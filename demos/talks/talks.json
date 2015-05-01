@@ -1,0 +1,550 @@
+[
+	{
+		"title": "",
+		"type": "Keynote",
+		"name": "You Gotta Love Frontend",
+		"url": "http://yougottalovefrontend.com",
+		"date": "2015-06-08",
+		"days": 2,
+		"country": "il",
+		"city": "Tel Aviv, Israel"
+	}, {
+		"sessions": [{"title":"The Chroma Zone: Engineering Color on the Web", "type": "Keynote"}, { "title": "CSS Visual Effects masterclass", "type": "Workshop" }],
+		"name": "WebVisions Barcelona",
+		"url": "http://www.webvisionsevent.com/barcelona/",
+		"date": "2014-06-20",
+		"country": "es",
+		"city": "Barcelona, Spain"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web",
+		"name": "CSSConf US",
+		"url": "http://2014.cssconf.com/",
+		"date": "2014-05-27",
+		"country": "us",
+		"city": "Amelia Island, FL, USA"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web", 
+		"type": "Keynote",
+		"name": "MoDevUX",
+		"url": "http://ux14.gomodev.com/",
+		"date": "2014-05-20",
+		"country": "us",
+		"city": "McLean, VA, USA"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web", 
+		"name": "jQuery UK",
+		"url": "http://jqueryuk.com/",
+		"date": "2014-05-16",
+		"country": "gb",
+		"city": "Oxford, UK"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web", 
+		"name": "Front-Trends 2014",
+		"url": "http://front-trends.com",
+		"date": "2014-05-07",
+		"days": 3,
+		"country": "pl",
+		"city": "Warsaw, Poland"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web", 
+		"name": "An Event Apart Boston 2014",
+		"url": "http://aneventapart.com/event/boston-2014",
+		"date": "2014-04-28",
+		"country": "us",
+		"city": "Boston, MA, USA"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web", 
+		"name": "CSSConf AU",
+		"url": "http://2014.cssconf.com.au/",
+		"date": "2014-04-09",
+		"country": "au",
+		"city": "Melbourne, Australia"
+	}, {
+		"name": "",
+		"url": "",
+		"date": "",
+		"country": "",
+		"city": ""
+	}, {
+		"sessions": [{"title":"The Chroma Zone: Engineering Color on the Web", "type": "Keynote"}, { "title": "CSS Visual Effects masterclass", "type": "Workshop" }],
+		"name": "Codemania",
+		"url": "http://codemania.co.nz/",
+		"date": "2014-04-04",
+		"country": "nz",
+		"city": "Auckland, New Zealand"
+	}, {
+		"sessions": ["The Chroma Zone: Engineering Color on the Web", { "title": "CSS: Beyond the basics", "type": "Workshop" }],
+		"name": "SmashingConf Oxford",
+		"url": "http://smashingconf.com/",
+		"date": "2014-03-18",
+		"country": "gb",
+		"city": "Oxford, UK"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web",
+		"type": "Keynote", 
+		"name": "jQuery",
+		"url": "http://jqueryto.com/",
+		"date": "2014-03-15",
+		"country": "ca",
+		"city": "Toronto, Canada"
+	}, {
+		"title": "The Humble border-radius",
+		"type": "Keynote",
+		"name": "O’Reilly Fluent 2014",
+		"url": "http://fluentconf.com/fluent2014",
+		"date": "2014-03-11",
+		"country": "us",
+		"city": "San Francisco, CA, USA"
+	}, {
+		"title": "The Chroma Zone: Engineering Color on the Web",
+		"type": "Keynote",
+		"name": "kod.io",
+		"url": "http://linz.kod.io/",
+		"date": "2014-03-01",
+		"country": "at",
+		"city": "Linz, Austria"
+	}, {
+		"title": "/Reg(exp){2}lained/: Demystifying Regular Expressions",
+		"name": "London JS Conf",
+		"url": "http://www.londonjsconf.com/",
+		"date": "2014-02-13",
+		"country": "gb",
+		"city": "London, UK"
+	}, {
+		"title": "Deep CSS Secrets",
+		"name": "An Event Apart SF 2013",
+		"url": "http://aneventapart.com/event/san-francisco-2013",
+		"date": "2013-12-09",
+		"country": "us",
+		"city": "San Francisco, CA, USA",
+		"feedback": "http://storify.com/LeaVerou/deep-css-secrets-an-event-apart-sf"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy’s CSS animation",
+		"name": "JSConf.asia",
+		"url": "http://2013.jsconf.asia/",
+		"date": "2013-11-28",
+		"country": "ph",
+		"city": "Manila, Philippines",
+		"feedback": "http://storify.com/LeaVerou/css-in-the-4th-dimension-jsconf-asia-manila"
+	}, {
+		"title": "More CSS secrets: Another 10 things you may not know about CSS",
+		"name": "StarTechConf",
+		"url": "http://www.startechconf.com/",
+		"date": "2013-10-25",
+		"country": "cl",
+		"city": "Santiago, Chile"
+	}, {
+		"title": "More CSS secrets: Another 10 things you may not know about CSS",
+		"name": "Blend Web Mix",
+		"url": "http://www.blendconference.com/",
+		"date": "2013-10-01",
+		"country": "fr",
+		"city": "Lyon, France",
+		"feedback": "http://storify.com/LeaVerou/more-css-secrets-blendwebmix-lyon"
+	}, {
+		"title": "The humble border-radius",
+		"type": "Keynote",
+		"name": "FrontInSampa",
+		"url": "http://www.frontinsampa.com.br/",
+		"date": "2013-09-14",
+		"country": "br",
+		"city": "São Paulo, Brazil",
+		"feedback": "http://storify.com/LeaVerou/the-humble-border-radius-frontinsampa-s-o-paulo"
+	}, {
+		"title": "Deep CSS Secrets",
+		"name": "An Event Apart Chicago 2013",
+		"url": "http://aneventapart.com/event/chicago-2013",
+		"date": "2013-08-26",
+		"country": "us",
+		"city": "Chicago, IL, USA",
+		"feedback": "http://storify.com/LeaVerou/deep-css-secrets-an-event-apart-chicago"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy’s CSS animation",
+		"name": "HybridConf",
+		"url": "http://hybridconf.net/speakers#lea-verou",
+		"date": "2013-08-15",
+		"country": "gb",
+		"city": "Cardiff, Wales",
+		"feedback": "http://storify.com/LeaVerou/css-in-the-4th-dimension-hybridconf"
+	}, {
+		"title": "Everything you always wanted to know about web standards (but were afraid to ask)",
+		"name": "engineers4engineers",
+		"url": "http://engineers4engineers.org/",
+		"date": "2013-06-28",
+		"country": "us",
+		"city": "Boston, MA, USA"
+	}, {
+		"title": "Deep CSS Secrets",
+		"name": "An Event Apart Boston 2013",
+		"url": "http://aneventapart.com/event/boston-2013",
+		"date": "2013-06-25",
+		"country": "us",
+		"city": "Boston, MA, USA",
+		"feedback": "http://storify.com/LeaVerou/deep-css-secrets-an-event-apart-boston"
+	}, {
+		"title": "The humble border-radius",
+		"video": "http://vimeo.com/70171266",
+		"name": "CSS Day",
+		"url": "http://cssday.nl/",
+		"date": "2013-06-14",
+		"country": "nl",
+		"city": "Amsterdam, The Netherlands",
+		"feedback": "http://storify.com/LeaVerou/the-humble-border-radius-cssday-2013"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"name": "Go Beyond Pixels",
+		"url": "http://gobeyondpixels.com/",
+		"date": "2013-06-07",
+		"country": "ca",
+		"city": "St. John's, Newfoundland, Canada",
+		"feedback": "http://storify.com/LeaVerou/more-css-secrets-gobeyondpixels"
+	}, {
+		"title": "Everything you always wanted to know about web standards (but were afraid to ask)",
+		"type": "Keynote",
+		"video": "http://www.youtube.com/watch?v=A5mI192gdZ8",
+		"name": "O’Reilly Fluent 2013",
+		"url": "http://fluentconf.com/fluent2013",
+		"date": "2013-05-30",
+		"country": "us",
+		"city": "San Francisco, CA, USA",
+		"feedback": "http://storify.com/LeaVerou/everything-you-always-wanted-to-know-about-web-sta"
+	}, {
+		"title": "The humble border-radius",
+		"video": "http://cssconf.com/talk-verou.html",
+		"name": "CSSConf",
+		"url": "http://cssconf.com",
+		"date": "2013-05-28",
+		"country": "us",
+		"city": "Amelia Island, FL, USA",
+		"feedback": "http://storify.com/LeaVerou/the-humble-border-radius-cssconf-2013"
+	}, {
+		"title": "The humble border-radius",
+		"video": "http://www.futureinsights.com/home/lea-verou-keynote-the-humble-border-radius.html",
+		"name": "FOWD London",
+		"url": "http://futureofwebdesign.com/london-2013/",
+		"date": "2013-05-15",
+		"country": "gb",
+		"city": "London, UK"
+	}, {
+		"title": "The humble border-radius",
+		"name": "Multi-Mania",
+		"url": "http://www.multi-mania.be/13/",
+		"date": "2013-05-13",
+		"country": "be",
+		"city": "Kortrijk, Belgium"
+	}, {
+		"title": "The humble border-radius",
+		"video": "http://vimeo.com/67567648",
+		"name": "Front Trends 2013",
+		"url": "http://2013.front-trends.com",
+		"date": "2013-04-24",
+		"country": "pl",
+		"city": "Warsaw, Poland"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy’s CSS animations",
+		"name": "FOSSCOMM 2013",
+		"url": "http://hua.fosscomm.gr/",
+		"date": "2013-04-21",
+		"country": "gr",
+		"city": "Athens, Greece"
+	}, {
+		"sessions": [
+			"The humble border-radius",
+			{ "title": "Future of the Web", "type": "Panel" }
+		],
+		"name": "Anglebrackets",
+		"url": "http://anglebrackets.org/",
+		"date": "2013-04-11",
+		"country": "us",
+		"city": "Las Vegas, NV, USA"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"name": "",
+		"url": "",
+		"date": "",
+		"country": "",
+		"city": ""
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"video": "http://www.youtube.com/watch?v=yIEJZ-FnIhI",
+		"name": "Kings of Code",
+		"url": "http://kingsofcode.com/conference/2012/speakers",
+		"date": "2012-12-03",
+		"country": "nl",
+		"city": "Amsterdam, The Netherlands"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"type": "Keynote",
+		"name": "FOWD Prague",
+		"url": "http://futureofwebdesign.com/prague-2012/speakers",
+		"date": "2012-11-29",
+		"country": "cz",
+		"city": "Prague, Czech Republic"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"name": "Web Directions South 2012",
+		"url": "http://south12.webdirections.org/speakers-sessions",
+		"date": "2012-10-18",
+		"country": "au",
+		"city": "Sydney, Australia"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"video": "http://www.youtube.com/watch?v=qTLN7SOAvsU",
+		"name": "Fronteers 2012",
+		"url": "http://fronteers.nl/congres/2012",
+		"date": "2012-10-04",
+		"country": "nl",
+		"city": "Amsterdam, The Netherlands"
+	}, {
+		"title": "CSS3: Not just for designers",
+		"name": "FromTheFront 2012",
+		"url": "http://2012.fromthefront.it/",
+		"date": "2012-09-20",
+		"country": "it",
+		"city": "Bologna, Italy"
+	}, {
+		"title": "More CSS Secrets: Another 10 things you may not know about CSS",
+		"video": "http://vimeo.com/57509874",
+		"name": "Smashing Conference",
+		"url": "http://smashingconf.com/2012",
+		"date": "2012-09-17",
+		"country": "de",
+		"city": "Freiburg, Germany"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"video": "http://vimeo.com/49879139",
+		"name": "WDCNZ 2012",
+		"url": "http://wdcnz.com/",
+		"date": "2012-08-02",
+		"country": "nz",
+		"city": "Wellington, New Zealand"
+	}, {
+		"title": "/Reg(exp){2}lained/: Demystifying Regular Expressions",
+		"name": "GothamJS",
+		"url": "http://www.gothamjs.com/",
+		"date": "2012-07-14",
+		"country": "us",
+		"city": "New York City, NY, USA"
+	}, {
+		"title": "/Reg(exp){2}lained/: Demystifying Regular Expressions",
+		"name": "TXJS 2012",
+		"url": "http://2012.texasjavascript.com/",
+		"date": "2012-06-14",
+		"country": "us",
+		"city": "Austin, TX, USA"
+	}, {
+		"sessions": [
+			{"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+			"video": "http://vimeo.com/43624462"},
+			{"title": "CSS3: Not just for designers",
+			"type": "Workshop"}
+		],
+		"name": "Norwegian Developers Conference",
+		"url": "http://www.ndcoslo.com/",
+		"date": "2012-06-05",
+		"country": "no",
+		"city": "Oslo, Norway"
+	}, {
+		"sessions": [
+			{ "title": "Turning to the client side", "type": "Keynote", "video": "http://www.youtube.com/watch?v=0T57Ivn5-Pw" },
+			{ "title": "/Reg(exp){2}lained/: Demystifying Regular Expressions", "video": "http://www.youtube.com/watch?v=EkluES9Rvak" }
+		],
+		"video": "http://www.youtube.com/watch?v=EkluES9Rvak",
+		"name": "O’Reilly Fluent 2012",
+		"url": "http://fluentconf.com/fluent2012/public/schedule/speaker/133766",
+		"date": "2012-05-30",
+		"country": "us",
+		"city": "San Francisco, USA"
+	}, {
+		"title": "/Reg(exp){2}lained/: Demystifying Regular Expressions",
+		"video": "http://vimeo.com/49446079",
+		"name": "Webshaped",
+		"url": "http://webshaped.fi/speakers",
+		"date": "2012-05-16",
+		"country": "fi",
+		"city": "Helsinki, Finland"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"video": "http://vimeo.com/46807187",
+		"name": "Front Trends 2012",
+		"url": "http://2012.front-trends.com",
+		"date": "2012-04-26",
+		"country": "pl",
+		"city": "Warsaw, Poland"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"name": "Web Montag",
+		"url": "http://webmontag-berlin.de/webmontag-63-frontend-dev/",
+		"date": "2012-04-23",
+		"country": "de",
+		"city": "Berlin, Germany"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"name": "Devs Love Bacon",
+		"url": "http://devslovebacon.com/",
+		"date": "2012-04-20",
+		"country": "gb",
+		"city": "London, UK"
+	}, {
+		"title": "CSS.next: Current Experiments, CSS4 and the Future",
+		"type": "Panel",
+		"name": "SXSW 2012",
+		"url": "http://sxsw.com/",
+		"date": "2012-03-09",
+		"country": "us",
+		"city": "Austin, TX, USA"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"name": "DDay",
+		"url": "http://www.dday.fi/speakers#lea",
+		"date": "2012-02-06",
+		"country": "fi",
+		"city": "Helsinki, Finland"
+	}, {
+		"title": "CSS in the 4th dimension: Not your daddy's CSS animations",
+		"video": "http://www.youtube.com/watch?v=LLMutaEz428",
+		"name": "SWDC 2011",
+		"url": "http://swdc.se/2011/",
+		"date": "2011-11-09",
+		"country": "se",
+		"city": "Stockholm, Sweden"
+	}, {
+		"title": "CSS3 Secrets: 10 things you might not know about CSS3",
+		"name": "Frontend 2011",
+		"url": "http://www.frontend2011.com/",
+		"date": "2011-10-10",
+		"country": "no",
+		"city": "Oslo, Norway"
+	}, {
+		"sessions": [{
+			"title": "CSS3 Secrets: 10 things you might not know about CSS3",
+			"video": "http://www.youtube.com/watch?v=54wJkqG8jXE"
+		}, {
+			"title": "CSS3: Not just for designers",
+			"type": "Workshop"
+		}],
+		"name": "Fronteers 2011",
+		"url": "http://fronteers.nl/congres/2011",
+		"date": "2011-10-06",
+		"country": "nl",
+		"city": "Amsterdam, The Netherlands",
+		"comment": "My talk was considered one of the <a href='http://www.netmagazine.com/features/2011-review-15-web-conference-talks-you-need-watch' target='_blank'>15 best talks of 2011 by .net magazine</a>"
+	}, {
+		"title": "Polyfilling the gaps",
+		"name": "JSConf EU",
+		"video": "http://www.youtube.com/watch?v=V0wJ1BnfnR8",
+		"url": "http://jsconf.eu/2011/speakers.html#entry-4802",
+		"date": "2011-10-01",
+		"country": "de",
+		"city": "Berlin, Germany"
+	}, {
+		"title": "CSS3 Secrets: 10 things you might not know about CSS3",
+		"name": "FromTheFront",
+		"url": "http://2011.fromthefront.it/",
+		"date": "2011-09-29",
+		"country": "it",
+		"city": "Cesena, Italy"
+	}, {
+		"title": "CSS3 Secrets: 10 things you might not know about CSS3",
+		"name": "Frontend conference",
+		"url": "http://2011.frontendconf.ch/",
+		"date": "2011-09-09",
+		"country": "ch",
+		"city": "Zurich, Switzerland",
+		"feedback": "http://lea.verou.me/2011/09/my-experience-from-frontendconf-zurich/"
+	}, {
+		"title": "CSS3 & gradients",
+		"slides": [
+			"http://www.slideshare.net/LeaVerou/mastering-css3-gradients",
+			"http://lea.verou.me/css3-gradients"
+		],
+		"name": "CSS Summit 2011",
+		"url": "http://environmentsforhumans.com/2011/css-summit",
+		"date": "2011-07-26",
+		"feedback": "http://lea.verou.me/2011/08/my-experience-from-the-css-summit-2011/"
+	}, {
+		"title": "10 things you might not know about CSS3",
+		"name": "Standards.next",
+		"url": "http://standards-next.org/2011/05/focus-on-css-3/",
+		"date": "2011-05-28",
+		"country": "gb",
+		"city": "London, UK",
+		"feedback": "http://lea.verou.me/2011/06/my-experience-from-web-directions-media-standards-next/"
+	}, {
+		"title": "Mastering CSS3 gradients",
+		"slides": [
+			"http://www.slideshare.net/LeaVerou/mastering-css3-gradients",
+			"http://lea.verou.me/css3-gradients"
+		],
+		"name": "Web Directions @media",
+		"url": "http://atmedia11.webdirections.org/program/design/#css3-at-the-outer-rim",
+		"date": "2011-05-26",
+		"country": "gb",
+		"city": "London, UK",
+		"feedback": "http://lea.verou.me/2011/06/my-experience-from-web-directions-media-standards-next/"
+	}, {
+		"sessions": [
+			{
+				"title": "Mastering CSS3 gradients",
+				"slides": [
+					"http://www.slideshare.net/LeaVerou/mastering-css3-gradients",
+					"http://lea.verou.me/css3-gradients"
+				]
+			},
+			"10 things you might not know about CSS3"
+		],
+		"name": "Geek Meet",
+		"url": "http://robertnyman.com/2011/04/06/geek-meet-may-2011-with-lea-verou/",
+		"date": "2011-05-10",
+		"country": "se",
+		"city": "Stockholm, Sweden",
+		"feedback": "http://lea.verou.me/2011/05/my-experience-from-geek-meet/"
+	}, {
+		"sessions": [
+			{
+				"title": "Mastering CSS3 gradients",
+				"slides": [
+					"http://www.slideshare.net/LeaVerou/mastering-css3-gradients",
+					"http://lea.verou.me/css3-gradients"
+				]
+			},
+			{"title": "Future of the browsers", "type": "Panel" }
+		],
+		"name": "РИТ++ conference",
+		"url": "http://ritconf.ru/2011/guru/812.html",
+		"date": "2011-04-25",
+		"country": "ru",
+		"city": "Moscow, Russia"
+		
+	}, {
+		"title": "CSS3 gradients",
+		"slides": [
+			"http://www.slideshare.net/LeaVerou/mastering-css3-gradients",
+			"http://lea.verou.me/css3-gradients"
+		],
+		"name": "Framsia",
+		"date": "2011-02-24",
+		"country": "no",
+		"city": "Oslo, Norway"
+	}, {
+		"title": "Pragmatic CSS3",
+		"name": "Front-Trends conference",
+		"url": "http://2010.front-trends.com/",
+		"date": "2010-10-21",
+		"days": 2,
+		"country": "pl",
+		"city": "Warsaw, Poland",
+		"details": "http://lea.verou.me/2010/10/my-ft2010-slides-and-csss-my-presentation-framework/",
+		"slides": "http://www.slideshare.net/LeaVerou/css3-a-practical-introduction-ft2010-talk",
+		"comment": "My slides became quite popular and were featured in the homepages of SlideShare, reddit, YCombinator Hacker News and many other websites. Christian Heilmann praised it on <a href=\"http://www.wait-till-i.com/2010/10/25/fronttrends2010-in-warsaw-poland-my-impressions-slides-and-audio/\">his review</a>"
+	}, {
+		"title": "CSS3 colors, today",
+		"name": "MediaCampAthens",
+		"url": "",
+		"date": "2009-03-09",
+		"country": "gr",
+		"city": "Microsoft Innovation Center, Athens, Greece",
+		"slides": "http://www.slideshare.net/LeaVerou/colors-in-css3",
+		"comment": "The slides from my presentation were featured in SlideShare and many other websites"
+	}
+]

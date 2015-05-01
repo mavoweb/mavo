@@ -1,0 +1,116 @@
+[data-store] [typeof],
+[data-store] [itemscope] {
+	position: relative;	
+	
+	& .edit, 
+	& .delete {
+		all: initial;
+		position: absolute;
+		top: 1em;
+		right: 1em;
+		padding: 0 .3em;
+		cursor: pointer;
+		transform: scale(-1, 1);
+		color: rgba(0,0,0,.3);
+		
+		&:hover {
+			border-radius: 50%;
+			background: rgba(0,0,0,.2);
+			color: white;
+		}
+	}
+	
+	&.editing .edit,
+	&.saved .curd-buttons,
+	&.saved .empty {
+		display: none;
+	}
+	
+	.empty {
+		color: hsla(0,0%,40%,.6);
+		font-style: italic;
+	}
+	
+	&.editing {
+		[itemprop]:not([itemscope]),
+		[property]:not([typeof]) {
+			&:hover {
+				background-image: linear-gradient(hsla(60, 100%, 50%, .2), hsla(60, 100%, 50%, .2));
+				background-size: auto;
+				outline: 1px dashed hsla(0,0%,50%,.3);
+			}
+			
+			&:focus {
+				outline-width: 1px;
+			}
+		}
+	}
+	
+	.popup {
+		all: initial;
+		position: absolute;
+		z-index: 1;
+		padding: 1em;
+		border: 1px solid rgba(0,0,0,.3);
+		border-radius: .4em;
+		margin: .3em 0 0 -.5em;
+		box-shadow: 0 .1em .3em rgba(0,0,0,.3);
+		background: white;
+		
+		&::before {
+			content: "";
+			position: absolute;
+			top: -.36em;
+			left: 1em;
+			padding: .3em;
+			border: inherit;
+			border-right-width: 0;
+			border-bottom-width: 0;
+			background: inherit;
+			transform: rotate(45deg)
+		}
+		
+		input {
+			display: block;
+		}
+	}
+		
+	.curd-buttons {
+		padding: .5em 0 .1em;
+		text-align: center;
+	
+		button {
+			all: initial;
+			padding: .25em .6em;
+			border: 2px solid;
+			border-radius: .4em;
+			background: transparent;
+			font: inherit;
+			cursor: pointer;
+		}
+		
+		button.save {
+			color: hsl(80, 80%, 40%);
+			font-weight: bold;
+		}
+		
+		button.cancel {
+			margin-left: .4em;
+			color: #c00;
+		}
+		
+		button:hover {
+			background: black;
+			color: white;
+			border-color: transparent;
+		}
+		
+		button.save:hover {
+			background: hsl(80, 80%, 40%);
+		}
+		
+		button.cancel:hover {
+			background: #c00;
+		}
+	}
+}

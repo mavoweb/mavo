@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Talks List</title>
+<link rel="stylesheet" href="http://lea.verou.me/wp-content/themes/elegant/style.css" />
+<link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="../../curd.css" />
+<link rel="stylesheet" href="talks.css" />
+
+</head>
+<body>
+
+<h1>Talks</h1>
+
+<main class="talks" data-store>
+	<template>
+	<article data-multiple typeof="Event">
+		<h1 data-multiple property="talk" typeof="Talk">
+			<span property="title">TBD</span>
+			<span property="type" class="keynote">
+				<select>
+					<option selected>Talk</option>
+					<option selected>Keynote</option>
+					<option selected>Workshop</option>
+				</select>
+			</span>
+			<a class="video" target="_blank">Video</a>
+		</h1>
+		<h2>
+			<a property="conference-url" target="_blank">
+				<span property="conference-name"></span>
+			</a>
+		</h2>
+		<p class="date"><time property="date"></time></p>
+		<address class="flag-{addressCountry}" property="address" itemscope itemtype="http://schema.org/PostalAddress">
+			<span property="addressLocality" title="City"></span>,
+			<span property="addressCountry">
+				<select id="country">
+					<option>USA</option>
+					<option>Italy</option>
+				</select>
+			</span>
+		</address>
+	</article>
+	</template>
+</main>
+
+<footer>By <a href="http://lea.verou.me">Lea Verou</a>. Flag icons made by <a href="http://www.famfamfam.com/lab/icons/flags/">Mark James</a> and are in the public domain.</footer>
+
+<script src="../../../bliss/bliss.js"></script>
+<script src="../../polyfills.js"></script>
+<script src="../../curd.js"></script>
+
+</body>
+</html>

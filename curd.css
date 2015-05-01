@@ -1,0 +1,99 @@
+[data-store] [typeof],
+[data-store] [itemscope] {
+  position: relative; }
+  [data-store] [typeof] .edit, [data-store] [typeof] .delete,
+  [data-store] [itemscope] .edit,
+  [data-store] [itemscope] .delete {
+    all: initial;
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    padding: 0 .3em;
+    cursor: pointer;
+    transform: scale(-1, 1);
+    color: rgba(0, 0, 0, 0.3); }
+    [data-store] [typeof] .edit:hover, [data-store] [typeof] .delete:hover,
+    [data-store] [itemscope] .edit:hover,
+    [data-store] [itemscope] .delete:hover {
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.2);
+      color: white; }
+  [data-store] [typeof].editing .edit, [data-store] [typeof].saved .curd-buttons, [data-store] [typeof].saved .empty,
+  [data-store] [itemscope].editing .edit,
+  [data-store] [itemscope].saved .curd-buttons,
+  [data-store] [itemscope].saved .empty {
+    display: none; }
+  [data-store] [typeof] .empty,
+  [data-store] [itemscope] .empty {
+    color: rgba(102, 102, 102, 0.6);
+    font-style: italic; }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]):hover,
+  [data-store] [typeof].editing [property]:not([typeof]):hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]):hover,
+  [data-store] [itemscope].editing [property]:not([typeof]):hover {
+    background-image: linear-gradient(rgba(255, 255, 0, 0.2), rgba(255, 255, 0, 0.2));
+    background-size: auto;
+    outline: 1px dashed rgba(128, 128, 128, 0.3); }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]):focus,
+  [data-store] [typeof].editing [property]:not([typeof]):focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]):focus,
+  [data-store] [itemscope].editing [property]:not([typeof]):focus {
+    outline-width: 1px; }
+  [data-store] [typeof] .popup,
+  [data-store] [itemscope] .popup {
+    all: initial;
+    position: absolute;
+    z-index: 1;
+    padding: 1em;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: .4em;
+    margin: .3em 0 0 -.5em;
+    box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
+    background: white; }
+    [data-store] [typeof] .popup::before,
+    [data-store] [itemscope] .popup::before {
+      content: "";
+      position: absolute;
+      top: -.36em;
+      left: 1em;
+      padding: .3em;
+      border: inherit;
+      border-right-width: 0;
+      border-bottom-width: 0;
+      background: inherit;
+      transform: rotate(45deg); }
+    [data-store] [typeof] .popup input,
+    [data-store] [itemscope] .popup input {
+      display: block; }
+  [data-store] [typeof] .curd-buttons,
+  [data-store] [itemscope] .curd-buttons {
+    padding: .5em 0 .1em;
+    text-align: center; }
+    [data-store] [typeof] .curd-buttons button,
+    [data-store] [itemscope] .curd-buttons button {
+      all: initial;
+      padding: .25em .6em;
+      border: 2px solid;
+      border-radius: .4em;
+      background: transparent;
+      font: inherit;
+      cursor: pointer; }
+    [data-store] [typeof] .curd-buttons button.save,
+    [data-store] [itemscope] .curd-buttons button.save {
+      color: #81b814;
+      font-weight: bold; }
+    [data-store] [typeof] .curd-buttons button.cancel,
+    [data-store] [itemscope] .curd-buttons button.cancel {
+      margin-left: .4em;
+      color: #c00; }
+    [data-store] [typeof] .curd-buttons button:hover,
+    [data-store] [itemscope] .curd-buttons button:hover {
+      background: black;
+      color: white;
+      border-color: transparent; }
+    [data-store] [typeof] .curd-buttons button.save:hover,
+    [data-store] [itemscope] .curd-buttons button.save:hover {
+      background: #81b814; }
+    [data-store] [typeof] .curd-buttons button.cancel:hover,
+    [data-store] [itemscope] .curd-buttons button.cancel:hover {
+      background: #c00; }

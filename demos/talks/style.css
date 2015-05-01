@@ -1,0 +1,25 @@
+footer {
+	display: block;
+	text-align: center;
+	font-size: 80%;
+	padding: 1em 0;
+}
+
+code {
+	font-family: Consolas, Monaco, monospace;
+	font-size: 95%;
+}
+
+#mark img {
+	position: fixed;
+	left: 10px;
+	top: 10px;
+	width: 50px;
+	border-radius: 50%;
+	box-shadow: 2px 2px 8px rgba(0,0,0,.3);
+	
+	-webkit-transform: rotate(-15deg);
+	-moz-transform: rotate(-15deg);
+	-ms-transform: rotate(-15deg);
+	transform: rotate(-15deg);
+}
