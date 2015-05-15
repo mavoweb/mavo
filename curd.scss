@@ -1,13 +1,27 @@
+%reset {
+	all: initial;
+	font: inherit;
+	color: inherit;
+	text-decoration: inherit;
+	text-align: inherit;
+}
+
+[data-store] button.add {
+	display: inline-block;
+	margin-left: .5em;
+	vertical-align: middle;
+}
+
 [data-store] [typeof],
 [data-store] [itemscope] {
 	position: relative;	
 	
-	& .edit, 
-	& .delete {
+	.edit, 
+	.delete {
 		all: initial;
 		position: absolute;
 		top: 1em;
-		right: 1em;
+		right: -1.5em;
 		padding: 0 .3em;
 		cursor: pointer;
 		transform: scale(-1, 1);
@@ -20,28 +34,48 @@
 		}
 	}
 	
+	.delete {
+		color: rgba(180,0,0,.8);
+	}
+	
+	.delete:hover {
+		background: rgba(180,0,0,.8);
+	}
+	
 	&.editing .edit,
 	&.saved .curd-buttons,
 	&.saved .empty {
 		display: none;
 	}
 	
-	.empty {
-		color: hsla(0,0%,40%,.6);
-		font-style: italic;
-	}
-	
 	&.editing {
 		[itemprop]:not([itemscope]),
 		[property]:not([typeof]) {
-			&:hover {
-				background-image: linear-gradient(hsla(60, 100%, 50%, .2), hsla(60, 100%, 50%, .2));
-				background-size: auto;
-				outline: 1px dashed hsla(0,0%,50%,.3);
+			input, select, textarea {
+				@extend %reset;
 			}
 			
-			&:focus {
-				outline-width: 1px;
+			textarea {
+				box-sizing: border-box;
+				width: 100%;
+			}
+			
+			&.using-popup, input, select, textarea {
+				&:hover, &:focus {
+					outline: 1px dashed;
+					outline-offset: 1px;
+				}
+				
+				&:hover {
+					$color: hsla(58, 100%, 50%, .15);
+					
+					box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
+					outline-color: hsla(200,10%,50%,.3);
+				}
+				
+				&:focus {
+					outline-color: hsla(200,50%,40%,.6);
+				}
 			}
 		}
 	}
@@ -70,8 +104,10 @@
 			transform: rotate(45deg)
 		}
 		
-		input {
+		input, select {
 			display: block;
+			font: inherit;
+			min-width: 100%;
 		}
 	}
 		
@@ -79,38 +115,40 @@
 		padding: .5em 0 .1em;
 		text-align: center;
 	
-		button {
-			all: initial;
-			padding: .25em .6em;
+		%buttons {
+			@extend %reset;
+			padding: .4em .6em;
 			border: 2px solid;
 			border-radius: .4em;
 			background: transparent;
-			font: inherit;
+			font: bold 80% Helvetica Neue, sans-serif;
 			cursor: pointer;
+			
+			&:hover {
+				background: black;
+				color: white;
+				border-color: transparent;
+			}
 		}
 		
 		button.save {
+			@extend %buttons;
 			color: hsl(80, 80%, 40%);
 			font-weight: bold;
+			
+			&:hover {
+				background: hsl(80, 80%, 40%);
+			}
 		}
 		
 		button.cancel {
+			@extend %buttons;
 			margin-left: .4em;
 			color: #c00;
-		}
-		
-		button:hover {
-			background: black;
-			color: white;
-			border-color: transparent;
-		}
-		
-		button.save:hover {
-			background: hsl(80, 80%, 40%);
-		}
-		
-		button.cancel:hover {
-			background: #c00;
+			
+			&:hover {
+				background: #c00;
+			}
 		}
 	}
 }

@@ -9,15 +9,34 @@ var _ = self.Curd = function (template) {
 	}
 	
 	this.template = template;
-	this.store = template.parentNode.getAttribute("data-store");
+	this.container = template.closest("[data-store]");
+	this.store = this.container.getAttribute("data-store");
 	
 	this.addButton = $(template.getAttribute("data-add")) || document.createElement("button")._.set({
-		textContent: "Add new",
-		after: template,
 		className: "add",
 		events: {
 			click: this.add.bind(this)
 		}
+	});
+	
+	var heading = $("h1, h2, h3, h4, h5, h6", this.container);
+	
+	if (heading) {
+		this.addButton._.set({
+			textContent: "+",
+			title: "Add new",
+			inside: heading
+		});
+	}
+	else {
+		this.addButton._.set({
+			textContent: "Add new",
+			after: template
+		});
+	}
+	
+	this.container.addEventListener("input", function(evt) {
+		_.autosize(evt.target);
 	});
 };
 
@@ -25,10 +44,12 @@ _.prototype = {
 	add: function () {
 		var item = $("[itemscope], [typeof]", document.importNode(this.template.content, true));
 		
-		$$("[itemprop], [property]", item).forEach(function (property) {
-			if (!property.hasAttribute("itemscope") && !property.hasAttribute("typeof")) {
-				new _.Property(property);
-			}
+		$$(_.selectors.property, item).forEach(function (property, i) {
+				property._.data.property = new _.Property(property);
+				
+				if (i == 0) {
+					property._.data.property.editor.autofocus = true;
+				}
 		});
 		
 		item.classList.add("editing");
@@ -47,7 +68,7 @@ _.prototype = {
 					scope.classList.add("editing");
 					scope.classList.remove("saved");
 					
-					$$("[itemprop], [property]", scope).forEach(function (element) {
+					$$(_.selectors.property, scope).forEach(function (element) {
 						element._.data.property.edit();
 					});
 				}
@@ -59,7 +80,7 @@ _.prototype = {
 		// TODO fix this WET mess and make them actually work
 		// To make them work I need to implement JSON importing/exporting…
 		item._.contents({
-			tag: "footer",
+			tag: "div",
 			className: "curd-buttons",
 			contents: [{
 				tag: "button",
@@ -72,7 +93,7 @@ _.prototype = {
 						item.classList.remove("editing");
 						item.classList.add("saved");
 						
-						$$("[itemprop], [property]", scope).forEach(function (element) {
+						$$(_.selectors.property, item).forEach(function (element) {
 							element._.data.property.save();
 						});
 					}
@@ -107,6 +128,10 @@ _.prototype = {
 		});
 		
 		item._.before(this.template);
+		
+		$$(_.selectors.property, item).forEach(function (property) {
+			property._.data.property.edit();
+		});
 	}
 };
 
@@ -121,10 +146,68 @@ _.readable = function (identifier) {
 	         .replace(/^[a-z]/, function($0) { return $0.toUpperCase() }); // Capitalize
 }
 
+// Inverse of _.readable(): Take a readable string and turn it into an identifier
+_.identifier = function (readable) {
+	return readable
+	         .replace(/\s+/g, "-") // Convert whitespace to hyphens
+	         .replace(/[^\w-]/g, "") // Remove weird characters
+	         .toLowerCase();
+}
+
+// Autosize an input or textarea
+_.autosize = function(element) {
+	if (!element.matches(_.selectors.textfield)) {
+		return;
+	}
+	
+	var cs = getComputedStyle(element);
+	var offset = 0;
+
+	if (!element.value && element.placeholder) {
+		var empty = true;
+		element.value = element.placeholder;
+	}
+
+	if (/^textarea$/i.test(element.nodeName)) {
+		if (cs.boxSizing == "border-box") {
+			offset = parseInt(cs.borderTopWidth) + parseInt(cs.borderBottomWidth);
+		}
+		else if (cs.boxSizing == "content-box") {
+			offset -= parseInt(cs.paddingTop) + parseInt(cs.paddingBottom);
+		}
+		
+		element.style.height = "0";
+
+		element.style.height = element.scrollHeight + offset + "px";
+	}
+	else {
+		if (cs.boxSizing == "border-box") {
+			offset = parseInt(cs.borderLeftWidth) + parseInt(cs.borderRightWidth);
+		}
+		else if (cs.boxSizing == "content-box") {
+			offset -= parseInt(cs.paddingLeft) + parseInt(cs.paddingRight);
+		}
+		
+		element.style.width = "0";
+
+		element.style.width = element.scrollWidth + offset + "px";
+	}
+	
+	if (empty) {
+		element.value = "";
+	}
+};
+
+_.selectors = {
+	property: "[itemprop]:not([itemscope]), [property]:not([typeof])",
+	textfield: 'textarea, input:not([type]), input[type="' + "text url email tel".split(" ").join('"], input[type="') + '"]',
+};
+
+
 })();
 
 document.addEventListener("DOMContentLoaded", function() {
-	$$("[data-store] > [itemscope], [data-store] > template").forEach(function (template) {
+	$$("[data-store] > [typeof], [data-store] > [itemscope], [data-store] > template").forEach(function (template) {
 		new Curd(template);
 	});
 });
@@ -135,20 +218,15 @@ var _ = Curd.Property = function (element) {
 	var me = this;
 	
 	this.element = element;
-	element._.data.property = this;
 	
 	this.scope = this.element.closest("[typeof], [itemscope]");
-	
+
 	this.name = element.getAttribute("property") ||
 	            element.getAttribute("itemprop") ||
 	            (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
 	            
 	this.nameRegex = RegExp("{" + this.name + "}", "g");
 	            
-	this.label = this.element.title || Curd.readable(this.name);
-	            
-	this.default = this.value;
-	
 	for (var selector in _.types) {
 		if (this.element.matches(selector)) {
 			// TODO calculate specificity and return the one with the highest, not the first one
@@ -156,46 +234,68 @@ var _ = Curd.Property = function (element) {
 		}
 	}
 	
-	this.editor = $("select, input", this.element) || this.editor && this.editor() || null;
+	this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
 	
-	if (this.editor) {
-		this.editor.addEventListener("input", function () {
+	if (this.element.getAttribute("data-attribute") != "title" && !this.nameRegex.test(this.element.title)) {
+		this.label = this.element.title;
+	}
+	
+	this.label = this.label || Curd.readable(this.name);
+
+	this.editor = ($(this.element.getAttribute("data-input-from"))
+	                  ? $(this.element.getAttribute("data-input-from")).cloneNode(true) : null) ||
+	              $$(this.element.children).filter(function (el) {
+	                  return el.parentNode === me.element && el.matches("input, select, textarea")
+	              })[0] ||
+	             this.editor && this.editor() ||
+	             document.createElement("input");
+	
+	this.editor._.events({
+		"input": function () {
 			me.element.setAttribute(me.attribute || "content", this.value);
-			me.element._.fireEvent("valuechange");
-		});
-	}
-	else {
-		this.element.addEventListener("input", function(event) {
-			this._.fireEvent("valuechange");
-		});
-	}
-	
-	this.element.addEventListener("valuechange", function () {
-		me.valueChanged();
-		me.onchange && me.onchange();
+			me.element._.fireEvent("valuechange", {
+				value: this.value
+			});
+		},
+		"focus": function () {
+			this.select && this.select();
+		}
 	});
 	
-	if (this.attribute || !this.editor) {
-		this.behavior.setPlaceholder(this.element);
-	}
-	else {
-		
+	this.default = this.value;
+	
+	if ("placeholder" in this.editor) {
+		this.editor.placeholder = "(" + this.label + ")";
 	}
 	
-					
+	if (this.default || this.default === 0) {
+		this.editor.value = this.default;
+	}
+	
+	this.element.addEventListener("valuechange", function (evt) {
+		if (evt.target == me.element) {
+			me.update(evt.value);
+		}
+	});
+	
 	if (this.attribute) {
 		// Set up popup
-		this.element.tabIndex = "0";
-		
+		this.element.classList.add("using-popup");
+
 		this.element._.events({
 			focus: function () {
+				if (!me.editing) {
+					return;
+				}
+				
 				document.createElement("div")._.set({
 					className: "popup",
 					contents: [
 						me.label + ":",
 						me.editor._.events({
 							blur: function () {
-								this.closest(".popup")._.remove();
+								var popup = this.closest(".popup");
+								popup && popup.parentNode && popup._.remove();
 							}	
 						})
 					],								
@@ -206,13 +306,19 @@ var _ = Curd.Property = function (element) {
 					after: this
 				});
 			},
+			
 			blur: function () {
+				if (!me.editing) {
+					return;
+				}
+				 
 				var popup = this.nextElementSibling;
 				
 				if (!popup.classList.contains("popup")) {
 					return;
 				}
 				
+				// Deferred as document.activeElement is not immediately updated 
 				setTimeout(function () {
 					if (document.activeElement.closest(".popup") !== popup) {
 						popup._.remove();
@@ -221,57 +327,61 @@ var _ = Curd.Property = function (element) {
 			}
 		});
 	}
-	else if (this.editor) {
-		if (this.editor.parentNode != this.element) {
-			this.element.appendChild(this.editor);
-		}
-	}
-	else {
-		this.element.contentEditable = true;
-	}
 	
 	// Prevent default actions while editing
 	this.element.addEventListener("click", function(evt) {
 		if (me.editing) {
 			evt.preventDefault();
+			evt.stopPropagation();
 		}
 	});
+	
+	this.update(this.value);
 }
 
 _.prototype = {
 	get value() {
-		if (this.editor) {
-			return this.element.getAttribute(this.attribute || "content");
+		if (this.editing || this.editing === undefined) {
+			return this.editor.value || this.element.getAttribute(this.attribute || "content");
 		}
 		else {
 			return this.element.textContent || null;
 		}
 	},
 	
-	valueChanged: function () {
+	update: function (value) {
 		this.element.classList[value? "remove" : "add"]("empty");
-		
+
 		// Crawl scope for property references (one-way data binding)
 		// TODO deal with references in text nodes with element siblings (wrap w/ span?)
-		$$("*", this.scope).concat(this.scope).forEach(function (element) {
+		// TODO optimize performance for attributes by storing in hash
+		value = value || value === 0? value : "";
 
+		$$("*", this.scope).concat(this.scope).forEach(function (element) {
+		
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
 				element.setAttribute("data-original-textContent", element.textContent);
+				element.textContent = element.textContent.replace(this.nameRegex, Curd.identifier(value));
 			}
 
 			$$(element.attributes).forEach(function (attribute) {
-			
+				this.nameRegex.lastIndex = 0;
+				
 				if (this.nameRegex.test(attribute.value)) {
+					var newValue = attribute.value.replace(this.nameRegex, value);
+					
 					if (attribute.name.indexOf("data-original-") === 0) {
 						// Shadow property, update the original one, not this one
 						var originalName = attribute.name.replace(/^data-original-/, "");
 						
-						var newValue = attribute.value.replace(this.nameRegex, value);
-
 						if (originalName.toLowerCase() == "textcontent") {
 							element.textContent = newValue;
 						}
 						else {
+							if (/^(class|id)$/i.test(originalName)) {
+								newValue = attribute.value.replace(this.nameRegex, Curd.identifier(value));
+							}
+							
 							element.setAttribute(originalName, newValue)
 						}
 					}
@@ -279,18 +389,27 @@ _.prototype = {
 						// First time we encounter this attribute, make a copy to save the reference
 						element.setAttribute("data-original-" + attribute.name, attribute.value);
 						
-						attribute.value = attribute.value.replace(this.nameRegex, value);
+						if (/^(class|id)$/i.test(attribute.name)) {
+							newValue = attribute.value.replace(this.nameRegex, Curd.identifier(value));
+						}
+						
+						attribute.value = newValue;
 					}
 					
 				}
 			}, this);
 		}, this);
+		
+		this.onchange && this.onchange(value);
 	},
 	
 	save: function () {
 		this.editing = false;
 		
-		if (!this.attribute && this.editor) {
+		if (this.attribute) {
+			this.element.removeAttribute("tabindex");
+		}
+		else {
 			this.element.textContent = this.editor.value;
 		}
 	},
@@ -298,10 +417,16 @@ _.prototype = {
 	edit: function () {
 		this.editing = true;
 		
-		if (!this.attribute && this.editor) {
-			this.editor.value = this.element.textContent;
-			this.element.textContent = "";
-			this.element.appendChild(this.editor);
+		if (this.attribute) {
+			this.element.tabIndex = "0";
+		}
+		else {
+			if (this.editor.parentNode != this.element) {
+				this.editor.value = this.element.textContent;
+				this.element.textContent = "";
+				this.element.appendChild(this.editor);
+				Curd.autosize(this.editor);
+			}
 		}
 	}
 };
@@ -331,14 +456,16 @@ _.types = {
 		},
 		
 		onchange: function () {
-			if (this.element.classList.contains("empty")) {
+			var date = new Date(this.element.getAttribute("datetime"));
+
+			if (!this.element.hasAttribute("datetime") || isNaN(date)) {
 				this.element.textContent = "(" + this.label + ")";
 			}
 			else {
-				// TODO proper formatting by type
+				// TODO do this properly
 				var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 				
-				return (date.getDate() + 1) + " " + months[date.getMonth()] + " " + date.getFullYear();
+				this.element.textContent = (date.getDate() + 1) + " " + months[date.getMonth()] + " " + date.getFullYear();
 			}
 		}
 	},
@@ -352,162 +479,14 @@ _.types = {
 				"placeholder": "http://"
 			});
 		}
+	},
+	
+	"p": {
+		editor: function () {
+			return document.createElement("textarea");
+		}
 	}
 };
-
-})();
-
-
-(function(){
-
-var _ = Curd.Behavior = function (element) {
-	if (!element) {
-		return;
-	}
-	
-	_.all.push(this);
-	
-	this.element = element;
-	
-	var behavior = this;
-	
-	this.element.contentEditable = true;
-	
-	this.element._.events({
-		focus: function () {
-			if (this.classList.contains("empty")) {
-				this.setSelectionRange(0, this.textContent.length);
-			}
-		},
-		input: function () {
-			if (!this.textContent) {
-				behavior.setPlaceholder(this);
-			}
-			else {
-				element.classList.remove("empty");
-			}
-		}
-	});
-}
-
-_.prototype = {
-	setPlaceholder: function () {
-		this.element.textContent = "(" + this.element._.data.property.label + ")";
-	}
-}
-
-_.all = [];
-
-_.types = {};
-
-// Factory method for getting the appropriate behavior
-_.get = function(element) {
-	for (var selector in _.types) {
-		if (element.matches(selector)) {
-			// TODO calculate specificity and return the one with the highest, not the first one
-			return new _.types[selector](element);
-		}
-	}
-	
-	return new _(element);
-}
-
-})();
-
-
-(function() {
-
-var zuper = Curd.Behavior;
-
-var types = {
-	"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-	"month": /^[Y\d]{4}-[M\d]{2}$/i,
-	"time": /^[H\d]{2}:[M\d]{2}/i,
-	"week": /[Y\d]{4}-W[W\d]{2}$/i,
-	"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-};
-
-var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
-
-var _ = Curd.TimeBehavior = function (element) {
-	var me = this;
-	
-	zuper.all.push(this);
-	
-	this.element = element;
-	
-	var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
-	
-	for (var type in types) {
-		if (types[type].test(datetime)) {
-			break;
-		}
-	}				
-	
-	this.type = type;
-	
-	this.element.tabIndex = "0";
-}
-
-Curd.TimeBehavior.prototype = new zuper();
-
-$.extend(Curd.TimeBehavior.prototype, {
-	attribute: "datetime",
-	
-	set: function () {
-		var date = new Date(this.element._.data.property.value);
-		
-		this.element.textContent = this.utils.format(date);
-	},
-	
-	editor: function () {
-		return document.createElement("input")._.set("type", this.type);
-	},
-	
-	utils: {
-		format: function (date) {
-			// TODO proper formatting by type
-			return (date.getDate() + 1) + " " + months[date.getMonth()] + " " + date.getFullYear();
-		}
-	}
-});
-
-zuper.types["time"] = _;
-
-})();
-
-(function() {
-
-var zuper = Curd.Behavior;
-
-var _ = Curd.ABehavior = function (element) {
-	zuper.all.push(this);
-	
-	this.element = element;
-	
-	this.element.addEventListener("click", function(evt) {
-		evt.preventDefault();
-	});
-}
-
-Curd.ABehavior.prototype = new zuper();
-
-$.extend(Curd.ABehavior.prototype, {
-	attribute: "href",
-	
-	setPlaceholder: function () {
-		this.element.href = "#";
-	},
-	
-	editor: function () {
-		return document.createElement("input")._.set({
-			"type": "url",
-			"placeholder": "http://"
-		});
-	}
-});
-
-zuper.types["a"] = _;
 
 })();
 

@@ -1,3 +1,61 @@
+
+
+(function(){
+
+var _ = Curd.Behavior = function (element) {
+	if (!element) {
+		return;
+	}
+	
+	_.all.push(this);
+	
+	this.element = element;
+	
+	var behavior = this;
+	
+	this.element.contentEditable = true;
+	
+	this.element._.events({
+		focus: function () {
+			if (this.classList.contains("empty")) {
+				this.setSelectionRange(0, this.textContent.length);
+			}
+		},
+		input: function () {
+			if (!this.textContent) {
+				behavior.setPlaceholder(this);
+			}
+			else {
+				element.classList.remove("empty");
+			}
+		}
+	});
+}
+
+_.prototype = {
+	setPlaceholder: function () {
+		this.element.textContent = "(" + this.element._.data.property.label + ")";
+	}
+}
+
+_.all = [];
+
+_.types = {};
+
+// Factory method for getting the appropriate behavior
+_.get = function(element) {
+	for (var selector in _.types) {
+		if (element.matches(selector)) {
+			// TODO calculate specificity and return the one with the highest, not the first one
+			return new _.types[selector](element);
+		}
+	}
+	
+	return new _(element);
+}
+
+})();
+
 (function() {
 
 var zuper = Curd.Behavior;

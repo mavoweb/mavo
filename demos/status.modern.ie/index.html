@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+<style type="text/css">
+@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\:form{display:block;}
+</style>
+<meta charset="utf-8">
+<meta content="IE=edge" http-equiv="X-UA-Compatible">
+
+<title>Internet Explorer Web Platform Status and Roadmap - status.modern.IE</title>
+
+<meta content="" name="description">
+<meta content="width=device-width" name="viewport">
+<link href="http://www.chromestatus.com/" rel="dns-prefetch">
+<link href="https://status.modern.ie/images/ca0668eb.arrow.svg" rel="prefetch">
+<link href="https://status.modern.ie/styles/4dff9889.main.css" rel="stylesheet">
+<link rel="stylesheet" href="../../curd.css" />
+<style>
+[data-store] button.add {
+	display: block;
+	margin: auto;
+	border: 2px solid #00baf0;
+	padding: .3em .5em;
+	color: #00BAF0;
+	border-radius: .3em;
+	cursor: pointer;
+	font: bold 120% Helvetica Neue, sans-serif;
+}
+
+[data-store] button.add:hover {
+	background: #00baf0;
+	color: white;
+}
+
+.feature_status.info,
+.feature-body-wrapper {
+	overflow: visible;
+}
+
+.feature-body-wrapper:after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
+.feature-body-wrapper .ie-status {
+	display: none;
+}
+
+.ie-status.status-ie8,
+.ie-status.status-ie9,
+.ie-status.status-ie10,
+.ie-status.status-ie11 {
+	display: block;
+}
+</style>
+
+</head>
+
+<body class="ng-scope" data-ng-app="statusieApp">
+<div class="content ng-scope" data-ng-controller="MainCtrl">
+	<header class="header">
+		<div>
+			<div class="siteLogo">
+				<a href="https://modern.ie">
+				<h1 class="status-ie">modern.IE</h1></a>
+			</div>
+
+			<div class="logos">
+				<a class="icon-social-tw" href="https://twitter.com/iedevchat" target="_blank" title="Give feedback on Twitter">Twitter</a> <a class="icon-social-stackoverflow" href="http://stackoverflow.com/questions/tagged/internet-explorer" target="_blank">Stack Overflow</a> <a class="icon-microsoft-logo" href="http://www.microsoft.com" target="_blank" title="Microsoft">Microsoft</a>
+			</div>
+		</div>
+
+		<nav class="menu">
+			<ul class="menu-bar">
+				<li class="menu-item menu-item-tools">
+					<a href="https://modern.ie/tools">Tools</a>
+				</li>
+
+				<li class="menu-item menu-item-status">
+					<a href="https://status.modern.ie/">Platform Status</a>
+				</li>
+
+				<li class="menu-item menu-item-devchannel">
+					<a href="https://devchannel.modern.ie/">Tech Preview</a>
+				</li>
+
+				<li class="menu-item menu-item-community">
+					<a href="https://modern.ie/meet-developers">Community</a>
+				</li>
+
+				<li class="menu-item menu-item-msdn">
+					<a href="https://msdn.microsoft.com/ie">MSDN Dev Center</a>
+				</li>
+			</ul>
+		</nav>
+	</header>
+
+	<div class="sticky" style="height: 65px;"></div>
+
+	<div class="filter-container fixed" data-sticky="">
+		<div class="filter-group">
+			<form class="form-group ng-pristine ng-valid">
+				<label class="sr-only" for="termInput">Filter results</label><input class="form-control ng-pristine ng-valid" data-ng-model="term" id="termInput" placeholder="Filter..." type="text">
+			</form>
+
+			<div class="dropdown filter-settings">
+				<button class="dropdown-toggle" data-bo-id="options.name">Interop <span class="dropdown-arrow"></span></button>
+
+				<div class="dropdown-menu">
+					<div class="ie-status-options">
+						<h2>IE Status</h2>
+
+						<ul>
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.notplanned" id="ie-notplanned" type="checkbox"><label for="ie-notplanned">Not Currently Planned</label></li>
+
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.underconsideration" id="ie-underconsideration" type="checkbox"><label for="ie-underconsideration">Under Consideration</label></li>
+
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.indevelopment" id="ie-indevelopment" type="checkbox"><label for="ie-indevelopment">In Development</label></li>
+
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.iedev" id="ie-devchannel" type="checkbox"><label for="ie-devchannel">Preview Release</label></li>
+
+							<li>
+								<input checked class="ng-pristine ng-valid" data-ng-model="iestatus.implemented" id="ie-implemented" type="checkbox"><label for="ie-implemented">Supported by:</label>
+
+								<ul>
+									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie11" name="ieversion" type="radio" value="ie11"><label for="ie11">IE11+</label></li>
+
+									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie10" name="ieversion" type="radio" value="ie10"><label for="ie10">IE10+</label></li>
+
+									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie9" name="ieversion" type="radio" value="ie9"><label for="ie9">IE9+</label></li>
+
+									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie8" name="ieversion" type="radio" value="ie8"><label for="ie8">IE8+</label></li>
+								</ul>
+							</li>
+						</ul>
+					</div>
+
+					<div class="interop-status-options">
+						<h2>Interop Status</h2>
+
+						<ul>
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.notsupported" id="notsupported" type="checkbox"><label for="notsupported">Not Supported</label></li>
+
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.indevelopment" id="indevelopment" type="checkbox"><label for="indevelopment">In Development</label></li>
+
+							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.implemented" id="implemented" type="checkbox"><label for="implemented">Implemented</label></li>
+						</ul>
+
+						<p>…in these browsers:</p>
+
+						<ul>
+							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.chrome" id="chrome" type="checkbox"><label for="chrome">Chrome</label></li>
+
+							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.firefox" id="firefox" type="checkbox"><label for="firefox">firefox</label></li>
+
+							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.opera" id="opera" type="checkbox"><label for="opera">opera</label></li>
+
+							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.safari" id="safari" type="checkbox"><label for="safari">safari</label></li>
+						</ul>
+					</div>
+
+					<div class="dropdown technologies ng-isolate-scope" data-options="{selections: categories, name: 'Technologies'}">
+						<button class="dropdown-toggle" data-bo-id="options.name" id="Technologies"><span data-bo-text="options.name">Technologies</span> <span class="dropdown-arrow" style="font-style: italic"></span></button>
+
+						<ul class="dropdown-menu" data-bo-attr="" data-bo-attr-aria-labelledby="options.name">
+							<li class="dynamic-all" data-bo-title="option.name"><!--<input ng-model="allOptions" type="checkbox" id="{{options.name}}" />--><input checked class="ng-pristine ng-valid" data-bo-id="options.name" data-ng-model="allOptions" id="Technologies" type="checkbox"><label data-bo-attr="" data-bo-attr-for="options.name" for="Technologies">All</label></li><!-- ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="User input"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="User input" type="checkbox" value="User input"><label data-bo-text="option.name" for="User input">User input</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Misc"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Misc" type="checkbox" value="Misc"><label data-bo-text="option.name" for="Misc">Misc</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Web Components"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Web Components" type="checkbox" value="Web Components"><label data-bo-text="option.name" for="Web Components">Web Components</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="File APIs"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="File APIs" type="checkbox" value="File APIs"><label data-bo-text="option.name" for="File APIs">File APIs</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Network / Connectivity"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Network / Connectivity" type="checkbox" value="Network / Connectivity"><label data-bo-text="option.name" for="Network / Connectivity">Network / Connectivity</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Multimedia"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Multimedia" type="checkbox" value="Multimedia"><label data-bo-text="option.name" for="Multimedia">Multimedia</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="JavaScript"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="JavaScript" type="checkbox" value="JavaScript"><label data-bo-text="option.name" for="JavaScript">JavaScript</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Graphics"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Graphics" type="checkbox" value="Graphics"><label data-bo-text="option.name" for="Graphics">Graphics</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Security"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Security" type="checkbox" value="Security"><label data-bo-text="option.name" for="Security">Security</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="CSS"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="CSS" type="checkbox" value="CSS"><label data-bo-text="option.name" for="CSS">CSS</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Device"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Device" type="checkbox" value="Device"><label data-bo-text="option.name" for="Device">Device</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="DOM"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="DOM" type="checkbox" value="DOM"><label data-bo-text="option.name" for="DOM">DOM</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Offline / Storage"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Offline / Storage" type="checkbox" value="Offline / Storage"><label data-bo-text="option.name" for="Offline / Storage">Offline / Storage</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Performance"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Performance" type="checkbox" value="Performance"><label data-bo-text="option.name" for="Performance">Performance</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Realtime / Communication"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Realtime / Communication" type="checkbox" value="Realtime / Communication"><label data-bo-text="option.name" for="Realtime / Communication">Realtime / Communication</label></li><!-- end ngRepeat: option in selections -->
+
+							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="User Input"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="User Input" type="checkbox" value="User Input"><label data-bo-text="option.name" for="User Input">User Input</label></li><!-- end ngRepeat: option in selections -->
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			<div class="dropdown">
+				<button class="dropdown-toggle" id="sorting">Sort <span class="dropdown-arrow"></span></button>
+
+				<ul class="dropdown-menu">
+					<!-- ngRepeat: sort in sorts -->
+
+					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="name"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="name" name="sorts" type="radio" value="name"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="name">name</label></li><!-- end ngRepeat: sort in sorts -->
+
+					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="technology"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="technology" name="sorts" type="radio" value="technology"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="technology">technology</label></li><!-- end ngRepeat: sort in sorts -->
+
+					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="status"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="status" name="sorts" type="radio" value="status"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="status">status</label></li><!-- end ngRepeat: sort in sorts -->
+
+					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="votes"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="votes" name="sorts" type="radio" value="votes"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="votes">votes</label></li><!-- end ngRepeat: sort in sorts -->
+				</ul>
+			</div>
+
+			<div class="total-features">
+				Features found: <span class="ng-binding">206</span>
+			</div>
+		</div>
+	</div>
+	
+	<article data-store>
+		<section typeof="Feature" class="show editing feature {category}" id="{feature_name}">
+			<button property="category" data-attribute="title" data-input-from="#categories" class="feature-header">
+				<span class="feature-icon icon-{category}"></span>
+
+				<h1 property class="feature_name"></h1>
+
+				<div class="feature-info">
+				<!-- boIf: feature.position!=='Deprecated' && (feature.browsers.ie.prefixed || feature.browsers.ie.unprefixed) && feature.browsers.ie.unprefixed!=12 -->
+
+					<p property class="ie-status">
+						<select>
+							<option>IE8+</option>
+							<option>IE9+</option>
+							<option>IE10+</option>
+							<option>IE11+</option>
+							<option>Preview Release</option>
+							<option>Shipped</option>
+							<option>In Development</option>
+							<option selected>Under Consideration</option>
+							<option>Not currently planned</option>
+							<option>Deprecated</option>
+						</select>
+					</p>
+				</div>
+			</button>
+
+			<div class="feature-body-wrapper">
+				<p property class="feature-description"></p>
+
+				<p class="ie-status status-{ie-status}">
+					<strong>Unprefixed version:</strong> <span>{ie-status}</span>
+				</p>
+
+				<div class="feature-status-wrapper">
+					<ul class="feature_status browsers">
+						<li property="chrome-status" data-input-from="#browser-status" data-attribute="content" class="{chrome-status} icon-chrome" title="{chrome-status} by Chrome">
+							{chrome-status} by Chrome
+						</li>
+
+						<li class="implemented icon-firefox" data-bo-class="{'implemented': feature.browsers.firefox.status === 'Shipped' || feature.browsers.firefox.status === 'Prefixed' || feature.browsers.firefox.status === 'Deprecated', 'indevelopment' : feature.browsers.firefox.status === 'In Development','icon-firefox': feature.browsers.firefox.status !== 'Deprecated', 'icon-firefox-deprecated': feature.browsers.firefox.status === 'Deprecated'}" data-bo-title="feature.browsers.firefox.status + ' by Firefox'" title="Shipped by Firefox">
+							<!-- boIf: feature.browsers.firefox.link --><a class="ng-scope" data-bo-href="feature.browsers.firefox.link" data-bo-if="feature.browsers.firefox.link" data-bo-text="feature.browsers.firefox.status + ' by Firefox'" href="https://bugzilla.mozilla.org/show_bug.cgi?id=525816#c78" target="_blank">Shipped by Firefox</a> <!-- boIf: !feature.browsers.firefox.link -->
+						</li>
+
+						<li class="implemented icon-ie" data-bo-class="{'implemented': feature.browsers.ie.status === 'Shipped' || feature.browsers.ie.status === 'Prefixed' || feature.browsers.ie.status === 'Preview Release' || feature.browsers.ie.status === 'Deprecated', 'indevelopment' : feature.browsers.ie.status === 'In Development', 'icon-ie': feature.browsers.ie.status !== 'Deprecated', 'icon-ie-deprecated': feature.browsers.ie.status === 'Deprecated'}" data-bo-title="feature.browsers.ie.status==='Preview Release' ? 'Available for preview in IE' : feature.browsers.ie.status + ' by Internet Explorer'" title="Shipped by Internet Explorer">
+							<!-- boIf: feature.browsers.ie.link --><a class="ng-scope" data-bo-href="feature.browsers.ie.link" data-bo-if="feature.browsers.ie.link" data-bo-text="feature.browsers.ie.status + ' by Internet Explorer'" href="http://dev.opera.com/articles/view/xhr2/#xhrtimeouts" target="_blank">Shipped by Internet Explorer</a> <!-- boIf: !feature.browsers.ie.link -->
+						</li>
+
+						<li class="implemented icon-opera" data-bo-class="{'implemented': feature.browsers.opera.status === 'Shipped' || feature.browsers.opera.status === 'Prefixed' || feature.browsers.opera.status === 'Deprecated', 'indevelopment' : feature.browsers.opera.status === 'In Development', 'icon-opera': feature.browsers.opera.status !== 'Deprecated', 'icon-opera-deprecated': feature.browsers.opera.status === 'Deprecated'}" data-bo-title="feature.browsers.opera.status + ' by Opera'" title="Shipped by Opera"><!-- boIf: feature.browsers.opera.link --><!-- boIf: !feature.browsers.opera.link --><span class="ng-scope" data-bo-if="!feature.browsers.opera.link" data-bo-text="feature.browsers.opera.status + ' by Opera'">Shipped by Opera</span></li>
+
+						<li class="icon-safari indevelopment" data-bo-class="{'implemented': feature.browsers.safari.status === 'Shipped' || feature.browsers.safari.status === 'Prefixed', 'indevelopment' : feature.browsers.safari.status === 'In Development'}" data-bo-title="feature.browsers.safari.status + ' by Safari'" title="In Development by Safari">
+							<!-- boIf: feature.browsers.safari.link --><a class="ng-scope" data-bo-href="feature.browsers.safari.link" data-bo-if="feature.browsers.safari.link" data-bo-text="feature.browsers.safari.status + ' by Safari'" href="https://bugs.webkit.org/show_bug.cgi?id=99478" target="_blank">In Development by Safari</a> <!-- boIf: !feature.browsers.safari.link -->
+						</li>
+					</ul>
+
+					<ul class="feature_status info">
+						<li class="docs">
+							<a property="WebPlatform Docs" target="_blank"><span class="icon icon-webplatform"></span> WebPlatform</a>
+						</li>
+
+						<li class="docs">
+							<a property="MSDN" target="_blank"><span class="icon icon-msdn"></span> MSDN</a>
+						</li>
+
+						<li class="standard">
+							<a property="specification" target="_blank"><span class="icon icon-w3c" data-bo-class="'icon-' + feature.spec.organization"></span>
+							<span property="Spec Status">
+								<select>
+									<option>Established standard</option>
+									<option>Working draft or equivalent</option>
+								</select>
+							</span></a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+	</article>
+
+	<footer>
+		<small><span class="origin-tag">Hello from Seattle</span> <a class="datalicense" href="https://creativecommons.org/licenses/by/2.5/legalcode" target="_blank">IE status data licensed under a CC Attribution 2.5 License</a> <a href="https://github.com/InternetExplorer/Status.IE/">GitHub</a> <a href="http://www.microsoft.com/library/toolbar/3.0/trademarks/en-us.mspx" target="_blank">Trademarks</a> <a href="https://msdn.microsoft.com/windows/apps/cc300389" target="_blank">Terms of Use</a> <a href="http://www.microsoft.com/info/privacy.mspx" target="_blank">Privacy and Cookies</a></small>
+	</footer>
+</div>
+
+<div hidden>
+	<select id="categories">
+		<option>User input</option>
+		<option>Misc</option>
+		<option>Web Components</option>
+		<option>File APIs</option>
+		<option>Network / Connectivity</option>
+		<option>Multimedia</option>
+		<option>JavaScript</option>
+		<option>Graphics</option>
+		<option>Security</option>
+		<option selected>CSS</option>
+		<option>Device</option>
+		<option>DOM</option>
+		<option>Offline / Storage</option>
+		<option>Performance</option>
+		<option>Realtime / Communication</option>
+		<option>User Input</option>
+	</select>
+	
+	<select id="browser-status">
+		<option>Implemented</option>
+		<option>Shipped</option>
+		<option>Prefixed</option>
+		<option>In Development</option>
+		<option>Deprecated</option>
+	</select>
+</div>
+
+<script src="../../../bliss/bliss.js"></script>
+<script>
+document.body.addEventListener("click", function(evt) {
+	if (evt.target.matches(".feature > button")) {
+		evt.target.parentNode.classList.toggle("show");
+	}
+});
+</script>
+<script src="../../polyfills.js"></script>
+<script src="../../curd.js"></script>
+	
+</body>
+</html>

@@ -12,21 +12,21 @@
 </head>
 <body>
 
-<h1>Talks</h1>
-
 <main class="talks" data-store>
+	<h1>Talks</h1>
+	
 	<template>
 	<article data-multiple typeof="Event">
 		<h1 data-multiple property="talk" typeof="Talk">
 			<span property="title">TBD</span>
-			<span property="type" class="keynote">
+			<span property class="type" class="keynote">
 				<select>
 					<option selected>Talk</option>
-					<option selected>Keynote</option>
-					<option selected>Workshop</option>
+					<option>Keynote</option>
+					<option>Workshop</option>
 				</select>
 			</span>
-			<a class="video" target="_blank">Video</a>
+			<a property class="video" target="_blank">Video</a>
 		</h1>
 		<h2>
 			<a property="conference-url" target="_blank">
@@ -34,12 +34,16 @@
 			</a>
 		</h2>
 		<p class="date"><time property="date"></time></p>
-		<address class="flag-{addressCountry}" property="address" itemscope itemtype="http://schema.org/PostalAddress">
+		<address class="flag-{addressCountry}" property="address" vocab="http://schema.org" typeof="PostalAddress">
 			<span property="addressLocality" title="City"></span>,
 			<span property="addressCountry">
-				<select id="country">
+				<select>
 					<option>USA</option>
 					<option>Italy</option>
+					<option>Australia</option>
+					<option>United Kingdom</option>
+					<option>Greece</option>
+					<option>Israel</option>
 				</select>
 			</span>
 		</address>

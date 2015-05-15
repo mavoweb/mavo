@@ -27,20 +27,20 @@ main > article {
 	content:none;
 }
 
-	.talks h1,
-	.talks h2,
+	.talks article h1,
+	.talks article h2,
 	.talks address,
 	.talks .comment {
 		margin-left:130px;
 	}
 	
-	.talks h1,
-	.talks h2 {
+	.talks article h1,
+	.talks article h2 {
 		font-size:100%;
 	}
 	
-	.talks h1,
-	.talks h2,
+	.talks article h1,
+	.talks article h2,
 	.talks p {
 		margin-top:0;
 		margin-bottom:0;
@@ -50,22 +50,22 @@ main > article {
 		
 	}
 	
-		.talks h1 [property=type] {
+		.talks article h1 .type {
 			color: grey;
 			color: rgba(0,0,0,.6);
 			font-weight: normal;
 			font-style: italic;
 		}
 		
-		.talks h1 span.type:before {
+		.talks article h1 span.type:before {
 			content: ' (';
 		}
 		
-		.talks h1 span.type:after {
+		.talks article h1 span.type:after {
 			content: ')';
 		}
 	
-		.talks h1 a {
+		.talks article h1 a {
 			display: inline-block;
 			vertical-align: .1em;
 			padding: .4em .4em .25em;
@@ -78,24 +78,24 @@ main > article {
 			border-radius: .3em;
 		}
 		
-		.talks h1 a.slides {
+		.talks article h1 a.slides {
 			background: orange;
 		}
 		
-		.talks h1 a.details {
+		.talks article h1 a.details {
 			background: #0bd;
 		}
 		
-		.talks h1 a.video {
+		.talks article h1 a.video {
 			background: yellowgreen;
 		}
 		
-		.talks h1 a:hover {
+		.talks article h1 a:hover {
 			background: #f06;
 			color: white;
 		}
 	
-	.talks h2 {
+	.talks article h2 {
 		font-weight:normal;
 		line-height:1.2;
 		margin-bottom:.6em;
@@ -130,18 +130,18 @@ main > article {
 	
 	.talks address.flag-nl:before { content: url(flags/nl.png); }
 	.talks address.flag-nz:before { content: url(flags/nz.png); }
-	.talks address.flag-gb:before { content: url(flags/gb.png); }
+	.talks address.flag-united-kingdom:before { content: url(flags/gb.png); }
 	.talks address.flag-se:before { content: url(flags/se.png); }
 	.talks address.flag-fi:before { content: url(flags/fi.png); }
 	.talks address.flag-ru:before { content: url(flags/ru.png); }
 	.talks address.flag-no:before { content: url(flags/no.png); }
 	.talks address.flag-pl:before { content: url(flags/pl.png); }
-	.talks address.flag-gr:before { content: url(flags/gr.png); }
+	.talks address.flag-greece:before { content: url(flags/gr.png); }
 	.talks address.flag-ch:before { content: url(flags/ch.png); }
 	.talks address.flag-de:before { content: url(flags/de.png); }
-	.talks address.flag-Italy:before { content: url(flags/it.png); }
-	.talks address.flag-USA:before { content: url(flags/us.png); }
-	.talks address.flag-au:before { content: url(flags/au.png); }
+	.talks address.flag-italy:before { content: url(flags/it.png); }
+	.talks address.flag-usa:before { content: url(flags/us.png); }
+	.talks address.flag-australia:before { content: url(flags/au.png); }
 	.talks address.flag-cz:before { content: url(flags/cz.png); }
 	.talks address.flag-ca:before { content: url(flags/ca.png); }
 	.talks address.flag-cl:before { content: url(flags/cl.png); }
@@ -155,7 +155,7 @@ main > article {
 	.talks address.flag-mx:before { content: url(flags/mx.png); }
 	.talks address.flag-in:before { content: url(flags/in.png); }
 	.talks address.flag-uy:before { content: url(flags/uy.png); }
-	.talks address.flag-il:before { content: url(flags/il.png); }
+	.talks address.flag-israel:before { content: url(flags/il.png); }
 	
 	.talks .comment,
 	.talks .comment a {

@@ -1,44 +1,121 @@
+[data-store] [typeof].editing [itemprop]:not([itemscope]) input, [data-store] [typeof].editing [itemprop]:not([itemscope]) select, [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea,
+[data-store] [typeof].editing [property]:not([typeof]) input,
+[data-store] [typeof].editing [property]:not([typeof]) select,
+[data-store] [typeof].editing [property]:not([typeof]) textarea,
+[data-store] [itemscope].editing [itemprop]:not([itemscope]) input,
+[data-store] [itemscope].editing [itemprop]:not([itemscope]) select,
+[data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea,
+[data-store] [itemscope].editing [property]:not([typeof]) input,
+[data-store] [itemscope].editing [property]:not([typeof]) select,
+[data-store] [itemscope].editing [property]:not([typeof]) textarea, [data-store] [typeof] .curd-buttons button.save, [data-store] [typeof] .curd-buttons button.cancel,
+[data-store] [itemscope] .curd-buttons button.save,
+[data-store] [itemscope] .curd-buttons button.cancel {
+  all: initial;
+  font: inherit;
+  color: inherit;
+  text-decoration: inherit;
+  text-align: inherit; }
+
+[data-store] button.add {
+  display: inline-block;
+  margin-left: .5em;
+  vertical-align: middle; }
+
 [data-store] [typeof],
 [data-store] [itemscope] {
   position: relative; }
-  [data-store] [typeof] .edit, [data-store] [typeof] .delete,
+  [data-store] [typeof] .edit,
+  [data-store] [typeof] .delete,
   [data-store] [itemscope] .edit,
   [data-store] [itemscope] .delete {
     all: initial;
     position: absolute;
     top: 1em;
-    right: 1em;
+    right: -1.5em;
     padding: 0 .3em;
     cursor: pointer;
     transform: scale(-1, 1);
     color: rgba(0, 0, 0, 0.3); }
-    [data-store] [typeof] .edit:hover, [data-store] [typeof] .delete:hover,
+    [data-store] [typeof] .edit:hover,
+    [data-store] [typeof] .delete:hover,
     [data-store] [itemscope] .edit:hover,
     [data-store] [itemscope] .delete:hover {
       border-radius: 50%;
       background: rgba(0, 0, 0, 0.2);
       color: white; }
+  [data-store] [typeof] .delete,
+  [data-store] [itemscope] .delete {
+    color: rgba(180, 0, 0, 0.8); }
+  [data-store] [typeof] .delete:hover,
+  [data-store] [itemscope] .delete:hover {
+    background: rgba(180, 0, 0, 0.8); }
   [data-store] [typeof].editing .edit, [data-store] [typeof].saved .curd-buttons, [data-store] [typeof].saved .empty,
   [data-store] [itemscope].editing .edit,
   [data-store] [itemscope].saved .curd-buttons,
   [data-store] [itemscope].saved .empty {
     display: none; }
-  [data-store] [typeof] .empty,
-  [data-store] [itemscope] .empty {
-    color: rgba(102, 102, 102, 0.6);
-    font-style: italic; }
-  [data-store] [typeof].editing [itemprop]:not([itemscope]):hover,
-  [data-store] [typeof].editing [property]:not([typeof]):hover,
-  [data-store] [itemscope].editing [itemprop]:not([itemscope]):hover,
-  [data-store] [itemscope].editing [property]:not([typeof]):hover {
-    background-image: linear-gradient(rgba(255, 255, 0, 0.2), rgba(255, 255, 0, 0.2));
-    background-size: auto;
-    outline: 1px dashed rgba(128, 128, 128, 0.3); }
-  [data-store] [typeof].editing [itemprop]:not([itemscope]):focus,
-  [data-store] [typeof].editing [property]:not([typeof]):focus,
-  [data-store] [itemscope].editing [itemprop]:not([itemscope]):focus,
-  [data-store] [itemscope].editing [property]:not([typeof]):focus {
-    outline-width: 1px; }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea,
+  [data-store] [typeof].editing [property]:not([typeof]) textarea,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea,
+  [data-store] [itemscope].editing [property]:not([typeof]) textarea {
+    box-sizing: border-box;
+    width: 100%; }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]).using-popup:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]).using-popup:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) input:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) input:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) select:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) select:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea:focus,
+  [data-store] [typeof].editing [property]:not([typeof]).using-popup:hover,
+  [data-store] [typeof].editing [property]:not([typeof]).using-popup:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) input:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) input:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) select:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) select:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) textarea:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) textarea:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]).using-popup:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]).using-popup:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) input:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) input:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) select:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) select:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]).using-popup:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]).using-popup:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) input:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) input:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) select:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) select:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) textarea:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) textarea:focus {
+    outline: 1px dashed;
+    outline-offset: 1px; }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]).using-popup:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) input:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) select:hover, [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea:hover,
+  [data-store] [typeof].editing [property]:not([typeof]).using-popup:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) input:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) select:hover,
+  [data-store] [typeof].editing [property]:not([typeof]) textarea:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]).using-popup:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) input:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) select:hover,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]).using-popup:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) input:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) select:hover,
+  [data-store] [itemscope].editing [property]:not([typeof]) textarea:hover {
+    box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.15), 0 0 0 99em rgba(255, 247, 0, 0.15) inset;
+    outline-color: rgba(115, 132, 140, 0.3); }
+  [data-store] [typeof].editing [itemprop]:not([itemscope]).using-popup:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) input:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) select:focus, [data-store] [typeof].editing [itemprop]:not([itemscope]) textarea:focus,
+  [data-store] [typeof].editing [property]:not([typeof]).using-popup:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) input:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) select:focus,
+  [data-store] [typeof].editing [property]:not([typeof]) textarea:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]).using-popup:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) input:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) select:focus,
+  [data-store] [itemscope].editing [itemprop]:not([itemscope]) textarea:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]).using-popup:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) input:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) select:focus,
+  [data-store] [itemscope].editing [property]:not([typeof]) textarea:focus {
+    outline-color: rgba(51, 119, 153, 0.6); }
   [data-store] [typeof] .popup,
   [data-store] [itemscope] .popup {
     all: initial;
@@ -62,38 +139,42 @@
       border-bottom-width: 0;
       background: inherit;
       transform: rotate(45deg); }
-    [data-store] [typeof] .popup input,
-    [data-store] [itemscope] .popup input {
-      display: block; }
+    [data-store] [typeof] .popup input, [data-store] [typeof] .popup select,
+    [data-store] [itemscope] .popup input,
+    [data-store] [itemscope] .popup select {
+      display: block;
+      font: inherit;
+      min-width: 100%; }
   [data-store] [typeof] .curd-buttons,
   [data-store] [itemscope] .curd-buttons {
     padding: .5em 0 .1em;
     text-align: center; }
-    [data-store] [typeof] .curd-buttons button,
-    [data-store] [itemscope] .curd-buttons button {
-      all: initial;
-      padding: .25em .6em;
+    [data-store] [typeof] .curd-buttons button.save, [data-store] [typeof] .curd-buttons button.cancel,
+    [data-store] [itemscope] .curd-buttons button.save,
+    [data-store] [itemscope] .curd-buttons button.cancel {
+      padding: .4em .6em;
       border: 2px solid;
       border-radius: .4em;
       background: transparent;
-      font: inherit;
+      font: bold 80% Helvetica Neue, sans-serif;
       cursor: pointer; }
+      [data-store] [typeof] .curd-buttons button.save:hover, [data-store] [typeof] .curd-buttons button.cancel:hover,
+      [data-store] [itemscope] .curd-buttons button.save:hover,
+      [data-store] [itemscope] .curd-buttons button.cancel:hover {
+        background: black;
+        color: white;
+        border-color: transparent; }
     [data-store] [typeof] .curd-buttons button.save,
     [data-store] [itemscope] .curd-buttons button.save {
       color: #81b814;
       font-weight: bold; }
+      [data-store] [typeof] .curd-buttons button.save:hover,
+      [data-store] [itemscope] .curd-buttons button.save:hover {
+        background: #81b814; }
     [data-store] [typeof] .curd-buttons button.cancel,
     [data-store] [itemscope] .curd-buttons button.cancel {
       margin-left: .4em;
       color: #c00; }
-    [data-store] [typeof] .curd-buttons button:hover,
-    [data-store] [itemscope] .curd-buttons button:hover {
-      background: black;
-      color: white;
-      border-color: transparent; }
-    [data-store] [typeof] .curd-buttons button.save:hover,
-    [data-store] [itemscope] .curd-buttons button.save:hover {
-      background: #81b814; }
-    [data-store] [typeof] .curd-buttons button.cancel:hover,
-    [data-store] [itemscope] .curd-buttons button.cancel:hover {
-      background: #c00; }
+      [data-store] [typeof] .curd-buttons button.cancel:hover,
+      [data-store] [itemscope] .curd-buttons button.cancel:hover {
+        background: #c00; }
