@@ -6,16 +6,18 @@
 	text-align: inherit;
 }
 
-[data-store] button.add {
+button.add {
 	display: inline-block;
 	margin-left: .5em;
 	vertical-align: middle;
 }
 
-[data-store] [typeof],
-[data-store] [itemscope] {
-	position: relative;	
-	
+[data-store] {
+	&[typeof], &[itemscope],
+	[typeof], [itemscope] {
+		position: relative;	
+	}
+
 	.edit, 
 	.delete {
 		all: initial;
@@ -44,7 +46,9 @@
 	
 	&.editing .edit,
 	&.saved .curd-buttons,
-	&.saved .empty {
+	&.saved .empty,
+	&.saved .delete,
+	&.saved button.add {
 		display: none;
 	}
 	

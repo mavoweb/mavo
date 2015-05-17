@@ -8,15 +8,25 @@
 <link rel="stylesheet" href="style.css" />
 <link rel="stylesheet" href="../../curd.css" />
 <link rel="stylesheet" href="talks.css" />
+<style>
+[property=talk] + .add {
+	margin-left: 130px;
+	margin-bottom: .3em;
+}
+
+h1[property=talk] {
+	width: -webkit-fit-content;
+	width: fit-content;
+}
+</style>
 
 </head>
 <body>
 
-<main class="talks" data-store>
+<main class="talks">
 	<h1>Talks</h1>
 	
-	<template>
-	<article data-multiple typeof="Event">
+	<article data-store="talks.json" data-multiple typeof="Event">
 		<h1 data-multiple property="talk" typeof="Talk">
 			<span property="title">TBD</span>
 			<span property class="type" class="keynote">
@@ -48,7 +58,6 @@
 			</span>
 		</address>
 	</article>
-	</template>
 </main>
 
 <footer>By <a href="http://lea.verou.me">Lea Verou</a>. Flag icons made by <a href="http://www.famfamfam.com/lab/icons/flags/">Mark James</a> and are in the public domain.</footer>
