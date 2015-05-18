@@ -18,7 +18,7 @@
 <link href="https://status.modern.ie/styles/4dff9889.main.css" rel="stylesheet">
 <link rel="stylesheet" href="../../curd.css" />
 <style>
-[data-store] button.add {
+button.add {
 	display: block;
 	margin: auto;
 	border: 2px solid #00baf0;
@@ -29,7 +29,7 @@
 	font: bold 120% Helvetica Neue, sans-serif;
 }
 
-[data-store] button.add:hover {
+button.add:hover {
 	background: #00baf0;
 	color: white;
 }
@@ -227,15 +227,13 @@
 	</div>
 	
 	<article>
-		<section data-store typeof="Feature" class="show editing feature {xcategory}" id="{feature_name}">
+		<section data-store data-multiple typeof="Feature" class="show feature {xcategory}" id="{feature_name}">
 			<button property="category" data-attribute="title" data-input-from="#categories" class="feature-header">
 				<span class="feature-icon icon-{category}"></span>
 
 				<h1 property class="feature_name"></h1>
 
 				<div class="feature-info">
-				<!-- boIf: feature.position!=='Deprecated' && (feature.browsers.ie.prefixed || feature.browsers.ie.unprefixed) && feature.browsers.ie.unprefixed!=12 -->
-
 					<p property class="ie-status">
 						<select>
 							<option>IE8+</option>
@@ -342,7 +340,7 @@
 <script src="../../../bliss/bliss.js"></script>
 <script>
 document.body.addEventListener("click", function(evt) {
-	if (evt.target.matches(".feature > button")) {
+	if (evt.target.matches(".feature:not(.editing) > button")) {
 		evt.target.parentNode.classList.toggle("show");
 	}
 });
