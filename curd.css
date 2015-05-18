@@ -27,6 +27,7 @@ button.add {
   position: absolute;
   top: .1em;
   right: -1.5em;
+  z-index: 1;
   padding: 0 .3em;
   cursor: pointer;
   transform: scale(-1, 1);
@@ -101,6 +102,7 @@ button.add {
     font: inherit;
     min-width: 100%; }
 .curd-item .curd-buttons {
+  position: relative;
   padding: .5em 0 .1em;
   text-align: center; }
   .curd-item .curd-buttons button.save, .curd-item .curd-buttons button.cancel {

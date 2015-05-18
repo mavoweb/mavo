@@ -317,6 +317,17 @@ _.types = {
 		}
 	},
 
+	"img": {
+		attribute: "src",
+
+		editor: function () {
+			return document.createElement("input")._.set({
+				"type": "url",
+				"placeholder": "http://"
+			});
+		}
+	},
+
 	"p": {
 		editor: function () {
 			return document.createElement("textarea");

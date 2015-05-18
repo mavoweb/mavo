@@ -45,6 +45,7 @@ var _ = Curd.Collection = function (element) {
 
 	this.property && this.template.setAttribute("data-property", this.property);
 	this.type && this.template.setAttribute("data-typeof", this.type);
+	this.template.setAttribute("data-path", element.getAttribute("data-path"));
 	this.length = 0;
 	this.template._.data.collection = this;
 };

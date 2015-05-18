@@ -7,7 +7,14 @@ var _ = self.Curd = function (template) {
 	this.template = template;
 	// this.container = template.parentNode;
 	
-	this.store = this.template.getAttribute("data-store");
+	// TODO escaping of # and \
+	this.store = {
+		url: this.template.getAttribute("data-store").split("#")
+	};
+
+	this.store.path = this.store.url[1] || null;
+	this.store.url = this.store.url[0];
+
 	this.template.removeAttribute("data-store");
 	this.template.classList.add("curd-item");
 
@@ -16,16 +23,18 @@ var _ = self.Curd = function (template) {
 	this.root = this.collection? new _.Collection(template) : new _.Scope(template);
 
 	// Fetch existing data
-	if (this.store) {
-		var xhr = new XMLHttpRequest(this.store);
+	if (this.store.url) {
+		var xhr = new XMLHttpRequest();
 
-		xhr.open("GET", this.store);
+		xhr.open("GET", this.store.url);
 
 		xhr.onreadystatechange = function(){
 			if (xhr.readyState == 4) {
 				if (xhr.status >= 200 || xhr.status === 0) {
 					var data = JSON.parse(xhr.responseText);
 
+					data = _.queryJSON(data, me.store.path);
+					
 					me.root.render(data);
 				}
 			}
@@ -46,7 +55,7 @@ _.readable = function (identifier) {
 	// Is it camelCase?
 	return identifier
 	         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase()}) // camelCase?
-	         .replace(/([a-z])[_-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
+	         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 	         .replace(/^[a-z]/, function($0) { return $0.toUpperCase() }); // Capitalize
 };
 
@@ -56,6 +65,24 @@ _.identifier = function (readable) {
 	         .replace(/\s+/g, "-") // Convert whitespace to hyphens
 	         .replace(/[^\w-]/g, "") // Remove weird characters
 	         .toLowerCase();
+};
+
+_.queryJSON = function(data, path) {
+	if (!path || !data) {
+		return data;
+	}
+
+	path = path.split("/");
+
+	for (var i=0, p; p=path[i++];) {
+		if (!data) {
+			return null;
+		}
+
+		data = data[p];
+	}
+
+	return data;
 };
 
 _.selectors = {
@@ -391,6 +418,17 @@ _.types = {
 		}
 	},
 
+	"img": {
+		attribute: "src",
+
+		editor: function () {
+			return document.createElement("input")._.set({
+				"type": "url",
+				"placeholder": "http://"
+			});
+		}
+	},
+
 	"p": {
 		editor: function () {
 			return document.createElement("textarea");
@@ -519,8 +557,10 @@ _.prototype = {
 		this.properties.forEach(function(prop){
 			var property = prop._.data.property;
 
-			if (property && property.name in data) {
-				property.render(data[property.name]);
+			var datum = Curd.queryJSON(data, prop.getAttribute("property"));
+
+			if (datum) {
+				property.render(datum);
 			}
 		});
 
@@ -583,6 +623,7 @@ var _ = Curd.Collection = function (element) {
 
 	this.property && this.template.setAttribute("data-property", this.property);
 	this.type && this.template.setAttribute("data-typeof", this.type);
+	this.template.setAttribute("data-path", element.getAttribute("data-path"));
 	this.length = 0;
 	this.template._.data.collection = this;
 };

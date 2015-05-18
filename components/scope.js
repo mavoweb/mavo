@@ -117,8 +117,10 @@ _.prototype = {
 		this.properties.forEach(function(prop){
 			var property = prop._.data.property;
 
-			if (property && property.name in data) {
-				property.render(data[property.name]);
+			var datum = Curd.queryJSON(data, prop.getAttribute("property"));
+
+			if (datum) {
+				property.render(datum);
 			}
 		});
 

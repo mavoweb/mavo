@@ -1,0 +1,99 @@
+body {
+	max-width: 950px;
+	margin: 0 auto;
+	padding-left: 10em;
+	font: 80%/1.5 Trebuchet MS, sans-serif;	
+}
+
+a {
+	text-decoration: none;
+	color: #aaa;
+}
+
+header {
+	margin: 4em 0 2em -5em;
+}
+
+	header h1 {
+		display: inline-block;
+		margin: 0;
+	}
+
+	nav {
+		display: inline-block;
+		vertical-align: 1em;
+	}
+
+		nav ul {
+			display: inline-block;
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+
+			nav li {
+				display: inline-block;
+				font-size: 85%
+			}
+
+				nav a {
+					padding: 2em 1em;
+				}
+
+				nav a:hover {
+					background: #eee;
+				}
+
+article {
+	display: inline-block;
+	vertical-align: top;
+	margin: .8em;
+}
+
+	article div {
+		position: relative;
+	}
+
+	article img {
+		display: block;
+		width: 180px;
+		min-height: 180px;
+		background: #ddd;
+		background-image: linear-gradient(to bottom right, transparent 50%, white 0, white calc(50% + 1px), transparent 0),
+		                  linear-gradient(to bottom left, transparent 50%, white 0, white calc(50% + 1px), transparent 0);
+	}
+
+	article p {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		padding: .6em;
+		margin: 0;
+		background: rgba(0,0,0,.6);
+		color: white;
+		transition: .2s bottom;
+	}
+
+	article:not(.editing) {
+		overflow: hidden;
+		
+	}
+
+	article:not(:hover):not(.editing) p {
+		bottom: -6em;
+	}
+
+button.add {
+	display: block;
+	padding: .5em .8em;
+	background: gray;
+	color: white;
+	border: none;
+	cursor: pointer;
+	font-size: 120%;
+}
+
+button.add:hover {
+	background: deeppink;
+}

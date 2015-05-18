@@ -35,6 +35,7 @@ button.add {
 		position: absolute;
 		top: .1em;
 		right: -1.5em;
+		z-index: 1;
 		padding: 0 .3em;
 		cursor: pointer;
 		transform: scale(-1, 1);
@@ -133,6 +134,7 @@ button.add {
 	}
 		
 	.curd-buttons {
+		position: relative;
 		padding: .5em 0 .1em;
 		text-align: center;
 	
