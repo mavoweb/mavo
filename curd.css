@@ -1,7 +1,7 @@
-[data-store].editing [itemprop]:not([itemscope]) input, [data-store].editing [itemprop]:not([itemscope]) select, [data-store].editing [itemprop]:not([itemscope]) textarea,
-[data-store].editing [property]:not([typeof]) input,
-[data-store].editing [property]:not([typeof]) select,
-[data-store].editing [property]:not([typeof]) textarea, [data-store] .curd-buttons button.save, [data-store] .curd-buttons button.cancel {
+.curd-item.editing [itemprop]:not([itemscope]) input, .curd-item.editing [itemprop]:not([itemscope]) select, .curd-item.editing [itemprop]:not([itemscope]) textarea,
+.curd-item.editing [property]:not([typeof]) input,
+.curd-item.editing [property]:not([typeof]) select,
+.curd-item.editing [property]:not([typeof]) textarea, .curd-item .curd-buttons button.save, .curd-item .curd-buttons button.cancel {
   all: initial;
   font: inherit;
   color: inherit;
@@ -13,59 +13,69 @@ button.add {
   margin-left: .5em;
   vertical-align: middle; }
 
-[data-store][typeof], [data-store][itemscope],
-[data-store] [typeof], [data-store] [itemscope] {
+[data-store] {
+  display: none; }
+
+.curd-item[typeof], .curd-item[itemscope], .curd-item *[typeof], .curd-item *[itemscope] {
   position: relative; }
-[data-store] .edit,
-[data-store] .delete {
+.curd-item.delete-hover, .curd-item *.delete-hover {
+  box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.06) inset, 0 0 0 0.1em rgba(255, 0, 0, 0.05);
+  border-radius: .1em; }
+.curd-item .edit,
+.curd-item .delete {
   all: initial;
   position: absolute;
-  top: 1em;
+  top: .1em;
   right: -1.5em;
   padding: 0 .3em;
   cursor: pointer;
   transform: scale(-1, 1);
   color: rgba(0, 0, 0, 0.3); }
-  [data-store] .edit:hover,
-  [data-store] .delete:hover {
+  .curd-item .edit:hover,
+  .curd-item .delete:hover {
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.2);
     color: white; }
-[data-store] .delete {
+.curd-item .delete {
   color: rgba(180, 0, 0, 0.8); }
-[data-store] .delete:hover {
+.curd-item .delete:hover {
   background: rgba(180, 0, 0, 0.8); }
-[data-store].editing .edit, [data-store].saved .curd-buttons, [data-store].saved .empty, [data-store].saved .delete, [data-store].saved button.add {
+.curd-item:not(.editing) .curd-buttons,
+.curd-item:not(.editing) .empty,
+.curd-item:not(.editing) .delete,
+.curd-item:not(.editing) button.add {
   display: none; }
-[data-store].editing [itemprop]:not([itemscope]) textarea,
-[data-store].editing [property]:not([typeof]) textarea {
+.curd-item.editing .edit {
+  display: none; }
+.curd-item.editing [itemprop]:not([itemscope]) textarea,
+.curd-item.editing [property]:not([typeof]) textarea {
   box-sizing: border-box;
   width: 100%; }
-[data-store].editing [itemprop]:not([itemscope]).using-popup:hover, [data-store].editing [itemprop]:not([itemscope]).using-popup:focus, [data-store].editing [itemprop]:not([itemscope]) input:hover, [data-store].editing [itemprop]:not([itemscope]) input:focus, [data-store].editing [itemprop]:not([itemscope]) select:hover, [data-store].editing [itemprop]:not([itemscope]) select:focus, [data-store].editing [itemprop]:not([itemscope]) textarea:hover, [data-store].editing [itemprop]:not([itemscope]) textarea:focus,
-[data-store].editing [property]:not([typeof]).using-popup:hover,
-[data-store].editing [property]:not([typeof]).using-popup:focus,
-[data-store].editing [property]:not([typeof]) input:hover,
-[data-store].editing [property]:not([typeof]) input:focus,
-[data-store].editing [property]:not([typeof]) select:hover,
-[data-store].editing [property]:not([typeof]) select:focus,
-[data-store].editing [property]:not([typeof]) textarea:hover,
-[data-store].editing [property]:not([typeof]) textarea:focus {
+.curd-item.editing [itemprop]:not([itemscope]).using-popup:hover, .curd-item.editing [itemprop]:not([itemscope]).using-popup:focus, .curd-item.editing [itemprop]:not([itemscope]) input:hover, .curd-item.editing [itemprop]:not([itemscope]) input:focus, .curd-item.editing [itemprop]:not([itemscope]) select:hover, .curd-item.editing [itemprop]:not([itemscope]) select:focus, .curd-item.editing [itemprop]:not([itemscope]) textarea:hover, .curd-item.editing [itemprop]:not([itemscope]) textarea:focus,
+.curd-item.editing [property]:not([typeof]).using-popup:hover,
+.curd-item.editing [property]:not([typeof]).using-popup:focus,
+.curd-item.editing [property]:not([typeof]) input:hover,
+.curd-item.editing [property]:not([typeof]) input:focus,
+.curd-item.editing [property]:not([typeof]) select:hover,
+.curd-item.editing [property]:not([typeof]) select:focus,
+.curd-item.editing [property]:not([typeof]) textarea:hover,
+.curd-item.editing [property]:not([typeof]) textarea:focus {
   outline: 1px dashed;
   outline-offset: 1px; }
-[data-store].editing [itemprop]:not([itemscope]).using-popup:hover, [data-store].editing [itemprop]:not([itemscope]) input:hover, [data-store].editing [itemprop]:not([itemscope]) select:hover, [data-store].editing [itemprop]:not([itemscope]) textarea:hover,
-[data-store].editing [property]:not([typeof]).using-popup:hover,
-[data-store].editing [property]:not([typeof]) input:hover,
-[data-store].editing [property]:not([typeof]) select:hover,
-[data-store].editing [property]:not([typeof]) textarea:hover {
+.curd-item.editing [itemprop]:not([itemscope]).using-popup:hover, .curd-item.editing [itemprop]:not([itemscope]) input:hover, .curd-item.editing [itemprop]:not([itemscope]) select:hover, .curd-item.editing [itemprop]:not([itemscope]) textarea:hover,
+.curd-item.editing [property]:not([typeof]).using-popup:hover,
+.curd-item.editing [property]:not([typeof]) input:hover,
+.curd-item.editing [property]:not([typeof]) select:hover,
+.curd-item.editing [property]:not([typeof]) textarea:hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.15), 0 0 0 99em rgba(255, 247, 0, 0.15) inset;
   outline-color: rgba(115, 132, 140, 0.3); }
-[data-store].editing [itemprop]:not([itemscope]).using-popup:focus, [data-store].editing [itemprop]:not([itemscope]) input:focus, [data-store].editing [itemprop]:not([itemscope]) select:focus, [data-store].editing [itemprop]:not([itemscope]) textarea:focus,
-[data-store].editing [property]:not([typeof]).using-popup:focus,
-[data-store].editing [property]:not([typeof]) input:focus,
-[data-store].editing [property]:not([typeof]) select:focus,
-[data-store].editing [property]:not([typeof]) textarea:focus {
+.curd-item.editing [itemprop]:not([itemscope]).using-popup:focus, .curd-item.editing [itemprop]:not([itemscope]) input:focus, .curd-item.editing [itemprop]:not([itemscope]) select:focus, .curd-item.editing [itemprop]:not([itemscope]) textarea:focus,
+.curd-item.editing [property]:not([typeof]).using-popup:focus,
+.curd-item.editing [property]:not([typeof]) input:focus,
+.curd-item.editing [property]:not([typeof]) select:focus,
+.curd-item.editing [property]:not([typeof]) textarea:focus {
   outline-color: rgba(51, 119, 153, 0.6); }
-[data-store] .popup {
+.curd-item .popup {
   all: initial;
   position: absolute;
   z-index: 1;
@@ -75,7 +85,7 @@ button.add {
   margin: .3em 0 0 -.5em;
   box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
   background: white; }
-  [data-store] .popup::before {
+  .curd-item .popup::before {
     content: "";
     position: absolute;
     top: -.36em;
@@ -86,31 +96,31 @@ button.add {
     border-bottom-width: 0;
     background: inherit;
     transform: rotate(45deg); }
-  [data-store] .popup input, [data-store] .popup select {
+  .curd-item .popup input, .curd-item .popup select {
     display: block;
     font: inherit;
     min-width: 100%; }
-[data-store] .curd-buttons {
+.curd-item .curd-buttons {
   padding: .5em 0 .1em;
   text-align: center; }
-  [data-store] .curd-buttons button.save, [data-store] .curd-buttons button.cancel {
+  .curd-item .curd-buttons button.save, .curd-item .curd-buttons button.cancel {
     padding: .4em .6em;
     border: 2px solid;
     border-radius: .4em;
     background: transparent;
     font: bold 80% Helvetica Neue, sans-serif;
     cursor: pointer; }
-    [data-store] .curd-buttons button.save:hover, [data-store] .curd-buttons button.cancel:hover {
+    .curd-item .curd-buttons button.save:hover, .curd-item .curd-buttons button.cancel:hover {
       background: black;
       color: white;
       border-color: transparent; }
-  [data-store] .curd-buttons button.save {
+  .curd-item .curd-buttons button.save {
     color: #81b814;
     font-weight: bold; }
-    [data-store] .curd-buttons button.save:hover {
+    .curd-item .curd-buttons button.save:hover {
       background: #81b814; }
-  [data-store] .curd-buttons button.cancel {
+  .curd-item .curd-buttons button.cancel {
     margin-left: .4em;
     color: #c00; }
-    [data-store] .curd-buttons button.cancel:hover {
+    .curd-item .curd-buttons button.cancel:hover {
       background: #c00; }

@@ -5,10 +5,11 @@ var _ = self.Curd = function (template) {
 	var me = this;
 
 	this.template = template;
-	this.container = template.parentNode;
+	// this.container = template.parentNode;
 	
-	this.store = this.container.getAttribute("data-store");
-	this.container.removeAttribute("data-store")
+	this.store = this.template.getAttribute("data-store");
+	this.template.removeAttribute("data-store");
+	this.template.classList.add("curd-item");
 
 	this.collection = template.hasAttribute("data-multiple");
 
@@ -20,12 +21,12 @@ var _ = self.Curd = function (template) {
 
 		xhr.open("GET", this.store);
 
-		xhr.onreadystatechange = function(xhr){
+		xhr.onreadystatechange = function(){
 			if (xhr.readyState == 4) {
 				if (xhr.status >= 200 || xhr.status === 0) {
 					var data = JSON.parse(xhr.responseText);
 
-
+					me.root.render(data);
 				}
 			}
 		};
@@ -102,13 +103,22 @@ var _ = Curd.Property = function (element) {
 
 	this.label = this.label || Curd.readable(this.name);
 
-	this.editor = ($(this.element.getAttribute("data-input-from"))
-	                  ? $(this.element.getAttribute("data-input-from")).cloneNode(true) : null) ||
-	              $$(this.element.children).filter(function (el) {
-	                  return el.parentNode === me.element && el.matches("input, select, textarea")
-	              })[0] ||
-	             this.editor && this.editor() ||
-	             document.createElement("input");
+	var defaultEditor = this.editor;
+	this.editor = null;
+
+	// Linked widgets
+	if ($(this.element.getAttribute("data-input-from"))) {
+		this.editor = $(this.element.getAttribute("data-input-from")).cloneNode(true);
+	}
+
+	// Nested widgets
+	if (!this.editor) {
+		this.editor = $$(this.element.children).filter(function (el) {
+		    return el.matches("input, select, textarea")
+		})[0];
+	}
+
+	this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
 
 	this.editor._.events({
 		"input": function () {
@@ -122,15 +132,26 @@ var _ = Curd.Property = function (element) {
 		}
 	});
 
-	this.default = this.value;
-
 	if ("placeholder" in this.editor) {
 		this.editor.placeholder = "(" + this.label + ")";
 	}
 
-	if (this.default || this.default === 0) {
-		this.editor.value = this.default;
+	if (this.editor.value) {
+		this.default = this.editor.value;
 	}
+	else {
+		if (this.attribute) {
+			this.default = this.element.getAttribute(this.attribute);
+		}
+		else if (this.editor.parentNode != this.element) {
+			this.default = this.element.textContent || null;
+		}
+
+		if (this.default !== null) {
+			this.editor.value = this.default;
+		}
+	}
+	
 
 	this.element.addEventListener("valuechange", function (evt) {
 		if (evt.target == me.element) {
@@ -204,9 +225,27 @@ _.prototype = {
 		if (this.editing || this.editing === undefined) {
 			return this.editor.value || this.element.getAttribute(this.attribute || "content");
 		}
+		else if (this.attribute) {
+			return this.element.getAttribute(this.attribute);
+		}
 		else {
 			return this.element.textContent || null;
 		}
+	},
+
+	set value (value) {
+		if (this.editing || this.editing === undefined) {
+			this.editor.value = value;
+		}
+		else {
+			this.element.textContent = value;
+		}
+
+		if (this.attribute) {
+			this.element.setAttribute(this.attribute, value);
+		}
+
+		this.update(value);
 	},
 
 	update: function (value) {
@@ -272,6 +311,7 @@ _.prototype = {
 		}
 		else {
 			this.element.textContent = this.editor.value;
+			$.remove(this.editor);
 		}
 	},
 
@@ -294,6 +334,10 @@ _.prototype = {
 	cancel: function() {
 		this.value = this.savedValue; // TODO setter for value
 		this.save();
+	},
+
+	render: function(data) {
+		this.value = data;
 	}
 };
 
@@ -376,6 +420,7 @@ var _ = Curd.Scope = function (element) {
 	});
 
 	// If root, add Save & Cancel button
+	// TODO remove these after saving & cache, to reduce number of DOM elements lying around
 	if (!this.property) {
 		// Add edit button (will be hidden while editing)
 		document.createElement("button")._.set({
@@ -385,9 +430,6 @@ var _ = Curd.Scope = function (element) {
 			events: {
 				click: function () {
 					var scope = this.closest(Curd.selectors.scope);
-					
-					scope.classList.add("editing");
-					scope.classList.remove("saved");
 					
 					me.edit();
 				}
@@ -406,9 +448,6 @@ var _ = Curd.Scope = function (element) {
 					click: function () {
 						var item = this.closest(".editing");
 
-						item.classList.remove("editing");
-						item.classList.add("saved");
-
 						item._.data.scope.save();
 					}
 				}
@@ -419,9 +458,6 @@ var _ = Curd.Scope = function (element) {
 				events: {
 					click: function () {
 						var item = this.closest(".editing");
-
-						item.classList.remove("editing");
-						item.classList.add("saved");
 
 						item._.data.scope.cancel();
 					}
@@ -439,26 +475,62 @@ _.prototype = {
 		}, this);
 	},
 
-	get scopes () {
-		return $$(_.selectors.scope, this.element);
+	get collections () {
+		return $$("template[data-property], template[data-typeof]", this.element);
 	},
 
 	edit: function() {
+		this.element.classList.add("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.edit();
+		});
+
+		this.collections.forEach(function (template){
+			var collection = template._.data.collection;
+
+			if (collection.length === 0) {
+				collection.addAndEdit();
+			}
 		});
 	},
 
 	save: function() {
+		this.element.classList.remove("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.save();
-		});	
+		}, this);	
 	},
 
 	cancel: function() {
+		this.element.classList.remove("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.cancel();
 		});
+	},
+
+	render: function(data) {
+		if (!data) {
+			return;
+		}
+		
+		this.properties.forEach(function(prop){
+			var property = prop._.data.property;
+
+			if (property && property.name in data) {
+				property.render(data[property.name]);
+			}
+		});
+
+		this.collections.forEach(function (template){
+			var collection = template._.data.collection;
+
+			collection.render(data[collection.property]);
+		});
+
+		this.save();
 	}
 };
 
@@ -467,6 +539,8 @@ _.prototype = {
 (function(){
 
 var _ = Curd.Collection = function (element) {
+	var me = this;
+
 	this.property = element.getAttribute("property");
 	this.type = element.getAttribute("typeof");
 	this.name = Curd.readable(this.property || this.type).toLowerCase();
@@ -480,51 +554,112 @@ var _ = Curd.Collection = function (element) {
 		events: {
 			click: function () {
 				if (confirm("Are you sure you want to " + this.title.toLowerCase() + "?")) {
-					var item = this.closest(".editing");
+					var item = this.closest("[data-multiple]");
 
-					item._.remove();
+					$.remove(item);
+					me.length--;
 				}
 			}
 		},
 		inside: element
 	});
 
-	this.template = this.property? element.cloneNode(true) : element;
-
 	// TODO Add clone button to the template
 
 	// Insert add button after entire collection (or before? or both?)
-	this.addButton = $(this.template.getAttribute("data-add")) || document.createElement("button")._.set({
+	this.addButton = $(element.getAttribute("data-add")) || document.createElement("button")._.set({
 		className: "add",
-		textContent: "Add new " + this.name,
+		textContent: "Add " + this.name,
 		after: element,
 		events: {
-			click: this.add.bind(this)
+			click: this.addAndEdit.bind(this)
 		}
 	});
 
-	this.template._.remove();
+	this.template = document.createElement("template")._.set({
+		before: element,
+		contents: element // If it’s a property, its cardinality is originally 1, otherwise 0.
+	});
+
+	this.property && this.template.setAttribute("data-property", this.property);
+	this.type && this.template.setAttribute("data-typeof", this.type);
+	this.length = 0;
+	this.template._.data.collection = this;
 };
 
 _.prototype = {
 	add: function() {
+		var me = this;
+		var item = document.importNode(this.template.content, true);
+		item = item.children[0];
 
-		var item = this.template.cloneNode(true);
+		// Add events
+		// TODO This is terrible.
+		item._.events({
+			"mouseover": function(evt) {
+				if (evt.target.matches(".delete")) {
+					this.classList.add("delete-hover");
+					evt.stopPropagation();
+				}
+			},
+			"mouseout": function(evt) {
+				if (evt.target.matches(".delete")) {
+					this.classList.remove("delete-hover");
+					evt.stopPropagation();
+				}
+			},
+			"click": function(evt) {
+				if (evt.target.matches(".delete")) {
+					if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+						var item = evt.target.closest("[data-multiple]");
 
-		$.before(item, this.addButton);
+						$.remove(item, {opacity: 0});
+						me.length--;
+						evt.stopPropagation();
+					}
+				}
+			}
+		});
 
-		item.classList.add("editing");
-
-		
+		$.before(item, this.template);
 
 		if (this.property) {
 			item._.data.property = this.type? new Curd.Scope(item) : new Curd.property(item);
-			item._.data.property.edit();
 		}
 		else {
+			// Root scope
 			item._.data.scope = new Curd.Scope(item);
-			item._.data.scope.edit();
 		}
+
+		item._.data.collection = this;
+
+		this.length++;
+
+		return item;
+	},
+
+	addAndEdit: function() {
+		var item = this.add();
+
+		item.classList.add("editing");
+
+		(item._.data.property || item._.data.scope).edit();
+	},
+
+	render: function(data) {
+		if (!data) {
+			return;
+		}
+
+		if (!Array.isArray(data) && typeof data === "object") {
+			data = [data];
+		}
+
+		data.forEach(function(datum){
+			var item = this.add();
+
+			(item._.data.property || item._.data.scope).render(datum);
+		}, this);
 	}
 };
 

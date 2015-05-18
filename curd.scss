@@ -13,16 +13,27 @@ button.add {
 }
 
 [data-store] {
-	&[typeof], &[itemscope],
-	[typeof], [itemscope] {
-		position: relative;	
-	}
+	// Unprocessed items
+	display: none;
+}
 
+.curd-item {
+	&, * {
+		&[typeof], &[itemscope] {
+			position: relative;	
+		}
+
+		&.delete-hover {
+			box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.06) inset, 0 0 0 .1em hsla(0,100%,50%,.05);
+			border-radius: .1em;
+		}
+	}
+	
 	.edit, 
 	.delete {
 		all: initial;
 		position: absolute;
-		top: 1em;
+		top: .1em;
 		right: -1.5em;
 		padding: 0 .3em;
 		cursor: pointer;
@@ -44,15 +55,21 @@ button.add {
 		background: rgba(180,0,0,.8);
 	}
 	
-	&.editing .edit,
-	&.saved .curd-buttons,
-	&.saved .empty,
-	&.saved .delete,
-	&.saved button.add {
-		display: none;
+	&:not(.editing) {
+		.curd-buttons,
+		.empty,
+		.delete,
+		button.add {
+			display: none;
+		}
 	}
 	
 	&.editing {
+		.edit {
+			display: none;
+		}
+
+		// Primitives
 		[itemprop]:not([itemscope]),
 		[property]:not([typeof]) {
 			input, select, textarea {

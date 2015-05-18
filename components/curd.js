@@ -5,10 +5,11 @@ var _ = self.Curd = function (template) {
 	var me = this;
 
 	this.template = template;
-	this.container = template.parentNode;
+	// this.container = template.parentNode;
 	
-	this.store = this.container.getAttribute("data-store");
-	this.container.removeAttribute("data-store")
+	this.store = this.template.getAttribute("data-store");
+	this.template.removeAttribute("data-store");
+	this.template.classList.add("curd-item");
 
 	this.collection = template.hasAttribute("data-multiple");
 
@@ -20,12 +21,12 @@ var _ = self.Curd = function (template) {
 
 		xhr.open("GET", this.store);
 
-		xhr.onreadystatechange = function(xhr){
+		xhr.onreadystatechange = function(){
 			if (xhr.readyState == 4) {
 				if (xhr.status >= 200 || xhr.status === 0) {
 					var data = JSON.parse(xhr.responseText);
 
-
+					me.root.render(data);
 				}
 			}
 		};

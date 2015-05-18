@@ -18,6 +18,7 @@ var _ = Curd.Scope = function (element) {
 	});
 
 	// If root, add Save & Cancel button
+	// TODO remove these after saving & cache, to reduce number of DOM elements lying around
 	if (!this.property) {
 		// Add edit button (will be hidden while editing)
 		document.createElement("button")._.set({
@@ -27,9 +28,6 @@ var _ = Curd.Scope = function (element) {
 			events: {
 				click: function () {
 					var scope = this.closest(Curd.selectors.scope);
-					
-					scope.classList.add("editing");
-					scope.classList.remove("saved");
 					
 					me.edit();
 				}
@@ -48,9 +46,6 @@ var _ = Curd.Scope = function (element) {
 					click: function () {
 						var item = this.closest(".editing");
 
-						item.classList.remove("editing");
-						item.classList.add("saved");
-
 						item._.data.scope.save();
 					}
 				}
@@ -61,9 +56,6 @@ var _ = Curd.Scope = function (element) {
 				events: {
 					click: function () {
 						var item = this.closest(".editing");
-
-						item.classList.remove("editing");
-						item.classList.add("saved");
 
 						item._.data.scope.cancel();
 					}
@@ -81,26 +73,62 @@ _.prototype = {
 		}, this);
 	},
 
-	get scopes () {
-		return $$(_.selectors.scope, this.element);
+	get collections () {
+		return $$("template[data-property], template[data-typeof]", this.element);
 	},
 
 	edit: function() {
+		this.element.classList.add("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.edit();
+		});
+
+		this.collections.forEach(function (template){
+			var collection = template._.data.collection;
+
+			if (collection.length === 0) {
+				collection.addAndEdit();
+			}
 		});
 	},
 
 	save: function() {
+		this.element.classList.remove("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.save();
-		});	
+		}, this);	
 	},
 
 	cancel: function() {
+		this.element.classList.remove("editing");
+
 		this.properties.forEach(function(prop){
 			prop._.data.property.cancel();
 		});
+	},
+
+	render: function(data) {
+		if (!data) {
+			return;
+		}
+		
+		this.properties.forEach(function(prop){
+			var property = prop._.data.property;
+
+			if (property && property.name in data) {
+				property.render(data[property.name]);
+			}
+		});
+
+		this.collections.forEach(function (template){
+			var collection = template._.data.collection;
+
+			collection.render(data[collection.property]);
+		});
+
+		this.save();
 	}
 };
 

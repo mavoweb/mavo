@@ -9,9 +9,9 @@
 <link rel="stylesheet" href="../../curd.css" />
 <link rel="stylesheet" href="talks.css" />
 <style>
-[property=talk] + .add {
+template[data-property=talk] + .add {
 	margin-left: 130px;
-	margin-bottom: .3em;
+	margin-bottom: .8em;
 }
 
 h1[property=talk] {
@@ -29,31 +29,38 @@ h1[property=talk] {
 	<article data-store="talks.json" data-multiple typeof="Event">
 		<h1 data-multiple property="talk" typeof="Talk">
 			<span property="title">TBD</span>
-			<span property class="type" class="keynote">
+			<span property class="type">
 				<select>
 					<option selected>Talk</option>
 					<option>Keynote</option>
 					<option>Workshop</option>
+					<option>Panel</option>
 				</select>
 			</span>
 			<a property class="video" target="_blank">Video</a>
+			<a property class="slides" target="_blank">Slides</a>
 		</h1>
 		<h2>
-			<a property="conference-url" target="_blank">
-				<span property="conference-name"></span>
+			<a property="url" target="_blank">
+				<span property="name"></span>
 			</a>
 		</h2>
 		<p class="date"><time property="date"></time></p>
-		<address class="flag-{addressCountry}" property="address" vocab="http://schema.org" typeof="PostalAddress">
-			<span property="addressLocality" title="City"></span>,
-			<span property="addressCountry">
+		<address class="flag-{country}">
+			<span property="city"></span>,
+			<span property="country">
 				<select>
 					<option>USA</option>
+					<option>UK</option>
 					<option>Italy</option>
 					<option>Australia</option>
-					<option>United Kingdom</option>
+					<option>Spain</option>
 					<option>Greece</option>
+					<option>Germany</option>
+					<option>France</option>
+					<optgroup>Wales</optgroup>
 					<option>Israel</option>
+					<option>New Zealand</option>
 				</select>
 			</span>
 		</address>

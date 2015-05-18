@@ -29,13 +29,22 @@ var _ = Curd.Property = function (element) {
 
 	this.label = this.label || Curd.readable(this.name);
 
-	this.editor = ($(this.element.getAttribute("data-input-from"))
-	                  ? $(this.element.getAttribute("data-input-from")).cloneNode(true) : null) ||
-	              $$(this.element.children).filter(function (el) {
-	                  return el.parentNode === me.element && el.matches("input, select, textarea")
-	              })[0] ||
-	             this.editor && this.editor() ||
-	             document.createElement("input");
+	var defaultEditor = this.editor;
+	this.editor = null;
+
+	// Linked widgets
+	if ($(this.element.getAttribute("data-input-from"))) {
+		this.editor = $(this.element.getAttribute("data-input-from")).cloneNode(true);
+	}
+
+	// Nested widgets
+	if (!this.editor) {
+		this.editor = $$(this.element.children).filter(function (el) {
+		    return el.matches("input, select, textarea")
+		})[0];
+	}
+
+	this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
 
 	this.editor._.events({
 		"input": function () {
@@ -49,15 +58,26 @@ var _ = Curd.Property = function (element) {
 		}
 	});
 
-	this.default = this.value;
-
 	if ("placeholder" in this.editor) {
 		this.editor.placeholder = "(" + this.label + ")";
 	}
 
-	if (this.default || this.default === 0) {
-		this.editor.value = this.default;
+	if (this.editor.value) {
+		this.default = this.editor.value;
 	}
+	else {
+		if (this.attribute) {
+			this.default = this.element.getAttribute(this.attribute);
+		}
+		else if (this.editor.parentNode != this.element) {
+			this.default = this.element.textContent || null;
+		}
+
+		if (this.default !== null) {
+			this.editor.value = this.default;
+		}
+	}
+	
 
 	this.element.addEventListener("valuechange", function (evt) {
 		if (evt.target == me.element) {
@@ -131,9 +151,27 @@ _.prototype = {
 		if (this.editing || this.editing === undefined) {
 			return this.editor.value || this.element.getAttribute(this.attribute || "content");
 		}
+		else if (this.attribute) {
+			return this.element.getAttribute(this.attribute);
+		}
 		else {
 			return this.element.textContent || null;
 		}
+	},
+
+	set value (value) {
+		if (this.editing || this.editing === undefined) {
+			this.editor.value = value;
+		}
+		else {
+			this.element.textContent = value;
+		}
+
+		if (this.attribute) {
+			this.element.setAttribute(this.attribute, value);
+		}
+
+		this.update(value);
 	},
 
 	update: function (value) {
@@ -199,6 +237,7 @@ _.prototype = {
 		}
 		else {
 			this.element.textContent = this.editor.value;
+			$.remove(this.editor);
 		}
 	},
 
@@ -221,6 +260,10 @@ _.prototype = {
 	cancel: function() {
 		this.value = this.savedValue; // TODO setter for value
 		this.save();
+	},
+
+	render: function(data) {
+		this.value = data;
 	}
 };
 

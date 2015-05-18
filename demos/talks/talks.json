@@ -1,6 +1,6 @@
 [
 	{
-		"talk": {"title": "", "type": "Keynote"}]
+		"talk": [{"type": "Keynote"}],
 		"name": "You Gotta Love Frontend",
 		"url": "http://yougottalovefrontend.com",
 		"date": "2015-06-08",
@@ -59,12 +59,6 @@
 		"country": "Australia",
 		"city": "Melbourne"
 	}, {
-		"name": "",
-		"url": "",
-		"date": "",
-		"country": "",
-		"city": ""
-	}, {
 		"talk": [{"title":"The Chroma Zone: Engineering Color on the Web", "type": "Keynote"}, { "title": "CSS Visual Effects masterclass", "type": "Workshop" }],
 		"name": "Codemania",
 		"url": "http://codemania.co.nz/",
@@ -72,7 +66,7 @@
 		"country": "New Zealand",
 		"city": "Auckland"
 	}, {
-		"talk": ["The Chroma Zone: Engineering Color on the Web", { "title": "CSS: Beyond the basics", "type": "Workshop" }],
+		"talk": [{ "title": "The Chroma Zone: Engineering Color on the Web"}, { "title": "CSS: Beyond the basics", "type": "Workshop" }],
 		"name": "SmashingConf Oxford",
 		"url": "http://smashingconf.com/",
 		"date": "2014-03-18",
@@ -80,7 +74,7 @@
 		"city": "Oxford"
 	}, {
 		"talk": [{"title": "The Chroma Zone: Engineering Color on the Web",
-		"type": "Keynote"}] 
+		"type": "Keynote"}],
 		"name": "jQuery",
 		"url": "http://jqueryto.com/",
 		"date": "2014-03-15",
@@ -88,7 +82,7 @@
 		"city": "Toronto"
 	}, {
 		"talk": [{"title": "The Humble border-radius",
-		"type": "Keynote"}]
+		"type": "Keynote"}],
 		"name": "O’Reilly Fluent 2014",
 		"url": "http://fluentconf.com/fluent2014",
 		"date": "2014-03-11",
@@ -96,7 +90,7 @@
 		"city": "San Francisco, CA"
 	}, {
 		"talk": [{"title": "The Chroma Zone: Engineering Color on the Web",
-		"type": "Keynote"}]
+		"type": "Keynote"}],
 		"name": "kod.io",
 		"url": "http://linz.kod.io/",
 		"date": "2014-03-01",
@@ -142,7 +136,7 @@
 		"feedback": "http://storify.com/LeaVerou/more-css-secrets-blendwebmix-lyon"
 	}, {
 		"talk": [{"title": "The humble border-radius",
-		"type": "Keynote"}]
+		"type": "Keynote"}],
 		"name": "FrontInSampa",
 		"url": "http://www.frontinsampa.com.br/",
 		"date": "2013-09-14",
@@ -199,7 +193,7 @@
 		"feedback": "http://storify.com/LeaVerou/more-css-secrets-gobeyondpixels"
 	}, {
 		"talk": [{"title": "Everything you always wanted to know about web standards (but were afraid to ask)",
-		"type": "Keynote"}]
+		"type": "Keynote"}],
 		"video": "http://www.youtube.com/watch?v=A5mI192gdZ8",
 		"name": "O’Reilly Fluent 2013",
 		"url": "http://fluentconf.com/fluent2013",
@@ -266,7 +260,7 @@
 		"city": "Amsterdam"
 	}, {
 		"talk": [{"title": "More CSS Secrets: Another 10 things you may not know about CSS",
-		"type": "Keynote"}]
+		"type": "Keynote"}],
 		"name": "FOWD Prague",
 		"url": "http://futureofwebdesign.com/prague-2012/speakers",
 		"date": "2012-11-29",
@@ -483,7 +477,7 @@
 					"http://lea.verou.me/css3-gradients"
 				]
 			},
-			"10 things you might not know about CSS3"
+			{ "title": "10 things you might not know about CSS3" }
 		],
 		"name": "Geek Meet",
 		"url": "http://robertnyman.com/2011/04/06/geek-meet-may-2011-with-lea-verou/",
