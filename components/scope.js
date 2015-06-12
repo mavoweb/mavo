@@ -1,137 +1,151 @@
 (function(){
 
-var _ = Curd.Scope = function (element) {
+var Super = Wysie.Unit;
+
+var _ = Wysie.Scope = function (element) {
 	var me = this;
 
-	// Parent scope (Null for the main scope)
-	this.element = element;
+	Super.apply(this, arguments);
 
-	this.type = element.getAttribute("typeof") || element.getAttribute("itemtype");
-	this.property = element.getAttribute("property");
+	this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
+		return new Wysie.Collection(template, me);
+	}, this);
 
+	// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
 	this.properties.forEach(function(prop){
-		prop._.data.property = prop.matches(Curd.selectors.scope)? new _(prop) : new Curd.Property(prop);
-
-		if (prop.hasAttribute("data-multiple")) {
-			new Curd.Collection(prop);
-		}
+		prop._.data.unit = Super.create(prop, me);
 	});
 
-	// If root, add Save & Cancel button
-	// TODO remove these after saving & cache, to reduce number of DOM elements lying around
-	if (!this.property) {
-		// Add edit button (will be hidden while editing)
-		document.createElement("button")._.set({
-			textContent: "✎",
-			title: "Edit this " + this.type,
-			className: "edit",
-			events: {
-				click: function () {
-					var scope = this.closest(Curd.selectors.scope);
-					
-					me.edit();
-				}
-			},
-			inside: this.element
+	if (this.isRoot) {
+		this.element.classList.add("wysie-root");
+
+		// TODO handle element templates in a better/more customizable way
+		this.buttons = {
+			edit: document.createElement("button")._.set({
+				textContent: "✎",
+				title: "Edit this " + this.type,
+				className: "edit"
+			}),
+			savecancel: document.createElement("div")._.set({
+				className: "wysie-buttons",
+				contents: [{
+					tag: "button",
+					textContent: "Save",
+					className: "save",
+				}, {
+					tag: "button",
+					textContent: "Cancel",
+					className: "cancel"
+				}]
+			})
+		};
+
+		this.element._.delegate("click", {
+			"button.edit": this.edit.bind(this),
+			"button.save": this.save.bind(this),
+			"button.cancel": this.cancel.bind(this)
 		});
 
-		this.element._.contents({
-			tag: "div",
-			className: "curd-buttons",
-			contents: [{
-				tag: "button",
-				textContent: "Save",
-				className: "save",
-				events: {
-					click: function () {
-						var item = this.closest(".editing");
-
-						item._.data.scope.save();
-					}
-				}
-			}, {
-				tag: "button",
-				textContent: "Cancel",
-				className: "cancel",
-				events: {
-					click: function () {
-						var item = this.closest(".editing");
-
-						item._.data.scope.cancel();
-					}
-				}
-			}]
-		});
+		// If root, add Save & Cancel button
+		// TODO remove these after saving & cache, to reduce number of DOM elements lying around
+		this.element.appendChild(this.buttons.edit);
 	}
 };
 
-_.prototype = {
+_.prototype = $.extend(new Super, {
+	get isRoot() {
+		return !this.property;
+	},
+
 	get properties () {
 		// TODO cache this
-		return $$("[property], [itemprop]", this.element).filter(function(property){
-			return this.element === property.parentNode.closest(Curd.selectors.scope);
+		return $$(Wysie.selectors.property, this.element).filter(function(property){
+			return this.element === property.parentNode.closest(Wysie.selectors.scope);
 		}, this);
 	},
 
-	get collections () {
-		return $$("template[data-property], template[data-typeof]", this.element);
+	get data() {
+		var ret = {};
+
+		this.properties.forEach(function(prop){
+			var unit = prop._.data.unit;
+
+			ret[unit.property] = unit.data;
+		});
+
+		return ret;
 	},
 
 	edit: function() {
-		this.element.classList.add("editing");
+		this.element.setAttribute("data-editing", "");
+
+		if (this.isRoot) {
+			this.element.removeChild(this.buttons.edit);
+			this.element.appendChild(this.buttons.savecancel);
+		}
 
 		this.properties.forEach(function(prop){
-			prop._.data.property.edit();
+			prop._.data.unit.edit();
 		});
 
-		this.collections.forEach(function (template){
-			var collection = template._.data.collection;
-
+		this.collections.forEach(function (collection){
 			if (collection.length === 0) {
-				collection.addAndEdit();
+				var item = collection.add();
+
+				item._.data.unit.edit();
 			}
 		});
 	},
 
 	save: function() {
-		this.element.classList.remove("editing");
+		// TODO make this a class when we handle references properly in classes so we can toggle other classes
+		this.element.removeAttribute("data-editing");
+
+		if (this.isRoot) {
+			$.remove(this.buttons.savecancel);
+			this.element.appendChild(this.buttons.edit);
+		}
 
 		this.properties.forEach(function(prop){
-			prop._.data.property.save();
+			prop._.data.unit.save();
 		}, this);	
 	},
 
 	cancel: function() {
-		this.element.classList.remove("editing");
+		if (this.isRoot) {
+			$.remove(this.buttons.savecancel);
+			this.element.appendChild(this.buttons.edit);
+		}
+
+		this.element.removeAttribute("data-editing");
 
 		this.properties.forEach(function(prop){
-			prop._.data.property.cancel();
+			prop._.data.unit.cancel();
 		});
 	},
 
+	// Inject data in this element
 	render: function(data) {
 		if (!data) {
 			return;
 		}
 		
 		this.properties.forEach(function(prop){
-			var property = prop._.data.property;
+			var property = prop._.data.unit;
 
-			var datum = Curd.queryJSON(data, prop.getAttribute("property"));
+			var datum = Wysie.queryJSON(data, prop.getAttribute("property"));
 
 			if (datum) {
 				property.render(datum);
 			}
 		});
 
-		this.collections.forEach(function (template){
-			var collection = template._.data.collection;
-
+		this.collections.forEach(function (collection){
 			collection.render(data[collection.property]);
 		});
 
 		this.save();
 	}
-};
+});
 
 })();

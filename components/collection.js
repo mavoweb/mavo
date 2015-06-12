@@ -1,112 +1,121 @@
 (function(){
 
-var _ = Curd.Collection = function (element) {
+var _ = Wysie.Collection = function (template, wysie) {
 	var me = this;
 
-	this.property = element.getAttribute("property");
-	this.type = element.getAttribute("typeof");
-	this.name = Curd.readable(this.property || this.type).toLowerCase();
-	
+	if (!template || !wysie) {
+		throw new TypeError("No template and/or Wysie object");
+	}
+
+	/*
+	 * Create the template, remove it from the DOM and store it
+	 */
+
+	this.template = template;
+	this.wysie = wysie;
+
+	this.property = Wysie.normalizeProperty(this.template);
+	this.type = Wysie.normalizeType(this.template);
+
+	this.required = this.template.matches(Wysie.selectors.required);
+
+	// Insert add button after entire collection (or before? or both?)
+	// Add button also serves to save position in the DOM
+	this.addButton = document.createElement("button")._.set({
+		className: "add",
+		textContent: "Add " + this.name,
+		after: this.template,
+		events: {
+			"click": function() {
+				var item = me.add();
+
+				item._.data.unit.edit();
+			}
+		}
+	});
+
+	this.template._.remove();
+
+	this.template.classList.add("wysie-item");
+
+	// Add events
+	this.template._.delegate({
+		"click": {
+			"button.delete": function(evt) {
+				if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+					me.delete(this);
+				}
+
+				evt.stopPropagation();
+			}
+		},
+		"mouseover": {
+			"button.delete": function(evt) {
+				this.classList.add("delete-hover");
+
+				evt.stopPropagation();
+			}
+		},
+		"mouseout": {
+			"button.delete": function(evt) {
+				this.classList.remove("delete-hover");
+				
+				evt.stopPropagation();
+			}
+		}
+	});
+
 	// Add delete button to the template
 	$.create({
 		tag: "button",
 		textContent: "✖",
 		title: "Delete this " + this.name,
 		className: "delete",
-		events: {
-			click: function () {
-				if (confirm("Are you sure you want to " + this.title.toLowerCase() + "?")) {
-					var item = this.closest("[data-multiple]");
-
-					$.remove(item);
-					me.length--;
-				}
-			}
-		},
-		inside: element
+		inside: this.template
 	});
 
 	// TODO Add clone button to the template
-
-	// Insert add button after entire collection (or before? or both?)
-	this.addButton = $(element.getAttribute("data-add")) || document.createElement("button")._.set({
-		className: "add",
-		textContent: "Add " + this.name,
-		after: element,
-		events: {
-			click: this.addAndEdit.bind(this)
-		}
-	});
-
-	this.template = document.createElement("template")._.set({
-		before: element,
-		contents: element // If it’s a property, its cardinality is originally 1, otherwise 0.
-	});
-
-	this.property && this.template.setAttribute("data-property", this.property);
-	this.type && this.template.setAttribute("data-typeof", this.type);
-	this.template.setAttribute("data-path", element.getAttribute("data-path"));
-	this.length = 0;
-	this.template._.data.collection = this;
 };
 
 _.prototype = {
-	add: function() {
-		var me = this;
-		var item = document.importNode(this.template.content, true);
-		item = item.children[0];
+	get name() {
+		return Wysie.readable(this.property || this.type).toLowerCase();
+	},
 
-		// Add events
-		// TODO This is terrible.
-		item._.events({
-			"mouseover": function(evt) {
-				if (evt.target.matches(".delete")) {
-					this.classList.add("delete-hover");
-					evt.stopPropagation();
-				}
-			},
-			"mouseout": function(evt) {
-				if (evt.target.matches(".delete")) {
-					this.classList.remove("delete-hover");
-					evt.stopPropagation();
-				}
-			},
-			"click": function(evt) {
-				if (evt.target.matches(".delete")) {
-					if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-						var item = evt.target.closest("[data-multiple]");
+	get selector() {
+		return ".wysie-item" +
+		       (this.property? '[property="' + this.property + '"]' : '') +
+		       (this.type? '[typeof="' + this.type + '"]' : '');
+	},
 
-						$.remove(item, {opacity: 0});
-						me.length--;
-						evt.stopPropagation();
-					}
-				}
-			}
+	get items() {
+		return $$(":scope > " + this.selector, this.addButton.parentNode);
+	},
+
+	get length() {
+		return this.items.length;
+	},
+
+	get data() {
+		return this.items.map(function(item){
+			return item._.data.unit.data;
 		});
+	},
 
-		$.before(item, this.template);
+	toJSON: Wysie.prototype.toJSON,
 
-		if (this.property) {
-			item._.data.property = this.type? new Curd.Scope(item) : new Curd.property(item);
-		}
-		else {
-			// Root scope
-			item._.data.scope = new Curd.Scope(item);
-		}
+	add: function() {
+		var item = $.clone(this.template);
 
-		item._.data.collection = this;
+		$.before(item, this.addButton);
 
-		this.length++;
+		item._.data.unit = Wysie.Unit.create(item, this);
 
 		return item;
 	},
 
-	addAndEdit: function() {
-		var item = this.add();
-
-		item.classList.add("editing");
-
-		(item._.data.property || item._.data.scope).edit();
+	delete: function(item) {
+		$.remove(item, {opacity: 0});
 	},
 
 	render: function(data) {
@@ -121,8 +130,14 @@ _.prototype = {
 		data.forEach(function(datum){
 			var item = this.add();
 
-			(item._.data.property || item._.data.scope).render(datum);
+			item._.data.unit.render(datum);
 		}, this);
+	},
+
+	toJSON: function(){
+		return "[" + this.items.map(function(item){
+			return item._.data.unit.toJSON();
+		}) + "]";
 	}
 };
 

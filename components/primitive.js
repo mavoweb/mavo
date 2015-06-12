@@ -1,19 +1,17 @@
 (function(){
 
-var _ = Curd.Property = function (element) {
+var Super = Wysie.Unit;
+
+var _ = Wysie.Primitive = function (element) {
 	var me = this;
 
-	this.element = element;
+	Super.apply(this, arguments);
 
-	this.scope = this.element.closest(Curd.selectors.scope);
+	// Scope this primitive belongs to
+	this.scope = this.element.closest(Wysie.selectors.scope);
 
-	this.name = element.getAttribute("property") ||
-	            element.getAttribute("itemprop") ||
-	            (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
-	element.setAttribute("property", this.name);
-
-	this.nameRegex = RegExp("{" + this.name + "}", "g");
-
+	this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
+ 
 	for (var selector in _.types) {
 		if (this.element.matches(selector)) {
 			// TODO calculate specificity and return the one with the highest, not the first one
@@ -27,14 +25,14 @@ var _ = Curd.Property = function (element) {
 		this.label = this.element.title;
 	}
 
-	this.label = this.label || Curd.readable(this.name);
+	this.label = this.label || Wysie.readable(this.property);
 
 	var defaultEditor = this.editor;
 	this.editor = null;
 
 	// Linked widgets
-	if ($(this.element.getAttribute("data-input-from"))) {
-		this.editor = $(this.element.getAttribute("data-input-from")).cloneNode(true);
+	if ($(this.element.getAttribute("data-input"))) {
+		this.editor = $(this.element.getAttribute("data-input")).cloneNode(true);
 	}
 
 	// Nested widgets
@@ -95,40 +93,38 @@ var _ = Curd.Property = function (element) {
 					return;
 				}
 
-				document.createElement("div")._.set({
+				if (/^select$/i.test(me.editor.nodeName)) {
+					me.editor.size = Math.min(10, me.editor.children.length);
+				}
+
+				me.popup = me.popup || document.createElement("div")._.set({
 					className: "popup",
 					contents: [
 						me.label + ":",
 						me.editor._.events({
 							blur: function () {
-								var popup = this.closest(".popup");
-								popup && popup.parentNode && popup._.remove();
+								$.remove(me.popup);
 							}
 						})
 					],
 					style: { // TODO what if it doesn’t fit?
 						top: this.offsetTop + this.offsetHeight + "px",
 						left: this.offsetLeft + "px"
-					},
-					after: this
+					}
 				});
+
+				me.popup._.after(this);
 			},
 
 			blur: function () {
-				if (!me.editing) {
-					return;
-				}
-
-				var popup = this.nextElementSibling;
-
-				if (!popup.classList.contains("popup")) {
+				if (!me.editing || !me.popup) {
 					return;
 				}
 
 				// Deferred as document.activeElement is not immediately updated
 				setTimeout(function () {
-					if (document.activeElement.closest(".popup") !== popup) {
-						popup._.remove();
+					if (document.activeElement.closest(".popup") !== me.popup) {
+						$.remove(me.popup);
 					}
 				}, 0);
 			}
@@ -146,7 +142,7 @@ var _ = Curd.Property = function (element) {
 	this.update(this.value);
 };
 
-_.prototype = {
+_.prototype = $.extend(new Super, {
 	get value() {
 		if (this.editing || this.editing === undefined) {
 			return this.editor.value || this.element.getAttribute(this.attribute || "content");
@@ -159,7 +155,7 @@ _.prototype = {
 		}
 	},
 
-	set value (value) {
+	set value(value) {
 		if (this.editing || this.editing === undefined) {
 			this.editor.value = value;
 		}
@@ -172,6 +168,10 @@ _.prototype = {
 		}
 
 		this.update(value);
+	},
+
+	get data() {
+		return this.value;
 	},
 
 	update: function (value) {
@@ -187,7 +187,7 @@ _.prototype = {
 
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
 				element.setAttribute("data-original-textContent", element.textContent);
-				element.textContent = element.textContent.replace(this.nameRegex, Curd.identifier(value));
+				element.textContent = element.textContent.replace(this.nameRegex, Wysie.identifier(value));
 			}
 
 			$$(element.attributes).forEach(function (attribute) {
@@ -205,7 +205,7 @@ _.prototype = {
 						}
 						else {
 							if (/^(class|id)$/i.test(originalName)) {
-								newValue = attribute.value.replace(this.nameRegex, Curd.identifier(value));
+								newValue = attribute.value.replace(this.nameRegex, Wysie.identifier(value));
 							}
 
 							element.setAttribute(originalName, newValue);
@@ -216,7 +216,7 @@ _.prototype = {
 						element.setAttribute("data-original-" + attribute.name, attribute.value);
 
 						if (/^(class|id)$/i.test(attribute.name)) {
-							newValue = attribute.value.replace(this.nameRegex, Curd.identifier(value));
+							newValue = attribute.value.replace(this.nameRegex, Wysie.identifier(value));
 						}
 
 						attribute.value = newValue;
@@ -265,7 +265,7 @@ _.prototype = {
 	render: function(data) {
 		this.value = data;
 	}
-};
+});
 
 _.types = {
 	"time": {

@@ -6,20 +6,14 @@
 	text-align: inherit;
 }
 
-button.add {
-	display: inline-block;
-	margin-left: .5em;
-	vertical-align: middle;
-}
-
 [data-store] {
 	// Unprocessed items
 	display: none;
 }
 
-.curd-item {
-	&, * {
-		&[typeof], &[itemscope] {
+.wysie-root {
+	&, * { // Descendant or self
+		&.wysie-item {
 			position: relative;	
 		}
 
@@ -27,6 +21,12 @@ button.add {
 			box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.06) inset, 0 0 0 .1em hsla(0,100%,50%,.05);
 			border-radius: .1em;
 		}
+	}
+
+	button.add {
+		display: inline-block;
+		margin-left: .5em;
+		vertical-align: middle;
 	}
 	
 	.edit, 
@@ -56,8 +56,8 @@ button.add {
 		background: rgba(180,0,0,.8);
 	}
 	
-	&:not(.editing) {
-		.curd-buttons,
+	&:not([data-editing]) {
+		.wysie-buttons,
 		.empty,
 		.delete,
 		button.add {
@@ -65,7 +65,7 @@ button.add {
 		}
 	}
 	
-	&.editing {
+	&[data-editing] {
 		.edit {
 			display: none;
 		}
@@ -82,7 +82,8 @@ button.add {
 				width: 100%;
 			}
 			
-			&.using-popup, input, select, textarea {
+			&.using-popup,
+			input, select, textarea {
 				&:hover, &:focus {
 					outline: 1px dashed;
 					outline-offset: 1px;
@@ -105,7 +106,7 @@ button.add {
 	.popup {
 		all: initial;
 		position: absolute;
-		z-index: 1;
+		z-index: 2;
 		padding: 1em;
 		border: 1px solid rgba(0,0,0,.3);
 		border-radius: .4em;
@@ -131,9 +132,13 @@ button.add {
 			font: inherit;
 			min-width: 100%;
 		}
+
+		select[size] {
+			border: 1px solid rgba(0,0,0,.2);
+		}
 	}
 		
-	.curd-buttons {
+	.wysie-buttons {
 		position: relative;
 		padding: .5em 0 .1em;
 		text-align: center;

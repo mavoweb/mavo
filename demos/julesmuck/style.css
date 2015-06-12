@@ -75,12 +75,12 @@ article {
 		transition: .2s bottom;
 	}
 
-	article:not(.editing) {
+	article:not(.editing) div {
 		overflow: hidden;
 		
 	}
 
-	article:not(:hover):not(.editing) p {
+	article:not(:hover):not([data-editing]) p {
 		bottom: -6em;
 	}
 

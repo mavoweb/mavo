@@ -16,7 +16,7 @@
 <link href="http://www.chromestatus.com/" rel="dns-prefetch">
 <link href="https://status.modern.ie/images/ca0668eb.arrow.svg" rel="prefetch">
 <link href="https://status.modern.ie/styles/4dff9889.main.css" rel="stylesheet">
-<link rel="stylesheet" href="../../curd.css" />
+<link rel="stylesheet" href="../../wysie.css" />
 <style>
 button.add {
 	display: block;
@@ -55,12 +55,25 @@ button.add:hover {
 .ie-status.status-ie11 {
 	display: block;
 }
+
+.info li {
+	border: 0;
+}
+
+.info li a {
+	border-left: solid 5px #a4a5ab;
+	background-origin: padding-box;
+}
+
+.info li .icon {
+	left: 10px;
+}
 </style>
 
 </head>
 
-<body class="ng-scope" data-ng-app="statusieApp">
-<div class="content ng-scope" data-ng-controller="MainCtrl">
+<body>
+<div class="content">
 	<header class="header">
 		<div>
 			<div class="siteLogo">
@@ -227,7 +240,7 @@ button.add:hover {
 	</div>
 	
 	<article>
-		<section data-store data-multiple typeof="Feature" class="show feature {xcategory}" id="{feature_name}">
+		<section data-store data-multiple typeof="Feature" class="show feature {category}" id="{feature_name}">
 			<button property="category" data-attribute="title" data-input-from="#categories" class="feature-header">
 				<span class="feature-icon icon-{category}"></span>
 
@@ -264,19 +277,22 @@ button.add:hover {
 							{chrome-status} by Chrome
 						</li>
 
-						<li class="implemented icon-firefox" data-bo-class="{'implemented': feature.browsers.firefox.status === 'Shipped' || feature.browsers.firefox.status === 'Prefixed' || feature.browsers.firefox.status === 'Deprecated', 'indevelopment' : feature.browsers.firefox.status === 'In Development','icon-firefox': feature.browsers.firefox.status !== 'Deprecated', 'icon-firefox-deprecated': feature.browsers.firefox.status === 'Deprecated'}" data-bo-title="feature.browsers.firefox.status + ' by Firefox'" title="Shipped by Firefox">
-							<!-- boIf: feature.browsers.firefox.link --><a class="ng-scope" data-bo-href="feature.browsers.firefox.link" data-bo-if="feature.browsers.firefox.link" data-bo-text="feature.browsers.firefox.status + ' by Firefox'" href="https://bugzilla.mozilla.org/show_bug.cgi?id=525816#c78" target="_blank">Shipped by Firefox</a> <!-- boIf: !feature.browsers.firefox.link -->
+						<li property="firefox-status" data-input-from="#browser-status" data-attribute="content" class="{firefox-status} icon-firefox" title="{firefox-status} by Firefox">
+							{firefox-status} by Firefox
 						</li>
 
-						<li class="implemented icon-ie" data-bo-class="{'implemented': feature.browsers.ie.status === 'Shipped' || feature.browsers.ie.status === 'Prefixed' || feature.browsers.ie.status === 'Preview Release' || feature.browsers.ie.status === 'Deprecated', 'indevelopment' : feature.browsers.ie.status === 'In Development', 'icon-ie': feature.browsers.ie.status !== 'Deprecated', 'icon-ie-deprecated': feature.browsers.ie.status === 'Deprecated'}" data-bo-title="feature.browsers.ie.status==='Preview Release' ? 'Available for preview in IE' : feature.browsers.ie.status + ' by Internet Explorer'" title="Shipped by Internet Explorer">
-							<!-- boIf: feature.browsers.ie.link --><a class="ng-scope" data-bo-href="feature.browsers.ie.link" data-bo-if="feature.browsers.ie.link" data-bo-text="feature.browsers.ie.status + ' by Internet Explorer'" href="http://dev.opera.com/articles/view/xhr2/#xhrtimeouts" target="_blank">Shipped by Internet Explorer</a> <!-- boIf: !feature.browsers.ie.link -->
+						<li property="iexp-status" data-input-from="#browser-status" data-attribute="content" class="{iexp-status} icon-ie" title="{iexp-status} by Internet Explorer">
+							{iexp-status} by Internet Explorer
 						</li>
 
-						<li class="implemented icon-opera" data-bo-class="{'implemented': feature.browsers.opera.status === 'Shipped' || feature.browsers.opera.status === 'Prefixed' || feature.browsers.opera.status === 'Deprecated', 'indevelopment' : feature.browsers.opera.status === 'In Development', 'icon-opera': feature.browsers.opera.status !== 'Deprecated', 'icon-opera-deprecated': feature.browsers.opera.status === 'Deprecated'}" data-bo-title="feature.browsers.opera.status + ' by Opera'" title="Shipped by Opera"><!-- boIf: feature.browsers.opera.link --><!-- boIf: !feature.browsers.opera.link --><span class="ng-scope" data-bo-if="!feature.browsers.opera.link" data-bo-text="feature.browsers.opera.status + ' by Opera'">Shipped by Opera</span></li>
-
-						<li class="icon-safari indevelopment" data-bo-class="{'implemented': feature.browsers.safari.status === 'Shipped' || feature.browsers.safari.status === 'Prefixed', 'indevelopment' : feature.browsers.safari.status === 'In Development'}" data-bo-title="feature.browsers.safari.status + ' by Safari'" title="In Development by Safari">
-							<!-- boIf: feature.browsers.safari.link --><a class="ng-scope" data-bo-href="feature.browsers.safari.link" data-bo-if="feature.browsers.safari.link" data-bo-text="feature.browsers.safari.status + ' by Safari'" href="https://bugs.webkit.org/show_bug.cgi?id=99478" target="_blank">In Development by Safari</a> <!-- boIf: !feature.browsers.safari.link -->
+						<li property="opera-status" data-input-from="#browser-status" data-attribute="content" class="{opera-status} icon-opera" title="{opera-status} by Opera">
+							{opera-status} by Opera
 						</li>
+
+						<li property="safari-status" data-input-from="#browser-status" data-attribute="content" class="{safari-status} icon-safari" title="{safari-status} by Safari">
+							{safari-status} by Safari
+						</li>
+
 					</ul>
 
 					<ul class="feature_status info">
@@ -294,6 +310,7 @@ button.add:hover {
 								<select>
 									<option>Established standard</option>
 									<option>Working draft or equivalent</option>
+									<option>No public standards discussion</option>
 								</select>
 							</span></a>
 						</li>
@@ -329,7 +346,7 @@ button.add:hover {
 	</select>
 	
 	<select id="browser-status">
-		<option>Implemented</option>
+		<option selected>Implemented</option>
 		<option>Shipped</option>
 		<option>Prefixed</option>
 		<option>In Development</option>
@@ -346,7 +363,7 @@ document.body.addEventListener("click", function(evt) {
 });
 </script>
 <script src="../../polyfills.js"></script>
-<script src="../../curd.js"></script>
+<script src="../../wysie.js"></script>
 	
 </body>
 </html>
