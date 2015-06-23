@@ -27,12 +27,28 @@ var _ = Wysie.Primitive = function (element) {
 
 	this.label = this.label || Wysie.readable(this.property);
 
+	/*
+	 * Set up input widget
+	 */
+
 	var defaultEditor = this.editor;
 	this.editor = null;
 
+	// Exposed widgets (visible always)
+	if (Wysie.is("formControl", this.element)) {
+		this.editor = this.element;
+	}
+
 	// Linked widgets
-	if ($(this.element.getAttribute("data-input"))) {
-		this.editor = $(this.element.getAttribute("data-input")).cloneNode(true);
+	if (this.element.hasAttribute("data-input")) {
+		var selector = this.element.getAttribute("data-input");
+
+		if (!selector) {
+			this.editor = this.element;
+		}
+		else {
+			this.editor = $(selector).cloneNode(true);
+		}
 	}
 
 	// Nested widgets
@@ -60,8 +76,8 @@ var _ = Wysie.Primitive = function (element) {
 		this.editor.placeholder = "(" + this.label + ")";
 	}
 
-	if (this.editor.value) {
-		this.default = this.editor.value;
+	if (this.editorValue !== "") {
+		this.default = this.editorValue;
 	}
 	else {
 		if (this.attribute) {
@@ -72,10 +88,19 @@ var _ = Wysie.Primitive = function (element) {
 		}
 
 		if (this.default !== null) {
-			this.editor.value = this.default;
+			this.editorValue = this.default;
 		}
 	}
 	
+	// Copy any data-input-* attributes from the element to the editor
+	if (this.element !== this.editor) {
+		var dataInput = /^data-input-/i;
+		$$(this.element.attributes).forEach(function (attribute) {
+			if (dataInput.test(attribute.name)) {
+				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+			}
+		}, this);
+	}
 
 	this.element.addEventListener("valuechange", function (evt) {
 		if (evt.target == me.element) {
@@ -133,7 +158,7 @@ var _ = Wysie.Primitive = function (element) {
 
 	// Prevent default actions while editing
 	this.element.addEventListener("click", function(evt) {
-		if (me.editing) {
+		if (me.editing && evt.target !== me.editor) {
 			evt.preventDefault();
 			evt.stopPropagation();
 		}
@@ -145,7 +170,7 @@ var _ = Wysie.Primitive = function (element) {
 _.prototype = $.extend(new Super, {
 	get value() {
 		if (this.editing || this.editing === undefined) {
-			return this.editor.value || this.element.getAttribute(this.attribute || "content");
+			return this.editorValue || this.element.getAttribute(this.attribute || "content");
 		}
 		else if (this.attribute) {
 			return this.element.getAttribute(this.attribute);
@@ -157,7 +182,7 @@ _.prototype = $.extend(new Super, {
 
 	set value(value) {
 		if (this.editing || this.editing === undefined) {
-			this.editor.value = value;
+			this.editorValue = value;
 		}
 		else {
 			this.element.textContent = value;
@@ -170,12 +195,30 @@ _.prototype = $.extend(new Super, {
 		this.update(value);
 	},
 
+	get editorValue() {
+		if (this.editor.matches('input[type="checkbox"]')) {
+			return this.editor.checked;
+		}
+		else {
+			return this.editor.value;
+		}
+	},
+
+	set editorValue(value) {
+		if (this.editor.matches('input[type="checkbox"]')) {
+			this.editor.checked = value;
+		}
+		else {
+			this.editor.value = value;
+		}
+	},
+
 	get data() {
 		return this.value;
 	},
 
 	update: function (value) {
-		this.element.classList[value? "remove" : "add"]("empty");
+		this.element.classList[value !== ""? "remove" : "add"]("empty");
 
 		// Crawl scope for property references (one-way data binding)
 		// TODO deal with references in text nodes with element siblings (wrap w/ span?)
@@ -230,13 +273,15 @@ _.prototype = $.extend(new Super, {
 	},
 
 	save: function () {
-		this.editing = false;
+		if (this.element !== this.editor) {
+			this.editing = false;
+		}
 
 		if (this.attribute) {
 			this.element.removeAttribute("tabindex");
 		}
-		else {
-			this.element.textContent = this.editor.value;
+		else if (this.element !== this.editor) {
+			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
 	},
@@ -250,9 +295,12 @@ _.prototype = $.extend(new Super, {
 		}
 		else {
 			if (this.editor.parentNode != this.element) {
-				this.editor.value = this.element.textContent;
+				this.editorValue = this.element.textContent;
 				this.element.textContent = "";
-				this.element.appendChild(this.editor);
+
+				if (this.element !== this.editor) {
+					this.element.appendChild(this.editor);
+				}
 			}
 		}
 	},
@@ -268,8 +316,12 @@ _.prototype = $.extend(new Super, {
 });
 
 _.types = {
+	'input[type="checkbox"]': {
+		datatype: "boolean"
+	},
 	"time": {
 		attribute: "datetime",
+		datatype: "dateTime",
 
 		editor: function () {
 			var types = {

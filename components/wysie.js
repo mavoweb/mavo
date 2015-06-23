@@ -11,36 +11,43 @@ var _ = self.Wysie = function (template) {
 	var storeURL = this.template.getAttribute("data-store").split("#");
 
 	this.store = {
+		href: storeURL,
 		url: storeURL[0],
 		path: storeURL[1] || null
 	};
 
 	this.template.removeAttribute("data-store");
 
-	if (!this.template.matches(_.selectors.scope)) {
+	if (!_.is("scope", this.template)) {
 		this.template.setAttribute("typeof", "");
 	}
 
 	// Build wysie objects
-	this.root = new _[this.template.matches(_.selectors.multiple)? "Collection" : "Scope"](template, this);
+	this.root = new _[_.is("multiple", this.template)? "Collection" : "Scope"](template, this);
 
 	// Fetch existing data
 	if (this.store.url) {
-		var xhr = new XMLHttpRequest();
+		if (localStorage[this.store.href]) {
+			// TODO what about local-only storage?
+			me.render(JSON.parse(localStorage[this.store.href]));
+		}
+		else {
+			var xhr = new XMLHttpRequest();
 
-		xhr.open("GET", this.store.url);
+			xhr.open("GET", this.store.url);
 
-		xhr.onreadystatechange = function(){
-			if (xhr.readyState == 4) {
-				if (xhr.status >= 200 || xhr.status === 0) {
-					var data = JSON.parse(xhr.responseText);
+			xhr.onreadystatechange = function(){
+				if (xhr.readyState == 4) {
+					if (xhr.status >= 200 || xhr.status === 0) {
+						var data = JSON.parse(xhr.responseText);
 
-					me.render(data);
+						me.render(data);
+					}
 				}
-			}
-		};
+			};
 
-		xhr.send(null);
+			xhr.send(null);
+		}
 	}
 };
 
@@ -133,7 +140,12 @@ $.extend(_, {
 		primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
 		scope: "[typeof], [itemscope]",
 		multiple: "[multiple], [data-multiple]",
-		required: "[required], [data-required]"
+		required: "[required], [data-required]",
+		formControl: "input, select, textarea"
+	},
+
+	is: function(thing, element) {
+		return element.matches(_.selectors[thing]);
 	}
 });
 

@@ -11,36 +11,43 @@ var _ = self.Wysie = function (template) {
 	var storeURL = this.template.getAttribute("data-store").split("#");
 
 	this.store = {
+		href: storeURL,
 		url: storeURL[0],
 		path: storeURL[1] || null
 	};
 
 	this.template.removeAttribute("data-store");
 
-	if (!this.template.matches(_.selectors.scope)) {
+	if (!_.is("scope", this.template)) {
 		this.template.setAttribute("typeof", "");
 	}
 
 	// Build wysie objects
-	this.root = new _[this.template.matches(_.selectors.multiple)? "Collection" : "Scope"](template, this);
+	this.root = new _[_.is("multiple", this.template)? "Collection" : "Scope"](template, this);
 
 	// Fetch existing data
 	if (this.store.url) {
-		var xhr = new XMLHttpRequest();
+		if (localStorage[this.store.href]) {
+			// TODO what about local-only storage?
+			me.render(JSON.parse(localStorage[this.store.href]));
+		}
+		else {
+			var xhr = new XMLHttpRequest();
 
-		xhr.open("GET", this.store.url);
+			xhr.open("GET", this.store.url);
 
-		xhr.onreadystatechange = function(){
-			if (xhr.readyState == 4) {
-				if (xhr.status >= 200 || xhr.status === 0) {
-					var data = JSON.parse(xhr.responseText);
+			xhr.onreadystatechange = function(){
+				if (xhr.readyState == 4) {
+					if (xhr.status >= 200 || xhr.status === 0) {
+						var data = JSON.parse(xhr.responseText);
 
-					me.render(data);
+						me.render(data);
+					}
 				}
-			}
-		};
+			};
 
-		xhr.send(null);
+			xhr.send(null);
+		}
 	}
 };
 
@@ -133,7 +140,12 @@ $.extend(_, {
 		primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
 		scope: "[typeof], [itemscope]",
 		multiple: "[multiple], [data-multiple]",
-		required: "[required], [data-required]"
+		required: "[required], [data-required]",
+		formControl: "input, select, textarea"
+	},
+
+	is: function(thing, element) {
+		return element.matches(_.selectors[thing]);
 	}
 });
 
@@ -403,12 +415,28 @@ var _ = Wysie.Primitive = function (element) {
 
 	this.label = this.label || Wysie.readable(this.property);
 
+	/*
+	 * Set up input widget
+	 */
+
 	var defaultEditor = this.editor;
 	this.editor = null;
 
+	// Exposed widgets (visible always)
+	if (Wysie.is("formControl", this.element)) {
+		this.editor = this.element;
+	}
+
 	// Linked widgets
-	if ($(this.element.getAttribute("data-input"))) {
-		this.editor = $(this.element.getAttribute("data-input")).cloneNode(true);
+	if (this.element.hasAttribute("data-input")) {
+		var selector = this.element.getAttribute("data-input");
+
+		if (!selector) {
+			this.editor = this.element;
+		}
+		else {
+			this.editor = $(selector).cloneNode(true);
+		}
 	}
 
 	// Nested widgets
@@ -436,8 +464,8 @@ var _ = Wysie.Primitive = function (element) {
 		this.editor.placeholder = "(" + this.label + ")";
 	}
 
-	if (this.editor.value) {
-		this.default = this.editor.value;
+	if (this.editorValue !== "") {
+		this.default = this.editorValue;
 	}
 	else {
 		if (this.attribute) {
@@ -448,10 +476,19 @@ var _ = Wysie.Primitive = function (element) {
 		}
 
 		if (this.default !== null) {
-			this.editor.value = this.default;
+			this.editorValue = this.default;
 		}
 	}
 	
+	// Copy any data-input-* attributes from the element to the editor
+	if (this.element !== this.editor) {
+		var dataInput = /^data-input-/i;
+		$$(this.element.attributes).forEach(function (attribute) {
+			if (dataInput.test(attribute.name)) {
+				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+			}
+		}, this);
+	}
 
 	this.element.addEventListener("valuechange", function (evt) {
 		if (evt.target == me.element) {
@@ -509,7 +546,7 @@ var _ = Wysie.Primitive = function (element) {
 
 	// Prevent default actions while editing
 	this.element.addEventListener("click", function(evt) {
-		if (me.editing) {
+		if (me.editing && evt.target !== me.editor) {
 			evt.preventDefault();
 			evt.stopPropagation();
 		}
@@ -521,7 +558,7 @@ var _ = Wysie.Primitive = function (element) {
 _.prototype = $.extend(new Super, {
 	get value() {
 		if (this.editing || this.editing === undefined) {
-			return this.editor.value || this.element.getAttribute(this.attribute || "content");
+			return this.editorValue || this.element.getAttribute(this.attribute || "content");
 		}
 		else if (this.attribute) {
 			return this.element.getAttribute(this.attribute);
@@ -533,7 +570,7 @@ _.prototype = $.extend(new Super, {
 
 	set value(value) {
 		if (this.editing || this.editing === undefined) {
-			this.editor.value = value;
+			this.editorValue = value;
 		}
 		else {
 			this.element.textContent = value;
@@ -546,12 +583,30 @@ _.prototype = $.extend(new Super, {
 		this.update(value);
 	},
 
+	get editorValue() {
+		if (this.editor.matches('input[type="checkbox"]')) {
+			return this.editor.checked;
+		}
+		else {
+			return this.editor.value;
+		}
+	},
+
+	set editorValue(value) {
+		if (this.editor.matches('input[type="checkbox"]')) {
+			this.editor.checked = value;
+		}
+		else {
+			this.editor.value = value;
+		}
+	},
+
 	get data() {
 		return this.value;
 	},
 
 	update: function (value) {
-		this.element.classList[value? "remove" : "add"]("empty");
+		this.element.classList[value !== ""? "remove" : "add"]("empty");
 
 		// Crawl scope for property references (one-way data binding)
 		// TODO deal with references in text nodes with element siblings (wrap w/ span?)
@@ -606,13 +661,15 @@ _.prototype = $.extend(new Super, {
 	},
 
 	save: function () {
-		this.editing = false;
+		if (this.element !== this.editor) {
+			this.editing = false;
+		}
 
 		if (this.attribute) {
 			this.element.removeAttribute("tabindex");
 		}
-		else {
-			this.element.textContent = this.editor.value;
+		else if (this.element !== this.editor) {
+			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
 	},
@@ -626,9 +683,12 @@ _.prototype = $.extend(new Super, {
 		}
 		else {
 			if (this.editor.parentNode != this.element) {
-				this.editor.value = this.element.textContent;
+				this.editorValue = this.element.textContent;
 				this.element.textContent = "";
-				this.element.appendChild(this.editor);
+
+				if (this.element !== this.editor) {
+					this.element.appendChild(this.editor);
+				}
 			}
 		}
 	},
@@ -644,8 +704,12 @@ _.prototype = $.extend(new Super, {
 });
 
 _.types = {
+	'input[type="checkbox"]': {
+		datatype: "boolean"
+	},
 	"time": {
 		attribute: "datetime",
+		datatype: "dateTime",
 
 		editor: function () {
 			var types = {
@@ -755,10 +819,21 @@ var _ = Wysie.Scope = function (element) {
 			})
 		};
 
-		this.element._.delegate("click", {
-			"button.edit": this.edit.bind(this),
-			"button.save": this.save.bind(this),
-			"button.cancel": this.cancel.bind(this)
+		this.element._.delegate({
+			click: {
+				"button.edit": this.edit.bind(this),
+				"button.save": this.save.bind(this),
+				"button.cancel": this.cancel.bind(this)
+			},
+			keyup: {
+				"input": function(evt) {
+					var code = evt.keyCode;
+
+					if (evt.keyCode == 13) { // Enter
+						me.save();
+					}
+				}
+			}
 		});
 
 		// If root, add Save & Cancel button

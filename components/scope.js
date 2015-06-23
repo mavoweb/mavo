@@ -40,10 +40,21 @@ var _ = Wysie.Scope = function (element) {
 			})
 		};
 
-		this.element._.delegate("click", {
-			"button.edit": this.edit.bind(this),
-			"button.save": this.save.bind(this),
-			"button.cancel": this.cancel.bind(this)
+		this.element._.delegate({
+			click: {
+				"button.edit": this.edit.bind(this),
+				"button.save": this.save.bind(this),
+				"button.cancel": this.cancel.bind(this)
+			},
+			keyup: {
+				"input": function(evt) {
+					var code = evt.keyCode;
+
+					if (evt.keyCode == 13) { // Enter
+						me.save();
+					}
+				}
+			}
 		});
 
 		// If root, add Save & Cancel button
