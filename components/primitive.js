@@ -170,7 +170,7 @@ var _ = Wysie.Primitive = function (element) {
 _.prototype = $.extend(new Super, {
 	get value() {
 		if (this.editing || this.editing === undefined) {
-			return this.editorValue || this.element.getAttribute(this.attribute || "content");
+			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
 		}
 		else if (this.attribute) {
 			return this.element.getAttribute(this.attribute);

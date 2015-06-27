@@ -558,7 +558,7 @@ var _ = Wysie.Primitive = function (element) {
 _.prototype = $.extend(new Super, {
 	get value() {
 		if (this.editing || this.editing === undefined) {
-			return this.editorValue || this.element.getAttribute(this.attribute || "content");
+			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
 		}
 		else if (this.attribute) {
 			return this.element.getAttribute(this.attribute);
@@ -969,9 +969,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 		after: this.template,
 		events: {
 			"click": function() {
-				var item = me.add();
-
-				item._.data.unit.edit();
+				me.addEditable();
 			}
 		}
 	});
@@ -1017,6 +1015,10 @@ var _ = Wysie.Collection = function (template, wysie) {
 	});
 
 	// TODO Add clone button to the template
+
+	if (this.required) {
+		this.addEditable();
+	}
 };
 
 _.prototype = {
@@ -1052,6 +1054,14 @@ _.prototype = {
 		$.before(item, this.addButton);
 
 		item._.data.unit = Wysie.Unit.create(item, this);
+
+		return item;
+	},
+
+	addEditable: function() {
+		var item = this.add();
+
+		item._.data.unit.edit();
 
 		return item;
 	},

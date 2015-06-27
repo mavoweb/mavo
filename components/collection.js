@@ -27,9 +27,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 		after: this.template,
 		events: {
 			"click": function() {
-				var item = me.add();
-
-				item._.data.unit.edit();
+				me.addEditable();
 			}
 		}
 	});
@@ -75,6 +73,10 @@ var _ = Wysie.Collection = function (template, wysie) {
 	});
 
 	// TODO Add clone button to the template
+
+	if (this.required) {
+		this.addEditable();
+	}
 };
 
 _.prototype = {
@@ -110,6 +112,14 @@ _.prototype = {
 		$.before(item, this.addButton);
 
 		item._.data.unit = Wysie.Unit.create(item, this);
+
+		return item;
+	},
+
+	addEditable: function() {
+		var item = this.add();
+
+		item._.data.unit.edit();
 
 		return item;
 	},
