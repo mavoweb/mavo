@@ -286,6 +286,11 @@ _.prototype = $.extend(new Super, {
 		}
 	},
 
+	cancel: function() {
+		this.value = this.savedValue;
+		this.save();
+	},
+
 	edit: function () {
 		this.savedValue = this.value;
 		this.editing = true;
@@ -303,11 +308,6 @@ _.prototype = $.extend(new Super, {
 				}
 			}
 		}
-	},
-
-	cancel: function() {
-		this.value = this.savedValue; // TODO setter for value
-		this.save();
 	},
 
 	render: function(data) {

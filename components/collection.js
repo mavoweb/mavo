@@ -111,7 +111,7 @@ _.prototype = {
 
 		$.before(item, this.addButton);
 
-		item._.data.unit = Wysie.Unit.create(item, this);
+		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 
 		return item;
 	},

@@ -8,12 +8,12 @@ var _ = self.Wysie = function (template) {
 	this.template = template;
 	
 	// TODO escaping of # and \
-	var storeURL = this.template.getAttribute("data-store").split("#");
+	var storeURL = this.template.getAttribute("data-store");
 
 	this.store = {
 		href: storeURL,
-		url: storeURL[0],
-		path: storeURL[1] || null
+		url: storeURL.split("#")[0],
+		path: storeURL.split("#")[1] || null
 	};
 
 	this.template.removeAttribute("data-store");
@@ -26,9 +26,8 @@ var _ = self.Wysie = function (template) {
 	this.root = new _[_.is("multiple", this.template)? "Collection" : "Scope"](template, this);
 
 	// Fetch existing data
-	if (this.store.url) {
+	if (this.store.href) {
 		if (localStorage[this.store.href]) {
-			// TODO what about local-only storage?
 			me.render(JSON.parse(localStorage[this.store.href]));
 		}
 		else {
@@ -40,8 +39,12 @@ var _ = self.Wysie = function (template) {
 				if (xhr.readyState == 4) {
 					if (xhr.status >= 200 || xhr.status === 0) {
 						var data = JSON.parse(xhr.responseText);
+						
+						data = _.queryJSON(data, this.store.path);
 
 						me.render(data);
+
+						localStorage[me.store.href] = me.toJSON();
 					}
 				}
 			};
@@ -61,9 +64,11 @@ _.prototype = {
 	},
 
 	render: function(data) {
-		data = _.queryJSON(data, this.store.path);
-		
 		this.root.render(data);
+	},
+
+	save: function() {
+		localStorage[this.store.href] = this.toJSON();
 	}
 };
 
@@ -674,6 +679,11 @@ _.prototype = $.extend(new Super, {
 		}
 	},
 
+	cancel: function() {
+		this.value = this.savedValue;
+		this.save();
+	},
+
 	edit: function () {
 		this.savedValue = this.value;
 		this.editing = true;
@@ -691,11 +701,6 @@ _.prototype = $.extend(new Super, {
 				}
 			}
 		}
-	},
-
-	cancel: function() {
-		this.value = this.savedValue; // TODO setter for value
-		this.save();
 	},
 
 	render: function(data) {
@@ -781,7 +786,7 @@ _.types = {
 
 var Super = Wysie.Unit;
 
-var _ = Wysie.Scope = function (element) {
+var _ = Wysie.Scope = function (element, wysie) {
 	var me = this;
 
 	Super.apply(this, arguments);
@@ -898,7 +903,9 @@ _.prototype = $.extend(new Super, {
 
 		this.properties.forEach(function(prop){
 			prop._.data.unit.save();
-		}, this);	
+		}, this);
+
+		this.wysie.save();
 	},
 
 	cancel: function() {
@@ -1053,7 +1060,7 @@ _.prototype = {
 
 		$.before(item, this.addButton);
 
-		item._.data.unit = Wysie.Unit.create(item, this);
+		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 
 		return item;
 	},

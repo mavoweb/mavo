@@ -2,7 +2,7 @@
 
 var Super = Wysie.Unit;
 
-var _ = Wysie.Scope = function (element) {
+var _ = Wysie.Scope = function (element, wysie) {
 	var me = this;
 
 	Super.apply(this, arguments);
@@ -119,7 +119,9 @@ _.prototype = $.extend(new Super, {
 
 		this.properties.forEach(function(prop){
 			prop._.data.unit.save();
-		}, this);	
+		}, this);
+
+		this.wysie.save();
 	},
 
 	cancel: function() {
