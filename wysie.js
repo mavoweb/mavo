@@ -1,29 +1,23 @@
 (function () {
 
-var _ = self.Wysie = function (template) {
+var _ = self.Wysie = function (element) {
 	_.all.push(this);
 
 	var me = this;
 
-	this.template = template;
+	this.element = element;
 	
 	// TODO escaping of # and \
-	var storeURL = this.template.getAttribute("data-store");
+	this.store = new URL(this.element.getAttribute("data-store"), location);
 
-	this.store = {
-		href: storeURL,
-		url: storeURL.split("#")[0],
-		path: storeURL.split("#")[1] || null
-	};
+	this.element.removeAttribute("data-store");
 
-	this.template.removeAttribute("data-store");
-
-	if (!_.is("scope", this.template)) {
-		this.template.setAttribute("typeof", "");
+	if (!_.is("scope", this.element)) {
+		this.element.setAttribute("typeof", "");
 	}
 
 	// Build wysie objects
-	this.root = new _[_.is("multiple", this.template)? "Collection" : "Scope"](template, this);
+	this.root = new _[_.is("multiple", this.element)? "Collection" : "Scope"](element, this);
 
 	// Fetch existing data
 	if (this.store.href) {
@@ -31,25 +25,9 @@ var _ = self.Wysie = function (template) {
 			me.render(JSON.parse(localStorage[this.store.href]));
 		}
 		else {
-			var xhr = new XMLHttpRequest();
+			this.storage = new _.Storage(this);
 
-			xhr.open("GET", this.store.url);
-
-			xhr.onreadystatechange = function(){
-				if (xhr.readyState == 4) {
-					if (xhr.status >= 200 || xhr.status === 0) {
-						var data = JSON.parse(xhr.responseText);
-						
-						data = _.queryJSON(data, this.store.path);
-
-						me.render(data);
-
-						localStorage[me.store.href] = me.toJSON();
-					}
-				}
-			};
-
-			xhr.send(null);
+			this.storage.load();
 		}
 	}
 };
@@ -69,6 +47,7 @@ _.prototype = {
 
 	save: function() {
 		localStorage[this.store.href] = this.toJSON();
+		this.storage.save();
 	}
 };
 
@@ -154,12 +133,105 @@ $.extend(_, {
 	}
 });
 
+_.Storage = function(wysie) {
+	this.wysie = wysie;
+
+	var adapters = _.Storage.adapters;
+
+	for (var id in adapters) {
+		var adapter = adapters[id];
+
+		if (adapter.url && adapter.url.test(this.wysie.store)) {
+			this.id = id;
+		}
+	}
+
+	this.id = this.id || "default";
+	this.adapter = adapters[this.id];
+};
+
+$.extend(_.Storage.prototype, {
+	load: function() {
+		if (this.adapter.private && this.adapter.login && !this.authenticated) {
+			this.login(function(){
+				this.load();
+			});
+		}
+
+		this.adapter.load.call(this);
+	},
+
+	save: function() {
+		if (this.adapter.login && !this.authenticated) {
+			this.login(function(){
+				this.save();
+			});
+		}
+
+		this.adapter.save.call(this);
+	},
+
+	login: function(callback) {
+		this.adapter.login.call(this, function(){
+			document.body.classList.add(this.id + "-authenticated");
+
+			callback.call(this);
+		});
+	},
+
+	logout: function(callback) {
+		this.adapter.logout.call(this, function(){
+			document.body.classList.remove(this.id + "-authenticated");
+
+			callback.call(this);
+		});
+	},
+
+	// Get storage parameters from the main element. Used for API keys and the like.
+	param: function(id) {
+		this.params = this.params || {};
+
+		this.params[id] = this.wysie.element.getAttribute("data-store-" + id);
+
+		this.wysie.element.removeAttribute("data-store-" + id);
+
+		return this.params[id];
+	}
+});
+
+$.extend(_.Storage, {
+	adapters: {
+		default: function() {
+			load: function() {
+				var xhr = new XMLHttpRequest();
+
+				xhr.open("GET", this.store.href);
+
+				xhr.onreadystatechange = function(){
+					if (xhr.readyState == 4) {
+						if (xhr.status >= 200 || xhr.status === 0) {
+							var data = JSON.parse(xhr.responseText);
+							
+							data = _.queryJSON(data, me.store.hash);
+
+							me.render(data);
+
+							localStorage[me.store.href] = me.toJSON();
+						}
+					}
+				};
+
+				xhr.send(null);
+			}
+		}
+	}
+})
 
 })();
 
 document.addEventListener("DOMContentLoaded", function() {
-	$$("[data-store]").forEach(function (template) {
-		new Wysie(template);
+	$$("[data-store]").forEach(function (element) {
+		new Wysie(element);
 	});
 });
 
