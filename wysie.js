@@ -21,14 +21,9 @@ var _ = self.Wysie = function (element) {
 
 	// Fetch existing data
 	if (this.store.href) {
-		if (localStorage[this.store.href]) {
-			me.render(JSON.parse(localStorage[this.store.href]));
-		}
-		else {
-			this.storage = new _.Storage(this);
+		this.storage = new _.Storage(this);
 
-			this.storage.load();
-		}
+		this.storage.load();
 	}
 };
 
@@ -140,35 +135,57 @@ _.Storage = function(wysie) {
 
 	for (var id in adapters) {
 		var adapter = adapters[id];
-
-		if (adapter.url && adapter.url.test(this.wysie.store)) {
-			this.id = id;
+		
+		if (adapter.url) {
+			if (
+				adapter.url.test && adapter.url.test(this.wysie.store) ||
+				typeof adapter.url === "function" && adapter.url.call(this)
+			) {
+				this.id = id;
+			}
 		}
 	}
 
-	this.id = this.id || "default";
-	this.adapter = adapters[this.id];
+	this.adapter = adapters[this.id] || null;
 };
 
 $.extend(_.Storage.prototype, {
+	get href () {
+		return this.wysie.store.href;
+	},
+
+	get url () {
+		return this.wysie.store;
+	},
+
 	load: function() {
-		if (this.adapter.private && this.adapter.login && !this.authenticated) {
-			this.login(function(){
-				this.load();
-			});
+		if (localStorage[this.href]) {
+			this.wysie.render(JSON.parse(localStorage[this.href]));
 		}
 
-		this.adapter.load.call(this);
+		if (this.adapter) {
+			if (this.adapter.private && this.adapter.login && !this.authenticated) {
+				this.login(function(){
+					this.load();
+				});
+			}
+
+			this.adapter.load.call(this);
+		}
 	},
 
 	save: function() {
-		if (this.adapter.login && !this.authenticated) {
-			this.login(function(){
-				this.save();
-			});
-		}
+		localStorage[this.href] = this.wysie.toJSON();
 
-		this.adapter.save.call(this);
+		if (this.adapter) {
+			if (this.adapter.login && !this.authenticated) {
+				this.login(function(){
+					this.save();
+				});
+			}
+
+			this.adapter.save.call(this);
+		}
 	},
 
 	login: function(callback) {
@@ -201,27 +218,28 @@ $.extend(_.Storage.prototype, {
 
 $.extend(_.Storage, {
 	adapters: {
-		default: function() {
+		default: {
+			url: function() {
+				return this.url.protocol !== location.protocol ||
+				       this.url.hostname !== location.hostname ||
+				       this.url.port !== location.port;
+			},
+
 			load: function() {
-				var xhr = new XMLHttpRequest();
+				var me = this;
 
-				xhr.open("GET", this.store.href);
+				$.xhr({
+					url: this.href,
+					callback: function(){
+						var data = JSON.parse(this.responseText);
+						
+						data = _.queryJSON(data, me.url.hash.slice(1));
 
-				xhr.onreadystatechange = function(){
-					if (xhr.readyState == 4) {
-						if (xhr.status >= 200 || xhr.status === 0) {
-							var data = JSON.parse(xhr.responseText);
-							
-							data = _.queryJSON(data, me.store.hash);
+						me.wysie.render(data);
 
-							me.render(data);
-
-							localStorage[me.store.href] = me.toJSON();
-						}
+						localStorage[me.href] = me.wysie.toJSON();
 					}
-				};
-
-				xhr.send(null);
+				});
 			}
 		}
 	}
@@ -1171,6 +1189,86 @@ _.prototype = {
 		}) + "]";
 	}
 };
+
+})();
+
+(function(){
+
+if (!self.Wysie) {
+	return;
+}
+
+var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
+
+(function defineAdapter() {
+
+if (!self.Dropbox) {
+	document.createElement("script")._.set({
+		src: dropboxURL,
+		async: true,
+		onload: defineAdapter
+	});
+
+	return;
+}
+
+Wysie.Storage.adapters["dropbox"] = {
+	url: /dropbox.com\//,
+	load: Wysie.Storage.adapters.default.load,
+	/*load: function() {
+		client.readFile(this.wysie.store, function(error, data) {
+			if (error) {
+				alert("Error: " + error);  // TODO better error handling
+				return;
+			}
+
+			alert(data);  // data has the file's contents
+		})
+	},*/
+	save: function() {
+		client.writeFile(this.wysie.store, this.wysie.toJSON(), function(error, stat) {
+			if (error) {
+				alert("Error: " + error);  // TODO better error handling
+				return;
+			}
+
+		  console.log("File saved as revision " + stat.versionTag);
+		});
+	},
+	login: function(callback) {
+		if (!this.client) {
+			this.client = new Dropbox.Client({ key: this.param("key") });
+		}
+
+		if (!this.client.isAuthenticated()) {
+			client.authDriver(new Dropbox.AuthDriver.Popup({
+			    receiverUrl: 'data:text/html,charset=utf8,<!DOCTYPE html><html lang="en"><head>\
+			        <script src="' + dropboxURL + '"></script>\
+			        <script>\
+			          Dropbox.AuthDriver.Popup.oauthReceiver();\
+			          close();\
+			        </script>\
+			      </head><body></body></html>'
+			}));
+
+			this.client.authenticate(function(error, client) {
+				if (error) {
+					alert("Error: " + error);  // TODO better error handling
+					return;
+				}
+
+				this.authenticated = true;
+				callback.call(this);
+			});
+		}
+	},
+	logout: function() {
+		this.client.signOut();
+		this.authenticated = false;
+	}
+};
+
+})();
 
 })();
 

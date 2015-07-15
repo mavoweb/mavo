@@ -20,7 +20,8 @@ if (!self.Dropbox) {
 
 Wysie.Storage.adapters["dropbox"] = {
 	url: /dropbox.com\//,
-	load: function() {
+	load: Wysie.Storage.adapters.default.load,
+	/*load: function() {
 		client.readFile(this.wysie.store, function(error, data) {
 			if (error) {
 				alert("Error: " + error);  // TODO better error handling
@@ -29,7 +30,7 @@ Wysie.Storage.adapters["dropbox"] = {
 
 			alert(data);  // data has the file's contents
 		})
-	},
+	},*/
 	save: function() {
 		client.writeFile(this.wysie.store, this.wysie.toJSON(), function(error, stat) {
 			if (error) {
