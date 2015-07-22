@@ -8,12 +8,12 @@ var _ = Wysie.Scope = function (element, wysie) {
 	Super.apply(this, arguments);
 
 	this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
-		return new Wysie.Collection(template, me);
+		return new Wysie.Collection(template, me.wysie);
 	}, this);
 
 	// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
 	this.properties.forEach(function(prop){
-		prop._.data.unit = Super.create(prop, me);
+		prop._.data.unit = Super.create(prop, me.wysie);
 	});
 
 	if (this.isRoot) {
@@ -63,7 +63,8 @@ var _ = Wysie.Scope = function (element, wysie) {
 	}
 };
 
-_.prototype = $.extend(new Super, {
+_.prototype = $.extend(Object.create(Super.prototype), {
+	constructor: _,
 	get isRoot() {
 		return !this.property;
 	},
@@ -151,13 +152,13 @@ _.prototype = $.extend(new Super, {
 			if (datum) {
 				property.render(datum);
 			}
+
+			property.save();
 		});
 
 		this.collections.forEach(function (collection){
 			collection.render(data[collection.property]);
 		});
-
-		this.save();
 	}
 });
 

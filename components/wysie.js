@@ -160,7 +160,7 @@ $.extend(_.Storage.prototype, {
 
 	load: function() {
 		if (localStorage[this.href]) {
-			this.wysie.render(JSON.parse(localStorage[this.href]));
+			//this.wysie.render(JSON.parse(localStorage[this.href]));
 		}
 
 		if (this.adapter) {
@@ -177,7 +177,7 @@ $.extend(_.Storage.prototype, {
 	save: function() {
 		localStorage[this.href] = this.wysie.toJSON();
 
-		if (this.adapter) {
+		if (this.adapter && this.adapter.save) {
 			if (this.adapter.login && !this.authenticated) {
 				this.login(function(){
 					this.save();
@@ -222,7 +222,8 @@ $.extend(_.Storage, {
 			url: function() {
 				return this.url.protocol !== location.protocol ||
 				       this.url.hostname !== location.hostname ||
-				       this.url.port !== location.port;
+				       this.url.port     !== location.port     ||
+				       this.url.pathname !== location.pathname;
 			},
 
 			load: function() {

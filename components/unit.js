@@ -5,7 +5,7 @@
 
 var _ = Wysie.Unit = function(element, wysie) {
 	if (!element || !wysie) {
-		return this;
+		throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 	}
 
 	this.wysie = wysie;
@@ -28,8 +28,8 @@ $.extend(_.prototype, {
 
 $.extend(_, {
 	create: function(element, wysie) {
-		if (!element) {
-			throw new TypeError("Wysie.Unit.create() requires an element argument");
+		if (!element || !wysie) {
+			throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 		}
 
 		return new Wysie[element.matches(Wysie.selectors.scope)? "Scope" : "Primitive"](element, wysie);

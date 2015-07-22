@@ -160,7 +160,7 @@ $.extend(_.Storage.prototype, {
 
 	load: function() {
 		if (localStorage[this.href]) {
-			this.wysie.render(JSON.parse(localStorage[this.href]));
+			//this.wysie.render(JSON.parse(localStorage[this.href]));
 		}
 
 		if (this.adapter) {
@@ -177,7 +177,7 @@ $.extend(_.Storage.prototype, {
 	save: function() {
 		localStorage[this.href] = this.wysie.toJSON();
 
-		if (this.adapter) {
+		if (this.adapter && this.adapter.save) {
 			if (this.adapter.login && !this.authenticated) {
 				this.login(function(){
 					this.save();
@@ -222,7 +222,8 @@ $.extend(_.Storage, {
 			url: function() {
 				return this.url.protocol !== location.protocol ||
 				       this.url.hostname !== location.hostname ||
-				       this.url.port !== location.port;
+				       this.url.port     !== location.port     ||
+				       this.url.pathname !== location.pathname;
 			},
 
 			load: function() {
@@ -287,8 +288,8 @@ var _ = self.Stretchy = {
 	script: $$("script").pop(),
 
 	// Autosize one element. The core of Stretchy.
-	apply: function(element) {
-		if (!_.applies(element)) {
+	resize: function(element) {
+		if (!_.resizes(element)) {
 			return;
 		}
 		
@@ -332,10 +333,10 @@ var _ = self.Stretchy = {
 
 			element.style.width = width + "px";
 		}
-		else if(type == "select") {
+		else if (type == "select") {
 			// Need to use dummy element to measure :(
 			var option = document.createElement("_");
-			option.textContent = element.selectedOptions[0].textContent;
+			option.textContent = element.options[element.selectedIndex].textContent;
 			element.parentNode.insertBefore(option, element.nextSibling);
 
 			// The name of the appearance property, as it might be prefixed
@@ -357,7 +358,7 @@ var _ = self.Stretchy = {
 			if (option.offsetWidth > 0) {
 				element.style.width = option.offsetWidth + "px";
 
-				if (cs[appearance] && cs[appearance] !== "none") {
+				if (!cs[appearance] || cs[appearance] !== "none") {
 					// Account for arrow
 					element.style.width = "calc(" + element.style.width + " + 2em)";
 				}
@@ -373,16 +374,16 @@ var _ = self.Stretchy = {
 	},
 
 	// Autosize multiple elements
-	applyAll: function(elements) {
+	resizeAll: function(elements) {
 		$$(elements || _.selectors.base).forEach(function (element) {
-			_.apply(element);
+			_.resize(element);
 		});	
 	},
 
 	active: true,
 
 	// Will stretchy do anything for this element?
-	applies: function(element) {
+	resizes: function(element) {
 		return element &&
 		       element.parentNode &&
 		       element.matches &&
@@ -394,7 +395,7 @@ var _ = self.Stretchy = {
 		_.selectors.filter = _.script.getAttribute("data-filter") ||
 		                     ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || "*";
 
-		_.applyAll();
+		_.resizeAll();
 	},
 
 	$$: $$
@@ -414,7 +415,7 @@ else {
 // Listen for changes
 var listener = function(evt) {
 	if (_.active) {
-		_.apply(evt.target);
+		_.resize(evt.target);
 	}
 };
 
@@ -429,7 +430,7 @@ if (self.MutationObserver) {
 		if (_.active) {
 			mutations.forEach(function(mutation) {
 				if (mutation.type == "childList") {
-					Stretchy.applyAll(mutation.addedNodes);
+					Stretchy.resizeAll(mutation.addedNodes);
 				}
 			});
 		}
@@ -448,7 +449,7 @@ if (self.MutationObserver) {
 
 var _ = Wysie.Unit = function(element, wysie) {
 	if (!element || !wysie) {
-		return this;
+		throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 	}
 
 	this.wysie = wysie;
@@ -471,8 +472,8 @@ $.extend(_.prototype, {
 
 $.extend(_, {
 	create: function(element, wysie) {
-		if (!element) {
-			throw new TypeError("Wysie.Unit.create() requires an element argument");
+		if (!element || !wysie) {
+			throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 		}
 
 		return new Wysie[element.matches(Wysie.selectors.scope)? "Scope" : "Primitive"](element, wysie);
@@ -650,7 +651,8 @@ var _ = Wysie.Primitive = function (element) {
 	this.update(this.value);
 };
 
-_.prototype = $.extend(new Super, {
+_.prototype = $.extend(Object.create(Super.prototype), {
+	constructor: _,
 	get value() {
 		if (this.editing || this.editing === undefined) {
 			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
@@ -664,15 +666,13 @@ _.prototype = $.extend(new Super, {
 	},
 
 	set value(value) {
-		if (this.editing || this.editing === undefined) {
-			this.editorValue = value;
-		}
-		else {
-			this.element.textContent = value;
-		}
-
+		this.editorValue = value;
+		
 		if (this.attribute) {
 			this.element.setAttribute(this.attribute, value);
+		}
+		else if (!this.editing) {
+			this.element.textContent = value;
 		}
 
 		this.update(value);
@@ -700,8 +700,12 @@ _.prototype = $.extend(new Super, {
 		return this.value;
 	},
 
+	get exposed() {
+		return this.editor === this.element;
+	},
+
 	update: function (value) {
-		this.element.classList[value !== ""? "remove" : "add"]("empty");
+		this.element.classList[value !== "" && value !== null? "remove" : "add"]("empty");
 
 		// Crawl scope for property references (one-way data binding)
 		// TODO deal with references in text nodes with element siblings (wrap w/ span?)
@@ -763,7 +767,7 @@ _.prototype = $.extend(new Super, {
 		if (this.attribute) {
 			this.element.removeAttribute("tabindex");
 		}
-		else if (this.element !== this.editor) {
+		else if (!this.exposed) {
 			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
@@ -836,7 +840,7 @@ _.types = {
 				// TODO do this properly
 				var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
-				this.element.textContent = (date.getDate() + 1) + " " + months[date.getMonth()] + " " + date.getFullYear();
+				this.element.textContent = date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
 			}
 		}
 	},
@@ -882,12 +886,12 @@ var _ = Wysie.Scope = function (element, wysie) {
 	Super.apply(this, arguments);
 
 	this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
-		return new Wysie.Collection(template, me);
+		return new Wysie.Collection(template, me.wysie);
 	}, this);
 
 	// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
 	this.properties.forEach(function(prop){
-		prop._.data.unit = Super.create(prop, me);
+		prop._.data.unit = Super.create(prop, me.wysie);
 	});
 
 	if (this.isRoot) {
@@ -937,7 +941,8 @@ var _ = Wysie.Scope = function (element, wysie) {
 	}
 };
 
-_.prototype = $.extend(new Super, {
+_.prototype = $.extend(Object.create(Super.prototype), {
+	constructor: _,
 	get isRoot() {
 		return !this.property;
 	},
@@ -1025,13 +1030,13 @@ _.prototype = $.extend(new Super, {
 			if (datum) {
 				property.render(datum);
 			}
+
+			property.save();
 		});
 
 		this.collections.forEach(function (collection){
 			collection.render(data[collection.property]);
 		});
-
-		this.save();
 	}
 });
 
@@ -1200,16 +1205,12 @@ if (!self.Wysie) {
 
 var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-(function defineAdapter() {
-
 if (!self.Dropbox) {
-	document.createElement("script")._.set({
+	var script = document.createElement("script")._.set({
 		src: dropboxURL,
 		async: true,
-		onload: defineAdapter
+		inside: document.head
 	});
-
-	return;
 }
 
 Wysie.Storage.adapters["dropbox"] = {
@@ -1242,13 +1243,14 @@ Wysie.Storage.adapters["dropbox"] = {
 
 		if (!this.client.isAuthenticated()) {
 			client.authDriver(new Dropbox.AuthDriver.Popup({
-			    receiverUrl: 'data:text/html,charset=utf8,<!DOCTYPE html><html lang="en"><head>\
+			    receiverUrl: 'data:text/html,charset=utf8,\
+			    	<!DOCTYPE html><html lang="en"><head>\
 			        <script src="' + dropboxURL + '"></script>\
 			        <script>\
 			          Dropbox.AuthDriver.Popup.oauthReceiver();\
 			          close();\
 			        </script>\
-			      </head><body></body></html>'
+			    	</head><body></body></html>'
 			}));
 
 			this.client.authenticate(function(error, client) {
@@ -1267,8 +1269,6 @@ Wysie.Storage.adapters["dropbox"] = {
 		this.authenticated = false;
 	}
 };
-
-})();
 
 })();
 

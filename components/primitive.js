@@ -167,7 +167,8 @@ var _ = Wysie.Primitive = function (element) {
 	this.update(this.value);
 };
 
-_.prototype = $.extend(new Super, {
+_.prototype = $.extend(Object.create(Super.prototype), {
+	constructor: _,
 	get value() {
 		if (this.editing || this.editing === undefined) {
 			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
@@ -181,15 +182,13 @@ _.prototype = $.extend(new Super, {
 	},
 
 	set value(value) {
-		if (this.editing || this.editing === undefined) {
-			this.editorValue = value;
-		}
-		else {
-			this.element.textContent = value;
-		}
-
+		this.editorValue = value;
+		
 		if (this.attribute) {
 			this.element.setAttribute(this.attribute, value);
+		}
+		else if (!this.editing) {
+			this.element.textContent = value;
 		}
 
 		this.update(value);
@@ -217,8 +216,12 @@ _.prototype = $.extend(new Super, {
 		return this.value;
 	},
 
+	get exposed() {
+		return this.editor === this.element;
+	},
+
 	update: function (value) {
-		this.element.classList[value !== ""? "remove" : "add"]("empty");
+		this.element.classList[value !== "" && value !== null? "remove" : "add"]("empty");
 
 		// Crawl scope for property references (one-way data binding)
 		// TODO deal with references in text nodes with element siblings (wrap w/ span?)
@@ -280,7 +283,7 @@ _.prototype = $.extend(new Super, {
 		if (this.attribute) {
 			this.element.removeAttribute("tabindex");
 		}
-		else if (this.element !== this.editor) {
+		else if (!this.exposed) {
 			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
@@ -353,7 +356,7 @@ _.types = {
 				// TODO do this properly
 				var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
-				this.element.textContent = (date.getDate() + 1) + " " + months[date.getMonth()] + " " + date.getFullYear();
+				this.element.textContent = date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
 			}
 		}
 	},
