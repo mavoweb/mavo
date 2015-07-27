@@ -159,9 +159,7 @@ $.extend(_.Storage.prototype, {
 	},
 
 	load: function() {
-		if (localStorage[this.href]) {
-			//this.wysie.render(JSON.parse(localStorage[this.href]));
-		}
+		var me = this;
 
 		if (this.adapter) {
 			if (this.adapter.private && this.adapter.login && !this.authenticated) {
@@ -170,7 +168,16 @@ $.extend(_.Storage.prototype, {
 				});
 			}
 
-			this.adapter.load.call(this);
+			this.adapter.load.call(this, {
+				onerror: function() {
+					if (localStorage[me.href]) {
+						me.wysie.render(JSON.parse(localStorage[me.href]));
+					}
+				}
+			});
+		}
+		else if (localStorage[this.href]) {
+			this.wysie.render(JSON.parse(localStorage[this.href]));
 		}
 	},
 
@@ -220,14 +227,13 @@ $.extend(_.Storage, {
 	adapters: {
 		default: {
 			url: function() {
-				return this.url.protocol !== location.protocol ||
-				       this.url.hostname !== location.hostname ||
-				       this.url.port     !== location.port     ||
+				return this.url.origin !== location.origin
 				       this.url.pathname !== location.pathname;
 			},
 
-			load: function() {
+			load: function(o) {
 				var me = this;
+				o = o || {};
 
 				$.xhr({
 					url: this.href,
@@ -239,7 +245,8 @@ $.extend(_.Storage, {
 						me.wysie.render(data);
 
 						localStorage[me.href] = me.wysie.toJSON();
-					}
+					},
+					onerror: o.onerror
 				});
 			}
 		}
