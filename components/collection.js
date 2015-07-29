@@ -126,6 +126,8 @@ _.prototype = {
 
 	delete: function(item) {
 		$.remove(item, {opacity: 0});
+
+		this.wysie.save();
 	},
 
 	render: function(data) {
