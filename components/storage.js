@@ -3,7 +3,7 @@
 var _ = Wysie.Storage = function(wysie) {
 	this.wysie = wysie;
 
-	var adapters = _.Storage.adapters;
+	var adapters = _.adapters;
 
 	for (var id in adapters) {
 		var adapter = adapters[id];
@@ -19,6 +19,12 @@ var _ = Wysie.Storage = function(wysie) {
 	}
 
 	this.adapter = adapters[this.id] || null;
+
+	if (this.adapter.init) {
+		this.adapter.init.call(this);
+
+		document.body.classList[this.adapter.authenticated? "add" : "remove"](this.id + "-authenticated");
+	}
 };
 
 $.extend(_.prototype, {
@@ -112,7 +118,7 @@ $.extend(_, {
 					callback: function(){
 						var data = JSON.parse(this.responseText);
 						
-						data = _.queryJSON(data, me.url.hash.slice(1));
+						data = Wysie.queryJSON(data, me.url.hash.slice(1));
 
 						me.wysie.render(data);
 

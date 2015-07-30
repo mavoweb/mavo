@@ -15,11 +15,19 @@ if (!self.Dropbox) {
 }
 
 Wysie.Storage.adapters["dropbox"] = {
-	url: /dropbox.com\//,
-	load: Wysie.Storage.adapters.http.load,
-	get canEdit() {
+	url: function() {
+		return /dropbox.com\//.test(this.url.domain) || this.url.protocol === "dropbox:";
+	},
+
+	get authenticated() {
 		return this.client.isAuthenticated();
 	},
+
+	init: function() {
+		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+	},
+
+	load: Wysie.Storage.adapters.http.load,
 	// TODO might be useful to use API methods to read private data
 	/*load: function() {
 		this.client.readFile(this.wysie.store, function(error, data) {
