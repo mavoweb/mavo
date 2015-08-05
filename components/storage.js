@@ -20,10 +20,14 @@ var _ = Wysie.Storage = function(wysie) {
 
 	this.adapter = adapters[this.id] || null;
 
-	if (this.adapter.init) {
-		this.adapter.init.call(this);
+	if (this.adapter) {
+		if (this.adapter.init) {
+			this.adapter.init.call(this);
 
-		document.body.classList[this.adapter.authenticated? "add" : "remove"](this.id + "-authenticated");
+			document.body.classList[this.adapter.authenticated? "add" : "remove"](this.id + "-authenticated");
+		}
+
+		
 	}
 };
 

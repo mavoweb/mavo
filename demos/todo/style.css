@@ -1,0 +1,124 @@
+* {
+	margin: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+}
+
+body {
+	min-height: 100vh;
+	box-sizing: border-box;
+	padding: 1em;
+	background: url(img/wood.png) hsl(30, 70%, 18%);
+	text-align: center;
+	font: 120% Helvetica Neue, sans-serif;
+	color: white;
+}
+
+a {
+	text-decoration: none;
+}
+
+@keyframes transform {
+	from { transform: rotate(5deg) }
+}
+
+ul {
+	position: relative;
+	display: block;
+	max-width: 20em;
+	padding: 2em;
+	padding-right: 3em;
+	border-top-right-radius: 100% 2%;
+	border-bottom-left-radius: 1% 100%;
+	margin: 1em auto;
+	background: hsl(55, 100%, 97%);
+	box-shadow: 2px 3px 20px black, 0 0 60px hsl(30, 80%, 30%) inset;
+	text-align: left;
+	color: #013;
+	list-style: none;
+}
+
+	ul::before,
+	ul::after {
+		content: '';
+		position: absolute;
+		top: 0; right: 0; bottom: 0; left: 0;
+		z-index: -1;
+		background: inherit;
+		box-shadow: inherit;
+		transform: rotate(-2deg);
+		animation: transform .4s cubic-bezier(.25,.1,.4,1.5);
+	}
+	
+	ul::after {
+		transform: rotate(3deg);
+	}
+
+	label {
+		display: block;
+		padding: .2em;
+		margin: .3em 0;
+		border-bottom: 1px dashed rgba(51, 85, 153, .5);
+		font-family: Marker Felt, Helvetica Neue, sans-serif;
+	}
+
+:checked + [property=task] {
+	font-style: italic;
+	text-decoration: line-through;
+	color: rgba(0,0,0,.5);
+}
+
+input {
+	outline: none !important;
+}
+
+input::-webkit-input-placeholder {
+	font-style: italic;
+			color: rgba(0,0,0,.3);
+}
+
+input::-moz-placeholder {
+	font-style: italic;
+	color: rgba(0,0,0,.3);
+}
+	
+	
+button.add {
+	padding: .2em .5em;
+	margin-top: 1em;
+	border-radius: .3em;
+	border: 1px solid rgba(0,0,0,.2);
+	background: hsl(80,90%,40%) linear-gradient(hsla(0,0%,100%,.3), hsla(0,0%,100%,0));
+	box-shadow: 0 1px hsla(0,0%,100%,.5) inset, 0 .1em .2em -.1em black;
+	color: white;
+	text-shadow: 0 -1px 1px rgba(0,0,0,.5);
+	font-weight: bold;
+	cursor: pointer;
+}
+
+	button.add:hover {
+		background-color: orange;
+	}
+	
+	button.add:active {
+		box-shadow: 0 .1em .3em rgba(0,0,0,.8) inset;
+		background-image: none;
+	}
+
+body > header {
+	display: block;
+	margin: 0 0 .7em;
+	font-size: 250%;
+}
+	
+body > footer {
+	display: block;
+	margin-top: 3em;
+	font-size: small;
+}
+
+/* We submit via enter only */
+.wysie-buttons {
+	display: none;
+}
