@@ -86,7 +86,7 @@ input::-moz-placeholder {
 	
 button.add {
 	padding: .2em .5em;
-	margin-top: 1em;
+	margin-bottom: 1em;
 	border-radius: .3em;
 	border: 1px solid rgba(0,0,0,.2);
 	background: hsl(80,90%,40%) linear-gradient(hsla(0,0%,100%,.3), hsla(0,0%,100%,0));

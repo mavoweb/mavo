@@ -43,41 +43,55 @@ Wysie.Storage.adapters["dropbox"] = {
 		var filename = (new URL(this.wysie.store)).pathname;
 		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
 
-		this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
-			if (error) {
-				alert("Error: " + error);  // TODO better error handling
-				return;
-			}
+		return new Promise(function(resolve, reject) {
+			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
+				if (error) {
+					return reject(Error(error));
+				}
 
-		  console.log("File saved as revision " + stat.versionTag);
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
+			});
 		});
 	},
-	login: function(callback) {
+	login: function() {
 		var me = this;
 
 		if (!this.client) {
 			this.client = new Dropbox.Client({ key: this.param("key") });
 		}
 
-		if (!this.client.isAuthenticated()) {
-			this.client.authDriver(new Dropbox.AuthDriver.Popup({
-			    receiverUrl: new URL("oauth.html", location) + ""
-			}));
+		return new Promise(function(resolve, reject) {
+			if (!me.client.isAuthenticated()) {
+				me.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL("oauth.html", location) + ""
+				}));
 
-			this.client.authenticate(function(error, client) {
-				if (error) {
-					alert("Error: " + error);  // TODO better error handling
-					return;
-				}
+				me.client.authenticate(function(error, client) {
+					if (error) {
+						reject(Error(error));
+					}
 
-				this.authenticated = true;
-				callback.call(me);
-			});
-		}
+					me.authenticated = true;
+
+					resolve();
+				});
+			}
+			else {
+				resolve();
+			}
+		});
 	},
 	logout: function() {
-		this.client.signOut();
-		this.authenticated = false;
+		var me = this;
+
+		return new Promise(function(resolve, reject){
+			me.client.signOut(null, function(){
+				me.authenticated = false;	
+				resolve();	
+			});
+		})
+		
 	}
 };
 

@@ -74,7 +74,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	if (this.required) {
+	if (this.required && !this.length) {
 		this.addEditable();
 	}
 };
@@ -109,7 +109,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		$.before(item, this.addButton);
+		$.before(item, this.wysie.marker);
 
 		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 

@@ -16,8 +16,19 @@ var _ = self.Wysie = function (element) {
 		this.element.setAttribute("typeof", "");
 	}
 
-	// Build wysie objects
-	this.root = new _[_.is("multiple", this.element)? "Collection" : "Scope"](element, this);
+	// Build wysie objects and keep position in the DOM with marker
+	if (_.is("multiple", this.element)) {
+		this.marker = document.createElement("span")._.set({
+			className: "wysie-marker",
+			hidden: true,
+			after: this.element
+		});
+
+		this.root = new _.Collection(element, this);
+	}
+	else {
+		this.root = this.marker = new _.Scope(element, this);
+	}
 
 	// Fetch existing data
 	if (this.store.href) {
@@ -166,7 +177,7 @@ var _ = Wysie.Storage = function(wysie) {
 			document.body.classList[this.adapter.authenticated? "add" : "remove"](this.id + "-authenticated");
 		}
 
-		
+		this.inProgress = true;
 	}
 };
 
@@ -179,57 +190,79 @@ $.extend(_.prototype, {
 		return this.wysie.store;
 	},
 
+	set inProgress(value) {
+		if (value) {
+			document.createElement("div")._.set({
+				textContent: "Loading…",
+				className: "progress",
+				after: this.wysie.marker
+			});
+		}
+		else {
+			var progress = this.wysie.marker.nextElementSibling;
+			progress = progress.matches(".progress")? progress : null;
+
+			$.remove(progress);
+		}
+	},
+
 	load: function() {
 		var me = this;
 
 		if (this.adapter) {
 			if (this.adapter.private && this.adapter.login && !this.authenticated) {
-				this.login(function(){
-					this.load();
-				});
+				this.login().then(this.load.bind(this));
 			}
 
-			this.adapter.load.call(this, {
-				onerror: function() {
-					if (localStorage[me.href]) {
-						me.wysie.render(JSON.parse(localStorage[me.href]));
-					}
-				}
+			this.adapter.load.call(this).then(function() {
+				me.inProgress = false;
+			}, function() {
+				me.loadLocal();
+
+				me.inProgress = false;
 			});
 		}
-		else if (localStorage[this.href]) {
+		else {
+			this.loadLocal();
+			me.inProgress = false;
+		}
+	},
+
+	loadLocal: function() {
+		if (localStorage[this.href]) {
 			this.wysie.render(JSON.parse(localStorage[this.href]));
 		}
 	},
 
 	save: function() {
+		// Local backup first
 		localStorage[this.href] = this.wysie.toJSON();
 
 		if (this.adapter && this.adapter.save) {
-			if (this.adapter.login && !this.authenticated) {
-				this.login(function(){
-					this.save();
-				});
-			}
-
-			this.adapter.save.call(this);
+			this.login().then(this.adapter.save.bind(this));
 		}
 	},
 
-	login: function(callback) {
-		this.adapter.login.call(this, function(){
-			document.body.classList.add(this.id + "-authenticated");
-
-			callback.call(this);
-		});
+	login: function() {
+		if (this.adapter.login && !this.authenticated) {
+			return this.adapter.login.call(this).then(function(){
+				document.body.classList.add(this.id + "-authenticated");
+			});
+		}
+		else {
+			return Promise.resolve();
+		}
 	},
 
-	logout: function(callback) {
-		this.adapter.logout.call(this, function(){
-			document.body.classList.remove(this.id + "-authenticated");
-
-			callback.call(this);
-		});
+	logout: function() {
+		if (this.adapter.logout && this.authenticated) {
+			return this.adapter.logout.call(this).then(function(){
+				document.body.classList.remove(this.id + "-authenticated");
+			});
+		}
+		else {
+			return Promise.resolve();
+		}
 	},
 
 	// Get storage parameters from the main element. Used for API keys and the like.
@@ -256,19 +289,15 @@ $.extend(_, {
 				var me = this;
 				o = o || {};
 
-				$.xhr({
-					url: this.href,
-					callback: function(){
-						var data = JSON.parse(this.responseText);
-						
-						data = Wysie.queryJSON(data, me.url.hash.slice(1));
+				return $.fetch(this.href, {
+					responseType: "json"
+				}).then(function(xhr){
+					var data = Wysie.queryJSON(xhr.response, me.url.hash.slice(1));
 
-						me.wysie.render(data);
+					me.wysie.render(data);
 
-						localStorage[me.href] = me.wysie.toJSON();
-					},
-					onerror: o.onerror
-				});
+					localStorage[me.href] = me.wysie.toJSON();
+				}, o.onerror);
 			}
 
 			// TODO should we have a save() method that uses HTTP PUT if it works?
@@ -1142,7 +1171,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	if (this.required) {
+	if (this.required && !this.length) {
 		this.addEditable();
 	}
 };
@@ -1177,7 +1206,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		$.before(item, this.addButton);
+		$.before(item, this.wysie.marker);
 
 		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 
@@ -1268,41 +1297,55 @@ Wysie.Storage.adapters["dropbox"] = {
 		var filename = (new URL(this.wysie.store)).pathname;
 		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
 
-		this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
-			if (error) {
-				alert("Error: " + error);  // TODO better error handling
-				return;
-			}
+		return new Promise(function(resolve, reject) {
+			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
+				if (error) {
+					return reject(Error(error));
+				}
 
-		  console.log("File saved as revision " + stat.versionTag);
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
+			});
 		});
 	},
-	login: function(callback) {
+	login: function() {
 		var me = this;
 
 		if (!this.client) {
 			this.client = new Dropbox.Client({ key: this.param("key") });
 		}
 
-		if (!this.client.isAuthenticated()) {
-			this.client.authDriver(new Dropbox.AuthDriver.Popup({
-			    receiverUrl: new URL("oauth.html", location) + ""
-			}));
+		return new Promise(function(resolve, reject) {
+			if (!me.client.isAuthenticated()) {
+				me.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL("oauth.html", location) + ""
+				}));
 
-			this.client.authenticate(function(error, client) {
-				if (error) {
-					alert("Error: " + error);  // TODO better error handling
-					return;
-				}
+				me.client.authenticate(function(error, client) {
+					if (error) {
+						reject(Error(error));
+					}
 
-				this.authenticated = true;
-				callback.call(me);
-			});
-		}
+					me.authenticated = true;
+
+					resolve();
+				});
+			}
+			else {
+				resolve();
+			}
+		});
 	},
 	logout: function() {
-		this.client.signOut();
-		this.authenticated = false;
+		var me = this;
+
+		return new Promise(function(resolve, reject){
+			me.client.signOut(null, function(){
+				me.authenticated = false;	
+				resolve();	
+			});
+		})
+		
 	}
 };
 

@@ -16,8 +16,19 @@ var _ = self.Wysie = function (element) {
 		this.element.setAttribute("typeof", "");
 	}
 
-	// Build wysie objects
-	this.root = new _[_.is("multiple", this.element)? "Collection" : "Scope"](element, this);
+	// Build wysie objects and keep position in the DOM with marker
+	if (_.is("multiple", this.element)) {
+		this.marker = document.createElement("span")._.set({
+			className: "wysie-marker",
+			hidden: true,
+			after: this.element
+		});
+
+		this.root = new _.Collection(element, this);
+	}
+	else {
+		this.root = this.marker = new _.Scope(element, this);
+	}
 
 	// Fetch existing data
 	if (this.store.href) {
