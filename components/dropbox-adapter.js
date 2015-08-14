@@ -15,8 +15,9 @@ if (!self.Dropbox) {
 }
 
 Wysie.Storage.adapters["dropbox"] = {
+	priority: 1,
 	url: function() {
-		return /dropbox.com\//.test(this.url.domain) || this.url.protocol === "dropbox:";
+		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
 	},
 
 	get authenticated() {

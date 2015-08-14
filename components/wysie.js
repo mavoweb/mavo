@@ -17,19 +17,8 @@ var _ = self.Wysie = function (element) {
 	}
 
 	// Build wysie objects and keep position in the DOM with marker
-	if (_.is("multiple", this.element)) {
-		this.marker = document.createElement("span")._.set({
-			className: "wysie-marker",
-			hidden: true,
-			after: this.element
-		});
-
-		this.root = new _.Collection(element, this);
-	}
-	else {
-		this.root = this.marker = new _.Scope(element, this);
-	}
-
+	this.root = _.is("multiple", this.element)? new _.Collection(element, this) : new _.Scope(element, this);
+	
 	// Fetch existing data
 	if (this.store.href) {
 		this.storage = new _.Storage(this);
@@ -41,6 +30,10 @@ var _ = self.Wysie = function (element) {
 _.prototype = {
 	get data() {
 		return this.root.data;
+	},
+
+	get marker() {
+		return this.root instanceof _.Collection? this.root.marker : this.root.element;
 	},
 
 	toJSON: function() {

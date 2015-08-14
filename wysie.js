@@ -17,19 +17,8 @@ var _ = self.Wysie = function (element) {
 	}
 
 	// Build wysie objects and keep position in the DOM with marker
-	if (_.is("multiple", this.element)) {
-		this.marker = document.createElement("span")._.set({
-			className: "wysie-marker",
-			hidden: true,
-			after: this.element
-		});
-
-		this.root = new _.Collection(element, this);
-	}
-	else {
-		this.root = this.marker = new _.Scope(element, this);
-	}
-
+	this.root = _.is("multiple", this.element)? new _.Collection(element, this) : new _.Scope(element, this);
+	
 	// Fetch existing data
 	if (this.store.href) {
 		this.storage = new _.Storage(this);
@@ -41,6 +30,10 @@ var _ = self.Wysie = function (element) {
 _.prototype = {
 	get data() {
 		return this.root.data;
+	},
+
+	get marker() {
+		return this.root instanceof _.Collection? this.root.marker : this.root.element;
 	},
 
 	toJSON: function() {
@@ -153,16 +146,17 @@ document.addEventListener("DOMContentLoaded", function() {
 var _ = Wysie.Storage = function(wysie) {
 	this.wysie = wysie;
 
-	var adapters = _.adapters;
+	var adapters = _.adapters, priority = 0;
 
 	for (var id in adapters) {
 		var adapter = adapters[id];
+		if (
+			adapter.url.test && adapter.url.test(this.wysie.store) ||
+			typeof adapter.url === "function" && adapter.url.call(this)
+		) {
+			adapter.priority = adapter.priority || 0;
 		
-		if (adapter.url) {
-			if (
-				adapter.url.test && adapter.url.test(this.wysie.store) ||
-				typeof adapter.url === "function" && adapter.url.call(this)
-			) {
+			if (adapter.priority >= priority) {
 				this.id = id;
 			}
 		}
@@ -190,6 +184,10 @@ $.extend(_.prototype, {
 		return this.wysie.store;
 	},
 
+	get authenticated() {
+		return this.adapter.authenticated;
+	},
+
 	set inProgress(value) {
 		if (value) {
 			document.createElement("div")._.set({
@@ -200,7 +198,7 @@ $.extend(_.prototype, {
 		}
 		else {
 			var progress = this.wysie.marker.nextElementSibling;
-			progress = progress.matches(".progress")? progress : null;
+			progress = progress && progress.matches(".progress")? progress : null;
 
 			$.remove(progress);
 		}
@@ -216,7 +214,9 @@ $.extend(_.prototype, {
 
 			this.adapter.load.call(this).then(function() {
 				me.inProgress = false;
-			}, function() {
+			}).catch(function(err) {
+				console.error(err);
+
 				me.loadLocal();
 
 				me.inProgress = false;
@@ -281,7 +281,7 @@ $.extend(_, {
 	adapters: {
 		http: {
 			url: function() {
-				return this.url.origin !== location.origin
+				return this.url.origin !== location.origin ||
 				       this.url.pathname !== location.pathname;
 			},
 
@@ -304,6 +304,106 @@ $.extend(_, {
 		}
 	}
 })
+
+})();
+
+(function(){
+
+if (!self.Wysie) {
+	return;
+}
+
+var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
+
+if (!self.Dropbox) {
+	var script = document.createElement("script")._.set({
+		src: dropboxURL,
+		async: true,
+		inside: document.head
+	});
+}
+
+Wysie.Storage.adapters["dropbox"] = {
+	priority: 1,
+	url: function() {
+		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
+	},
+
+	get authenticated() {
+		return this.client.isAuthenticated();
+	},
+
+	init: function() {
+		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+	},
+
+	load: Wysie.Storage.adapters.http.load,
+	// TODO might be useful to use API methods to read private data
+	/*load: function() {
+		this.client.readFile(this.wysie.store, function(error, data) {
+			if (error) {
+				alert("Error: " + error);  // TODO better error handling
+				return;
+			}
+
+			alert(data);  // data has the file's contents
+		})
+	},*/
+	save: function() {
+		var filename = (new URL(this.wysie.store)).pathname;
+		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
+
+		return new Promise(function(resolve, reject) {
+			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
+				if (error) {
+					return reject(Error(error));
+				}
+
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
+			});
+		});
+	},
+	login: function() {
+		var me = this;
+
+		if (!this.client) {
+			this.client = new Dropbox.Client({ key: this.param("key") });
+		}
+
+		return new Promise(function(resolve, reject) {
+			if (!me.client.isAuthenticated()) {
+				me.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL("oauth.html", location) + ""
+				}));
+
+				me.client.authenticate(function(error, client) {
+					if (error) {
+						reject(Error(error));
+					}
+
+					me.authenticated = true;
+
+					resolve();
+				});
+			}
+			else {
+				resolve();
+			}
+		});
+	},
+	logout: function() {
+		var me = this;
+
+		return new Promise(function(resolve, reject){
+			me.client.signOut(null, function(){
+				me.authenticated = false;	
+				resolve();	
+			});
+		})
+		
+	}
+};
 
 })();
 
@@ -1129,6 +1229,12 @@ var _ = Wysie.Collection = function (template, wysie) {
 		}
 	});
 
+	this.marker = document.createElement("span")._.set({
+		className: "wysie-marker",
+		hidden: true,
+		after: this.template
+	});
+
 	this.template._.remove();
 
 	this.template.classList.add("wysie-item");
@@ -1206,7 +1312,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		$.before(item, this.wysie.marker);
+		$.before(item, this.marker);
 
 		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 
@@ -1247,105 +1353,6 @@ _.prototype = {
 		return "[" + this.items.map(function(item){
 			return item._.data.unit.toJSON();
 		}) + "]";
-	}
-};
-
-})();
-
-(function(){
-
-if (!self.Wysie) {
-	return;
-}
-
-var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
-
-if (!self.Dropbox) {
-	var script = document.createElement("script")._.set({
-		src: dropboxURL,
-		async: true,
-		inside: document.head
-	});
-}
-
-Wysie.Storage.adapters["dropbox"] = {
-	url: function() {
-		return /dropbox.com\//.test(this.url.domain) || this.url.protocol === "dropbox:";
-	},
-
-	get authenticated() {
-		return this.client.isAuthenticated();
-	},
-
-	init: function() {
-		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
-	},
-
-	load: Wysie.Storage.adapters.http.load,
-	// TODO might be useful to use API methods to read private data
-	/*load: function() {
-		this.client.readFile(this.wysie.store, function(error, data) {
-			if (error) {
-				alert("Error: " + error);  // TODO better error handling
-				return;
-			}
-
-			alert(data);  // data has the file's contents
-		})
-	},*/
-	save: function() {
-		var filename = (new URL(this.wysie.store)).pathname;
-		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
-
-		return new Promise(function(resolve, reject) {
-			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
-				if (error) {
-					return reject(Error(error));
-				}
-
-			  console.log("File saved as revision " + stat.versionTag);
-			  resolve(stat);
-			});
-		});
-	},
-	login: function() {
-		var me = this;
-
-		if (!this.client) {
-			this.client = new Dropbox.Client({ key: this.param("key") });
-		}
-
-		return new Promise(function(resolve, reject) {
-			if (!me.client.isAuthenticated()) {
-				me.client.authDriver(new Dropbox.AuthDriver.Popup({
-				    receiverUrl: new URL("oauth.html", location) + ""
-				}));
-
-				me.client.authenticate(function(error, client) {
-					if (error) {
-						reject(Error(error));
-					}
-
-					me.authenticated = true;
-
-					resolve();
-				});
-			}
-			else {
-				resolve();
-			}
-		});
-	},
-	logout: function() {
-		var me = this;
-
-		return new Promise(function(resolve, reject){
-			me.client.signOut(null, function(){
-				me.authenticated = false;	
-				resolve();	
-			});
-		})
-		
 	}
 };
 

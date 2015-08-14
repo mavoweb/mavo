@@ -32,6 +32,12 @@ var _ = Wysie.Collection = function (template, wysie) {
 		}
 	});
 
+	this.marker = document.createElement("span")._.set({
+		className: "wysie-marker",
+		hidden: true,
+		after: this.template
+	});
+
 	this.template._.remove();
 
 	this.template.classList.add("wysie-item");
@@ -109,7 +115,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		$.before(item, this.wysie.marker);
+		$.before(item, this.marker);
 
 		item._.data.unit = Wysie.Unit.create(item, this.wysie);
 

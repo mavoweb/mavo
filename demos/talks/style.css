@@ -23,3 +23,7 @@ code {
 	-ms-transform: rotate(-15deg);
 	transform: rotate(-15deg);
 }
+
+[typeof=Event] button.add {
+	margin-left: 130px;
+}

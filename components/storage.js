@@ -3,16 +3,17 @@
 var _ = Wysie.Storage = function(wysie) {
 	this.wysie = wysie;
 
-	var adapters = _.adapters;
+	var adapters = _.adapters, priority = 0;
 
 	for (var id in adapters) {
 		var adapter = adapters[id];
+		if (
+			adapter.url.test && adapter.url.test(this.wysie.store) ||
+			typeof adapter.url === "function" && adapter.url.call(this)
+		) {
+			adapter.priority = adapter.priority || 0;
 		
-		if (adapter.url) {
-			if (
-				adapter.url.test && adapter.url.test(this.wysie.store) ||
-				typeof adapter.url === "function" && adapter.url.call(this)
-			) {
+			if (adapter.priority >= priority) {
 				this.id = id;
 			}
 		}
@@ -40,6 +41,10 @@ $.extend(_.prototype, {
 		return this.wysie.store;
 	},
 
+	get authenticated() {
+		return this.adapter.authenticated;
+	},
+
 	set inProgress(value) {
 		if (value) {
 			document.createElement("div")._.set({
@@ -50,7 +55,7 @@ $.extend(_.prototype, {
 		}
 		else {
 			var progress = this.wysie.marker.nextElementSibling;
-			progress = progress.matches(".progress")? progress : null;
+			progress = progress && progress.matches(".progress")? progress : null;
 
 			$.remove(progress);
 		}
@@ -66,7 +71,9 @@ $.extend(_.prototype, {
 
 			this.adapter.load.call(this).then(function() {
 				me.inProgress = false;
-			}, function() {
+			}).catch(function(err) {
+				console.error(err);
+
 				me.loadLocal();
 
 				me.inProgress = false;
@@ -131,7 +138,7 @@ $.extend(_, {
 	adapters: {
 		http: {
 			url: function() {
-				return this.url.origin !== location.origin
+				return this.url.origin !== location.origin ||
 				       this.url.pathname !== location.pathname;
 			},
 
