@@ -307,106 +307,6 @@ $.extend(_, {
 
 })();
 
-(function(){
-
-if (!self.Wysie) {
-	return;
-}
-
-var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
-
-if (!self.Dropbox) {
-	var script = document.createElement("script")._.set({
-		src: dropboxURL,
-		async: true,
-		inside: document.head
-	});
-}
-
-Wysie.Storage.adapters["dropbox"] = {
-	priority: 1,
-	url: function() {
-		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
-	},
-
-	get authenticated() {
-		return this.client.isAuthenticated();
-	},
-
-	init: function() {
-		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
-	},
-
-	load: Wysie.Storage.adapters.http.load,
-	// TODO might be useful to use API methods to read private data
-	/*load: function() {
-		this.client.readFile(this.wysie.store, function(error, data) {
-			if (error) {
-				alert("Error: " + error);  // TODO better error handling
-				return;
-			}
-
-			alert(data);  // data has the file's contents
-		})
-	},*/
-	save: function() {
-		var filename = (new URL(this.wysie.store)).pathname;
-		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
-
-		return new Promise(function(resolve, reject) {
-			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
-				if (error) {
-					return reject(Error(error));
-				}
-
-			  console.log("File saved as revision " + stat.versionTag);
-			  resolve(stat);
-			});
-		});
-	},
-	login: function() {
-		var me = this;
-
-		if (!this.client) {
-			this.client = new Dropbox.Client({ key: this.param("key") });
-		}
-
-		return new Promise(function(resolve, reject) {
-			if (!me.client.isAuthenticated()) {
-				me.client.authDriver(new Dropbox.AuthDriver.Popup({
-				    receiverUrl: new URL("oauth.html", location) + ""
-				}));
-
-				me.client.authenticate(function(error, client) {
-					if (error) {
-						reject(Error(error));
-					}
-
-					me.authenticated = true;
-
-					resolve();
-				});
-			}
-			else {
-				resolve();
-			}
-		});
-	},
-	logout: function() {
-		var me = this;
-
-		return new Promise(function(resolve, reject){
-			me.client.signOut(null, function(){
-				me.authenticated = false;	
-				resolve();	
-			});
-		})
-		
-	}
-};
-
-})();
-
 /*
  * Stretchy: Form element autosizing, the way it should be.
  * by Lea Verou http://lea.verou.me 
@@ -637,175 +537,171 @@ $.extend(_, {
 
 (function(){
 
-var Super = Wysie.Unit;
+var _ = Wysie.Primitive = $.Class({
+	extends: Wysie.Unit,
+	constructor: function (element) {
+		var me = this;
 
-var _ = Wysie.Primitive = function (element) {
-	var me = this;
+		// Scope this primitive belongs to
+		this.scope = this.element.closest(Wysie.selectors.scope);
 
-	Super.apply(this, arguments);
-
-	// Scope this primitive belongs to
-	this.scope = this.element.closest(Wysie.selectors.scope);
-
-	this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
- 
-	for (var selector in _.types) {
-		if (this.element.matches(selector)) {
-			// TODO calculate specificity and return the one with the highest, not the first one
-			$.extend(this, _.types[selector]);
+		this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
+	 
+		for (var selector in _.types) {
+			if (this.element.matches(selector)) {
+				// TODO calculate specificity and return the one with the highest, not the first one
+				$.extend(this, _.types[selector]);
+			}
 		}
-	}
 
-	this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
+		this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
 
-	if (this.element.getAttribute("data-attribute") != "title" && !this.nameRegex.test(this.element.title)) {
-		this.label = this.element.title;
-	}
+		if (this.element.getAttribute("data-attribute") != "title" && !this.nameRegex.test(this.element.title)) {
+			this.label = this.element.title;
+		}
 
-	this.label = this.label || Wysie.readable(this.property);
+		this.label = this.label || Wysie.readable(this.property);
 
-	/*
-	 * Set up input widget
-	 */
+		/*
+		 * Set up input widget
+		 */
 
-	var defaultEditor = this.editor;
-	this.editor = null;
+		var defaultEditor = this.editor;
+		this.editor = null;
 
-	// Exposed widgets (visible always)
-	if (Wysie.is("formControl", this.element)) {
-		this.editor = this.element;
-	}
-
-	// Linked widgets
-	if (this.element.hasAttribute("data-input")) {
-		var selector = this.element.getAttribute("data-input");
-
-		if (!selector) {
+		// Exposed widgets (visible always)
+		if (Wysie.is("formControl", this.element)) {
 			this.editor = this.element;
 		}
-		else {
-			this.editor = $(selector).cloneNode(true);
-		}
-	}
 
-	// Nested widgets
-	if (!this.editor) {
-		this.editor = $$(this.element.children).filter(function (el) {
-		    return el.matches("input, select, textarea")
-		})[0];
-	}
+		// Linked widgets
+		if (this.element.hasAttribute("data-input")) {
+			var selector = this.element.getAttribute("data-input");
 
-	this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
-
-	this.editor._.events({
-		"input": function () {
-			me.element.setAttribute(me.attribute || "content", this.value);
-			me.element._.fireEvent("valuechange", {
-				value: this.value
-			});
-		},
-		"focus": function () {
-			this.select && this.select();
-		}
-	});
-
-	if ("placeholder" in this.editor) {
-		this.editor.placeholder = "(" + this.label + ")";
-	}
-
-	if (this.editorValue !== "") {
-		this.default = this.editorValue;
-	}
-	else {
-		if (this.attribute) {
-			this.default = this.element.getAttribute(this.attribute);
-		}
-		else if (this.editor.parentNode != this.element) {
-			this.default = this.element.textContent || null;
-		}
-
-		if (this.default !== null) {
-			this.editorValue = this.default;
-		}
-	}
-	
-	// Copy any data-input-* attributes from the element to the editor
-	if (this.element !== this.editor) {
-		var dataInput = /^data-input-/i;
-		$$(this.element.attributes).forEach(function (attribute) {
-			if (dataInput.test(attribute.name)) {
-				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+			if (!selector) {
+				this.editor = this.element;
 			}
-		}, this);
-	}
-
-	this.element.addEventListener("valuechange", function (evt) {
-		if (evt.target == me.element) {
-			me.update(evt.value);
+			else {
+				this.editor = $(selector).cloneNode(true);
+			}
 		}
-	});
 
-	if (this.attribute) {
-		// Set up popup
-		this.element.classList.add("using-popup");
+		// Nested widgets
+		if (!this.editor) {
+			this.editor = $$(this.element.children).filter(function (el) {
+			    return el.matches("input, select, textarea")
+			})[0];
+		}
 
-		this.element._.events({
-			focus: function () {
-				if (!me.editing) {
-					return;
-				}
+		this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
 
-				if (/^select$/i.test(me.editor.nodeName)) {
-					me.editor.size = Math.min(10, me.editor.children.length);
-				}
-
-				me.popup = me.popup || document.createElement("div")._.set({
-					className: "popup",
-					contents: [
-						me.label + ":",
-						me.editor._.events({
-							blur: function () {
-								$.remove(me.popup);
-							}
-						})
-					],
-					style: { // TODO what if it doesn’t fit?
-						top: this.offsetTop + this.offsetHeight + "px",
-						left: this.offsetLeft + "px"
-					}
+		this.editor._.events({
+			"input": function () {
+				me.element.setAttribute(me.attribute || "content", this.value);
+				me.element._.fireEvent("valuechange", {
+					value: this.value
 				});
-
-				me.popup._.after(this);
 			},
-
-			blur: function () {
-				if (!me.editing || !me.popup) {
-					return;
-				}
-
-				// Deferred as document.activeElement is not immediately updated
-				setTimeout(function () {
-					if (document.activeElement.closest(".popup") !== me.popup) {
-						$.remove(me.popup);
-					}
-				}, 0);
+			"focus": function () {
+				this.select && this.select();
 			}
 		});
-	}
 
-	// Prevent default actions while editing
-	this.element.addEventListener("click", function(evt) {
-		if (me.editing && evt.target !== me.editor) {
-			evt.preventDefault();
-			evt.stopPropagation();
+		if ("placeholder" in this.editor) {
+			this.editor.placeholder = "(" + this.label + ")";
 		}
-	});
 
-	this.update(this.value);
-};
+		if (this.editorValue !== "") {
+			this.default = this.editorValue;
+		}
+		else {
+			if (this.attribute) {
+				this.default = this.element.getAttribute(this.attribute);
+			}
+			else if (this.editor.parentNode != this.element) {
+				this.default = this.element.textContent || null;
+			}
 
-_.prototype = $.extend(Object.create(Super.prototype), {
-	constructor: _,
+			if (this.default !== null) {
+				this.editorValue = this.default;
+			}
+		}
+		
+		// Copy any data-input-* attributes from the element to the editor
+		if (this.element !== this.editor) {
+			var dataInput = /^data-input-/i;
+			$$(this.element.attributes).forEach(function (attribute) {
+				if (dataInput.test(attribute.name)) {
+					this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+				}
+			}, this);
+		}
+
+		this.element.addEventListener("valuechange", function (evt) {
+			if (evt.target == me.element) {
+				me.update(evt.value);
+			}
+		});
+
+		if (this.attribute) {
+			// Set up popup
+			this.element.classList.add("using-popup");
+
+			this.element._.events({
+				focus: function () {
+					if (!me.editing) {
+						return;
+					}
+
+					if (/^select$/i.test(me.editor.nodeName)) {
+						me.editor.size = Math.min(10, me.editor.children.length);
+					}
+
+					me.popup = me.popup || document.createElement("div")._.set({
+						className: "popup",
+						contents: [
+							me.label + ":",
+							me.editor._.events({
+								blur: function () {
+									$.remove(me.popup);
+								}
+							})
+						],
+						style: { // TODO what if it doesn’t fit?
+							top: this.offsetTop + this.offsetHeight + "px",
+							left: this.offsetLeft + "px"
+						}
+					});
+
+					me.popup._.after(this);
+				},
+
+				blur: function () {
+					if (!me.editing || !me.popup) {
+						return;
+					}
+
+					// Deferred as document.activeElement is not immediately updated
+					setTimeout(function () {
+						if (document.activeElement.closest(".popup") !== me.popup) {
+							$.remove(me.popup);
+						}
+					}, 0);
+				}
+			});
+		}
+
+		// Prevent default actions while editing
+		this.element.addEventListener("click", function(evt) {
+			if (me.editing && evt.target !== me.editor) {
+				evt.preventDefault();
+				evt.stopPropagation();
+			}
+		});
+
+		this.update(this.value);
+	},
+
 	get value() {
 		if (this.editing || this.editing === undefined) {
 			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
@@ -1031,71 +927,67 @@ _.types = {
 
 (function(){
 
-var Super = Wysie.Unit;
+var _ = Wysie.Scope = $.Class({
+	extends: Wysie.Unit,
+	constructor: function (element, wysie) {
+		var me = this;
 
-var _ = Wysie.Scope = function (element, wysie) {
-	var me = this;
+		this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
+			return new Wysie.Collection(template, me.wysie);
+		}, this);
 
-	Super.apply(this, arguments);
-
-	this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
-		return new Wysie.Collection(template, me.wysie);
-	}, this);
-
-	// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
-	this.properties.forEach(function(prop){
-		prop._.data.unit = Super.create(prop, me.wysie);
-	});
-
-	if (this.isRoot) {
-		this.element.classList.add("wysie-root");
-
-		// TODO handle element templates in a better/more customizable way
-		this.buttons = {
-			edit: document.createElement("button")._.set({
-				textContent: "✎",
-				title: "Edit this " + this.type,
-				className: "edit"
-			}),
-			savecancel: document.createElement("div")._.set({
-				className: "wysie-buttons",
-				contents: [{
-					tag: "button",
-					textContent: "Save",
-					className: "save",
-				}, {
-					tag: "button",
-					textContent: "Cancel",
-					className: "cancel"
-				}]
-			})
-		};
-
-		this.element._.delegate({
-			click: {
-				"button.edit": this.edit.bind(this),
-				"button.save": this.save.bind(this),
-				"button.cancel": this.cancel.bind(this)
-			},
-			keyup: {
-				"input": function(evt) {
-					var code = evt.keyCode;
-
-					if (evt.keyCode == 13) { // Enter
-						me.save();
-					}
-				}
-			}
+		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
+		this.properties.forEach(function(prop){
+			prop._.data.unit = _.super.create(prop, me.wysie);
 		});
 
-		// If root, add Save & Cancel button
-		// TODO remove these after saving & cache, to reduce number of DOM elements lying around
-		this.element.appendChild(this.buttons.edit);
-	}
-};
+		if (this.isRoot) {
+			this.element.classList.add("wysie-root");
 
-_.prototype = $.extend(Object.create(Super.prototype), {
-	constructor: _,
+			// TODO handle element templates in a better/more customizable way
+			this.buttons = {
+				edit: document.createElement("button")._.set({
+					textContent: "✎",
+					title: "Edit this " + this.type,
+					className: "edit"
+				}),
+				savecancel: document.createElement("div")._.set({
+					className: "wysie-buttons",
+					contents: [{
+						tag: "button",
+						textContent: "Save",
+						className: "save",
+					}, {
+						tag: "button",
+						textContent: "Cancel",
+						className: "cancel"
+					}]
+				})
+			};
+
+			this.element._.delegate({
+				click: {
+					"button.edit": this.edit.bind(this),
+					"button.save": this.save.bind(this),
+					"button.cancel": this.cancel.bind(this)
+				},
+				keyup: {
+					"input": function(evt) {
+						var code = evt.keyCode;
+
+						if (evt.keyCode == 13) { // Enter
+							me.save();
+						}
+					}
+				}
+			});
+
+			// If root, add Save & Cancel button
+			// TODO remove these after saving & cache, to reduce number of DOM elements lying around
+			this.element.appendChild(this.buttons.edit);
+		}
+	},
+
 	get isRoot() {
 		return !this.property;
 	},
@@ -1355,6 +1247,109 @@ _.prototype = {
 		}) + "]";
 	}
 };
+
+})();
+
+(function(){
+
+if (!self.Wysie) {
+	return;
+}
+
+var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
+
+if (!self.Dropbox) {
+	$.include(dropboxURL);
+}
+
+var _ = {
+	priority: 1,
+
+	url: function() {
+		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
+	},
+
+	get authenticated() {
+		return this.client.isAuthenticated();
+	},
+
+	init: function() {
+		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+
+		this.filename = (new URL(this.wysie.store)).pathname;
+		this.filename = (this.param("path") || "") + this.filename.match(/[^/]*$/)[0];
+	},
+
+	load: Wysie.Storage.adapters.http.load,
+	// TODO might be useful to use API methods to read private data
+	/*load: function() {
+		this.client.readFile(this.wysie.store, function(error, data) {
+			if (error) {
+				alert("Error: " + error);  // TODO better error handling
+				return;
+			}
+
+			alert(data);  // data has the file's contents
+		})
+	},*/
+	save: function() {
+		var me = this;
+
+		return new Promise(function(resolve, reject) {
+			this.client.writeFile(me.filename, this.wysie.toJSON(), function(error, stat) {
+				if (error) {
+					return reject(Error(error));
+				}
+
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
+			});
+		});
+	},
+	login: function() {
+		var me = this;
+
+		return new Promise(function(resolve, reject) {
+			if (!me.client.isAuthenticated()) {
+				me.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL("oauth.html", location) + ""
+				}));
+
+				me.client.authenticate(function(error, client) {
+					if (error) {
+						reject(Error(error));
+					}
+
+					me.authenticated = true;
+
+					resolve();
+				});
+			}
+			else {
+				resolve();
+			}
+		});
+	},
+	logout: function() {
+		var me = this;
+
+		return new Promise(function(resolve, reject){
+			me.client.signOut(null, function(){
+				me.authenticated = false;	
+				resolve();	
+			});
+		});
+		
+	}
+};
+
+$.lazy(_, {
+	client: function() {
+		return new Dropbox.Client({ key: this.param("key") });
+	}
+});
+
+Wysie.Storage.adapters["dropbox"] = _;
 
 })();
 

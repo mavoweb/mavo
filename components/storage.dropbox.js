@@ -7,15 +7,12 @@ if (!self.Wysie) {
 var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
 if (!self.Dropbox) {
-	var script = document.createElement("script")._.set({
-		src: dropboxURL,
-		async: true,
-		inside: document.head
-	});
+	$.include(dropboxURL);
 }
 
-Wysie.Storage.adapters["dropbox"] = {
+var _ = {
 	priority: 1,
+
 	url: function() {
 		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
 	},
@@ -26,6 +23,9 @@ Wysie.Storage.adapters["dropbox"] = {
 
 	init: function() {
 		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+
+		this.filename = (new URL(this.wysie.store)).pathname;
+		this.filename = (this.param("path") || "") + this.filename.match(/[^/]*$/)[0];
 	},
 
 	load: Wysie.Storage.adapters.http.load,
@@ -41,11 +41,10 @@ Wysie.Storage.adapters["dropbox"] = {
 		})
 	},*/
 	save: function() {
-		var filename = (new URL(this.wysie.store)).pathname;
-		filename = (this.param("path") || "") + filename.match(/[^/]*$/)[0];
+		var me = this;
 
 		return new Promise(function(resolve, reject) {
-			this.client.writeFile(filename, this.wysie.toJSON(), function(error, stat) {
+			this.client.writeFile(me.filename, this.wysie.toJSON(), function(error, stat) {
 				if (error) {
 					return reject(Error(error));
 				}
@@ -57,10 +56,6 @@ Wysie.Storage.adapters["dropbox"] = {
 	},
 	login: function() {
 		var me = this;
-
-		if (!this.client) {
-			this.client = new Dropbox.Client({ key: this.param("key") });
-		}
 
 		return new Promise(function(resolve, reject) {
 			if (!me.client.isAuthenticated()) {
@@ -91,9 +86,17 @@ Wysie.Storage.adapters["dropbox"] = {
 				me.authenticated = false;	
 				resolve();	
 			});
-		})
+		});
 		
 	}
 };
+
+$.lazy(_, {
+	client: function() {
+		return new Dropbox.Client({ key: this.param("key") });
+	}
+});
+
+Wysie.Storage.adapters["dropbox"] = _;
 
 })();

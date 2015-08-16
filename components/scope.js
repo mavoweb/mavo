@@ -1,70 +1,66 @@
 (function(){
 
-var Super = Wysie.Unit;
+var _ = Wysie.Scope = $.Class({
+	extends: Wysie.Unit,
+	constructor: function (element, wysie) {
+		var me = this;
 
-var _ = Wysie.Scope = function (element, wysie) {
-	var me = this;
+		this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
+			return new Wysie.Collection(template, me.wysie);
+		}, this);
 
-	Super.apply(this, arguments);
-
-	this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
-		return new Wysie.Collection(template, me.wysie);
-	}, this);
-
-	// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
-	this.properties.forEach(function(prop){
-		prop._.data.unit = Super.create(prop, me.wysie);
-	});
-
-	if (this.isRoot) {
-		this.element.classList.add("wysie-root");
-
-		// TODO handle element templates in a better/more customizable way
-		this.buttons = {
-			edit: document.createElement("button")._.set({
-				textContent: "✎",
-				title: "Edit this " + this.type,
-				className: "edit"
-			}),
-			savecancel: document.createElement("div")._.set({
-				className: "wysie-buttons",
-				contents: [{
-					tag: "button",
-					textContent: "Save",
-					className: "save",
-				}, {
-					tag: "button",
-					textContent: "Cancel",
-					className: "cancel"
-				}]
-			})
-		};
-
-		this.element._.delegate({
-			click: {
-				"button.edit": this.edit.bind(this),
-				"button.save": this.save.bind(this),
-				"button.cancel": this.cancel.bind(this)
-			},
-			keyup: {
-				"input": function(evt) {
-					var code = evt.keyCode;
-
-					if (evt.keyCode == 13) { // Enter
-						me.save();
-					}
-				}
-			}
+		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
+		this.properties.forEach(function(prop){
+			prop._.data.unit = _.super.create(prop, me.wysie);
 		});
 
-		// If root, add Save & Cancel button
-		// TODO remove these after saving & cache, to reduce number of DOM elements lying around
-		this.element.appendChild(this.buttons.edit);
-	}
-};
+		if (this.isRoot) {
+			this.element.classList.add("wysie-root");
 
-_.prototype = $.extend(Object.create(Super.prototype), {
-	constructor: _,
+			// TODO handle element templates in a better/more customizable way
+			this.buttons = {
+				edit: document.createElement("button")._.set({
+					textContent: "✎",
+					title: "Edit this " + this.type,
+					className: "edit"
+				}),
+				savecancel: document.createElement("div")._.set({
+					className: "wysie-buttons",
+					contents: [{
+						tag: "button",
+						textContent: "Save",
+						className: "save",
+					}, {
+						tag: "button",
+						textContent: "Cancel",
+						className: "cancel"
+					}]
+				})
+			};
+
+			this.element._.delegate({
+				click: {
+					"button.edit": this.edit.bind(this),
+					"button.save": this.save.bind(this),
+					"button.cancel": this.cancel.bind(this)
+				},
+				keyup: {
+					"input": function(evt) {
+						var code = evt.keyCode;
+
+						if (evt.keyCode == 13) { // Enter
+							me.save();
+						}
+					}
+				}
+			});
+
+			// If root, add Save & Cancel button
+			// TODO remove these after saving & cache, to reduce number of DOM elements lying around
+			this.element.appendChild(this.buttons.edit);
+		}
+	},
+
 	get isRoot() {
 		return !this.property;
 	},

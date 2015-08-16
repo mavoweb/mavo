@@ -1,174 +1,170 @@
 (function(){
 
-var Super = Wysie.Unit;
+var _ = Wysie.Primitive = $.Class({
+	extends: Wysie.Unit,
+	constructor: function (element) {
+		var me = this;
 
-var _ = Wysie.Primitive = function (element) {
-	var me = this;
+		// Scope this primitive belongs to
+		this.scope = this.element.closest(Wysie.selectors.scope);
 
-	Super.apply(this, arguments);
-
-	// Scope this primitive belongs to
-	this.scope = this.element.closest(Wysie.selectors.scope);
-
-	this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
- 
-	for (var selector in _.types) {
-		if (this.element.matches(selector)) {
-			// TODO calculate specificity and return the one with the highest, not the first one
-			$.extend(this, _.types[selector]);
+		this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
+	 
+		for (var selector in _.types) {
+			if (this.element.matches(selector)) {
+				// TODO calculate specificity and return the one with the highest, not the first one
+				$.extend(this, _.types[selector]);
+			}
 		}
-	}
 
-	this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
+		this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
 
-	if (this.element.getAttribute("data-attribute") != "title" && !this.nameRegex.test(this.element.title)) {
-		this.label = this.element.title;
-	}
+		if (this.element.getAttribute("data-attribute") != "title" && !this.nameRegex.test(this.element.title)) {
+			this.label = this.element.title;
+		}
 
-	this.label = this.label || Wysie.readable(this.property);
+		this.label = this.label || Wysie.readable(this.property);
 
-	/*
-	 * Set up input widget
-	 */
+		/*
+		 * Set up input widget
+		 */
 
-	var defaultEditor = this.editor;
-	this.editor = null;
+		var defaultEditor = this.editor;
+		this.editor = null;
 
-	// Exposed widgets (visible always)
-	if (Wysie.is("formControl", this.element)) {
-		this.editor = this.element;
-	}
-
-	// Linked widgets
-	if (this.element.hasAttribute("data-input")) {
-		var selector = this.element.getAttribute("data-input");
-
-		if (!selector) {
+		// Exposed widgets (visible always)
+		if (Wysie.is("formControl", this.element)) {
 			this.editor = this.element;
 		}
-		else {
-			this.editor = $(selector).cloneNode(true);
-		}
-	}
 
-	// Nested widgets
-	if (!this.editor) {
-		this.editor = $$(this.element.children).filter(function (el) {
-		    return el.matches("input, select, textarea")
-		})[0];
-	}
+		// Linked widgets
+		if (this.element.hasAttribute("data-input")) {
+			var selector = this.element.getAttribute("data-input");
 
-	this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
-
-	this.editor._.events({
-		"input": function () {
-			me.element.setAttribute(me.attribute || "content", this.value);
-			me.element._.fireEvent("valuechange", {
-				value: this.value
-			});
-		},
-		"focus": function () {
-			this.select && this.select();
-		}
-	});
-
-	if ("placeholder" in this.editor) {
-		this.editor.placeholder = "(" + this.label + ")";
-	}
-
-	if (this.editorValue !== "") {
-		this.default = this.editorValue;
-	}
-	else {
-		if (this.attribute) {
-			this.default = this.element.getAttribute(this.attribute);
-		}
-		else if (this.editor.parentNode != this.element) {
-			this.default = this.element.textContent || null;
-		}
-
-		if (this.default !== null) {
-			this.editorValue = this.default;
-		}
-	}
-	
-	// Copy any data-input-* attributes from the element to the editor
-	if (this.element !== this.editor) {
-		var dataInput = /^data-input-/i;
-		$$(this.element.attributes).forEach(function (attribute) {
-			if (dataInput.test(attribute.name)) {
-				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+			if (!selector) {
+				this.editor = this.element;
 			}
-		}, this);
-	}
-
-	this.element.addEventListener("valuechange", function (evt) {
-		if (evt.target == me.element) {
-			me.update(evt.value);
+			else {
+				this.editor = $(selector).cloneNode(true);
+			}
 		}
-	});
 
-	if (this.attribute) {
-		// Set up popup
-		this.element.classList.add("using-popup");
+		// Nested widgets
+		if (!this.editor) {
+			this.editor = $$(this.element.children).filter(function (el) {
+			    return el.matches("input, select, textarea")
+			})[0];
+		}
 
-		this.element._.events({
-			focus: function () {
-				if (!me.editing) {
-					return;
-				}
+		this.editor = this.editor || defaultEditor && defaultEditor.call(this) || document.createElement("input");
 
-				if (/^select$/i.test(me.editor.nodeName)) {
-					me.editor.size = Math.min(10, me.editor.children.length);
-				}
-
-				me.popup = me.popup || document.createElement("div")._.set({
-					className: "popup",
-					contents: [
-						me.label + ":",
-						me.editor._.events({
-							blur: function () {
-								$.remove(me.popup);
-							}
-						})
-					],
-					style: { // TODO what if it doesn’t fit?
-						top: this.offsetTop + this.offsetHeight + "px",
-						left: this.offsetLeft + "px"
-					}
+		this.editor._.events({
+			"input": function () {
+				me.element.setAttribute(me.attribute || "content", this.value);
+				me.element._.fireEvent("valuechange", {
+					value: this.value
 				});
-
-				me.popup._.after(this);
 			},
-
-			blur: function () {
-				if (!me.editing || !me.popup) {
-					return;
-				}
-
-				// Deferred as document.activeElement is not immediately updated
-				setTimeout(function () {
-					if (document.activeElement.closest(".popup") !== me.popup) {
-						$.remove(me.popup);
-					}
-				}, 0);
+			"focus": function () {
+				this.select && this.select();
 			}
 		});
-	}
 
-	// Prevent default actions while editing
-	this.element.addEventListener("click", function(evt) {
-		if (me.editing && evt.target !== me.editor) {
-			evt.preventDefault();
-			evt.stopPropagation();
+		if ("placeholder" in this.editor) {
+			this.editor.placeholder = "(" + this.label + ")";
 		}
-	});
 
-	this.update(this.value);
-};
+		if (this.editorValue !== "") {
+			this.default = this.editorValue;
+		}
+		else {
+			if (this.attribute) {
+				this.default = this.element.getAttribute(this.attribute);
+			}
+			else if (this.editor.parentNode != this.element) {
+				this.default = this.element.textContent || null;
+			}
 
-_.prototype = $.extend(Object.create(Super.prototype), {
-	constructor: _,
+			if (this.default !== null) {
+				this.editorValue = this.default;
+			}
+		}
+		
+		// Copy any data-input-* attributes from the element to the editor
+		if (this.element !== this.editor) {
+			var dataInput = /^data-input-/i;
+			$$(this.element.attributes).forEach(function (attribute) {
+				if (dataInput.test(attribute.name)) {
+					this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+				}
+			}, this);
+		}
+
+		this.element.addEventListener("valuechange", function (evt) {
+			if (evt.target == me.element) {
+				me.update(evt.value);
+			}
+		});
+
+		if (this.attribute) {
+			// Set up popup
+			this.element.classList.add("using-popup");
+
+			this.element._.events({
+				focus: function () {
+					if (!me.editing) {
+						return;
+					}
+
+					if (/^select$/i.test(me.editor.nodeName)) {
+						me.editor.size = Math.min(10, me.editor.children.length);
+					}
+
+					me.popup = me.popup || document.createElement("div")._.set({
+						className: "popup",
+						contents: [
+							me.label + ":",
+							me.editor._.events({
+								blur: function () {
+									$.remove(me.popup);
+								}
+							})
+						],
+						style: { // TODO what if it doesn’t fit?
+							top: this.offsetTop + this.offsetHeight + "px",
+							left: this.offsetLeft + "px"
+						}
+					});
+
+					me.popup._.after(this);
+				},
+
+				blur: function () {
+					if (!me.editing || !me.popup) {
+						return;
+					}
+
+					// Deferred as document.activeElement is not immediately updated
+					setTimeout(function () {
+						if (document.activeElement.closest(".popup") !== me.popup) {
+							$.remove(me.popup);
+						}
+					}, 0);
+				}
+			});
+		}
+
+		// Prevent default actions while editing
+		this.element.addEventListener("click", function(evt) {
+			if (me.editing && evt.target !== me.editor) {
+				evt.preventDefault();
+				evt.stopPropagation();
+			}
+		});
+
+		this.update(this.value);
+	},
+
 	get value() {
 		if (this.editing || this.editing === undefined) {
 			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
