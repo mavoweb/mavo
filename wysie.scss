@@ -1,3 +1,5 @@
+$property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
+
 %reset {
 	all: initial;
 	font: inherit;
@@ -6,26 +8,41 @@
 	text-align: inherit;
 }
 
+@mixin flat-button($color: black) {
+	@extend %reset;
+	padding: .4em .6em;
+	border: 2px solid $color;
+	border-radius: .4em;
+	background: transparent;
+	font: bold 80% Helvetica Neue, sans-serif;
+	cursor: pointer;
+	color: $color;
+	
+	&:hover {
+		background: $color;
+		color: white;
+		border-color: transparent;
+	}
+}
+
 [data-store] {
 	// Unprocessed items
 	display: none;
 }
 
 .wysie-root {
-	&, * { // Descendant or self
-		&.wysie-item {
-			position: relative;	
-		}
+	.wysie-item {
+		position: relative;	
+	}
 
-		&.delete-hover {
-			box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.06) inset, 0 0 0 .1em hsla(0,100%,50%,.05);
-			border-radius: .1em;
-		}
+	.delete-hover {
+		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.06) inset, 0 0 0 .1em hsla(0,100%,50%,.05);
+		border-radius: .1em;
 	}
 
 	button.add {
 		display: inline-block;
-		margin-left: .5em;
+		//margin-left: .5em;
 		vertical-align: middle;
 	}
 	
@@ -55,49 +72,50 @@
 	.delete:hover {
 		background: rgba(180,0,0,.8);
 	}
-	
-	&:not([data-editing]) {
-		.wysie-buttons,
-		.empty,
-		.delete,
-		button.add {
-			display: none;
-		}
-	}
-	
-	&[data-editing] {
-		.edit {
-			display: none;
-		}
 
-		// Primitives
-		[itemprop]:not([itemscope]),
-		[property]:not([typeof]) {
-			input, select, textarea {
-				@extend %reset;
+	& > * {
+		&:not([data-editing]) {
+			.wysie-buttons,
+			.empty,
+			.delete,
+			button.add {
+				display: none;
 			}
-			
-			textarea {
-				box-sizing: border-box;
-				width: 100%;
+		}
+		
+		&[data-editing] {
+			.edit {
+				display: none;
 			}
-			
-			&.using-popup,
-			input, select, textarea {
-				&:hover, &:focus {
-					outline: 1px dashed;
-					outline-offset: 1px;
+
+			// Primitives
+			#{$property} {
+				input, select, textarea {
+					@extend %reset;
 				}
 				
-				&:hover {
-					$color: hsla(58, 100%, 50%, .15);
+				textarea {
+					box-sizing: border-box;
+					width: 100%;
+				}
+				
+				&.using-popup,
+				input, select, textarea {
+					&:hover, &:focus {
+						outline: 1px dashed;
+						outline-offset: 1px;
+					}
 					
-					box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
-					outline-color: hsla(200,10%,50%,.3);
-				}
-				
-				&:focus {
-					outline-color: hsla(200,50%,40%,.6);
+					&:hover {
+						$color: hsla(58, 100%, 50%, .15);
+						
+						box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
+						outline-color: hsla(200,10%,50%,.3);
+					}
+					
+					&:focus {
+						outline-color: hsla(200,50%,40%,.6);
+					}
 				}
 			}
 		}
@@ -142,59 +160,71 @@
 		position: relative;
 		padding: .5em 0 .1em;
 		text-align: center;
-	
-		%buttons {
-			@extend %reset;
-			padding: .4em .6em;
-			border: 2px solid;
-			border-radius: .4em;
-			background: transparent;
-			font: bold 80% Helvetica Neue, sans-serif;
-			cursor: pointer;
-			
-			&:hover {
-				background: black;
-				color: white;
-				border-color: transparent;
-			}
-		}
 		
 		button.save {
-			@extend %buttons;
-			color: hsl(80, 80%, 40%);
-			font-weight: bold;
-			
-			&:hover {
-				background: hsl(80, 80%, 40%);
-			}
+			@include flat-button(hsl(80, 80%, 40%));
 		}
 		
 		button.cancel {
-			@extend %buttons;
+			@include flat-button(#c00);
 			margin-left: .4em;
-			color: #c00;
-			
-			&:hover {
-				background: #c00;
-			}
 		}
 	}
-}
 
-.wysie-marker + .progress {
-	&::before {
-		content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 40 40">\
-			<style>\
-				@keyframes dasharray { 50% { stroke-dasharray: 0 100 100 } to { stroke-dasharray: 100 100 100 } } \
-				circle { \
-					fill: none; \
-					stroke: currentColor; stroke-width: 8; stroke-opacity: .6; stroke-dasharray: 0 0 100; \
-					animation: dasharray 2s infinite; \
-				} \
-			</style>\
-			<circle r="16" cx="50%" cy="50%" transform="rotate(-90, 20, 20)" /></svg>');
-		display: inline-block;
-		vertical-align: middle;
-		margin-right: .2em;
+	&:not(.can-edit) {
+		.edit, [data-editing], .add {
+			display: none;
+		}
+	}
+
+	&.authenticated .auth-controls .login,
+	&:not(.authenticated) .auth-controls .logout {
+		display: none;
+	}
+
+	.auth-controls {
+		font-size: 80%;
+		margin-bottom: .8em;
+
+		.login, .logout {
+			@include flat-button();
+		}
+
+		.login {
+			margin-right: .6em;
+		}
+
+		.logout {
+			margin-left: .6em;
+		}
+
+		.status {
+			
+		}
+
+		.status:empty {
+			content: "Not logged in";
+		}
+	}
+
+	.progress {
+		margin-top: .5em;
+		font-size: 80%;
+
+		&::before {
+			content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 40 40">\
+				<style>\
+					@keyframes dasharray { 50% { stroke-dasharray: 0 100 100 } to { stroke-dasharray: 100 100 100 } } \
+					circle { \
+						fill: none; \
+						stroke: currentColor; stroke-width: 8; stroke-opacity: .6; stroke-dasharray: 0 0 100; \
+						animation: dasharray 2s infinite; \
+					} \
+				</style>\
+				<circle r="16" cx="50%" cy="50%" transform="rotate(-90, 20, 20)" /></svg>');
+			display: inline-block;
+			vertical-align: middle;
+			margin-right: .2em;
+		}
 	}
 }

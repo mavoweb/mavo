@@ -2,7 +2,7 @@
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element) {
+	constructor: function (element, wysie) {
 		var me = this;
 
 		// Scope this primitive belongs to
@@ -64,6 +64,11 @@ var _ = Wysie.Primitive = $.Class({
 				me.element._.fireEvent("valuechange", {
 					value: this.value
 				});
+			},
+			"change": function() {
+				if (me.exposed && me.scope._.data.unit.everSaved) {
+					me.wysie.save();
+				}
 			},
 			"focus": function () {
 				this.select && this.select();
@@ -209,7 +214,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	get data() {
-		return this.value;
+		return this.editing? this.savedValue : this.value;
 	},
 
 	get exposed() {

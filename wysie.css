@@ -1,7 +1,4 @@
-.wysie-root[data-editing] [itemprop]:not([itemscope]) input, .wysie-root[data-editing] [itemprop]:not([itemscope]) select, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea,
-.wysie-root[data-editing] [property]:not([typeof]) input,
-.wysie-root[data-editing] [property]:not([typeof]) select,
-.wysie-root[data-editing] [property]:not([typeof]) textarea, .wysie-root .wysie-buttons button.save, .wysie-root .wysie-buttons button.cancel {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) input, .wysie-root > *[data-editing] [property]:not([typeof]) select, .wysie-root > *[data-editing] [property]:not([typeof]) textarea, .wysie-root .wysie-buttons button.save, .wysie-root .wysie-buttons button.cancel, .wysie-root .auth-controls .login, .wysie-root .auth-controls .logout {
   all: initial;
   font: inherit;
   color: inherit;
@@ -11,14 +8,13 @@
 [data-store] {
   display: none; }
 
-.wysie-root.wysie-item, .wysie-root *.wysie-item {
+.wysie-root .wysie-item {
   position: relative; }
-.wysie-root.delete-hover, .wysie-root *.delete-hover {
+.wysie-root .delete-hover {
   box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.06) inset, 0 0 0 0.1em rgba(255, 0, 0, 0.05);
   border-radius: .1em; }
 .wysie-root button.add {
   display: inline-block;
-  margin-left: .5em;
   vertical-align: middle; }
 .wysie-root .edit,
 .wysie-root .delete {
@@ -40,44 +36,31 @@
   color: rgba(180, 0, 0, 0.8); }
 .wysie-root .delete:hover {
   background: rgba(180, 0, 0, 0.8); }
-.wysie-root:not([data-editing]) .wysie-buttons,
-.wysie-root:not([data-editing]) .empty,
-.wysie-root:not([data-editing]) .delete,
-.wysie-root:not([data-editing]) button.add {
+.wysie-root > *:not([data-editing]) .wysie-buttons,
+.wysie-root > *:not([data-editing]) .empty,
+.wysie-root > *:not([data-editing]) .delete,
+.wysie-root > *:not([data-editing]) button.add {
   display: none; }
-.wysie-root[data-editing] .edit {
+.wysie-root > *[data-editing] .edit {
   display: none; }
-.wysie-root[data-editing] [itemprop]:not([itemscope]) textarea,
-.wysie-root[data-editing] [property]:not([typeof]) textarea {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) textarea {
   box-sizing: border-box;
   width: 100%; }
-.wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
-.wysie-root[data-editing] [itemprop]:not([itemscope]) input:hover,
-.wysie-root[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:focus,
-.wysie-root[data-editing] [property]:not([typeof]).using-popup:hover,
-.wysie-root[data-editing] [property]:not([typeof]).using-popup:focus,
-.wysie-root[data-editing] [property]:not([typeof]) input:hover,
-.wysie-root[data-editing] [property]:not([typeof]) input:focus,
-.wysie-root[data-editing] [property]:not([typeof]) select:hover,
-.wysie-root[data-editing] [property]:not([typeof]) select:focus,
-.wysie-root[data-editing] [property]:not([typeof]) textarea:hover,
-.wysie-root[data-editing] [property]:not([typeof]) textarea:focus {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover,
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
+.wysie-root > *[data-editing] [property]:not([typeof]) input:hover,
+.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
   outline: 1px dashed;
   outline-offset: 1px; }
-.wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:hover,
-.wysie-root[data-editing] [itemprop]:not([itemscope]) input:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:hover,
-.wysie-root[data-editing] [property]:not([typeof]).using-popup:hover,
-.wysie-root[data-editing] [property]:not([typeof]) input:hover,
-.wysie-root[data-editing] [property]:not([typeof]) select:hover,
-.wysie-root[data-editing] [property]:not([typeof]) textarea:hover {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:hover,
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover,
+.wysie-root > *[data-editing] [property]:not([typeof]) input:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.15), 0 0 0 99em rgba(255, 247, 0, 0.15) inset;
   outline-color: rgba(115, 132, 140, 0.3); }
-.wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
-.wysie-root[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:focus,
-.wysie-root[data-editing] [property]:not([typeof]).using-popup:focus,
-.wysie-root[data-editing] [property]:not([typeof]) input:focus,
-.wysie-root[data-editing] [property]:not([typeof]) select:focus,
-.wysie-root[data-editing] [property]:not([typeof]) textarea:focus {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
+.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
   outline-color: rgba(51, 119, 153, 0.6); }
 .wysie-root .popup {
   all: initial;
@@ -110,30 +93,61 @@
   position: relative;
   padding: .5em 0 .1em;
   text-align: center; }
-  .wysie-root .wysie-buttons button.save, .wysie-root .wysie-buttons button.cancel {
+  .wysie-root .wysie-buttons button.save {
     padding: .4em .6em;
-    border: 2px solid;
+    border: 2px solid #81b814;
     border-radius: .4em;
     background: transparent;
     font: bold 80% Helvetica Neue, sans-serif;
-    cursor: pointer; }
-    .wysie-root .wysie-buttons button.save:hover, .wysie-root .wysie-buttons button.cancel:hover {
+    cursor: pointer;
+    color: #81b814; }
+    .wysie-root .wysie-buttons button.save:hover {
+      background: #81b814;
+      color: white;
+      border-color: transparent; }
+  .wysie-root .wysie-buttons button.cancel {
+    padding: .4em .6em;
+    border: 2px solid #c00;
+    border-radius: .4em;
+    background: transparent;
+    font: bold 80% Helvetica Neue, sans-serif;
+    cursor: pointer;
+    color: #c00;
+    margin-left: .4em; }
+    .wysie-root .wysie-buttons button.cancel:hover {
+      background: #c00;
+      color: white;
+      border-color: transparent; }
+.wysie-root:not(.can-edit) .edit, .wysie-root:not(.can-edit) [data-editing], .wysie-root:not(.can-edit) .add {
+  display: none; }
+.wysie-root.authenticated .auth-controls .login, .wysie-root:not(.authenticated) .auth-controls .logout {
+  display: none; }
+.wysie-root .auth-controls {
+  font-size: 80%;
+  margin-bottom: .8em; }
+  .wysie-root .auth-controls .login, .wysie-root .auth-controls .logout {
+    padding: .4em .6em;
+    border: 2px solid black;
+    border-radius: .4em;
+    background: transparent;
+    font: bold 80% Helvetica Neue, sans-serif;
+    cursor: pointer;
+    color: black; }
+    .wysie-root .auth-controls .login:hover, .wysie-root .auth-controls .logout:hover {
       background: black;
       color: white;
       border-color: transparent; }
-  .wysie-root .wysie-buttons button.save {
-    color: #81b814;
-    font-weight: bold; }
-    .wysie-root .wysie-buttons button.save:hover {
-      background: #81b814; }
-  .wysie-root .wysie-buttons button.cancel {
-    margin-left: .4em;
-    color: #c00; }
-    .wysie-root .wysie-buttons button.cancel:hover {
-      background: #c00; }
-
-.wysie-marker + .progress::before {
-  content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 40 40">			<style>				@keyframes dasharray { 50% { stroke-dasharray: 0 100 100 } to { stroke-dasharray: 100 100 100 } } 				circle { 					fill: none; 					stroke: currentColor; stroke-width: 8; stroke-opacity: .6; stroke-dasharray: 0 0 100; 					animation: dasharray 2s infinite; 				} 			</style>			<circle r="16" cx="50%" cy="50%" transform="rotate(-90, 20, 20)" /></svg>');
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: .2em; }
+  .wysie-root .auth-controls .login {
+    margin-right: .6em; }
+  .wysie-root .auth-controls .logout {
+    margin-left: .6em; }
+  .wysie-root .auth-controls .status:empty {
+    content: "Not logged in"; }
+.wysie-root .progress {
+  margin-top: .5em;
+  font-size: 80%; }
+  .wysie-root .progress::before {
+    content: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 40 40">				<style>					@keyframes dasharray { 50% { stroke-dasharray: 0 100 100 } to { stroke-dasharray: 100 100 100 } } 					circle { 						fill: none; 						stroke: currentColor; stroke-width: 8; stroke-opacity: .6; stroke-dasharray: 0 0 100; 						animation: dasharray 2s infinite; 					} 				</style>				<circle r="16" cx="50%" cy="50%" transform="rotate(-90, 20, 20)" /></svg>');
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: .2em; }

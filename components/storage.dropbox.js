@@ -4,99 +4,92 @@ if (!self.Wysie) {
 	return;
 }
 
-var dropboxURL = "https://cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
+var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-if (!self.Dropbox) {
-	$.include(dropboxURL);
-}
+var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
+	constructor: function() {
+		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
+			var referrer = new URL(document.referrer);
 
-var _ = {
-	priority: 1,
-
-	url: function() {
-		return /dropbox.com/.test(this.url.host) || this.url.protocol === "dropbox:";
-	},
-
-	get authenticated() {
-		return this.client.isAuthenticated();
-	},
-
-	init: function() {
-		this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
-
-		this.filename = (new URL(this.wysie.store)).pathname;
-		this.filename = (this.param("path") || "") + this.filename.match(/[^/]*$/)[0];
-	},
-
-	load: Wysie.Storage.adapters.http.load,
-	// TODO might be useful to use API methods to read private data
-	/*load: function() {
-		this.client.readFile(this.wysie.store, function(error, data) {
-			if (error) {
-				alert("Error: " + error);  // TODO better error handling
+			if (referrer.hostname === "www.dropbox.com" && location.hash.indexOf("#access_token=") === 0) {
+				// We’re in an OAuth response popup, do what you need then close this
+				Dropbox.AuthDriver.Popup.oauthReceiver();
+				$.fireEvent(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
+				close();
 				return;
 			}
 
-			alert(data);  // data has the file's contents
-		})
-	},*/
-	save: function() {
-		var me = this;
+			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
 
-		return new Promise(function(resolve, reject) {
-			this.client.writeFile(me.filename, this.wysie.toJSON(), function(error, stat) {
+			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
+
+			this.client = new Dropbox.Client({ key: this.param("key") });
+			this.authenticated = this.client.isAuthenticated();
+		}));
+	},
+
+	canEdit: "with login",
+
+	load: function() {
+		return this.super.load.call(this).then(this.afterLoad.bind(this));
+	},
+
+	save: function() {
+		return this.super.save.call(this).then(() => {
+			return new Promise((resolve, reject) => {
+				this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
+					if (error) {
+						return reject(Error(error));
+					}
+
+				  console.log("File saved as revision " + stat.versionTag);
+				  resolve(stat);
+				});
+			});
+		}).then(this.afterSave.bind(this));
+	},
+
+	login: function() {
+		return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
+			this.client.authDriver(new Dropbox.AuthDriver.Popup({
+			    receiverUrl: new URL(location) + ""
+			}));
+
+			this.client.authenticate((error, client) => {
 				if (error) {
-					return reject(Error(error));
+					reject(Error(error));
 				}
 
-			  console.log("File saved as revision " + stat.versionTag);
-			  resolve(stat);
+				this.authenticated = true;
+
+				resolve();
+			})
+		}).then(() => {
+			// Not returning a promise here, since processes depending on login don't need to wait for this
+			this.client.getAccountInfo((error, accountInfo) => {
+				if (!error) {
+					this.wysie.wrapper._.fireEvent("wysie:login", accountInfo);
+				}
 			});
 		});
 	},
-	login: function() {
-		var me = this;
 
-		return new Promise(function(resolve, reject) {
-			if (!me.client.isAuthenticated()) {
-				me.client.authDriver(new Dropbox.AuthDriver.Popup({
-				    receiverUrl: new URL("oauth.html", location) + ""
-				}));
-
-				me.client.authenticate(function(error, client) {
-					if (error) {
-						reject(Error(error));
-					}
-
-					me.authenticated = true;
-
-					resolve();
-				});
-			}
-			else {
-				resolve();
-			}
-		});
-	},
 	logout: function() {
-		var me = this;
-
-		return new Promise(function(resolve, reject){
-			me.client.signOut(null, function(){
-				me.authenticated = false;	
-				resolve();	
+		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
+			this.client.signOut(null, () => {
+				this.authenticated = false;
+				this.wysie.wrapper._.fireEvent("wysie:logout");
+				resolve();
 			});
 		});
 		
-	}
-};
+	},
 
-$.lazy(_, {
-	client: function() {
-		return new Dropbox.Client({ key: this.param("key") });
+	static: {
+		test: function(url) {
+			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
+		}
 	}
 });
-
-Wysie.Storage.adapters["dropbox"] = _;
 
 })();

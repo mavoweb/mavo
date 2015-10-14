@@ -15,8 +15,6 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		if (this.isRoot) {
-			this.element.classList.add("wysie-root");
-
 			// TODO handle element templates in a better/more customizable way
 			this.buttons = {
 				edit: document.createElement("button")._.set({
@@ -45,11 +43,14 @@ var _ = Wysie.Scope = $.Class({
 					"button.cancel": this.cancel.bind(this)
 				},
 				keyup: {
-					"input": function(evt) {
+					"input": evt => {
 						var code = evt.keyCode;
 
-						if (evt.keyCode == 13) { // Enter
-							me.save();
+						if (code == 13) { // Enter
+							this.save();
+						}
+						else if (code == 27) { // Esc
+							this.cancel();
 						}
 					}
 				}
@@ -73,6 +74,10 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	get data() {
+		if (this.editing && !this.everSaved) {
+			return null;
+		}
+
 		var ret = {};
 
 		this.properties.forEach(function(prop){
@@ -84,8 +89,21 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
+	stored: {
+		editing: {
+			set: function(value) {
+				if (value) {
+					this.element.setAttribute("data-editing", "");
+				}
+				else {
+					this.element.removeAttribute("data-editing");
+				}
+			}
+		}
+	},
+
 	edit: function() {
-		this.element.setAttribute("data-editing", "");
+		this.editing = true;
 
 		if (this.isRoot) {
 			this.element.removeChild(this.buttons.edit);
@@ -107,7 +125,7 @@ var _ = Wysie.Scope = $.Class({
 
 	save: function() {
 		// TODO make this a class when we handle references properly in classes so we can toggle other classes
-		this.element.removeAttribute("data-editing");
+		this.editing = false;
 
 		if (this.isRoot) {
 			$.remove(this.buttons.savecancel);
@@ -118,6 +136,8 @@ var _ = Wysie.Scope = $.Class({
 			prop._.data.unit.save();
 		}, this);
 
+		this.everSaved = true;
+
 		this.wysie.save();
 	},
 
@@ -127,7 +147,7 @@ var _ = Wysie.Scope = $.Class({
 			this.element.appendChild(this.buttons.edit);
 		}
 
-		this.element.removeAttribute("data-editing");
+		this.editing = false;
 
 		this.properties.forEach(function(prop){
 			prop._.data.unit.cancel();
@@ -155,6 +175,8 @@ var _ = Wysie.Scope = $.Class({
 		this.collections.forEach(function (collection){
 			collection.render(data[collection.property]);
 		});
+
+		this.everSaved = true;
 	}
 });
 

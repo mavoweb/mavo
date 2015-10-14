@@ -17,28 +17,38 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.property = Wysie.normalizeProperty(this.template);
 	this.type = Wysie.normalizeType(this.template);
 
+	// Scope this collection belongs to (or null if root)
+	this.scope = this.template.parentNode.closest(Wysie.selectors.scope);
+
 	this.required = this.template.matches(Wysie.selectors.required);
 
-	// Insert add button after entire collection (or before? or both?)
-	// Add button also serves to save position in the DOM
+	// Add new items at the top? (default: bottom)
+	this.bottomUp = false;
+
+	// Find add button if provided, or generate one
+	//var closestCollection = this.template.parentNode.closest(".wysie-item")
+
 	this.addButton = document.createElement("button")._.set({
 		className: "add",
 		textContent: "Add " + this.name,
-		after: this.template,
 		events: {
-			"click": function() {
-				me.addEditable();
-			}
+			"click": this.addEditable.bind(this)
 		}
 	});
 
-	this.marker = document.createElement("span")._.set({
+	// Keep position of the template, since we’re gonna remove it
+	this.marker = $.create("div", {
+		hidden: true, 
 		className: "wysie-marker",
-		hidden: true,
 		after: this.template
 	});
 
 	this.template._.remove();
+
+	["required", "multiple"].forEach(attr => {
+		this.template.removeAttribute(attr);
+		this.template.removeAttribute("data-" + attr);
+	});
 
 	this.template.classList.add("wysie-item");
 
@@ -80,9 +90,20 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	if (this.required && !this.length) {
-		this.addEditable();
-	}
+	this.wysie.wrapper.addEventListener("wysie:load", evt => {
+		if (this.required && !this.length) {
+			this.addEditable();
+		}
+
+		if (!this.addButton.parentNode) {
+			if (this.bottomUp) {
+				this.addButton._.before(this.items[0] || this.marker);
+			}
+			else {
+				this.addButton._.after(this.marker);
+			}
+		}
+	});
 };
 
 _.prototype = {
@@ -97,7 +118,7 @@ _.prototype = {
 	},
 
 	get items() {
-		return $$(":scope > " + this.selector, this.addButton.parentNode);
+		return $$(this.selector, this.scope || this.wysie.wrapper);
 	},
 
 	get length() {
@@ -107,6 +128,8 @@ _.prototype = {
 	get data() {
 		return this.items.map(function(item){
 			return item._.data.unit.data;
+		}).filter(function(item){
+			return item !== null;
 		});
 	},
 
@@ -115,15 +138,20 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		$.before(item, this.marker);
-
 		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+
+		item._.before(this.marker);
 
 		return item;
 	},
 
+	// TODO find a less stupid name?
 	addEditable: function() {
-		var item = this.add();
+		var item = $.clone(this.template);
+
+		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+
+		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
 
 		item._.data.unit.edit();
 
@@ -131,9 +159,7 @@ _.prototype = {
 	},
 
 	delete: function(item) {
-		$.remove(item, {opacity: 0});
-
-		this.wysie.save();
+		return $.remove(item, {opacity: 0}).then(this.wysie.save.bind(this.wysie));
 	},
 
 	render: function(data) {
