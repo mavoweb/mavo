@@ -22,21 +22,40 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	this.required = this.template.matches(Wysie.selectors.required);
 
-	// Add new items at the top? (default: bottom)
-	this.bottomUp = false;
-
 	// Find add button if provided, or generate one
-	//var closestCollection = this.template.parentNode.closest(".wysie-item")
+	var closestCollection = this.template.parentNode.closest(".wysie-item");
+	this.addButton = $$(".wysie-add, button.add", closestCollection).filter(button => {
+		return !this.template.contains(button);
+	})[0];
 
-	this.addButton = document.createElement("button")._.set({
+	this.addButton = this.addButton || document.createElement("button")._.set({
 		className: "add",
-		textContent: "Add " + this.name,
-		events: {
-			"click": this.addEditable.bind(this)
-		}
+		textContent: "Add " + this.name
 	});
 
-	// Keep position of the template, since we’re gonna remove it
+	this.addButton.addEventListener("click", evt => {
+		evt.preventDefault();
+		this.addEditable();
+	});
+
+	/*
+	 * Add new items at the top or bottom?
+	 */
+	if (this.template.hasAttribute("data-bottomup")) {
+		// Attribute data-bottomup has the highest priority and overrides any heuristics
+		this.bottomUp = true;
+	}
+	else if (!this.addButton.parentNode) {
+		// If add button not in DOM, do the default
+		this.bottomUp = false;
+	}
+	else {
+		console.log(this.addButton.compareDocumentPosition(this.template))
+		// If add button is already in the DOM and *before* our template, then we default to prepending
+		this.bottomUp = !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
+	}
+
+	// Keep position of the template in the DOM, since we’re gonna remove it
 	this.marker = $.create("div", {
 		hidden: true, 
 		className: "wysie-marker",
@@ -95,6 +114,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 			this.addEditable();
 		}
 
+		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			if (this.bottomUp) {
 				this.addButton._.before(this.items[0] || this.marker);

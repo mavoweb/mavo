@@ -137,3 +137,7 @@ input[type="checkbox"]:checked + [property="task-title"] {
 	font-style: italic;
 	color: rgba(0,0,0,.6);
 }
+
+.auth-controls, .progress {
+	mix-blend-mode: multiply;
+}
