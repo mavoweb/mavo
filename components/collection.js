@@ -14,8 +14,8 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.template = template;
 	this.wysie = wysie;
 
-	this.property = Wysie.normalizeProperty(this.template);
-	this.type = Wysie.normalizeType(this.template);
+	this.property = Wysie.Unit.normalizeProperty(this.template);
+	this.type = Wysie.Scope.normalize(this.template);
 
 	// Scope this collection belongs to (or null if root)
 	this.scope = this.template.parentNode.closest(Wysie.selectors.scope);

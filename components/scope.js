@@ -5,6 +5,8 @@ var _ = Wysie.Scope = $.Class({
 	constructor: function (element, wysie) {
 		var me = this;
 
+		this.type = _.normalize(this.element);
+
 		this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
 			return new Wysie.Collection(template, me.wysie);
 		}, this);
@@ -177,6 +179,42 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		this.everSaved = true;
+	},
+
+	static: {
+		is: function(element) {
+
+			var ret = Wysie.is("scope", element);
+
+			if (!ret) {
+				// Heuristic for matching scopes without a scoping attribute
+				if ($$(Wysie.selectors.property, element).length) {
+					// Contains other properties
+					ret = Wysie.is("multiple", element)
+						// content not in attribute
+						|| !element.matches(Object.keys(Wysie.Primitive.types).filter(selector => {
+							return !!Wysie.Primitive.types[selector].attribute;
+						}).join(", "));
+				}
+			}
+
+			return ret;
+		},
+
+		normalize: function(element) {
+			// Get & normalize typeof name, if exists
+			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
+
+			if (!type && _.is(element)) {
+				type = "Thing";
+			}
+
+			if (type) {
+				element.setAttribute("typeof", type);
+			}
+
+			return type;
+		},
 	}
 });
 

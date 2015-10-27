@@ -12,8 +12,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		this.wysie = wysie;
 		this.element = element;
 
-		this.property = Wysie.normalizeProperty(this.element);
-		this.type = Wysie.normalizeType(this.element);
+		this.property = _.normalizeProperty(this.element);
 
 		this.required = this.element.matches("[required], [data-required]");
 	},
@@ -26,8 +25,33 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			return new Wysie[element.matches(Wysie.selectors.scope)? "Scope" : "Primitive"](element, wysie);
-		}
+			var isScope = Wysie.is("scope", element)
+				|| ( // Heuristic for matching scopes without a scoping attribute
+					$$(Wysie.selectors.property, element).length // contains properties
+					// TODO what if these properties are in another typeof?
+					&& (
+						Wysie.is("multiple", element)
+						|| !element.matches("[data-attribute], [href], [src], time[datetime]") // content not in attribute
+					)
+				);
+
+			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie);
+		},
+
+		normalizeProperty: function(element) {
+			// Get & normalize property name, if exists
+			var property = element.getAttribute("property") || element.getAttribute("itemprop");
+
+			if (!property && element.hasAttribute("property")) {
+				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
+			}
+
+			if (property) {
+				element.setAttribute("property", property);
+			}
+
+			return property;
+		},
 	}
 });
 

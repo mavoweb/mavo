@@ -168,8 +168,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// Subclasses should call super to save locally first
 	save: function() {
-		var me = this;
-
 		this.backup = this.wysie.toJSON();
 
 		return this.login().then(()=>{ this.inProgress = "Saving"; });
@@ -183,8 +181,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// To be overriden by subclasses
 	// Subclasses should set this.authenticated
-	login: function() { Promise.resolve() },
-	logout: function() { Promise.resolve() },
+	login: () => Promise.resolve(),
+	logout: () => Promise.resolve(),
 
 	// Get storage parameters from the main element and cache them. Used for API keys and the like.
 	param: function(id) {

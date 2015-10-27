@@ -69,36 +69,6 @@ var _ = self.Wysie = $.Class({
 			         .toLowerCase();
 		},
 
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
-			var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-			if (!property && element.hasAttribute("property")) {
-				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
-
-			return property;
-		},
-
-		normalizeType: function(element) {
-			// Get & normalize typeof name, if exists
-			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
-
-			if (!type && element.hasAttribute("typeof")) {
-				type = "Thing";
-			}
-
-			if (type) {
-				element.setAttribute("typeof", type);
-			}
-
-			return type;
-		},
-
 		queryJSON: function(data, path) {
 			if (!path || !data) {
 				return data;
@@ -120,7 +90,7 @@ var _ = self.Wysie = $.Class({
 		selectors: {
 			property: "[property], [itemprop]",
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-			scope: "[typeof], [itemscope]",
+			scope: "[typeof], [itemscope], [itemtype]",
 			multiple: "[multiple], [data-multiple]",
 			required: "[required], [data-required]",
 			formControl: "input, select, textarea"
@@ -316,8 +286,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// Subclasses should call super to save locally first
 	save: function() {
-		var me = this;
-
 		this.backup = this.wysie.toJSON();
 
 		return this.login().then(()=>{ this.inProgress = "Saving"; });
@@ -331,8 +299,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// To be overriden by subclasses
 	// Subclasses should set this.authenticated
-	login: function() { Promise.resolve() },
-	logout: function() { Promise.resolve() },
+	login: () => Promise.resolve(),
+	logout: () => Promise.resolve(),
 
 	// Get storage parameters from the main element and cache them. Used for API keys and the like.
 	param: function(id) {
@@ -611,8 +579,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		this.wysie = wysie;
 		this.element = element;
 
-		this.property = Wysie.normalizeProperty(this.element);
-		this.type = Wysie.normalizeType(this.element);
+		this.property = _.normalizeProperty(this.element);
 
 		this.required = this.element.matches("[required], [data-required]");
 	},
@@ -625,8 +592,33 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			return new Wysie[element.matches(Wysie.selectors.scope)? "Scope" : "Primitive"](element, wysie);
-		}
+			var isScope = Wysie.is("scope", element)
+				|| ( // Heuristic for matching scopes without a scoping attribute
+					$$(Wysie.selectors.property, element).length // contains properties
+					// TODO what if these properties are in another typeof?
+					&& (
+						Wysie.is("multiple", element)
+						|| !element.matches("[data-attribute], [href], [src], time[datetime]") // content not in attribute
+					)
+				);
+
+			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie);
+		},
+
+		normalizeProperty: function(element) {
+			// Get & normalize property name, if exists
+			var property = element.getAttribute("property") || element.getAttribute("itemprop");
+
+			if (!property && element.hasAttribute("property")) {
+				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
+			}
+
+			if (property) {
+				element.setAttribute("property", property);
+			}
+
+			return property;
+		},
 	}
 });
 
@@ -1034,6 +1026,8 @@ var _ = Wysie.Scope = $.Class({
 	constructor: function (element, wysie) {
 		var me = this;
 
+		this.type = _.normalize(this.element);
+
 		this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
 			return new Wysie.Collection(template, me.wysie);
 		}, this);
@@ -1206,6 +1200,42 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		this.everSaved = true;
+	},
+
+	static: {
+		is: function(element) {
+
+			var ret = Wysie.is("scope", element);
+
+			if (!ret) {
+				// Heuristic for matching scopes without a scoping attribute
+				if ($$(Wysie.selectors.property, element).length) {
+					// Contains other properties
+					ret = Wysie.is("multiple", element)
+						// content not in attribute
+						|| !element.matches(Object.keys(Wysie.Primitive.types).filter(selector => {
+							return !!Wysie.Primitive.types[selector].attribute;
+						}).join(", "));
+				}
+			}
+
+			return ret;
+		},
+
+		normalize: function(element) {
+			// Get & normalize typeof name, if exists
+			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
+
+			if (!type && _.is(element)) {
+				type = "Thing";
+			}
+
+			if (type) {
+				element.setAttribute("typeof", type);
+			}
+
+			return type;
+		},
 	}
 });
 
@@ -1227,8 +1257,8 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.template = template;
 	this.wysie = wysie;
 
-	this.property = Wysie.normalizeProperty(this.template);
-	this.type = Wysie.normalizeType(this.template);
+	this.property = Wysie.Unit.normalizeProperty(this.template);
+	this.type = Wysie.Scope.normalize(this.template);
 
 	// Scope this collection belongs to (or null if root)
 	this.scope = this.template.parentNode.closest(Wysie.selectors.scope);

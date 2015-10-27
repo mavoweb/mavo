@@ -69,36 +69,6 @@ var _ = self.Wysie = $.Class({
 			         .toLowerCase();
 		},
 
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
-			var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-			if (!property && element.hasAttribute("property")) {
-				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
-
-			return property;
-		},
-
-		normalizeType: function(element) {
-			// Get & normalize typeof name, if exists
-			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
-
-			if (!type && element.hasAttribute("typeof")) {
-				type = "Thing";
-			}
-
-			if (type) {
-				element.setAttribute("typeof", type);
-			}
-
-			return type;
-		},
-
 		queryJSON: function(data, path) {
 			if (!path || !data) {
 				return data;
@@ -120,7 +90,7 @@ var _ = self.Wysie = $.Class({
 		selectors: {
 			property: "[property], [itemprop]",
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-			scope: "[typeof], [itemscope]",
+			scope: "[typeof], [itemscope], [itemtype]",
 			multiple: "[multiple], [data-multiple]",
 			required: "[required], [data-required]",
 			formControl: "input, select, textarea"
