@@ -84,11 +84,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// localStorage backup (or only storage, in case of local Wysie instances)
 	// TODO Switch to indexedDB
 	get backup() {
-		return localStorage[this.originalHref];
+		return JSON.parse(localStorage[this.originalHref]);
 	},
 
 	set backup(data) {
-		localStorage[this.originalHref] = data;
+		localStorage[this.originalHref] = JSON.stringify(data, null, "\t");
 	},
 
 	// Is the storage ready?
@@ -124,10 +124,16 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	load: function() {
 		var ret = this.ready;
+		var backup = this.backup;
 
 		this.inProgress = "Loading";
-
-		if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
+			
+		if (backup && backup.synced === false) {
+			// Unsynced backup, we need to restore & then save instead of reading remote
+			this.wysie.render(backup);
+			this.save();
+		}
+		else if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
 			// URL is not a hash, load it
 			ret = ret.then(() => {
 				return $.fetch(this.href, {
@@ -140,7 +146,10 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 				this.wysie.render(data);
 
-				this.backup = this.wysie.toJSON();
+				this.backup = {
+					synced: true,
+					data: this.wysie.data
+				};
 			});
 		}
 		else {
@@ -154,8 +163,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				console.error(err);
 			}
 			
-			if (this.backup) {
-				this.wysie.render(JSON.parse(this.backup));
+			if (backup) {
+				this.wysie.render(backup);
 			}
 		});
 	},
@@ -168,13 +177,22 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// Subclasses should call super to save locally first
 	save: function() {
-		this.backup = this.wysie.toJSON();
+		this.backup = {
+			synced: false,
+			data: this.wysie.data
+		};
 
 		return this.login().then(()=>{ this.inProgress = "Saving"; });
 	},
 
 	// Subclasses overriding should call this
-	afterSave: function() {
+	afterSave: function(success) {
+		if (success) {
+			var backup = this.backup;
+			backup.synced = true;
+			this.backup = backup;	
+		}
+
 		this.inProgress = false;
 		this.wysie.wrapper._.fireEvent("wysie:save");
 	},

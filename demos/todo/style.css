@@ -30,7 +30,7 @@ ul {
 	display: block;
 	max-width: 20em;
 	padding: 2em;
-	padding-right: 3em;
+	padding-right: 1em;
 	border-top-right-radius: 100% 2%;
 	border-bottom-left-radius: 1% 100%;
 	margin: 1em auto;

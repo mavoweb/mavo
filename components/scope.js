@@ -50,9 +50,11 @@ var _ = Wysie.Scope = $.Class({
 
 						if (code == 13) { // Enter
 							this.save();
+							evt.stopPropagation();
 						}
 						else if (code == 27) { // Esc
 							this.cancel();
+							evt.stopPropagation();
 						}
 					}
 				}

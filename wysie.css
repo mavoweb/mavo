@@ -9,7 +9,8 @@
   display: none; }
 
 .wysie-root .wysie-item {
-  position: relative; }
+  position: relative;
+  margin-right: 1.5em; }
 .wysie-root .delete-hover {
   box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.06) inset, 0 0 0 0.1em rgba(255, 0, 0, 0.05);
   border-radius: .1em; }

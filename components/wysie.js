@@ -20,6 +20,13 @@ var _ = self.Wysie = $.Class({
 
 		element.removeAttribute("data-store");
 
+		// Apply heuristic for collections
+		$$("li:only-of-type, tr:only-of-type", this.wrapper).forEach(element=>{
+			if (_.is("property", element) || _.is("scope", element)) {
+				element.setAttribute("data-multiple", "");
+			}
+		});
+
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 		
@@ -40,7 +47,7 @@ var _ = self.Wysie = $.Class({
 	},
 
 	render: function(data) {
-		this.root.render(data);
+		this.root.render(data.data || data);
 	},
 
 	save: function() {

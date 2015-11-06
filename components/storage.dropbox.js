@@ -46,7 +46,9 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				  resolve(stat);
 				});
 			});
-		}).then(this.afterSave.bind(this));
+		})
+		.then(()=>{ this.afterSave(true); })
+		.catch(()=>{ this.afterSave(false); });
 	},
 
 	login: function() {
