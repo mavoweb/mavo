@@ -32,34 +32,16 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 
 	canEdit: "with login",
 
-	load: function() {
-		var ret = this.ready;
-
-		this.inProgress = "Loading";
-
+	backendLoad: function() {
 		return ret.then(()=>{
 			return gapi.client.drive.files.get({
 				'fileId': this.fileId
 			});
-		}).then(function(){
-			console.log(arguments);
-		}).catch(err => {
-			if (err) {
-				console.error(err);
-			}
-			
-			if (this.backup) {
-				this.wysie.render(JSON.parse(this.backup));
-			}
-		}).then(this.afterLoad.bind(this));
+		});
 	},
 
-	save: function() {
-		return this.super.save.call(this).then(() => {
-			return new Promise((resolve, reject) => {
-				// TODO
-			});
-		}).then(this.afterSave.bind(this));
+	backendSave: function() {
+		// TODO
 	},
 
 	static: {

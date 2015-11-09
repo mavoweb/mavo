@@ -84,7 +84,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// localStorage backup (or only storage, in case of local Wysie instances)
 	// TODO Switch to indexedDB
 	get backup() {
-		return JSON.parse(localStorage[this.originalHref]);
+		return JSON.parse(localStorage[this.originalHref] || null);
 	},
 
 	set backup(data) {
@@ -136,13 +136,14 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		else if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
 			// URL is not a hash, load it
 			ret = ret.then(() => {
-				return $.fetch(this.href, {
+				return this.backendLoad? this.backendLoad() : $.fetch(this.href, {
 					responseType: "json"
 				});
-			}).then(xhr => {
-				var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
-
+			})
+			.then(xhr => {
 				this.inProgress = false;
+
+				var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
 				this.wysie.render(data);
 
@@ -159,6 +160,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		}
 
 		return ret.catch(err => {
+			this.inProgress = false;
+			
 			if (err) {
 				console.error(err);
 			}
@@ -175,26 +178,27 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		this.wysie.wrapper._.fireEvent("wysie:load");
 	},
 
-	// Subclasses should call super to save locally first
 	save: function() {
 		this.backup = {
 			synced: false,
 			data: this.wysie.data
 		};
 
-		return this.login().then(()=>{ this.inProgress = "Saving"; });
-	},
+		if (this._save) {
+			return this.login().then(()=>{
+				this.inProgress = "Saving";
 
-	// Subclasses overriding should call this
-	afterSave: function(success) {
-		if (success) {
-			var backup = this.backup;
-			backup.synced = true;
-			this.backup = backup;	
+				return this.backendSave().then(()=>{
+					var backup = this.backup;
+					backup.synced = true;
+					this.backup = backup;
+
+					this.wysie.wrapper._.fireEvent("wysie:save");
+				}).done(()=>{
+					this.inProgress = false;
+				});
+			});
 		}
-
-		this.inProgress = false;
-		this.wysie.wrapper._.fireEvent("wysie:save");
 	},
 
 	// To be overriden by subclasses

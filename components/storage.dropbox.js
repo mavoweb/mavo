@@ -30,41 +30,36 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 
 	canEdit: "with login",
 
-	load: function() {
-		return this.super.load.call(this).then(this.afterLoad.bind(this));
-	},
+	// Super class save() calls this. Do not call directly.
+	backendSave: function() {
+		return new Promise((resolve, reject) => {
+			this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
+				if (error) {
+					return reject(Error(error));
+				}
 
-	save: function() {
-		return this.super.save.call(this).then(() => {
-			return new Promise((resolve, reject) => {
-				this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
-					if (error) {
-						return reject(Error(error));
-					}
-
-				  console.log("File saved as revision " + stat.versionTag);
-				  resolve(stat);
-				});
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
 			});
-		})
-		.then(()=>{ this.afterSave(true); })
-		.catch(()=>{ this.afterSave(false); });
+		});
 	},
 
 	login: function() {
-		return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
-			this.client.authDriver(new Dropbox.AuthDriver.Popup({
-			    receiverUrl: new URL(location) + ""
-			}));
+		return this.ready.then(()=>{
+			this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
+				this.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL(location) + ""
+				}));
 
-			this.client.authenticate((error, client) => {
-				if (error) {
-					reject(Error(error));
-				}
+				this.client.authenticate((error, client) => {
+					if (error) {
+						reject(Error(error));
+					}
 
-				this.authenticated = true;
+					this.authenticated = true;
 
-				resolve();
+					resolve();
+				})
 			})
 		}).then(() => {
 			// Not returning a promise here, since processes depending on login don't need to wait for this
