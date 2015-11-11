@@ -127,49 +127,54 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		var backup = this.backup;
 
 		this.inProgress = "Loading";
-			
+
 		if (backup && backup.synced === false) {
 			// Unsynced backup, we need to restore & then save instead of reading remote
-			this.wysie.render(backup);
-			this.save();
-		}
-		else if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
-			// URL is not a hash, load it
-			ret = ret.then(() => {
-				return this.backendLoad? this.backendLoad() : $.fetch(this.href, {
-					responseType: "json"
-				});
-			})
-			.then(xhr => {
+			return ret.then(()=>{
+				this.wysie.render(backup);
 				this.inProgress = false;
-
-				var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
-
-				this.wysie.render(data);
-
-				this.backup = {
-					synced: true,
-					data: this.wysie.data
-				};
+				return this.save();	
 			});
 		}
 		else {
-			ret = ret.done(function(){
-				return Promise.reject();
+			if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
+				// URL is not a hash, load it
+				ret = ret.then(() => {
+
+					return this.backendLoad? this.backendLoad() : $.fetch(this.href, {
+						responseType: "json"
+					});
+				}).then(xhr => {
+					this.inProgress = false;
+					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
+					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
+
+					this.wysie.render(data);
+
+					this.backup = {
+						synced: true,
+						data: this.wysie.data
+					};
+				});
+			}
+			else {
+				ret = ret.done(function(){
+					return Promise.reject();
+				});
+			}
+
+			return ret.catch(err => {
+				this.inProgress = false;
+				
+				if (err) {
+					console.error(err);
+				}
+				
+				if (backup) {
+					this.wysie.render(backup);
+				}
 			});
 		}
-
-		return ret.catch(err => {
-			this.inProgress = false;
-			
-			if (err) {
-				console.error(err);
-			}
-			
-			if (backup) {
-				this.wysie.render(backup);
-			}
-		});
 	},
 
 	// Subclasses overriding load must call this after load is done
@@ -179,6 +184,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	},
 
 	save: function() {
+		console.log("save() called");
 		this.backup = {
 			synced: false,
 			data: this.wysie.data

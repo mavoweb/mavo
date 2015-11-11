@@ -19,13 +19,17 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				return;
 			}
 
-			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+			// Transform the dropbox shared URL into something raw and CORS-enabled
+			this.wysie.store.hostname = "dl.dropboxusercontent.com";
+			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
 
+			// Internal filename (to be used for saving)
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-			this.authenticated = this.client.isAuthenticated();
-		}));
+		})).then(()=>{
+			this.login(true);
+		});
 	},
 
 	canEdit: "with login",
@@ -44,21 +48,27 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		});
 	},
 
-	login: function() {
+	login: function(passive) {
 		return this.ready.then(()=>{
-			this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
+			return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 				this.client.authDriver(new Dropbox.AuthDriver.Popup({
 				    receiverUrl: new URL(location) + ""
 				}));
 
-				this.client.authenticate((error, client) => {
+				this.client.authenticate({interactive: !passive}, (error, client) => {
+
 					if (error) {
 						reject(Error(error));
 					}
 
-					this.authenticated = true;
-
-					resolve();
+					if (this.client.isAuthenticated()) {
+						this.authenticated = true;
+						resolve();	
+					}
+					else {
+						this.authenticated = false;
+						reject();
+					}
 				})
 			})
 		}).then(() => {
@@ -68,7 +78,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					this.wysie.wrapper._.fireEvent("wysie:login", accountInfo);
 				}
 			});
-		});
+		}).catch(()=>{});
 	},
 
 	logout: function() {

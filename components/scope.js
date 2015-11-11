@@ -11,10 +11,17 @@ var _ = Wysie.Scope = $.Class({
 			return new Wysie.Collection(template, me.wysie);
 		}, this);
 
+		this.propertyNames = [];
+
 		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
-		this.properties.forEach(function(prop){
+		this.properties.forEach(prop => {
 			prop._.data.unit = _.super.create(prop, me.wysie);
+
+			this.propertyNames.push(prop._.data.unit.property);
 		});
+
+		// Handle expressions
+		this._cacheReferences();
 
 		if (this.isRoot) {
 			// TODO handle element templates in a better/more customizable way
@@ -181,6 +188,49 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		this.everSaved = true;
+	},
+
+	_cacheReferences: function() {
+		this.refRegex = RegExp("(?:{" + this.propertyNames.join("|") + "})|(?:\\${.*(?:" + this.propertyNames.join("|") + ").*})", "gi");
+		this.references = [];
+
+		var extractRefs = (element, attribute) => {
+			if (!attribute && element.children.length > 0) {
+				return;
+			}
+
+			var text = attribute? attribute.value : element.textContent;
+			var matches = text.match(this.refRegex);
+
+			if (matches) {
+				this.references.push({
+					element: element,
+					attribute: attribute && attribute.name,
+					text: text,
+					expressions: matches.map(match => match.replace(/^\$?{|}$/))
+				});
+			}
+		};
+		
+		this.properties.forEach(prop => {
+			if (this.refRegex.test(prop.outerHTML)) {
+				extractRefs(prop, null);
+
+				$$(prop.attributes).forEach(attribute => {
+					extractRefs(prop, attribute);
+				});
+			}
+		});
+	},
+
+	_updateReferences: function() {
+		var data = this.data;
+
+		$$(this.references).forEach(ref=>{
+			$$(ref.expressions).forEach(expr=>{
+				// TODO
+			});
+		});
 	},
 
 	static: {

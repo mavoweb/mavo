@@ -5,9 +5,6 @@ var _ = Wysie.Primitive = $.Class({
 	constructor: function (element, wysie) {
 		var me = this;
 
-		// Scope this primitive belongs to
-		this.scope = this.element.closest(Wysie.selectors.scope);
-
 		this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
 	 
 		for (var selector in _.types) {
@@ -25,7 +22,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.label = this.label || Wysie.readable(this.property);
 
-		/*
+		/**
 		 * Set up input widget
 		 */
 
@@ -230,14 +227,14 @@ var _ = Wysie.Primitive = $.Class({
 		// TODO special-case classes
 		value = value || value === 0? value : "";
 
-		$$("*", this.scope).concat(this.scope).forEach(function (element) {
+		$$("*", this.scope).concat(this.scope).forEach(element => {
 
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
 				element.setAttribute("data-original-textContent", element.textContent);
 				element.textContent = element.textContent.replace(this.nameRegex, Wysie.identifier(value));
 			}
 
-			$$(element.attributes).forEach(function (attribute) {
+			$$(element.attributes).forEach(attribute => {
 				this.nameRegex.lastIndex = 0;
 
 				if (this.nameRegex.test(attribute.value)) {
@@ -270,8 +267,8 @@ var _ = Wysie.Primitive = $.Class({
 					}
 
 				}
-			}, this);
-		}, this);
+			});
+		});
 
 		this.onchange && this.onchange(value);
 	},

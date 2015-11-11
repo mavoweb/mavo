@@ -397,7 +397,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// localStorage backup (or only storage, in case of local Wysie instances)
 	// TODO Switch to indexedDB
 	get backup() {
-		return JSON.parse(localStorage[this.originalHref]);
+		return JSON.parse(localStorage[this.originalHref] || null);
 	},
 
 	set backup(data) {
@@ -440,46 +440,54 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		var backup = this.backup;
 
 		this.inProgress = "Loading";
-			
+
 		if (backup && backup.synced === false) {
 			// Unsynced backup, we need to restore & then save instead of reading remote
-			this.wysie.render(backup);
-			this.save();
-		}
-		else if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
-			// URL is not a hash, load it
-			ret = ret.then(() => {
-				return $.fetch(this.href, {
-					responseType: "json"
-				});
-			}).then(xhr => {
-				var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
-
+			return ret.then(()=>{
+				this.wysie.render(backup);
 				this.inProgress = false;
-
-				this.wysie.render(data);
-
-				this.backup = {
-					synced: true,
-					data: this.wysie.data
-				};
+				return this.save();	
 			});
 		}
 		else {
-			ret = ret.done(function(){
-				return Promise.reject();
+			if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
+				// URL is not a hash, load it
+				ret = ret.then(() => {
+
+					return this.backendLoad? this.backendLoad() : $.fetch(this.href, {
+						responseType: "json"
+					});
+				}).then(xhr => {
+					this.inProgress = false;
+					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
+					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
+
+					this.wysie.render(data);
+
+					this.backup = {
+						synced: true,
+						data: this.wysie.data
+					};
+				});
+			}
+			else {
+				ret = ret.done(function(){
+					return Promise.reject();
+				});
+			}
+
+			return ret.catch(err => {
+				this.inProgress = false;
+				
+				if (err) {
+					console.error(err);
+				}
+				
+				if (backup) {
+					this.wysie.render(backup);
+				}
 			});
 		}
-
-		return ret.catch(err => {
-			if (err) {
-				console.error(err);
-			}
-			
-			if (backup) {
-				this.wysie.render(backup);
-			}
-		});
 	},
 
 	// Subclasses overriding load must call this after load is done
@@ -488,26 +496,28 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		this.wysie.wrapper._.fireEvent("wysie:load");
 	},
 
-	// Subclasses should call super to save locally first
 	save: function() {
+		console.log("save() called");
 		this.backup = {
 			synced: false,
 			data: this.wysie.data
 		};
 
-		return this.login().then(()=>{ this.inProgress = "Saving"; });
-	},
+		if (this._save) {
+			return this.login().then(()=>{
+				this.inProgress = "Saving";
 
-	// Subclasses overriding should call this
-	afterSave: function(success) {
-		if (success) {
-			var backup = this.backup;
-			backup.synced = true;
-			this.backup = backup;	
+				return this.backendSave().then(()=>{
+					var backup = this.backup;
+					backup.synced = true;
+					this.backup = backup;
+
+					this.wysie.wrapper._.fireEvent("wysie:save");
+				}).done(()=>{
+					this.inProgress = false;
+				});
+			});
 		}
-
-		this.inProgress = false;
-		this.wysie.wrapper._.fireEvent("wysie:save");
 	},
 
 	// To be overriden by subclasses
@@ -606,6 +616,11 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 
 		this.property = _.normalizeProperty(this.element);
 
+		if (this.property) {
+			// Scope this property belongs to
+			this.scope = this.element.closest(Wysie.selectors.scope);
+		}
+
 		this.required = this.element.matches("[required], [data-required]");
 	},
 
@@ -662,10 +677,17 @@ var _ = Wysie.Scope = $.Class({
 			return new Wysie.Collection(template, me.wysie);
 		}, this);
 
+		this.propertyNames = [];
+
 		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
-		this.properties.forEach(function(prop){
+		this.properties.forEach(prop => {
 			prop._.data.unit = _.super.create(prop, me.wysie);
+
+			this.propertyNames.push(prop._.data.unit.property);
 		});
+
+		// Handle expressions
+		this._cacheReferences();
 
 		if (this.isRoot) {
 			// TODO handle element templates in a better/more customizable way
@@ -834,6 +856,49 @@ var _ = Wysie.Scope = $.Class({
 		this.everSaved = true;
 	},
 
+	_cacheReferences: function() {
+		this.refRegex = RegExp("(?:{" + this.propertyNames.join("|") + "})|(?:\\${.*(?:" + this.propertyNames.join("|") + ").*})", "gi");
+		this.references = [];
+
+		var extractRefs = (element, attribute) => {
+			if (!attribute && element.children.length > 0) {
+				return;
+			}
+
+			var text = attribute? attribute.value : element.textContent;
+			var matches = text.match(this.refRegex);
+
+			if (matches) {
+				this.references.push({
+					element: element,
+					attribute: attribute && attribute.name,
+					text: text,
+					expressions: matches.map(match => match.replace(/^\$?{|}$/))
+				});
+			}
+		};
+		
+		this.properties.forEach(prop => {
+			if (this.refRegex.test(prop.outerHTML)) {
+				extractRefs(prop, null);
+
+				$$(prop.attributes).forEach(attribute => {
+					extractRefs(prop, attribute);
+				});
+			}
+		});
+	},
+
+	_updateReferences: function() {
+		var data = this.data;
+
+		$$(this.references).forEach(ref=>{
+			$$(ref.expressions).forEach(expr=>{
+				// TODO
+			});
+		});
+	},
+
 	static: {
 		is: function(element) {
 
@@ -880,9 +945,6 @@ var _ = Wysie.Primitive = $.Class({
 	constructor: function (element, wysie) {
 		var me = this;
 
-		// Scope this primitive belongs to
-		this.scope = this.element.closest(Wysie.selectors.scope);
-
 		this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
 	 
 		for (var selector in _.types) {
@@ -900,7 +962,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.label = this.label || Wysie.readable(this.property);
 
-		/*
+		/**
 		 * Set up input widget
 		 */
 
@@ -1105,14 +1167,14 @@ var _ = Wysie.Primitive = $.Class({
 		// TODO special-case classes
 		value = value || value === 0? value : "";
 
-		$$("*", this.scope).concat(this.scope).forEach(function (element) {
+		$$("*", this.scope).concat(this.scope).forEach(element => {
 
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
 				element.setAttribute("data-original-textContent", element.textContent);
 				element.textContent = element.textContent.replace(this.nameRegex, Wysie.identifier(value));
 			}
 
-			$$(element.attributes).forEach(function (attribute) {
+			$$(element.attributes).forEach(attribute => {
 				this.nameRegex.lastIndex = 0;
 
 				if (this.nameRegex.test(attribute.value)) {
@@ -1145,8 +1207,8 @@ var _ = Wysie.Primitive = $.Class({
 					}
 
 				}
-			}, this);
-		}, this);
+			});
+		});
 
 		this.onchange && this.onchange(value);
 	},
@@ -1498,52 +1560,57 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				return;
 			}
 
-			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0/, "dl=1");
+			// Transform the dropbox shared URL into something raw and CORS-enabled
+			this.wysie.store.hostname = "dl.dropboxusercontent.com";
+			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
 
+			// Internal filename (to be used for saving)
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-			this.authenticated = this.client.isAuthenticated();
-		}));
+		})).then(()=>{
+			this.login(true);
+		});
 	},
 
 	canEdit: "with login",
 
-	load: function() {
-		return this.super.load.call(this).then(this.afterLoad.bind(this));
-	},
-
-	save: function() {
-		return this.super.save.call(this).then(() => {
-			return new Promise((resolve, reject) => {
-				this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
-					if (error) {
-						return reject(Error(error));
-					}
-
-				  console.log("File saved as revision " + stat.versionTag);
-				  resolve(stat);
-				});
-			});
-		})
-		.then(()=>{ this.afterSave(true); })
-		.catch(()=>{ this.afterSave(false); });
-	},
-
-	login: function() {
-		return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
-			this.client.authDriver(new Dropbox.AuthDriver.Popup({
-			    receiverUrl: new URL(location) + ""
-			}));
-
-			this.client.authenticate((error, client) => {
+	// Super class save() calls this. Do not call directly.
+	backendSave: function() {
+		return new Promise((resolve, reject) => {
+			this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
 				if (error) {
-					reject(Error(error));
+					return reject(Error(error));
 				}
 
-				this.authenticated = true;
+			  console.log("File saved as revision " + stat.versionTag);
+			  resolve(stat);
+			});
+		});
+	},
 
-				resolve();
+	login: function(passive) {
+		return this.ready.then(()=>{
+			return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
+				this.client.authDriver(new Dropbox.AuthDriver.Popup({
+				    receiverUrl: new URL(location) + ""
+				}));
+
+				this.client.authenticate({interactive: !passive}, (error, client) => {
+
+					if (error) {
+						reject(Error(error));
+					}
+
+					if (this.client.isAuthenticated()) {
+						this.authenticated = true;
+						resolve();	
+					}
+					else {
+						this.authenticated = false;
+						reject();
+					}
+				})
 			})
 		}).then(() => {
 			// Not returning a promise here, since processes depending on login don't need to wait for this
@@ -1552,7 +1619,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					this.wysie.wrapper._.fireEvent("wysie:login", accountInfo);
 				}
 			});
-		});
+		}).catch(()=>{});
 	},
 
 	logout: function() {

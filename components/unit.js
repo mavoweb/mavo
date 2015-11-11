@@ -14,6 +14,11 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 
 		this.property = _.normalizeProperty(this.element);
 
+		if (this.property) {
+			// Scope this property belongs to
+			this.scope = this.element.closest(Wysie.selectors.scope);
+		}
+
 		this.required = this.element.matches("[required], [data-required]");
 	},
 
