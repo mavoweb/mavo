@@ -16,6 +16,8 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		this.property = _.normalizeProperty(this.element);
 		this.collection = collection;
 
+		this.computed = this.element.matches(Wysie.selectors.computed);
+
 		// Scope this property belongs to
 		this.parentScope = this.scope = this.property? this.element.closest(Wysie.selectors.scope) : null;
 

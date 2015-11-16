@@ -90,8 +90,11 @@ var _ = Wysie.Scope = $.Class({
 		}, this);
 	},
 
-	getData: function(dirty) {
-		if (this.editing && !this.everSaved && !dirty) {
+	getData: function(o) {
+		o = o || {};
+
+		if (this.editing && !this.everSaved && !o.dirty
+			|| this.computed && !o.computed) {
 			return null;
 		}
 
@@ -100,7 +103,9 @@ var _ = Wysie.Scope = $.Class({
 		this.properties.forEach(function(prop){
 			var unit = prop._.data.unit;
 
-			ret[unit.property] = unit.getData(dirty);
+			if (!unit.computed || o.computed) {
+				ret[unit.property] = unit.getData(o);
+			}
 		});
 
 		return ret;
@@ -250,7 +255,7 @@ var _ = Wysie.Scope = $.Class({
 
 		while (scope) {
 			var property = scope.property;
-			data = $.extend(scope.getData(true), data);
+			data = $.extend(scope.getData({dirty: true, computed: true}), data);
 
 			var parentScope = scope.parentScope;
 			
@@ -262,9 +267,7 @@ var _ = Wysie.Scope = $.Class({
 
 			$$(ref.expressions).forEach(expr => {
 				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
-				if (!value) {
-					console.log(data, expr)
-				}
+
 				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
 					value = Wysie.identifier(value);
 				}

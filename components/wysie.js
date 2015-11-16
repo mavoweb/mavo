@@ -47,8 +47,8 @@ var _ = self.Wysie = $.Class({
 		return this.getData();
 	},
 
-	getData: function(dirty) {
-		return this.root.getData(dirty);
+	getData: function(o) {
+		return this.root.getData(o);
 	},
 
 	toJSON: function() {
@@ -106,10 +106,11 @@ var _ = self.Wysie = $.Class({
 		selectors: {
 			property: "[property], [itemprop]",
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-			scope: "[typeof], [itemscope], [itemtype]",
-			multiple: "[multiple], [data-multiple]",
-			required: "[required], [data-required]",
-			formControl: "input, select, textarea"
+			scope: "[typeof], [itemscope], [itemtype], .scope",
+			multiple: "[multiple], [data-multiple], .multiple",
+			required: "[required], [data-required], .required",
+			formControl: "input, select, textarea",
+			computed: ".computed" // Properties or scopes with computed properties, will not be saved
 		},
 
 		is: function(thing, element) {

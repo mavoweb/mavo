@@ -148,9 +148,13 @@ _.prototype = {
 		return this.getData();
 	},
 
-	getData: function(dirty) {
+	getData: function(o) {
+		o = o || {};
+
 		return this.items.map(function(item){
-			return item._.data.unit.getData(dirty);
+			var unit = item._.data.unit;
+
+			return unit.getData(o);
 		}).filter(function(item){
 			return item !== null;
 		});

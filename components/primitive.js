@@ -63,7 +63,7 @@ var _ = Wysie.Primitive = $.Class({
 				});
 			},
 			"change": function() {
-				if (me.exposed && me.scope._.data.unit.everSaved) {
+				if (me.exposed && (!me.scope.collection || me.scope._.data.unit.everSaved)) {
 					me.wysie.save();
 				}
 			},
@@ -218,8 +218,14 @@ var _ = Wysie.Primitive = $.Class({
 		return this.editor === this.element;
 	},
 
-	getData: function(dirty) {
-		return this.editing && !dirty? this.savedValue : this.value;
+	getData: function(o) {
+		o = o || {};
+
+		if (this.computed && !o.computed) {
+			return null;
+		}
+
+		return this.editing && !o.dirty? this.savedValue : this.value;
 	},
 
 	update: function (value) {

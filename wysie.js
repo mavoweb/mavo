@@ -47,8 +47,8 @@ var _ = self.Wysie = $.Class({
 		return this.getData();
 	},
 
-	getData: function(dirty) {
-		return this.root.getData(dirty);
+	getData: function(o) {
+		return this.root.getData(o);
 	},
 
 	toJSON: function() {
@@ -106,10 +106,11 @@ var _ = self.Wysie = $.Class({
 		selectors: {
 			property: "[property], [itemprop]",
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-			scope: "[typeof], [itemscope], [itemtype]",
-			multiple: "[multiple], [data-multiple]",
-			required: "[required], [data-required]",
-			formControl: "input, select, textarea"
+			scope: "[typeof], [itemscope], [itemtype], .scope",
+			multiple: "[multiple], [data-multiple], .multiple",
+			required: "[required], [data-required], .required",
+			formControl: "input, select, textarea",
+			computed: ".computed" // Properties or scopes with computed properties, will not be saved
 		},
 
 		is: function(thing, element) {
@@ -625,6 +626,8 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		this.property = _.normalizeProperty(this.element);
 		this.collection = collection;
 
+		this.computed = this.element.matches(Wysie.selectors.computed);
+
 		// Scope this property belongs to
 		this.parentScope = this.scope = this.property? this.element.closest(Wysie.selectors.scope) : null;
 
@@ -771,8 +774,11 @@ var _ = Wysie.Scope = $.Class({
 		}, this);
 	},
 
-	getData: function(dirty) {
-		if (this.editing && !this.everSaved && !dirty) {
+	getData: function(o) {
+		o = o || {};
+
+		if (this.editing && !this.everSaved && !o.dirty
+			|| this.computed && !o.computed) {
 			return null;
 		}
 
@@ -781,7 +787,9 @@ var _ = Wysie.Scope = $.Class({
 		this.properties.forEach(function(prop){
 			var unit = prop._.data.unit;
 
-			ret[unit.property] = unit.getData(dirty);
+			if (!unit.computed || o.computed) {
+				ret[unit.property] = unit.getData(o);
+			}
 		});
 
 		return ret;
@@ -931,7 +939,7 @@ var _ = Wysie.Scope = $.Class({
 
 		while (scope) {
 			var property = scope.property;
-			data = $.extend(scope.getData(true), data);
+			data = $.extend(scope.getData({dirty: true, computed: true}), data);
 
 			var parentScope = scope.parentScope;
 			
@@ -943,9 +951,7 @@ var _ = Wysie.Scope = $.Class({
 
 			$$(ref.expressions).forEach(expr => {
 				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
-				if (!value) {
-					console.log(data, expr)
-				}
+
 				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
 					value = Wysie.identifier(value);
 				}
@@ -1066,7 +1072,7 @@ var _ = Wysie.Primitive = $.Class({
 				});
 			},
 			"change": function() {
-				if (me.exposed && me.scope._.data.unit.everSaved) {
+				if (me.exposed && (!me.scope.collection || me.scope._.data.unit.everSaved)) {
 					me.wysie.save();
 				}
 			},
@@ -1221,8 +1227,14 @@ var _ = Wysie.Primitive = $.Class({
 		return this.editor === this.element;
 	},
 
-	getData: function(dirty) {
-		return this.editing && !dirty? this.savedValue : this.value;
+	getData: function(o) {
+		o = o || {};
+
+		if (this.computed && !o.computed) {
+			return null;
+		}
+
+		return this.editing && !o.dirty? this.savedValue : this.value;
 	},
 
 	update: function (value) {
@@ -1559,9 +1571,13 @@ _.prototype = {
 		return this.getData();
 	},
 
-	getData: function(dirty) {
+	getData: function(o) {
+		o = o || {};
+
 		return this.items.map(function(item){
-			return item._.data.unit.getData(dirty);
+			var unit = item._.data.unit;
+
+			return unit.getData(o);
 		}).filter(function(item){
 			return item !== null;
 		});
