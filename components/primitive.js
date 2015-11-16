@@ -197,6 +197,10 @@ var _ = Wysie.Primitive = $.Class({
 			return this.editor.checked;
 		}
 		else {
+			if (this.datatype === "number") {
+				return +this.editor.value;	
+			}
+
 			return this.editor.value;
 		}
 	},
@@ -210,12 +214,12 @@ var _ = Wysie.Primitive = $.Class({
 		}
 	},
 
-	get data() {
-		return this.editing? this.savedValue : this.value;
-	},
-
 	get exposed() {
 		return this.editor === this.element;
+	},
+
+	getData: function(dirty) {
+		return this.editing && !dirty? this.savedValue : this.value;
 	},
 
 	update: function (value) {
@@ -226,7 +230,7 @@ var _ = Wysie.Primitive = $.Class({
 		// TODO optimize performance for attributes by storing in hash
 		// TODO special-case classes
 		value = value || value === 0? value : "";
-
+/*
 		$$("*", this.scope).concat(this.scope).forEach(element => {
 
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
@@ -270,7 +274,14 @@ var _ = Wysie.Primitive = $.Class({
 			});
 		});
 
+*/
+
 		this.onchange && this.onchange(value);
+
+		this.element._.fireEvent("wysie:propertychange", {
+			property: this.property,
+			value: value
+		});
 	},
 
 	save: function () {
@@ -320,6 +331,11 @@ _.types = {
 	'input[type="checkbox"]': {
 		datatype: "boolean"
 	},
+
+	'input[type="range"], input[type="number"]': {
+		datatype: "number"
+	},
+
 	"time": {
 		attribute: "datetime",
 		datatype: "dateTime",

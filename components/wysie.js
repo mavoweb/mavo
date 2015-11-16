@@ -14,6 +14,11 @@ var _ = self.Wysie = $.Class({
 
 		this.element = _.is("scope", element)? element : $(_.selectors.scope, element);
 
+		if (!this.element) {
+			element.setAttribute("typeof", "");
+			this.element = element;
+		}
+
 		this.wrapper = element !== this.element? element : document.createElement("div")._.around(this.element);
 
 		this.wrapper.classList.add("wysie-root");
@@ -39,7 +44,11 @@ var _ = self.Wysie = $.Class({
 	},
 
 	get data() {
-		return this.root.data;
+		return this.getData();
+	},
+
+	getData: function(dirty) {
+		return this.root.getData(dirty);
 	},
 
 	toJSON: function() {
@@ -62,7 +71,7 @@ var _ = self.Wysie = $.Class({
 		// Convert an identifier to readable text that can be used as a label
 		readable: function (identifier) {
 			// Is it camelCase?
-			return identifier
+			return identifier && identifier
 			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase()}) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase() }); // Capitalize
@@ -70,7 +79,7 @@ var _ = self.Wysie = $.Class({
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
 		identifier: function (readable) {
-			return readable
+			return readable && readable
 			         .replace(/\s+/g, "-") // Convert whitespace to hyphens
 			         .replace(/[^\w-]/g, "") // Remove weird characters
 			         .toLowerCase();
@@ -110,6 +119,13 @@ var _ = self.Wysie = $.Class({
 });
 
 })();
+
+// TODO implement this properly
+function safeval(expr, vars) {
+	with (vars) {
+		return eval(expr);
+	}
+}
 
 if (self.Promise && !Promise.prototype.done) {
 	Promise.prototype.done = function(callback) {

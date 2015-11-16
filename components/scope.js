@@ -23,6 +23,12 @@ var _ = Wysie.Scope = $.Class({
 		// Handle expressions
 		this._cacheReferences();
 
+		this.element.addEventListener("wysie:propertychange", evt=>{
+			evt.stopPropagation();
+			this._updateReferences();
+		});
+		this._updateReferences();
+
 		if (this.isRoot) {
 			// TODO handle element templates in a better/more customizable way
 			this.buttons = {
@@ -84,8 +90,8 @@ var _ = Wysie.Scope = $.Class({
 		}, this);
 	},
 
-	get data() {
-		if (this.editing && !this.everSaved) {
+	getData: function(dirty) {
+		if (this.editing && !this.everSaved && !dirty) {
 			return null;
 		}
 
@@ -94,7 +100,7 @@ var _ = Wysie.Scope = $.Class({
 		this.properties.forEach(function(prop){
 			var unit = prop._.data.unit;
 
-			ret[unit.property] = unit.data;
+			ret[unit.property] = unit.getData(dirty);
 		});
 
 		return ret;
@@ -191,9 +197,11 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	_cacheReferences: function() {
-		this.refRegex = RegExp("(?:{" + this.propertyNames.join("|") + "})|(?:\\${.*(?:" + this.propertyNames.join("|") + ").*})", "gi");
+		var propertiesRegex = this.propertyNames.join("|");
+		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${(?:.*" + propertiesRegex + ".*)}", "gi");
 		this.references = [];
 
+		// TODO handle references when an attribute value is set later
 		var extractRefs = (element, attribute) => {
 			if (!attribute && element.children.length > 0) {
 				return;
@@ -207,29 +215,69 @@ var _ = Wysie.Scope = $.Class({
 					element: element,
 					attribute: attribute && attribute.name,
 					text: text,
-					expressions: matches.map(match => match.replace(/^\$?{|}$/))
+					expressions: matches.map(match => {
+						return {
+							isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
+							expression: match.replace(/^\$?{|}$/g, "")
+						};
+					})
 				});
 			}
 		};
-		
-		this.properties.forEach(prop => {
-			if (this.refRegex.test(prop.outerHTML)) {
-				extractRefs(prop, null);
 
-				$$(prop.attributes).forEach(attribute => {
-					extractRefs(prop, attribute);
+		$$("*", this.element).concat(this.element).forEach(element => {
+			
+			if (this.refRegex.test(element.outerHTML)) {
+				extractRefs(element, null);
+
+				$$(element.attributes).forEach(attribute => {
+					extractRefs(element, attribute);
 				});
 			}
 		});
 	},
 
+	// Gets called every time a property changes in this or descendant scopes
 	_updateReferences: function() {
-		var data = this.data;
+		if (!this.references.length) {
+			return;
+		}
 
-		$$(this.references).forEach(ref=>{
-			$$(ref.expressions).forEach(expr=>{
-				// TODO
+		// Ancestor properties should also be added as on the same level,
+		// with closer ancestors overriding higher up ancestors in case of collision
+		var scope = this;
+		var data = {};
+
+		while (scope) {
+			var property = scope.property;
+			data = $.extend(scope.getData(true), data);
+
+			var parentScope = scope.parentScope;
+			
+			scope = parentScope && parentScope._.data.unit;
+		}
+
+		$$(this.references).forEach(ref => {
+			var newText = ref.text;
+
+			$$(ref.expressions).forEach(expr => {
+				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
+				if (!value) {
+					console.log(data, expr)
+				}
+				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
+					value = Wysie.identifier(value);
+				}
+				
+				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value);				
 			});
+
+			if (ref.attribute) {
+				ref.element.setAttribute(ref.attribute, newText);
+			}
+			else {
+				ref.element.textContent = newText;
+			}
 		});
 	},
 

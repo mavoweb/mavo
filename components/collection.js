@@ -18,13 +18,13 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.type = Wysie.Scope.normalize(this.template);
 
 	// Scope this collection belongs to (or null if root)
-	this.scope = this.template.parentNode.closest(Wysie.selectors.scope);
+	this.parentScope = this.template.parentNode.closest(Wysie.selectors.scope);
 
 	this.required = this.template.matches(Wysie.selectors.required);
 
 	// Find add button if provided, or generate one
 	var closestCollection = this.template.parentNode.closest(".wysie-item");
-	this.addButton = $$(".wysie-add, button.add", closestCollection).filter(button => {
+	this.addButton = $$("button.add-" + this.property + ", .wysie-add, button.add", closestCollection).filter(button => {
 		return !this.template.contains(button);
 	})[0];
 
@@ -50,7 +50,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 		this.bottomUp = false;
 	}
 	else {
-		console.log(this.addButton.compareDocumentPosition(this.template))
 		// If add button is already in the DOM and *before* our template, then we default to prepending
 		this.bottomUp = !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
 	}
@@ -110,10 +109,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 	// TODO Add clone button to the template
 
 	this.wysie.wrapper.addEventListener("wysie:load", evt => {
-		if (this.required && !this.length) {
-			this.addEditable();
-		}
-
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			if (this.bottomUp) {
@@ -122,6 +117,10 @@ var _ = Wysie.Collection = function (template, wysie) {
 			else {
 				this.addButton._.after(this.marker);
 			}
+		}
+
+		if (this.required && !this.length) {
+			this.addEditable();
 		}
 	});
 };
@@ -138,7 +137,7 @@ _.prototype = {
 	},
 
 	get items() {
-		return $$(this.selector, this.scope || this.wysie.wrapper);
+		return $$(this.selector, this.parentScope || this.wysie.wrapper);
 	},
 
 	get length() {
@@ -146,8 +145,12 @@ _.prototype = {
 	},
 
 	get data() {
+		return this.getData();
+	},
+
+	getData: function(dirty) {
 		return this.items.map(function(item){
-			return item._.data.unit.data;
+			return item._.data.unit.getData(dirty);
 		}).filter(function(item){
 			return item !== null;
 		});
@@ -158,7 +161,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+		Wysie.Unit.create(item, this.wysie, this);
 
 		item._.before(this.marker);
 
@@ -169,7 +172,7 @@ _.prototype = {
 	addEditable: function() {
 		var item = $.clone(this.template);
 
-		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+		Wysie.Unit.create(item, this.wysie, this);
 
 		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
 
@@ -196,12 +199,6 @@ _.prototype = {
 
 			item._.data.unit.render(datum);
 		}, this);
-	},
-
-	toJSON: function(){
-		return "[" + this.items.map(function(item){
-			return item._.data.unit.toJSON();
-		}) + "]";
 	}
 };
 

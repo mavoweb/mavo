@@ -14,6 +14,11 @@ var _ = self.Wysie = $.Class({
 
 		this.element = _.is("scope", element)? element : $(_.selectors.scope, element);
 
+		if (!this.element) {
+			element.setAttribute("typeof", "");
+			this.element = element;
+		}
+
 		this.wrapper = element !== this.element? element : document.createElement("div")._.around(this.element);
 
 		this.wrapper.classList.add("wysie-root");
@@ -39,7 +44,11 @@ var _ = self.Wysie = $.Class({
 	},
 
 	get data() {
-		return this.root.data;
+		return this.getData();
+	},
+
+	getData: function(dirty) {
+		return this.root.getData(dirty);
 	},
 
 	toJSON: function() {
@@ -62,7 +71,7 @@ var _ = self.Wysie = $.Class({
 		// Convert an identifier to readable text that can be used as a label
 		readable: function (identifier) {
 			// Is it camelCase?
-			return identifier
+			return identifier && identifier
 			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase()}) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase() }); // Capitalize
@@ -70,7 +79,7 @@ var _ = self.Wysie = $.Class({
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
 		identifier: function (readable) {
-			return readable
+			return readable && readable
 			         .replace(/\s+/g, "-") // Convert whitespace to hyphens
 			         .replace(/[^\w-]/g, "") // Remove weird characters
 			         .toLowerCase();
@@ -110,6 +119,13 @@ var _ = self.Wysie = $.Class({
 });
 
 })();
+
+// TODO implement this properly
+function safeval(expr, vars) {
+	with (vars) {
+		return eval(expr);
+	}
+}
 
 if (self.Promise && !Promise.prototype.done) {
 	Promise.prototype.done = function(callback) {
@@ -446,6 +462,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			return ret.then(()=>{
 				this.wysie.render(backup);
 				this.inProgress = false;
+				this.wysie.wrapper._.fireEvent("wysie:load");
+
 				return this.save();	
 			});
 		}
@@ -459,6 +477,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					});
 				}).then(xhr => {
 					this.inProgress = false;
+					this.wysie.wrapper._.fireEvent("wysie:load");
 					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
 					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
@@ -472,6 +491,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			}
 			else {
 				ret = ret.done(function(){
+					// FIXME forcing the promise to fail to load locally is bad style
 					return Promise.reject();
 				});
 			}
@@ -486,20 +506,15 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				if (backup) {
 					this.wysie.render(backup);
 				}
+
+				this.wysie.wrapper._.fireEvent("wysie:load");
 			});
 		}
 	},
 
-	// Subclasses overriding load must call this after load is done
-	afterLoad: function() {
-		this.inProgress = false;
-		this.wysie.wrapper._.fireEvent("wysie:load");
-	},
-
 	save: function() {
-		console.log("save() called");
 		this.backup = {
-			synced: false,
+			synced: !this._save,
 			data: this.wysie.data
 		};
 
@@ -583,14 +598,6 @@ _.Default = $.Class({ extends: _,
 		this.canEdit = this.url.origin === location.origin && this.url.pathname === location.pathname;
 	},
 
-	load: function() {
-		return this.super.load.call(this).then(this.afterLoad.bind(this));
-	},
-
-	save: function() {
-		return this.super.save.call(this).then(this.afterSave.bind(this));
-	},
-
 	canEdit: true,
 
 	static: {
@@ -606,19 +613,23 @@ _.Default = $.Class({ extends: _,
 (function(){
 
 var _ = Wysie.Unit = $.Class({ abstract: true,
-	constructor: function(element, wysie) {
+	constructor: function(element, wysie, collection) {
 		if (!element || !wysie) {
 			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 		}
 
 		this.wysie = wysie;
 		this.element = element;
+		this.element._.data.unit = this;
 
 		this.property = _.normalizeProperty(this.element);
+		this.collection = collection;
 
-		if (this.property) {
-			// Scope this property belongs to
-			this.scope = this.element.closest(Wysie.selectors.scope);
+		// Scope this property belongs to
+		this.parentScope = this.scope = this.property? this.element.closest(Wysie.selectors.scope) : null;
+
+		if (this.scope === this.element) {
+			this.parentScope = collection && collection.parentScope || this.scope.parentNode.closest(Wysie.selectors.scope);
 		}
 
 		this.required = this.element.matches("[required], [data-required]");
@@ -626,8 +637,12 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 
 	toJSON: Wysie.prototype.toJSON,
 
+	get data() {
+		return this.getData();
+	},
+
 	static: {
-		create: function(element, wysie) {
+		create: function(element, wysie, collection) {
 			if (!element || !wysie) {
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
@@ -642,7 +657,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 					)
 				);
 
-			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie);
+			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie, collection);
 		},
 
 		normalizeProperty: function(element) {
@@ -688,6 +703,12 @@ var _ = Wysie.Scope = $.Class({
 
 		// Handle expressions
 		this._cacheReferences();
+
+		this.element.addEventListener("wysie:propertychange", evt=>{
+			evt.stopPropagation();
+			this._updateReferences();
+		});
+		this._updateReferences();
 
 		if (this.isRoot) {
 			// TODO handle element templates in a better/more customizable way
@@ -750,8 +771,8 @@ var _ = Wysie.Scope = $.Class({
 		}, this);
 	},
 
-	get data() {
-		if (this.editing && !this.everSaved) {
+	getData: function(dirty) {
+		if (this.editing && !this.everSaved && !dirty) {
 			return null;
 		}
 
@@ -760,7 +781,7 @@ var _ = Wysie.Scope = $.Class({
 		this.properties.forEach(function(prop){
 			var unit = prop._.data.unit;
 
-			ret[unit.property] = unit.data;
+			ret[unit.property] = unit.getData(dirty);
 		});
 
 		return ret;
@@ -857,9 +878,11 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	_cacheReferences: function() {
-		this.refRegex = RegExp("(?:{" + this.propertyNames.join("|") + "})|(?:\\${.*(?:" + this.propertyNames.join("|") + ").*})", "gi");
+		var propertiesRegex = this.propertyNames.join("|");
+		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${(?:.*" + propertiesRegex + ".*)}", "gi");
 		this.references = [];
 
+		// TODO handle references when an attribute value is set later
 		var extractRefs = (element, attribute) => {
 			if (!attribute && element.children.length > 0) {
 				return;
@@ -873,29 +896,69 @@ var _ = Wysie.Scope = $.Class({
 					element: element,
 					attribute: attribute && attribute.name,
 					text: text,
-					expressions: matches.map(match => match.replace(/^\$?{|}$/))
+					expressions: matches.map(match => {
+						return {
+							isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
+							expression: match.replace(/^\$?{|}$/g, "")
+						};
+					})
 				});
 			}
 		};
-		
-		this.properties.forEach(prop => {
-			if (this.refRegex.test(prop.outerHTML)) {
-				extractRefs(prop, null);
 
-				$$(prop.attributes).forEach(attribute => {
-					extractRefs(prop, attribute);
+		$$("*", this.element).concat(this.element).forEach(element => {
+			
+			if (this.refRegex.test(element.outerHTML)) {
+				extractRefs(element, null);
+
+				$$(element.attributes).forEach(attribute => {
+					extractRefs(element, attribute);
 				});
 			}
 		});
 	},
 
+	// Gets called every time a property changes in this or descendant scopes
 	_updateReferences: function() {
-		var data = this.data;
+		if (!this.references.length) {
+			return;
+		}
 
-		$$(this.references).forEach(ref=>{
-			$$(ref.expressions).forEach(expr=>{
-				// TODO
+		// Ancestor properties should also be added as on the same level,
+		// with closer ancestors overriding higher up ancestors in case of collision
+		var scope = this;
+		var data = {};
+
+		while (scope) {
+			var property = scope.property;
+			data = $.extend(scope.getData(true), data);
+
+			var parentScope = scope.parentScope;
+			
+			scope = parentScope && parentScope._.data.unit;
+		}
+
+		$$(this.references).forEach(ref => {
+			var newText = ref.text;
+
+			$$(ref.expressions).forEach(expr => {
+				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
+				if (!value) {
+					console.log(data, expr)
+				}
+				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
+					value = Wysie.identifier(value);
+				}
+				
+				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value);				
 			});
+
+			if (ref.attribute) {
+				ref.element.setAttribute(ref.attribute, newText);
+			}
+			else {
+				ref.element.textContent = newText;
+			}
 		});
 	},
 
@@ -1137,6 +1200,10 @@ var _ = Wysie.Primitive = $.Class({
 			return this.editor.checked;
 		}
 		else {
+			if (this.datatype === "number") {
+				return +this.editor.value;	
+			}
+
 			return this.editor.value;
 		}
 	},
@@ -1150,12 +1217,12 @@ var _ = Wysie.Primitive = $.Class({
 		}
 	},
 
-	get data() {
-		return this.editing? this.savedValue : this.value;
-	},
-
 	get exposed() {
 		return this.editor === this.element;
+	},
+
+	getData: function(dirty) {
+		return this.editing && !dirty? this.savedValue : this.value;
 	},
 
 	update: function (value) {
@@ -1166,7 +1233,7 @@ var _ = Wysie.Primitive = $.Class({
 		// TODO optimize performance for attributes by storing in hash
 		// TODO special-case classes
 		value = value || value === 0? value : "";
-
+/*
 		$$("*", this.scope).concat(this.scope).forEach(element => {
 
 			if (this.nameRegex.test(element.textContent) && !element.children.length) {
@@ -1210,7 +1277,14 @@ var _ = Wysie.Primitive = $.Class({
 			});
 		});
 
+*/
+
 		this.onchange && this.onchange(value);
+
+		this.element._.fireEvent("wysie:propertychange", {
+			property: this.property,
+			value: value
+		});
 	},
 
 	save: function () {
@@ -1260,6 +1334,11 @@ _.types = {
 	'input[type="checkbox"]': {
 		datatype: "boolean"
 	},
+
+	'input[type="range"], input[type="number"]': {
+		datatype: "number"
+	},
+
 	"time": {
 		attribute: "datetime",
 		datatype: "dateTime",
@@ -1350,13 +1429,13 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.type = Wysie.Scope.normalize(this.template);
 
 	// Scope this collection belongs to (or null if root)
-	this.scope = this.template.parentNode.closest(Wysie.selectors.scope);
+	this.parentScope = this.template.parentNode.closest(Wysie.selectors.scope);
 
 	this.required = this.template.matches(Wysie.selectors.required);
 
 	// Find add button if provided, or generate one
 	var closestCollection = this.template.parentNode.closest(".wysie-item");
-	this.addButton = $$(".wysie-add, button.add", closestCollection).filter(button => {
+	this.addButton = $$("button.add-" + this.property + ", .wysie-add, button.add", closestCollection).filter(button => {
 		return !this.template.contains(button);
 	})[0];
 
@@ -1382,7 +1461,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 		this.bottomUp = false;
 	}
 	else {
-		console.log(this.addButton.compareDocumentPosition(this.template))
 		// If add button is already in the DOM and *before* our template, then we default to prepending
 		this.bottomUp = !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
 	}
@@ -1442,10 +1520,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 	// TODO Add clone button to the template
 
 	this.wysie.wrapper.addEventListener("wysie:load", evt => {
-		if (this.required && !this.length) {
-			this.addEditable();
-		}
-
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			if (this.bottomUp) {
@@ -1454,6 +1528,10 @@ var _ = Wysie.Collection = function (template, wysie) {
 			else {
 				this.addButton._.after(this.marker);
 			}
+		}
+
+		if (this.required && !this.length) {
+			this.addEditable();
 		}
 	});
 };
@@ -1470,7 +1548,7 @@ _.prototype = {
 	},
 
 	get items() {
-		return $$(this.selector, this.scope || this.wysie.wrapper);
+		return $$(this.selector, this.parentScope || this.wysie.wrapper);
 	},
 
 	get length() {
@@ -1478,8 +1556,12 @@ _.prototype = {
 	},
 
 	get data() {
+		return this.getData();
+	},
+
+	getData: function(dirty) {
 		return this.items.map(function(item){
-			return item._.data.unit.data;
+			return item._.data.unit.getData(dirty);
 		}).filter(function(item){
 			return item !== null;
 		});
@@ -1490,7 +1572,7 @@ _.prototype = {
 	add: function() {
 		var item = $.clone(this.template);
 
-		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+		Wysie.Unit.create(item, this.wysie, this);
 
 		item._.before(this.marker);
 
@@ -1501,7 +1583,7 @@ _.prototype = {
 	addEditable: function() {
 		var item = $.clone(this.template);
 
-		item._.data.unit = Wysie.Unit.create(item, this.wysie);
+		Wysie.Unit.create(item, this.wysie, this);
 
 		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
 
@@ -1528,12 +1610,6 @@ _.prototype = {
 
 			item._.data.unit.render(datum);
 		}, this);
-	},
-
-	toJSON: function(){
-		return "[" + this.items.map(function(item){
-			return item._.data.unit.toJSON();
-		}) + "]";
 	}
 };
 

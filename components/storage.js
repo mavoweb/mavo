@@ -133,6 +133,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			return ret.then(()=>{
 				this.wysie.render(backup);
 				this.inProgress = false;
+				this.wysie.wrapper._.fireEvent("wysie:load");
+
 				return this.save();	
 			});
 		}
@@ -146,6 +148,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					});
 				}).then(xhr => {
 					this.inProgress = false;
+					this.wysie.wrapper._.fireEvent("wysie:load");
 					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
 					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
@@ -159,6 +162,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			}
 			else {
 				ret = ret.done(function(){
+					// FIXME forcing the promise to fail to load locally is bad style
 					return Promise.reject();
 				});
 			}
@@ -173,20 +177,15 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				if (backup) {
 					this.wysie.render(backup);
 				}
+
+				this.wysie.wrapper._.fireEvent("wysie:load");
 			});
 		}
 	},
 
-	// Subclasses overriding load must call this after load is done
-	afterLoad: function() {
-		this.inProgress = false;
-		this.wysie.wrapper._.fireEvent("wysie:load");
-	},
-
 	save: function() {
-		console.log("save() called");
 		this.backup = {
-			synced: false,
+			synced: !this._save,
 			data: this.wysie.data
 		};
 
@@ -268,14 +267,6 @@ _.Default = $.Class({ extends: _,
 	constructor: function() {
 		// Can edit if local
 		this.canEdit = this.url.origin === location.origin && this.url.pathname === location.pathname;
-	},
-
-	load: function() {
-		return this.super.load.call(this).then(this.afterLoad.bind(this));
-	},
-
-	save: function() {
-		return this.super.save.call(this).then(this.afterSave.bind(this));
 	},
 
 	canEdit: true,
