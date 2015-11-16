@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>Wysie Colour Picker</title>
+
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<header>
+	<h1>Basic Colour Picker</h1>
+</header>
+
+
+<article data-store="#color-picker">
+	<output style="background: hsl({hue}, {saturation}%, {lightness}%);"></output>
+	<input type="range" property="hue" max="360" />
+	<input type="range" property="saturation" />
+	<input type="range" property="lightness" />
+</article>
+
+<script src="../../../bliss/bliss.js"></script>
+<script src="../../wysie.js"></script>
+
+</body>
+</html>
