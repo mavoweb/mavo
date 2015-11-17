@@ -12,15 +12,34 @@
 <body>
 
 <header>
-	<h1>Basic Colour Picker</h1>
+	<h1>HSLA Colour Picker</h1>
 </header>
 
-
 <article data-store="#color-picker">
-	<output style="background: hsl({hue}, {saturation}%, {lightness}%);"></output>
-	<input type="range" property="hue" max="360" />
-	<input type="range" property="saturation" />
-	<input type="range" property="lightness" />
+	<div>
+		<div class="sliders">
+			<input type="range" property="hue" max="360"
+			       style="background-image: linear-gradient(to right, 
+				       hsla(0, {saturation}%, {lightness}%, {alpha}),
+				       hsla(60, {saturation}%, {lightness}%, {alpha}),
+				       hsla(120, {saturation}%, {lightness}%, {alpha}),
+				       hsla(180, {saturation}%, {lightness}%, {alpha}),
+				       hsla(240, {saturation}%, {lightness}%, {alpha}),
+				       hsla(300, {saturation}%, {lightness}%, {alpha}),
+				       hsla(360, {saturation}%, {lightness}%, {alpha})
+				    )" />
+			<input type="range" property="saturation"
+			       style="background-image: linear-gradient(to right, hsla({hue}, 0%, {lightness}%, {alpha}), hsla({hue}, 100%, {lightness}%, {alpha}))" />
+			<input type="range" property="lightness"
+			       style="background-image: linear-gradient(to right, hsla({hue}, {saturation}%, 0%, {alpha}), hsla({hue}, {saturation}%, 50%, {alpha}), hsla({hue}, {saturation}%, 100%, {alpha}))" />
+			<input type="range" property="alpha" min="0" max="1" step=".01"
+			       style="background-image: linear-gradient(to right, hsla({hue}, {saturation}%, {lightness}%, 0), hsla({hue}, {saturation}%, {lightness}%, 1))" />
+		</div>
+
+		<output style="background-color: {color};"></output>
+	</div>
+
+	<input property="color" value="hsla({hue}, {saturation}%, {lightness}%, {alpha})" readonly class="computed" />
 </article>
 
 <script src="../../../bliss/bliss.js"></script>
