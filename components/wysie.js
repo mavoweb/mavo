@@ -10,7 +10,8 @@ var _ = self.Wysie = $.Class({
 		this.id = element.id || "wysie-" + _.all.length;
 		
 		// TODO escaping of # and \
-		this.store = new URL(element.getAttribute("data-store") || this.id, location);
+		var dataStore = element.getAttribute("data-store");
+		this.store = dataStore === "none"? null : new URL(dataStore || this.id, location);
 
 		this.element = _.is("scope", element)? element : $(_.selectors.scope, element);
 
@@ -36,7 +37,7 @@ var _ = self.Wysie = $.Class({
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 		
 		// Fetch existing data
-		if (this.store.href) {
+		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
 
 			this.storage.load();
@@ -60,9 +61,7 @@ var _ = self.Wysie = $.Class({
 	},
 
 	save: function() {
-		var me = this;
-
-		this.storage.save();
+		this.storage && this.storage.save();
 	},
 
 	static: {

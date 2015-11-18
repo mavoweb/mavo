@@ -189,7 +189,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			data: this.wysie.data
 		};
 
-		if (this._save) {
+		if (this.backendSave) {
 			return this.login().then(()=>{
 				this.inProgress = "Saving";
 

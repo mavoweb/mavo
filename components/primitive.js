@@ -62,9 +62,9 @@ var _ = Wysie.Primitive = $.Class({
 					value: this.value
 				});
 			},
-			"change": function() {
-				if (me.exposed && (!me.scope.collection || me.scope._.data.unit.everSaved)) {
-					me.wysie.save();
+			"change": () => {
+				if (this.exposed && (this.scope._.data.unit.everSaved || !this.scope.collection)) {
+					this.wysie.save();
 				}
 			},
 			"focus": function () {
