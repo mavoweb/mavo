@@ -1,4 +1,4 @@
-(function () {
+(function ($, $$) {
 
 var _ = self.Wysie = $.Class({
 	constructor: function (element) {
@@ -119,7 +119,13 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-})();
+document._.waitFor("DOMContentLoaded").then(evt=>{
+	$$("[data-store]").forEach(function (element) {
+		new Wysie(element);
+	});
+});
+
+})(Bliss, Bliss.$);
 
 // TODO implement this properly
 function safeval(expr, vars) {
@@ -133,12 +139,6 @@ if (self.Promise && !Promise.prototype.done) {
 		return this.then(callback, callback);
 	};
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-	$$("[data-store]").forEach(function (element) {
-		new Wysie(element);
-	});
-});
 
 /*
  * Stretchy: Form element autosizing, the way it should be.
@@ -328,7 +328,7 @@ if (self.MutationObserver) {
 
 })();
 
-(function(){
+(function($){
 
 var _ = Wysie.Storage = $.Class({ abstract: true,
 
@@ -463,7 +463,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			return ret.then(()=>{
 				this.wysie.render(backup);
 				this.inProgress = false;
-				this.wysie.wrapper._.fireEvent("wysie:load");
+				this.wysie.wrapper._.fire("wysie:load");
 
 				return this.save();	
 			});
@@ -478,7 +478,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					});
 				}).then(xhr => {
 					this.inProgress = false;
-					this.wysie.wrapper._.fireEvent("wysie:load");
+					this.wysie.wrapper._.fire("wysie:load");
 					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
 					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
@@ -508,7 +508,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					this.wysie.render(backup);
 				}
 
-				this.wysie.wrapper._.fireEvent("wysie:load");
+				this.wysie.wrapper._.fire("wysie:load");
 			});
 		}
 	},
@@ -528,7 +528,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					backup.synced = true;
 					this.backup = backup;
 
-					this.wysie.wrapper._.fireEvent("wysie:save");
+					this.wysie.wrapper._.fire("wysie:save");
 				}).done(()=>{
 					this.inProgress = false;
 				});
@@ -606,12 +606,12 @@ _.Default = $.Class({ extends: _,
 	}
 });
 
-})();
+})(Bliss);
 
 /*
- * Wysie Unit: Super class that Scope or Primitive inherit from
+ * Wysie Unit: Super class that Scope and Primitive inherit from
  */
-(function(){
+(function($, $$){
 
 var _ = Wysie.Unit = $.Class({ abstract: true,
 	constructor: function(element, wysie, collection) {
@@ -680,9 +680,9 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 	}
 });
 
-})();
+})(Bliss, Bliss.$);
 
-(function(){
+(function($, $$){
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
@@ -1005,9 +1005,9 @@ var _ = Wysie.Scope = $.Class({
 	}
 });
 
-})();
+})(Bliss, Bliss.$);
 
-(function(){
+(function($, $$){
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
@@ -1067,7 +1067,7 @@ var _ = Wysie.Primitive = $.Class({
 		this.editor._.events({
 			"input": function () {
 				me.element.setAttribute(me.attribute || "content", this.value);
-				me.element._.fireEvent("valuechange", {
+				me.element._.fire("valuechange", {
 					value: this.value
 				});
 			},
@@ -1293,7 +1293,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.onchange && this.onchange(value);
 
-		this.element._.fireEvent("wysie:propertychange", {
+		this.element._.fire("wysie:propertychange", {
 			property: this.property,
 			value: value
 		});
@@ -1419,9 +1419,9 @@ _.types = {
 	}
 };
 
-})();
+})(Bliss, Bliss.$);
 
-(function(){
+(function($, $$){
 
 var _ = Wysie.Collection = function (template, wysie) {
 	var me = this;
@@ -1531,7 +1531,8 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	this.wysie.wrapper.addEventListener("wysie:load", evt => {
+	this.wysie.wrapper._.waitFor("wysie:load").then(evt => {
+		
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			if (this.bottomUp) {
@@ -1629,9 +1630,9 @@ _.prototype = {
 	}
 };
 
-})();
+})(Bliss, Bliss.$);
 
-(function(){
+(function($){
 
 if (!self.Wysie) {
 	return;
@@ -1647,7 +1648,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			if (referrer.hostname === "www.dropbox.com" && location.hash.indexOf("#access_token=") === 0) {
 				// We’re in an OAuth response popup, do what you need then close this
 				Dropbox.AuthDriver.Popup.oauthReceiver();
-				$.fireEvent(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
+				$.fire(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
 				close();
 				return;
 			}
@@ -1708,7 +1709,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.wysie.wrapper._.fireEvent("wysie:login", accountInfo);
+					this.wysie.wrapper._.fire("wysie:login", accountInfo);
 				}
 			});
 		}).catch(()=>{});
@@ -1718,7 +1719,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 			this.client.signOut(null, () => {
 				this.authenticated = false;
-				this.wysie.wrapper._.fireEvent("wysie:logout");
+				this.wysie.wrapper._.fire("wysie:logout");
 				resolve();
 			});
 		});
@@ -1732,5 +1733,5 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	}
 });
 
-})();
+})(Bliss);
 

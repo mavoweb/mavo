@@ -1,4 +1,4 @@
-(function(){
+(function($){
 
 var _ = Wysie.Storage = $.Class({ abstract: true,
 
@@ -133,7 +133,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			return ret.then(()=>{
 				this.wysie.render(backup);
 				this.inProgress = false;
-				this.wysie.wrapper._.fireEvent("wysie:load");
+				this.wysie.wrapper._.fire("wysie:load");
 
 				return this.save();	
 			});
@@ -148,7 +148,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					});
 				}).then(xhr => {
 					this.inProgress = false;
-					this.wysie.wrapper._.fireEvent("wysie:load");
+					this.wysie.wrapper._.fire("wysie:load");
 					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
 					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
@@ -178,7 +178,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					this.wysie.render(backup);
 				}
 
-				this.wysie.wrapper._.fireEvent("wysie:load");
+				this.wysie.wrapper._.fire("wysie:load");
 			});
 		}
 	},
@@ -198,7 +198,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					backup.synced = true;
 					this.backup = backup;
 
-					this.wysie.wrapper._.fireEvent("wysie:save");
+					this.wysie.wrapper._.fire("wysie:save");
 				}).done(()=>{
 					this.inProgress = false;
 				});
@@ -276,4 +276,4 @@ _.Default = $.Class({ extends: _,
 	}
 });
 
-})();
+})(Bliss);

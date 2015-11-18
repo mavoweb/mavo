@@ -1,4 +1,4 @@
-(function () {
+(function ($, $$) {
 
 var _ = self.Wysie = $.Class({
 	constructor: function (element) {
@@ -119,7 +119,13 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-})();
+document._.waitFor("DOMContentLoaded").then(evt=>{
+	$$("[data-store]").forEach(function (element) {
+		new Wysie(element);
+	});
+});
+
+})(Bliss, Bliss.$);
 
 // TODO implement this properly
 function safeval(expr, vars) {
@@ -133,9 +139,3 @@ if (self.Promise && !Promise.prototype.done) {
 		return this.then(callback, callback);
 	};
 }
-
-document.addEventListener("DOMContentLoaded", function() {
-	$$("[data-store]").forEach(function (element) {
-		new Wysie(element);
-	});
-});

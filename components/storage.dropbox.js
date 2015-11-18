@@ -1,4 +1,4 @@
-(function(){
+(function($){
 
 if (!self.Wysie) {
 	return;
@@ -14,7 +14,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			if (referrer.hostname === "www.dropbox.com" && location.hash.indexOf("#access_token=") === 0) {
 				// We’re in an OAuth response popup, do what you need then close this
 				Dropbox.AuthDriver.Popup.oauthReceiver();
-				$.fireEvent(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
+				$.fire(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
 				close();
 				return;
 			}
@@ -75,7 +75,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.wysie.wrapper._.fireEvent("wysie:login", accountInfo);
+					this.wysie.wrapper._.fire("wysie:login", accountInfo);
 				}
 			});
 		}).catch(()=>{});
@@ -85,7 +85,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 			this.client.signOut(null, () => {
 				this.authenticated = false;
-				this.wysie.wrapper._.fireEvent("wysie:logout");
+				this.wysie.wrapper._.fire("wysie:logout");
 				resolve();
 			});
 		});
@@ -99,4 +99,4 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	}
 });
 
-})();
+})(Bliss);

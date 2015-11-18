@@ -1,4 +1,4 @@
-(function(){
+(function($, $$){
 
 var _ = Wysie.Collection = function (template, wysie) {
 	var me = this;
@@ -108,7 +108,8 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	this.wysie.wrapper.addEventListener("wysie:load", evt => {
+	this.wysie.wrapper._.waitFor("wysie:load").then(evt => {
+		
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			if (this.bottomUp) {
@@ -206,4 +207,4 @@ _.prototype = {
 	}
 };
 
-})();
+})(Bliss, Bliss.$);

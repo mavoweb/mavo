@@ -1,4 +1,4 @@
-(function(){
+(function($, $$){
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
@@ -321,4 +321,4 @@ var _ = Wysie.Scope = $.Class({
 	}
 });
 
-})();
+})(Bliss, Bliss.$);

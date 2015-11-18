@@ -1,4 +1,4 @@
-(function(){
+(function($, $$){
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
@@ -58,7 +58,7 @@ var _ = Wysie.Primitive = $.Class({
 		this.editor._.events({
 			"input": function () {
 				me.element.setAttribute(me.attribute || "content", this.value);
-				me.element._.fireEvent("valuechange", {
+				me.element._.fire("valuechange", {
 					value: this.value
 				});
 			},
@@ -284,7 +284,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.onchange && this.onchange(value);
 
-		this.element._.fireEvent("wysie:propertychange", {
+		this.element._.fire("wysie:propertychange", {
 			property: this.property,
 			value: value
 		});
@@ -410,4 +410,4 @@ _.types = {
 	}
 };
 
-})();
+})(Bliss, Bliss.$);
