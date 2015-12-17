@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Meaningless wysie test</title>
+<link rel="stylesheet" href="../wysie.css" />
+<style>
+	[property="foo"]::before {
+		content: "title=" attr(data-ref);
+		color: deeppink;
+	}
+</style>
+</head>
+<body>
+
+<ul data-store="none">
+	<li typeof>
+		<div property=foo data-ref="{bar}"></div>
+		<div property=bar></div>
+		{foo}
+	</li>
+</ul>
+
+<script src="../../bliss/bliss.js"></script>
+<script src="../wysie.js"></script>
+
+</body>
+</html>
