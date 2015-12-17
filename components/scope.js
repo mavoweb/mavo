@@ -307,7 +307,7 @@ var _ = Wysie.Scope = $.Class({
 			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
 
 			if (!type && _.is(element)) {
-				type = "Thing";
+				type = "Item";
 			}
 
 			if (type) {
