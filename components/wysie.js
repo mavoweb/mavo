@@ -6,12 +6,12 @@ var _ = self.Wysie = $.Class({
 
 		var me = this;
 
+		// TODO escaping of # and \
+		var dataStore = element.getAttribute("data-store") || "#";
+		this.store = dataStore === "none"? null : new URL(dataStore || this.id, location);
+
 		// Assign a unique (for the page) id to this wysie instance
 		this.id = element.id || "wysie-" + _.all.length;
-		
-		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store");
-		this.store = dataStore === "none"? null : new URL(dataStore || this.id, location);
 
 		this.element = _.is("scope", element)? element : $(_.selectors.scope, element);
 
@@ -42,6 +42,9 @@ var _ = self.Wysie = $.Class({
 
 			this.storage.load();
 		}
+		else {
+			this.wrapper._.fire("wysie:load");
+		}
 	},
 
 	get data() {
@@ -62,6 +65,12 @@ var _ = self.Wysie = $.Class({
 
 	save: function() {
 		this.storage && this.storage.save();
+	},
+
+	live: {
+		readonly: function(value) {
+			this.wrapper.classList[value? "add" : "remove"]("readonly");
+		}
 	},
 
 	static: {

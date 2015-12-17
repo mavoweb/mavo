@@ -172,7 +172,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 	}
 
-	&:not(.can-edit) {
+	&.readonly {
 		.edit, [data-editing], .add {
 			display: none;
 		}

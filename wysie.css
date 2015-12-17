@@ -133,7 +133,7 @@
       color: white;
       border-color: transparent; }
 
-.wysie-root:not(.can-edit) .edit, .wysie-root:not(.can-edit) [data-editing], .wysie-root:not(.can-edit) .add {
+.wysie-root.readonly .edit, .wysie-root.readonly [data-editing], .wysie-root.readonly .add {
   display: none; }
 
 .wysie-root.authenticated .auth-controls .login,

@@ -8,6 +8,9 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
+		this.wysie.readonly = true;
+		this.loginToEdit = true;
+
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer);
 
@@ -31,8 +34,6 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.login(true);
 		});
 	},
-
-	canEdit: "with login",
 
 	// Super class save() calls this. Do not call directly.
 	backendSave: function() {
@@ -63,10 +64,12 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 
 					if (this.client.isAuthenticated()) {
 						this.authenticated = true;
+						this.wysie.readonly = false;
 						resolve();	
 					}
 					else {
 						this.authenticated = false;
+						this.wysie.readonly = true;
 						reject();
 					}
 				})
