@@ -108,18 +108,17 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	this.wysie.wrapper._.waitFor("wysie:load").then(evt => {
-		
-		// Insert the add button if it's not already in the DOM
-		if (!this.addButton.parentNode) {
-			if (this.bottomUp) {
-				this.addButton._.before(this.items[0] || this.marker);
-			}
-			else {
-				this.addButton._.after(this.marker);
-			}
+	// Insert the add button if it's not already in the DOM
+	if (!this.addButton.parentNode) {
+		if (this.bottomUp) {
+			this.addButton._.before(this.items[0] || this.marker);
 		}
+		else {
+			this.addButton._.after(this.marker);
+		}
+	}
 
+	this.wysie.wrapper.addEventListener("wysie:load", evt => {
 		if (this.required && !this.length) {
 			this.addEditable();
 		}
@@ -187,7 +186,10 @@ _.prototype = {
 	},
 
 	delete: function(item) {
-		return $.remove(item, {opacity: 0}).then(this.wysie.save.bind(this.wysie));
+		return $.transition(item, {opacity: 0}).then(()=>{
+			$.remove(item);
+			this.wysie.save();
+		});
 	},
 
 	render: function(data) {

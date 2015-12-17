@@ -71,6 +71,10 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		else if (this.canEdit) {
 			this.wysie.wrapper.classList.add("can-edit");
 		}
+
+		this.loaded = new Promise((resolve, reject)=>{
+			this.wysie.wrapper.addEventListener("wysie:load", evt=>{resolve()});
+		});
 	},
 
 	get url () {
@@ -95,11 +99,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// To be be overriden by subclasses
 	ready: Promise.resolve(),
 
-	stored: {
+	live: {
 		inProgress: {
 			set: function(value) {
 				if (value) {
-					var p = document.createElement("div")._.set({
+					var p = $.create("div", {
 						textContent: value + "…",
 						className: "progress",
 						inside: this.wysie.wrapper

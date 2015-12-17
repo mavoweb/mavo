@@ -118,7 +118,7 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-document._.waitFor("DOMContentLoaded").then(evt=>{
+$.ready().then(evt=>{
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);
 	});
@@ -400,6 +400,10 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		else if (this.canEdit) {
 			this.wysie.wrapper.classList.add("can-edit");
 		}
+
+		this.loaded = new Promise((resolve, reject)=>{
+			this.wysie.wrapper.addEventListener("wysie:load", evt=>{resolve()});
+		});
 	},
 
 	get url () {
@@ -424,11 +428,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// To be be overriden by subclasses
 	ready: Promise.resolve(),
 
-	stored: {
+	live: {
 		inProgress: {
 			set: function(value) {
 				if (value) {
-					var p = document.createElement("div")._.set({
+					var p = $.create("div", {
 						textContent: value + "…",
 						className: "progress",
 						inside: this.wysie.wrapper
@@ -794,7 +798,7 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
-	stored: {
+	live: {
 		editing: {
 			set: function(value) {
 				if (value) {
@@ -821,9 +825,7 @@ var _ = Wysie.Scope = $.Class({
 
 		this.collections.forEach(function (collection){
 			if (collection.length === 0) {
-				var item = collection.add();
-
-				item._.data.unit.edit();
+				var item = collection.addEditable();
 			}
 		});
 	},
@@ -1530,18 +1532,17 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// TODO Add clone button to the template
 
-	this.wysie.wrapper._.waitFor("wysie:load").then(evt => {
-		
-		// Insert the add button if it's not already in the DOM
-		if (!this.addButton.parentNode) {
-			if (this.bottomUp) {
-				this.addButton._.before(this.items[0] || this.marker);
-			}
-			else {
-				this.addButton._.after(this.marker);
-			}
+	// Insert the add button if it's not already in the DOM
+	if (!this.addButton.parentNode) {
+		if (this.bottomUp) {
+			this.addButton._.before(this.items[0] || this.marker);
 		}
+		else {
+			this.addButton._.after(this.marker);
+		}
+	}
 
+	this.wysie.wrapper.addEventListener("wysie:load", evt => {
 		if (this.required && !this.length) {
 			this.addEditable();
 		}
@@ -1609,7 +1610,10 @@ _.prototype = {
 	},
 
 	delete: function(item) {
-		return $.remove(item, {opacity: 0}).then(this.wysie.save.bind(this.wysie));
+		return $.transition(item, {opacity: 0}).then(()=>{
+			$.remove(item);
+			this.wysie.save();
+		});
 	},
 
 	render: function(data) {

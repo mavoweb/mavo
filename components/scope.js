@@ -111,7 +111,7 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
-	stored: {
+	live: {
 		editing: {
 			set: function(value) {
 				if (value) {
@@ -138,9 +138,7 @@ var _ = Wysie.Scope = $.Class({
 
 		this.collections.forEach(function (collection){
 			if (collection.length === 0) {
-				var item = collection.add();
-
-				item._.data.unit.edit();
+				var item = collection.addEditable();
 			}
 		});
 	},

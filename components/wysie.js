@@ -118,7 +118,7 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-document._.waitFor("DOMContentLoaded").then(evt=>{
+$.ready().then(evt=>{
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);
 	});
