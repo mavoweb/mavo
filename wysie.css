@@ -11,12 +11,15 @@
 .wysie-root .wysie-item {
   position: relative;
   margin-right: 1.5em; }
+
 .wysie-root .delete-hover {
   box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.06) inset, 0 0 0 0.1em rgba(255, 0, 0, 0.05);
   border-radius: .1em; }
+
 .wysie-root button.add {
   display: inline-block;
   vertical-align: middle; }
+
 .wysie-root .edit,
 .wysie-root .delete {
   all: initial;
@@ -33,20 +36,26 @@
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.2);
     color: white; }
+
 .wysie-root .delete {
   color: rgba(180, 0, 0, 0.8); }
+
 .wysie-root .delete:hover {
   background: rgba(180, 0, 0, 0.8); }
+
 .wysie-root > *:not([data-editing]) .wysie-buttons,
 .wysie-root > *:not([data-editing]) .empty,
 .wysie-root > *:not([data-editing]) .delete,
 .wysie-root > *:not([data-editing]) button.add {
   display: none; }
+
 .wysie-root > *[data-editing] .edit {
   display: none; }
+
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) textarea {
   box-sizing: border-box;
   width: 100%; }
+
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
@@ -54,15 +63,18 @@
 .wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
   outline: 1px dashed;
   outline-offset: 1px; }
+
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:hover,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover,
 .wysie-root > *[data-editing] [property]:not([typeof]) input:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.15), 0 0 0 99em rgba(255, 247, 0, 0.15) inset;
   outline-color: rgba(115, 132, 140, 0.3); }
+
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
 .wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
   outline-color: rgba(51, 119, 153, 0.6); }
+
 .wysie-root .popup {
   all: initial;
   position: absolute;
@@ -90,6 +102,7 @@
     min-width: 100%; }
   .wysie-root .popup select[size] {
     border: 1px solid rgba(0, 0, 0, 0.2); }
+
 .wysie-root .wysie-buttons {
   position: relative;
   padding: .5em 0 .1em;
@@ -119,10 +132,14 @@
       background: #c00;
       color: white;
       border-color: transparent; }
+
 .wysie-root:not(.can-edit) .edit, .wysie-root:not(.can-edit) [data-editing], .wysie-root:not(.can-edit) .add {
   display: none; }
-.wysie-root.authenticated .auth-controls .login, .wysie-root:not(.authenticated) .auth-controls .logout {
+
+.wysie-root.authenticated .auth-controls .login,
+.wysie-root:not(.authenticated) .auth-controls .logout {
   display: none; }
+
 .wysie-root .auth-controls {
   font-size: 80%;
   margin-bottom: .8em; }
@@ -144,6 +161,7 @@
     margin-left: .6em; }
   .wysie-root .auth-controls .status:empty {
     content: "Not logged in"; }
+
 .wysie-root .progress {
   margin-top: .5em;
   font-size: 80%; }
