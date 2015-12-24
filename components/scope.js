@@ -275,7 +275,7 @@ var _ = Wysie.Scope = $.Class({
 					value = Wysie.identifier(value);
 				}
 
-				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value);
+				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value || "");
 			});
 
 			if (ref.attribute) {
