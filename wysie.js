@@ -222,7 +222,7 @@ var _ = self.Wysie = $.Class({
 
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
-		
+
 		// Fetch existing data
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
@@ -309,7 +309,7 @@ var _ = self.Wysie = $.Class({
 		},
 
 		is: function(thing, element) {
-			return element.matches(_.selectors[thing]);
+			return element.matches && element.matches(_.selectors[thing]);
 		}
 	}
 });
@@ -334,6 +334,7 @@ if (self.Promise && !Promise.prototype.done) {
 		return this.then(callback, callback);
 	};
 }
+
 (function($){
 
 var _ = Wysie.Storage = $.Class({ abstract: true,
@@ -839,7 +840,9 @@ var _ = Wysie.Scope = $.Class({
 
 		this.everSaved = true;
 
-		this.wysie.save();
+		if (this.isRoot) {
+			this.wysie.save();
+		}
 	},
 
 	cancel: function() {
@@ -860,7 +863,7 @@ var _ = Wysie.Scope = $.Class({
 		if (!data) {
 			return;
 		}
-		
+
 		this.properties.forEach(function(prop){
 			var property = prop._.data.unit;
 
@@ -887,12 +890,9 @@ var _ = Wysie.Scope = $.Class({
 
 		// TODO handle references when an attribute value is set later
 		var extractRefs = (element, attribute) => {
-			if (!attribute && element.children.length > 0) {
-				return;
-			}
-
 			var text = attribute? attribute.value : element.textContent;
 			var matches = text.match(this.refRegex);
+			var propertyAttribute = $.value(element._.data.unit, "attribute");
 
 			if (matches) {
 				this.references.push({
@@ -902,23 +902,29 @@ var _ = Wysie.Scope = $.Class({
 					expressions: matches.map(match => {
 						return {
 							isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
-							expression: match.replace(/^\$?{|}$/g, "")
+							expression: match.replace(/^\$?{|}$/g, ""),
+							isProperty: Wysie.is("property", element) && attribute.name == propertyAttribute
 						};
 					})
 				});
 			}
 		};
 
-		$$("*", this.element).concat(this.element).forEach(element => {
-			
-			if (this.refRegex.test(element.outerHTML)) {
-				extractRefs(element, null);
-
+		$$(this.element.childNodes).forEach(function traverse(element) {
+			if (this.refRegex.test(element.outerHTML || element.textContent)) {
 				$$(element.attributes).forEach(attribute => {
 					extractRefs(element, attribute);
 				});
+
+				if (element.children) {
+					$$(element.childNodes).forEach(traverse, this);
+				}
+				else {
+					// Leaf node, extract references from content
+					extractRefs(element, null);
+				}
 			}
-		});
+		}, this);
 	},
 
 	// Gets called every time a property changes in this or descendant scopes
@@ -937,7 +943,7 @@ var _ = Wysie.Scope = $.Class({
 			data = $.extend(scope.getData({dirty: true, computed: true}), data);
 
 			var parentScope = scope.parentScope;
-			
+
 			scope = parentScope && parentScope._.data.unit;
 		}
 
@@ -950,8 +956,8 @@ var _ = Wysie.Scope = $.Class({
 				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
 					value = Wysie.identifier(value);
 				}
-				
-				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value);				
+
+				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value);
 			});
 
 			if (ref.attribute) {
@@ -1001,6 +1007,7 @@ var _ = Wysie.Scope = $.Class({
 });
 
 })(Bliss, Bliss.$);
+
 (function($, $$){
 
 var _ = Wysie.Primitive = $.Class({

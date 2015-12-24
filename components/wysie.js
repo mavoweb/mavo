@@ -35,7 +35,7 @@ var _ = self.Wysie = $.Class({
 
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
-		
+
 		// Fetch existing data
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
@@ -122,7 +122,7 @@ var _ = self.Wysie = $.Class({
 		},
 
 		is: function(thing, element) {
-			return element.matches(_.selectors[thing]);
+			return element.matches && element.matches(_.selectors[thing]);
 		}
 	}
 });
