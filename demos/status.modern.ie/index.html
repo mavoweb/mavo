@@ -1,369 +1,299 @@
 <!DOCTYPE html>
+<html lang="en-US">
 
-<html lang="en">
 <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width">
 
-<style type="text/css">
-@charset "UTF-8";[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide{display:none !important;}ng\:form{display:block;}
-</style>
-<meta charset="utf-8">
-<meta content="IE=edge" http-equiv="X-UA-Compatible">
-
-<title>Internet Explorer Web Platform Status and Roadmap - status.modern.IE</title>
-
-<meta content="" name="description">
-<meta content="width=device-width" name="viewport">
-<link href="http://www.chromestatus.com/" rel="dns-prefetch">
-<link href="https://status.modern.ie/images/ca0668eb.arrow.svg" rel="prefetch">
-<link href="https://status.modern.ie/styles/4dff9889.main.css" rel="stylesheet">
-<link rel="stylesheet" href="../../wysie.css" />
-<style>
-button.add {
-	display: block;
-	margin: auto;
-	border: 2px solid #00baf0;
-	padding: .3em .5em;
-	color: #00BAF0;
-	border-radius: .3em;
-	cursor: pointer;
-	font: bold 120% Helvetica Neue, sans-serif;
-}
-
-button.add:hover {
-	background: #00baf0;
-	color: white;
-}
-
-.feature_status.info,
-.feature-body-wrapper {
-	overflow: visible;
-}
-
-.feature-body-wrapper:after {
-	content: "";
-	display: block;
-	clear: both;
-}
-
-.feature-body-wrapper .ie-status {
-	display: none;
-}
-
-.ie-status.status-ie8,
-.ie-status.status-ie9,
-.ie-status.status-ie10,
-.ie-status.status-ie11 {
-	display: block;
-}
-
-.info li {
-	border: 0;
-}
-
-.info li a {
-	border-left: solid 5px #a4a5ab;
-	background-origin: padding-box;
-}
-
-.info li .icon {
-	left: 10px;
-}
-</style>
-
+	<link rel="icon" href="https://az813057.vo.msecnd.net/images/favicon-96.cabc29b515.png">
+	<title>Developer Resources : Microsoft Edge Dev</title>
+	<meta property="description" content="MSEdge Dev Developer Resources">
+	<meta name="description" content="MSEdge Dev Developer Resources">
+	<meta name="keywords" content="microsoft edge, microsoft, edge, msedge, browser, tools, development, virtual machines, internet explorer, ie">
+	<meta property="og:title" content="Developer Resources : MSEdgeDev">
+	<meta property="og:description" content="MSEdge Dev Developer Resources">
+	<link rel="stylesheet" href="https://az813057.vo.msecnd.net/styles/edge.eeb5770085.css">
+	<link rel="stylesheet" href="https://az813057.vo.msecnd.net/styles/status.854f187439.css">
+	<link rel="stylesheet" href="../../wysie.css">
+	<!--[if IE 9]><script src="//cdnjs.cloudflare.com/ajax/libs/classlist/2014.01.31/classList.min.js"></script><![endif]-->
 </head>
 
 <body>
-<div class="content">
-	<header class="header">
-		<div>
-			<div class="siteLogo">
-				<a href="https://modern.ie">
-				<h1 class="status-ie">modern.IE</h1></a>
-			</div>
-
-			<div class="logos">
-				<a class="icon-social-tw" href="https://twitter.com/iedevchat" target="_blank" title="Give feedback on Twitter">Twitter</a> <a class="icon-social-stackoverflow" href="http://stackoverflow.com/questions/tagged/internet-explorer" target="_blank">Stack Overflow</a> <a class="icon-microsoft-logo" href="http://www.microsoft.com" target="_blank" title="Microsoft">Microsoft</a>
-			</div>
-		</div>
-
-		<nav class="menu">
-			<ul class="menu-bar">
-				<li class="menu-item menu-item-tools">
-					<a href="https://modern.ie/tools">Tools</a>
-				</li>
-
-				<li class="menu-item menu-item-status">
-					<a href="https://status.modern.ie/">Platform Status</a>
-				</li>
-
-				<li class="menu-item menu-item-devchannel">
-					<a href="https://devchannel.modern.ie/">Tech Preview</a>
-				</li>
-
-				<li class="menu-item menu-item-community">
-					<a href="https://modern.ie/meet-developers">Community</a>
-				</li>
-
-				<li class="menu-item menu-item-msdn">
-					<a href="https://msdn.microsoft.com/ie">MSDN Dev Center</a>
-				</li>
-			</ul>
-		</nav>
-	</header>
-
-	<div class="sticky" style="height: 65px;"></div>
-
-	<div class="filter-container fixed" data-sticky="">
-		<div class="filter-group">
-			<form class="form-group ng-pristine ng-valid">
-				<label class="sr-only" for="termInput">Filter results</label><input class="form-control ng-pristine ng-valid" data-ng-model="term" id="termInput" placeholder="Filter..." type="text">
-			</form>
-
-			<div class="dropdown filter-settings">
-				<button class="dropdown-toggle" data-bo-id="options.name">Interop <span class="dropdown-arrow"></span></button>
-
-				<div class="dropdown-menu">
-					<div class="ie-status-options">
-						<h2>IE Status</h2>
-
-						<ul>
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.notplanned" id="ie-notplanned" type="checkbox"><label for="ie-notplanned">Not Currently Planned</label></li>
-
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.underconsideration" id="ie-underconsideration" type="checkbox"><label for="ie-underconsideration">Under Consideration</label></li>
-
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.indevelopment" id="ie-indevelopment" type="checkbox"><label for="ie-indevelopment">In Development</label></li>
-
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="iestatus.iedev" id="ie-devchannel" type="checkbox"><label for="ie-devchannel">Preview Release</label></li>
-
-							<li>
-								<input checked class="ng-pristine ng-valid" data-ng-model="iestatus.implemented" id="ie-implemented" type="checkbox"><label for="ie-implemented">Supported by:</label>
-
-								<ul>
-									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie11" name="ieversion" type="radio" value="ie11"><label for="ie11">IE11+</label></li>
-
-									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie10" name="ieversion" type="radio" value="ie10"><label for="ie10">IE10+</label></li>
-
-									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie9" name="ieversion" type="radio" value="ie9"><label for="ie9">IE9+</label></li>
-
-									<li data-ng-class="{'disabled' : !iestatus.implemented }"><input class="ng-pristine ng-valid" data-ng-disabled="!iestatus.implemented" data-ng-model="ieversion" id="ie8" name="ieversion" type="radio" value="ie8"><label for="ie8">IE8+</label></li>
-								</ul>
-							</li>
+	<div class="bg-wrap">
+		<header role="banner" class="header">
+			<div class="nav-bar container">
+				<h1 class="header__logo title"><a href="https://www.microsoft.com/" title="Microsoft">Microsoft</a></h1>
+				<nav aria-label="microsoft developer" class="nav--global" data-menu>
+					<ul class="nav__navbar">
+						<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-developer" href="#" class="navitem__button">Developer technologies</a>
+							<ul role="group" id="submenu-developer" class="navbar__submenu" aria-hidden="true">
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-windows" class="navitem__button" href="https://dev.windows.com/">Windows</a>
+									<ul role="group" id="submenu-windows" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://dev.windows.com/en-us/windows-apps">Windows apps</a></li>
+										<li><a href="https://dev.windows.com/en-us/desktop">Classic desktop</a></li>
+										<li><a href="https://dev.windows.com/en-us/iot">Internet of Things</a></li>
+										<li><a href="https://dev.windows.com/en-us/games">Games</a></li>
+										<li><a href="https://dev.windows.com/en-us/microsoft-edge/">Microsoft Edge</a></li>
+										<li><a href="https://msdn.microsoft.com/windows/hardware/gg236587.aspx">Hardware</a></li>
+									</ul>
+								</li>
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-services" class="navitem__button" href="https://dev.windows.com/">Services</a>
+									<ul role="group" id="submenu-services" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://dev.office.com/">Office 365</a></li>
+										<li><a href="https://dev.onedrive.com/">OneDrive</a></li>
+										<li><a href="https://www.skype.com/developer/">Skype</a></li>
+										<li><a href="https://www.bing.com/dev">Bing</a></li>
+										<li><a href="https://dev.windows.com/en-us/cortana">Cortana</a></li>
+									</ul>
+								</li>
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-vs" class="navitem__button" href="https://msdn.microsoft.com/vstudio">Visual Studio</a>
+									<ul role="group" id="submenu-vs" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://www.visualstudio.com/features/">Visual Studio 2015</a></li>
+										<li><a href="https://www.visualstudio.com/products/what-is-visual-studio-online-vs">Visual Studio Online</a></li>
+										<li><a href="https://code.visualstudio.com/docs">Visual Studio Code</a></li>
+									</ul>
+								</li>
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-msdn" class="navitem__button" href="https://msdn.microsoft.com/">MSDN</a>
+									<ul role="group" id="submenu-msdn" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://msdn.microsoft.com/subscriptions">Subscriptions</a></li>
+										<li><a href="https://social.msdn.microsoft.com/forums/">Community</a></li>
+										<li><a href="https://blogs.msdn.com/b/developer-tools/">Blogs</a></li>
+										<li><a href="https://msdn.microsoft.com/magazine/dd767791">Magazine</a></li>
+									</ul>
+								</li>
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-office" class="navitem__button" href="https://dev.office.com/">Office</a>
+									<ul role="group" id="submenu-office" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://dev.office.com/getting-started/office365apis">Office 365 APIs</a></li>
+										<li><a href="https://dev.office.com/getting-started/addins">Office add-ins</a></li>
+										<li><a href="https://msdn.microsoft.com/library/office/fp179930.aspx">SharePoint add-ins</a></li>
+										<li><a href="https://dev.office.com/ios">Office 365 for iOS</a></li>
+										<li><a href="https://dev.office.com/android">Office 365 for Android</a></li>
+									</ul>
+								</li>
+								<li class="navbar__navitem"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-azure" class="navitem__button" href="https://azure.microsoft.com/documentation/">Azure</a>
+									<ul role="group" id="submenu-azure" class="navbar__submenu" aria-hidden="true">
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/web-app/">Web apps</a></li>
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/mobile-app/">Subscriptions</a></li>
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/virtual-machines/">Virtual machines</a></li>
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/data-analytics/">Data analytics</a></li>
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/high-performance-computing/">High performance computing</a></li>
+										<li><a href="https://azure.microsoft.com/en-us/documentation/scenarios/internet-of-things/">Internet of Things</a></li>
+									</ul>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				</nav>
+				<form role="search" class="form-search" action="https://social.msdn.microsoft.com/search/windows" method="get">
+					<input name="query" type="search" aria-label="search" required>
+					<input name="refinement" type="hidden" value="183">
+					<button type="submit" aria-label="search" class="button-search"></button>
+				</form>
+				<button class="header__toggle icon--global-nav-button" aria-label="Menu"></button> <a class="user-account" href="/en-us/microsoft-edge/users/dashboard/">Sign in</a> </div>
+			<nav role="navigation" aria-label="Microsoft Edge dev site" class="nav clear" data-menu>
+				<ul class="nav__navbar">
+					<li class="navbar__navitem">
+						<h1 class="edge-wordmark"><a href="/en-us/microsoft-edge/">Microsoft Edge</a></h1>
+					</li>
+					<li class="navbar__navitem navitem--web-platform"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-platform" href="/en-us/microsoft-edge/platform/" class="navitem__button">Web platform</a>
+						<ul role="group" id="submenu-platform" class="navbar__submenu" aria-hidden="true">
+							<li><a href="/en-us/microsoft-edge/platform/">Web platform</a></li>
+							<li><a href="/en-us/microsoft-edge/platform/status/">Platform status</a></li>
+							<li><a href="/en-us/microsoft-edge/platform/documentation/">Documentation</a></li>
+							<li><a href="/en-us/microsoft-edge/platform/changelog/">Changelog</a></li>
+							<li><a href="/en-us/microsoft-edge/platform/faq/">FAQ</a></li>
+							<li><a href="https://msdn.microsoft.com/library/windows/apps/dn705792.aspx" target="_blank">Web Apps on Windows</a></li>
 						</ul>
-					</div>
-
-					<div class="interop-status-options">
-						<h2>Interop Status</h2>
-
-						<ul>
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.notsupported" id="notsupported" type="checkbox"><label for="notsupported">Not Supported</label></li>
-
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.indevelopment" id="indevelopment" type="checkbox"><label for="indevelopment">In Development</label></li>
-
-							<li><input checked class="ng-pristine ng-valid" data-ng-model="browserstatus.implemented" id="implemented" type="checkbox"><label for="implemented">Implemented</label></li>
+					</li>
+					<li class="navbar__navitem navitem--news-and-community"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-community" href="/en-us/microsoft-edge/community/" class="navitem__button">News & community</a>
+						<ul role="group" id="submenu-community" class="navbar__submenu" aria-hidden="true">
+							<li><a href="/en-us/microsoft-edge/community/">What’s new</a></li>
+							<li><a href="/en-us/microsoft-edge/community/social/">Blogs & social media</a></li>
+							<li><a href="/en-us/microsoft-edge/community/oss/">Open source projects</a></li>
+							<li><a href="/en-us/microsoft-edge/community/careers/">Careers</a></li>
+							<li><a href="http://events.msdn.microsoft.com/en-us/" target="_blank">Events</a></li>
+							<li><a href="/en-us/microsoft-edge/community/support/">Feedback & support</a></li>
 						</ul>
-
-						<p>…in these browsers:</p>
-
-						<ul>
-							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.chrome" id="chrome" type="checkbox"><label for="chrome">Chrome</label></li>
-
-							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.firefox" id="firefox" type="checkbox"><label for="firefox">firefox</label></li>
-
-							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.opera" id="opera" type="checkbox"><label for="opera">opera</label></li>
-
-							<li data-ng-class="{'disabled' : browsersDisabled}"><input checked class="ng-pristine ng-valid" data-ng-disabled="browsersDisabled" data-ng-model="browsers.safari" id="safari" type="checkbox"><label for="safari">safari</label></li>
+					</li>
+					<li class="navbar__navitem navitem--tools"><a role="button" aria-haspopup="true" aria-expanded="false" aria-controls="submenu-tools" href="/en-us/microsoft-edge/tools/" class="navitem__button">Tools</a>
+						<ul role="group" id="submenu-tools" class="navbar__submenu" aria-hidden="true">
+							<li><a href="/en-us/microsoft-edge/tools/">All tools</a></li>
+							<li><a href="/en-us/microsoft-edge/tools/vms/">Virtual machines</a></li>
+							<li><a href="/en-us/microsoft-edge/tools/remote/">Remote</a></li>
+							<li><a href="/en-us/microsoft-edge/tools/staticscan/">Site scan</a></li>
+							<li><a href="/en-us/microsoft-edge/tools/screenshots/">Browser screenshots</a></li>
+							<li><a href="/en-us/microsoft-edge/platform/documentation/f12-devtools-guide/">F12 Dev Tools</a></li>
 						</ul>
-					</div>
-
-					<div class="dropdown technologies ng-isolate-scope" data-options="{selections: categories, name: 'Technologies'}">
-						<button class="dropdown-toggle" data-bo-id="options.name" id="Technologies"><span data-bo-text="options.name">Technologies</span> <span class="dropdown-arrow" style="font-style: italic"></span></button>
-
-						<ul class="dropdown-menu" data-bo-attr="" data-bo-attr-aria-labelledby="options.name">
-							<li class="dynamic-all" data-bo-title="option.name"><!--<input ng-model="allOptions" type="checkbox" id="{{options.name}}" />--><input checked class="ng-pristine ng-valid" data-bo-id="options.name" data-ng-model="allOptions" id="Technologies" type="checkbox"><label data-bo-attr="" data-bo-attr-for="options.name" for="Technologies">All</label></li><!-- ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="User input"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="User input" type="checkbox" value="User input"><label data-bo-text="option.name" for="User input">User input</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Misc"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Misc" type="checkbox" value="Misc"><label data-bo-text="option.name" for="Misc">Misc</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Web Components"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Web Components" type="checkbox" value="Web Components"><label data-bo-text="option.name" for="Web Components">Web Components</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="File APIs"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="File APIs" type="checkbox" value="File APIs"><label data-bo-text="option.name" for="File APIs">File APIs</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Network / Connectivity"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Network / Connectivity" type="checkbox" value="Network / Connectivity"><label data-bo-text="option.name" for="Network / Connectivity">Network / Connectivity</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Multimedia"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Multimedia" type="checkbox" value="Multimedia"><label data-bo-text="option.name" for="Multimedia">Multimedia</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="JavaScript"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="JavaScript" type="checkbox" value="JavaScript"><label data-bo-text="option.name" for="JavaScript">JavaScript</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Graphics"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Graphics" type="checkbox" value="Graphics"><label data-bo-text="option.name" for="Graphics">Graphics</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Security"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Security" type="checkbox" value="Security"><label data-bo-text="option.name" for="Security">Security</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="CSS"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="CSS" type="checkbox" value="CSS"><label data-bo-text="option.name" for="CSS">CSS</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Device"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Device" type="checkbox" value="Device"><label data-bo-text="option.name" for="Device">Device</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="DOM"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="DOM" type="checkbox" value="DOM"><label data-bo-text="option.name" for="DOM">DOM</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Offline / Storage"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Offline / Storage" type="checkbox" value="Offline / Storage"><label data-bo-text="option.name" for="Offline / Storage">Offline / Storage</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Performance"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Performance" type="checkbox" value="Performance"><label data-bo-text="option.name" for="Performance">Performance</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="Realtime / Communication"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="Realtime / Communication" type="checkbox" value="Realtime / Communication"><label data-bo-text="option.name" for="Realtime / Communication">Realtime / Communication</label></li><!-- end ngRepeat: option in selections -->
-
-							<li class="dynamic-option ng-scope disabled" data-bo-title="option.name" data-ng-class="{'disabled' : allOptions}" data-ng-repeat="option in selections" title="User Input"><!--<input ng-disabled="allOptions" name="{{option.name}}" id="{{option.name}}" value="{{option.name}}" ng-model="option.selected" type="checkbox" />--><input checked class="ng-pristine ng-valid" data-attr="" data-attr-name="option.name" data-bo-id="option.name" data-bo-value="option.name" data-ng-disabled="allOptions" disabled="disabled" id="User Input" type="checkbox" value="User Input"><label data-bo-text="option.name" for="User Input">User Input</label></li><!-- end ngRepeat: option in selections -->
-						</ul>
-					</div>
-				</div>
-			</div>
-
-			<div class="dropdown">
-				<button class="dropdown-toggle" id="sorting">Sort <span class="dropdown-arrow"></span></button>
-
-				<ul class="dropdown-menu">
-					<!-- ngRepeat: sort in sorts -->
-
-					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="name"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="name" name="sorts" type="radio" value="name"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="name">name</label></li><!-- end ngRepeat: sort in sorts -->
-
-					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="technology"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="technology" name="sorts" type="radio" value="technology"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="technology">technology</label></li><!-- end ngRepeat: sort in sorts -->
-
-					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="status"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="status" name="sorts" type="radio" value="status"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="status">status</label></li><!-- end ngRepeat: sort in sorts -->
-
-					<li class="dynamic-option ng-scope" data-bo-title="sort.name" data-ng-repeat="sort in sorts" title="votes"><input class="ng-pristine ng-valid" data-bo-id="sort.name" data-ng-model="selectedSort.name" data-ng-value="sort.name" id="votes" name="sorts" type="radio" value="votes"><label data-bo-attr="" data-bo-attr-for="sort.name" data-bo-text="sort.name" for="votes">votes</label></li><!-- end ngRepeat: sort in sorts -->
+					</li>
+					<li class="navbar__navitem navitem--testdrive"><a href="/en-us/microsoft-edge/testdrive/">Demos</a></li>
 				</ul>
-			</div>
+			</nav>
+		</header>
+		<article role="article" class="content content--platform content--roadmap">
+			<section role="region" class="section section--page-intro">
+				<div class="container">
+					<div class="section__header">
+						<h1 class="heading--page__title">Platform status</h1>
+						<p class="title heading--page__subtitle">What we’ve built and our roadmap</p><a class="button button--page-primary button--github page-intro__button--page-primary" href="https://github.com/MicrosoftEdge/Status" target="_blank">View on GitHub</a></div>
+				</div>
+			</section>
+			<section role="region" class="section section--roadmap">
+				<div class="container">
+					<div class="layout layout--sidebar">
+						<aside class="module module--secondary">
+							<form class="roadmap-controls clear">
+								<section role="region" class="roadmap-sort">
+									<h3 class="subtitle">Sort features by</h3>
+									<select id="filter-sort" class="roadmap-sort__control">
+										<option value="Feature name">Feature name</option>
+										<option value="Status">Status</option>
+										<option value="Category">Category</option>
+									</select>
+								</section>
+								<section role="region" class="roadmap-filters">
+									<h3 class="subtitle">Filter features</h3>
+									<label for="status-search">Search name or description text</label>
+									<input type="text" id="status-search" placeholder="Enter text to search…" value="" autofocus>
+									<div class="roadmap-filters__advanced">
+										<label for="filter-category">Categories</label>
+										<select id="filter-category">
+											<option value="all">All</option>
+											<option value="userinput">User input</option>
+											<option value="security">Security</option>
+											<option value="misc">Misc</option>
+											<option value="fileapis">File APIs</option>
+											<option value="graphics">Graphics</option>
+											<option value="webcomponents">Web Components</option>
+											<option value="css">CSS</option>
+											<option value="networkconnectivity">Network / Connectivity</option>
+											<option value="multimedia">Multimedia</option>
+											<option value="javascript">JavaScript</option>
+											<option value="device">Device</option>
+											<option value="offlinestorage">Offline / Storage</option>
+											<option value="dom">DOM</option>
+											<option value="performance">Performance</option>
+											<option value="realtimecommunication">Realtime / Communication</option>
+										</select>
+										<fieldset class="checkable-set">
+											<legend>Status in Microsoft Edge</legend>
+											<input type="checkbox" id="edge-implemented" checked="checked">
+											<label for="edge-implemented">Supported</label>
+											<input type="checkbox" id="edge-preview" checked="checked">
+											<label for="edge-preview">Preview Build</label>
+											<input type="checkbox" id="edge-indevelopment" checked="checked">
+											<label for="edge-indevelopment">In Development</label>
+											<input type="checkbox" id="edge-underconsideration" checked="checked">
+											<label for="edge-underconsideration">Under Consideration</label>
+											<input type="checkbox" id="edge-deprecated" checked="checked">
+											<label for="edge-deprecated">Deprecated</label>
+											<input type="checkbox" id="edge-notplanned" checked="checked">
+											<label for="edge-notplanned">Not Currently Planned</label>
+										</fieldset>
+										<fieldset class="checkable-set">
+											<legend>Interoperability: any checked statuses…</legend>
+											<input type="checkbox" id="interop-supported" checked="checked">
+											<label for="interop-supported">Supported</label>
+											<input type="checkbox" id="interop-indevelopment" checked="checked">
+											<label for="interop-indevelopment">In Development</label>
+											<input type="checkbox" id="interop-notsupported" checked="checked">
+											<label for="interop-notsupported">Not Supported</label>
+										</fieldset>
+										<fieldset class="checkable-set">
+											<legend>…in all checked browsers</legend>
+											<input type="checkbox" id="interop-chrome" checked="checked">
+											<label for="interop-chrome">Chrome</label>
+											<input type="checkbox" id="interop-firefox" checked="checked">
+											<label for="interop-firefox">Firefox</label>
+											<input type="checkbox" id="interop-opera" checked="checked">
+											<label for="interop-opera">Opera</label>
+											<input type="checkbox" id="interop-safari" checked="checked">
+											<label for="interop-safari">Safari</label>
+										</fieldset>
+									</div>
+								</section>
+							</form>
+						</aside>
+						<div role="main" class="module module--primary">
+							<div role="status" aria-atomic="true" class="roadmap-results subtitle">
+								<span class="roadmap-results__count">252</span> features found</div>
+							<div id="status-features" class="web-features" data-store="features.json">
+								<details role="group" data-multiple typeof="Feature" id="{normalized_name}" class="web-feature web-feature--{normalized_category}" data-search="{normalized_summary}">
+									<summary role="button" aria-expanded="false" class="web-feature__toggle icon--{normalized_category}" title="{category}" data-pathname="/platform/status/" id="{normalized_name}">
+										<h3 class="web-feature__name-bar clear">
+											<span property="name" class="web-feature__name"></span>
+											<span property="position" class="web-feature__our-status base" title="{statusDescription}"></span>
+										</h3>
+									</summary>
+									<div id="{normalized_name}_wrapper" class="details__content web-feature__content">
+										<div class="web-feature__description">
+											<p property="summary"></p>
+											<p class="web-feature__description__detail">
+												<strong>Roadmap Priority: ${ie.priority}</strong> — We intend to begin development soon.</p>
+										</div>
+										<ul class="web-feature__resources">
+											<li class="docs" property>
+												<a class="button" property="wpd" target="_blank">
+													<span class="icon icon-webplatform" aria-label="documentation on"></span>
+													<span>WebPlatform</span>
+												</a>
+												<a class="button" property="msdn" target="_blank">
+													<span class="icon icon-msdn" aria-label="documentation on"></span>
+													<span>MSDN</span>
+												</a>
+											</li>
+											<li class="standard" property="spec" typeof="Specification">
+												<a class="button" href="{link}" target="_blank">
+													<span class="icon icon-w3c" aria-label="Specification status:"></span>
+													<span>{status}</span>
+												</a>
+											</li>
+										</ul>
+										<ul property="browsers" class="list--browser-icons web-feature__browsers clear" aria-label="browser support">
+											<li property="chrome" typeof="Browser" class="icon-chrome " title="{status} by Chrome">
+												<span aria-label="{status} by Chrome"></span>
+											</li>
+											<li property="edge" typeof="Browser" class="icon-edge " title="{status} by Microsoft Edge">
+												<span aria-label="{status} by Microsoft Edge"></span>
+											</li>
+											<li property="firefox" typeof="Browser" class="icon-firefox " title="{status} by Firefox">
+												<span aria-label="{status} by Firefox"></span>
+											</li>
+											<li property="ie" typeof="Browser" class="icon-ie " title="{status} in Internet Explorer">
+												<span aria-label="{status} in Internet Explorer"></span>
+											</li>
+											<li property="opera" typeof="Browser" class="icon-opera " title="{status} by Opera">
+												<span aria-label="{status} by Opera"></span>
+											</li>
+											<li property="safari" typeof="Browser" class="icon-safari " title="{status} by Safari">
+												<span aria-label="{status} by Safari"></span>
+											</li>
+										</ul>
+									</div>
+								</details>
 
-			<div class="total-features">
-				Features found: <span class="ng-binding">206</span>
-			</div>
-		</div>
+								</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</article>
 	</div>
-	
-	<article>
-		<section data-store data-multiple typeof="Feature" class="show feature {category}" id="{feature_name}">
-			<button property="category" data-attribute="title" data-input-from="#categories" class="feature-header">
-				<span class="feature-icon icon-{category}"></span>
+	<footer role="contentinfo" class="footer">
+		<div class="container">
 
-				<h1 property class="feature_name"></h1>
-
-				<div class="feature-info">
-					<p property class="ie-status">
-						<select>
-							<option>IE8+</option>
-							<option>IE9+</option>
-							<option>IE10+</option>
-							<option>IE11+</option>
-							<option>Preview Release</option>
-							<option>Shipped</option>
-							<option>In Development</option>
-							<option selected>Under Consideration</option>
-							<option>Not currently planned</option>
-							<option>Deprecated</option>
-						</select>
-					</p>
-				</div>
-			</button>
-
-			<div class="feature-body-wrapper">
-				<p property class="feature-description"></p>
-
-				<p class="ie-status status-{ie-status}">
-					<strong>Unprefixed version:</strong> <span>{ie-status}</span>
-				</p>
-
-				<div class="feature-status-wrapper">
-					<ul class="feature_status browsers">
-						<li property="chrome-status" data-input-from="#browser-status" data-attribute="content" class="{chrome-status} icon-chrome" title="{chrome-status} by Chrome">
-							{chrome-status} by Chrome
-						</li>
-
-						<li property="firefox-status" data-input-from="#browser-status" data-attribute="content" class="{firefox-status} icon-firefox" title="{firefox-status} by Firefox">
-							{firefox-status} by Firefox
-						</li>
-
-						<li property="iexp-status" data-input-from="#browser-status" data-attribute="content" class="{iexp-status} icon-ie" title="{iexp-status} by Internet Explorer">
-							{iexp-status} by Internet Explorer
-						</li>
-
-						<li property="opera-status" data-input-from="#browser-status" data-attribute="content" class="{opera-status} icon-opera" title="{opera-status} by Opera">
-							{opera-status} by Opera
-						</li>
-
-						<li property="safari-status" data-input-from="#browser-status" data-attribute="content" class="{safari-status} icon-safari" title="{safari-status} by Safari">
-							{safari-status} by Safari
-						</li>
-
-					</ul>
-
-					<ul class="feature_status info">
-						<li class="docs">
-							<a property="WebPlatform Docs" target="_blank"><span class="icon icon-webplatform"></span> WebPlatform</a>
-						</li>
-
-						<li class="docs">
-							<a property="MSDN" target="_blank"><span class="icon icon-msdn"></span> MSDN</a>
-						</li>
-
-						<li class="standard">
-							<a property="specification" target="_blank"><span class="icon icon-w3c" data-bo-class="'icon-' + feature.spec.organization"></span>
-							<span property="Spec Status">
-								<select>
-									<option>Established standard</option>
-									<option>Working draft or equivalent</option>
-									<option>No public standards discussion</option>
-								</select>
-							</span></a>
-						</li>
-					</ul>
-				</div>
-			</div>
-		</section>
-	</article>
-
-	<footer>
-		<small><span class="origin-tag">Hello from Seattle</span> <a class="datalicense" href="https://creativecommons.org/licenses/by/2.5/legalcode" target="_blank">IE status data licensed under a CC Attribution 2.5 License</a> <a href="https://github.com/InternetExplorer/Status.IE/">GitHub</a> <a href="http://www.microsoft.com/library/toolbar/3.0/trademarks/en-us.mspx" target="_blank">Trademarks</a> <a href="https://msdn.microsoft.com/windows/apps/cc300389" target="_blank">Terms of Use</a> <a href="http://www.microsoft.com/info/privacy.mspx" target="_blank">Privacy and Cookies</a></small>
+			<ul class="footer__links">
+				<li class="footer__feedback"><a href="/en-us/microsoft-edge/community/support/">Feedback & support</a></li>
+				<li><a href="https://go.microsoft.com/fwlink/p/?linkid=248155">Terms of use</a></li>
+				<li><a href="https://www.microsoft.com/library/toolbar/3.0/trademarks/en-us.mspx">Trademarks</a></li>
+				<li><a href="http://www.microsoft.com/info/privacy.mspx">Privacy and cookies</a></li>
+			</ul>
+			<small class="footer__copyright">© 2015 Microsoft</small>
+			<p class="footer__text">Hello from Seattle</p>
+		</div>
 	</footer>
-</div>
 
-<div hidden>
-	<select id="categories">
-		<option>User input</option>
-		<option>Misc</option>
-		<option>Web Components</option>
-		<option>File APIs</option>
-		<option>Network / Connectivity</option>
-		<option>Multimedia</option>
-		<option>JavaScript</option>
-		<option>Graphics</option>
-		<option>Security</option>
-		<option selected>CSS</option>
-		<option>Device</option>
-		<option>DOM</option>
-		<option>Offline / Storage</option>
-		<option>Performance</option>
-		<option>Realtime / Communication</option>
-		<option>User Input</option>
-	</select>
-	
-	<select id="browser-status">
-		<option selected>Implemented</option>
-		<option>Shipped</option>
-		<option>Prefixed</option>
-		<option>In Development</option>
-		<option>Deprecated</option>
-	</select>
-</div>
+	<script src="../../../bliss/bliss.js"></script>
+	<script src="../../wysie.js"></script>
 
-<script src="../../../bliss/bliss.js"></script>
-<script>
-document.body.addEventListener("click", function(evt) {
-	if (evt.target.matches(".feature:not(.editing) > button")) {
-		evt.target.parentNode.classList.toggle("show");
-	}
-});
-</script>
-<script src="../../polyfills.js"></script>
-<script src="../../wysie.js"></script>
-	
 </body>
 </html>

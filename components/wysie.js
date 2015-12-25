@@ -60,7 +60,9 @@ var _ = self.Wysie = $.Class({
 	},
 
 	render: function(data) {
+		console.time("render");
 		this.root.render(data.data || data);
+		console.timeEnd("render");
 	},
 
 	save: function() {
@@ -138,7 +140,12 @@ $.ready().then(evt=>{
 // TODO implement this properly
 function safeval(expr, vars) {
 	with (vars) {
-		return eval(expr);
+		try {
+			return eval(expr);
+		}
+		catch (e) {
+			return "ERROR!";
+		}
 	}
 }
 

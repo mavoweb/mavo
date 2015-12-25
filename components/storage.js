@@ -130,7 +130,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				this.inProgress = false;
 				this.wysie.wrapper._.fire("wysie:load");
 
-				return this.save();	
+				return this.save();
 			});
 		}
 		else {
@@ -164,11 +164,12 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 			return ret.catch(err => {
 				this.inProgress = false;
-				
+
 				if (err) {
 					console.error(err);
+					console.log(err.stack);
 				}
-				
+
 				if (backup) {
 					this.wysie.render(backup);
 				}
@@ -208,7 +209,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 	// Get storage parameters from the main element and cache them. Used for API keys and the like.
 	param: function(id) {
-		// TODO traverse all properties and cache params in constructor, to avoid 
+		// TODO traverse all properties and cache params in constructor, to avoid
 		// collection items carrying all of these
 		this.params = this.params || {};
 
@@ -220,7 +221,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			this.wysie.wrapper.removeAttribute(attribute);
 			this.wysie.element.removeAttribute(attribute);
 		}
-		
+
 		return this.params[id];
 	},
 

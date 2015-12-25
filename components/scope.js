@@ -2,7 +2,7 @@
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element, wysie) {
+	constructor: function (element, wysie, collection) {
 		var me = this;
 
 		this.type = _.normalize(this.element);
@@ -11,23 +11,19 @@ var _ = Wysie.Scope = $.Class({
 			return new Wysie.Collection(template, me.wysie);
 		}, this);
 
-		this.propertyNames = [];
-
 		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
 		this.properties.forEach(prop => {
-			prop._.data.unit = _.super.create(prop, me.wysie);
-
-			this.propertyNames.push(prop._.data.unit.property);
+			prop._.data.unit = _.super.create(prop, this.wysie, this.collection);
 		});
 
 		// Handle expressions
-		this._cacheReferences();
+		this.cacheReferences();
 
 		this.element.addEventListener("wysie:propertychange", evt=>{
 			evt.stopPropagation();
-			this._updateReferences();
+			this.updateReferences();
 		});
-		this._updateReferences();
+		this.updateReferences();
 
 		if (this.isRoot) {
 			// TODO handle element templates in a better/more customizable way
@@ -77,6 +73,17 @@ var _ = Wysie.Scope = $.Class({
 			// TODO remove these after saving & cache, to reduce number of DOM elements lying around
 			this.element.appendChild(this.buttons.edit);
 		}
+
+		// Monitor property additions or new references
+		/*this.MutationObserver = new MutationObserver(records=>{
+			records.forEach(record=>{
+				console.log(record.type, record.target, $.value(record.addedNodes, "length"), record);
+			});
+		});
+		this.MutationObserver.observe(this.element, {
+			childList: true,
+			subtree: true
+		});*/
 	},
 
 	get isRoot() {
@@ -85,9 +92,15 @@ var _ = Wysie.Scope = $.Class({
 
 	get properties () {
 		// TODO cache this
-		return $$(Wysie.selectors.property, this.element).filter(function(property){
+		return $$(Wysie.selectors.property, this.element).filter(property=>{
 			return this.element === property.parentNode.closest(Wysie.selectors.scope);
-		}, this);
+		});
+	},
+
+	get propertyNames () {
+		return this.properties.map(property=>{
+			return property._.data.unit.property;
+		});
 	},
 
 	getData: function(o) {
@@ -182,6 +195,10 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
+		var unhandled = Object.keys(data).filter(property=>{
+			return this.propertyNames.indexOf(property) === -1 && typeof data[property] != "object";
+		});
+
 		this.properties.forEach(function(prop){
 			var property = prop._.data.unit;
 
@@ -194,16 +211,30 @@ var _ = Wysie.Scope = $.Class({
 			property.save();
 		});
 
+		unhandled.map(property=>{
+			property = $.create("meta", {
+				property: property,
+				content: data[property],
+				inside: this.element
+			});
+
+			property._.data.unit = Wysie.Unit.create(property, this.wysie, this.collection);
+
+			return property;
+		});
+
 		this.collections.forEach(function (collection){
 			collection.render(data[collection.property]);
 		});
 
 		this.everSaved = true;
+
+		this.cacheReferences();
 	},
 
-	_cacheReferences: function() {
+	cacheReferences: function() {
 		var propertiesRegex = this.propertyNames.join("|");
-		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${(?:.*" + propertiesRegex + ".*)}", "gi");
+		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${.+?}", "gi");
 		this.references = [];
 
 		// TODO handle references when an attribute value is set later
@@ -228,25 +259,28 @@ var _ = Wysie.Scope = $.Class({
 			}
 		};
 
-		$$(this.element.childNodes).forEach(function traverse(element) {
+		(function traverse(element) {
+			this.refRegex.lastIndex = 0;
+
 			if (this.refRegex.test(element.outerHTML || element.textContent)) {
 				$$(element.attributes).forEach(attribute => {
 					extractRefs(element, attribute);
 				});
 
-				if (element.children) {
-					$$(element.childNodes).forEach(traverse, this);
-				}
-				else {
+				$$(element.childNodes).forEach(traverse, this);
+
+				if (element.nodeType === 3) {
 					// Leaf node, extract references from content
 					extractRefs(element, null);
 				}
 			}
-		}, this);
+		}).call(this, this.element);
+
+		this.updateReferences();
 	},
 
 	// Gets called every time a property changes in this or descendant scopes
-	_updateReferences: function() {
+	updateReferences: function() {
 		if (!this.references.length) {
 			return;
 		}

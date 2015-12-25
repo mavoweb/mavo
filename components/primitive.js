@@ -6,7 +6,7 @@ var _ = Wysie.Primitive = $.Class({
 		var me = this;
 
 		this.nameRegex = RegExp("{(has-)?" + this.property + "}", "g");
-	 
+
 		for (var selector in _.types) {
 			if (this.element.matches(selector)) {
 				// TODO calculate specificity and return the one with the highest, not the first one
@@ -91,7 +91,7 @@ var _ = Wysie.Primitive = $.Class({
 				this.editorValue = this.default;
 			}
 		}
-		
+
 		// Copy any data-input-* attributes from the element to the editor
 		if (this.element !== this.editor) {
 			var dataInput = /^data-input-/i;
@@ -181,7 +181,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	set value(value) {
 		this.editorValue = value;
-		
+
 		if (this.attribute) {
 			this.element.setAttribute(this.attribute, value);
 		}
@@ -198,7 +198,7 @@ var _ = Wysie.Primitive = $.Class({
 		}
 		else {
 			if (this.datatype === "number") {
-				return +this.editor.value;	
+				return +this.editor.value;
 			}
 
 			return this.editor.value;
