@@ -175,7 +175,7 @@ var _ = Wysie.Primitive = $.Class({
 			return this.element.getAttribute(this.attribute);
 		}
 		else {
-			return this.element.textContent || null;
+			return this.element.getAttribute("content") || this.element.textContent || null;
 		}
 	},
 

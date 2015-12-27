@@ -279,17 +279,14 @@ var _ = Wysie.Scope = $.Class({
 		this.updateReferences();
 	},
 
-	// Gets called every time a property changes in this or descendant scopes
-	updateReferences: function() {
-		if (!this.references.length) {
-			return;
-		}
-
-		// Ancestor properties should also be added as on the same level,
-		// with closer ancestors overriding higher up ancestors in case of collision
+	// Get data in JSON format, with ancestor and nested properties flattened,
+	// iff they do not collide with properties of this scope.
+	// Used in expressions.
+	getRelativeData() {
 		var scope = this;
 		var data = {};
 
+		// Get data of this scope and flatten ancestors
 		while (scope) {
 			var property = scope.property;
 			data = $.extend(scope.getData({dirty: true, computed: true}), data);
@@ -298,6 +295,32 @@ var _ = Wysie.Scope = $.Class({
 
 			scope = parentScope && parentScope._.data.unit;
 		}
+
+		// Flatten nested objects
+		(function flatten(obj) {
+			$.each(obj, (key, value)=>{
+				if (!(key in data)) {
+					data[key] = value;
+				}
+
+				if ($.type(value) === "object") {
+					flatten(value);
+				}
+			});
+		}).call(this, data);
+
+		return data;
+	},
+
+	// Gets called every time a property changes in this or descendant scopes
+	updateReferences: function() {
+		if (!this.references.length) {
+			return;
+		}
+
+		// Ancestor properties should also be added as on the same level,
+		// with closer ancestors overriding higher up ancestors in case of collision
+		data = this.getRelativeData();
 
 		$$(this.references).forEach(ref => {
 			var newText = ref.text;
