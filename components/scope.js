@@ -199,7 +199,7 @@ var _ = Wysie.Scope = $.Class({
 			return this.propertyNames.indexOf(property) === -1 && typeof data[property] != "object";
 		});
 
-		this.properties.forEach(function(prop){
+		this.properties.forEach(prop => {
 			var property = prop._.data.unit;
 
 			var datum = Wysie.queryJSON(data, prop.getAttribute("property"));
@@ -207,8 +207,6 @@ var _ = Wysie.Scope = $.Class({
 			if (datum) {
 				property.render(datum);
 			}
-
-			property.save();
 		});
 
 		unhandled.map(property=>{
@@ -313,6 +311,7 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	// Gets called every time a property changes in this or descendant scopes
+	// TODO special-case classes
 	updateReferences: function() {
 		if (!this.references.length) {
 			return;
