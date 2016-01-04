@@ -114,7 +114,9 @@ var _ = Wysie.Primitive = $.Class({
 
 		value = value || value === 0? value : "";
 
-		this.onchange && this.onchange(value);
+		if (this.humanReadable) {
+			this.element.textContent = this.humanReadable(value);
+		}
 
 		this.element._.fire("wysie:propertychange", {
 			property: this.property,
@@ -320,18 +322,17 @@ _.types = {
 			return $.create("input", {type: type});
 		},
 
-		onchange: function () {
-			var date = new Date(this.element.getAttribute("datetime"));
+		humanReadable: function (value) {
+			var date = new Date(value);
 
-			if (!this.element.hasAttribute("datetime") || isNaN(date)) {
-				this.element.textContent = "(" + this.label + ")";
+			if (!value || isNaN(date)) {
+				return null;
 			}
-			else {
-				// TODO do this properly
-				var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
-				this.element.textContent = date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
-			}
+			// TODO do this properly
+			var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+
+			return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
 		}
 	},
 
@@ -339,7 +340,7 @@ _.types = {
 		attribute: "href",
 
 		getEditor: function () {
-			return document.createElement("input")._.set({
+			return $.create("input", {
 				"type": "url",
 				"placeholder": "http://"
 			});
@@ -350,7 +351,7 @@ _.types = {
 		attribute: "src",
 
 		getEditor: function () {
-			return document.createElement("input")._.set({
+			return $.create("input", {
 				"type": "url",
 				"placeholder": "http://"
 			});
