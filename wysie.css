@@ -102,6 +102,20 @@
     min-width: 100%; }
   .wysie-root .popup select[size] {
     border: 1px solid rgba(0, 0, 0, 0.2); }
+  .wysie-root .popup .image-popup .image-preview {
+    position: relative;
+    display: inline-block; }
+    .wysie-root .popup .image-popup .image-preview progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 1em;
+      width: 100%; }
+      .wysie-root .popup .image-popup .image-preview progress[value="0"], .wysie-root .popup .image-popup .image-preview progress[value="100"] {
+        display: none; }
+    .wysie-root .popup .image-popup .image-preview img {
+      display: block;
+      max-width: 100%; }
 
 .wysie-root .wysie-buttons {
   position: relative;

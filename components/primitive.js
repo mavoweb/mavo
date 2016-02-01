@@ -1,17 +1,16 @@
 (function($, $$){
 
+const DISABLE_CACHE = true;
+
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, collection) {
-		for (var selector in _.types) {
-			if (this.element.matches(selector)) {
-				// TODO calculate specificity and return the one with the highest, not the first one
-				$.extend(this, _.types[selector]);
-				break;
-			}
-		}
+		// Which attribute holds the data, if any?
+		// "null" or null for none (i.e. data is in content).
+		this.attribute = _.getValueAttribute(this.element);
 
-		this.attribute = this.element.getAttribute("data-attribute") || this.attribute;
+		// What is the datatype?
+		this.datatype = _.getDatatype(this.element, this.attribute);
 
 		/**
 		 * Set up input widget
@@ -22,6 +21,7 @@ var _ = Wysie.Primitive = $.Class({
 			this.editor = this.element;
 
 			if (this.exposed) {
+				// Editing exposed elements saves the wysie
 				this.element.addEventListener("change", evt => {
 					if (evt.target === this.editor && (this.scope._.data.unit.everSaved || !this.scope.collection)) {
 						this.wysie.save();
@@ -41,57 +41,74 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		this.update(this.value);
+
+		// Observe future mutations to this property, if possible
+		// Properties like input.checked or input.value cannot be observed that way
+		// so we cannot depend on mutation observers for everything :(
+		if (!this.attribute) {
+			// Data in content
+			this.observer = new MutationObserver(record => {
+				if (!this.editing) {
+					this.update(this.value);
+				}
+			});
+
+			this.observer.observe(this.element, {
+				characterData: true,
+				childList: true,
+				subtree: true
+			});
+		}
+		else if (!Wysie.is("formControl", this.element)) {
+			// Data in attribute
+			this.observer = new MutationObserver(record => {
+				this.update(this.value);
+			});
+
+			this.observer.observe(this.element, {
+				attributes: true,
+				attributeFilter: [this.attribute]
+			});
+		}
 	},
 
 	get value() {
 		if (this.editing || this.exposed) {
 			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
 		}
-		else if (this.attribute) {
-			return this.element.getAttribute(this.attribute);
-		}
-		else {
-			return this.element.getAttribute("content") || this.element.textContent || null;
-		}
+
+		return _.getValue(this.element, this.attribute, this.datatype);
 	},
 
 	set value(value) {
 		this.editorValue = value;
 
-		if (this.attribute) {
-			this.element.setAttribute(this.attribute, value);
-		}
-		else if (!this.editing) {
-			this.element.textContent = value;
-		}
+		_.setValue(this.element, value, this.attribute, this.datatype);
 
-		this.update(value);
+		if (Wysie.is("formControl", this.element) || !this.attribute) {
+			// Mutation observer won't catch this, so we have to call update manually
+			this.update(value);
+		}
 	},
 
 	get editorValue() {
-		if (!this.editor) {
-			return undefined;
-		}
+		if (this.editor) {
+			if (this.editor.matches(Wysie.selectors.formControl)) {
+				return _.getValue(this.editor, undefined, this.datatype);
+			}
 
-		if (this.editor.matches('input[type="checkbox"]')) {
-			return this.editor.checked;
-		}
+			// if we're here, this.editor is an entire HTML structure
+			var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
 
-		if (this.datatype === "number") {
-			return +this.editor.value;
+			if (output) {
+				return output._.data.unit ? output._.data.unit.value : _.getValue(output);
+			}
 		}
-
-		return this.editor.value;
 	},
 
 	set editorValue(value) {
 		if (this.editor) {
-			if (this.editor.matches('input[type="checkbox"]')) {
-				this.editor.checked = value;
-			}
-			else {
-				this.editor.value = value;
-			}
+			_.setValue(this.editor, value, undefined, this.datatype);
 		}
 	},
 
@@ -114,13 +131,16 @@ var _ = Wysie.Primitive = $.Class({
 
 		value = value || value === 0? value : "";
 
-		if (this.humanReadable) {
+		if (this.humanReadable && this.attribute) {
 			this.element.textContent = this.humanReadable(value);
 		}
 
 		this.element._.fire("wysie:propertychange", {
 			property: this.property,
-			value: value
+			value: value,
+			wysie: this.wysie,
+			unit: this,
+			dirty: this.editing
 		});
 	},
 
@@ -145,7 +165,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	edit: function () {
 		if (this.savedValue === undefined) {
-			// First time edit was called
+			// First time edit is called, set up editing UI
 			this.label = this.label || Wysie.readable(this.property);
 
 			// Linked widgets
@@ -154,17 +174,42 @@ var _ = Wysie.Primitive = $.Class({
 
 				if (selector) {
 					this.editor = $.clone($(selector));
+
+					if (!Wysie.is("formControl", this.editor)) {
+						if ($(Wysie.selectors.output, this.editor)) { // has output element?
+							// Process it as a wysie instance, so people can use references
+							this.editor.setAttribute("data-store", "none");
+							new Wysie(this.editor);
+						}
+						else {
+							this.editor = null; // Cannot use this, sorry bro
+						}
+					}
 				}
 			}
 
-			// No editor provided, use default for element type
-			this.editor = this.editor || this.getEditor && this.getEditor() || document.createElement("input");
+			if (!this.editor) {
+				// No editor provided, use default for element type
+				// Find default editor for datatype
+				var datatype = this.datatype.split(/\s+/);
+
+				do {
+					var editor = _.editors[datatype.join(" ")];
+					datatype.shift();
+				} while (!editor);
+
+				editor = editor || _.editors.string;
+
+				this.editor = $.type(editor) === "function"? editor.call(this) : $.create(editor);
+			}
 
 			this.editor._.events({
 				"input": evt => {
-					this.element.setAttribute(this.attribute || "content", this.editorValue);
+					if (this.attribute) {
+						this.element.setAttribute(this.attribute, this.editorValue);
+					}
 
-					if (this.exposed) {
+					if (this.exposed || !this.attribute) {
 						this.update(this.editorValue);
 					}
 				},
@@ -175,6 +220,12 @@ var _ = Wysie.Primitive = $.Class({
 					if (this.popup && evt.keyCode == 13 || evt.keyCode == 27) {
 						evt.stopPropagation();
 						$.remove(this.popup);
+					}
+				},
+				"wysie:propertychange": evt => {
+					if (evt.property === "output") {
+						evt.stopPropagation();
+						$.fire(this.editor, "input");
 					}
 				}
 			});
@@ -207,54 +258,54 @@ var _ = Wysie.Primitive = $.Class({
 						this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
 					}
 				}, this);
-			}
 
-			if (this.attribute) {
-				// Set up popup
-				this.element.classList.add("using-popup");
+				if (this.attribute) {
+					// Set up popup
+					this.element.classList.add("using-popup");
 
-				this.element._.events({
-					focus: evt => {
-						if (!this.editing) {
-							return;
-						}
-
-						if (/^select$/i.test(this.editor.nodeName)) {
-							this.editor.size = Math.min(10, this.editor.children.length);
-						}
-
-						this.popup = this.popup || $.create("div", {
-							className: "popup",
-							contents: [
-								this.label + ":",
-								this.editor._.events({
-									blur: () => {
-										$.remove(this.popup);
-									}
-								})
-							],
-							style: { // TODO what if it doesn’t fit?
-								top: this.element.offsetTop + this.element.offsetHeight + "px",
-								left: this.element.offsetLeft + "px"
+					this.element._.events({
+						focus: evt => {
+							if (!this.editing) {
+								return;
 							}
-						});
 
-						this.popup._.after(this.element);
-					},
-
-					blur: evt => {
-						if (!this.editing || !this.popup) {
-							return;
-						}
-
-						// Deferred as document.activeElement is not immediately updated
-						setTimeout(function () {
-							if (document.activeElement.closest(".popup") !== this.popup) {
-								$.remove(this.popup);
+							if (/^select$/i.test(this.editor.nodeName)) {
+								this.editor.size = Math.min(10, this.editor.children.length);
 							}
-						}, 0);
-					}
-				});
+
+							this.popup = this.popup || $.create("div", {
+								className: "popup",
+								contents: [
+									this.label + ":",
+									this.editor._.events({
+										blur: () => {
+											$.remove(this.popup);
+										}
+									})
+								],
+								style: { // TODO what if it doesn’t fit?
+									top: this.element.offsetTop + this.element.offsetHeight + "px",
+									left: this.element.offsetLeft + "px"
+								}
+							});
+
+							this.popup._.after(this.element);
+						},
+
+						blur: evt => {
+							if (!this.editing || !this.popup) {
+								return;
+							}
+
+							// Deferred as document.activeElement is not immediately updated
+							setTimeout(function () {
+								if (document.activeElement.closest(".popup") !== this.popup) {
+									$.remove(this.popup);
+								}
+							}, 0);
+						}
+					});
+				}
 			}
 
 			// Prevent default actions while editing
@@ -286,42 +337,135 @@ var _ = Wysie.Primitive = $.Class({
 
 	render: function(data) {
 		this.value = data;
+	},
+
+	static: {
+		getValueAttribute: function callee(element) {
+			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
+
+			if (ret === undefined || DISABLE_CACHE) {
+				var ret = element.getAttribute("data-attribute");
+
+				if (!ret) {
+					for (var selector in _.attributes) {
+						if (element.matches(selector)) {
+							ret = _.attributes[selector];
+						}
+					}
+				}
+
+				// TODO refactor this
+
+				if (ret) {
+					if (ret.humanReadable && element._.data.unit instanceof _) {
+						element._.data.unit.humanReadable = ret.humanReadable;
+					}
+
+					ret = ret.value || ret;
+				}
+
+				if (!ret || ret === "null") {
+					ret = null;
+				}
+
+				callee.cache.set(element, ret);
+			}
+
+			return ret;
+		},
+
+		getDatatype: function callee (element, attribute) {
+			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
+
+			if (ret === undefined || DISABLE_CACHE) {
+				ret = element.getAttribute("datatype");
+
+				if (!ret) {
+					for (var selector in _.datatypes) {
+						if (element.matches(selector)) {
+							ret = _.datatypes[selector][attribute];
+						}
+					}
+				}
+
+				ret = ret || "string";
+
+				callee.cache.set(element, ret);
+			}
+
+			return ret;
+		},
+
+		getValue: function callee(element, attribute, datatype) {
+			var getter = (callee.cache = callee.cache || new WeakMap()).get(element);
+
+			if (!getter || DISABLE_CACHE) {
+				attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
+				datatype = datatype || _.getDatatype(element, attribute);
+
+				getter = function() {
+					var ret;
+
+					if (attribute in element) {
+						// Returning properties (if they exist) instead of attributes
+						// is needed for dynamic elements such as checkboxes, sliders etc
+						ret = element[attribute];
+					}
+					else if (attribute) {
+						ret = element.getAttribute(attribute);
+					}
+					else {
+						ret = element.getAttribute("content") || element.textContent || null;
+					}
+
+					switch (datatype) {
+						case "number": return +ret;
+						case "boolean": return !!ret;
+						default: return ret;
+					}
+				};
+
+				callee.cache.set(element, getter);
+			}
+
+			return getter();
+		},
+
+		setValue: function callee(element, value, attribute, datatype) {
+			var setter = (callee.cache = callee.cache || new WeakMap()).get(element);
+
+			if (!setter || DISABLE_CACHE) {
+				attribute = attribute || _.getValueAttribute(element);
+				datatype = datatype || _.getDatatype(element, attribute);
+
+				if (attribute in element) {
+					// Returning properties (if they exist) instead of attributes
+					// is needed for dynamic elements such as checkboxes, sliders etc
+					setter = value => element[attribute] = value;
+				}
+				else if (attribute) {
+					setter = value => element.setAttribute(attribute, value);
+				}
+				else {
+					setter = value => element.textContent = value;
+				}
+
+				callee.cache.set(element, setter);
+			}
+
+			return setter(value);
+		},
 	}
 });
 
-_.types = {
-	'input[type="checkbox"]': {
-		datatype: "boolean"
-	},
-
-	'input[type="range"], input[type="number"]': {
-		datatype: "number"
-	},
-
+// Define default attributes
+_.attributes = {
+	"img, video, audio": "src",
+	"a, link": "href",
+	"select, input, textarea": "value",
+	"input[type=checkbox]": "checked",
 	"time": {
-		attribute: "datetime",
-		datatype: "dateTime",
-
-		getEditor: function () {
-			var types = {
-				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-				"month": /^[Y\d]{4}-[M\d]{2}$/i,
-				"time": /^[H\d]{2}:[M\d]{2}/i,
-				"week": /[Y\d]{4}-W[W\d]{2}$/i,
-				"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-			};
-
-			var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
-
-			for (var type in types) {
-				if (types[type].test(datetime)) {
-					break;
-				}
-			}
-
-			return $.create("input", {type: type});
-		},
-
+		value: "datetime",
 		humanReadable: function (value) {
 			var date = new Date(value);
 
@@ -329,39 +473,74 @@ _.types = {
 				return null;
 			}
 
-			// TODO do this properly
+			// TODO do this properly (account for other datetime datatypes and different formats)
 			var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 
 			return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
 		}
-	},
+	}
+};
 
-	"a": {
-		attribute: "href",
-
-		getEditor: function () {
-			return $.create("input", {
-				"type": "url",
-				"placeholder": "http://"
-			});
-		}
-	},
-
+// Datatypes per attribute
+_.datatypes = {
 	"img": {
-		attribute: "src",
+		"src": "image url"
+	},
+	"video": {
+		"src": "video url"
+	},
+	"audio": {
+		"src": "audio url"
+	},
+	"a, link": {
+		"href": "url"
+	},
+	"input[type=checkbox]": {
+		"checked": "boolean"
+	},
+	"input[type=range], input[type=number]": {
+		"value": "number"
+	},
+	"time": {
+		"datetime": "datetime",
+	},
+	"p, div": {
+		"null": "multiline"
+	},
+	"address": {
+		"null": "location"
+	}
+};
 
-		getEditor: function () {
-			return $.create("input", {
-				"type": "url",
-				"placeholder": "http://"
-			});
-		}
+_.editors = {
+	"string": {"tag": "input"},
+
+	"url": {
+		"tag": "input",
+		"type": "url",
+		"placeholder": "http://"
 	},
 
-	"p": {
-		getEditor: function () {
-			return document.createElement("textarea");
+	"multiline string": {tag: "textarea"},
+
+	"datetime": function() {
+		var types = {
+			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+			"month": /^[Y\d]{4}-[M\d]{2}$/i,
+			"time": /^[H\d]{2}:[M\d]{2}/i,
+			"week": /[Y\d]{4}-W[W\d]{2}$/i,
+			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+		};
+
+		var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+
+		for (var type in types) {
+			if (types[type].test(datetime)) {
+				break;
+			}
 		}
+
+		return $.create("input", {type: type});
 	}
 };
 

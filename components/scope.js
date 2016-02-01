@@ -226,8 +226,6 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		this.everSaved = true;
-
-		this.cacheReferences();
 	},
 
 	cacheReferences: function() {
@@ -350,13 +348,10 @@ var _ = Wysie.Scope = $.Class({
 
 			if (!ret) {
 				// Heuristic for matching scopes without a scoping attribute
-				if ($$(Wysie.selectors.property, element).length) {
-					// Contains other properties
-					ret = Wysie.is("multiple", element)
-						// content not in attribute
-						|| !element.matches(Object.keys(Wysie.Primitive.types).filter(selector => {
-							return !!Wysie.Primitive.types[selector].attribute;
-						}).join(", "));
+				if ($$(Wysie.selectors.property, element).length) { // Contains other properties and...
+					ret = Wysie.is("multiple", element) // is a collection...
+						// ...or its content is not in an attribute
+						|| Wysie.Primitive.getValueAttribute(element) === null;
 				}
 			}
 

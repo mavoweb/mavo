@@ -17,7 +17,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	font: bold 80% Helvetica Neue, sans-serif;
 	cursor: pointer;
 	color: $color;
-	
+
 	&:hover {
 		background: $color;
 		color: white;
@@ -32,7 +32,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 .wysie-root {
 	.wysie-item {
-		position: relative;	
+		position: relative;
 		margin-right: 1.5em;
 	}
 
@@ -46,8 +46,8 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		//margin-left: .5em;
 		vertical-align: middle;
 	}
-	
-	.edit, 
+
+	.edit,
 	.delete {
 		all: initial;
 		position: absolute;
@@ -58,18 +58,18 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		cursor: pointer;
 		transform: scale(-1, 1);
 		color: rgba(0,0,0,.3);
-		
+
 		&:hover {
 			border-radius: 50%;
 			background: rgba(0,0,0,.2);
 			color: white;
 		}
 	}
-	
+
 	.delete {
 		color: rgba(180,0,0,.8);
 	}
-	
+
 	.delete:hover {
 		background: rgba(180,0,0,.8);
 	}
@@ -83,7 +83,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 				display: none;
 			}
 		}
-		
+
 		&[data-editing] {
 			.edit {
 				display: none;
@@ -94,26 +94,26 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 				input, select, textarea {
 					@extend %reset;
 				}
-				
+
 				textarea {
 					box-sizing: border-box;
 					width: 100%;
 				}
-				
+
 				&.using-popup,
 				input, select, textarea {
 					&:hover, &:focus {
 						outline: 1px dashed;
 						outline-offset: 1px;
 					}
-					
+
 					&:hover {
 						$color: hsla(58, 100%, 50%, .15);
-						
+
 						box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
 						outline-color: hsla(200,10%,50%,.3);
 					}
-					
+
 					&:focus {
 						outline-color: hsla(200,50%,40%,.6);
 					}
@@ -121,7 +121,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			}
 		}
 	}
-	
+
 	.popup {
 		all: initial;
 		position: absolute;
@@ -132,7 +132,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		margin: .3em 0 0 -.5em;
 		box-shadow: 0 .1em .3em rgba(0,0,0,.3);
 		background: white;
-		
+
 		&::before {
 			content: "";
 			position: absolute;
@@ -145,7 +145,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			background: inherit;
 			transform: rotate(45deg)
 		}
-		
+
 		input, select {
 			display: block;
 			font: inherit;
@@ -155,17 +155,42 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		select[size] {
 			border: 1px solid rgba(0,0,0,.2);
 		}
+
+		.image-popup {
+			.image-preview {
+				position: relative;
+				display: inline-block;
+
+				progress {
+					position: absolute;
+					left: 0;
+					right: 0;
+					bottom: 1em;
+					width: 100%;
+
+					&[value="0"],
+					&[value="100"] {
+						display: none;
+					}
+				}
+
+				img {
+ 					display: block;
+					max-width: 100%;
+				}
+			}
+		}
 	}
-		
+
 	.wysie-buttons {
 		position: relative;
 		padding: .5em 0 .1em;
 		text-align: center;
-		
+
 		button.save {
 			@include flat-button(hsl(80, 80%, 40%));
 		}
-		
+
 		button.cancel {
 			@include flat-button(#c00);
 			margin-left: .4em;
@@ -200,7 +225,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 
 		.status {
-			
+
 		}
 
 		.status:empty {

@@ -37,14 +37,21 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 
 	// Super class save() calls this. Do not call directly.
 	backendSave: function() {
+		return this.upload({
+			name: this.filename,
+			data: this.wysie.toJSON()
+		});
+	},
+
+	upload: function(file) {
 		return new Promise((resolve, reject) => {
-			this.client.writeFile(this.filename, this.wysie.toJSON(), function(error, stat) {
+			this.client.writeFile(file.name, file.data, function(error, stat) {
 				if (error) {
 					return reject(Error(error));
 				}
 
-			  console.log("File saved as revision " + stat.versionTag);
-			  resolve(stat);
+				console.log("Upload succeeded. File saved as revision " + stat.versionTag);
+				resolve(stat);
 			});
 		});
 	},
@@ -65,7 +72,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					if (this.client.isAuthenticated()) {
 						this.authenticated = true;
 						this.wysie.readonly = false;
-						resolve();	
+						resolve();
 					}
 					else {
 						this.authenticated = false;
@@ -92,7 +99,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				resolve();
 			});
 		});
-		
+
 	},
 
 	static: {
@@ -101,5 +108,79 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		}
 	}
 });
+
+// TODO Storage adapter should only provide an upload method
+// this should be implemented in Wysie.Primitive,
+// as long as the current storage backend has an upload method
+Wysie.Primitive.editors["image url"] = {
+	create: function() {
+		if (!this.wysie.storage.upload) {
+			return;
+		}
+
+		var root = $.create("div", {
+			className: "image-popup",
+			events: {
+				"dragenter dragover drop": function(evt) {
+					evt.stopPropagation();
+  					evt.preventDefault();
+				},
+
+				drop: function(evt) {
+					var file = $.value(evt.dataTransfer, "files", 0);
+
+					// Do upload stuff
+				}
+			},
+			contents: [
+			{
+				tag: "label",
+				contents: ["Image location: ", {
+					tag: "input",
+					type: "url"
+				}]
+			}, {
+				tag: "input",
+				type: "file",
+				accept: "image/*",
+				events: {
+					change: function (evt) {
+						var file = this.files[0];
+
+						if (!file) {
+							return;
+						}
+
+						// Show image locally
+						$("img", root).file = file;
+
+						// Upload to Dropbox
+
+						// Once uploaded, share and get public URL
+
+						// Set public URL as the value of the URL input
+					}
+				}
+			}, {
+				tag: "div",
+				className: "image-preview",
+				contents: [{
+						tag: "progress",
+						value: "0",
+						max: "100"
+					}, {
+						tag: "img"
+					}
+				]
+			}
+		]});
+
+		return root;
+	},
+
+	getValue: function() {
+		return $("input[type=url]", this.popup).value;
+	}
+};
 
 })(Bliss);
