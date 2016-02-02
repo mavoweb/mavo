@@ -114,9 +114,9 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 // as long as the current storage backend has an upload method
 Wysie.Primitive.editors["image url"] = {
 	create: function() {
-		if (!this.wysie.storage.upload) {
+		/*if (!this.wysie.storage.upload) {
 			return;
-		}
+		}*/
 
 		var root = $.create("div", {
 			className: "image-popup",
@@ -134,11 +134,9 @@ Wysie.Primitive.editors["image url"] = {
 			},
 			contents: [
 			{
-				tag: "label",
-				contents: ["Image location: ", {
-					tag: "input",
-					type: "url"
-				}]
+				tag: "input",
+				type: "url",
+				className: "value"
 			}, {
 				tag: "input",
 				type: "file",
@@ -176,10 +174,6 @@ Wysie.Primitive.editors["image url"] = {
 		]});
 
 		return root;
-	},
-
-	getValue: function() {
-		return $("input[type=url]", this.popup).value;
 	}
 };
 

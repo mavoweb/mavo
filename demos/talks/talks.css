@@ -33,38 +33,38 @@ main > article {
 	.talks .comment {
 		margin-left:130px;
 	}
-	
+
 	.talks article h1,
 	.talks article h2 {
 		font-size:100%;
 	}
-	
+
 	.talks article h1,
 	.talks article h2,
 	.talks p {
 		margin-top:0;
 		margin-bottom:0;
 	}
-	
+
 	.talks h1 {
-		
+
 	}
-	
+
 		.talks article h1 .type {
 			color: grey;
 			color: rgba(0,0,0,.6);
 			font-weight: normal;
 			font-style: italic;
 		}
-		
+
 		.talks article h1 span.type:before {
 			content: ' (';
 		}
-		
+
 		.talks article h1 span.type:after {
 			content: ')';
 		}
-	
+
 		.talks article h1 a {
 			display: inline-block;
 			vertical-align: .1em;
@@ -77,57 +77,57 @@ main > article {
 			text-transform: uppercase;
 			border-radius: .3em;
 		}
-		
+
 		.talks article h1 a.slides {
 			background: orange;
 		}
-		
+
 		.talks article h1 a.details {
 			background: #0bd;
 		}
-		
+
 		.talks article h1 a.video {
 			background: yellowgreen;
 		}
-		
+
 		.talks article h1 a:hover {
 			background: #f06;
 			color: white;
 		}
-	
+
 	.talks article h2 {
 		font-weight:normal;
 		line-height:1.2;
 		margin-bottom:.6em;
 	}
-	
+
 	.talks .date {
 		float:left;
 		margin-top:-1.9em;
 		color: #aaa;
 		font-variant:small-caps;
 	}
-	
+
 	.talks address,
 	.talks .comment {
 		font-size:75%;
 		font-style:normal;
 	}
-	
+
 	.talks address {
 	}
-	
+
 	.talks address:before {
 		display:inline-block;
 		margin-right:.4em;
 		vertical-align:-1px;
 	}
-	
+
 	.talks address:not([class*="flag-"]):before {
 		content: url(flags/online.png);
 		vertical-align:-3px;
 	}
-	
+
 	.talks address.flag-the-netherlands:before { content: url(flags/nl.png); }
 	.talks address.flag-new-zealand:before { content: url(flags/nz.png); }
 	.talks address.flag-uk:before { content: url(flags/gb.png); }
@@ -156,16 +156,16 @@ main > article {
 	.talks address.flag-india:before { content: url(flags/in.png); }
 	.talks address.flag-uy:before { content: url(flags/uy.png); }
 	.talks address.flag-israel:before { content: url(flags/il.png); }
-	
+
 	.talks .comment,
 	.talks .comment a {
 		color:gray;
 	}
-	
+
 	.talks .comment a {
 		text-decoration: underline;
 	}
-	
+
 	.talks .comment a:before {
 		content:none;
 	}

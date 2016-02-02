@@ -108,7 +108,22 @@ var _ = Wysie.Primitive = $.Class({
 
 	set editorValue(value) {
 		if (this.editor) {
-			_.setValue(this.editor, value, undefined, this.datatype);
+			if (this.editor.matches(Wysie.selectors.formControl)) {
+				_.setValue(this.editor, value);
+			}
+			else {
+				// if we're here, this.editor is an entire HTML structure
+				var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
+
+				if (output) {
+					if (output._.data.unit) {
+						output._.data.unit.value = value;
+					}
+					else {
+						_.setValue(output, value);
+					}
+				}
+			}
 		}
 	},
 
@@ -199,11 +214,16 @@ var _ = Wysie.Primitive = $.Class({
 				do {
 					var editor = _.editors[datatype.join(" ")];
 					datatype.shift();
-				} while (!editor);
+				} while (!editor && datatype.length > 0);
 
 				editor = editor || _.editors.string;
 
-				this.editor = $.type(editor) === "function"? editor.call(this) : $.create(editor);
+				if (editor.create) {
+					$.extend(this, editor, property => property != "create");
+				}
+
+				var create = editor.create || editor;
+				this.editor = $.create($.type(create) === "function"? create.call(this) : create);
 			}
 
 			this.editor._.events({
@@ -302,7 +322,7 @@ var _ = Wysie.Primitive = $.Class({
 					evt.stopPropagation();
 				}
 
-				if (this.element != document.activeElement) {
+				if (this.popup && this.element != document.activeElement) {
 					this.popup.classList.toggle("hidden");
 				}
 			},
@@ -429,12 +449,11 @@ var _ = Wysie.Primitive = $.Class({
 			return getter();
 		},
 
-		setValue: function callee(element, value, attribute, datatype) {
+		setValue: function callee(element, value, attribute) {
 			var setter = (callee.cache = callee.cache || new WeakMap()).get(element);
 
 			if (!setter || DISABLE_CACHE) {
 				attribute = attribute || _.getValueAttribute(element);
-				datatype = datatype || _.getDatatype(element, attribute);
 
 				if (attribute in element) {
 					// Returning properties (if they exist) instead of attributes
@@ -519,7 +538,19 @@ _.editors = {
 		"placeholder": "http://"
 	},
 
-	"multiline string": {tag: "textarea"},
+	"multiline": {
+		create: {tag: "textarea"},
+
+		get editorValue () {
+			return this.editor && this.editor.value;
+		},
+
+		set editorValue (value) {
+			if (this.editor) {
+				this.editor.value = value.replace(/\r?\n/g, "");
+			}
+		}
+	},
 
 	"datetime": function() {
 		var types = {
