@@ -95,7 +95,9 @@
   border-radius: .4em;
   margin: .3em 0 0 -.5em;
   box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
-  background: white; }
+  background: white;
+  transform-origin: -.36em 1em;
+  transition: .2s transform; }
   .wysie-root .popup::before {
     content: "";
     position: absolute;
@@ -107,6 +109,8 @@
     border-bottom-width: 0;
     background: inherit;
     transform: rotate(45deg); }
+  .wysie-root .popup.hidden {
+    transform: scale(0); }
   .wysie-root .popup input, .wysie-root .popup select {
     display: block;
     font: inherit;

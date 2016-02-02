@@ -132,6 +132,8 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		margin: .3em 0 0 -.5em;
 		box-shadow: 0 .1em .3em rgba(0,0,0,.3);
 		background: white;
+		transform-origin: -.36em 1em;
+		transition: .2s transform;
 
 		&::before {
 			content: "";
@@ -144,6 +146,10 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			border-bottom-width: 0;
 			background: inherit;
 			transform: rotate(45deg)
+		}
+
+		&.hidden {
+			transform: scale(0);
 		}
 
 		input, select {

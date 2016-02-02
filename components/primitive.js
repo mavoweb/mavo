@@ -149,13 +149,16 @@ var _ = Wysie.Primitive = $.Class({
 			this.editing = false;
 		}
 
-		if (this.attribute) {
-			this.element.removeAttribute("tabindex");
+		if (this.popup) {
+			$.remove(this.popup);
+			this.popup.classList.add("hidden");
 		}
-		else if (!this.exposed) {
+		else if (!this.attribute && !this.exposed) {
 			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
+
+		$.unbind(this.element, this.elementEditEvents);
 	},
 
 	cancel: function() {
@@ -219,7 +222,7 @@ var _ = Wysie.Primitive = $.Class({
 				"keyup": evt => {
 					if (this.popup && evt.keyCode == 13 || evt.keyCode == 27) {
 						evt.stopPropagation();
-						$.remove(this.popup);
+						this.popup.classList.add("hidden");
 					}
 				},
 				"wysie:propertychange": evt => {
@@ -250,8 +253,8 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			}
 
-			// Copy any data-input-* attributes from the element to the editor
 			if (!this.exposed) {
+				// Copy any data-input-* attributes from the element to the editor
 				var dataInput = /^data-input-/i;
 				$$(this.element.attributes).forEach(function (attribute) {
 					if (dataInput.test(attribute.name)) {
@@ -263,67 +266,62 @@ var _ = Wysie.Primitive = $.Class({
 					// Set up popup
 					this.element.classList.add("using-popup");
 
-					this.element._.events({
-						focus: evt => {
-							if (!this.editing) {
-								return;
-							}
-
-							if (/^select$/i.test(this.editor.nodeName)) {
-								this.editor.size = Math.min(10, this.editor.children.length);
-							}
-
-							this.popup = this.popup || $.create("div", {
-								className: "popup",
-								contents: [
-									this.label + ":",
-									this.editor._.events({
-										blur: () => {
-											$.remove(this.popup);
-										}
-									})
-								],
-								style: { // TODO what if it doesn’t fit?
-									top: this.element.offsetTop + this.element.offsetHeight + "px",
-									left: this.element.offsetLeft + "px"
-								}
-							});
-
-							this.popup._.after(this.element);
-						},
-
-						blur: evt => {
-							if (!this.editing || !this.popup) {
-								return;
-							}
-
-							// Deferred as document.activeElement is not immediately updated
-							setTimeout(function () {
-								if (document.activeElement.closest(".popup") !== this.popup) {
-									$.remove(this.popup);
-								}
-							}, 0);
+					this.popup = this.popup || $.create("div", {
+						className: "popup hidden",
+						contents: [
+							this.label + ":",
+							this.editor
+						],
+						style: { // TODO what if it doesn’t fit?
+							top: this.element.offsetTop + this.element.offsetHeight + "px",
+							left: this.element.offsetLeft + "px"
 						}
 					});
+
+					// No point in having a dropdown in a popup
+					if (this.editor.matches("select")) {
+						this.editor.size = Math.min(10, this.editor.children.length);
+					}
+
+					this.popup.addEventListener("focus", function() {
+						this.classList.remove("hidden");
+					}, true);
+
+					this.popup.addEventListener("blur", function() {
+						this.classList.add("hidden");
+					}, true);
 				}
 			}
+		}
 
-			// Prevent default actions while editing
-			this.element.addEventListener("click", evt => {
-				if (this.editing && evt.target !== this.editor) {
+		this.elementEditEvents = {
+			"click": evt => {
+				// Prevent default actions while editing
+				if (evt.target !== this.editor) {
 					evt.preventDefault();
 					evt.stopPropagation();
 				}
-			});
-		}
+
+				if (this.element != document.activeElement) {
+					this.popup.classList.toggle("hidden");
+				}
+			},
+			"focus": evt => {
+				this.popup.classList.remove("hidden");
+			},
+			"blur": evt => {
+				this.popup.classList.add("hidden");
+			}
+		};
+
+		this.element._.events(this.elementEditEvents);
+
+		this.popup && this.popup._.after(this.element);
 
 		this.savedValue = this.value;
 		this.editing = true;
 
-		if (this.attribute) {
-			this.element.tabIndex = "0";
-		}
-		else {
+		if (!this.attribute) {
 			if (this.editor.parentNode != this.element && !this.exposed) {
 				this.editorValue = this.element.textContent;
 				this.element.textContent = "";
@@ -344,7 +342,7 @@ var _ = Wysie.Primitive = $.Class({
 			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
 
 			if (ret === undefined || DISABLE_CACHE) {
-				var ret = element.getAttribute("data-attribute");
+				ret = element.getAttribute("data-attribute");
 
 				if (!ret) {
 					for (var selector in _.attributes) {
