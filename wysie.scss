@@ -1,4 +1,4 @@
-$property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
+$primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 %reset {
 	all: initial;
@@ -30,12 +30,12 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	display: none;
 }
 
-.wysie-root {
-	.wysie-item {
-		position: relative;
-		margin-right: 1.5em;
-	}
+.wysie-item {
+	position: relative;
+	margin-right: 1.5em;
+}
 
+.wysie-wrapper {
 	.delete-hover {
 		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.06) inset, 0 0 0 .1em hsla(0,100%,50%,.05);
 		border-radius: .1em;
@@ -74,54 +74,6 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		background: rgba(180,0,0,.8);
 	}
 
-	& > *, & {
-		&:not([data-editing]) {
-			.wysie-buttons,
-			.empty,
-			.delete,
-			button.add {
-				display: none;
-			}
-		}
-
-		&[data-editing] {
-			.edit {
-				display: none;
-			}
-
-			// Primitives
-			#{$property} {
-				input, select, textarea {
-					@extend %reset;
-				}
-
-				textarea {
-					box-sizing: border-box;
-					width: 100%;
-				}
-
-				&.using-popup,
-				input, select, textarea {
-					&:hover, &:focus {
-						outline: 1px dashed;
-						outline-offset: 1px;
-					}
-
-					&:hover {
-						$color: hsla(58, 100%, 50%, .15);
-
-						box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
-						outline-color: hsla(200,10%,50%,.3);
-					}
-
-					&:focus {
-						outline-color: hsla(200,50%,40%,.6);
-					}
-				}
-			}
-		}
-	}
-
 	.popup {
 		all: initial;
 		position: absolute;
@@ -132,8 +84,8 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		margin: .3em 0 0 -.5em;
 		box-shadow: 0 .1em .3em rgba(0,0,0,.3);
 		background: white;
-		transform-origin: -.36em 1em;
-		transition: .2s transform;
+		transform-origin: -1.4em -0.45em; // Magic numbers. No idea why.
+		transition: .3s transform;
 
 		&::before {
 			content: "";
@@ -257,6 +209,53 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			display: inline-block;
 			vertical-align: middle;
 			margin-right: .2em;
+		}
+	}
+}
+
+.wysie-root {
+	&:not([data-editing]) {
+		.empty,
+		.delete,
+		button.add {
+			display: none;
+		}
+	}
+
+	&[data-editing] {
+		.edit {
+			display: none;
+		}
+
+		// Primitives
+		#{$primitive} {
+			input, select, textarea {
+				@extend %reset;
+			}
+
+			textarea {
+				box-sizing: border-box;
+				width: 100%;
+			}
+
+			&.using-popup,
+			input, select, textarea {
+				&:hover, &:focus {
+					outline: 1px dashed;
+					outline-offset: 1px;
+				}
+
+				&:hover {
+					$color: hsla(58, 100%, 50%, .15);
+
+					box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
+					outline-color: hsla(200,10%,50%,.3);
+				}
+
+				&:focus {
+					outline-color: hsla(200,50%,40%,.6);
+				}
+			}
 		}
 	}
 }

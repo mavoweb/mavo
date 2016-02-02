@@ -207,13 +207,15 @@ var _ = self.Wysie = $.Class({
 			this.element = element;
 		}
 
+		this.element.classList.add("wysie-root");
+
 		this.wrapper = element;
 
 		if (element === this.element && _.is("multiple", element)) {
-			this.wrapper = element.closest(".wysie-root") || $.create("div", {around: this.element});
+			this.wrapper = element.closest(".wysie-wrapper") || $.create("div", {around: this.element});
 		}
 
-		this.wrapper.classList.add("wysie-root");
+		this.wrapper.classList.add("wysie-wrapper");
 
 		element.removeAttribute("data-store");
 
