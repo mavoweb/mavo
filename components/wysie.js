@@ -20,7 +20,11 @@ var _ = self.Wysie = $.Class({
 			this.element = element;
 		}
 
-		this.wrapper = element !== this.element? element : document.createElement("div")._.around(this.element);
+		this.wrapper = element;
+
+		if (element === this.element && _.is("multiple", element)) {
+			this.wrapper = element.closest(".wysie-root") || $.create("div", {around: this.element});
+		}
 
 		this.wrapper.classList.add("wysie-root");
 

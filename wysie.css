@@ -1,4 +1,4 @@
-.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) input, .wysie-root > *[data-editing] [property]:not([typeof]) select, .wysie-root > *[data-editing] [property]:not([typeof]) textarea, .wysie-root .wysie-buttons button.save, .wysie-root .wysie-buttons button.cancel, .wysie-root .auth-controls .login, .wysie-root .auth-controls .logout {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) input, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) input, .wysie-root > *[data-editing] [property]:not([typeof]) select, .wysie-root > *[data-editing] [property]:not([typeof]) textarea, .wysie-root[data-editing] [itemprop]:not([itemscope]) input, .wysie-root[data-editing] [itemprop]:not([itemscope]) select, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root[data-editing] [property]:not([typeof]) input, .wysie-root[data-editing] [property]:not([typeof]) select, .wysie-root[data-editing] [property]:not([typeof]) textarea, .wysie-root .wysie-buttons button.save, .wysie-root .wysie-buttons button.cancel, .wysie-root .auth-controls .login, .wysie-root .auth-controls .logout {
   all: initial;
   font: inherit;
   color: inherit;
@@ -25,7 +25,7 @@
   all: initial;
   position: absolute;
   top: .1em;
-  right: -1.5em;
+  right: .1em;
   z-index: 1;
   padding: 0 .3em;
   cursor: pointer;
@@ -46,13 +46,16 @@
 .wysie-root > *:not([data-editing]) .wysie-buttons,
 .wysie-root > *:not([data-editing]) .empty,
 .wysie-root > *:not([data-editing]) .delete,
-.wysie-root > *:not([data-editing]) button.add {
+.wysie-root > *:not([data-editing]) button.add, .wysie-root:not([data-editing]) .wysie-buttons,
+.wysie-root:not([data-editing]) .empty,
+.wysie-root:not([data-editing]) .delete,
+.wysie-root:not([data-editing]) button.add {
   display: none; }
 
-.wysie-root > *[data-editing] .edit {
+.wysie-root > *[data-editing] .edit, .wysie-root[data-editing] .edit {
   display: none; }
 
-.wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) textarea {
+.wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root > *[data-editing] [property]:not([typeof]) textarea, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-root[data-editing] [property]:not([typeof]) textarea {
   box-sizing: border-box;
   width: 100%; }
 
@@ -60,19 +63,27 @@
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
 .wysie-root > *[data-editing] [property]:not([typeof]) input:hover,
-.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
+.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
+.wysie-root[data-editing] [itemprop]:not([itemscope]) input:hover,
+.wysie-root[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root[data-editing] [property]:not([typeof]).using-popup:hover, .wysie-root[data-editing] [property]:not([typeof]).using-popup:focus,
+.wysie-root[data-editing] [property]:not([typeof]) input:hover,
+.wysie-root[data-editing] [property]:not([typeof]) input:focus, .wysie-root[data-editing] [property]:not([typeof]) select:hover, .wysie-root[data-editing] [property]:not([typeof]) select:focus, .wysie-root[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root[data-editing] [property]:not([typeof]) textarea:focus {
   outline: 1px dashed;
   outline-offset: 1px; }
 
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:hover,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:hover,
-.wysie-root > *[data-editing] [property]:not([typeof]) input:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover {
+.wysie-root > *[data-editing] [property]:not([typeof]) input:hover, .wysie-root > *[data-editing] [property]:not([typeof]) select:hover, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:hover,
+.wysie-root[data-editing] [itemprop]:not([itemscope]) input:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:hover, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:hover, .wysie-root[data-editing] [property]:not([typeof]).using-popup:hover,
+.wysie-root[data-editing] [property]:not([typeof]) input:hover, .wysie-root[data-editing] [property]:not([typeof]) select:hover, .wysie-root[data-editing] [property]:not([typeof]) textarea:hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.15), 0 0 0 99em rgba(255, 247, 0, 0.15) inset;
   outline-color: rgba(115, 132, 140, 0.3); }
 
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
 .wysie-root > *[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root > *[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root > *[data-editing] [property]:not([typeof]).using-popup:focus,
-.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus {
+.wysie-root > *[data-editing] [property]:not([typeof]) input:focus, .wysie-root > *[data-editing] [property]:not([typeof]) select:focus, .wysie-root > *[data-editing] [property]:not([typeof]) textarea:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]).using-popup:focus,
+.wysie-root[data-editing] [itemprop]:not([itemscope]) input:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) select:focus, .wysie-root[data-editing] [itemprop]:not([itemscope]) textarea:focus, .wysie-root[data-editing] [property]:not([typeof]).using-popup:focus,
+.wysie-root[data-editing] [property]:not([typeof]) input:focus, .wysie-root[data-editing] [property]:not([typeof]) select:focus, .wysie-root[data-editing] [property]:not([typeof]) textarea:focus {
   outline-color: rgba(51, 119, 153, 0.6); }
 
 .wysie-root .popup {

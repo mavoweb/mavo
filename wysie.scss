@@ -52,7 +52,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		all: initial;
 		position: absolute;
 		top: .1em;
-		right: -1.5em;
+		right: .1em;
 		z-index: 1;
 		padding: 0 .3em;
 		cursor: pointer;
@@ -74,7 +74,7 @@ $property: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		background: rgba(180,0,0,.8);
 	}
 
-	& > * {
+	& > *, & {
 		&:not([data-editing]) {
 			.wysie-buttons,
 			.empty,
