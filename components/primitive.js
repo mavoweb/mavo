@@ -291,11 +291,7 @@ var _ = Wysie.Primitive = $.Class({
 						contents: [
 							this.label + ":",
 							this.editor
-						],
-						style: { // TODO what if it doesn’t fit?
-							top: this.element.offsetTop + this.element.offsetHeight + "px",
-							left: this.element.offsetLeft + "px"
-						}
+						]
 					});
 
 					// No point in having a dropdown in a popup
@@ -303,13 +299,8 @@ var _ = Wysie.Primitive = $.Class({
 						this.editor.size = Math.min(10, this.editor.children.length);
 					}
 
-					this.popup.addEventListener("focus", function() {
-						this.classList.remove("hidden");
-					}, true);
-
-					this.popup.addEventListener("blur", function() {
-						this.classList.add("hidden");
-					}, true);
+					this.popup.addEventListener("focus", evt => this.showPopup(), true);
+					this.popup.addEventListener("blur", evt => this.popup.classList.add("hidden"), true);
 				}
 			}
 		}
@@ -323,15 +314,16 @@ var _ = Wysie.Primitive = $.Class({
 				}
 
 				if (this.popup && this.element != document.activeElement) {
-					this.popup.classList.toggle("hidden");
+					if (this.popup.classList.contains("hidden")) {
+						this.showPopup();
+					}
+					else {
+						this.popup.classList.add("hidden");
+					}
 				}
 			},
-			"focus": evt => {
-				this.popup.classList.remove("hidden");
-			},
-			"blur": evt => {
-				this.popup.classList.add("hidden");
-			}
+			"focus": evt => this.showPopup(),
+			"blur": evt => this.popup.classList.add("hidden")
 		};
 
 		this.element._.events(this.elementEditEvents);
@@ -350,6 +342,16 @@ var _ = Wysie.Primitive = $.Class({
 					this.element.appendChild(this.editor);
 				}
 			}
+		}
+	},
+
+	showPopup: function() {
+		if (this.popup) {
+			this.popup.classList.remove("hidden");
+			this.popup._.style({ // TODO what if it doesn’t fit?
+				top: this.element.offsetTop + this.element.offsetHeight + "px",
+				left: this.element.offsetLeft + "px"
+			});
 		}
 	},
 
