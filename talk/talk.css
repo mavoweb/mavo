@@ -201,13 +201,6 @@ footer.slide {
 	background-size: contain;
 }
 
-.token.highlight,
-.token.highlight + .attr-value {
-	xbackground: #333;
-	xborder-radius: .05em;
-	xbox-shadow: 0 .15em #333, 0 -.15em 0 0 #333, 0 0 0 .1em #333;
-}
-
 .token.reference {
 	color: hsl(198, 100%, 60%);
 }
@@ -218,4 +211,8 @@ footer.slide {
 
 .attr-name:not(.highlight) + .attr-value {
 	color: hsl(198, 10%, 60%);
+}
+
+#indicator {
+	pointer-events: none;
 }
