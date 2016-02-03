@@ -138,7 +138,7 @@ var _ = Wysie.Primitive = $.Class({
 			return null;
 		}
 
-		return this.editing && !o.dirty? this.savedValue : this.value;
+		return this.editing && !o.dirty && !this.exposed? this.savedValue : this.value;
 	},
 
 	update: function (value) {
@@ -160,7 +160,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	save: function () {
-		if (this.element !== this.editor) {
+		if (!this.exposed) {
 			this.editing = false;
 		}
 
@@ -184,7 +184,6 @@ var _ = Wysie.Primitive = $.Class({
 	edit: function () {
 		if (this.savedValue === undefined) {
 			// First time edit is called, set up editing UI
-			this.label = this.label || Wysie.readable(this.property);
 
 			// Linked widgets
 			if (this.element.hasAttribute("data-input")) {
@@ -323,7 +322,7 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			},
 			"focus": evt => this.showPopup(),
-			"blur": evt => this.popup.classList.add("hidden")
+			"blur": evt => this.popup && this.popup.classList.add("hidden")
 		};
 
 		this.element._.events(this.elementEditEvents);
@@ -357,6 +356,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	render: function(data) {
 		this.value = data;
+	},
+
+	lazy: {
+		label: function() {
+			return Wysie.readable(this.property);
+		}
 	},
 
 	static: {
@@ -489,7 +494,7 @@ _.attributes = {
 			var date = new Date(value);
 
 			if (!value || isNaN(date)) {
-				return null;
+				return "(" + this.label + ")";
 			}
 
 			// TODO do this properly (account for other datetime datatypes and different formats)
