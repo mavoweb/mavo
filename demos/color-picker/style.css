@@ -41,7 +41,7 @@ header {
 		filter: drop-shadow(0 0 .5px gray) drop-shadow(0 0 .5px gray);
 	}
 
-@media (min-width: 50em) {
+@media (min-width: 70em) {
 	header {
 		position: absolute;
 		left: 1em;
