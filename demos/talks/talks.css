@@ -57,54 +57,7 @@ ul.talks > li,
 			font-style:normal;
 		}
 
-		.talks address {
-		}
 
-		.talks address:before {
-			display:inline-block;
-			margin-right:.4em;
-			vertical-align:-1px;
-		}
-
-		.talks address:not([class*="country-"]):before {
-			content: url(flags/online.png);
-			vertical-align:-3px;
-		}
-
-		.talks address.country-nl:before { content: url(flags/nl.png); }
-		.talks address.country-nz:before { content: url(flags/nz.png); }
-		.talks address.country-gb:before { content: url(flags/gb.png); }
-		.talks address.country-se:before { content: url(flags/se.png); }
-		.talks address.country-fi:before { content: url(flags/fi.png); }
-		.talks address.country-ru:before { content: url(flags/ru.png); }
-		.talks address.country-no:before { content: url(flags/no.png); }
-		.talks address.country-pl:before { content: url(flags/pl.png); }
-		.talks address.country-gr:before { content: url(flags/gr.png); }
-		.talks address.country-ch:before { content: url(flags/ch.png); }
-		.talks address.country-de:before { content: url(flags/de.png); }
-		.talks address.country-it:before { content: url(flags/it.png); }
-		.talks address.country-us:before { content: url(flags/us.png); }
-		.talks address.country-au:before { content: url(flags/au.png); }
-		.talks address.country-cz:before { content: url(flags/cz.png); }
-		.talks address.country-ca:before { content: url(flags/ca.png); }
-		.talks address.country-cl:before { content: url(flags/cl.png); }
-		.talks address.country-br:before { content: url(flags/br.png); }
-		.talks address.country-be:before { content: url(flags/be.png); }
-		.talks address.country-fr:before { content: url(flags/fr.png); }
-		.talks address.country-ph:before { content: url(flags/ph.png); }
-
-		.talks .comment,
-		.talks .comment a {
-			color:gray;
-		}
-
-		.talks .comment a {
-			text-decoration: underline;
-		}
-
-		.talks .comment a:before {
-			content:none;
-		}
 
 
 
@@ -267,6 +220,7 @@ main:empty:before {
 	.talks address.flag-india:before { content: url(flags/in.png); }
 	.talks address.flag-uy:before { content: url(flags/uy.png); }
 	.talks address.flag-israel:before { content: url(flags/il.png); }
+	.talks address.flag-singapore:before { content: url(flags/sg.png); }
 
 	.talks .comment,
 	.talks .comment a {

@@ -1,0 +1,188 @@
+body {
+	font: 200 100%/1.5 'Helvetica Neue', sans-serif;
+	background: linear-gradient(45deg, silver 25%, transparent 25%, transparent 75%, silver 75%),
+	            linear-gradient(45deg, silver 25%, transparent 25%, transparent 75%, silver 75%) 20px 20px;
+	background-color: #eee;
+	background-size: 40px 40px;
+	font-kerning: normal;
+}
+
+h1 {
+	font-weight: inherit;
+	line-height: 1.2;
+}
+
+h1, p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+}
+
+strong, b {
+	font-weight: bold; /* FF is weird */
+}
+
+code, textarea, pre {
+	max-width: 100%;
+	margin: 0;
+	font: 100%/1.4 Consolas, Monaco, 'Andale Mono', monospace;
+	tab-size: 4;
+}
+
+pre + pre {
+	margin-top: 1.5em;
+}
+
+input {
+	font: inherit;
+	color: inherit;
+	border: 0;
+	background: transparent;
+	outline: none;
+}
+
+input[type="range"][orient="vertical"] {
+	x-webkit-appearance: slider-vertical;
+	writing-mode: bt-lr;
+}
+
+textarea {
+	background: transparent;
+	color: inherit;
+	border: 0;
+	outline: none;
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 75%;
+	height: 100%;
+	padding: .6em 1em;
+	box-sizing: border-box;
+	background: hsl(200, 20%, 25%) linear-gradient(rgba(0,0,0,.1) 50%, transparent 0);
+	background-origin: content-box;
+	background-size: auto 3em;
+	background-attachment: local;
+	color: white;
+	line-height: 1.5;
+}
+
+	textarea:not(.bottom) {
+		padding-left: calc(1em + 8rem);
+		padding-right: 0;
+		box-shadow: .1em 0 .2em rgba(0,0,0,.3) inset;
+		font-size: 90%;
+	}
+
+	@media (max-width: 1024px) {
+		textarea:not(.bottom) {
+			width: 77%;
+			padding-left: calc(1em + 6.5rem);
+			font-size: 24px;
+			tab-size: 3;
+			overflow: auto;
+		}
+	}
+
+	textarea.bottom {
+		bottom: 0;
+		left: 0;
+		right: 0;
+		top: auto;
+		width: 100%;
+		height: auto;
+		box-shadow: 0 .1em .2em rgba(0,0,0,.3) inset;
+	}
+
+.slide {
+	padding: 2.5rem;
+	background-color: black;
+	color: white;
+}
+
+@media (max-width: 1024px) {
+	.slide {
+		padding: 3vmin;
+	}
+}
+
+	.slide[data-source]::after {
+		color: black;
+		text-shadow: none;
+	}
+
+	.light.slide {
+		background: white;
+		color: black;
+	}
+
+	.slide > h1 {
+		text-align: center;
+		margin: 0 0 .6em;
+		font-size: 200%;
+	}
+
+	.slide h2 {
+		color: yellowgreen;
+		font-size: 120%;
+	}
+
+.image.slide > h1:only-child,
+.image.slide > .caption,
+.iframe.slide > h1 {
+	/*bottom: .5em;
+	margin: 0;*/
+	background: black;
+	text-shadow: none;
+	font-weight: 100;
+}
+
+.delayed.displayed,
+.delayed-children > .displayed {
+	opacity: 1;
+}
+
+section > header.slide {
+	align-items: center;
+	justify-content: center;
+	background: url(img/piettern.png);
+}
+
+section > header.slide:target {
+	display: flex;
+}
+
+	section > header.slide > h1 {
+		margin: auto;
+		padding: .5em .7em;
+		background: black;
+		text-align: center;
+		line-height: 1.2;
+		font-weight: 100;
+	}
+
+#indicator {
+	background: transparent;
+	text-shadow: none;
+	font-weight: 100;
+}
+
+::selection {
+	background: hsl(335, 100%, 40%);
+	color: white;
+}
+
+footer.ref a {
+	position: absolute;
+	bottom: 5vmin;
+	text-decoration: none;
+	font-size: 75%;
+}
+
+.emphasis,
+mark {
+	background: transparent;
+	color: hsl(348, 50%, 60%);
+	font-weight: bold;
+}

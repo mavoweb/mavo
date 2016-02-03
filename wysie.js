@@ -1698,7 +1698,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	this.addButton = this.addButton || document.createElement("button")._.set({
 		className: "add",
-		textContent: "Add " + this.name
+		textContent: "Add " + this.name.replace(/s$/i, "")
 	});
 
 	this.addButton.addEventListener("click", evt => {
@@ -1724,7 +1724,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	// Keep position of the template in the DOM, since we’re gonna remove it
 	this.marker = $.create("div", {
-		hidden: true, 
+		hidden: true,
 		className: "wysie-marker",
 		after: this.template
 	});
@@ -1759,7 +1759,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 		"mouseout": {
 			"button.delete": function(evt) {
 				this.classList.remove("delete-hover");
-				
+
 				evt.stopPropagation();
 			}
 		}
@@ -1769,7 +1769,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	$.create({
 		tag: "button",
 		textContent: "✖",
-		title: "Delete this " + this.name,
+		title: "Delete this " + this.name.replace(/s$/i, ""),
 		className: "delete",
 		inside: this.template
 	});
@@ -1878,6 +1878,7 @@ _.prototype = {
 };
 
 })(Bliss, Bliss.$);
+
 (function($){
 
 if (!self.Wysie) {
