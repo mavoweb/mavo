@@ -497,7 +497,8 @@ _.attributes = {
 
 			return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
 		}
-	}
+	},
+	"meta": "content"
 };
 
 // Datatypes per attribute
