@@ -145,9 +145,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 					this.inProgress = false;
 					this.wysie.wrapper._.fire("wysie:load");
 					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
-					var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
+					if (xhr.response) {
+						var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
 
-					this.wysie.render(data);
+						this.wysie.render(data);
+					}
 
 					this.backup = {
 						synced: true,
