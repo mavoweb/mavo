@@ -2004,29 +2004,32 @@ Wysie.Primitive.editors["image url"] = {
 				type: "url",
 				className: "value"
 			}, {
-				tag: "input",
-				type: "file",
-				accept: "image/*",
-				events: {
-					change: function (evt) {
-						var file = this.files[0];
+				tag: "label",
+				className: "upload",
+				contents: ["Upload: ", {
+					tag: "input",
+					type: "file",
+					accept: "image/*",
+					events: {
+						change: function (evt) {
+							var file = this.files[0];
 
-						if (!file) {
-							return;
+							if (!file) {
+								return;
+							}
+
+							// Show image locally
+							$("img", root).file = file;
+
+							// Upload to Dropbox
+
+							// Once uploaded, share and get public URL
+
+							// Set public URL as the value of the URL input
 						}
-
-						// Show image locally
-						$("img", root).file = file;
-
-						// Upload to Dropbox
-
-						// Once uploaded, share and get public URL
-
-						// Set public URL as the value of the URL input
 					}
-				}
+				}]
 			}, {
-				tag: "div",
 				className: "image-preview",
 				contents: [{
 						tag: "progress",
@@ -2036,6 +2039,9 @@ Wysie.Primitive.editors["image url"] = {
 						tag: "img"
 					}
 				]
+			}, {
+				className: "tip",
+				innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste the image to be uploaded!"
 			}
 		]});
 

@@ -88,6 +88,12 @@
     .wysie-wrapper .popup .image-popup .image-preview img {
       display: block;
       max-width: 100%; }
+  .wysie-wrapper .popup .image-popup .upload {
+    display: block;
+    margin: .8em 0; }
+  .wysie-wrapper .popup .image-popup .tip {
+    font-size: 70%;
+    color: gray; }
 
 .wysie-wrapper .wysie-buttons {
   position: relative;

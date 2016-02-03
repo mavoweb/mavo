@@ -137,6 +137,16 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 					max-width: 100%;
 				}
 			}
+
+			.upload {
+				display: block;
+				margin: .8em 0;
+			}
+
+			.tip {
+				font-size: 70%;
+				color: gray;
+			}
 		}
 	}
 
