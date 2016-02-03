@@ -221,6 +221,9 @@ main:empty:before {
 	.talks address.flag-uy:before { content: url(flags/uy.png); }
 	.talks address.flag-israel:before { content: url(flags/il.png); }
 	.talks address.flag-singapore:before { content: url(flags/sg.png); }
+	.talks address.flag-china:before { content: url(flags/cn.png); }
+	.talks address.flag-japan:before { content: url(flags/jp.png); }
+	.talks address.flag-austria:before { content: url(flags/at.png); }
 
 	.talks .comment,
 	.talks .comment a {
