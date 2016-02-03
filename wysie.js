@@ -711,7 +711,7 @@ var _ = Wysie.Scope = $.Class({
 
 		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
 		this.properties.forEach(prop => {
-			prop._.data.unit = _.super.create(prop, this.wysie, this.collection);
+			prop._.data.unit = _.super.create(prop, this.wysie);
 		});
 
 		// Handle expressions
@@ -811,12 +811,16 @@ var _ = Wysie.Scope = $.Class({
 
 		var ret = {};
 
-		this.properties.forEach(function(prop){
+		this.properties.forEach(prop => {
 			var unit = prop._.data.unit;
 
-			if (!unit.computed || o.computed) {
-				ret[unit.property] = unit.getData(o);
+			if ((!unit.computed || o.computed) && !(unit.property in ret)) {
+				ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
 			}
+		});
+
+		this.collections.forEach(collection => {
+			ret[collection.property] = collection.getData(o);
 		});
 
 		return ret;
