@@ -184,7 +184,10 @@ _.prototype = {
 	delete: function(item) {
 		return $.transition(item, {opacity: 0}).then(()=>{
 			$.remove(item);
-			this.wysie.save();
+
+			if (item._.data.unit.isRoot) {
+				this.wysie.save();
+			}
 		});
 	},
 
