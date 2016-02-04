@@ -35,6 +35,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
+
 		this.addEditable();
 	});
 
@@ -62,11 +63,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 	});
 
 	this.template._.remove();
-
-	["required", "multiple"].forEach(attr => {
-		this.template.removeAttribute(attr);
-		this.template.removeAttribute("data-" + attr);
-	});
 
 	this.template.classList.add("wysie-item");
 
