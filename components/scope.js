@@ -7,13 +7,17 @@ var _ = Wysie.Scope = $.Class({
 
 		this.type = _.normalize(this.element);
 
-		this.collections = $$(Wysie.selectors.multiple, element).map(function(template) {
-			return new Wysie.Collection(template, me.wysie);
-		}, this);
+		this.collections = [];
 
-		// Create Wysie objects for all properties in this scope, primitives or scopes, but not properties in descendant scopes
+		// Create Wysie objects for all properties in this scope (primitives or scopes),
+		// but not properties in descendant scopes (they will be handled by their scope)
 		this.properties.forEach(prop => {
-			prop._.data.unit = _.super.create(prop, this.wysie);
+			if (Wysie.is("multiple", prop)) {
+				this.collections.push(new Wysie.Collection(prop, me.wysie));
+			}
+			else {
+				prop._.data.unit = _.super.create(prop, this.wysie);
+			}
 		});
 
 		// Handle expressions
@@ -149,6 +153,7 @@ var _ = Wysie.Scope = $.Class({
 			this.element.appendChild(this.buttons.savecancel);
 		}
 
+		// This should include collections, once per item
 		this.properties.forEach(function(prop){
 			prop._.data.unit.edit();
 		});
@@ -169,6 +174,7 @@ var _ = Wysie.Scope = $.Class({
 			this.element.appendChild(this.buttons.edit);
 		}
 
+		// this should include collections
 		this.properties.forEach(function(prop){
 			prop._.data.unit.save();
 		}, this);
@@ -199,21 +205,27 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
+		// This should include collections
 		var unhandled = Object.keys(data).filter(property=>{
 			return this.propertyNames.indexOf(property) === -1 && typeof data[property] != "object";
 		});
 
+		// this should NOT include nested collections, they are handled after it
 		this.properties.forEach(prop => {
 			var property = prop._.data.unit;
 
-			var datum = Wysie.queryJSON(data, prop.getAttribute("property"));
+			if (!property.collection) {
+				var datum = Wysie.queryJSON(data, property.property);
 
-			if (datum) {
-				property.render(datum);
+				if (datum) {
+					property.render(datum);
+				}
 			}
 		});
 
-		unhandled.map(property=>{
+		this.collections.forEach(collection => collection.render(data[collection.property]));
+
+		unhandled.map(property => {
 			property = $.create("meta", {
 				property: property,
 				content: data[property],
@@ -223,10 +235,6 @@ var _ = Wysie.Scope = $.Class({
 			property._.data.unit = Wysie.Unit.create(property, this.wysie, this.collection);
 
 			return property;
-		});
-
-		this.collections.forEach(function (collection){
-			collection.render(data[collection.property]);
 		});
 
 		this.everSaved = true;
