@@ -39,6 +39,28 @@ var _ = self.Wysie = $.Class({
 			}
 		});
 
+		// Create bar
+		this.bar = $.create({
+			className: "wysie-bar",
+			start: this.wrapper,
+			contents: [{
+				tag: "button",
+				className: "edit",
+				innerHTML: "<span class='icon'>✎</span> Edit",
+				onclick: e => this.edit()
+			}, {
+				tag: "button",
+				innerHTML: "<span class='icon'>✓</span> Save",
+				className: "save",
+				onclick: e => this.save()
+			}, {
+				tag: "button",
+				innerHTML: "<span class='icon'>✘</span> Cancel",
+				className: "cancel",
+				onclick: e => this.cancel()
+			}]
+		});
+
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
@@ -66,18 +88,38 @@ var _ = self.Wysie = $.Class({
 	},
 
 	render: function(data) {
-		console.time("render");
 		this.root.render(data.data || data);
-		console.timeEnd("render");
+	},
+
+	edit: function() {
+		this.editing = true;
+		this.root.edit();
 	},
 
 	save: function() {
+		this.root.save();
+		this.editing = false;
 		this.storage && this.storage.save();
+	},
+
+	cancel: function() {
+		this.editing = false;
+		this.root.cancel();
 	},
 
 	live: {
 		readonly: function(value) {
 			this.wrapper.classList[value? "add" : "remove"]("readonly");
+		},
+		editing: {
+			set: function(value) {
+				if (value) {
+					this.wrapper.setAttribute("data-editing", "");
+				}
+				else {
+					this.wrapper.removeAttribute("data-editing");
+				}
+			}
 		}
 	},
 
@@ -88,9 +130,9 @@ var _ = self.Wysie = $.Class({
 		readable: function (identifier) {
 			// Is it camelCase?
 			return identifier && identifier
-			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase()}) // camelCase?
+			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase(); }) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase() }); // Capitalize
+			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase(); }); // Capitalize
 		},
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
@@ -119,6 +161,15 @@ var _ = self.Wysie = $.Class({
 			return data;
 		},
 
+		// Debugging function, should be moved
+		timed: function(id, callback) {
+			return function() {
+				console.time(id);
+				callback.apply(this, arguments);
+				console.timeEnd(id);
+			};
+		},
+
 		selectors: {
 			property: "[property], [itemprop]",
 			output: "[property=output], [itemprop=output], .output, .value",
@@ -136,11 +187,33 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-$.ready().then(evt=>{
+// Detach an element from the DOM, run a callback, then reattach
+$.add("swap", function(callback) {
+	// Remember position
+	var pos = $.extend({}, this, ["previousSibling", "nextSibling", "parentNode"]);
+
+	$.remove(this);
+	var ret = callback.call(this);
+
+	// Reattach element
+	if (pos.previousSibling) {
+		$.after(this, pos.previousSibling);
+	}
+	else if (pos.nextSibling) {
+		$.before(this, pos.nextSibling);
+	}
+	else {
+		pos.parentNode.appendChild(this);
+	}
+});
+
+$.ready().then(evt => {
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);
 	});
 });
+
+_.prototype.render = _.timed("render", _.prototype.render);
 
 })(Bliss, Bliss.$);
 

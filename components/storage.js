@@ -8,8 +8,8 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		// Used in localStorage, in case the backend subclass modifies the URL
 		this.originalHref = new URL(this.href, location);
 
-		this.loaded = new Promise((resolve, reject)=>{
-			this.wysie.wrapper.addEventListener("wysie:load", evt=>{resolve()});
+		this.loaded = new Promise((resolve, reject) => {
+			this.wysie.wrapper.addEventListener("wysie:load", resolve);
 		});
 	},
 
@@ -55,35 +55,36 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				// Otherwise, we have to generate a slightly more complex hash
 				this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
 
-				this.authControls = $.create("aside", {
-					className: "auth-controls",
-					contents: [
-						{
-							tag: "a",
-							href: this.loginHash,
-							textContent: "Login to edit",
-							className: "login",
-							start: this.wysie.wrapper,
-							events: {
-								click: evt => {
-									evt.preventDefault();
-									this.login();
-								}
+				this.authControls = {
+					logout: $.create({
+						tag: "button",
+						textContent: "Logout",
+						className: "logout",
+						events: {
+							click: this.logout.bind(this)
+						},
+						start: this.wysie.bar
+					}),
+					login: $.create({
+						tag: "a",
+						href: this.loginHash,
+						textContent: "Login to edit",
+						className: "login button",
+						start: this.wysie.wrapper,
+						events: {
+							click: evt => {
+								evt.preventDefault();
+								this.login();
 							}
-						}, {
-							tag: "span",
-							className: "status"
-						}, {
-							tag: "button",
-							textContent: "Logout",
-							className: "logout",
-							events: {
-								click: this.logout.bind(this)
-							}
-						}
-					],
-					start: this.wysie.wrapper
-				});
+						},
+						start: this.wysie.bar
+					}),
+					status: $.create({
+						tag: "span",
+						className: "status",
+						start: this.wysie.bar
+					})
+				}
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
 				window.addEventListener("hashchange", () => {
@@ -100,12 +101,12 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 				// Update login status
 				this.wysie.wrapper.addEventListener("wysie:login", evt => {
-					this.authControls.children[1].innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
+					this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
 					Stretchy.resizeAll(); // TODO decouple
 				});
 
 				this.wysie.wrapper.addEventListener("wysie:logout", evt => {
-					this.authControls.children[1].textContent = "";
+					this.authControls.status.textContent = "";
 				});
 
 				return value;

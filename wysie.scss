@@ -8,23 +8,6 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	text-align: inherit;
 }
 
-@mixin flat-button($color: black) {
-	@extend %reset;
-	padding: .4em .6em;
-	border: 2px solid $color;
-	border-radius: .4em;
-	background: transparent;
-	font: bold 80% Helvetica Neue, sans-serif;
-	cursor: pointer;
-	color: $color;
-
-	&:hover {
-		background: $color;
-		color: white;
-		border-color: transparent;
-	}
-}
-
 [data-store] {
 	// Unprocessed items
 	display: none;
@@ -47,7 +30,6 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		vertical-align: middle;
 	}
 
-	.edit,
 	.delete {
 		all: initial;
 		position: absolute;
@@ -57,21 +39,13 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		padding: 0 .3em;
 		cursor: pointer;
 		transform: scale(-1, 1);
-		color: rgba(0,0,0,.3);
+		color: rgba(180,0,0,.8);
 
 		&:hover {
 			border-radius: 50%;
-			background: rgba(0,0,0,.2);
+			background: rgba(180,0,0,.8);
 			color: white;
 		}
-	}
-
-	.delete {
-		color: rgba(180,0,0,.8);
-	}
-
-	.delete:hover {
-		background: rgba(180,0,0,.8);
 	}
 
 	.popup {
@@ -150,21 +124,6 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 	}
 
-	.wysie-buttons {
-		position: relative;
-		padding: .5em 0 .1em;
-		text-align: center;
-
-		button.save {
-			@include flat-button(hsl(80, 80%, 40%));
-		}
-
-		button.cancel {
-			@include flat-button(#c00);
-			margin-left: .4em;
-		}
-	}
-
 	&.readonly {
 		.edit, [data-editing], .add {
 			display: none;
@@ -174,31 +133,6 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	&.authenticated .auth-controls .login,
 	&:not(.authenticated) .auth-controls .logout {
 		display: none;
-	}
-
-	.auth-controls {
-		font-size: 80%;
-		margin-bottom: .8em;
-
-		.login, .logout {
-			@include flat-button();
-		}
-
-		.login {
-			margin-right: .6em;
-		}
-
-		.logout {
-			margin-left: .6em;
-		}
-
-		.status {
-
-		}
-
-		.status:empty {
-			content: "Not logged in";
-		}
 	}
 
 	.progress {
@@ -221,13 +155,13 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			margin-right: .2em;
 		}
 	}
-}
 
-.wysie-root {
 	&:not([data-editing]) {
 		.empty,
 		.delete,
-		button.add {
+		button.add,
+		.save,
+		.cancel {
 			display: none;
 		}
 	}
@@ -235,6 +169,10 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	&[data-editing] {
 		.edit {
 			display: none;
+		}
+
+		.empty {
+			opacity: .8;
 		}
 
 		// Primitives
@@ -267,5 +205,94 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 				}
 			}
 		}
+	}
+}
+
+.wysie-bar {
+	all: initial;
+	position: fixed;
+	z-index: 99999; // this is wrong, but must override other wrong things :(
+	color: white;
+	font-family: inherit;
+	font-size: 1rem;
+
+	.wysie-wrapper.authenticated & {
+		top: 0;
+		left: 0;
+		right: 0;
+		display: flex;
+		padding: 0 .5em 0 6em;
+		background: black;
+		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat, linear-gradient(hsla(0,0%,10%,.9), black);
+
+		.login {
+			display: none;
+		}
+	}
+
+	.wysie-wrapper:not(.authenticated) & {
+		top: 1em;
+		right: 1em;
+
+		&:not(:hover):not(:focus) {
+			opacity: .6;
+		}
+
+		button, .button {
+			border-radius: .3em;
+			border: 1px solid black;
+			background: rgba(0,0,0,.8);
+		}
+
+		.logout, .status {
+			display: none;
+		}
+	}
+
+	button, .button {
+		padding: .3em .6em .4em;
+		border: 0;
+		background: transparent;
+		font: inherit;
+		font-weight: bold;
+		color: inherit;
+		cursor: pointer;
+
+		&:hover {
+			background: hsla(0,0%,100%,.2);
+		}
+
+		.icon {
+			color: hsla(0,0%,100%,.5);
+		}
+	}
+
+	a.button {
+		text-decoration: none;
+	}
+
+	.edit:hover {
+
+	}
+
+	.save:hover {
+		background: hsl(80, 80%, 40%);
+	}
+
+	.cancel:hover {
+		background: #c00;
+	}
+
+	.status {
+		flex: 1;
+		line-height: 1.8;
+	}
+
+	.logout {
+		margin-left: .6em;
+	}
+
+	.status:empty {
+		content: "Not logged in";
 	}
 }

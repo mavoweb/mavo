@@ -142,7 +142,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	update: function (value) {
-		this.element.classList[value !== "" && value !== null? "remove" : "add"]("empty");
+		this.empty = value === "" || value === null;
 
 		value = value || value === 0? value : "";
 
@@ -168,20 +168,60 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.popup);
 			this.popup.classList.add("hidden");
 		}
-		else if (!this.attribute && !this.exposed) {
+		else if (!this.attribute && !this.exposed && this.editing) {
 			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
 		}
 
-		$.unbind(this.element, this.elementEditEvents);
+		this.element.tabIndex = this.element._.data.previousTabIndex || -1;
+
+		this.element._.fire("wysie:propertysave", {
+			unit: this
+		});
 	},
 
 	cancel: function() {
-		this.value = this.savedValue;
+		if (this.savedValue !== undefined) {
+			// FIXME if we have a collection of properties (not scopes), this will cause
+			// cancel to not remove new unsaved items
+			// This should be fixed by handling this on the collection level.
+			this.value = this.savedValue;
+		}
+
 		this.save();
 	},
 
+	// Prepare to be edited
+	// Called when root edit button is pressed
+	preEdit: function () {
+		// Empty properties should become editable immediately
+		// otherwise they could be invisible!
+		if (this.empty && !this.attribute) {
+			this.edit();
+			return;
+		}
+
+		var events = {
+			// click is needed too because it works with the keyboard as well
+			"mousedown focus click": e => this.edit(),
+			"wysie:propertysave": e => this.element._.unbind(events)
+		};
+
+		this.element._.events(events);
+
+		// Make element focusable, so it can actually receive focus
+		if (this.element.tabIndex != -1) {
+			this.element._.data.previousTabIndex = this.element.tabIndex;
+		}
+
+		this.element.tabIndex = 0;
+	},
+
 	edit: function () {
+		if (this.editing) {
+			return;
+		}
+
 		if (this.savedValue === undefined) {
 			// First time edit is called, set up editing UI
 
@@ -304,7 +344,7 @@ var _ = Wysie.Primitive = $.Class({
 			}
 		}
 
-		this.elementEditEvents = {
+		var events = {
 			"click": evt => {
 				// Prevent default actions while editing
 				if (evt.target !== this.editor) {
@@ -322,10 +362,11 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			},
 			"focus": evt => this.showPopup(),
-			"blur": evt => this.popup && this.popup.classList.add("hidden")
+			"blur": evt => this.popup && this.popup.classList.add("hidden"),
+			"wysie:propertysave": e => this.element._.unbind(events)
 		};
 
-		this.element._.events(this.elementEditEvents);
+		this.element._.events(events);
 
 		this.popup && this.popup._.after(this.element);
 
@@ -361,6 +402,12 @@ var _ = Wysie.Primitive = $.Class({
 	lazy: {
 		label: function() {
 			return Wysie.readable(this.property);
+		}
+	},
+
+	live: {
+		empty: function(value) {
+			this.element.classList[value? "add" : "remove"]("empty");
 		}
 	},
 

@@ -181,6 +181,12 @@ _.prototype = {
 		return item;
 	},
 
+	edit: function() {
+		if (this.length === 0 && this.required) {
+			var item = this.addEditable();
+		}
+	},
+
 	delete: function(item) {
 		return $.transition(item, {opacity: 0}).then(()=>{
 			$.remove(item);

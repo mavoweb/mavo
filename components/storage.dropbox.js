@@ -30,9 +30,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-		})).then(()=>{
-			this.login(true);
-		});
+		})).then(() => { this.login(true) });
 	},
 
 	// Super class save() calls this. Do not call directly.

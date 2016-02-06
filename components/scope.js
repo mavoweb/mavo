@@ -28,66 +28,6 @@ var _ = Wysie.Scope = $.Class({
 			this.updateReferences();
 		});
 		this.updateReferences();
-
-		if (this.isRoot) {
-			// TODO handle element templates in a better/more customizable way
-			this.buttons = {
-				edit: document.createElement("button")._.set({
-					textContent: "✎",
-					title: "Edit this " + this.type,
-					className: "edit"
-				}),
-				savecancel: document.createElement("div")._.set({
-					className: "wysie-buttons",
-					contents: [{
-						tag: "button",
-						textContent: "Save",
-						className: "save",
-					}, {
-						tag: "button",
-						textContent: "Cancel",
-						className: "cancel"
-					}]
-				})
-			};
-
-			this.element._.delegate({
-				click: {
-					"button.edit": this.edit.bind(this),
-					"button.save": this.save.bind(this),
-					"button.cancel": this.cancel.bind(this)
-				},
-				keyup: {
-					"input": evt => {
-						var code = evt.keyCode;
-
-						if (code == 13) { // Enter
-							this.save();
-							evt.stopPropagation();
-						}
-						else if (code == 27) { // Esc
-							this.cancel();
-							evt.stopPropagation();
-						}
-					}
-				}
-			});
-
-			// If root, add Save & Cancel button
-			// TODO remove these after saving & cache, to reduce number of DOM elements lying around
-			this.element.appendChild(this.buttons.edit);
-		}
-
-		// Monitor property additions or new references
-		/*this.MutationObserver = new MutationObserver(records=>{
-			records.forEach(record=>{
-				console.log(record.type, record.target, $.value(record.addedNodes, "length"), record);
-			});
-		});
-		this.MutationObserver.observe(this.element, {
-			childList: true,
-			subtree: true
-		});*/
 	},
 
 	get isRoot() {
@@ -132,71 +72,34 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
-	live: {
-		editing: {
-			set: function(value) {
-				if (value) {
-					this.element.setAttribute("data-editing", "");
-				}
-				else {
-					this.element.removeAttribute("data-editing");
-				}
-			}
-		}
-	},
-
 	edit: function() {
-		this.editing = true;
+		this.collections.forEach(collection => collection.edit());
 
-		if (this.isRoot) {
-			this.element.removeChild(this.buttons.edit);
-			this.element.appendChild(this.buttons.savecancel);
-		}
+		this.properties.forEach(prop => {
+			var unit = prop._.data.unit;
 
-		// This should include collections, once per item
-		this.properties.forEach(function(prop){
-			prop._.data.unit.edit();
-		});
-
-		this.collections.forEach(function (collection){
-			if (collection.length === 0) {
-				var item = collection.addEditable();
-			}
+			// If scope, edit. If primitive, prepare for edit.
+			unit[unit instanceof _? "edit" : "preEdit"]();
 		});
 	},
 
 	save: function() {
-		// TODO make this a class when we handle references properly in classes so we can toggle other classes
-		this.editing = false;
-
-		if (this.isRoot) {
-			$.remove(this.buttons.savecancel);
-			this.element.appendChild(this.buttons.edit);
-		}
-
 		// this should include collections
 		this.properties.forEach(function(prop){
 			prop._.data.unit.save();
 		}, this);
 
 		this.everSaved = true;
-
-		if (this.isRoot) {
-			this.wysie.save();
-		}
 	},
 
 	cancel: function() {
-		if (this.isRoot) {
-			$.remove(this.buttons.savecancel);
-			this.element.appendChild(this.buttons.edit);
-		}
-
-		this.editing = false;
-
 		this.properties.forEach(function(prop){
 			prop._.data.unit.cancel();
 		});
+
+		if (this.collection && !this.everSaved) {
+			$.remove(this.element);
+		}
 	},
 
 	// Inject data in this element
