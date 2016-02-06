@@ -11,7 +11,7 @@ var concat = require('gulp-concat');
 var sass = require('gulp-sass');
 
 gulp.task('concat', function() {
-	var files = "stretchy wysie storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "components/" + path + ".js");
+	var files = "stretchy wysie storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
 
 	return gulp.src(files)
 		.pipe(concat('wysie.js'))
