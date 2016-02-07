@@ -494,7 +494,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 						href: this.loginHash,
 						textContent: "Login to edit",
 						className: "login button",
-						start: this.wysie.wrapper,
 						events: {
 							click: evt => {
 								evt.preventDefault();
@@ -508,20 +507,18 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 						className: "status",
 						start: this.wysie.bar
 					})
-				}
+				};
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
-				window.addEventListener("hashchange", () => {
+				var login;
+				(login = () => {
+					console.log("yolo", location.hash, this.loginHash);
 					if (location.hash === this.loginHash) {
+						history.replaceState(null, document.title, new URL("", location) + "");
 						this.login();
-						history.pushState(null, "", "#");
 					}
-				});
-
-				if (location.hash === this.loginHash) {
-					this.login();
-					history.pushState(null, "", "#");
-				}
+				})();
+				window.addEventListener("hashchange", login);
 
 				// Update login status
 				this.wysie.wrapper.addEventListener("wysie:login", evt => {
@@ -1927,7 +1924,6 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
 		this.wysie.readonly = true;
-		this.loginToEdit = true;
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -1948,6 +1944,8 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
+
+			this.loginToEdit = true;
 		})).then(() => { this.login(true) });
 	},
 
