@@ -1930,7 +1930,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		this.loginToEdit = true;
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
-			var referrer = new URL(document.referrer);
+			var referrer = new URL(document.referrer, location);
 
 			if (referrer.hostname === "www.dropbox.com" && location.hash.indexOf("#access_token=") === 0) {
 				// We’re in an OAuth response popup, do what you need then close this

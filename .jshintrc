@@ -1,5 +1,6 @@
 {
 	"expr": true,
 	"esnext": true,
-	"funcscope": true
+	"funcscope": true,
+	"loopfunc": true
 }
