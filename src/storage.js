@@ -88,7 +88,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
 				var login;
 				(login = () => {
-					console.log("yolo", location.hash, this.loginHash);
 					if (location.hash === this.loginHash) {
 						history.replaceState(null, document.title, new URL("", location) + "");
 						this.login();

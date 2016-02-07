@@ -512,7 +512,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
 				var login;
 				(login = () => {
-					console.log("yolo", location.hash, this.loginHash);
 					if (location.hash === this.loginHash) {
 						history.replaceState(null, document.title, new URL("", location) + "");
 						this.login();
@@ -1065,7 +1064,7 @@ var _ = Wysie.Scope = $.Class({
 
 (function($, $$){
 
-const DISABLE_CACHE = true;
+const DISABLE_CACHE = false;
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
@@ -1146,7 +1145,9 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
-		this.editorValue = value;
+		if (this.editing) {
+			this.editorValue = value;
+		}
 
 		_.setValue(this.element, value, this.attribute, this.datatype);
 
@@ -1741,6 +1742,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	 */
 	if (this.template.hasAttribute("data-bottomup")) {
 		// Attribute data-bottomup has the highest priority and overrides any heuristics
+		// TODO what if we want to override the heuristics and set it to false?
 		this.bottomUp = true;
 	}
 	else if (!this.addButton.parentNode) {
@@ -1762,33 +1764,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.template._.remove();
 
 	this.template.classList.add("wysie-item");
-
-	// Add events
-	this.template._.delegate({
-		"click": {
-			"button.delete": function(evt) {
-				if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-					me.delete(this);
-				}
-
-				evt.stopPropagation();
-			}
-		},
-		"mouseover": {
-			"button.delete": function(evt) {
-				this.classList.add("delete-hover");
-
-				evt.stopPropagation();
-			}
-		},
-		"mouseout": {
-			"button.delete": function(evt) {
-				this.classList.remove("delete-hover");
-
-				evt.stopPropagation();
-			}
-		}
-	});
 
 	// Add delete button to the template
 	$.create({
@@ -1855,10 +1830,45 @@ _.prototype = {
 
 	toJSON: Wysie.prototype.toJSON,
 
-	add: function() {
-		var item = $.clone(this.template);
+	// Create item but don't insert it anywhere
+	// Mostly used internally
+	createItem: function () {
+		var item = this.template.cloneNode(true);
+
+		// Add events
+		item._.delegate({
+			"click": {
+				"button.delete": function(evt) {
+					if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+						me.delete(this);
+					}
+
+					evt.stopPropagation();
+				}
+			},
+			"mouseover": {
+				"button.delete": function(evt) {
+					this.classList.add("delete-hover");
+
+					evt.stopPropagation();
+				}
+			},
+			"mouseout": {
+				"button.delete": function(evt) {
+					this.classList.remove("delete-hover");
+
+					evt.stopPropagation();
+				}
+			}
+		});
 
 		Wysie.Unit.create(item, this.wysie, this);
+
+		return item;
+	},
+
+	add: function() {
+		var item = this.createItem();
 
 		item._.before(this.marker);
 
@@ -1867,9 +1877,7 @@ _.prototype = {
 
 	// TODO find a less stupid name?
 	addEditable: function() {
-		var item = $.clone(this.template);
-
-		Wysie.Unit.create(item, this.wysie, this);
+		var item = this.createItem();
 
 		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
 

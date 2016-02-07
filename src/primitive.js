@@ -1,6 +1,6 @@
 (function($, $$){
 
-const DISABLE_CACHE = true;
+const DISABLE_CACHE = false;
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
@@ -81,7 +81,9 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
-		this.editorValue = value;
+		if (this.editing) {
+			this.editorValue = value;
+		}
 
 		_.setValue(this.element, value, this.attribute, this.datatype);
 
