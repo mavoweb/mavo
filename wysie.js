@@ -386,13 +386,15 @@ _.prototype.render = _.timed("render", _.prototype.render);
 
 // TODO implement this properly
 function safeval(expr, vars) {
-	with (vars) {
-		try {
-			return eval(expr);
-		}
-		catch (e) {
-			return "ERROR!";
-		}
+	for (var variable in vars) {
+		eval("var " + variable + " = " + JSON.stringify(vars[variable]));
+	}
+
+	try {
+		return eval(expr);
+	}
+	catch (e) {
+		return "ERROR!";
 	}
 }
 
@@ -943,7 +945,7 @@ var _ = Wysie.Scope = $.Class({
 	// Get data in JSON format, with ancestor and nested properties flattened,
 	// iff they do not collide with properties of this scope.
 	// Used in expressions.
-	getRelativeData() {
+	getRelativeData: function() {
 		var scope = this;
 		var data = {};
 
@@ -1454,7 +1456,7 @@ var _ = Wysie.Primitive = $.Class({
 		getMatch: function (element, all) {
 			// TODO specificity
 			var ret = null;
-			
+
 			for (var selector in all) {
 				if (element.matches(selector)) {
 					ret = all[selector];

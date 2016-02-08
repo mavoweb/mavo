@@ -9,6 +9,7 @@ var uglify = require('gulp-uglify');
 var rename = require('gulp-rename')
 var concat = require('gulp-concat');
 var sass = require('gulp-sass');
+var babel = require('gulp-babel');
 
 gulp.task('concat', function() {
 	var files = "stretchy wysie storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
@@ -25,8 +26,35 @@ gulp.task('sass', function() {
 		.pipe(gulp.dest('.'));
 });
 
-gulp.task('watch', function() {
-	gulp.watch(["**/*.js", "**/*.scss"], ['concat', 'sass']);
+gulp.task('transpile', ['concat'], function() {
+	return gulp.src(['wysie.js'])
+	.pipe(babel({
+		"plugins": [
+			"transform-es2015-arrow-functions",
+			"transform-es2015-template-literals"
+		]
+	}))
+	.pipe(rename({ suffix: '.es5' }))
+	.pipe(gulp.dest('.'));
+
 });
 
-gulp.task('default', ['concat', 'sass']);
+gulp.task('minify', ['concat', "transpile"], function() {
+	var u = uglify();
+	u.on('error', function(error){
+		console.error(error);
+		u.end();
+	});
+
+	return gulp.src(['wysie.es5.js'])
+	.pipe(u)
+	.pipe(rename("wysie.min.js"))
+	.pipe(gulp.dest('.'));
+
+});
+
+gulp.task('watch', function() {
+	gulp.watch(["src/*.js", "**/*.scss"], ['concat', 'sass', 'transpile', 'minify']);
+});
+
+gulp.task('default', ['concat', 'sass', 'transpile', 'minify']);

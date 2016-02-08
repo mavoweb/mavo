@@ -199,13 +199,15 @@ _.prototype.render = _.timed("render", _.prototype.render);
 
 // TODO implement this properly
 function safeval(expr, vars) {
-	with (vars) {
-		try {
-			return eval(expr);
-		}
-		catch (e) {
-			return "ERROR!";
-		}
+	for (var variable in vars) {
+		eval("var " + variable + " = " + JSON.stringify(vars[variable]));
+	}
+
+	try {
+		return eval(expr);
+	}
+	catch (e) {
+		return "ERROR!";
 	}
 }
 

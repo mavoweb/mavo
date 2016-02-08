@@ -410,7 +410,7 @@ var _ = Wysie.Primitive = $.Class({
 		getMatch: function (element, all) {
 			// TODO specificity
 			var ret = null;
-			
+
 			for (var selector in all) {
 				if (element.matches(selector)) {
 					ret = all[selector];

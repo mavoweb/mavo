@@ -193,7 +193,7 @@ var _ = Wysie.Scope = $.Class({
 	// Get data in JSON format, with ancestor and nested properties flattened,
 	// iff they do not collide with properties of this scope.
 	// Used in expressions.
-	getRelativeData() {
+	getRelativeData: function() {
 		var scope = this;
 		var data = {};
 
