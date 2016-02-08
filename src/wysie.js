@@ -187,26 +187,6 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
-// Detach an element from the DOM, run a callback, then reattach
-$.add("swap", function(callback) {
-	// Remember position
-	var pos = $.extend({}, this, ["previousSibling", "nextSibling", "parentNode"]);
-
-	$.remove(this);
-	var ret = callback.call(this);
-
-	// Reattach element
-	if (pos.previousSibling) {
-		$.after(this, pos.previousSibling);
-	}
-	else if (pos.nextSibling) {
-		$.before(this, pos.nextSibling);
-	}
-	else {
-		pos.parentNode.appendChild(this);
-	}
-});
-
 $.ready().then(evt => {
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);

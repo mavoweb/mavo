@@ -204,6 +204,18 @@ _.prototype = {
 		});
 	},
 
+	save: function() {
+		this.items.forEach(item => {
+			item._.data.unit.save();
+		});
+	},
+
+	cancel: function() {
+		this.items.forEach(item => {
+			item._.data.unit.cancel();
+		});
+	},
+
 	render: function(data) {
 		if (!data) {
 			return;
