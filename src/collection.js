@@ -209,7 +209,7 @@ _.prototype = {
 			return;
 		}
 
-		if (!Array.isArray(data) && typeof data === "object") {
+		if (data && !Array.isArray(data)) {
 			data = [data];
 		}
 

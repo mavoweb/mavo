@@ -1314,14 +1314,7 @@ var _ = Wysie.Primitive = $.Class({
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var datatype = this.datatype.split(/\s+/);
-
-				do {
-					var editor = _.editors[datatype.join(" ")];
-					datatype.shift();
-				} while (!editor && datatype.length > 0);
-
-				editor = editor || _.editors.string;
+				var editor = _.getMatch(this.element, _.editors);
 
 				if (editor.create) {
 					$.extend(this, editor, property => property != "create");
@@ -1478,22 +1471,26 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	static: {
+		getMatch: function (element, all) {
+			// TODO specificity
+			var ret = null;
+			
+			for (var selector in all) {
+				if (element.matches(selector)) {
+					ret = all[selector];
+				}
+			}
+
+			return ret;
+		},
+
 		getValueAttribute: function callee(element) {
 			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
 
 			if (ret === undefined || DISABLE_CACHE) {
-				ret = element.getAttribute("data-attribute");
-
-				if (!ret) {
-					for (var selector in _.attributes) {
-						if (element.matches(selector)) {
-							ret = _.attributes[selector];
-						}
-					}
-				}
+				ret = element.getAttribute("data-attribute") || _.getMatch(element, _.attributes);
 
 				// TODO refactor this
-
 				if (ret) {
 					if (ret.humanReadable && element._.data.unit instanceof _) {
 						element._.data.unit.humanReadable = ret.humanReadable;
@@ -1570,27 +1567,19 @@ var _ = Wysie.Primitive = $.Class({
 		},
 
 		setValue: function callee(element, value, attribute) {
-			var setter = (callee.cache = callee.cache || new WeakMap()).get(element);
+			attribute = attribute || _.getValueAttribute(element);
 
-			if (!setter || DISABLE_CACHE) {
-				attribute = attribute || _.getValueAttribute(element);
-
-				if (attribute in element) {
-					// Returning properties (if they exist) instead of attributes
-					// is needed for dynamic elements such as checkboxes, sliders etc
-					setter = value => element[attribute] = value;
-				}
-				else if (attribute) {
-					setter = value => element.setAttribute(attribute, value);
-				}
-				else {
-					setter = value => element.textContent = value;
-				}
-
-				callee.cache.set(element, setter);
+			if (attribute in element) {
+				// Returning properties (if they exist) instead of attributes
+				// is needed for dynamic elements such as checkboxes, sliders etc
+				element[attribute] = value;
 			}
-
-			return setter(value);
+			else if (attribute) {
+				element.setAttribute(attribute, value);
+			}
+			else {
+				element.textContent = value;
+			}
 		},
 	}
 });
@@ -1619,47 +1608,37 @@ _.attributes = {
 	"meta": "content"
 };
 
-// Datatypes per attribute
+// Basic datatypes per attribute
+// Only number, boolean
 _.datatypes = {
-	"img": {
-		"src": "image url"
-	},
-	"video": {
-		"src": "video url"
-	},
-	"audio": {
-		"src": "audio url"
-	},
-	"a, link": {
-		"href": "url"
-	},
 	"input[type=checkbox]": {
 		"checked": "boolean"
 	},
 	"input[type=range], input[type=number]": {
 		"value": "number"
-	},
-	"time": {
-		"datetime": "datetime",
-	},
-	"p, div": {
-		"null": "multiline"
-	},
-	"address": {
-		"null": "location"
 	}
 };
 
 _.editors = {
-	"string": {"tag": "input"},
+	"*": {"tag": "input"},
 
-	"url": {
+	".number": {
+		"tag": "input",
+		"type": "number"
+	},
+
+	".boolean": {
+		"tag": "input",
+		"type": "checkbox"
+	},
+
+	"a, img, video, audio, .url": {
 		"tag": "input",
 		"type": "url",
 		"placeholder": "http://"
 	},
 
-	"multiline": {
+	"p, div, .multiline": {
 		create: {tag: "textarea"},
 
 		get editorValue () {
@@ -1673,7 +1652,7 @@ _.editors = {
 		}
 	},
 
-	"datetime": function() {
+	"time, .date": function() {
 		var types = {
 			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 			"month": /^[Y\d]{4}-[M\d]{2}$/i,
@@ -1907,7 +1886,7 @@ _.prototype = {
 			return;
 		}
 
-		if (!Array.isArray(data) && typeof data === "object") {
+		if (data && !Array.isArray(data)) {
 			data = [data];
 		}
 
