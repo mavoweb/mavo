@@ -802,8 +802,7 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.editing && !this.everSaved && !o.dirty
-			|| this.computed && !o.computed) {
+		if (this.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
 			return null;
 		}
 
@@ -880,16 +879,18 @@ var _ = Wysie.Scope = $.Class({
 
 		this.collections.forEach(collection => collection.render(data[collection.property]));
 
-		unhandled.map(property => {
-			property = $.create("meta", {
+		unhandled.forEach(property => {
+			var prop = $.create("meta", {
 				property: property,
 				content: data[property],
 				inside: this.element
 			});
 
-			property._.data.unit = Wysie.Unit.create(property, this.wysie, this.collection);
+			if (/number|boolean/.test(typeof data[property])) {
+				prop.setAttribute("datatype", typeof data[property]);
+			}
 
-			return property;
+			prop._.data.unit = Wysie.Unit.create(prop, this.wysie);
 		});
 
 		this.everSaved = true;

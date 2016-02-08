@@ -886,16 +886,18 @@ if (self.Promise && !Promise.prototype.done) {
 				return collection.render(data[collection.property]);
 			});
 
-			unhandled.map(function (property) {
-				property = $.create("meta", {
+			unhandled.forEach(function (property) {
+				var prop = $.create("meta", {
 					property: property,
 					content: data[property],
 					inside: _this8.element
 				});
 
-				property._.data.unit = Wysie.Unit.create(property, _this8.wysie, _this8.collection);
+				if (/number|boolean/.test(typeof data[property])) {
+					prop.setAttribute("datatype", typeof data[property]);
+				}
 
-				return property;
+				prop._.data.unit = Wysie.Unit.create(prop, _this8.wysie);
 			});
 
 			this.everSaved = true;
