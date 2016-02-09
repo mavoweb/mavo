@@ -839,9 +839,9 @@ if (self.Promise && !Promise.prototype.done) {
 
 		save: function () {
 			// this should include collections
-			this.properties.forEach(function (prop) {
-				prop._.data.unit.save();
-			}, this);
+			this.properties.forEach(function (p) {
+				return p._.data.unit.save();
+			});
 
 			this.everSaved = true;
 		},
@@ -1097,6 +1097,8 @@ if (self.Promise && !Promise.prototype.done) {
 					$.remove(this.editor);
 				}
 
+			this.default = this.editor ? this.editorValue : this.value;
+
 			this.update(this.value);
 
 			// Observe future mutations to this property, if possible
@@ -1129,8 +1131,8 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		get value() {
-			if (this.editing || this.exposed) {
-				return this.editorValue !== "" ? this.editorValue : this.element.getAttribute(this.attribute || "content");
+			if (this.editing) {
+				return this.editorValue;
 			}
 
 			return _.getValue(this.element, this.attribute, this.datatype);
@@ -1216,9 +1218,6 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		save: function () {
-			if (!this.exposed) {
-				this.editing = false;
-			}
 
 			if (this.popup) {
 				$.remove(this.popup);
@@ -1228,7 +1227,15 @@ if (self.Promise && !Promise.prototype.done) {
 				$.remove(this.editor);
 			}
 
-			this.element.tabIndex = this.element._.data.previousTabIndex || -1;
+			if (!this.exposed) {
+				this.editing = false;
+			}
+
+			if (this.element._.data.prevTabindex !== null) {
+				this.element.tabIndex = this.element._.data.prevTabindex;
+			} else {
+				this.element.removeAttribute("tabindex");
+			}
 
 			this.element._.fire("wysie:propertysave", {
 				unit: this
@@ -1271,9 +1278,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.element._.events(events);
 
 			// Make element focusable, so it can actually receive focus
-			if (this.element.tabIndex != -1) {
-				this.element._.data.previousTabIndex = this.element.tabIndex;
-			}
+			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 
 			this.element.tabIndex = 0;
 		},
@@ -1354,20 +1359,6 @@ if (self.Promise && !Promise.prototype.done) {
 					this.editor.placeholder = "(" + this.label + ")";
 				}
 
-				if (this.editor && this.editorValue !== "") {
-					this.default = this.editorValue;
-				} else {
-					if (this.attribute) {
-						this.default = this.element.getAttribute(this.attribute);
-					} else if (this.editor.parentNode != this.element) {
-						this.default = this.element.getAttribute("content") || this.element.textContent || null;
-					}
-
-					if (this.default !== null && this.editor) {
-						this.editorValue = this.default;
-					}
-				}
-
 				if (!this.exposed) {
 					// Copy any data-input-* attributes from the element to the editor
 					var dataInput = /^data-input-/i;
@@ -1398,6 +1389,10 @@ if (self.Promise && !Promise.prototype.done) {
 							return _this12.popup.classList.add("hidden");
 						}, true);
 					}
+				}
+
+				if (!this.popup) {
+					this.editor.classList.add("wysie-editor");
 				}
 			}
 
@@ -1470,6 +1465,9 @@ if (self.Promise && !Promise.prototype.done) {
 		live: {
 			empty: function (value) {
 				this.element.classList[value ? "add" : "remove"]("empty");
+			},
+			editing: function (value) {
+				this.element.classList[value ? "add" : "remove"]("editing");
 			}
 		},
 

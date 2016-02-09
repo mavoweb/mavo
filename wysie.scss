@@ -177,6 +177,18 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 		// Primitives
 		#{$primitive} {
+			&:hover {
+				$color: hsla(58, 100%, 50%, .2);
+
+				box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
+			}
+
+			&:focus,
+			.wysie-editor:focus {
+				outline: 1px dashed hsla(200,50%,40%,.6);
+				outline-offset: 1px;
+			}
+
 			input, select, textarea {
 				@extend %reset;
 			}
@@ -188,7 +200,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 			&.using-popup,
 			input, select, textarea {
-				&:hover, &:focus {
+				/*&:hover, &:focus {
 					outline: 1px dashed;
 					outline-offset: 1px;
 				}
@@ -202,7 +214,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 				&:focus {
 					outline-color: hsla(200,50%,40%,.6);
-				}
+				}*/
 			}
 		}
 	}

@@ -84,9 +84,7 @@ var _ = Wysie.Scope = $.Class({
 
 	save: function() {
 		// this should include collections
-		this.properties.forEach(function(prop){
-			prop._.data.unit.save();
-		}, this);
+		this.properties.forEach(p => p._.data.unit.save());
 
 		this.everSaved = true;
 	},

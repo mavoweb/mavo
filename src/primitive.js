@@ -40,6 +40,8 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
+		this.default = this.editor? this.editorValue : this.value;
+
 		this.update(this.value);
 
 		// Observe future mutations to this property, if possible
@@ -73,8 +75,8 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	get value() {
-		if (this.editing || this.exposed) {
-			return this.editorValue !== ""? this.editorValue : this.element.getAttribute(this.attribute || "content");
+		if (this.editing) {
+			return this.editorValue;
 		}
 
 		return _.getValue(this.element, this.attribute, this.datatype);
@@ -162,9 +164,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	save: function () {
-		if (!this.exposed) {
-			this.editing = false;
-		}
+
 
 		if (this.popup) {
 			$.remove(this.popup);
@@ -175,7 +175,16 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
-		this.element.tabIndex = this.element._.data.previousTabIndex || -1;
+		if (!this.exposed) {
+			this.editing = false;
+		}
+
+		if (this.element._.data.prevTabindex !== null) {
+			this.element.tabIndex = this.element._.data.prevTabindex;
+		}
+		else {
+			this.element.removeAttribute("tabindex");
+		}
 
 		this.element._.fire("wysie:propertysave", {
 			unit: this
@@ -212,9 +221,7 @@ var _ = Wysie.Primitive = $.Class({
 		this.element._.events(events);
 
 		// Make element focusable, so it can actually receive focus
-		if (this.element.tabIndex != -1) {
-			this.element._.data.previousTabIndex = this.element.tabIndex;
-		}
+		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 
 		this.element.tabIndex = 0;
 	},
@@ -291,22 +298,6 @@ var _ = Wysie.Primitive = $.Class({
 				this.editor.placeholder = "(" + this.label + ")";
 			}
 
-			if (this.editor && this.editorValue !== "") {
-				this.default = this.editorValue;
-			}
-			else {
-				if (this.attribute) {
-					this.default = this.element.getAttribute(this.attribute);
-				}
-				else if (this.editor.parentNode != this.element) {
-					this.default = this.element.getAttribute("content") || this.element.textContent || null;
-				}
-
-				if (this.default !== null && this.editor) {
-					this.editorValue = this.default;
-				}
-			}
-
 			if (!this.exposed) {
 				// Copy any data-input-* attributes from the element to the editor
 				var dataInput = /^data-input-/i;
@@ -336,6 +327,10 @@ var _ = Wysie.Primitive = $.Class({
 					this.popup.addEventListener("focus", evt => this.showPopup(), true);
 					this.popup.addEventListener("blur", evt => this.popup.classList.add("hidden"), true);
 				}
+			}
+
+			if (!this.popup) {
+				this.editor.classList.add("wysie-editor");
 			}
 		}
 
@@ -403,6 +398,9 @@ var _ = Wysie.Primitive = $.Class({
 	live: {
 		empty: function(value) {
 			this.element.classList[value? "add" : "remove"]("empty");
+		},
+		editing: function (value) {
+			this.element.classList[value? "add" : "remove"]("editing");
 		}
 	},
 
