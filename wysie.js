@@ -1,6 +1,6 @@
 /*
  * Stretchy: Form element autosizing, the way it should be.
- * by Lea Verou http://lea.verou.me 
+ * by Lea Verou http://lea.verou.me
  * MIT license
  */
 (function() {
@@ -29,14 +29,14 @@ var _ = self.Stretchy = {
 	},
 
 	// Script element this was included with, if any
-	script: $$("script").pop(),
+	script: document.currentScript || $$("script").pop(),
 
 	// Autosize one element. The core of Stretchy.
 	resize: function(element) {
 		if (!_.resizes(element)) {
 			return;
 		}
-		
+
 		var cs = getComputedStyle(element);
 		var offset = 0;
 
@@ -44,9 +44,9 @@ var _ = self.Stretchy = {
 			var empty = true;
 			element.value = element.placeholder;
 		}
-		
+
 		var type = element.nodeName.toLowerCase();
-		
+
 		if (type == "textarea") {
 			element.style.height = "0";
 
@@ -121,7 +121,7 @@ var _ = self.Stretchy = {
 	resizeAll: function(elements) {
 		$$(elements || _.selectors.base).forEach(function (element) {
 			_.resize(element);
-		});	
+		});
 	},
 
 	active: true,
@@ -137,7 +137,7 @@ var _ = self.Stretchy = {
 
 	init: function(){
 		_.selectors.filter = _.script.getAttribute("data-filter") ||
-		                     ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || "*";
+		                     ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
 		_.resizeAll();
 	},
@@ -185,6 +185,7 @@ if (self.MutationObserver) {
 }
 
 })();
+
 (function ($, $$) {
 
 var _ = self.Wysie = $.Class({
@@ -1318,6 +1319,7 @@ var _ = Wysie.Primitive = $.Class({
 
 				var create = editor.create || editor;
 				this.editor = $.create($.type(create) === "function"? create.call(this) : create);
+				this.editorValue = this.value;
 			}
 
 			this.editor._.events({
@@ -1659,6 +1661,8 @@ _.editors = {
 		return $.create("input", {type: type});
 	}
 };
+
+Stretchy.selectors.filter = ".wysie-editor";
 
 })(Bliss, Bliss.$);
 

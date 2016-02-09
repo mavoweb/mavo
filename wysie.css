@@ -114,7 +114,7 @@
   display: none; }
 
 .wysie-wrapper[data-editing] .empty {
-  opacity: .8; }
+  opacity: .5; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.2), 0 0 0 99em rgba(255, 247, 0, 0.2) inset; }

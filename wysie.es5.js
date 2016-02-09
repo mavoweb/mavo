@@ -1,6 +1,6 @@
 /*
  * Stretchy: Form element autosizing, the way it should be.
- * by Lea Verou http://lea.verou.me 
+ * by Lea Verou http://lea.verou.me
  * MIT license
  */
 (function () {
@@ -28,7 +28,7 @@
 		},
 
 		// Script element this was included with, if any
-		script: $$("script").pop(),
+		script: document.currentScript || $$("script").pop(),
 
 		// Autosize one element. The core of Stretchy.
 		resize: function (element) {
@@ -127,7 +127,7 @@
 		},
 
 		init: function () {
-			_.selectors.filter = _.script.getAttribute("data-filter") || ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || "*";
+			_.selectors.filter = _.script.getAttribute("data-filter") || ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
 			_.resizeAll();
 		},
@@ -173,6 +173,7 @@
 		});
 	}
 })();
+
 (function ($, $$) {
 
 	var _ = self.Wysie = $.Class({
@@ -1335,6 +1336,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 					var create = editor.create || editor;
 					this.editor = $.create($.type(create) === "function" ? create.call(this) : create);
+					this.editorValue = this.value;
 				}
 
 				this.editor._.events({
@@ -1681,6 +1683,8 @@ if (self.Promise && !Promise.prototype.done) {
 			return $.create("input", { type: type });
 		}
 	};
+
+	Stretchy.selectors.filter = ".wysie-editor";
 })(Bliss, Bliss.$);
 
 (function ($, $$) {

@@ -269,6 +269,7 @@ var _ = Wysie.Primitive = $.Class({
 
 				var create = editor.create || editor;
 				this.editor = $.create($.type(create) === "function"? create.call(this) : create);
+				this.editorValue = this.value;
 			}
 
 			this.editor._.events({
@@ -610,5 +611,7 @@ _.editors = {
 		return $.create("input", {type: type});
 	}
 };
+
+Stretchy.selectors.filter = ".wysie-editor";
 
 })(Bliss, Bliss.$);
