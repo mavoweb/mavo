@@ -812,7 +812,11 @@ var _ = Wysie.Scope = $.Class({
 			var unit = prop._.data.unit;
 
 			if ((!unit.computed || o.computed) && !(unit.property in ret)) {
-				ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
+				var data = unit.getData(o);
+
+				if (data !== null) {
+					ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
+				}
 			}
 		});
 
@@ -1187,7 +1191,13 @@ var _ = Wysie.Primitive = $.Class({
 			return null;
 		}
 
-		return this.editing && !o.dirty && !this.exposed? this.savedValue : this.value;
+		var ret = this.editing && !o.dirty && !this.exposed? this.savedValue : this.value;
+
+		if (!o.dirty && ret === "" && ret === this.default) {
+			return null;
+		}
+
+		return ret;
 	},
 
 	update: function (value) {
@@ -1209,8 +1219,6 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	save: function () {
-
-
 		if (this.popup) {
 			$.remove(this.popup);
 			this.popup.classList.add("hidden");

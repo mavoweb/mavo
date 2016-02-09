@@ -60,7 +60,11 @@ var _ = Wysie.Scope = $.Class({
 			var unit = prop._.data.unit;
 
 			if ((!unit.computed || o.computed) && !(unit.property in ret)) {
-				ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
+				var data = unit.getData(o);
+
+				if (data !== null) {
+					ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
+				}
 			}
 		});
 

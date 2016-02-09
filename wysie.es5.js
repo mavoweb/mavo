@@ -813,7 +813,11 @@ if (self.Promise && !Promise.prototype.done) {
 				var unit = prop._.data.unit;
 
 				if ((!unit.computed || o.computed) && !(unit.property in ret)) {
-					ret[unit.property] = unit.collection ? [/* later */] : unit.getData(o);
+					var data = unit.getData(o);
+
+					if (data !== null) {
+						ret[unit.property] = unit.collection ? [/* later */] : unit.getData(o);
+					}
 				}
 			});
 
@@ -1196,7 +1200,13 @@ if (self.Promise && !Promise.prototype.done) {
 				return null;
 			}
 
-			return this.editing && !o.dirty && !this.exposed ? this.savedValue : this.value;
+			var ret = this.editing && !o.dirty && !this.exposed ? this.savedValue : this.value;
+
+			if (!o.dirty && ret === "" && ret === this.default) {
+				return null;
+			}
+
+			return ret;
 		},
 
 		update: function (value) {
@@ -1218,7 +1228,6 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		save: function () {
-
 			if (this.popup) {
 				$.remove(this.popup);
 				this.popup.classList.add("hidden");
