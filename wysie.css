@@ -28,6 +28,7 @@
   z-index: 1;
   padding: 0 .3em;
   cursor: pointer;
+  -webkit-transform: scale(-1, 1);
   transform: scale(-1, 1);
   color: rgba(180, 0, 0, 0.8); }
   .wysie-wrapper .delete:hover {
@@ -45,6 +46,7 @@
   margin: .3em 0 0 -.5em;
   box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
   background: white;
+  -webkit-transform-origin: -1.4em -0.45em;
   transform-origin: -1.4em -0.45em;
   transition: .3s transform; }
   .wysie-wrapper .popup::before {
@@ -57,8 +59,10 @@
     border-right-width: 0;
     border-bottom-width: 0;
     background: inherit;
+    -webkit-transform: rotate(45deg);
     transform: rotate(45deg); }
   .wysie-wrapper .popup.hidden {
+    -webkit-transform: scale(0);
     transform: scale(0); }
   .wysie-wrapper .popup input, .wysie-wrapper .popup select {
     display: block;
@@ -159,6 +163,8 @@
     top: 0;
     left: 0;
     right: 0;
+    display: -webkit-flex;
+    display: -ms-flexbox;
     display: flex;
     padding: 0 .5em 0 6em;
     background: black;
@@ -195,6 +201,8 @@
   .wysie-bar .cancel:hover {
     background: #c00; }
   .wysie-bar .status {
+    -webkit-flex: 1;
+    -ms-flex: 1;
     flex: 1;
     line-height: 1.8; }
   .wysie-bar .logout {

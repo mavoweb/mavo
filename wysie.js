@@ -212,6 +212,13 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper = element;
 
+		// Apply heuristic for collections
+		$$("li:only-of-type, tr:only-of-type", this.wrapper).forEach(element=>{
+			if (_.is("property", element) || _.is("scope", element)) {
+				element.setAttribute("data-multiple", "");
+			}
+		});
+
 		if (element === this.element && _.is("multiple", element)) {
 			this.wrapper = element.closest(".wysie-wrapper") || $.create("div", {around: this.element});
 		}
@@ -219,13 +226,6 @@ var _ = self.Wysie = $.Class({
 		this.wrapper.classList.add("wysie-wrapper");
 
 		element.removeAttribute("data-store");
-
-		// Apply heuristic for collections
-		$$("li:only-of-type, tr:only-of-type", this.wrapper).forEach(element=>{
-			if (_.is("property", element) || _.is("scope", element)) {
-				element.setAttribute("data-multiple", "");
-			}
-		});
 
 		// Create bar
 		this.bar = $.create({
@@ -738,7 +738,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 			if (!property && element.hasAttribute("property")) {
-				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
+				property = element.name || element.id || element.classList[0];
 			}
 
 			if (property) {
@@ -751,6 +751,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 });
 
 })(Bliss, Bliss.$);
+
 (function($, $$){
 
 var _ = Wysie.Scope = $.Class({

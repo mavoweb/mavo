@@ -10,6 +10,7 @@ var rename = require('gulp-rename')
 var concat = require('gulp-concat');
 var sass = require('gulp-sass');
 var babel = require('gulp-babel');
+var autoprefixer = require('gulp-autoprefixer');
 
 gulp.task('concat', function() {
 	var files = "stretchy wysie storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
@@ -22,6 +23,10 @@ gulp.task('concat', function() {
 gulp.task('sass', function() {
 	return gulp.src(["**/*.scss", "!node_modules/**"])
 		.pipe(sass().on('error', sass.logError))
+		.pipe(autoprefixer({
+			browsers: ['last 2 versions'],
+			cascade: false
+		}))
 		.pipe(rename({ extname: '.css' }))
 		.pipe(gulp.dest('.'));
 });

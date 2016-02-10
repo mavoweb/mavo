@@ -58,7 +58,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 			if (!property && element.hasAttribute("property")) {
-				property = (element.getAttribute("class") || "").match(/^[^\s]*/)[0];
+				property = element.name || element.id || element.classList[0];
 			}
 
 			if (property) {

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" class="docs">
+<head>
+	<meta charset="UTF-8">
+	<title>Wysie: Documentation for HTML authors</title>
+	<link rel="stylesheet" href="website/style.css">
+</head>
+<body class="language-markup">
+
+<header>
+	<h1 class="logo">
+		<img src="logo.svg" alt="Wysie: What you see is editable">
+		Documentation for HTML authors
+	</h1>
+</header>
+
+<section>
+	<h1>Getting started</h1>
+
+	<p>To use wysie to make a page editable, two things are needed as a minimum:</p>
+
+	<ul>
+		<li>A <code>data-store</code> attribute with a URI that tells wysie <strong>where</strong> to store the data.</li>
+		<li><code>property</code> attributes on every element that needs to be editable.</li>
+	</ul>
+
+	<p>You can find details about these attributes below.</p>
+</section>
+
+<section id="attributes">
+	<h1>HTML attribute reference</h1>
+
+	<article>
+		<h1><code>data-store</code></h1>
+
+		<p>A URL that tells wysie <strong>where</strong> to find the data. It’s exact format depends on the backend used.
+		Each backend might also require more <code>data-store-*</code> properties.</p>
+
+		<p>You can use any URL you want, but if there is no supported backend associated with such URLs, the data will not be editable.</p>
+
+		<p>If the value is a hash (e.g. <code>data-store="#todo"</code>), wysie only stores the data locally.
+			If the value is <code>none</code>, the data is not stored anywhere.
+			This can be useful for experimenting, or for applications that don't require storage (e.g. a colour picker).</p>
+	</article>
+	<article>
+		<h1><code>property</code> or <code>itemprop</code></h1>
+
+		<p>The presence of any of these attributes on an element tells wysie that the element contains data and should be editable.
+			The attribute value can be anything you want, as long as it’s different from other unrelated elements.
+			It should describe the type of data the element will hold, because it will be used in various places in the editing interface.
+			The rules for a good property name are the same as those for a good CSS class name.</p>
+
+		<p>For example, this is what the markup for a person could look like if you want the name, image and website url to be editable:</p>
+
+		<script type="text/plain">
+			<article>
+				<h1 property="name">Lea Verou</h1>
+				<img property="image" src="lea.png" alt="Avatar"/>
+				<a property="url" href="http://lea.verou.me">Visit website</a>
+			</article>
+		</script>
+
+		<p>Note that if the <code>property</code> attribute is specified but without a value, wysie will try to find an identifier
+			in the following attributes, in this order:</p>
+
+		<ul>
+			<li><code>itemprop</code></li>
+			<li><code>name</code></li>
+			<li><code>id</code></li>
+			<li><code>class</code> (only the first class will be considered)</li>
+		</ul>
+
+		<p>For example, the following markup has the same result as the one above:</p>
+
+		<script type="text/plain">
+			<article>
+				<h1 property id="name">Lea Verou</h1> <!-- Getting an identifier from the id -->
+				<img property class="image" src="lea.png" alt="Avatar"/> <!-- Getting an identifier from the class name -->
+				<a itemprop="url" href="http://lea.verou.me">Visit website</a>
+			</article>
+		</script>
+
+		<p class="tip">You can also use <code>property</code> attributes for styling, through attribute selectors. For example:</p>
+		<pre><code class="language-css">
+		h1[property="name"] {
+			font-size: 300%;
+		}</code></pre>
+	</article>
+	<article>
+		<h1><code>data-multiple</code></h1>
+
+		<p>Tells wysie that this element can be multiplied (i.e. is a collection).
+			This way wysie knows to add controls for adding new elements, deleting existing ones<span class="unimplemented"> and dragging to rearrange</span>.</p>
+
+		<p>Some elements get this attribute automatically<span class="unimplemented">, which can be disabled with <code>data-multiple="false"</code></span>.
+			These elements are:</p>
+
+		<ul>
+			<li><code>&lt;li></code> without any other <code>&lt;li></code>s adjacent to it</li>
+			<li><code>&lt;tr></code> without any other <code>&lt;tr></code>s adjacent to it</li>
+		</ul>
+
+		<p>For example, this could be the markup for a basic to-do list, saved locally:</p>
+		<script type="text/plain">
+			<ul data-store="#todo">
+				<li></li>
+			</ul>
+		</script>
+	</article>
+	<article>
+		<h1><code>typeof</code></h1>
+	</article>
+	<article>
+		<h1><code>data-input</code></h1>
+
+		<p>A CSS selector that points to a form element or HTML structure used for editing the current property.
+			For more details on editing widgets see the <a href="#editors"></a> section.</p>
+	</article>
+	<article>
+		<h1><code>data-attribute</code></h1>
+
+		<p>Overrides the default for which attribute (if any) contains the element’s data.
+			Specify <code>"null"</code> for the data to be in the content.</p>
+	</article>
+	<!-- <article>
+		<h1><code></code></h1>
+	</article>
+	<article>
+		<h1><code></code></h1>
+	</article>
+	<article>
+		<h1><code></code></h1>
+	</article>
+	<article>
+		<h1><code></code></h1>
+	</article> -->
+</section>
+
+<script src="../bliss/bliss.js"></script>
+<script src="website/docs.js"></script>
+<script src="website/prism.js"></script>
+
+</body>
+</html>
