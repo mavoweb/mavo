@@ -282,7 +282,7 @@
 		save: function () {
 			this.root.save();
 			this.editing = false;
-			this.storage && this.storage.save();
+			//this.storage && this.storage.save();
 		},
 
 		cancel: function () {
@@ -1278,8 +1278,12 @@ if (self.Promise && !Promise.prototype.done) {
 
 			var events = {
 				// click is needed too because it works with the keyboard as well
-				"mousedown focus click": function (e) {
+				"mousedown click": function (e) {
 					return _this11.edit();
+				},
+				"focus": function (e) {
+					_this11.edit();
+					_this11.editor.focus && _this11.editor.focus();
 				},
 				"wysie:propertysave": function (e) {
 					return _this11.element._.unbind(events);
@@ -1411,7 +1415,7 @@ if (self.Promise && !Promise.prototype.done) {
 			var events = {
 				"click": function (evt) {
 					// Prevent default actions while editing
-					if (evt.target !== _this12.editor) {
+					if (evt.target !== _this12.editor && !evt.target.closest(".wysie-editor")) {
 						evt.preventDefault();
 						evt.stopPropagation();
 					}
@@ -1728,7 +1732,7 @@ if (self.Promise && !Promise.prototype.done) {
 		this.addButton.addEventListener("click", function (evt) {
 			evt.preventDefault();
 
-			_this13.addEditable();
+			_this13.add()._.data.unit.edit();
 		});
 
 		/*
@@ -1776,12 +1780,6 @@ if (self.Promise && !Promise.prototype.done) {
 				this.addButton._.after(this.marker);
 			}
 		}
-
-		this.wysie.wrapper.addEventListener("wysie:load", function (evt) {
-			if (_this13.required && !_this13.length) {
-				_this13.addEditable();
-			}
-		});
 	};
 
 	_.prototype = {
@@ -1859,26 +1857,20 @@ if (self.Promise && !Promise.prototype.done) {
 		add: function () {
 			var item = this.createItem();
 
-			item._.before(this.marker);
-
-			return item;
-		},
-
-		// TODO find a less stupid name?
-		addEditable: function () {
-			var item = this.createItem();
-
 			item._.before(this.bottomUp ? this.items[0] || this.marker : this.marker);
-
-			item._.data.unit.edit();
 
 			return item;
 		},
 
 		edit: function () {
 			if (this.length === 0 && this.required) {
-				var item = this.addEditable();
+				this.add();
 			}
+
+			this.items.forEach(function (item) {
+				var unit = item._.data.unit;
+				unit.preEdit ? unit.preEdit() : unit.edit();
+			});
 		},
 
 		delete: function (item) {

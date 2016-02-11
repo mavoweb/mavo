@@ -308,3 +308,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		content: "Not logged in";
 	}
 }
+
+// Temporary, good for debugging keyboard usability
+:focus {
+	outline: 3px solid #f06 !important;
+}

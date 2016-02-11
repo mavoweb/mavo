@@ -36,7 +36,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.addEditable();
+		this.add()._.data.unit.edit();
 	});
 
 	/*
@@ -87,12 +87,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 			this.addButton._.after(this.marker);
 		}
 	}
-
-	this.wysie.wrapper.addEventListener("wysie:load", evt => {
-		if (this.required && !this.length) {
-			this.addEditable();
-		}
-	});
 };
 
 _.prototype = {
@@ -172,26 +166,20 @@ _.prototype = {
 	add: function() {
 		var item = this.createItem();
 
-		item._.before(this.marker);
-
-		return item;
-	},
-
-	// TODO find a less stupid name?
-	addEditable: function() {
-		var item = this.createItem();
-
 		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
-
-		item._.data.unit.edit();
 
 		return item;
 	},
 
 	edit: function() {
 		if (this.length === 0 && this.required) {
-			var item = this.addEditable();
+			this.add();
 		}
+
+		this.items.forEach(item => {
+			var unit = item._.data.unit;
+			unit.preEdit? unit.preEdit() : unit.edit();
+		});
 	},
 
 	delete: function(item) {

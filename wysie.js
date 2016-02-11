@@ -287,7 +287,7 @@ var _ = self.Wysie = $.Class({
 	save: function() {
 		this.root.save();
 		this.editing = false;
-		this.storage && this.storage.save();
+		//this.storage && this.storage.save();
 	},
 
 	cancel: function() {
@@ -1269,7 +1269,11 @@ var _ = Wysie.Primitive = $.Class({
 
 		var events = {
 			// click is needed too because it works with the keyboard as well
-			"mousedown focus click": e => this.edit(),
+			"mousedown click": e => this.edit(),
+			"focus": e => {
+				this.edit();
+				this.editor.focus && this.editor.focus();
+			},
 			"wysie:propertysave": e => this.element._.unbind(events)
 		};
 
@@ -1393,7 +1397,7 @@ var _ = Wysie.Primitive = $.Class({
 		var events = {
 			"click": evt => {
 				// Prevent default actions while editing
-				if (evt.target !== this.editor) {
+				if (evt.target !== this.editor && !evt.target.closest(".wysie-editor")) {
 					evt.preventDefault();
 					evt.stopPropagation();
 				}
@@ -1705,7 +1709,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.addEditable();
+		this.add()._.data.unit.edit();
 	});
 
 	/*
@@ -1756,12 +1760,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 			this.addButton._.after(this.marker);
 		}
 	}
-
-	this.wysie.wrapper.addEventListener("wysie:load", evt => {
-		if (this.required && !this.length) {
-			this.addEditable();
-		}
-	});
 };
 
 _.prototype = {
@@ -1841,26 +1839,20 @@ _.prototype = {
 	add: function() {
 		var item = this.createItem();
 
-		item._.before(this.marker);
-
-		return item;
-	},
-
-	// TODO find a less stupid name?
-	addEditable: function() {
-		var item = this.createItem();
-
 		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
-
-		item._.data.unit.edit();
 
 		return item;
 	},
 
 	edit: function() {
 		if (this.length === 0 && this.required) {
-			var item = this.addEditable();
+			this.add();
 		}
+
+		this.items.forEach(item => {
+			var unit = item._.data.unit;
+			unit.preEdit? unit.preEdit() : unit.edit();
+		});
 	},
 
 	delete: function(item) {

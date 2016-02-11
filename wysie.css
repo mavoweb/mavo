@@ -209,3 +209,6 @@
     margin-left: .6em; }
   .wysie-bar .status:empty {
     content: "Not logged in"; }
+
+:focus {
+  outline: 3px solid #f06 !important; }

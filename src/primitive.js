@@ -218,7 +218,11 @@ var _ = Wysie.Primitive = $.Class({
 
 		var events = {
 			// click is needed too because it works with the keyboard as well
-			"mousedown focus click": e => this.edit(),
+			"mousedown click": e => this.edit(),
+			"focus": e => {
+				this.edit();
+				this.editor.focus && this.editor.focus();
+			},
 			"wysie:propertysave": e => this.element._.unbind(events)
 		};
 
@@ -342,7 +346,7 @@ var _ = Wysie.Primitive = $.Class({
 		var events = {
 			"click": evt => {
 				// Prevent default actions while editing
-				if (evt.target !== this.editor) {
+				if (evt.target !== this.editor && !evt.target.closest(".wysie-editor")) {
 					evt.preventDefault();
 					evt.stopPropagation();
 				}
