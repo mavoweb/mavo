@@ -1,3 +1,4 @@
+@import url("https://fontlibrary.org/face/libre-bodoni");
 body {
   margin: 0;
   font: 300 106%/1.5 Helvetica Neue, sans-serif;
@@ -81,7 +82,7 @@ body > header {
   clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%); }
 
 body > section > h1 {
-  font: bold 200% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Hoefler Text", Cambria, Georgia, serif;
+  font: bold 200% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Libre Bodoni", "Hoefler Text", Cambria, Georgia, serif;
   color: #bc6c7c; }
 
 body > section > * {

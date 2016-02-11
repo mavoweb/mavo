@@ -3,7 +3,9 @@ $accent-color: hsl(348, 37%, 68%);
 
 // Fonts
 $body-font: Helvetica Neue, sans-serif;
-$heading-font: Didot, 'Didot LT STD', "Bodoni 72", Bodoni, 'Bodoni MT', 'Hoefler Text', Cambria, Georgia, serif;
+$heading-font: Didot, 'Didot LT STD', "Bodoni 72", Bodoni, 'Bodoni MT', 'Libre Bodoni', 'Hoefler Text', Cambria, Georgia, serif;
+
+@import url("https://fontlibrary.org/face/libre-bodoni");
 
 body {
 	margin: 0;
