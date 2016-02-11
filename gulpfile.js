@@ -34,10 +34,7 @@ gulp.task('sass', function() {
 gulp.task('transpile', ['concat'], function() {
 	return gulp.src(['wysie.js'])
 	.pipe(babel({
-		"plugins": [
-			"transform-es2015-arrow-functions",
-			"transform-es2015-template-literals"
-		]
+		"presets": ["ES2015"]
 	}))
 	.pipe(rename({ suffix: '.es5' }))
 	.pipe(gulp.dest('.'));

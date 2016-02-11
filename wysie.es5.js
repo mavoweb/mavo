@@ -1,3 +1,7 @@
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 /*
  * Stretchy: Form element autosizing, the way it should be.
  * by Lea Verou http://lea.verou.me
@@ -31,7 +35,7 @@
 		script: document.currentScript || $$("script").pop(),
 
 		// Autosize one element. The core of Stretchy.
-		resize: function (element) {
+		resize: function resize(element) {
 			if (!_.resizes(element)) {
 				return;
 			}
@@ -113,7 +117,7 @@
 		},
 
 		// Autosize multiple elements
-		resizeAll: function (elements) {
+		resizeAll: function resizeAll(elements) {
 			$$(elements || _.selectors.base).forEach(function (element) {
 				_.resize(element);
 			});
@@ -122,11 +126,11 @@
 		active: true,
 
 		// Will stretchy do anything for this element?
-		resizes: function (element) {
+		resizes: function resizes(element) {
 			return element && element.parentNode && element.matches && element.matches(_.selectors.base) && element.matches(_.selectors.filter);
 		},
 
-		init: function () {
+		init: function init() {
 			_.selectors.filter = _.script.getAttribute("data-filter") || ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
 			_.resizeAll();
@@ -146,7 +150,7 @@
 	}
 
 	// Listen for changes
-	var listener = function (evt) {
+	var listener = function listener(evt) {
 		if (_.active) {
 			_.resize(evt.target);
 		}
@@ -177,7 +181,7 @@
 (function ($, $$) {
 
 	var _ = self.Wysie = $.Class({
-		constructor: function (element) {
+		constructor: function constructor(element) {
 			var _this = this;
 
 			_.all.push(this);
@@ -225,21 +229,21 @@
 					tag: "button",
 					className: "edit",
 					innerHTML: "<span class='icon'>✎</span> Edit",
-					onclick: function (e) {
+					onclick: function onclick(e) {
 						return _this.edit();
 					}
 				}, {
 					tag: "button",
 					innerHTML: "<span class='icon'>✓</span> Save",
 					className: "save",
-					onclick: function (e) {
+					onclick: function onclick(e) {
 						return _this.save();
 					}
 				}, {
 					tag: "button",
 					innerHTML: "<span class='icon'>✘</span> Cancel",
 					className: "cancel",
-					onclick: function (e) {
+					onclick: function onclick(e) {
 						return _this.cancel();
 					}
 				}]
@@ -262,40 +266,40 @@
 			return this.getData();
 		},
 
-		getData: function (o) {
+		getData: function getData(o) {
 			return this.root.getData(o);
 		},
 
-		toJSON: function () {
+		toJSON: function toJSON() {
 			return JSON.stringify(this.data, null, "\t");
 		},
 
-		render: function (data) {
+		render: function render(data) {
 			this.root.render(data.data || data);
 		},
 
-		edit: function () {
+		edit: function edit() {
 			this.editing = true;
 			this.root.edit();
 		},
 
-		save: function () {
+		save: function save() {
 			this.root.save();
 			this.editing = false;
 			//this.storage && this.storage.save();
 		},
 
-		cancel: function () {
+		cancel: function cancel() {
 			this.editing = false;
 			this.root.cancel();
 		},
 
 		live: {
-			readonly: function (value) {
+			readonly: function readonly(value) {
 				this.wrapper.classList[value ? "add" : "remove"]("readonly");
 			},
 			editing: {
-				set: function (value) {
+				set: function set(value) {
 					if (value) {
 						this.wrapper.setAttribute("data-editing", "");
 					} else {
@@ -309,7 +313,7 @@
 			all: [],
 
 			// Convert an identifier to readable text that can be used as a label
-			readable: function (identifier) {
+			readable: function readable(identifier) {
 				// Is it camelCase?
 				return identifier && identifier.replace(/([a-z])([A-Z][a-z])/g, function ($0, $1, $2) {
 					return $1 + " " + $2.toLowerCase();
@@ -321,13 +325,13 @@
 			},
 
 			// Inverse of _.readable(): Take a readable string and turn it into an identifier
-			identifier: function (readable) {
+			identifier: function identifier(readable) {
 				return readable && readable.replace(/\s+/g, "-") // Convert whitespace to hyphens
 				.replace(/[^\w-]/g, "") // Remove weird characters
 				.toLowerCase();
 			},
 
-			queryJSON: function (data, path) {
+			queryJSON: function queryJSON(data, path) {
 				if (!path || !data) {
 					return data;
 				}
@@ -346,7 +350,7 @@
 			},
 
 			// Debugging function, should be moved
-			timed: function (id, callback) {
+			timed: function timed(id, callback) {
 				return function () {
 					console.time(id);
 					callback.apply(this, arguments);
@@ -365,7 +369,7 @@
 				computed: ".computed" // Properties or scopes with computed properties, will not be saved
 			},
 
-			is: function (thing, element) {
+			is: function is(thing, element) {
 				return element.matches && element.matches(_.selectors[thing]);
 			}
 		}
@@ -403,7 +407,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 	var _ = Wysie.Storage = $.Class({ abstract: true,
 
-		constructor: function (wysie) {
+		constructor: function constructor(wysie) {
 			var _this2 = this;
 
 			this.wysie = wysie;
@@ -439,7 +443,7 @@ if (self.Promise && !Promise.prototype.done) {
 		ready: Promise.resolve(),
 
 		live: {
-			inProgress: function (value) {
+			inProgress: function inProgress(value) {
 				if (value) {
 					var p = $.create("div", {
 						textContent: value + "…",
@@ -451,7 +455,7 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 			},
 
-			loginToEdit: function (value) {
+			loginToEdit: function loginToEdit(value) {
 				var _this3 = this;
 
 				if (value) {
@@ -475,7 +479,7 @@ if (self.Promise && !Promise.prototype.done) {
 							textContent: "Login to edit",
 							className: "login button",
 							events: {
-								click: function (evt) {
+								click: function click(evt) {
 									evt.preventDefault();
 									_this3.login();
 								}
@@ -491,7 +495,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 					// We also support a hash to trigger login, in case the user doesn't want visible login UI
 					var login;
-					(login = function () {
+					(login = function login() {
 						if (location.hash === _this3.loginHash) {
 							history.replaceState(null, document.title, new URL("", location) + "");
 							_this3.login();
@@ -513,12 +517,12 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 			},
 
-			authenticated: function (value) {
+			authenticated: function authenticated(value) {
 				this.wysie.wrapper.classList[value ? "add" : "remove"]("authenticated");
 			}
 		},
 
-		load: function () {
+		load: function load() {
 			var _this4 = this;
 
 			var ret = this.ready;
@@ -582,7 +586,7 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 		},
 
-		save: function () {
+		save: function save() {
 			var _this5 = this;
 
 			this.backup = {
@@ -609,15 +613,15 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// To be overriden by subclasses
 		// Subclasses should set this.authenticated
-		login: function () {
+		login: function login() {
 			return Promise.resolve();
 		},
-		logout: function () {
+		logout: function logout() {
 			return Promise.resolve();
 		},
 
 		// Get storage parameters from the main element and cache them. Used for API keys and the like.
-		param: function (id) {
+		param: function param(id) {
 			// TODO traverse all properties and cache params in constructor, to avoid
 			// collection items carrying all of these
 			this.params = this.params || {};
@@ -636,7 +640,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		static: {
 			// Factory method to return the right storage subclass for a given wysie object
-			create: function (wysie) {
+			create: function create(wysie) {
 				var priority = -1;
 				var Id;
 
@@ -668,13 +672,13 @@ if (self.Promise && !Promise.prototype.done) {
 	});
 
 	_.Default = $.Class({ extends: _,
-		constructor: function () {
+		constructor: function constructor() {
 			// Can edit if local
 			this.wysie.readonly = this.url.origin !== location.origin || this.url.pathname !== location.pathname;
 		},
 
 		static: {
-			test: function () {
+			test: function test() {
 				return false;
 			}
 		}
@@ -687,7 +691,7 @@ if (self.Promise && !Promise.prototype.done) {
 (function ($, $$) {
 
 	var _ = Wysie.Unit = $.Class({ abstract: true,
-		constructor: function (element, wysie, collection) {
+		constructor: function constructor(element, wysie, collection) {
 			if (!element || !wysie) {
 				throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 			}
@@ -718,7 +722,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		static: {
-			create: function (element, wysie, collection) {
+			create: function create(element, wysie, collection) {
 				if (!element || !wysie) {
 					throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 				}
@@ -732,7 +736,7 @@ if (self.Promise && !Promise.prototype.done) {
 				return new Wysie[Wysie.Scope.is(element) ? "Scope" : "Primitive"](element, wysie, collection);
 			},
 
-			normalizeProperty: function (element) {
+			normalizeProperty: function normalizeProperty(element) {
 				// Get & normalize property name, if exists
 				var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
@@ -754,7 +758,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 	var _ = Wysie.Scope = $.Class({
 		extends: Wysie.Unit,
-		constructor: function (element, wysie, collection) {
+		constructor: function constructor(element, wysie, collection) {
 			var _this6 = this;
 
 			var me = this;
@@ -802,7 +806,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		getData: function (o) {
+		getData: function getData(o) {
 			o = o || {};
 
 			if (this.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
@@ -830,7 +834,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return ret;
 		},
 
-		edit: function () {
+		edit: function edit() {
 			this.collections.forEach(function (collection) {
 				return collection.edit();
 			});
@@ -843,7 +847,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		save: function () {
+		save: function save() {
 			// this should include collections
 			this.properties.forEach(function (p) {
 				return p._.data.unit.save();
@@ -852,7 +856,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.everSaved = true;
 		},
 
-		cancel: function () {
+		cancel: function cancel() {
 			this.properties.forEach(function (prop) {
 				prop._.data.unit.cancel();
 			});
@@ -863,7 +867,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		// Inject data in this element
-		render: function (data) {
+		render: function render(data) {
 			var _this8 = this;
 
 			if (!data) {
@@ -872,7 +876,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// This should include collections
 			var unhandled = Object.keys(data).filter(function (property) {
-				return _this8.propertyNames.indexOf(property) === -1 && typeof data[property] != "object";
+				return _this8.propertyNames.indexOf(property) === -1 && _typeof(data[property]) != "object";
 			});
 
 			// this should NOT include nested collections, they are handled after it
@@ -899,8 +903,8 @@ if (self.Promise && !Promise.prototype.done) {
 					inside: _this8.element
 				});
 
-				if (/number|boolean/.test(typeof data[property])) {
-					prop.setAttribute("datatype", typeof data[property]);
+				if (/number|boolean/.test(_typeof(data[property]))) {
+					prop.setAttribute("datatype", _typeof(data[property]));
 				}
 
 				prop._.data.unit = Wysie.Unit.create(prop, _this8.wysie);
@@ -909,7 +913,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.everSaved = true;
 		},
 
-		cacheReferences: function () {
+		cacheReferences: function cacheReferences() {
 			var _this9 = this;
 
 			var propertiesRegex = this.propertyNames.join("|");
@@ -917,7 +921,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.references = [];
 
 			// TODO handle references when an attribute value is set later
-			var extractRefs = function (element, attribute) {
+			var extractRefs = function extractRefs(element, attribute) {
 				var text = attribute ? attribute.value : element.textContent;
 				var matches = text.match(_this9.refRegex);
 				var propertyAttribute = $.value(element._.data.unit, "attribute");
@@ -961,7 +965,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Get data in JSON format, with ancestor and nested properties flattened,
 		// iff they do not collide with properties of this scope.
 		// Used in expressions.
-		getRelativeData: function () {
+		getRelativeData: function getRelativeData() {
 			var scope = this;
 			var data = {};
 
@@ -993,7 +997,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Gets called every time a property changes in this or descendant scopes
 		// TODO special-case classes
-		updateReferences: function () {
+		updateReferences: function updateReferences() {
 			if (!this.references.length) {
 				return;
 			}
@@ -1024,7 +1028,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		static: {
-			is: function (element) {
+			is: function is(element) {
 
 				var ret = Wysie.is("scope", element);
 
@@ -1041,7 +1045,7 @@ if (self.Promise && !Promise.prototype.done) {
 				return ret;
 			},
 
-			normalize: function (element) {
+			normalize: function normalize(element) {
 				// Get & normalize typeof name, if exists
 				var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
 
@@ -1061,11 +1065,11 @@ if (self.Promise && !Promise.prototype.done) {
 
 (function ($, $$) {
 
-	const DISABLE_CACHE = false;
+	var DISABLE_CACHE = false;
 
 	var _ = Wysie.Primitive = $.Class({
 		extends: Wysie.Unit,
-		constructor: function (element, wysie, collection) {
+		constructor: function constructor(element, wysie, collection) {
 			var _this10 = this;
 
 			// Which attribute holds the data, if any?
@@ -1195,7 +1199,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return this.editor === this.element;
 		},
 
-		getData: function (o) {
+		getData: function getData(o) {
 			o = o || {};
 
 			if (this.computed && !o.computed) {
@@ -1211,7 +1215,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return ret;
 		},
 
-		update: function (value) {
+		update: function update(value) {
 			this.empty = value === "" || value === null;
 
 			value = value || value === 0 ? value : "";
@@ -1229,7 +1233,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		save: function () {
+		save: function save() {
 			if (this.popup) {
 				$.remove(this.popup);
 				this.popup.classList.add("hidden");
@@ -1253,7 +1257,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		cancel: function () {
+		cancel: function cancel() {
 			if (this.savedValue !== undefined) {
 				// FIXME if we have a collection of properties (not scopes), this will cause
 				// cancel to not remove new unsaved items
@@ -1266,7 +1270,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Prepare to be edited
 		// Called when root edit button is pressed
-		preEdit: function () {
+		preEdit: function preEdit() {
 			var _this11 = this;
 
 			// Empty properties should become editable immediately
@@ -1278,14 +1282,14 @@ if (self.Promise && !Promise.prototype.done) {
 
 			var events = {
 				// click is needed too because it works with the keyboard as well
-				"mousedown click": function (e) {
+				"mousedown click": function mousedownClick(e) {
 					return _this11.edit();
 				},
-				"focus": function (e) {
+				"focus": function focus(e) {
 					_this11.edit();
 					_this11.editor.focus && _this11.editor.focus();
 				},
-				"wysie:propertysave": function (e) {
+				"wysie:propertysave": function wysiePropertysave(e) {
 					return _this11.element._.unbind(events);
 				}
 			};
@@ -1298,7 +1302,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.element.tabIndex = 0;
 		},
 
-		edit: function () {
+		edit: function edit() {
 			var _this12 = this;
 
 			if (this.editing) {
@@ -1345,7 +1349,7 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 
 				this.editor._.events({
-					"input": function (evt) {
+					"input": function input(evt) {
 						if (_this12.attribute) {
 							_this12.element.setAttribute(_this12.attribute, _this12.editorValue);
 						}
@@ -1354,16 +1358,16 @@ if (self.Promise && !Promise.prototype.done) {
 							_this12.update(_this12.editorValue);
 						}
 					},
-					"focus": function () {
+					"focus": function focus() {
 						this.select && this.select();
 					},
-					"keyup": function (evt) {
+					"keyup": function keyup(evt) {
 						if (_this12.popup && evt.keyCode == 13 || evt.keyCode == 27) {
 							evt.stopPropagation();
 							_this12.popup.classList.add("hidden");
 						}
 					},
-					"wysie:propertychange": function (evt) {
+					"wysie:propertychange": function wysiePropertychange(evt) {
 						if (evt.property === "output") {
 							evt.stopPropagation();
 							$.fire(_this12.editor, "input");
@@ -1413,7 +1417,7 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 
 			var events = {
-				"click": function (evt) {
+				"click": function click(evt) {
 					// Prevent default actions while editing
 					if (evt.target !== _this12.editor && !evt.target.closest(".wysie-editor")) {
 						evt.preventDefault();
@@ -1428,13 +1432,13 @@ if (self.Promise && !Promise.prototype.done) {
 						}
 					}
 				},
-				"focus": function (evt) {
+				"focus": function focus(evt) {
 					return _this12.showPopup();
 				},
-				"blur": function (evt) {
+				"blur": function blur(evt) {
 					return _this12.popup && _this12.popup.classList.add("hidden");
 				},
-				"wysie:propertysave": function (e) {
+				"wysie:propertysave": function wysiePropertysave(e) {
 					return _this12.element._.unbind(events);
 				}
 			};
@@ -1458,7 +1462,7 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 		},
 
-		showPopup: function () {
+		showPopup: function showPopup() {
 			if (this.popup) {
 				this.popup.classList.remove("hidden");
 				this.popup._.style({ // TODO what if it doesn’t fit?
@@ -1468,27 +1472,27 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 		},
 
-		render: function (data) {
+		render: function render(data) {
 			this.value = data;
 		},
 
 		lazy: {
-			label: function () {
+			label: function label() {
 				return Wysie.readable(this.property);
 			}
 		},
 
 		live: {
-			empty: function (value) {
+			empty: function empty(value) {
 				this.element.classList[value ? "add" : "remove"]("empty");
 			},
-			editing: function (value) {
+			editing: function editing(value) {
 				this.element.classList[value ? "add" : "remove"]("editing");
 			}
 		},
 
 		static: {
-			getMatch: function (element, all) {
+			getMatch: function getMatch(element, all) {
 				// TODO specificity
 				var ret = null;
 
@@ -1555,7 +1559,7 @@ if (self.Promise && !Promise.prototype.done) {
 					attribute = attribute || attribute === null ? attribute : _.getValueAttribute(element);
 					datatype = datatype || _.getDatatype(element, attribute);
 
-					getter = function () {
+					getter = function getter() {
 						var ret;
 
 						if (attribute in element) {
@@ -1608,7 +1612,7 @@ if (self.Promise && !Promise.prototype.done) {
 		"input[type=checkbox]": "checked",
 		"time": {
 			value: "datetime",
-			humanReadable: function (value) {
+			humanReadable: function humanReadable(value) {
 				var date = new Date(value);
 
 				if (!value || isNaN(date)) {
@@ -1668,7 +1672,7 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 		},
 
-		"time, .date": function () {
+		"time, .date": function timeDate() {
 			var types = {
 				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 				"month": /^[Y\d]{4}-[M\d]{2}$/i,
@@ -1803,7 +1807,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return this.getData();
 		},
 
-		getData: function (o) {
+		getData: function getData(o) {
 			o = o || {};
 
 			return this.items.map(function (item) {
@@ -1819,13 +1823,13 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Create item but don't insert it anywhere
 		// Mostly used internally
-		createItem: function () {
+		createItem: function createItem() {
 			var item = this.template.cloneNode(true);
 
 			// Add events
 			item._.delegate({
 				"click": {
-					"button.delete": function (evt) {
+					"button.delete": function buttonDelete(evt) {
 						if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
 							me.delete(this);
 						}
@@ -1834,14 +1838,14 @@ if (self.Promise && !Promise.prototype.done) {
 					}
 				},
 				"mouseover": {
-					"button.delete": function (evt) {
+					"button.delete": function buttonDelete(evt) {
 						this.classList.add("delete-hover");
 
 						evt.stopPropagation();
 					}
 				},
 				"mouseout": {
-					"button.delete": function (evt) {
+					"button.delete": function buttonDelete(evt) {
 						this.classList.remove("delete-hover");
 
 						evt.stopPropagation();
@@ -1854,7 +1858,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return item;
 		},
 
-		add: function () {
+		add: function add() {
 			var item = this.createItem();
 
 			item._.before(this.bottomUp ? this.items[0] || this.marker : this.marker);
@@ -1862,7 +1866,7 @@ if (self.Promise && !Promise.prototype.done) {
 			return item;
 		},
 
-		edit: function () {
+		edit: function edit() {
 			if (this.length === 0 && this.required) {
 				this.add();
 			}
@@ -1873,7 +1877,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		delete: function (item) {
+		delete: function _delete(item) {
 			var _this14 = this;
 
 			return $.transition(item, { opacity: 0 }).then(function () {
@@ -1885,19 +1889,19 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		save: function () {
+		save: function save() {
 			this.items.forEach(function (item) {
 				item._.data.unit.save();
 			});
 		},
 
-		cancel: function () {
+		cancel: function cancel() {
 			this.items.forEach(function (item) {
 				item._.data.unit.cancel();
 			});
 		},
 
-		render: function (data) {
+		render: function render(data) {
 			if (!data) {
 				return;
 			}
@@ -1931,7 +1935,7 @@ if (self.Promise && !Promise.prototype.done) {
 	var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
-		constructor: function () {
+		constructor: function constructor() {
 			var _this15 = this;
 
 			this.wysie.readonly = true;
@@ -1963,14 +1967,14 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		// Super class save() calls this. Do not call directly.
-		backendSave: function () {
+		backendSave: function backendSave() {
 			return this.put({
 				name: this.filename,
 				data: this.wysie.toJSON()
 			});
 		},
 
-		put: function (file) {
+		put: function put(file) {
 			var _this16 = this;
 
 			return new Promise(function (resolve, reject) {
@@ -1985,7 +1989,7 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
-		login: function (passive) {
+		login: function login(passive) {
 			var _this17 = this;
 
 			return this.ready.then(function () {
@@ -2021,7 +2025,7 @@ if (self.Promise && !Promise.prototype.done) {
 			}).catch(function () {});
 		},
 
-		logout: function () {
+		logout: function logout() {
 			var _this18 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
@@ -2034,7 +2038,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		static: {
-			test: function (url) {
+			test: function test(url) {
 				return (/dropbox.com/.test(url.host) || url.protocol === "dropbox:"
 				);
 			}
