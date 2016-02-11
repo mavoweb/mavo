@@ -346,10 +346,10 @@ var _ = Wysie.Primitive = $.Class({
 		var events = {
 			"click": evt => {
 				// Prevent default actions while editing
-				if (evt.target !== this.editor && !evt.target.closest(".wysie-editor")) {
-					evt.preventDefault();
-					evt.stopPropagation();
-				}
+				//if (evt.target !== this.editor) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				//}
 
 				if (this.popup && this.element != document.activeElement) {
 					if (this.popup.classList.contains("hidden")) {

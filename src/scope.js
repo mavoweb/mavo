@@ -7,18 +7,25 @@ var _ = Wysie.Scope = $.Class({
 
 		this.type = _.normalize(this.element);
 
-		this.collections = [];
+		this.properties = {};
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
-		this.properties.forEach(prop => {
-			if (Wysie.is("multiple", prop)) {
-				this.collections.push(new Wysie.Collection(prop, me.wysie));
-			}
-			else {
-				prop._.data.unit = _.super.create(prop, this.wysie);
-			}
-		});
+		$$(Wysie.selectors.property, this.element)
+			.filter(property => this.contains(property))
+			.forEach(prop => {
+				if (Wysie.is("multiple", prop)) {
+					var obj = new Wysie.Collection(prop, me.wysie);
+				}
+				else {
+					obj = _.super.create(prop, this.wysie);
+					obj.scope = obj instanceof _? obj : this;
+				}
+
+				obj.parentScope = this;
+
+				this.properties[obj.property] = obj;
+			});
 
 		// Handle expressions
 		this.cacheReferences();
@@ -34,17 +41,8 @@ var _ = Wysie.Scope = $.Class({
 		return !this.property;
 	},
 
-	get properties () {
-		// TODO cache this
-		return $$(Wysie.selectors.property, this.element).filter(property=>{
-			return this.element === property.parentNode.closest(Wysie.selectors.scope);
-		});
-	},
-
 	get propertyNames () {
-		return this.properties.map(property=>{
-			return property._.data.unit.property;
-		});
+		return Object.keys(this.properties);
 	},
 
 	getData: function(o) {
@@ -56,51 +54,40 @@ var _ = Wysie.Scope = $.Class({
 
 		var ret = {};
 
-		this.properties.forEach(prop => {
-			var unit = prop._.data.unit;
-
-			if ((!unit.computed || o.computed) && !(unit.property in ret)) {
-				var data = unit.getData(o);
+		$.each(this.properties, (property, obj) => {
+			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
+				var data = obj.getData(o);
 
 				if (data !== null) {
-					ret[unit.property] = unit.collection? [/* later */] : unit.getData(o);
+					ret[property] = data;
 				}
 			}
-		});
-
-		this.collections.forEach(collection => {
-			ret[collection.property] = collection.getData(o);
 		});
 
 		return ret;
 	},
 
 	edit: function() {
-		this.collections.forEach(collection => collection.edit());
-
-		this.properties.forEach(prop => {
-			var unit = prop._.data.unit;
-
-			// If scope, edit. If primitive, prepare for edit.
-			unit[unit instanceof _? "edit" : "preEdit"]();
+		$.each(this.properties, (property, obj) => {
+			if (obj instanceof Wysie.Collection) {
+				obj.edit();
+			}
+			else {
+				// If scope, edit. If primitive, prepare for edit.
+				obj[obj instanceof _? "edit" : "preEdit"]();
+			}
 		});
 	},
 
 	save: function() {
 		// this should include collections
-		this.properties.forEach(p => p._.data.unit.save());
+		$.each(this.properties, (property, obj) => {obj.save();});
 
 		this.everSaved = true;
 	},
 
 	cancel: function() {
-		this.properties.forEach(function(prop){
-			prop._.data.unit.cancel();
-		});
-
-		if (this.collection && !this.everSaved) {
-			$.remove(this.element);
-		}
+		$.each(this.properties, (property, obj) => {obj.cancel();});
 	},
 
 	// Inject data in this element
@@ -109,27 +96,20 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		// This should include collections
-		var unhandled = Object.keys(data).filter(property=>{
-			return this.propertyNames.indexOf(property) === -1 && typeof data[property] != "object";
-		});
+		// Properties in the data object but not in the template
+		this.unhandled = Object.keys(data).filter(property => !(property in this.properties));
 
-		// this should NOT include nested collections, they are handled after it
-		this.properties.forEach(prop => {
-			var property = prop._.data.unit;
+		$.each(this.properties, (property, obj) => {
+			var datum = Wysie.queryJSON(data, property);
 
-			if (!property.collection) {
-				var datum = Wysie.queryJSON(data, property.property);
-
-				if (datum) {
-					property.render(datum);
-				}
+			if (datum || datum === 0) {
+				obj.render(datum);
 			}
 		});
 
-		this.collections.forEach(collection => collection.render(data[collection.property]));
-
-		unhandled.forEach(property => {
+		// Render unhandled properties
+		/*
+		$.each(this.unhandled, (property, obj) => {
 			var prop = $.create("meta", {
 				property: property,
 				content: data[property],
@@ -141,7 +121,10 @@ var _ = Wysie.Scope = $.Class({
 			}
 
 			prop._.data.unit = Wysie.Unit.create(prop, this.wysie);
+			this.properties[property] = data[property];
+			delete this.unhandled[property];
 		});
+		*/
 
 		this.everSaved = true;
 	},
@@ -207,7 +190,7 @@ var _ = Wysie.Scope = $.Class({
 
 			var parentScope = scope.parentScope;
 
-			scope = parentScope && parentScope._.data.unit;
+			scope = parentScope;
 		}
 
 		// Flatten nested objects
@@ -257,6 +240,16 @@ var _ = Wysie.Scope = $.Class({
 				ref.element.textContent = newText;
 			}
 		});
+	},
+
+	// Check if this scope contains a property
+	// property can be either a Wysie.Unit or a Node
+	contains (property) {
+		if (property instanceof Wysie.Unit) {
+			return property.parentScope === this;
+		}
+
+		return this.element === property.parentNode.closest(Wysie.selectors.scope);
 	},
 
 	static: {

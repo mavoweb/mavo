@@ -14,11 +14,9 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.template = template;
 	this.wysie = wysie;
 
+	this.items = [];
 	this.property = Wysie.Unit.normalizeProperty(this.template);
 	this.type = Wysie.Scope.normalize(this.template);
-
-	// Scope this collection belongs to (or null if root)
-	this.parentScope = this.template.parentNode.closest(Wysie.selectors.scope);
 
 	this.required = this.template.matches(Wysie.selectors.required);
 
@@ -36,7 +34,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.add()._.data.unit.edit();
+		this.add().edit();
 	});
 
 	/*
@@ -63,8 +61,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 		after: this.template
 	});
 
-	this.template._.remove();
-
 	this.template.classList.add("wysie-item");
 
 	// Add delete button to the template
@@ -76,17 +72,53 @@ var _ = Wysie.Collection = function (template, wysie) {
 		inside: this.template
 	});
 
+	// Add events
+	this.template.parentNode._.delegate({
+		"click": {
+			"button.delete": evt => {
+				if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+					var item = evt.target.closest(".wysie-item");
+					me.delete(item._.data.unit);
+				}
+
+				evt.stopPropagation();
+			}
+		},
+		"mouseover": {
+			"button.delete": evt => {
+				var item = evt.target.closest(".wysie-item");
+				item.classList.add("delete-hover");
+
+				evt.stopPropagation();
+			}
+		},
+		"mouseout": {
+			"button.delete": evt => {
+				var item = evt.target.closest(".wysie-item");
+				item.classList.remove("delete-hover");
+
+				evt.stopPropagation();
+			}
+		}
+	});
+
 	// TODO Add clone button to the template
+
+	this.template.remove();
 
 	// Insert the add button if it's not already in the DOM
 	if (!this.addButton.parentNode) {
 		if (this.bottomUp) {
-			this.addButton._.before(this.items[0] || this.marker);
+			this.addButton._.before($.value(this.items[0], "element") || this.marker);
 		}
 		else {
 			this.addButton._.after(this.marker);
 		}
 	}
+
+	// Deleted items are stored here until save/cancel
+	// TODO implement this
+	this.rubbish = [];
 };
 
 _.prototype = {
@@ -98,10 +130,6 @@ _.prototype = {
 		return ".wysie-item" +
 		       (this.property? '[property="' + this.property + '"]' : '') +
 		       (this.type? '[typeof="' + this.type + '"]' : '');
-	},
-
-	get items() {
-		return $$(this.selector, this.parentScope || this.wysie.wrapper);
 	},
 
 	get length() {
@@ -116,9 +144,7 @@ _.prototype = {
 		o = o || {};
 
 		return this.items.map(function(item){
-			var unit = item._.data.unit;
-
-			return unit.getData(o);
+			return item.getData(o);
 		}).filter(function(item){
 			return item !== null;
 		});
@@ -131,42 +157,19 @@ _.prototype = {
 	createItem: function () {
 		var item = this.template.cloneNode(true);
 
-		// Add events
-		item._.delegate({
-			"click": {
-				"button.delete": function(evt) {
-					if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-						me.delete(this);
-					}
+		var unit = Wysie.Unit.create(item, this.wysie, this);
+		unit.parentScope = this.parentScope;
+		unit.scope = unit.scope || this.parentScope;
 
-					evt.stopPropagation();
-				}
-			},
-			"mouseover": {
-				"button.delete": function(evt) {
-					this.classList.add("delete-hover");
-
-					evt.stopPropagation();
-				}
-			},
-			"mouseout": {
-				"button.delete": function(evt) {
-					this.classList.remove("delete-hover");
-
-					evt.stopPropagation();
-				}
-			}
-		});
-
-		Wysie.Unit.create(item, this.wysie, this);
-
-		return item;
+		return unit;
 	},
 
 	add: function() {
-		var item = this.createItem();
+		var /* Node */ item = this.createItem();
 
-		item._.before(this.bottomUp? this.items[0] || this.marker : this.marker);
+		item.element._.before(this.bottomUp && this.items.length > 0? this.items[0].element : this.marker);
+
+		this.items.push(item);
 
 		return item;
 	},
@@ -176,31 +179,35 @@ _.prototype = {
 			this.add();
 		}
 
-		this.items.forEach(item => {
-			var unit = item._.data.unit;
-			unit.preEdit? unit.preEdit() : unit.edit();
-		});
+		this.items.forEach(item => item.preEdit? item.preEdit() : item.edit());
 	},
 
 	delete: function(item) {
-		return $.transition(item, {opacity: 0}).then(()=>{
-			$.remove(item);
+		return $.transition(item.element, {opacity: 0}).then(()=>{
+			$.remove(item.element);
 
-			if (item._.data.unit.isRoot) {
-				this.wysie.save();
-			}
+			this.items.splice(this.items.indexOf(item), 1);
 		});
 	},
 
 	save: function() {
-		this.items.forEach(item => {
-			item._.data.unit.save();
-		});
+		this.items.forEach(item => item.save());
+
+		this.rubbish = [];
 	},
 
 	cancel: function() {
-		this.items.forEach(item => {
-			item._.data.unit.cancel();
+		this.items.forEach((item, i) => {
+			// Revert all properties
+			item.cancel();
+
+			// Delete added items
+			if (item instanceof Wysie.Scope && !item.everSaved) {
+				this.items.splice(i, 1);
+				$.remove(item.element);
+			}
+
+			// TODO Bring back deleted items
 		});
 	},
 
@@ -219,9 +226,11 @@ _.prototype = {
 		data.forEach(function(datum){
 			var item = this.createItem();
 
-			item._.data.unit.render(datum);
+			item.render(datum);
 
-			fragment.appendChild(item);
+			this.items.push(item);
+
+			fragment.appendChild(item.element);
 		}, this);
 
 		this.marker.parentNode.insertBefore(fragment, this.marker);

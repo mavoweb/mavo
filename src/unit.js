@@ -18,13 +18,6 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
-		// Scope this property belongs to
-		this.parentScope = this.scope = this.property? this.element.closest(Wysie.selectors.scope) : null;
-
-		if (this.scope === this.element) {
-			this.parentScope = collection && collection.parentScope || this.scope.parentNode.closest(Wysie.selectors.scope);
-		}
-
 		this.required = this.element.matches("[required], [data-required]");
 	},
 

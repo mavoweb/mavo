@@ -172,6 +172,7 @@ var _ = self.Wysie = $.Class({
 
 		selectors: {
 			property: "[property], [itemprop]",
+			specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 			output: "[property=output], [itemprop=output], .output, .value",
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
 			scope: "[typeof], [itemscope], [itemtype], .scope",

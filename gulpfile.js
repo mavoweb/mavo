@@ -42,7 +42,9 @@ gulp.task('transpile', ['concat'], function() {
 });
 
 gulp.task('minify', ['concat', "transpile"], function() {
-	var u = uglify();
+	var u = uglify({output: {
+		max_line_len  : 1000 // to prevent merge conflicts
+	}});
 	u.on('error', function(error){
 		console.error(error);
 		u.end();
