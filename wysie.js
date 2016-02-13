@@ -812,6 +812,8 @@ var _ = Wysie.Scope = $.Class({
 			}
 		});
 
+		$.extend(ret, this.unhandled);
+
 		return ret;
 	},
 
@@ -1268,7 +1270,6 @@ var _ = Wysie.Primitive = $.Class({
 
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-
 		this.element.tabIndex = 0;
 	},
 
@@ -1420,6 +1421,14 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			}
 		}
+
+		// Revert tabIndex, since now tabbing can just go through the editors directly
+		if (this.element._.data.prevTabindex !== null) {
+			this.element.tabIndex = this.element._.data.prevTabindex;
+		}
+		else {
+			this.element.removeAttribute("tabindex");
+		}
 	},
 
 	showPopup: function() {
@@ -1444,7 +1453,14 @@ var _ = Wysie.Primitive = $.Class({
 
 	live: {
 		empty: function(value) {
-			this.element.classList[value? "add" : "remove"]("empty");
+			if (!value || this.attribute && $(Wysie.selectors.property, this.element)) {
+				// If it contains other properties, it shouldn’t be hidden
+				this.element.classList.remove("empty");
+			}
+			else {
+				this.element.classList.add("empty");
+			}
+
 		},
 		editing: function (value) {
 			this.element.classList[value? "add" : "remove"]("editing");

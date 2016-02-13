@@ -64,6 +64,8 @@ var _ = Wysie.Scope = $.Class({
 			}
 		});
 
+		$.extend(ret, this.unhandled);
+
 		return ret;
 	},
 

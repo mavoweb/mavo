@@ -815,6 +815,8 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 			});
 
+			$.extend(ret, this.unhandled);
+
 			return ret;
 		},
 
@@ -1281,7 +1283,6 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// Make element focusable, so it can actually receive focus
 			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-
 			this.element.tabIndex = 0;
 		},
 
@@ -1443,6 +1444,13 @@ if (self.Promise && !Promise.prototype.done) {
 					}
 				}
 			}
+
+			// Revert tabIndex, since now tabbing can just go through the editors directly
+			if (this.element._.data.prevTabindex !== null) {
+				this.element.tabIndex = this.element._.data.prevTabindex;
+			} else {
+				this.element.removeAttribute("tabindex");
+			}
 		},
 
 		showPopup: function showPopup() {
@@ -1467,7 +1475,12 @@ if (self.Promise && !Promise.prototype.done) {
 
 		live: {
 			empty: function empty(value) {
-				this.element.classList[value ? "add" : "remove"]("empty");
+				if (!value || this.attribute && $(Wysie.selectors.property, this.element)) {
+					// If it contains other properties, it shouldn’t be hidden
+					this.element.classList.remove("empty");
+				} else {
+					this.element.classList.add("empty");
+				}
 			},
 			editing: function editing(value) {
 				this.element.classList[value ? "add" : "remove"]("editing");
