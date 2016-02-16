@@ -1,4 +1,8 @@
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input, .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select, .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-wrapper[data-editing] [property]:not([typeof]) input, .wysie-wrapper[data-editing] [property]:not([typeof]) select, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor,
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select.wysie-editor,
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]) select.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
   all: initial;
   font: inherit;
   color: inherit;
@@ -130,28 +134,12 @@
   outline: 1px dashed rgba(51, 119, 153, 0.6);
   outline-offset: 1px; }
 
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
   box-sizing: border-box;
   width: 100%; }
 
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]).using-popup,
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input, .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select, .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea, .wysie-wrapper[data-editing] [property]:not([typeof]).using-popup,
-.wysie-wrapper[data-editing] [property]:not([typeof]) input, .wysie-wrapper[data-editing] [property]:not([typeof]) select, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea {
-  /*&:hover, &:focus {
-					outline: 1px dashed;
-					outline-offset: 1px;
-				}
-
-				&:hover {
-					$color: hsla(58, 100%, 50%, .15);
-
-					box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
-					outline-color: hsla(200,10%,50%,.3);
-				}
-
-				&:focus {
-					outline-color: hsla(200,50%,40%,.6);
-				}*/ }
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor {
+  max-width: 100%; }
 
 .wysie-bar {
   all: initial;

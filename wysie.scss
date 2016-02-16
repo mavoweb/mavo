@@ -190,32 +190,19 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 				outline-offset: 1px;
 			}
 
-			input, select, textarea {
+			input.wysie-editor,
+			select.wysie-editor,
+			textarea.wysie-editor {
 				@extend %reset;
 			}
 
-			textarea {
+			textarea.wysie-editor {
 				box-sizing: border-box;
 				width: 100%;
 			}
 
-			&.using-popup,
-			input, select, textarea {
-				/*&:hover, &:focus {
-					outline: 1px dashed;
-					outline-offset: 1px;
-				}
-
-				&:hover {
-					$color: hsla(58, 100%, 50%, .15);
-
-					box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
-					outline-color: hsla(200,10%,50%,.3);
-				}
-
-				&:focus {
-					outline-color: hsla(200,50%,40%,.6);
-				}*/
+			input.wysie-editor {
+				max-width: 100%;
 			}
 		}
 	}
