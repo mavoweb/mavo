@@ -34,7 +34,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.add().edit();
+		this.add()._.data.unit.edit();
 	});
 
 	/*
@@ -115,10 +115,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 			this.addButton._.after(this.marker);
 		}
 	}
-
-	// Deleted items are stored here until save/cancel
-	// TODO implement this
-	this.rubbish = [];
 };
 
 _.prototype = {
@@ -192,8 +188,6 @@ _.prototype = {
 
 	save: function() {
 		this.items.forEach(item => item.save());
-
-		this.rubbish = [];
 	},
 
 	cancel: function() {

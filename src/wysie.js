@@ -99,7 +99,7 @@ var _ = self.Wysie = $.Class({
 	save: function() {
 		this.root.save();
 		this.editing = false;
-		//this.storage && this.storage.save();
+		this.storage && this.storage.save();
 	},
 
 	cancel: function() {

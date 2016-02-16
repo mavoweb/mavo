@@ -31,7 +31,7 @@ var _ = Wysie.Scope = $.Class({
 		this.cacheReferences();
 
 		this.element.addEventListener("wysie:propertychange", evt=>{
-			evt.stopPropagation();
+			evt.stopPropagation(); // why?
 			this.updateReferences();
 		});
 		this.updateReferences();

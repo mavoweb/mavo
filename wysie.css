@@ -36,7 +36,7 @@
     background: rgba(180, 0, 0, 0.8);
     color: white; }
 
-.wysie-wrapper .popup {
+.wysie-wrapper .wysie-popup {
   all: initial;
   position: absolute;
   z-index: 2;
@@ -49,7 +49,7 @@
   -webkit-transform-origin: -1.4em -0.45em;
   transform-origin: -1.4em -0.45em;
   transition: .3s transform; }
-  .wysie-wrapper .popup::before {
+  .wysie-wrapper .wysie-popup::before {
     content: "";
     position: absolute;
     top: -.36em;
@@ -61,33 +61,34 @@
     background: inherit;
     -webkit-transform: rotate(45deg);
     transform: rotate(45deg); }
-  .wysie-wrapper .popup.hidden {
+  .wysie-wrapper .wysie-popup[hidden] {
+    display: block;
     -webkit-transform: scale(0);
     transform: scale(0); }
-  .wysie-wrapper .popup input, .wysie-wrapper .popup select {
+  .wysie-wrapper .wysie-popup input, .wysie-wrapper .wysie-popup select {
     display: block;
     font: inherit;
     min-width: 100%; }
-  .wysie-wrapper .popup select[size] {
+  .wysie-wrapper .wysie-popup select[size] {
     border: 1px solid rgba(0, 0, 0, 0.2); }
-  .wysie-wrapper .popup .image-popup .image-preview {
+  .wysie-wrapper .wysie-popup .image-popup .image-preview {
     position: relative;
     display: inline-block; }
-    .wysie-wrapper .popup .image-popup .image-preview progress {
+    .wysie-wrapper .wysie-popup .image-popup .image-preview progress {
       position: absolute;
       left: 0;
       right: 0;
       bottom: 1em;
       width: 100%; }
-      .wysie-wrapper .popup .image-popup .image-preview progress[value="0"], .wysie-wrapper .popup .image-popup .image-preview progress[value="100"] {
+      .wysie-wrapper .wysie-popup .image-popup .image-preview progress[value="0"], .wysie-wrapper .wysie-popup .image-popup .image-preview progress[value="100"] {
         display: none; }
-    .wysie-wrapper .popup .image-popup .image-preview img {
+    .wysie-wrapper .wysie-popup .image-popup .image-preview img {
       display: block;
       max-width: 100%; }
-  .wysie-wrapper .popup .image-popup .upload {
+  .wysie-wrapper .wysie-popup .image-popup .upload {
     display: block;
     margin: .8em 0; }
-  .wysie-wrapper .popup .image-popup .tip {
+  .wysie-wrapper .wysie-popup .image-popup .tip {
     font-size: 70%;
     color: gray; }
 

@@ -171,8 +171,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	save: function () {
 		if (this.popup) {
-			$.remove(this.popup);
-			this.popup.classList.add("hidden");
+			this.hidePopup();
 		}
 		else if (!this.attribute && !this.exposed && this.editing) {
 			this.element.textContent = this.editorValue;
@@ -183,12 +182,15 @@ var _ = Wysie.Primitive = $.Class({
 			this.editing = false;
 		}
 
+		// Revert tabIndex
 		if (this.element._.data.prevTabindex !== null) {
 			this.element.tabIndex = this.element._.data.prevTabindex;
 		}
 		else {
 			this.element.removeAttribute("tabindex");
 		}
+
+		this.element._.unbind(".wysie:edit .wysie:preedit .wysie:showpopup");
 
 		this.element._.fire("wysie:propertysave", {
 			unit: this
@@ -216,17 +218,22 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
-		var events = {
+		this.element._.events({
 			// click is needed too because it works with the keyboard as well
-			"mousedown click": e => this.edit(),
-			"focus": e => {
+			"mousedown.wysie:preedit click.wysie:preedit": e => this.edit(),
+			"focus.wysie:preedit": e => {
 				this.edit();
-				this.editor.focus && this.editor.focus();
-			},
-			"wysie:propertysave": e => this.element._.unbind(events)
-		};
 
-		this.element._.events(events);
+				if (!this.popup) {
+					this.editor.focus();
+				}
+			},
+			"click.wysie:edit": evt => {
+				// Prevent default actions while editing
+				// e.g. following links etc
+				evt.preventDefault();
+			}
+		});
 
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
@@ -237,6 +244,8 @@ var _ = Wysie.Primitive = $.Class({
 		if (this.editing) {
 			return;
 		}
+
+		this.element._.unbind(".wysie:preedit");
 
 		if (this.savedValue === undefined) {
 			// First time edit is called, set up editing UI
@@ -285,13 +294,17 @@ var _ = Wysie.Primitive = $.Class({
 						this.update(this.editorValue);
 					}
 				},
-				"focus": function () {
-					this.select && this.select();
+				"focus": evt => {
+					this.editor.select && this.editor.select();
 				},
 				"keyup": evt => {
 					if (this.popup && evt.keyCode == 13 || evt.keyCode == 27) {
+						if (this.popup.contains(document.activeElement)) {
+							this.element.focus();
+						}
+
 						evt.stopPropagation();
-						this.popup.classList.add("hidden");
+						this.hidePopup();
 					}
 				},
 				"wysie:propertychange": evt => {
@@ -320,7 +333,8 @@ var _ = Wysie.Primitive = $.Class({
 					this.element.classList.add("using-popup");
 
 					this.popup = this.popup || $.create("div", {
-						className: "popup hidden",
+						className: "wysie-popup",
+						hidden: true,
 						contents: [
 							this.label + ":",
 							this.editor
@@ -332,8 +346,40 @@ var _ = Wysie.Primitive = $.Class({
 						this.editor.size = Math.min(10, this.editor.children.length);
 					}
 
-					this.popup.addEventListener("focus", evt => this.showPopup(), true);
-					this.popup.addEventListener("blur", evt => this.popup.classList.add("hidden"), true);
+					// Toggle popup events & methods
+					var hideCallback = evt => {
+						if (!this.popup.contains(evt.target) && !this.element.contains(evt.target)) {
+							this.hidePopup();
+						}
+					};
+
+					this.showPopup = function() {
+						$.unbind([this.element, this.popup], ".wysie:showpopup");
+						this.popup._.after(this.element);
+
+						this.popup._.style({ // TODO what if it doesn’t fit?
+							top: this.element.offsetTop + this.element.offsetHeight + "px",
+							left: this.element.offsetLeft + "px"
+						});
+
+						this.popup._.removeAttribute("hidden"); // trigger transition
+
+						$.events(document, "focus click", hideCallback, true);
+					};
+
+					this.hidePopup = function() {
+						$.unbind(document, "focus click", hideCallback, true);
+
+						this.popup.setAttribute("hidden", ""); // trigger transition
+
+						setTimeout(() => {
+							$.remove(this.popup);
+						}, 400); // TODO transition-duration could override this
+
+						$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", evt => {
+							this.showPopup();
+						}, true);
+					};
 				}
 			}
 
@@ -342,31 +388,9 @@ var _ = Wysie.Primitive = $.Class({
 			}
 		}
 
-		var events = {
-			"click": evt => {
-				// Prevent default actions while editing
-				//if (evt.target !== this.editor) {
-				evt.preventDefault();
-				evt.stopPropagation();
-				//}
-
-				if (this.popup && this.element != document.activeElement) {
-					if (this.popup.classList.contains("hidden")) {
-						this.showPopup();
-					}
-					else {
-						this.popup.classList.add("hidden");
-					}
-				}
-			},
-			"focus": evt => this.showPopup(),
-			"blur": evt => this.popup && this.popup.classList.add("hidden"),
-			"wysie:propertysave": e => this.element._.unbind(events)
-		};
-
-		this.element._.events(events);
-
-		this.popup && this.popup._.after(this.element);
+		if (this.popup) {
+			this.showPopup();
+		}
 
 		this.savedValue = this.value;
 		this.editing = true;
@@ -380,24 +404,6 @@ var _ = Wysie.Primitive = $.Class({
 					this.element.appendChild(this.editor);
 				}
 			}
-		}
-
-		// Revert tabIndex, since now tabbing can just go through the editors directly
-		if (this.element._.data.prevTabindex !== null) {
-			this.element.tabIndex = this.element._.data.prevTabindex;
-		}
-		else {
-			this.element.removeAttribute("tabindex");
-		}
-	},
-
-	showPopup: function() {
-		if (this.popup) {
-			this.popup.classList.remove("hidden");
-			this.popup._.style({ // TODO what if it doesn’t fit?
-				top: this.element.offsetTop + this.element.offsetHeight + "px",
-				left: this.element.offsetLeft + "px"
-			});
 		}
 	},
 

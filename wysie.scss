@@ -48,7 +48,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 	}
 
-	.popup {
+	.wysie-popup {
 		all: initial;
 		position: absolute;
 		z-index: 2;
@@ -74,7 +74,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			transform: rotate(45deg)
 		}
 
-		&.hidden {
+		&[hidden] {
+			display: block;
 			transform: scale(0);
 		}
 
