@@ -58,7 +58,8 @@ gulp.task('minify', ['concat', "transpile"], function() {
 });
 
 gulp.task('watch', function() {
-	gulp.watch(["src/*.js", "**/*.scss"], ['concat', 'sass', 'transpile', 'minify']);
+	gulp.watch(["src/*.js"], ['concat', 'transpile', 'minify']);
+	gulp.watch(["**/*.scss"], ['sass']);
 });
 
 gulp.task('default', ['concat', 'sass', 'transpile', 'minify']);
