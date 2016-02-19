@@ -818,6 +818,8 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	edit: function() {
+		this.editing = true;
+
 		$.each(this.properties, (property, obj) => {
 			if (obj instanceof Wysie.Collection) {
 				obj.edit();
@@ -830,14 +832,22 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	save: function() {
+		this.editing = false;
+
 		// this should include collections
 		$.each(this.properties, (property, obj) => {obj.save();});
+
+		$.unbind(this.element, ".wysie:edit");
 
 		this.everSaved = true;
 	},
 
 	cancel: function() {
+		this.editing = false;
+		
 		$.each(this.properties, (property, obj) => {obj.cancel();});
+
+		$.unbind(this.element, ".wysie:edit");
 	},
 
 	// Inject data in this element
@@ -1745,45 +1755,6 @@ var _ = Wysie.Collection = function (template, wysie) {
 
 	this.template.classList.add("wysie-item");
 
-	// Add delete button to the template
-	$.create({
-		tag: "button",
-		textContent: "✖",
-		title: "Delete this " + this.name.replace(/s$/i, ""),
-		className: "delete",
-		inside: this.template
-	});
-
-	// Add events
-	this.template.parentNode._.delegate({
-		"click": {
-			"button.delete": evt => {
-				if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-					var item = evt.target.closest(".wysie-item");
-					me.delete(item._.data.unit);
-				}
-
-				evt.stopPropagation();
-			}
-		},
-		"mouseover": {
-			"button.delete": evt => {
-				var item = evt.target.closest(".wysie-item");
-				item.classList.add("delete-hover");
-
-				evt.stopPropagation();
-			}
-		},
-		"mouseout": {
-			"button.delete": evt => {
-				var item = evt.target.closest(".wysie-item");
-				item.classList.remove("delete-hover");
-
-				evt.stopPropagation();
-			}
-		}
-	});
-
 	// TODO Add clone button to the template
 
 	this.template.remove();
@@ -1833,17 +1804,85 @@ _.prototype = {
 	// Create item but don't insert it anywhere
 	// Mostly used internally
 	createItem: function () {
-		var item = this.template.cloneNode(true);
+		var element = this.template.cloneNode(true);
 
-		var unit = Wysie.Unit.create(item, this.wysie, this);
-		unit.parentScope = this.parentScope;
-		unit.scope = unit.scope || this.parentScope;
+		var item = Wysie.Unit.create(element, this.wysie, this);
+		item.parentScope = this.parentScope;
+		item.scope = item.scope || this.parentScope;
 
-		return unit;
+		// Add delete & add buttons to the template
+		// TODO follow persmissions, these might not be allowed
+		var itemControls = $.create({
+			tag: "menu",
+			type: "toolbar",
+			className: "wysie-item-controls",
+			contents: [
+				{
+					tag: "button",
+					title: "Delete this " + this.name.replace(/s$/i, ""),
+					className: "delete",
+					events: {
+						"click": evt => {
+							if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+								this.delete(item);
+							}
+						},
+						"mouseenter mouseleave": evt => {
+							element.classList[evt.type == "mouseenter"? "add" : "remove"]("delete-hover");
+						}
+					}
+				}, {
+					tag: "button",
+					title: "Add new " + this.name.replace(/s$/i, ""),
+					textContent: "✚",
+					className: "add",
+					events: {
+						"click": evt => {
+							var i = this.items.indexOf(item);
+
+							if (i > -1) {
+								var newItem = this.createItem();
+
+								this.items.splice(i, 0, newItem);
+
+								newItem.element._.after(element);
+
+								newItem.edit();
+							}
+						}
+					}
+				}
+			],
+			inside: element
+		});
+
+		element._.events({
+			"mouseover.wysie:edit": evt => {
+				if (!item.editing) {
+					return;
+				}
+
+				var isClosest = evt.target.closest(".wysie-item") === element;
+
+				// CSS :hover will include child collections
+				item.element.classList[isClosest? "add" : "remove"]("wysie-item-hovered");
+
+				evt.stopPropagation();
+			},
+			"mouseout.wysie:edit": evt => {
+				if (!item.editing) {
+					return;
+				}
+				
+				item.element.classList.remove("wysie-item-hovered");
+			}
+		});
+
+		return item;
 	},
 
 	add: function() {
-		var /* Node */ item = this.createItem();
+		var item = this.createItem();
 
 		item.element._.before(this.bottomUp && this.items.length > 0? this.items[0].element : this.marker);
 
@@ -1857,7 +1896,9 @@ _.prototype = {
 			this.add();
 		}
 
-		this.items.forEach(item => item.preEdit? item.preEdit() : item.edit());
+		this.items.forEach(item => {
+			item.preEdit? item.preEdit() : item.edit();
+		});
 	},
 
 	delete: function(item) {
@@ -1869,13 +1910,17 @@ _.prototype = {
 	},
 
 	save: function() {
-		this.items.forEach(item => item.save());
+		this.items.forEach(item => {
+			item.save();
+			item.element.classList.remove("wysie-item-hovered");
+		});
 	},
 
 	cancel: function() {
 		this.items.forEach((item, i) => {
 			// Revert all properties
 			item.cancel();
+			item.element.classList.remove("wysie-item-hovered");
 
 			// Delete added items
 			if (item instanceof Wysie.Scope && !item.everSaved) {

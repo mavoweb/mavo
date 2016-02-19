@@ -12,33 +12,71 @@
 [data-store] {
   display: none; }
 
+.wysie-item-controls {
+  all: initial;
+  position: absolute;
+  bottom: 100%;
+  bottom: calc(100% - 2px);
+  right: .1em;
+  z-index: 10;
+  transition: .4s opacity;
+  -webkit-filter: drop-shadow(0 0.1em 0.2em rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 0.1em 0.2em rgba(0, 0, 0, 0.4)); }
+  .wysie-item:not(.wysie-item-hovered):not(:focus):not(.focus-within) > .wysie-item-controls {
+    opacity: 0;
+    pointer-events: none;
+    transition-delay: .1s; }
+  .wysie-item-controls button {
+    all: initial;
+    display: inline-block;
+    vertical-align: middle;
+    padding: .2em .3em;
+    min-width: 1em;
+    min-height: 1em;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    background: #eee no-repeat center;
+    line-height: 1;
+    font-size: 120%;
+    text-align: center; }
+    .wysie-item-controls button:not(:hover):not(:focus) {
+      box-shadow: 0 .4em 1em white inset; }
+    .wysie-item-controls button:first-child {
+      border-top-left-radius: .3em;
+      border-bottom-left-radius: .3em; }
+    .wysie-item-controls button:last-child {
+      border-top-right-radius: .3em;
+      border-bottom-right-radius: .3em; }
+    .wysie-item-controls button:not(:first-child) {
+      border-left: 0; }
+  .wysie-item-controls .delete {
+    color: #cc0000; }
+    .wysie-item-controls .delete::before {
+      content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 100 125" fill="#cc0000">\a 				<path d="M65,15.437V8c0-3.86-3.141-7-7-7H42c-3.86,0-7,3.14-7,7v7.437C14.017,16.816,14,21,14,21v10h72V21 C86,21,85.982,16.816,65,15.437z M43,9h14v6.086C54.828,15.032,52.51,15,50,15c-2.51,0-4.828,0.032-7,0.086V9z"/>\a 				<path d="M19,37l6,62h50l6-62H19z M35.167,88.995C35.11,88.998,35.053,89,34.998,89c-1.581,0-2.904-1.236-2.993-2.834l-2-36  c-0.092-1.654,1.175-3.07,2.829-3.162c1.663-0.089,3.07,1.175,3.162,2.829l2,36C38.087,87.488,36.821,88.903,35.167,88.995z M53,86\a 						 c0,1.657-1.343,3-3,3c-1.657,0-3-1.343-3-3V50c0-1.657,1.343-3,3-3c1.657,0,3,1.343,3,3V86z M67.995,86.166  C67.906,87.764,66.583,89,65.003,89c-0.057,0-0.112-0.002-0.169-0.005c-1.654-0.092-2.921-1.507-2.829-3.161l2-36\a 						 c0.093-1.655,1.533-2.906,3.161-2.829c1.654,0.092,2.921,1.508,2.829,3.162L67.995,86.166z"/>\a 			</svg>');
+      display: block;
+      height: 1em; }
+    .wysie-item-controls .delete:hover {
+      background-color: #cc0000;
+      color: white; }
+      .wysie-item-controls .delete:hover::before {
+        -webkit-filter: saturate(0) brightness(600%);
+        filter: saturate(0) brightness(600%); }
+  .wysie-item-controls .add {
+    color: #81b814; }
+    .wysie-item-controls .add:hover {
+      background-color: #81b814;
+      color: white; }
+
 .wysie-item {
   position: relative;
   margin-right: 1.5em; }
-
-.wysie-wrapper .delete-hover {
-  box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.06) inset, 0 0 0 0.1em rgba(255, 0, 0, 0.05);
-  border-radius: .1em; }
+  .wysie-item.delete-hover {
+    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset;
+    border-radius: .1em; }
 
 .wysie-wrapper button.add {
   display: inline-block;
   vertical-align: middle; }
-
-.wysie-wrapper .delete {
-  all: initial;
-  position: absolute;
-  top: .1em;
-  right: .1em;
-  z-index: 1;
-  padding: 0 .3em;
-  cursor: pointer;
-  -webkit-transform: scale(-1, 1);
-  transform: scale(-1, 1);
-  color: rgba(180, 0, 0, 0.8); }
-  .wysie-wrapper .delete:hover {
-    border-radius: 50%;
-    background: rgba(180, 0, 0, 0.8);
-    color: white; }
 
 .wysie-wrapper .wysie-popup {
   all: initial;
@@ -113,7 +151,7 @@
     margin-right: .2em; }
 
 .wysie-wrapper:not([data-editing]) .empty,
-.wysie-wrapper:not([data-editing]) .delete,
+.wysie-wrapper:not([data-editing]) .wysie-item-controls,
 .wysie-wrapper:not([data-editing]) button.add,
 .wysie-wrapper:not([data-editing]) .save,
 .wysie-wrapper:not([data-editing]) .cancel {
@@ -124,6 +162,13 @@
 
 .wysie-wrapper[data-editing] .empty {
   opacity: .5; }
+
+.wysie-wrapper[data-editing] [itemprop]:focus, .wysie-wrapper[data-editing] [property]:focus,
+.wysie-wrapper[data-editing] .wysie-editor:focus,
+.wysie-wrapper[data-editing] .wysie-popup:focus,
+.wysie-wrapper[data-editing] .wysie-item:focus,
+.wysie-wrapper[data-editing] .wysie-item-controls *:focus {
+  outline: 3px solid #f06 !important; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):hover {
   box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.2), 0 0 0 99em rgba(255, 247, 0, 0.2) inset; }
@@ -198,6 +243,3 @@
     margin-left: .6em; }
   .wysie-bar .status:empty {
     content: "Not logged in"; }
-
-:focus {
-  outline: 3px solid #f06 !important; }

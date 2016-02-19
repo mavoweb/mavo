@@ -70,6 +70,8 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	edit: function() {
+		this.editing = true;
+
 		$.each(this.properties, (property, obj) => {
 			if (obj instanceof Wysie.Collection) {
 				obj.edit();
@@ -82,14 +84,22 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	save: function() {
+		this.editing = false;
+
 		// this should include collections
 		$.each(this.properties, (property, obj) => {obj.save();});
+
+		$.unbind(this.element, ".wysie:edit");
 
 		this.everSaved = true;
 	},
 
 	cancel: function() {
+		this.editing = false;
+		
 		$.each(this.properties, (property, obj) => {obj.cancel();});
+
+		$.unbind(this.element, ".wysie:edit");
 	},
 
 	// Inject data in this element

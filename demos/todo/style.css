@@ -52,7 +52,7 @@ ul {
 		transform: rotate(-2deg);
 		animation: transform .4s cubic-bezier(.25,.1,.4,1.5);
 	}
-	
+
 	ul::after {
 		transform: rotate(3deg);
 	}
@@ -84,9 +84,9 @@ input::-moz-placeholder {
 	font-style: italic;
 	color: rgba(0,0,0,.3);
 }
-	
-	
-button.add {
+
+
+.wysie-wrapper > button.add {
 	padding: .2em .5em;
 	margin-top: 1em;
 	border-radius: .3em;
@@ -102,7 +102,7 @@ button.add {
 	button.add:hover {
 		background-color: orange;
 	}
-	
+
 	button.add:active {
 		box-shadow: 0 .1em .3em rgba(0,0,0,.8) inset;
 		background-image: none;
@@ -120,7 +120,7 @@ body > header {
 		text-shadow: 0 -1px 3px black;
 		opacity: .9;
 	}
-	
+
 body > footer {
 	display: block;
 	margin-top: 3em;
