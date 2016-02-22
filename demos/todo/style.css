@@ -86,7 +86,7 @@ input::-moz-placeholder {
 }
 
 
-.wysie-wrapper > button.add {
+:not(.wysie-item-controls) > button.add {
 	padding: .2em .5em;
 	margin-top: 1em;
 	border-radius: .3em;

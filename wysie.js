@@ -196,7 +196,7 @@ var _ = self.Wysie = $.Class({
 		var me = this;
 
 		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store") || "#";
+		var dataStore = element.getAttribute("data-store") || "none";
 		this.store = dataStore === "none"? null : new URL(dataStore || this.id, location);
 
 		// Assign a unique (for the page) id to this wysie instance
@@ -211,17 +211,28 @@ var _ = self.Wysie = $.Class({
 
 		this.element.classList.add("wysie-root");
 
-		this.wrapper = element;
-
 		// Apply heuristic for collections
-		$$("li:only-of-type, tr:only-of-type", this.wrapper).forEach(element=>{
-			if (_.is("property", element) || _.is("scope", element)) {
+		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element=>{
+			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 				element.setAttribute("data-multiple", "");
 			}
 		});
 
-		if (element === this.element && _.is("multiple", element)) {
-			this.wrapper = element.closest(".wysie-wrapper") || $.create({around: this.element});
+		this.wrapper = element.closest(".wysie-wrapper") || element;
+
+		if (this.wrapper === this.element && _.is("multiple", element)) {
+			// Need to create a wrapper
+			var around = this.element;
+
+			// Avoid producing invalid HTML
+			if (this.element.matches("li, option")) {
+				around = around.parentNode;
+			}
+			else if (this.element.matches("td, tr, tbody, thead, tfoot")) {
+				around = around.closest("table");
+			}
+
+			this.wrapper = $.create({ around });
 		}
 
 		this.wrapper.classList.add("wysie-wrapper");
@@ -376,6 +387,7 @@ var _ = self.Wysie = $.Class({
 			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
 			scope: "[typeof], [itemscope], [itemtype], .scope",
 			multiple: "[multiple], [data-multiple], .multiple",
+			autoMultiple: ["li", "tr", "option"].map(tag => tag + ":only-of-type").join(", "),
 			required: "[required], [data-required], .required",
 			formControl: "input, select, textarea",
 			computed: ".computed" // Properties or scopes with computed properties, will not be saved
