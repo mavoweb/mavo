@@ -46,7 +46,11 @@ var _ = self.Wysie = $.Class({
 
 		this.bar = $(".wysie-bar", this.wrapper) || $.create({
 			className: "wysie-bar",
-			start: this.wrapper
+			start: this.wrapper,
+			contents: {
+				tag: "span",
+				className: "status",
+			}
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {

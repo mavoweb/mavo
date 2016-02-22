@@ -34,7 +34,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.add()._.data.unit.edit();
+		this.add().edit();
 	});
 
 	/*
@@ -181,7 +181,7 @@ _.prototype = {
 				if (!item.editing) {
 					return;
 				}
-				
+
 				item.element.classList.remove("wysie-item-hovered");
 			}
 		});

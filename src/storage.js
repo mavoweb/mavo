@@ -19,12 +19,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			// Otherwise, we have to generate a slightly more complex hash
 			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
 
-			this.authControls.status = this.authControls.status || $.create({
-				tag: "span",
-				className: "status",
-				start: this.wysie.bar
-			});
-
 			this.authControls.login = $.create({
 				tag: "a",
 				href: this.loginHash,
@@ -36,7 +30,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 						this.login();
 					}
 				},
-				start: this.wysie.bar
+				after: $(".status", this.wysie.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -61,7 +55,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				events: {
 					click: this.logout.bind(this)
 				},
-				inside: this.wysie.bar
+				after: $(".status", this.wysie.bar)
 			});
 		}, () => {
 			$.remove(this.authControls.logout);
@@ -69,12 +63,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 		// Update login status
 		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
-			this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
-			//Stretchy.resizeAll(); // TODO decouple
+			$(".status", this.wysie.bar).innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
 		});
 
 		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
-			this.authControls.status.textContent = "";
+			$(".status", this.wysie.bar).textContent = "";
 		});
 	},
 

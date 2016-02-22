@@ -23,7 +23,7 @@ var _ = Wysie.Primitive = $.Class({
 			if (this.exposed) {
 				// Editing exposed elements saves the wysie
 				this.element.addEventListener("change", evt => {
-					if (evt.target === this.editor && (this.scope._.data.unit.everSaved || !this.scope.collection)) {
+					if (!this.wysie.editing && evt.target === this.editor && (this.scope.everSaved || !this.scope.collection)) {
 						this.wysie.save();
 					}
 				});
@@ -231,7 +231,9 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
-				evt.preventDefault();
+				if (!this.exposed) {
+					evt.preventDefault();
+				}
 			}
 		});
 

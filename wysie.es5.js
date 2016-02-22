@@ -226,7 +226,11 @@
 
 			this.bar = $(".wysie-bar", this.wrapper) || $.create({
 				className: "wysie-bar",
-				start: this.wrapper
+				start: this.wrapper,
+				contents: {
+					tag: "span",
+					className: "status"
+				}
 			});
 
 			this.permissions.can(["edit", "add", "delete"], function () {
@@ -611,12 +615,6 @@ if (self.Promise && !Promise.prototype.done) {
 				// Otherwise, we have to generate a slightly more complex hash
 				_this6.loginHash = "#login" + (Wysie.all[0] === _this6.wysie ? "" : "-" + _this6.wysie.id);
 
-				_this6.authControls.status = _this6.authControls.status || $.create({
-					tag: "span",
-					className: "status",
-					start: _this6.wysie.bar
-				});
-
 				_this6.authControls.login = $.create({
 					tag: "a",
 					href: _this6.loginHash,
@@ -628,7 +626,7 @@ if (self.Promise && !Promise.prototype.done) {
 							_this6.login();
 						}
 					},
-					start: _this6.wysie.bar
+					after: $(".status", _this6.wysie.bar)
 				});
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -653,7 +651,7 @@ if (self.Promise && !Promise.prototype.done) {
 					events: {
 						click: _this6.logout.bind(_this6)
 					},
-					inside: _this6.wysie.bar
+					after: $(".status", _this6.wysie.bar)
 				});
 			}, function () {
 				$.remove(_this6.authControls.logout);
@@ -661,12 +659,11 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// Update login status
 			this.wysie.wrapper.addEventListener("wysie:login.wysie", function (evt) {
-				_this6.authControls.status.innerHTML = "Logged in to " + _this6.id + " as <strong>" + evt.name + "</strong>";
-				//Stretchy.resizeAll(); // TODO decouple
+				$(".status", _this6.wysie.bar).innerHTML = "Logged in to " + _this6.id + " as <strong>" + evt.name + "</strong>";
 			});
 
 			this.wysie.wrapper.addEventListener("wysie:logout.wysie", function (evt) {
-				_this6.authControls.status.textContent = "";
+				$(".status", _this6.wysie.bar).textContent = "";
 			});
 		},
 
@@ -1275,7 +1272,7 @@ if (self.Promise && !Promise.prototype.done) {
 				if (this.exposed) {
 					// Editing exposed elements saves the wysie
 					this.element.addEventListener("change", function (evt) {
-						if (evt.target === _this12.editor && (_this12.scope._.data.unit.everSaved || !_this12.scope.collection)) {
+						if (!_this12.wysie.editing && evt.target === _this12.editor && (_this12.scope.everSaved || !_this12.scope.collection)) {
 							_this12.wysie.save();
 						}
 					});
@@ -1482,7 +1479,9 @@ if (self.Promise && !Promise.prototype.done) {
 				"click.wysie:edit": function clickWysieEdit(evt) {
 					// Prevent default actions while editing
 					// e.g. following links etc
-					evt.preventDefault();
+					if (!_this13.exposed) {
+						evt.preventDefault();
+					}
 				}
 			});
 
@@ -1928,7 +1927,7 @@ if (self.Promise && !Promise.prototype.done) {
 		this.addButton.addEventListener("click", function (evt) {
 			evt.preventDefault();
 
-			_this16.add()._.data.unit.edit();
+			_this16.add().edit();
 		});
 
 		/*
@@ -2172,8 +2171,14 @@ if (self.Promise && !Promise.prototype.done) {
 		constructor: function constructor() {
 			var _this20 = this;
 
-			this.permissions.on(["read", "login"]);
-			// TODO check if file actually is publicly readable
+			// Transform the dropbox shared URL into something raw and CORS-enabled
+			if (this.wysie.store.protocol != "dropbox:") {
+				this.wysie.store.hostname = "dl.dropboxusercontent.com";
+				this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
+				this.permissions.read = true; // TODO check if file actually is publicly readable
+			}
+
+			this.permissions.login = true;
 
 			this.ready = $.include(self.Dropbox, dropboxURL).then(function () {
 				var referrer = new URL(document.referrer, location);
@@ -2185,10 +2190,6 @@ if (self.Promise && !Promise.prototype.done) {
 					close();
 					return;
 				}
-
-				// Transform the dropbox shared URL into something raw and CORS-enabled
-				_this20.wysie.store.hostname = "dl.dropboxusercontent.com";
-				_this20.wysie.store.search = _this20.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
 
 				// Internal filename (to be used for saving)
 				_this20.filename = (_this20.param("path") || "") + new URL(_this20.wysie.store).pathname.match(/[^/]*$/)[0];

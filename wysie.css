@@ -195,7 +195,8 @@
   color: white;
   font-family: inherit;
   font-size: 1rem; }
-  .wysie-wrapper.can-logout .wysie-bar {
+  .wysie-wrapper.can-logout .wysie-bar,
+  .wysie-wrapper[data-editing] .wysie-bar {
     top: 0;
     left: 0;
     right: 0;
@@ -205,21 +206,21 @@
     padding: 0 .5em 0 6em;
     background: black;
     background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(rgba(26, 26, 26, 0.9), black); }
-  .wysie-wrapper.can-login .wysie-bar,
-  .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar {
+  .wysie-wrapper.can-login:not([data-editing]) .wysie-bar,
+  .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar {
     top: 1em;
     right: 1em; }
-    .wysie-wrapper.can-login .wysie-bar:not(:hover):not(:focus),
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar:not(:hover):not(:focus) {
+    .wysie-wrapper.can-login:not([data-editing]) .wysie-bar:not(:hover):not(:focus),
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar:not(:hover):not(:focus) {
       opacity: .6; }
-    .wysie-wrapper.can-login .wysie-bar button, .wysie-wrapper.can-login .wysie-bar .button,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar button,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar .button {
+    .wysie-wrapper.can-login:not([data-editing]) .wysie-bar button, .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .button,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar button,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar .button {
       border-radius: .3em;
       border: 1px solid black;
       background: rgba(0, 0, 0, 0.8); }
-    .wysie-wrapper.can-login .wysie-bar .status,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar .status {
+    .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .status,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar .status {
       display: none; }
   .wysie-bar button, .wysie-bar .button {
     padding: .3em .6em .4em;

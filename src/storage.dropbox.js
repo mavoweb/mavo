@@ -8,8 +8,14 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
-		this.permissions.on(["read", "login"]);
-		// TODO check if file actually is publicly readable
+		// Transform the dropbox shared URL into something raw and CORS-enabled
+		if (this.wysie.store.protocol != "dropbox:") {
+			this.wysie.store.hostname = "dl.dropboxusercontent.com";
+			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
+			this.permissions.read = true; // TODO check if file actually is publicly readable
+		}
+
+		this.permissions.login = true;
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -22,15 +28,13 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				return;
 			}
 
-			// Transform the dropbox shared URL into something raw and CORS-enabled
-			this.wysie.store.hostname = "dl.dropboxusercontent.com";
-			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
-
 			// Internal filename (to be used for saving)
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-		})).then(() => { this.login(true) });
+		})).then(() => {
+			this.login(true);
+		});
 	},
 
 	// Super class save() calls this. Do not call directly.

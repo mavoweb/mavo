@@ -318,7 +318,8 @@ $property: "[itemprop], [property]";
 	font-size: 1rem;
 
     // Bar fixed at the top of the screen
-	.wysie-wrapper.can-logout & {
+	.wysie-wrapper.can-logout &,
+    .wysie-wrapper[data-editing] & {
 		top: 0;
 		left: 0;
 		right: 0;
@@ -329,8 +330,8 @@ $property: "[itemprop], [property]";
 	}
 
     // Floating bar, intended for when there is only 1 button
-	.wysie-wrapper.can-login &,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) & {
+	.wysie-wrapper.can-login:not([data-editing]) &,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) & {
 		top: 1em;
 		right: 1em;
 

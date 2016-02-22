@@ -235,7 +235,11 @@ var _ = self.Wysie = $.Class({
 
 		this.bar = $(".wysie-bar", this.wrapper) || $.create({
 			className: "wysie-bar",
-			start: this.wrapper
+			start: this.wrapper,
+			contents: {
+				tag: "span",
+				className: "status",
+			}
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
@@ -596,12 +600,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 			// Otherwise, we have to generate a slightly more complex hash
 			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
 
-			this.authControls.status = this.authControls.status || $.create({
-				tag: "span",
-				className: "status",
-				start: this.wysie.bar
-			});
-
 			this.authControls.login = $.create({
 				tag: "a",
 				href: this.loginHash,
@@ -613,7 +611,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 						this.login();
 					}
 				},
-				start: this.wysie.bar
+				after: $(".status", this.wysie.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -638,7 +636,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				events: {
 					click: this.logout.bind(this)
 				},
-				inside: this.wysie.bar
+				after: $(".status", this.wysie.bar)
 			});
 		}, () => {
 			$.remove(this.authControls.logout);
@@ -646,12 +644,11 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 		// Update login status
 		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
-			this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
-			//Stretchy.resizeAll(); // TODO decouple
+			$(".status", this.wysie.bar).innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
 		});
 
 		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
-			this.authControls.status.textContent = "";
+			$(".status", this.wysie.bar).textContent = "";
 		});
 	},
 
@@ -1254,7 +1251,7 @@ var _ = Wysie.Primitive = $.Class({
 			if (this.exposed) {
 				// Editing exposed elements saves the wysie
 				this.element.addEventListener("change", evt => {
-					if (evt.target === this.editor && (this.scope._.data.unit.everSaved || !this.scope.collection)) {
+					if (!this.wysie.editing && evt.target === this.editor && (this.scope.everSaved || !this.scope.collection)) {
 						this.wysie.save();
 					}
 				});
@@ -1462,7 +1459,9 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
-				evt.preventDefault();
+				if (!this.exposed) {
+					evt.preventDefault();
+				}
 			}
 		});
 
@@ -1908,7 +1907,7 @@ var _ = Wysie.Collection = function (template, wysie) {
 	this.addButton.addEventListener("click", evt => {
 		evt.preventDefault();
 
-		this.add()._.data.unit.edit();
+		this.add().edit();
 	});
 
 	/*
@@ -2055,7 +2054,7 @@ _.prototype = {
 				if (!item.editing) {
 					return;
 				}
-				
+
 				item.element.classList.remove("wysie-item-hovered");
 			}
 		});
@@ -2153,8 +2152,14 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
-		this.permissions.on(["read", "login"]);
-		// TODO check if file actually is publicly readable
+		// Transform the dropbox shared URL into something raw and CORS-enabled
+		if (this.wysie.store.protocol != "dropbox:") {
+			this.wysie.store.hostname = "dl.dropboxusercontent.com";
+			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
+			this.permissions.read = true; // TODO check if file actually is publicly readable
+		}
+
+		this.permissions.login = true;
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -2167,15 +2172,13 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 				return;
 			}
 
-			// Transform the dropbox shared URL into something raw and CORS-enabled
-			this.wysie.store.hostname = "dl.dropboxusercontent.com";
-			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
-
 			// Internal filename (to be used for saving)
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-		})).then(() => { this.login(true) });
+		})).then(() => {
+			this.login(true);
+		});
 	},
 
 	// Super class save() calls this. Do not call directly.
