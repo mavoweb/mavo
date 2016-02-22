@@ -1281,6 +1281,8 @@ if (self.Promise && !Promise.prototype.done) {
 			// What is the datatype?
 			this.datatype = _.getDatatype(this.element, this.attribute);
 
+			this.templateValue = this.value;
+
 			/**
     * Set up input widget
     */
@@ -1309,7 +1311,7 @@ if (self.Promise && !Promise.prototype.done) {
 					$.remove(this.editor);
 				}
 
-			this.default = this.editor ? this.editorValue : this.value;
+			this.default = this.element.hasAttribute("data-default") ? this.templateValue : this.editor ? this.editorValue : "";
 
 			this.update(this.value);
 
@@ -1510,155 +1512,160 @@ if (self.Promise && !Promise.prototype.done) {
 			this.element.tabIndex = 0;
 		},
 
-		edit: function edit() {
+		// Called only the first time this primitive is edited
+		initEdit: function initEdit() {
 			var _this14 = this;
 
+			// Linked widgets
+			if (this.element.hasAttribute("data-input")) {
+				var selector = this.element.getAttribute("data-input");
+
+				if (selector) {
+					this.editor = $.clone($(selector));
+
+					if (!Wysie.is("formControl", this.editor)) {
+						if ($(Wysie.selectors.output, this.editor)) {
+							// has output element?
+							// Process it as a wysie instance, so people can use references
+							this.editor.setAttribute("data-store", "none");
+							new Wysie(this.editor);
+						} else {
+							this.editor = null; // Cannot use this, sorry bro
+						}
+					}
+				}
+			}
+
+			if (!this.editor) {
+				// No editor provided, use default for element type
+				// Find default editor for datatype
+				var editor = _.getMatch(this.element, _.editors);
+
+				if (editor.create) {
+					$.extend(this, editor, function (property) {
+						return property != "create";
+					});
+				}
+
+				var create = editor.create || editor;
+				this.editor = $.create($.type(create) === "function" ? create.call(this) : create);
+				this.editorValue = this.value;
+			}
+
+			this.editor._.events({
+				"input": function input(evt) {
+					if (_this14.attribute) {
+						_this14.element.setAttribute(_this14.attribute, _this14.editorValue);
+					}
+
+					if (_this14.exposed || !_this14.attribute) {
+						_this14.update(_this14.editorValue);
+					}
+				},
+				"focus": function focus(evt) {
+					_this14.editor.select && _this14.editor.select();
+				},
+				"keyup": function keyup(evt) {
+					if (_this14.popup && evt.keyCode == 13 || evt.keyCode == 27) {
+						if (_this14.popup.contains(document.activeElement)) {
+							_this14.element.focus();
+						}
+
+						evt.stopPropagation();
+						_this14.hidePopup();
+					}
+				},
+				"wysie:propertychange": function wysiePropertychange(evt) {
+					if (evt.property === "output") {
+						evt.stopPropagation();
+						$.fire(_this14.editor, "input");
+					}
+				}
+			});
+
+			if ("placeholder" in this.editor) {
+				this.editor.placeholder = "(" + this.label + ")";
+			}
+
+			if (!this.exposed) {
+				// Copy any data-input-* attributes from the element to the editor
+				var dataInput = /^data-input-/i;
+				$$(this.element.attributes).forEach(function (attribute) {
+					if (dataInput.test(attribute.name)) {
+						this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
+					}
+				}, this);
+
+				if (this.attribute) {
+					// Set up popup
+					this.element.classList.add("using-popup");
+
+					this.popup = this.popup || $.create("div", {
+						className: "wysie-popup",
+						hidden: true,
+						contents: [this.label + ":", this.editor]
+					});
+
+					// No point in having a dropdown in a popup
+					if (this.editor.matches("select")) {
+						this.editor.size = Math.min(10, this.editor.children.length);
+					}
+
+					// Toggle popup events & methods
+					var hideCallback = function hideCallback(evt) {
+						if (!_this14.popup.contains(evt.target) && !_this14.element.contains(evt.target)) {
+							_this14.hidePopup();
+						}
+					};
+
+					this.showPopup = function () {
+						$.unbind([this.element, this.popup], ".wysie:showpopup");
+						this.popup._.after(this.element);
+
+						this.popup._.style({ // TODO what if it doesn’t fit?
+							top: this.element.offsetTop + this.element.offsetHeight + "px",
+							left: this.element.offsetLeft + "px"
+						});
+
+						this.popup._.removeAttribute("hidden"); // trigger transition
+
+						$.events(document, "focus click", hideCallback, true);
+					};
+
+					this.hidePopup = function () {
+						var _this15 = this;
+
+						$.unbind(document, "focus click", hideCallback, true);
+
+						this.popup.setAttribute("hidden", ""); // trigger transition
+
+						setTimeout(function () {
+							$.remove(_this15.popup);
+						}, 400); // TODO transition-duration could override this
+
+						$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", function (evt) {
+							_this15.showPopup();
+						}, true);
+					};
+				}
+			}
+
+			if (!this.popup) {
+				this.editor.classList.add("wysie-editor");
+			}
+
+			this.initEdit = null;
+		},
+
+		edit: function edit() {
 			if (this.editing) {
 				return;
 			}
 
 			this.element._.unbind(".wysie:preedit");
 
-			if (this.savedValue === undefined) {
-				// First time edit is called, set up editing UI
-
-				// Linked widgets
-				if (this.element.hasAttribute("data-input")) {
-					var selector = this.element.getAttribute("data-input");
-
-					if (selector) {
-						this.editor = $.clone($(selector));
-
-						if (!Wysie.is("formControl", this.editor)) {
-							if ($(Wysie.selectors.output, this.editor)) {
-								// has output element?
-								// Process it as a wysie instance, so people can use references
-								this.editor.setAttribute("data-store", "none");
-								new Wysie(this.editor);
-							} else {
-								this.editor = null; // Cannot use this, sorry bro
-							}
-						}
-					}
-				}
-
-				if (!this.editor) {
-					// No editor provided, use default for element type
-					// Find default editor for datatype
-					var editor = _.getMatch(this.element, _.editors);
-
-					if (editor.create) {
-						$.extend(this, editor, function (property) {
-							return property != "create";
-						});
-					}
-
-					var create = editor.create || editor;
-					this.editor = $.create($.type(create) === "function" ? create.call(this) : create);
-					this.editorValue = this.value;
-				}
-
-				this.editor._.events({
-					"input": function input(evt) {
-						if (_this14.attribute) {
-							_this14.element.setAttribute(_this14.attribute, _this14.editorValue);
-						}
-
-						if (_this14.exposed || !_this14.attribute) {
-							_this14.update(_this14.editorValue);
-						}
-					},
-					"focus": function focus(evt) {
-						_this14.editor.select && _this14.editor.select();
-					},
-					"keyup": function keyup(evt) {
-						if (_this14.popup && evt.keyCode == 13 || evt.keyCode == 27) {
-							if (_this14.popup.contains(document.activeElement)) {
-								_this14.element.focus();
-							}
-
-							evt.stopPropagation();
-							_this14.hidePopup();
-						}
-					},
-					"wysie:propertychange": function wysiePropertychange(evt) {
-						if (evt.property === "output") {
-							evt.stopPropagation();
-							$.fire(_this14.editor, "input");
-						}
-					}
-				});
-
-				if ("placeholder" in this.editor) {
-					this.editor.placeholder = "(" + this.label + ")";
-				}
-
-				if (!this.exposed) {
-					// Copy any data-input-* attributes from the element to the editor
-					var dataInput = /^data-input-/i;
-					$$(this.element.attributes).forEach(function (attribute) {
-						if (dataInput.test(attribute.name)) {
-							this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
-						}
-					}, this);
-
-					if (this.attribute) {
-						// Set up popup
-						this.element.classList.add("using-popup");
-
-						this.popup = this.popup || $.create("div", {
-							className: "wysie-popup",
-							hidden: true,
-							contents: [this.label + ":", this.editor]
-						});
-
-						// No point in having a dropdown in a popup
-						if (this.editor.matches("select")) {
-							this.editor.size = Math.min(10, this.editor.children.length);
-						}
-
-						// Toggle popup events & methods
-						var hideCallback = function hideCallback(evt) {
-							if (!_this14.popup.contains(evt.target) && !_this14.element.contains(evt.target)) {
-								_this14.hidePopup();
-							}
-						};
-
-						this.showPopup = function () {
-							$.unbind([this.element, this.popup], ".wysie:showpopup");
-							this.popup._.after(this.element);
-
-							this.popup._.style({ // TODO what if it doesn’t fit?
-								top: this.element.offsetTop + this.element.offsetHeight + "px",
-								left: this.element.offsetLeft + "px"
-							});
-
-							this.popup._.removeAttribute("hidden"); // trigger transition
-
-							$.events(document, "focus click", hideCallback, true);
-						};
-
-						this.hidePopup = function () {
-							var _this15 = this;
-
-							$.unbind(document, "focus click", hideCallback, true);
-
-							this.popup.setAttribute("hidden", ""); // trigger transition
-
-							setTimeout(function () {
-								$.remove(_this15.popup);
-							}, 400); // TODO transition-duration could override this
-
-							$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", function (evt) {
-								_this15.showPopup();
-							}, true);
-						};
-					}
-				}
-
-				if (!this.popup) {
-					this.editor.classList.add("wysie-editor");
-				}
+			if (this.initEdit) {
+				this.initEdit();
 			}
 
 			if (this.popup) {
@@ -1678,7 +1685,7 @@ if (self.Promise && !Promise.prototype.done) {
 					}
 				}
 			}
-		},
+		}, // edit
 
 		render: function render(data) {
 			this.value = this.savedValue = data;

@@ -36,6 +36,10 @@ gulp.task('transpile', ['concat'], function() {
 	.pipe(babel({
 		"presets": ["ES2015"]
 	}))
+	.on('error', function(error) {
+		console.error(error.message, error.loc);
+		this.emit('end');
+	})
 	.pipe(rename({ suffix: '.es5' }))
 	.pipe(gulp.dest('.'));
 
