@@ -1667,7 +1667,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		render: function render(data) {
-			this.value = data;
+			this.value = this.savedValue = data;
 		},
 
 		lazy: {

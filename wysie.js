@@ -1644,7 +1644,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	render: function(data) {
-		this.value = data;
+		this.value = this.savedValue = data;
 	},
 
 	lazy: {
