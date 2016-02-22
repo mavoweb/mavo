@@ -186,6 +186,7 @@ if (self.MutationObserver) {
 
 })();
 
+
 (function ($, $$) {
 
 var _ = self.Wysie = $.Class({
@@ -220,18 +221,25 @@ var _ = self.Wysie = $.Class({
 		});
 
 		if (element === this.element && _.is("multiple", element)) {
-			this.wrapper = element.closest(".wysie-wrapper") || $.create("div", {around: this.element});
+			this.wrapper = element.closest(".wysie-wrapper") || $.create({around: this.element});
 		}
 
 		this.wrapper.classList.add("wysie-wrapper");
 
 		element.removeAttribute("data-store");
 
-		// Create bar
-		this.bar = $.create({
+		// Build wysie objects
+		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+
+		this.permissions = new Wysie.Permissions(null, this);
+
+		this.bar = $(".wysie-bar", this.wrapper) || $.create({
 			className: "wysie-bar",
-			start: this.wrapper,
-			contents: [{
+			start: this.wrapper
+		});
+
+		this.permissions.can(["edit", "add", "delete"], () => {
+			$.contents(this.bar, [{
 				tag: "button",
 				className: "edit",
 				innerHTML: "<span class='icon'>✎</span> Edit",
@@ -246,17 +254,16 @@ var _ = self.Wysie = $.Class({
 				innerHTML: "<span class='icon'>✘</span> Cancel",
 				className: "cancel",
 				onclick: e => this.cancel()
-			}]
+			}]);
+		}, () => { // cannot
+			$$(".edit, .save, .cancel", this.bar)._.remove();
 		});
-
-		// Build wysie objects
-		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
 		// Fetch existing data
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
 
-			this.storage.load();
+			this.permissions.can("read", () => this.storage.load());
 		}
 		else {
 			this.wrapper._.fire("wysie:load");
@@ -372,8 +379,14 @@ var _ = self.Wysie = $.Class({
 
 		is: function(thing, element) {
 			return element.matches && element.matches(_.selectors[thing]);
-		}
+		},
+
+		hooks: new $.Hooks()
 	}
+});
+
+$.add("toggleClass", function(className, addIf) {
+	this.classList[addIf? "add" : "remove"](className);
 });
 
 $.ready().then(evt => {
@@ -406,6 +419,144 @@ if (self.Promise && !Promise.prototype.done) {
 	};
 }
 
+
+(function($){
+
+var _ = Wysie.Permissions = $.Class({
+	constructor: function(o, wysie) {
+		this.triggers = [];
+		this.wysie = wysie;
+
+		this.set(o);
+	},
+
+	// Set multiple permissions at once
+	set: function(o) {
+		for (var action in o) {
+			this[action] = o[action];
+		}
+	},
+
+	// Fired once at least one of the actions passed can be performed
+	// Kind of like a Promise that can be resolved multiple times.
+	can: function(actions, callback, cannot) {
+		this.observe(actions, true, callback);
+
+		if (cannot) {
+			// Fired once the action cannot be done anymore, even though it could be done before
+			this.observe(actions, false, cannot);
+		}
+	},
+
+	// Schedule a callback for when a set of permissions changes value
+	observe: function(actions, value, callback) {
+		actions = Array.isArray(actions)? actions : [actions];
+
+		if (this.is(actions, value)) {
+			// Should be fired immediately
+			callback();
+		}
+
+		// For future transitions
+		this.triggers.push({ actions, value, callback, active: true });
+	},
+
+	// Compare a set of permissions with true or false
+	// If comparing with true, we want at least one to be true, i.e. OR
+	// If comparing with false, we want ALL to be false, i.e. NOR
+	is: function(actions, able) {
+		var or = actions.map(action => !!this[action])
+		                .reduce((prev, current) => prev || current);
+
+		return able? or : !or;
+	},
+
+	// A single permission changed value
+	changed: function(action, value, from) {
+		from = !!from;
+		value = !!value;
+
+		if (value == from) {
+			// Nothing changed
+			return;
+		}
+
+		this.wysie.wrapper._.toggleClass("can-" + action, value);
+
+		// $.live() calls the setter before the actual property is set so we
+		// need to set it manually, otherwise it still has its previous value
+		this["_" + action] = value;
+
+		// TODO add classes to wrapper
+		this.triggers.forEach(trigger => {
+			var match = this.is(trigger.actions, trigger.value);
+
+			if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
+
+				trigger.active = false;
+				trigger.callback();
+			}
+			else if (!match) {
+				// This is so that triggers can only be executed in an actual transition
+				// And that if there is a trigger for [a,b] it won't be executed twice
+				// if a and b are set to true one after the other
+				trigger.active = true;
+			}
+		});
+	},
+
+	static: {
+		actions: [],
+
+		// Register a new permission type
+		register: function(action, setter) {
+			if (Array.isArray(action)) {
+				action.forEach(action => _.register(action, setter));
+				return;
+			}
+
+			$.live(_.prototype, action, function(able, previous) {
+				if (setter) {
+					setter.call(this, able, previous);
+				}
+
+				this.changed(action, able, previous);
+			});
+
+			_.actions.push(action);
+		}
+	}
+});
+
+_.register("read");
+
+_.register("login", function(can) {
+	if (can && this.logout) {
+		this.logout = false;
+	}
+});
+
+_.register("logout", function(can) {
+	if (can && this.login) {
+		this.login = false;
+	}
+});
+
+_.register("edit", function(can) {
+	if (can) {
+		this.add = this.delete = true;
+	}
+});
+
+_.register(["add", "delete"], function(can) {
+	if (!can) {
+		this.edit = false;
+	}
+});
+
+})(Bliss);
+
+
 (function($){
 
 var _ = Wysie.Storage = $.Class({ abstract: true,
@@ -419,10 +570,79 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		this.loaded = new Promise((resolve, reject) => {
 			this.wysie.wrapper.addEventListener("wysie:load", resolve);
 		});
+
+		this.authControls = {};
+
+		this.permissions.can("login", () => {
+			// #login authenticates if only 1 wysie on the page, or if the first.
+			// Otherwise, we have to generate a slightly more complex hash
+			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
+
+			this.authControls.status = this.authControls.status || $.create({
+				tag: "span",
+				className: "status",
+				start: this.wysie.bar
+			});
+
+			this.authControls.login = $.create({
+				tag: "a",
+				href: this.loginHash,
+				textContent: "Login",
+				className: "login button",
+				events: {
+					click: evt => {
+						evt.preventDefault();
+						this.login();
+					}
+				},
+				start: this.wysie.bar
+			});
+
+			// We also support a hash to trigger login, in case the user doesn't want visible login UI
+			var login;
+			(login = () => {
+				if (location.hash === this.loginHash) {
+					history.replaceState(null, document.title, new URL("", location) + "");
+					this.login();
+				}
+			})();
+			window.addEventListener("hashchange.wysie", login);
+		}, () => {
+			$.remove(this.authControls.login);
+			this.wysie.wrapper._.unbind("hashchange.wysie");
+		});
+
+		this.permissions.can("logout", () => {
+			this.authControls.logout = $.create({
+				tag: "button",
+				textContent: "Logout",
+				className: "logout",
+				events: {
+					click: this.logout.bind(this)
+				},
+				inside: this.wysie.bar
+			});
+		}, () => {
+			$.remove(this.authControls.logout);
+		});
+
+		// Update login status
+		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
+			this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
+			//Stretchy.resizeAll(); // TODO decouple
+		});
+
+		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
+			this.authControls.status.textContent = "";
+		});
 	},
 
 	get url () {
 		return this.wysie.store;
+	},
+
+	get permissions () {
+		return this.wysie.permissions;
 	},
 
 	get href () {
@@ -442,85 +662,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// Is the storage ready?
 	// To be be overriden by subclasses
 	ready: Promise.resolve(),
-
-	live: {
-		inProgress: function(value) {
-			if (value) {
-				var p = $.create("div", {
-					textContent: value + "…",
-					className: "progress",
-					inside: this.wysie.wrapper
-				});
-			}
-			else {
-				$.remove($(".progress", this.wysie.wrapper));
-			}
-		},
-
-		loginToEdit: function(value) {
-			if (value) {
-				// #login authenticates if only 1 wysie on the page, or if the first.
-				// Otherwise, we have to generate a slightly more complex hash
-				this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
-
-				this.authControls = {
-					logout: $.create({
-						tag: "button",
-						textContent: "Logout",
-						className: "logout",
-						events: {
-							click: this.logout.bind(this)
-						},
-						start: this.wysie.bar
-					}),
-					login: $.create({
-						tag: "a",
-						href: this.loginHash,
-						textContent: "Login to edit",
-						className: "login button",
-						events: {
-							click: evt => {
-								evt.preventDefault();
-								this.login();
-							}
-						},
-						start: this.wysie.bar
-					}),
-					status: $.create({
-						tag: "span",
-						className: "status",
-						start: this.wysie.bar
-					})
-				};
-
-				// We also support a hash to trigger login, in case the user doesn't want visible login UI
-				var login;
-				(login = () => {
-					if (location.hash === this.loginHash) {
-						history.replaceState(null, document.title, new URL("", location) + "");
-						this.login();
-					}
-				})();
-				window.addEventListener("hashchange", login);
-
-				// Update login status
-				this.wysie.wrapper.addEventListener("wysie:login", evt => {
-					this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
-					Stretchy.resizeAll(); // TODO decouple
-				});
-
-				this.wysie.wrapper.addEventListener("wysie:logout", evt => {
-					this.authControls.status.textContent = "";
-				});
-
-				return value;
-			}
-		},
-
-		authenticated: function(value) {
-			this.wysie.wrapper.classList[value? "add" : "remove"]("authenticated");
-		}
-	},
 
 	load: function() {
 		var ret = this.ready;
@@ -610,7 +751,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	},
 
 	// To be overriden by subclasses
-	// Subclasses should set this.authenticated
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
@@ -630,6 +770,21 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		}
 
 		return this.params[id];
+	},
+
+	live: {
+		inProgress: function(value) {
+			if (value) {
+				var p = $.create("div", {
+					textContent: value + "…",
+					className: "progress",
+					inside: this.wysie.wrapper
+				});
+			}
+			else {
+				$.remove($(".progress", this.wysie.wrapper));
+			}
+		}
 	},
 
 	static: {
@@ -668,16 +823,22 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 _.Default = $.Class({ extends: _,
 	constructor: function() {
-		// Can edit if local
-		this.wysie.readonly = this.url.origin !== location.origin || this.url.pathname !== location.pathname;
+		this.permissions.set({
+			read: true,
+			edit: this.url.origin === location.origin && this.url.pathname === location.pathname, // Can edit if local
+			login: false,
+			logout: false
+		});
+
 	},
 
 	static: {
-		test: function() { return false; }
+		test: () => false
 	}
 });
 
 })(Bliss);
+
 
 /*
  * Wysie Unit: Super class that Scope and Primitive inherit from
@@ -745,6 +906,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 });
 
 })(Bliss, Bliss.$);
+
 
 (function($, $$){
 
@@ -1047,6 +1209,7 @@ var _ = Wysie.Scope = $.Class({
 });
 
 })(Bliss, Bliss.$);
+
 
 (function($, $$){
 
@@ -1690,6 +1853,7 @@ Stretchy.selectors.filter = ".wysie-editor";
 
 })(Bliss, Bliss.$);
 
+
 (function($, $$){
 
 var _ = Wysie.Collection = function (template, wysie) {
@@ -1960,6 +2124,7 @@ _.prototype = {
 
 })(Bliss, Bliss.$);
 
+
 (function($){
 
 if (!self.Wysie) {
@@ -1970,7 +2135,11 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
-		this.wysie.readonly = true;
+		this.permissions.set({
+			read: true,
+			login: true,
+			logout: false
+		});
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -1991,8 +2160,6 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-
-			this.loginToEdit = true;
 		})).then(() => { this.login(true) });
 	},
 
@@ -2031,13 +2198,12 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					}
 
 					if (this.client.isAuthenticated()) {
-						this.authenticated = true;
-						this.wysie.readonly = false;
+						// TODO check if can actually edit the file
+						this.permissions.logout = this.permissions.edit = true;
 						resolve();
 					}
 					else {
-						this.authenticated = false;
-						this.wysie.readonly = true;
+						this.permissions.set({logout: false, edit: false, add: false, delete: false});
 						reject();
 					}
 				});
@@ -2055,7 +2221,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	logout: function() {
 		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 			this.client.signOut(null, () => {
-				this.authenticated = false;
+				this.permissions.set({login: true, edit: false, add: false, delete: false});
 				this.wysie.wrapper._.fire("wysie:logout");
 				resolve();
 			});
@@ -2071,3 +2237,6 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 });
 
 })(Bliss);
+
+
+//# sourceMappingURL=wysie.js.map

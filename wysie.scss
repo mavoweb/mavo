@@ -113,6 +113,11 @@ $property: "[itemprop], [property]";
 			color: white;
 		}
 	}
+
+    .wysie-wrapper:not(.can-delete) & .delete,
+    .wysie-wrapper:not(.can-add) & .add {
+        display: none;
+    }
 }
 
 .wysie-item {
@@ -133,6 +138,10 @@ $property: "[itemprop], [property]";
 		//margin-left: .5em;
 		vertical-align: middle;
 	}
+
+    &:not(.can-add) button.add {
+        display: none;
+    }
 
 	.wysie-popup {
 		all: initial;
@@ -215,11 +224,6 @@ $property: "[itemprop], [property]";
 		.edit, [data-editing], .add {
 			display: none;
 		}
-	}
-
-	&.authenticated .auth-controls .login,
-	&:not(.authenticated) .auth-controls .logout {
-		display: none;
 	}
 
 	.progress {
@@ -313,7 +317,8 @@ $property: "[itemprop], [property]";
 	font-family: inherit;
 	font-size: 1rem;
 
-	.wysie-wrapper.authenticated & {
+    // Bar fixed at the top of the screen
+	.wysie-wrapper.can-logout & {
 		top: 0;
 		left: 0;
 		right: 0;
@@ -321,13 +326,11 @@ $property: "[itemprop], [property]";
 		padding: 0 .5em 0 6em;
 		background: black;
 		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat, linear-gradient(hsla(0,0%,10%,.9), black);
-
-		.login {
-			display: none;
-		}
 	}
 
-	.wysie-wrapper:not(.authenticated) & {
+    // Floating bar, intended for when there is only 1 button
+	.wysie-wrapper.can-login &,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) & {
 		top: 1em;
 		right: 1em;
 
@@ -341,7 +344,7 @@ $property: "[itemprop], [property]";
 			background: rgba(0,0,0,.8);
 		}
 
-		.logout, .status {
+		.status {
 			display: none;
 		}
 	}

@@ -32,18 +32,25 @@ var _ = self.Wysie = $.Class({
 		});
 
 		if (element === this.element && _.is("multiple", element)) {
-			this.wrapper = element.closest(".wysie-wrapper") || $.create("div", {around: this.element});
+			this.wrapper = element.closest(".wysie-wrapper") || $.create({around: this.element});
 		}
 
 		this.wrapper.classList.add("wysie-wrapper");
 
 		element.removeAttribute("data-store");
 
-		// Create bar
-		this.bar = $.create({
+		// Build wysie objects
+		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+
+		this.permissions = new Wysie.Permissions(null, this);
+
+		this.bar = $(".wysie-bar", this.wrapper) || $.create({
 			className: "wysie-bar",
-			start: this.wrapper,
-			contents: [{
+			start: this.wrapper
+		});
+
+		this.permissions.can(["edit", "add", "delete"], () => {
+			$.contents(this.bar, [{
 				tag: "button",
 				className: "edit",
 				innerHTML: "<span class='icon'>✎</span> Edit",
@@ -58,17 +65,16 @@ var _ = self.Wysie = $.Class({
 				innerHTML: "<span class='icon'>✘</span> Cancel",
 				className: "cancel",
 				onclick: e => this.cancel()
-			}]
+			}]);
+		}, () => { // cannot
+			$$(".edit, .save, .cancel", this.bar)._.remove();
 		});
-
-		// Build wysie objects
-		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
 		// Fetch existing data
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
 
-			this.storage.load();
+			this.permissions.can("read", () => this.storage.load());
 		}
 		else {
 			this.wrapper._.fire("wysie:load");
@@ -184,8 +190,14 @@ var _ = self.Wysie = $.Class({
 
 		is: function(thing, element) {
 			return element.matches && element.matches(_.selectors[thing]);
-		}
+		},
+
+		hooks: new $.Hooks()
 	}
+});
+
+$.add("toggleClass", function(className, addIf) {
+	this.classList[addIf? "add" : "remove"](className);
 });
 
 $.ready().then(evt => {

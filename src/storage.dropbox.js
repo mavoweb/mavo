@@ -8,7 +8,11 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
-		this.wysie.readonly = true;
+		this.permissions.set({
+			read: true,
+			login: true,
+			logout: false
+		});
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -29,8 +33,6 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
 
 			this.client = new Dropbox.Client({ key: this.param("key") });
-
-			this.loginToEdit = true;
 		})).then(() => { this.login(true) });
 	},
 
@@ -69,13 +71,12 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					}
 
 					if (this.client.isAuthenticated()) {
-						this.authenticated = true;
-						this.wysie.readonly = false;
+						// TODO check if can actually edit the file
+						this.permissions.logout = this.permissions.edit = true;
 						resolve();
 					}
 					else {
-						this.authenticated = false;
-						this.wysie.readonly = true;
+						this.permissions.set({logout: false, edit: false, add: false, delete: false});
 						reject();
 					}
 				});
@@ -93,7 +94,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	logout: function() {
 		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 			this.client.signOut(null, () => {
-				this.authenticated = false;
+				this.permissions.set({login: true, edit: false, add: false, delete: false});
 				this.wysie.wrapper._.fire("wysie:logout");
 				resolve();
 			});

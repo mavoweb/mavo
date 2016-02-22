@@ -7,13 +7,13 @@ var gulp  = require('gulp');
 var gutil = require('gulp-util');
 var uglify = require('gulp-uglify');
 var rename = require('gulp-rename')
-var concat = require('gulp-concat');
+var concat = require('gulp-concat-sourcemap');
 var sass = require('gulp-sass');
 var babel = require('gulp-babel');
 var autoprefixer = require('gulp-autoprefixer');
 
 gulp.task('concat', function() {
-	var files = "stretchy wysie storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
+	var files = "stretchy wysie permissions storage unit scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
 
 	return gulp.src(files)
 		.pipe(concat('wysie.js'))

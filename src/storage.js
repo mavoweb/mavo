@@ -11,10 +11,79 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		this.loaded = new Promise((resolve, reject) => {
 			this.wysie.wrapper.addEventListener("wysie:load", resolve);
 		});
+
+		this.authControls = {};
+
+		this.permissions.can("login", () => {
+			// #login authenticates if only 1 wysie on the page, or if the first.
+			// Otherwise, we have to generate a slightly more complex hash
+			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
+
+			this.authControls.status = this.authControls.status || $.create({
+				tag: "span",
+				className: "status",
+				start: this.wysie.bar
+			});
+
+			this.authControls.login = $.create({
+				tag: "a",
+				href: this.loginHash,
+				textContent: "Login",
+				className: "login button",
+				events: {
+					click: evt => {
+						evt.preventDefault();
+						this.login();
+					}
+				},
+				start: this.wysie.bar
+			});
+
+			// We also support a hash to trigger login, in case the user doesn't want visible login UI
+			var login;
+			(login = () => {
+				if (location.hash === this.loginHash) {
+					history.replaceState(null, document.title, new URL("", location) + "");
+					this.login();
+				}
+			})();
+			window.addEventListener("hashchange.wysie", login);
+		}, () => {
+			$.remove(this.authControls.login);
+			this.wysie.wrapper._.unbind("hashchange.wysie");
+		});
+
+		this.permissions.can("logout", () => {
+			this.authControls.logout = $.create({
+				tag: "button",
+				textContent: "Logout",
+				className: "logout",
+				events: {
+					click: this.logout.bind(this)
+				},
+				inside: this.wysie.bar
+			});
+		}, () => {
+			$.remove(this.authControls.logout);
+		});
+
+		// Update login status
+		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
+			this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
+			//Stretchy.resizeAll(); // TODO decouple
+		});
+
+		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
+			this.authControls.status.textContent = "";
+		});
 	},
 
 	get url () {
 		return this.wysie.store;
+	},
+
+	get permissions () {
+		return this.wysie.permissions;
 	},
 
 	get href () {
@@ -34,85 +103,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	// Is the storage ready?
 	// To be be overriden by subclasses
 	ready: Promise.resolve(),
-
-	live: {
-		inProgress: function(value) {
-			if (value) {
-				var p = $.create("div", {
-					textContent: value + "…",
-					className: "progress",
-					inside: this.wysie.wrapper
-				});
-			}
-			else {
-				$.remove($(".progress", this.wysie.wrapper));
-			}
-		},
-
-		loginToEdit: function(value) {
-			if (value) {
-				// #login authenticates if only 1 wysie on the page, or if the first.
-				// Otherwise, we have to generate a slightly more complex hash
-				this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
-
-				this.authControls = {
-					logout: $.create({
-						tag: "button",
-						textContent: "Logout",
-						className: "logout",
-						events: {
-							click: this.logout.bind(this)
-						},
-						start: this.wysie.bar
-					}),
-					login: $.create({
-						tag: "a",
-						href: this.loginHash,
-						textContent: "Login to edit",
-						className: "login button",
-						events: {
-							click: evt => {
-								evt.preventDefault();
-								this.login();
-							}
-						},
-						start: this.wysie.bar
-					}),
-					status: $.create({
-						tag: "span",
-						className: "status",
-						start: this.wysie.bar
-					})
-				};
-
-				// We also support a hash to trigger login, in case the user doesn't want visible login UI
-				var login;
-				(login = () => {
-					if (location.hash === this.loginHash) {
-						history.replaceState(null, document.title, new URL("", location) + "");
-						this.login();
-					}
-				})();
-				window.addEventListener("hashchange", login);
-
-				// Update login status
-				this.wysie.wrapper.addEventListener("wysie:login", evt => {
-					this.authControls.status.innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
-					Stretchy.resizeAll(); // TODO decouple
-				});
-
-				this.wysie.wrapper.addEventListener("wysie:logout", evt => {
-					this.authControls.status.textContent = "";
-				});
-
-				return value;
-			}
-		},
-
-		authenticated: function(value) {
-			this.wysie.wrapper.classList[value? "add" : "remove"]("authenticated");
-		}
-	},
 
 	load: function() {
 		var ret = this.ready;
@@ -202,7 +192,6 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 	},
 
 	// To be overriden by subclasses
-	// Subclasses should set this.authenticated
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
@@ -222,6 +211,21 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		}
 
 		return this.params[id];
+	},
+
+	live: {
+		inProgress: function(value) {
+			if (value) {
+				var p = $.create("div", {
+					textContent: value + "…",
+					className: "progress",
+					inside: this.wysie.wrapper
+				});
+			}
+			else {
+				$.remove($(".progress", this.wysie.wrapper));
+			}
+		}
 	},
 
 	static: {
@@ -260,12 +264,17 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 _.Default = $.Class({ extends: _,
 	constructor: function() {
-		// Can edit if local
-		this.wysie.readonly = this.url.origin !== location.origin || this.url.pathname !== location.pathname;
+		this.permissions.set({
+			read: true,
+			edit: this.url.origin === location.origin && this.url.pathname === location.pathname, // Can edit if local
+			login: false,
+			logout: false
+		});
+
 	},
 
 	static: {
-		test: function() { return false; }
+		test: () => false
 	}
 });
 

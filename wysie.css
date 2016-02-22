@@ -66,6 +66,9 @@
     .wysie-item-controls .add:hover {
       background-color: #81b814;
       color: white; }
+  .wysie-wrapper:not(.can-delete) .wysie-item-controls .delete,
+  .wysie-wrapper:not(.can-add) .wysie-item-controls .add {
+    display: none; }
 
 .wysie-item {
   position: relative;
@@ -77,6 +80,9 @@
 .wysie-wrapper button.add {
   display: inline-block;
   vertical-align: middle; }
+
+.wysie-wrapper:not(.can-add) button.add {
+  display: none; }
 
 .wysie-wrapper .wysie-popup {
   all: initial;
@@ -137,10 +143,6 @@
 .wysie-wrapper.readonly .edit, .wysie-wrapper.readonly [data-editing], .wysie-wrapper.readonly .add {
   display: none; }
 
-.wysie-wrapper.authenticated .auth-controls .login,
-.wysie-wrapper:not(.authenticated) .auth-controls .logout {
-  display: none; }
-
 .wysie-wrapper .progress {
   margin-top: .5em;
   font-size: 80%; }
@@ -193,7 +195,7 @@
   color: white;
   font-family: inherit;
   font-size: 1rem; }
-  .wysie-wrapper.authenticated .wysie-bar {
+  .wysie-wrapper.can-logout .wysie-bar {
     top: 0;
     left: 0;
     right: 0;
@@ -203,18 +205,21 @@
     padding: 0 .5em 0 6em;
     background: black;
     background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(rgba(26, 26, 26, 0.9), black); }
-    .wysie-wrapper.authenticated .wysie-bar .login {
-      display: none; }
-  .wysie-wrapper:not(.authenticated) .wysie-bar {
+  .wysie-wrapper.can-login .wysie-bar,
+  .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar {
     top: 1em;
     right: 1em; }
-    .wysie-wrapper:not(.authenticated) .wysie-bar:not(:hover):not(:focus) {
+    .wysie-wrapper.can-login .wysie-bar:not(:hover):not(:focus),
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar:not(:hover):not(:focus) {
       opacity: .6; }
-    .wysie-wrapper:not(.authenticated) .wysie-bar button, .wysie-wrapper:not(.authenticated) .wysie-bar .button {
+    .wysie-wrapper.can-login .wysie-bar button, .wysie-wrapper.can-login .wysie-bar .button,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar button,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar .button {
       border-radius: .3em;
       border: 1px solid black;
       background: rgba(0, 0, 0, 0.8); }
-    .wysie-wrapper:not(.authenticated) .wysie-bar .logout, .wysie-wrapper:not(.authenticated) .wysie-bar .status {
+    .wysie-wrapper.can-login .wysie-bar .status,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout) .wysie-bar .status {
       display: none; }
   .wysie-bar button, .wysie-bar .button {
     padding: .3em .6em .4em;
