@@ -15,6 +15,24 @@ var _ = Wysie.Permissions = $.Class({
 		}
 	},
 
+	// Set a bunch of permissions to true. Chainable.
+	on: function(actions) {
+		actions = Array.isArray(actions)? actions : [actions];
+
+		actions.forEach(action => this[action] = true);
+
+		return this;
+	},
+
+	// Set a bunch of permissions to false. Chainable.
+	off: function(actions) {
+		actions = Array.isArray(actions)? actions : [actions];
+		
+		actions.forEach(action => this[action] = false);
+
+		return this;
+	},
+
 	// Fired once at least one of the actions passed can be performed
 	// Kind of like a Promise that can be resolved multiple times.
 	can: function(actions, callback, cannot) {

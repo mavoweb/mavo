@@ -266,11 +266,11 @@ _.Default = $.Class({ extends: _,
 	constructor: function() {
 		this.permissions.set({
 			read: true,
-			edit: this.url.origin === location.origin && this.url.pathname === location.pathname, // Can edit if local
+			edit: this.url.origin === location.origin &&
+			      this.url.pathname === location.pathname, // Can edit if local
 			login: false,
 			logout: false
 		});
-
 	},
 
 	static: {

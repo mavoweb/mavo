@@ -437,6 +437,24 @@ var _ = Wysie.Permissions = $.Class({
 		}
 	},
 
+	// Set a bunch of permissions to true. Chainable.
+	on: function(actions) {
+		actions = Array.isArray(actions)? actions : [actions];
+
+		actions.forEach(action => this[action] = true);
+
+		return this;
+	},
+
+	// Set a bunch of permissions to false. Chainable.
+	off: function(actions) {
+		actions = Array.isArray(actions)? actions : [actions];
+		
+		actions.forEach(action => this[action] = false);
+
+		return this;
+	},
+
 	// Fired once at least one of the actions passed can be performed
 	// Kind of like a Promise that can be resolved multiple times.
 	can: function(actions, callback, cannot) {
@@ -825,11 +843,11 @@ _.Default = $.Class({ extends: _,
 	constructor: function() {
 		this.permissions.set({
 			read: true,
-			edit: this.url.origin === location.origin && this.url.pathname === location.pathname, // Can edit if local
+			edit: this.url.origin === location.origin &&
+			      this.url.pathname === location.pathname, // Can edit if local
 			login: false,
 			logout: false
 		});
-
 	},
 
 	static: {
@@ -2135,11 +2153,8 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	constructor: function() {
-		this.permissions.set({
-			read: true,
-			login: true,
-			logout: false
-		});
+		this.permissions.on(["read", "login"]);
+		// TODO check if file actually is publicly readable
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -2199,11 +2214,13 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 
 					if (this.client.isAuthenticated()) {
 						// TODO check if can actually edit the file
-						this.permissions.logout = this.permissions.edit = true;
+						this.permissions.on(["logout", "edit"]);
+
 						resolve();
 					}
 					else {
-						this.permissions.set({logout: false, edit: false, add: false, delete: false});
+						this.permissions.off(["logout", "edit", "add", "delete"]);
+
 						reject();
 					}
 				});
@@ -2221,7 +2238,8 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	logout: function() {
 		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 			this.client.signOut(null, () => {
-				this.permissions.set({login: true, edit: false, add: false, delete: false});
+				this.permissions.off(["edit", "add", "delete"]).on("login");
+
 				this.wysie.wrapper._.fire("wysie:logout");
 				resolve();
 			});
