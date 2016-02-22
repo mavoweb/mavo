@@ -196,7 +196,8 @@
 			this.element = _.is("scope", element) ? element : $(_.selectors.scope, element);
 
 			if (!this.element) {
-				element.setAttribute("typeof", "");
+				element.setAttribute("typeof", element.getAttribute("property") || "");
+				element.removeAttribute("property");
 				this.element = element;
 			}
 
