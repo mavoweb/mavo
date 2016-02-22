@@ -164,28 +164,6 @@ _.prototype = {
 			inside: element
 		});
 
-		element._.events({
-			"mouseover.wysie:edit": evt => {
-				if (!item.editing) {
-					return;
-				}
-
-				var isClosest = evt.target.closest(".wysie-item") === element;
-
-				// CSS :hover will include child collections
-				item.element.classList[isClosest? "add" : "remove"]("wysie-item-hovered");
-
-				evt.stopPropagation();
-			},
-			"mouseout.wysie:edit": evt => {
-				if (!item.editing) {
-					return;
-				}
-
-				item.element.classList.remove("wysie-item-hovered");
-			}
-		});
-
 		return item;
 	},
 
@@ -206,27 +184,55 @@ _.prototype = {
 
 		this.items.forEach(item => {
 			item.preEdit? item.preEdit() : item.edit();
+
+			item.element._.events({
+				"mouseover.wysie:edit": evt => {
+					if (!item.editing) {
+						return;
+					}
+
+					var isClosest = evt.target.closest(".wysie-item") === item.element;
+
+					// CSS :hover would include child collections
+					item.element._.toggleClass("wysie-item-hovered", isClosest);
+
+					evt.stopPropagation();
+				},
+				"mouseout.wysie:edit": evt => {
+					if (!item.editing) {
+						return;
+					}
+
+					item.element.classList.remove("wysie-item-hovered");
+				}
+			});
 		});
 	},
 
 	delete: function(item) {
 		return $.transition(item.element, {opacity: 0}).then(()=>{
-			$.remove(item.element);
-
-			this.items.splice(this.items.indexOf(item), 1);
+			item.deleted = true; // schedule for deletion
+			item.element.style.opacity = "";
 		});
 	},
 
 	save: function() {
 		this.items.forEach(item => {
-			item.save();
-			item.element.classList.remove("wysie-item-hovered");
+			if (item.deleted) {
+				$.remove(item.element);
+				this.items.splice(this.items.indexOf(item), 1);
+			}
+			else {
+				item.save();
+				item.element.classList.remove("wysie-item-hovered");
+			}
 		});
 	},
 
 	cancel: function() {
 		this.items.forEach((item, i) => {
 			// Revert all properties
+			item.deleted = false;
 			item.cancel();
 			item.element.classList.remove("wysie-item-hovered");
 

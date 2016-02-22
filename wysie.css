@@ -76,6 +76,8 @@
   .wysie-item.delete-hover {
     box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset;
     border-radius: .1em; }
+  .wysie-item.deleted {
+    display: none; }
 
 .wysie-wrapper button.add {
   display: inline-block;
@@ -140,7 +142,7 @@
     font-size: 70%;
     color: gray; }
 
-.wysie-wrapper.readonly .edit, .wysie-wrapper.readonly [data-editing], .wysie-wrapper.readonly .add {
+.wysie-wrapper:not(.can-edit) .edit, .wysie-wrapper:not(.can-edit) [data-editing], .wysie-wrapper:not(.can-edit) .add {
   display: none; }
 
 .wysie-wrapper .progress {

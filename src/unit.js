@@ -27,6 +27,12 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		return this.getData();
 	},
 
+	live: {
+		deleted: function(value) {
+			this.element._.toggleClass("deleted", value);
+		}
+	},
+
 	static: {
 		create: function(element, wysie, collection) {
 			if (!element || !wysie) {
