@@ -1,4 +1,4 @@
-(function($, $$){
+(function($, $$) {
 
 var _ = Wysie.Collection = function (template, wysie) {
 	var me = this;
@@ -83,12 +83,6 @@ _.prototype = {
 		return Wysie.readable(this.property || this.type).toLowerCase();
 	},
 
-	get selector() {
-		return ".wysie-item" +
-		       (this.property? '[property="' + this.property + '"]' : '') +
-		       (this.type? '[typeof="' + this.type + '"]' : '');
-	},
-
 	get length() {
 		return this.items.length;
 	},
@@ -100,9 +94,9 @@ _.prototype = {
 	getData: function(o) {
 		o = o || {};
 
-		return this.items.map(function(item){
-			return item.getData(o);
-		}).filter(function(item){
+		return this.items.map(function(item) {
+			return item.deleted? null : item.getData(o);
+		}).filter(function(item) {
 			return item !== null;
 		});
 	},
@@ -174,6 +168,13 @@ _.prototype = {
 
 		this.items.push(item);
 
+		item.element._.fire("wysie:datachange", {
+			collection: this,
+			wysie: this.wysie,
+			action: "add",
+			item
+		});
+
 		return item;
 	},
 
@@ -210,9 +211,16 @@ _.prototype = {
 	},
 
 	delete: function(item) {
-		return $.transition(item.element, {opacity: 0}).then(()=>{
+		return $.transition(item.element, {opacity: 0}).then(() => {
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
+
+			item.element._.fire("wysie:datachange", {
+				collection: this,
+				wysie: this.wysie,
+				action: "delete",
+				item: item
+			});
 		});
 	},
 
@@ -258,7 +266,7 @@ _.prototype = {
 		// Using document fragments improved rendering performance by 60%
 		var fragment = document.createDocumentFragment();
 
-		data.forEach(function(datum){
+		data.forEach(function(datum) {
 			var item = this.createItem();
 
 			item.render(datum);

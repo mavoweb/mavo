@@ -24,7 +24,7 @@ var _ = self.Wysie = $.Class({
 		this.element.classList.add("wysie-root");
 
 		// Apply heuristic for collections
-		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element=>{
+		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element => {
 			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 				element.setAttribute("data-multiple", "");
 			}
@@ -130,11 +130,10 @@ var _ = self.Wysie = $.Class({
 	},
 
 	live: {
-		readonly: function(value) {
-			this.wrapper.classList[value? "add" : "remove"]("readonly");
-		},
 		editing: {
 			set: function(value) {
+				this.wrapper._.toggleClass("editing", value);
+
 				if (value) {
 					this.wrapper.setAttribute("data-editing", "");
 				}
@@ -152,9 +151,9 @@ var _ = self.Wysie = $.Class({
 		readable: function (identifier) {
 			// Is it camelCase?
 			return identifier && identifier
-			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase(); }) // camelCase?
+			         .replace(/([a-z])([A-Z][a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase(); }); // Capitalize
+			         .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 		},
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
@@ -170,17 +169,7 @@ var _ = self.Wysie = $.Class({
 				return data;
 			}
 
-			path = path.split("/");
-
-			for (var i=0, p; p=path[i++];) {
-				if (!data) {
-					return null;
-				}
-
-				data = data[p];
-			}
-
-			return data;
+			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
 		// Debugging function, should be moved
@@ -190,6 +179,25 @@ var _ = self.Wysie = $.Class({
 				callback.apply(this, arguments);
 				console.timeEnd(id);
 			};
+		},
+
+		observe: function(element, attribute, callback, oldValue) {
+			var observer = $.type(callback) == "function"? new MutationObserver(callback) : callback;
+
+			var options = attribute? {
+					attributes: true,
+					attributeFilter: [attribute],
+					attributeOldValue: !!oldValue
+				} : {
+					characterData: true,
+					childList: true,
+					subtree: true,
+					characterDataOldValue: !!oldValue
+				};
+
+			observer.observe(element, options);
+
+			return observer;
 		},
 
 		selectors: {
@@ -213,10 +221,24 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
+// Bliss plugins
 $.add("toggleClass", function(className, addIf) {
 	this.classList[addIf? "add" : "remove"](className);
 });
 
+$.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
+	Object.defineProperty(obj, property, {
+		get: function() {
+			return this[proxy][property];
+		},
+		configurable: true,
+		enumerable: true
+	});
+
+	return obj;
+});
+
+// Init wysie
 $.ready().then(evt => {
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);
@@ -226,20 +248,6 @@ $.ready().then(evt => {
 _.prototype.render = _.timed("render", _.prototype.render);
 
 })(Bliss, Bliss.$);
-
-// TODO implement this properly
-function safeval(expr, vars) {
-	for (var variable in vars) {
-		eval("var " + variable + " = " + JSON.stringify(vars[variable]));
-	}
-
-	try {
-		return eval(expr);
-	}
-	catch (e) {
-		return "ERROR!";
-	}
-}
 
 if (self.Promise && !Promise.prototype.done) {
 	Promise.prototype.done = function(callback) {

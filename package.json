@@ -1,6 +1,6 @@
 {
   "name": "wysie",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Create web applications with HTML and CSS",
   "main": "wysie.js",
   "scripts": {

@@ -1,4 +1,4 @@
-(function($, $$){
+(function($, $$) {
 
 const DISABLE_CACHE = false;
 
@@ -49,31 +49,18 @@ var _ = Wysie.Primitive = $.Class({
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
-		if (!this.attribute) {
-			// Data in content
-			this.observer = new MutationObserver(record => {
-				if (!this.editing) {
-					this.update(this.value);
+		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			if (this.attribute) {
+				var value = this.value;
+
+				if (record[0].oldValue != value) {
+					this.update(value);
 				}
-			});
-
-			this.observer.observe(this.element, {
-				characterData: true,
-				childList: true,
-				subtree: true
-			});
-		}
-		else if (!Wysie.is("formControl", this.element)) {
-			// Data in attribute
-			this.observer = new MutationObserver(record => {
+			}
+			else if (!this.editing) {
 				this.update(this.value);
-			});
-
-			this.observer.observe(this.element, {
-				attributes: true,
-				attributeFilter: [this.attribute]
-			});
-		}
+			}
+		});
 	},
 
 	get value() {
@@ -162,13 +149,16 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		this.element._.fire("wysie:propertychange", {
+		var evt = {
 			property: this.property,
 			value: value,
 			wysie: this.wysie,
 			unit: this,
 			dirty: this.editing
-		});
+		};
+
+		this.element._.fire("wysie:propertychange", evt);
+		this.element._.fire("wysie:datachange", evt);
 	},
 
 	save: function () {

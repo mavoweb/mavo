@@ -1,4 +1,4 @@
-(function($, $$){
+(function($, $$) {
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
@@ -27,14 +27,7 @@ var _ = Wysie.Scope = $.Class({
 				this.properties[obj.property] = obj;
 			});
 
-		// Handle expressions
-		this.cacheReferences();
-
-		this.element.addEventListener("wysie:propertychange", evt=>{
-			evt.stopPropagation(); // why?
-			this.updateReferences();
-		});
-		this.updateReferences();
+		Wysie.hooks.run("scope-init-end", this);
 	},
 
 	get isRoot() {
@@ -58,7 +51,7 @@ var _ = Wysie.Scope = $.Class({
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
-				if (data !== null) {
+				if (data !== null || o.null) {
 					ret[property] = data;
 				}
 			}
@@ -67,6 +60,39 @@ var _ = Wysie.Scope = $.Class({
 		$.extend(ret, this.unhandled);
 
 		return ret;
+	},
+
+	// Get data in JSON format, with ancestor and nested properties flattened,
+	// iff they do not collide with properties of this scope.
+	// Used in expressions.
+	getRelativeData: function() {
+		var scope = this;
+		var data = {};
+
+		// Get data of this scope and flatten ancestors
+		while (scope) {
+			var property = scope.property;
+			data = $.extend(scope.getData({dirty: true, computed: true, null: true}), data);
+
+			var parentScope = scope.parentScope;
+
+			scope = parentScope;
+		}
+
+		// Flatten nested objects
+		(function flatten(obj) {
+			$.each(obj, (key, value) => {
+				if (!(key in data)) {
+					data[key] = value;
+				}
+
+				if ($.type(value) === "object") {
+					flatten(value);
+				}
+			});
+		}).call(this, data);
+
+		return data;
 	},
 
 	edit: function() {
@@ -87,7 +113,9 @@ var _ = Wysie.Scope = $.Class({
 		this.editing = false;
 
 		// this should include collections
-		$.each(this.properties, (property, obj) => {obj.save();});
+		$.each(this.properties, (property, obj) => {
+			obj.save();
+		});
 
 		$.unbind(this.element, ".wysie:edit");
 
@@ -96,8 +124,10 @@ var _ = Wysie.Scope = $.Class({
 
 	cancel: function() {
 		this.editing = false;
-		
-		$.each(this.properties, (property, obj) => {obj.cancel();});
+
+		$.each(this.properties, (property, obj) => {
+			obj.cancel();
+		});
 
 		$.unbind(this.element, ".wysie:edit");
 	},
@@ -108,150 +138,20 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		// Properties in the data object but not in the template
-		this.unhandled = Object.keys(data).filter(property => !(property in this.properties));
+		data = data.isArray? data[0] : data;
 
-		$.each(this.properties, (property, obj) => {
-			var datum = Wysie.queryJSON(data, property);
+		this.unhandled = {};
 
-			if (datum || datum === 0) {
-				obj.render(datum);
-			}
-		});
-
-		// Render unhandled properties
-		/*
-		$.each(this.unhandled, (property, obj) => {
-			var prop = $.create("meta", {
-				property: property,
-				content: data[property],
-				inside: this.element
-			});
-
-			if (/number|boolean/.test(typeof data[property])) {
-				prop.setAttribute("datatype", typeof data[property]);
-			}
-
-			prop._.data.unit = Wysie.Unit.create(prop, this.wysie);
-			this.properties[property] = data[property];
-			delete this.unhandled[property];
-		});
-		*/
-
-		this.everSaved = true;
-	},
-
-	cacheReferences: function() {
-		var propertiesRegex = this.propertyNames.join("|");
-		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${.+?}", "gi");
-		this.references = [];
-
-		// TODO handle references when an attribute value is set later
-		var extractRefs = (element, attribute) => {
-			var text = attribute? attribute.value : element.textContent;
-			var matches = text.match(this.refRegex);
-			var propertyAttribute = $.value(element._.data.unit, "attribute");
-
-			if (matches) {
-				this.references.push({
-					element: element,
-					attribute: attribute && attribute.name,
-					text: text,
-					expressions: matches.map(match => {
-						return {
-							isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
-							expression: match.replace(/^\$?{|}$/g, ""),
-							isProperty: Wysie.is("property", element) && attribute.name == propertyAttribute
-						};
-					})
-				});
-			}
-		};
-
-		(function traverse(element) {
-			this.refRegex.lastIndex = 0;
-
-			if (this.refRegex.test(element.outerHTML || element.textContent)) {
-				$$(element.attributes).forEach(attribute => {
-					extractRefs(element, attribute);
-				});
-
-				$$(element.childNodes).forEach(traverse, this);
-
-				if (element.nodeType === 3) {
-					// Leaf node, extract references from content
-					extractRefs(element, null);
-				}
-			}
-		}).call(this, this.element);
-
-		this.updateReferences();
-	},
-
-	// Get data in JSON format, with ancestor and nested properties flattened,
-	// iff they do not collide with properties of this scope.
-	// Used in expressions.
-	getRelativeData: function() {
-		var scope = this;
-		var data = {};
-
-		// Get data of this scope and flatten ancestors
-		while (scope) {
-			var property = scope.property;
-			data = $.extend(scope.getData({dirty: true, computed: true}), data);
-
-			var parentScope = scope.parentScope;
-
-			scope = parentScope;
-		}
-
-		// Flatten nested objects
-		(function flatten(obj) {
-			$.each(obj, (key, value)=>{
-				if (!(key in data)) {
-					data[key] = value;
-				}
-
-				if ($.type(value) === "object") {
-					flatten(value);
-				}
-			});
-		}).call(this, data);
-
-		return data;
-	},
-
-	// Gets called every time a property changes in this or descendant scopes
-	// TODO special-case classes
-	updateReferences: function() {
-		if (!this.references.length) {
-			return;
-		}
-
-		// Ancestor properties should also be added as on the same level,
-		// with closer ancestors overriding higher up ancestors in case of collision
-		data = this.getRelativeData();
-
-		$$(this.references).forEach(ref => {
-			var newText = ref.text;
-
-			$$(ref.expressions).forEach(expr => {
-				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
-
-				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
-					value = Wysie.identifier(value);
-				}
-
-				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value || "");
-			});
-
-			if (ref.attribute) {
-				ref.element.setAttribute(ref.attribute, newText);
+		$.each(data, (property, datum) => {
+			if (property in this.properties) {
+				this.properties[property].render(datum);
 			}
 			else {
-				ref.element.textContent = newText;
+				this.unhandled[property] = datum;
 			}
 		});
+
+		this.everSaved = true;
 	},
 
 	// Check if this scope contains a property

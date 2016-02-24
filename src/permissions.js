@@ -27,7 +27,7 @@ var _ = Wysie.Permissions = $.Class({
 	// Set a bunch of permissions to false. Chainable.
 	off: function(actions) {
 		actions = Array.isArray(actions)? actions : [actions];
-		
+
 		actions.forEach(action => this[action] = false);
 
 		return this;
@@ -42,6 +42,14 @@ var _ = Wysie.Permissions = $.Class({
 			// Fired once the action cannot be done anymore, even though it could be done before
 			this.observe(actions, false, cannot);
 		}
+	},
+
+	// Like this.can(), but returns a promise
+	// Useful for things that you want to do only once
+	when: function(actions) {
+		return new Promise((resolve, reject) => {
+			this.can(actions, resolve, reject);
+		});
 	},
 
 	// Schedule a callback for when a set of permissions changes value

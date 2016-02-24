@@ -317,11 +317,10 @@
 		},
 
 		live: {
-			readonly: function readonly(value) {
-				this.wrapper.classList[value ? "add" : "remove"]("readonly");
-			},
 			editing: {
 				set: function set(value) {
+					this.wrapper._.toggleClass("editing", value);
+
 					if (value) {
 						this.wrapper.setAttribute("data-editing", "");
 					} else {
@@ -358,17 +357,7 @@
 					return data;
 				}
 
-				path = path.split("/");
-
-				for (var i = 0, p; p = path[i++];) {
-					if (!data) {
-						return null;
-					}
-
-					data = data[p];
-				}
-
-				return data;
+				return $.value.apply($, [data].concat(path.split("/")));
 			},
 
 			// Debugging function, should be moved
@@ -378,6 +367,25 @@
 					callback.apply(this, arguments);
 					console.timeEnd(id);
 				};
+			},
+
+			observe: function observe(element, attribute, callback, oldValue) {
+				var observer = $.type(callback) == "function" ? new MutationObserver(callback) : callback;
+
+				var options = attribute ? {
+					attributes: true,
+					attributeFilter: [attribute],
+					attributeOldValue: !!oldValue
+				} : {
+					characterData: true,
+					childList: true,
+					subtree: true,
+					characterDataOldValue: !!oldValue
+				};
+
+				observer.observe(element, options);
+
+				return observer;
 			},
 
 			selectors: {
@@ -405,10 +413,24 @@
 		}
 	});
 
+	// Bliss plugins
 	$.add("toggleClass", function (className, addIf) {
 		this.classList[addIf ? "add" : "remove"](className);
 	});
 
+	$.proxy = $.classProps.proxy = $.overload(function (obj, property, proxy) {
+		Object.defineProperty(obj, property, {
+			get: function get() {
+				return this[proxy][property];
+			},
+			configurable: true,
+			enumerable: true
+		});
+
+		return obj;
+	});
+
+	// Init wysie
 	$.ready().then(function (evt) {
 		$$("[data-store]").forEach(function (element) {
 			new Wysie(element);
@@ -417,19 +439,6 @@
 
 	_.prototype.render = _.timed("render", _.prototype.render);
 })(Bliss, Bliss.$);
-
-// TODO implement this properly
-function safeval(expr, vars) {
-	for (var variable in vars) {
-		eval("var " + variable + " = " + JSON.stringify(vars[variable]));
-	}
-
-	try {
-		return eval(expr);
-	} catch (e) {
-		return "ERROR!";
-	}
-}
 
 if (self.Promise && !Promise.prototype.done) {
 	Promise.prototype.done = function (callback) {
@@ -491,6 +500,16 @@ if (self.Promise && !Promise.prototype.done) {
 			}
 		},
 
+		// Like this.can(), but returns a promise
+		// Useful for things that you want to do only once
+		when: function when(actions) {
+			var _this4 = this;
+
+			return new Promise(function (resolve, reject) {
+				_this4.can(actions, resolve, reject);
+			});
+		},
+
 		// Schedule a callback for when a set of permissions changes value
 		observe: function observe(actions, value, callback) {
 			actions = Array.isArray(actions) ? actions : [actions];
@@ -508,10 +527,10 @@ if (self.Promise && !Promise.prototype.done) {
 		// If comparing with true, we want at least one to be true, i.e. OR
 		// If comparing with false, we want ALL to be false, i.e. NOR
 		is: function is(actions, able) {
-			var _this4 = this;
+			var _this5 = this;
 
 			var or = actions.map(function (action) {
-				return !!_this4[action];
+				return !!_this5[action];
 			}).reduce(function (prev, current) {
 				return prev || current;
 			});
@@ -521,7 +540,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// A single permission changed value
 		changed: function changed(action, value, from) {
-			var _this5 = this;
+			var _this6 = this;
 
 			from = !!from;
 			value = !!value;
@@ -539,7 +558,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// TODO add classes to wrapper
 			this.triggers.forEach(function (trigger) {
-				var match = _this5.is(trigger.actions, trigger.value);
+				var match = _this6.is(trigger.actions, trigger.value);
 
 				if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
 
@@ -611,7 +630,7 @@ if (self.Promise && !Promise.prototype.done) {
 	var _ = Wysie.Storage = $.Class({ abstract: true,
 
 		constructor: function constructor(wysie) {
-			var _this6 = this;
+			var _this7 = this;
 
 			this.wysie = wysie;
 
@@ -619,7 +638,7 @@ if (self.Promise && !Promise.prototype.done) {
 			this.originalHref = new URL(this.href, location);
 
 			this.loaded = new Promise(function (resolve, reject) {
-				_this6.wysie.wrapper.addEventListener("wysie:load", resolve);
+				_this7.wysie.wrapper.addEventListener("wysie:load", resolve);
 			});
 
 			this.authControls = {};
@@ -627,57 +646,57 @@ if (self.Promise && !Promise.prototype.done) {
 			this.permissions.can("login", function () {
 				// #login authenticates if only 1 wysie on the page, or if the first.
 				// Otherwise, we have to generate a slightly more complex hash
-				_this6.loginHash = "#login" + (Wysie.all[0] === _this6.wysie ? "" : "-" + _this6.wysie.id);
+				_this7.loginHash = "#login" + (Wysie.all[0] === _this7.wysie ? "" : "-" + _this7.wysie.id);
 
-				_this6.authControls.login = $.create({
+				_this7.authControls.login = $.create({
 					tag: "a",
-					href: _this6.loginHash,
+					href: _this7.loginHash,
 					textContent: "Login",
 					className: "login button",
 					events: {
 						click: function click(evt) {
 							evt.preventDefault();
-							_this6.login();
+							_this7.login();
 						}
 					},
-					after: $(".status", _this6.wysie.bar)
+					after: $(".status", _this7.wysie.bar)
 				});
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
 				var login;
 				(login = function login() {
-					if (location.hash === _this6.loginHash) {
+					if (location.hash === _this7.loginHash) {
 						history.replaceState(null, document.title, new URL("", location) + "");
-						_this6.login();
+						_this7.login();
 					}
 				})();
 				window.addEventListener("hashchange.wysie", login);
 			}, function () {
-				$.remove(_this6.authControls.login);
-				_this6.wysie.wrapper._.unbind("hashchange.wysie");
+				$.remove(_this7.authControls.login);
+				_this7.wysie.wrapper._.unbind("hashchange.wysie");
 			});
 
 			this.permissions.can("logout", function () {
-				_this6.authControls.logout = $.create({
+				_this7.authControls.logout = $.create({
 					tag: "button",
 					textContent: "Logout",
 					className: "logout",
 					events: {
-						click: _this6.logout.bind(_this6)
+						click: _this7.logout.bind(_this7)
 					},
-					after: $(".status", _this6.wysie.bar)
+					after: $(".status", _this7.wysie.bar)
 				});
 			}, function () {
-				$.remove(_this6.authControls.logout);
+				$.remove(_this7.authControls.logout);
 			});
 
 			// Update login status
 			this.wysie.wrapper.addEventListener("wysie:login.wysie", function (evt) {
-				$(".status", _this6.wysie.bar).innerHTML = "Logged in to " + _this6.id + " as <strong>" + evt.name + "</strong>";
+				$(".status", _this7.wysie.bar).innerHTML = "Logged in to " + _this7.id + " as <strong>" + evt.name + "</strong>";
 			});
 
 			this.wysie.wrapper.addEventListener("wysie:logout.wysie", function (evt) {
-				$(".status", _this6.wysie.bar).textContent = "";
+				$(".status", _this7.wysie.bar).textContent = "";
 			});
 		},
 
@@ -708,7 +727,7 @@ if (self.Promise && !Promise.prototype.done) {
 		ready: Promise.resolve(),
 
 		load: function load() {
-			var _this7 = this;
+			var _this8 = this;
 
 			var ret = this.ready;
 			var backup = this.backup;
@@ -718,33 +737,33 @@ if (self.Promise && !Promise.prototype.done) {
 			if (backup && backup.synced === false) {
 				// Unsynced backup, we need to restore & then save instead of reading remote
 				return ret.then(function () {
-					_this7.wysie.render(backup);
-					_this7.inProgress = false;
-					_this7.wysie.wrapper._.fire("wysie:load");
+					_this8.wysie.render(backup);
+					_this8.inProgress = false;
+					_this8.wysie.wrapper._.fire("wysie:load");
 
-					return _this7.save();
+					return _this8.save();
 				});
 			} else {
 				if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
 					// URL is not a hash, load it
 					ret = ret.then(function () {
 
-						return _this7.backendLoad ? _this7.backendLoad() : $.fetch(_this7.href, {
+						return _this8.backendLoad ? _this8.backendLoad() : $.fetch(_this8.href, {
 							responseType: "json"
 						});
 					}).then(function (xhr) {
-						_this7.inProgress = false;
-						_this7.wysie.wrapper._.fire("wysie:load");
+						_this8.inProgress = false;
+						_this8.wysie.wrapper._.fire("wysie:load");
 						// FIXME xhr.response cannot be expected in the case of this.backendLoad()
 						if (xhr.response) {
-							var data = Wysie.queryJSON(xhr.response, _this7.url.hash.slice(1));
+							var data = Wysie.queryJSON(xhr.response, _this8.url.hash.slice(1));
 
-							_this7.wysie.render(data);
+							_this8.wysie.render(data);
 						}
 
-						_this7.backup = {
+						_this8.backup = {
 							synced: true,
-							data: _this7.wysie.data
+							data: _this8.wysie.data
 						};
 					});
 				} else {
@@ -755,7 +774,7 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 
 				return ret.catch(function (err) {
-					_this7.inProgress = false;
+					_this8.inProgress = false;
 
 					if (err) {
 						console.error(err);
@@ -763,16 +782,16 @@ if (self.Promise && !Promise.prototype.done) {
 					}
 
 					if (backup) {
-						_this7.wysie.render(backup);
+						_this8.wysie.render(backup);
 					}
 
-					_this7.wysie.wrapper._.fire("wysie:load");
+					_this8.wysie.wrapper._.fire("wysie:load");
 				});
 			}
 		},
 
 		save: function save() {
-			var _this8 = this;
+			var _this9 = this;
 
 			this.backup = {
 				synced: !this._save,
@@ -781,16 +800,16 @@ if (self.Promise && !Promise.prototype.done) {
 
 			if (this.backendSave) {
 				return this.login().then(function () {
-					_this8.inProgress = "Saving";
+					_this9.inProgress = "Saving";
 
-					return _this8.backendSave().then(function () {
-						var backup = _this8.backup;
+					return _this9.backendSave().then(function () {
+						var backup = _this9.backup;
 						backup.synced = true;
-						_this8.backup = backup;
+						_this9.backup = backup;
 
-						_this8.wysie.wrapper._.fire("wysie:save");
+						_this9.wysie.wrapper._.fire("wysie:save");
 					}).done(function () {
-						_this8.inProgress = false;
+						_this9.inProgress = false;
 					});
 				});
 			}
@@ -957,10 +976,272 @@ if (self.Promise && !Promise.prototype.done) {
 
 (function ($, $$) {
 
+	var _ = Wysie.Expression = $.Class({
+		constructor: function constructor(expression) {
+			this.simple = expression[0] !== "$";
+			this.expression = expression.replace(/\$?\{|\}/g, "").trim();
+		},
+
+		get regex() {
+			return RegExp((this.simple ? "\\{" : "\\$\\{") + this.expression + "\\}");
+		},
+
+		eval: function _eval(data) {
+			this.oldValue = this.value;
+
+			return this.value = this.simple ? data[this.expression] : _.eval(this.expression, data);
+		},
+
+		toString: function toString() {
+			return (this.simple ? "{" : "${") + this.expression + "}";
+		},
+
+
+		static: {
+			eval: function _eval(expr, data) {
+				// TODO cache function and use cached if Object.keys(data) hasn't changed
+				var properties = Object.keys(data);
+
+				try {
+					var compiled = Function.apply(null, properties.concat("return " + expr + ";"));
+					return compiled.apply(self, properties.map(function (property) {
+						return data[property];
+					}));
+				} catch (e) {
+					console.warn("Error in " + expr + ": " + e);
+					return "N/A";
+				}
+			}
+		}
+	});
+
+	(function () {
+
+		var _ = Wysie.Expression.Text = $.Class({
+			constructor: function constructor(o) {
+				this.element = o.element;
+				this.attribute = o.attribute || null;
+				this.all = o.all;
+				this.template = this.tokenize(this.text);
+			},
+
+			get text() {
+				return this.attribute ? this.attribute.value : this.element.textContent;
+			},
+
+			set text(value) {
+				this.oldText = this.text;
+
+				if (this.attribute) {
+					this.attribute.value = value;
+				} else {
+					this.element.textContent = value;
+				}
+			},
+
+			update: function update(data) {
+				var _this10 = this;
+
+				this.text = this.template.map(function (expr) {
+					if (expr instanceof Wysie.Expression) {
+						var value = expr.eval(data) || "";
+
+						return expr.simple ? _this10.transform(value) : value;
+					}
+
+					return expr;
+				}).join("");
+			},
+
+			tokenize: function tokenize(template) {
+				return _.tokenize(template, this.expressionRegex);
+			},
+
+			lazy: {
+				transform: function transform() {
+					var ret = function ret(value) {
+						return value;
+					};
+
+					if (this.element.matches) {
+						var attribute = this.attribute && RegExp("\\b" + this.attribute.name + "\\b", "i");
+
+						for (var selector in _.special) {
+							if (this.element.matches(selector)) {
+								var transforms = _.special[selector];
+
+								for (var attrs in transforms) {
+									if (this.attribute && attribute.test(attrs) || !this.attribute && attrs == "null") {
+										var _ret = ret;
+										ret = function ret(value) {
+											return transforms[attrs](_ret(value));
+										};
+									}
+								}
+							}
+						}
+					}
+
+					return ret;
+				}
+			},
+
+			proxy: {
+				scope: "all",
+				allProperties: "all",
+				expressionRegex: "all"
+			},
+
+			static: {
+				tokenize: function tokenize(template, regex) {
+					var match,
+					    ret = [],
+					    lastIndex = 0;
+
+					regex.lastIndex = 0;
+
+					while ((match = regex.exec(template)) !== null) {
+						// Literal before the expression
+						if (match.index > lastIndex) {
+							ret.push(template.substring(lastIndex, match.index));
+						}
+
+						ret.push(new Wysie.Expression(match[0]));
+
+						lastIndex = regex.lastIndex;
+					}
+
+					// Literal at the end
+					if (lastIndex < template.length) {
+						ret.push(template.substring(lastIndex));
+					}
+
+					return ret;
+				},
+
+				// Handle simple expressions specially if they are in these elements/attributes
+				special: {
+					"*": {
+						"id, class, name": Wysie.identifier
+					}
+				}
+			}
+		});
+	})();
+
+	(function () {
+
+		var _ = Wysie.Expressions = $.Class({
+			constructor: function constructor(scope) {
+				var _this11 = this;
+
+				this.scope = scope;
+				this.scope.expressions = this;
+
+				this.all = [];
+
+				this.allProperties = Object.keys(this.scope.getRelativeData());
+
+				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|\\${.+?}", "g");
+
+				this.traverse();
+
+				if (this.all.length > 0) {
+					this.lastUpdated = 0;
+
+					this.update();
+
+					// Watch changes and update value
+					this.scope.element.addEventListener("wysie:datachange", function (evt) {
+						return _this11.update();
+					});
+				}
+			},
+
+			update: function callee() {
+				var _this12 = this;
+
+				var timePassed = performance.now() - this.lastUpdated;
+
+				if (this.lastUpdated && timePassed < _.THROTTLE) {
+					// Throttle
+					if (!callee.timeout) {
+						callee.timeout = setTimeout(function () {
+							return _this12.update();
+						}, _.THROTTLE - timePassed);
+					}
+
+					return;
+				}
+
+				clearTimeout(callee.timeout);
+
+				var data = this.scope.getRelativeData();
+
+				$$(this.all).forEach(function (ref) {
+					return ref.update(data);
+				});
+
+				this.lastUpdated = performance.now();
+				callee.timeout = 0;
+			},
+
+			extract: function extract(element, attribute) {
+				this.expressionRegex.lastIndex = 0;
+
+				if (this.expressionRegex.test(attribute ? attribute.value : element.textContent)) {
+
+					this.all.push(new Wysie.Expression.Text({
+						element: element, attribute: attribute,
+						all: this
+					}));
+				}
+			},
+
+			// Traverse an element, including attribute nodes, text nodes and all descendants
+			traverse: function traverse(element) {
+				var _this13 = this;
+
+				element = element || this.scope.element;
+
+				this.expressionRegex.lastIndex = 0;
+
+				if (this.expressionRegex.test(element.outerHTML || element.textContent)) {
+					$$(element.attributes).forEach(function (attribute) {
+						return _this13.extract(element, attribute);
+					});
+
+					if (element.nodeType === 3) {
+						// Text node
+						// Leaf node, extract references from content
+						this.extract(element, null);
+					}
+
+					if (element == this.scope.element || !(element._.data.unit instanceof Wysie.Scope)) {
+						$$(element.childNodes).forEach(function (child) {
+							return _this13.traverse(child);
+						});
+					}
+				}
+			},
+
+			static: {
+				THROTTLE: 25
+			}
+		});
+	})();
+
+	Wysie.hooks.add("scope-init-end", function (scope) {
+		new Wysie.Expressions(scope);
+	});
+})(Bliss, Bliss.$);
+
+(function ($, $$) {
+
 	var _ = Wysie.Scope = $.Class({
 		extends: Wysie.Unit,
 		constructor: function constructor(element, wysie, collection) {
-			var _this9 = this;
+			var _this14 = this;
 
 			var me = this;
 
@@ -971,28 +1252,21 @@ if (self.Promise && !Promise.prototype.done) {
 			// Create Wysie objects for all properties in this scope (primitives or scopes),
 			// but not properties in descendant scopes (they will be handled by their scope)
 			$$(Wysie.selectors.property, this.element).filter(function (property) {
-				return _this9.contains(property);
+				return _this14.contains(property);
 			}).forEach(function (prop) {
 				if (Wysie.is("multiple", prop)) {
 					var obj = new Wysie.Collection(prop, me.wysie);
 				} else {
-					obj = _.super.create(prop, _this9.wysie);
-					obj.scope = obj instanceof _ ? obj : _this9;
+					obj = _.super.create(prop, _this14.wysie);
+					obj.scope = obj instanceof _ ? obj : _this14;
 				}
 
-				obj.parentScope = _this9;
+				obj.parentScope = _this14;
 
-				_this9.properties[obj.property] = obj;
+				_this14.properties[obj.property] = obj;
 			});
 
-			// Handle expressions
-			this.cacheReferences();
-
-			this.element.addEventListener("wysie:propertychange", function (evt) {
-				evt.stopPropagation(); // why?
-				_this9.updateReferences();
-			});
-			this.updateReferences();
+			Wysie.hooks.run("scope-init-end", this);
 		},
 
 		get isRoot() {
@@ -1016,7 +1290,7 @@ if (self.Promise && !Promise.prototype.done) {
 				if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 					var data = obj.getData(o);
 
-					if (data !== null) {
+					if (data !== null || o.null) {
 						ret[property] = data;
 					}
 				}
@@ -1025,6 +1299,39 @@ if (self.Promise && !Promise.prototype.done) {
 			$.extend(ret, this.unhandled);
 
 			return ret;
+		},
+
+		// Get data in JSON format, with ancestor and nested properties flattened,
+		// iff they do not collide with properties of this scope.
+		// Used in expressions.
+		getRelativeData: function getRelativeData() {
+			var scope = this;
+			var data = {};
+
+			// Get data of this scope and flatten ancestors
+			while (scope) {
+				var property = scope.property;
+				data = $.extend(scope.getData({ dirty: true, computed: true, null: true }), data);
+
+				var parentScope = scope.parentScope;
+
+				scope = parentScope;
+			}
+
+			// Flatten nested objects
+			(function flatten(obj) {
+				$.each(obj, function (key, value) {
+					if (!(key in data)) {
+						data[key] = value;
+					}
+
+					if ($.type(value) === "object") {
+						flatten(value);
+					}
+				});
+			}).call(this, data);
+
+			return data;
 		},
 
 		edit: function edit() {
@@ -1065,157 +1372,25 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Inject data in this element
 		render: function render(data) {
-			var _this10 = this;
+			var _this15 = this;
 
 			if (!data) {
 				return;
 			}
 
-			// Properties in the data object but not in the template
-			this.unhandled = Object.keys(data).filter(function (property) {
-				return !(property in _this10.properties);
-			});
+			data = data.isArray ? data[0] : data;
 
-			$.each(this.properties, function (property, obj) {
-				var datum = Wysie.queryJSON(data, property);
+			this.unhandled = {};
 
-				if (datum || datum === 0) {
-					obj.render(datum);
+			$.each(data, function (property, datum) {
+				if (property in _this15.properties) {
+					_this15.properties[property].render(datum);
+				} else {
+					_this15.unhandled[property] = datum;
 				}
 			});
-
-			// Render unhandled properties
-			/*
-   $.each(this.unhandled, (property, obj) => {
-   	var prop = $.create("meta", {
-   		property: property,
-   		content: data[property],
-   		inside: this.element
-   	});
-   		if (/number|boolean/.test(typeof data[property])) {
-   		prop.setAttribute("datatype", typeof data[property]);
-   	}
-   		prop._.data.unit = Wysie.Unit.create(prop, this.wysie);
-   	this.properties[property] = data[property];
-   	delete this.unhandled[property];
-   });
-   */
 
 			this.everSaved = true;
-		},
-
-		cacheReferences: function cacheReferences() {
-			var _this11 = this;
-
-			var propertiesRegex = this.propertyNames.join("|");
-			this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${.+?}", "gi");
-			this.references = [];
-
-			// TODO handle references when an attribute value is set later
-			var extractRefs = function extractRefs(element, attribute) {
-				var text = attribute ? attribute.value : element.textContent;
-				var matches = text.match(_this11.refRegex);
-				var propertyAttribute = $.value(element._.data.unit, "attribute");
-
-				if (matches) {
-					_this11.references.push({
-						element: element,
-						attribute: attribute && attribute.name,
-						text: text,
-						expressions: matches.map(function (match) {
-							return {
-								isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
-								expression: match.replace(/^\$?{|}$/g, ""),
-								isProperty: Wysie.is("property", element) && attribute.name == propertyAttribute
-							};
-						})
-					});
-				}
-			};
-
-			(function traverse(element) {
-				this.refRegex.lastIndex = 0;
-
-				if (this.refRegex.test(element.outerHTML || element.textContent)) {
-					$$(element.attributes).forEach(function (attribute) {
-						extractRefs(element, attribute);
-					});
-
-					$$(element.childNodes).forEach(traverse, this);
-
-					if (element.nodeType === 3) {
-						// Leaf node, extract references from content
-						extractRefs(element, null);
-					}
-				}
-			}).call(this, this.element);
-
-			this.updateReferences();
-		},
-
-		// Get data in JSON format, with ancestor and nested properties flattened,
-		// iff they do not collide with properties of this scope.
-		// Used in expressions.
-		getRelativeData: function getRelativeData() {
-			var scope = this;
-			var data = {};
-
-			// Get data of this scope and flatten ancestors
-			while (scope) {
-				var property = scope.property;
-				data = $.extend(scope.getData({ dirty: true, computed: true }), data);
-
-				var parentScope = scope.parentScope;
-
-				scope = parentScope;
-			}
-
-			// Flatten nested objects
-			(function flatten(obj) {
-				$.each(obj, function (key, value) {
-					if (!(key in data)) {
-						data[key] = value;
-					}
-
-					if ($.type(value) === "object") {
-						flatten(value);
-					}
-				});
-			}).call(this, data);
-
-			return data;
-		},
-
-		// Gets called every time a property changes in this or descendant scopes
-		// TODO special-case classes
-		updateReferences: function updateReferences() {
-			if (!this.references.length) {
-				return;
-			}
-
-			// Ancestor properties should also be added as on the same level,
-			// with closer ancestors overriding higher up ancestors in case of collision
-			data = this.getRelativeData();
-
-			$$(this.references).forEach(function (ref) {
-				var newText = ref.text;
-
-				$$(ref.expressions).forEach(function (expr) {
-					var value = expr.isSimple ? data[expr.expression] : safeval(expr.expression, data);
-
-					if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
-						value = Wysie.identifier(value);
-					}
-
-					newText = newText.replace((expr.isSimple ? "{" : "${") + expr.expression + "}", value || "");
-				});
-
-				if (ref.attribute) {
-					ref.element.setAttribute(ref.attribute, newText);
-				} else {
-					ref.element.textContent = newText;
-				}
-			});
 		},
 
 		// Check if this scope contains a property
@@ -1272,7 +1447,7 @@ if (self.Promise && !Promise.prototype.done) {
 	var _ = Wysie.Primitive = $.Class({
 		extends: Wysie.Unit,
 		constructor: function constructor(element, wysie, collection) {
-			var _this12 = this;
+			var _this16 = this;
 
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
@@ -1294,8 +1469,8 @@ if (self.Promise && !Promise.prototype.done) {
 				if (this.exposed) {
 					// Editing exposed elements saves the wysie
 					this.element.addEventListener("change", function (evt) {
-						if (!_this12.wysie.editing && evt.target === _this12.editor && (_this12.scope.everSaved || !_this12.scope.collection)) {
-							_this12.wysie.save();
+						if (!_this16.wysie.editing && evt.target === _this16.editor && (_this16.scope.everSaved || !_this16.scope.collection)) {
+							_this16.wysie.save();
 						}
 					});
 
@@ -1318,30 +1493,17 @@ if (self.Promise && !Promise.prototype.done) {
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
 			// so we cannot depend on mutation observers for everything :(
-			if (!this.attribute) {
-				// Data in content
-				this.observer = new MutationObserver(function (record) {
-					if (!_this12.editing) {
-						_this12.update(_this12.value);
+			this.observer = Wysie.observe(this.element, this.attribute, function (record) {
+				if (_this16.attribute) {
+					var value = _this16.value;
+
+					if (record[0].oldValue != value) {
+						_this16.update(value);
 					}
-				});
-
-				this.observer.observe(this.element, {
-					characterData: true,
-					childList: true,
-					subtree: true
-				});
-			} else if (!Wysie.is("formControl", this.element)) {
-				// Data in attribute
-				this.observer = new MutationObserver(function (record) {
-					_this12.update(_this12.value);
-				});
-
-				this.observer.observe(this.element, {
-					attributes: true,
-					attributeFilter: [this.attribute]
-				});
-			}
+				} else if (!_this16.editing) {
+					_this16.update(_this16.value);
+				}
+			});
 		},
 
 		get value() {
@@ -1428,13 +1590,16 @@ if (self.Promise && !Promise.prototype.done) {
 				this.element.textContent = this.humanReadable(value);
 			}
 
-			this.element._.fire("wysie:propertychange", {
+			var evt = {
 				property: this.property,
 				value: value,
 				wysie: this.wysie,
 				unit: this,
 				dirty: this.editing
-			});
+			};
+
+			this.element._.fire("wysie:propertychange", evt);
+			this.element._.fire("wysie:datachange", evt);
 		},
 
 		save: function save() {
@@ -1477,7 +1642,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Prepare to be edited
 		// Called when root edit button is pressed
 		preEdit: function preEdit() {
-			var _this13 = this;
+			var _this17 = this;
 
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
@@ -1489,19 +1654,19 @@ if (self.Promise && !Promise.prototype.done) {
 			this.element._.events({
 				// click is needed too because it works with the keyboard as well
 				"mousedown.wysie:preedit click.wysie:preedit": function mousedownWysiePreeditClickWysiePreedit(e) {
-					return _this13.edit();
+					return _this17.edit();
 				},
 				"focus.wysie:preedit": function focusWysiePreedit(e) {
-					_this13.edit();
+					_this17.edit();
 
-					if (!_this13.popup) {
-						_this13.editor.focus();
+					if (!_this17.popup) {
+						_this17.editor.focus();
 					}
 				},
 				"click.wysie:edit": function clickWysieEdit(evt) {
 					// Prevent default actions while editing
 					// e.g. following links etc
-					if (!_this13.exposed) {
+					if (!_this17.exposed) {
 						evt.preventDefault();
 					}
 				}
@@ -1514,7 +1679,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Called only the first time this primitive is edited
 		initEdit: function initEdit() {
-			var _this14 = this;
+			var _this18 = this;
 
 			// Linked widgets
 			if (this.element.hasAttribute("data-input")) {
@@ -1554,31 +1719,31 @@ if (self.Promise && !Promise.prototype.done) {
 
 			this.editor._.events({
 				"input": function input(evt) {
-					if (_this14.attribute) {
-						_this14.element.setAttribute(_this14.attribute, _this14.editorValue);
+					if (_this18.attribute) {
+						_this18.element.setAttribute(_this18.attribute, _this18.editorValue);
 					}
 
-					if (_this14.exposed || !_this14.attribute) {
-						_this14.update(_this14.editorValue);
+					if (_this18.exposed || !_this18.attribute) {
+						_this18.update(_this18.editorValue);
 					}
 				},
 				"focus": function focus(evt) {
-					_this14.editor.select && _this14.editor.select();
+					_this18.editor.select && _this18.editor.select();
 				},
 				"keyup": function keyup(evt) {
-					if (_this14.popup && evt.keyCode == 13 || evt.keyCode == 27) {
-						if (_this14.popup.contains(document.activeElement)) {
-							_this14.element.focus();
+					if (_this18.popup && evt.keyCode == 13 || evt.keyCode == 27) {
+						if (_this18.popup.contains(document.activeElement)) {
+							_this18.element.focus();
 						}
 
 						evt.stopPropagation();
-						_this14.hidePopup();
+						_this18.hidePopup();
 					}
 				},
 				"wysie:propertychange": function wysiePropertychange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
-						$.fire(_this14.editor, "input");
+						$.fire(_this18.editor, "input");
 					}
 				}
 			});
@@ -1613,8 +1778,8 @@ if (self.Promise && !Promise.prototype.done) {
 
 					// Toggle popup events & methods
 					var hideCallback = function hideCallback(evt) {
-						if (!_this14.popup.contains(evt.target) && !_this14.element.contains(evt.target)) {
-							_this14.hidePopup();
+						if (!_this18.popup.contains(evt.target) && !_this18.element.contains(evt.target)) {
+							_this18.hidePopup();
 						}
 					};
 
@@ -1633,18 +1798,18 @@ if (self.Promise && !Promise.prototype.done) {
 					};
 
 					this.hidePopup = function () {
-						var _this15 = this;
+						var _this19 = this;
 
 						$.unbind(document, "focus click", hideCallback, true);
 
 						this.popup.setAttribute("hidden", ""); // trigger transition
 
 						setTimeout(function () {
-							$.remove(_this15.popup);
+							$.remove(_this19.popup);
 						}, 400); // TODO transition-duration could override this
 
 						$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", function (evt) {
-							_this15.showPopup();
+							_this19.showPopup();
 						}, true);
 					};
 				}
@@ -1919,7 +2084,7 @@ if (self.Promise && !Promise.prototype.done) {
 (function ($, $$) {
 
 	var _ = Wysie.Collection = function (template, wysie) {
-		var _this16 = this;
+		var _this20 = this;
 
 		var me = this;
 
@@ -1943,7 +2108,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Find add button if provided, or generate one
 		var closestCollection = this.template.parentNode.closest(".wysie-item");
 		this.addButton = $$("button.add-" + this.property + ", .wysie-add, button.add", closestCollection).filter(function (button) {
-			return !_this16.template.contains(button);
+			return !_this20.template.contains(button);
 		})[0];
 
 		this.addButton = this.addButton || document.createElement("button")._.set({
@@ -1954,7 +2119,7 @@ if (self.Promise && !Promise.prototype.done) {
 		this.addButton.addEventListener("click", function (evt) {
 			evt.preventDefault();
 
-			_this16.add().edit();
+			_this20.add().edit();
 		});
 
 		/*
@@ -2000,10 +2165,6 @@ if (self.Promise && !Promise.prototype.done) {
 			return Wysie.readable(this.property || this.type).toLowerCase();
 		},
 
-		get selector() {
-			return ".wysie-item" + (this.property ? '[property="' + this.property + '"]' : '') + (this.type ? '[typeof="' + this.type + '"]' : '');
-		},
-
 		get length() {
 			return this.items.length;
 		},
@@ -2016,7 +2177,7 @@ if (self.Promise && !Promise.prototype.done) {
 			o = o || {};
 
 			return this.items.map(function (item) {
-				return item.getData(o);
+				return item.deleted ? null : item.getData(o);
 			}).filter(function (item) {
 				return item !== null;
 			});
@@ -2027,7 +2188,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Create item but don't insert it anywhere
 		// Mostly used internally
 		createItem: function createItem() {
-			var _this17 = this;
+			var _this21 = this;
 
 			var element = this.template.cloneNode(true);
 
@@ -2048,7 +2209,7 @@ if (self.Promise && !Promise.prototype.done) {
 					events: {
 						"click": function click(evt) {
 							if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-								_this17.delete(item);
+								_this21.delete(item);
 							}
 						},
 						"mouseenter mouseleave": function mouseenterMouseleave(evt) {
@@ -2062,12 +2223,12 @@ if (self.Promise && !Promise.prototype.done) {
 					className: "add",
 					events: {
 						"click": function click(evt) {
-							var i = _this17.items.indexOf(item);
+							var i = _this21.items.indexOf(item);
 
 							if (i > -1) {
-								var newItem = _this17.createItem();
+								var newItem = _this21.createItem();
 
-								_this17.items.splice(i, 0, newItem);
+								_this21.items.splice(i, 0, newItem);
 
 								newItem.element._.after(element);
 
@@ -2088,6 +2249,13 @@ if (self.Promise && !Promise.prototype.done) {
 			item.element._.before(this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker);
 
 			this.items.push(item);
+
+			item.element._.fire("wysie:datachange", {
+				collection: this,
+				wysie: this.wysie,
+				action: "add",
+				item: item
+			});
 
 			return item;
 		},
@@ -2125,19 +2293,28 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		delete: function _delete(item) {
+			var _this22 = this;
+
 			return $.transition(item.element, { opacity: 0 }).then(function () {
 				item.deleted = true; // schedule for deletion
 				item.element.style.opacity = "";
+
+				item.element._.fire("wysie:datachange", {
+					collection: _this22,
+					wysie: _this22.wysie,
+					action: "delete",
+					item: item
+				});
 			});
 		},
 
 		save: function save() {
-			var _this18 = this;
+			var _this23 = this;
 
 			this.items.forEach(function (item) {
 				if (item.deleted) {
 					$.remove(item.element);
-					_this18.items.splice(_this18.items.indexOf(item), 1);
+					_this23.items.splice(_this23.items.indexOf(item), 1);
 				} else {
 					item.save();
 					item.element.classList.remove("wysie-item-hovered");
@@ -2146,7 +2323,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		cancel: function cancel() {
-			var _this19 = this;
+			var _this24 = this;
 
 			this.items.forEach(function (item, i) {
 				// Revert all properties
@@ -2156,7 +2333,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 				// Delete added items
 				if (item instanceof Wysie.Scope && !item.everSaved) {
-					_this19.items.splice(i, 1);
+					_this24.items.splice(i, 1);
 					$.remove(item.element);
 				}
 
@@ -2201,7 +2378,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		constructor: function constructor() {
-			var _this20 = this;
+			var _this25 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			if (this.wysie.store.protocol != "dropbox:") {
@@ -2224,11 +2401,11 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 
 				// Internal filename (to be used for saving)
-				_this20.filename = (_this20.param("path") || "") + new URL(_this20.wysie.store).pathname.match(/[^/]*$/)[0];
+				_this25.filename = (_this25.param("path") || "") + new URL(_this25.wysie.store).pathname.match(/[^/]*$/)[0];
 
-				_this20.client = new Dropbox.Client({ key: _this20.param("key") });
+				_this25.client = new Dropbox.Client({ key: _this25.param("key") });
 			}).then(function () {
-				_this20.login(true);
+				_this25.login(true);
 			});
 		},
 
@@ -2241,10 +2418,10 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		put: function put(file) {
-			var _this21 = this;
+			var _this26 = this;
 
 			return new Promise(function (resolve, reject) {
-				_this21.client.writeFile(file.name, file.data, function (error, stat) {
+				_this26.client.writeFile(file.name, file.data, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -2256,27 +2433,27 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		login: function login(passive) {
-			var _this22 = this;
+			var _this27 = this;
 
 			return this.ready.then(function () {
-				return _this22.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this22.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this27.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this27.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this22.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this27.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this22.client.isAuthenticated()) {
+						if (_this27.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this22.permissions.on(["logout", "edit"]);
+							_this27.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this22.permissions.off(["logout", "edit", "add", "delete"]);
+							_this27.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -2284,22 +2461,22 @@ if (self.Promise && !Promise.prototype.done) {
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this22.client.getAccountInfo(function (error, accountInfo) {
+				_this27.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						_this22.wysie.wrapper._.fire("wysie:login", accountInfo);
+						_this27.wysie.wrapper._.fire("wysie:login", accountInfo);
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this23 = this;
+			var _this28 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this23.client.signOut(null, function () {
-					_this23.permissions.off(["edit", "add", "delete"]).on("login");
+				_this28.client.signOut(null, function () {
+					_this28.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this23.wysie.wrapper._.fire("wysie:logout");
+					_this28.wysie.wrapper._.fire("wysie:logout");
 					resolve();
 				});
 			});

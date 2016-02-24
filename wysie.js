@@ -213,7 +213,7 @@ var _ = self.Wysie = $.Class({
 		this.element.classList.add("wysie-root");
 
 		// Apply heuristic for collections
-		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element=>{
+		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element => {
 			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 				element.setAttribute("data-multiple", "");
 			}
@@ -319,11 +319,10 @@ var _ = self.Wysie = $.Class({
 	},
 
 	live: {
-		readonly: function(value) {
-			this.wrapper.classList[value? "add" : "remove"]("readonly");
-		},
 		editing: {
 			set: function(value) {
+				this.wrapper._.toggleClass("editing", value);
+
 				if (value) {
 					this.wrapper.setAttribute("data-editing", "");
 				}
@@ -341,9 +340,9 @@ var _ = self.Wysie = $.Class({
 		readable: function (identifier) {
 			// Is it camelCase?
 			return identifier && identifier
-			         .replace(/([a-z])([A-Z][a-z])/g, function($0, $1, $2) { return $1 + " " + $2.toLowerCase(); }) // camelCase?
+			         .replace(/([a-z])([A-Z][a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-			         .replace(/^[a-z]/, function($0) { return $0.toUpperCase(); }); // Capitalize
+			         .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 		},
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
@@ -359,17 +358,7 @@ var _ = self.Wysie = $.Class({
 				return data;
 			}
 
-			path = path.split("/");
-
-			for (var i=0, p; p=path[i++];) {
-				if (!data) {
-					return null;
-				}
-
-				data = data[p];
-			}
-
-			return data;
+			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
 		// Debugging function, should be moved
@@ -379,6 +368,25 @@ var _ = self.Wysie = $.Class({
 				callback.apply(this, arguments);
 				console.timeEnd(id);
 			};
+		},
+
+		observe: function(element, attribute, callback, oldValue) {
+			var observer = $.type(callback) == "function"? new MutationObserver(callback) : callback;
+
+			var options = attribute? {
+					attributes: true,
+					attributeFilter: [attribute],
+					attributeOldValue: !!oldValue
+				} : {
+					characterData: true,
+					childList: true,
+					subtree: true,
+					characterDataOldValue: !!oldValue
+				};
+
+			observer.observe(element, options);
+
+			return observer;
 		},
 
 		selectors: {
@@ -402,10 +410,24 @@ var _ = self.Wysie = $.Class({
 	}
 });
 
+// Bliss plugins
 $.add("toggleClass", function(className, addIf) {
 	this.classList[addIf? "add" : "remove"](className);
 });
 
+$.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
+	Object.defineProperty(obj, property, {
+		get: function() {
+			return this[proxy][property];
+		},
+		configurable: true,
+		enumerable: true
+	});
+
+	return obj;
+});
+
+// Init wysie
 $.ready().then(evt => {
 	$$("[data-store]").forEach(function (element) {
 		new Wysie(element);
@@ -415,20 +437,6 @@ $.ready().then(evt => {
 _.prototype.render = _.timed("render", _.prototype.render);
 
 })(Bliss, Bliss.$);
-
-// TODO implement this properly
-function safeval(expr, vars) {
-	for (var variable in vars) {
-		eval("var " + variable + " = " + JSON.stringify(vars[variable]));
-	}
-
-	try {
-		return eval(expr);
-	}
-	catch (e) {
-		return "ERROR!";
-	}
-}
 
 if (self.Promise && !Promise.prototype.done) {
 	Promise.prototype.done = function(callback) {
@@ -466,7 +474,7 @@ var _ = Wysie.Permissions = $.Class({
 	// Set a bunch of permissions to false. Chainable.
 	off: function(actions) {
 		actions = Array.isArray(actions)? actions : [actions];
-		
+
 		actions.forEach(action => this[action] = false);
 
 		return this;
@@ -481,6 +489,14 @@ var _ = Wysie.Permissions = $.Class({
 			// Fired once the action cannot be done anymore, even though it could be done before
 			this.observe(actions, false, cannot);
 		}
+	},
+
+	// Like this.can(), but returns a promise
+	// Useful for things that you want to do only once
+	when: function(actions) {
+		return new Promise((resolve, reject) => {
+			this.can(actions, resolve, reject);
+		});
 	},
 
 	// Schedule a callback for when a set of permissions changes value
@@ -942,7 +958,247 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 })(Bliss, Bliss.$);
 
 
-(function($, $$){
+(function($, $$) {
+
+var _ = Wysie.Expression = $.Class({
+	constructor: function(expression) {
+		this.simple = expression[0] !== "$";
+		this.expression = expression.replace(/\$?\{|\}/g, "").trim();
+	},
+
+	get regex() {
+		return RegExp((this.simple? "\\{" : "\\$\\{") + this.expression + "\\}");
+	},
+
+	eval: function(data) {
+		this.oldValue = this.value;
+
+		return this.value = this.simple? data[this.expression] : _.eval(this.expression, data);
+	},
+
+	toString() {
+		return (this.simple? "{" : "${") + this.expression + "}";
+	},
+
+	static: {
+		eval: function(expr, data) {
+			// TODO cache function and use cached if Object.keys(data) hasn't changed
+			var properties = Object.keys(data);
+
+			try {
+				var compiled = Function.apply(null, properties.concat(`return ${expr};`));
+				return compiled.apply(self, properties.map(property => data[property]));
+			}
+			catch (e) {
+				console.warn(`Error in ${expr}: ` + e);
+				return `N/A`;
+			}
+		}
+	}
+});
+
+(function() {
+
+var _ = Wysie.Expression.Text = $.Class({
+	constructor: function(o) {
+		this.element = o.element;
+		this.attribute = o.attribute || null;
+		this.all = o.all;
+		this.template = this.tokenize(this.text);
+	},
+
+	get text() {
+		return this.attribute? this.attribute.value : this.element.textContent;
+	},
+
+	set text(value) {
+		this.oldText = this.text;
+
+		if (this.attribute) {
+			this.attribute.value = value;
+		}
+		else {
+			this.element.textContent = value;
+		}
+	},
+
+	update: function(data) {
+		this.text = this.template.map(expr => {
+			if (expr instanceof Wysie.Expression) {
+				var value = expr.eval(data) || "";
+
+				return expr.simple? this.transform(value) : value;
+			}
+
+			return expr;
+		}).join("");
+	},
+
+	tokenize: function(template) {
+		return _.tokenize(template, this.expressionRegex);
+	},
+
+	lazy: {
+		transform: function() {
+			var ret = value => value;
+
+			if (this.element.matches) {
+				var attribute = this.attribute && RegExp("\\b" + this.attribute.name + "\\b", "i");
+
+				for (var selector in _.special) {
+					if (this.element.matches(selector)) {
+						var transforms = _.special[selector];
+
+						for (var attrs in transforms) {
+							if (this.attribute && attribute.test(attrs) || !this.attribute && attrs == "null") {
+								var _ret = ret;
+								ret = value => transforms[attrs](_ret(value));
+							}
+						}
+					}
+				}
+			}
+
+			return ret;
+		}
+	},
+
+	proxy: {
+		scope: "all",
+		allProperties: "all",
+		expressionRegex: "all"
+	},
+
+	static: {
+		tokenize: function(template, regex) {
+			var match, ret = [], lastIndex = 0;
+
+			regex.lastIndex = 0;
+
+			while ((match = regex.exec(template)) !== null) {
+				// Literal before the expression
+				if (match.index > lastIndex) {
+					ret.push(template.substring(lastIndex, match.index));
+				}
+
+				ret.push(new Wysie.Expression(match[0]));
+
+				lastIndex = regex.lastIndex;
+			}
+
+			// Literal at the end
+			if (lastIndex < template.length) {
+				ret.push(template.substring(lastIndex));
+			}
+
+			return ret;
+		},
+
+		// Handle simple expressions specially if they are in these elements/attributes
+		special: {
+			"*": {
+				"id, class, name": Wysie.identifier
+			}
+		}
+	}
+});
+
+})();
+
+(function() {
+
+var _ = Wysie.Expressions = $.Class({
+	constructor: function(scope) {
+		this.scope = scope;
+		this.scope.expressions = this;
+
+		this.all = [];
+
+		this.allProperties = Object.keys(this.scope.getRelativeData());
+
+		this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|\\${.+?}", "g");
+
+		this.traverse();
+
+		if (this.all.length > 0) {
+			this.lastUpdated = 0;
+
+			this.update();
+
+			// Watch changes and update value
+			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
+		}
+	},
+
+	update: function callee() {
+		var timePassed = performance.now() - this.lastUpdated;
+		
+		if (this.lastUpdated && timePassed < _.THROTTLE) {
+			// Throttle
+			if (!callee.timeout) {
+				callee.timeout = setTimeout(() => this.update(), _.THROTTLE - timePassed);
+			}
+
+			return;
+		}
+
+		clearTimeout(callee.timeout);
+
+		var data = this.scope.getRelativeData();
+
+		$$(this.all).forEach(ref => ref.update(data));
+
+		this.lastUpdated = performance.now();
+		callee.timeout = 0;
+	},
+
+	extract: function(element, attribute) {
+		this.expressionRegex.lastIndex = 0;
+
+		if (this.expressionRegex.test(attribute? attribute.value : element.textContent)) {
+
+			this.all.push(new Wysie.Expression.Text({
+				element, attribute,
+				all: this
+			}));
+		}
+	},
+
+	// Traverse an element, including attribute nodes, text nodes and all descendants
+	traverse: function(element) {
+		element = element || this.scope.element;
+
+		this.expressionRegex.lastIndex = 0;
+
+		if (this.expressionRegex.test(element.outerHTML || element.textContent)) {
+			$$(element.attributes).forEach(attribute => this.extract(element, attribute));
+
+			if (element.nodeType === 3) { // Text node
+				// Leaf node, extract references from content
+				this.extract(element, null);
+			}
+
+			if (element == this.scope.element || !(element._.data.unit instanceof Wysie.Scope)) {
+				$$(element.childNodes).forEach(child => this.traverse(child));
+			}
+		}
+	},
+
+	static: {
+		THROTTLE: 25
+	}
+});
+
+})();
+
+Wysie.hooks.add("scope-init-end", function(scope) {
+	new Wysie.Expressions(scope);
+});
+
+})(Bliss, Bliss.$);
+
+
+(function($, $$) {
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
@@ -971,14 +1227,7 @@ var _ = Wysie.Scope = $.Class({
 				this.properties[obj.property] = obj;
 			});
 
-		// Handle expressions
-		this.cacheReferences();
-
-		this.element.addEventListener("wysie:propertychange", evt=>{
-			evt.stopPropagation(); // why?
-			this.updateReferences();
-		});
-		this.updateReferences();
+		Wysie.hooks.run("scope-init-end", this);
 	},
 
 	get isRoot() {
@@ -1002,7 +1251,7 @@ var _ = Wysie.Scope = $.Class({
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
-				if (data !== null) {
+				if (data !== null || o.null) {
 					ret[property] = data;
 				}
 			}
@@ -1011,6 +1260,39 @@ var _ = Wysie.Scope = $.Class({
 		$.extend(ret, this.unhandled);
 
 		return ret;
+	},
+
+	// Get data in JSON format, with ancestor and nested properties flattened,
+	// iff they do not collide with properties of this scope.
+	// Used in expressions.
+	getRelativeData: function() {
+		var scope = this;
+		var data = {};
+
+		// Get data of this scope and flatten ancestors
+		while (scope) {
+			var property = scope.property;
+			data = $.extend(scope.getData({dirty: true, computed: true, null: true}), data);
+
+			var parentScope = scope.parentScope;
+
+			scope = parentScope;
+		}
+
+		// Flatten nested objects
+		(function flatten(obj) {
+			$.each(obj, (key, value) => {
+				if (!(key in data)) {
+					data[key] = value;
+				}
+
+				if ($.type(value) === "object") {
+					flatten(value);
+				}
+			});
+		}).call(this, data);
+
+		return data;
 	},
 
 	edit: function() {
@@ -1031,7 +1313,9 @@ var _ = Wysie.Scope = $.Class({
 		this.editing = false;
 
 		// this should include collections
-		$.each(this.properties, (property, obj) => {obj.save();});
+		$.each(this.properties, (property, obj) => {
+			obj.save();
+		});
 
 		$.unbind(this.element, ".wysie:edit");
 
@@ -1040,8 +1324,10 @@ var _ = Wysie.Scope = $.Class({
 
 	cancel: function() {
 		this.editing = false;
-		
-		$.each(this.properties, (property, obj) => {obj.cancel();});
+
+		$.each(this.properties, (property, obj) => {
+			obj.cancel();
+		});
 
 		$.unbind(this.element, ".wysie:edit");
 	},
@@ -1052,150 +1338,20 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		// Properties in the data object but not in the template
-		this.unhandled = Object.keys(data).filter(property => !(property in this.properties));
+		data = data.isArray? data[0] : data;
 
-		$.each(this.properties, (property, obj) => {
-			var datum = Wysie.queryJSON(data, property);
+		this.unhandled = {};
 
-			if (datum || datum === 0) {
-				obj.render(datum);
-			}
-		});
-
-		// Render unhandled properties
-		/*
-		$.each(this.unhandled, (property, obj) => {
-			var prop = $.create("meta", {
-				property: property,
-				content: data[property],
-				inside: this.element
-			});
-
-			if (/number|boolean/.test(typeof data[property])) {
-				prop.setAttribute("datatype", typeof data[property]);
-			}
-
-			prop._.data.unit = Wysie.Unit.create(prop, this.wysie);
-			this.properties[property] = data[property];
-			delete this.unhandled[property];
-		});
-		*/
-
-		this.everSaved = true;
-	},
-
-	cacheReferences: function() {
-		var propertiesRegex = this.propertyNames.join("|");
-		this.refRegex = RegExp("{(?:" + propertiesRegex + ")}|\\${.+?}", "gi");
-		this.references = [];
-
-		// TODO handle references when an attribute value is set later
-		var extractRefs = (element, attribute) => {
-			var text = attribute? attribute.value : element.textContent;
-			var matches = text.match(this.refRegex);
-			var propertyAttribute = $.value(element._.data.unit, "attribute");
-
-			if (matches) {
-				this.references.push({
-					element: element,
-					attribute: attribute && attribute.name,
-					text: text,
-					expressions: matches.map(match => {
-						return {
-							isSimple: match.indexOf("$") !== 0, // Is a simple property reference?
-							expression: match.replace(/^\$?{|}$/g, ""),
-							isProperty: Wysie.is("property", element) && attribute.name == propertyAttribute
-						};
-					})
-				});
-			}
-		};
-
-		(function traverse(element) {
-			this.refRegex.lastIndex = 0;
-
-			if (this.refRegex.test(element.outerHTML || element.textContent)) {
-				$$(element.attributes).forEach(attribute => {
-					extractRefs(element, attribute);
-				});
-
-				$$(element.childNodes).forEach(traverse, this);
-
-				if (element.nodeType === 3) {
-					// Leaf node, extract references from content
-					extractRefs(element, null);
-				}
-			}
-		}).call(this, this.element);
-
-		this.updateReferences();
-	},
-
-	// Get data in JSON format, with ancestor and nested properties flattened,
-	// iff they do not collide with properties of this scope.
-	// Used in expressions.
-	getRelativeData: function() {
-		var scope = this;
-		var data = {};
-
-		// Get data of this scope and flatten ancestors
-		while (scope) {
-			var property = scope.property;
-			data = $.extend(scope.getData({dirty: true, computed: true}), data);
-
-			var parentScope = scope.parentScope;
-
-			scope = parentScope;
-		}
-
-		// Flatten nested objects
-		(function flatten(obj) {
-			$.each(obj, (key, value)=>{
-				if (!(key in data)) {
-					data[key] = value;
-				}
-
-				if ($.type(value) === "object") {
-					flatten(value);
-				}
-			});
-		}).call(this, data);
-
-		return data;
-	},
-
-	// Gets called every time a property changes in this or descendant scopes
-	// TODO special-case classes
-	updateReferences: function() {
-		if (!this.references.length) {
-			return;
-		}
-
-		// Ancestor properties should also be added as on the same level,
-		// with closer ancestors overriding higher up ancestors in case of collision
-		data = this.getRelativeData();
-
-		$$(this.references).forEach(ref => {
-			var newText = ref.text;
-
-			$$(ref.expressions).forEach(expr => {
-				var value = expr.isSimple? data[expr.expression] : safeval(expr.expression, data);
-
-				if (expr.isSimple && /^(class|id)$/i.test(ref.attribute)) {
-					value = Wysie.identifier(value);
-				}
-
-				newText = newText.replace((expr.isSimple? "{" : "${") + expr.expression + "}", value || "");
-			});
-
-			if (ref.attribute) {
-				ref.element.setAttribute(ref.attribute, newText);
+		$.each(data, (property, datum) => {
+			if (property in this.properties) {
+				this.properties[property].render(datum);
 			}
 			else {
-				ref.element.textContent = newText;
+				this.unhandled[property] = datum;
 			}
 		});
+
+		this.everSaved = true;
 	},
 
 	// Check if this scope contains a property
@@ -1245,7 +1401,7 @@ var _ = Wysie.Scope = $.Class({
 })(Bliss, Bliss.$);
 
 
-(function($, $$){
+(function($, $$) {
 
 const DISABLE_CACHE = false;
 
@@ -1296,31 +1452,18 @@ var _ = Wysie.Primitive = $.Class({
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
-		if (!this.attribute) {
-			// Data in content
-			this.observer = new MutationObserver(record => {
-				if (!this.editing) {
-					this.update(this.value);
+		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			if (this.attribute) {
+				var value = this.value;
+
+				if (record[0].oldValue != value) {
+					this.update(value);
 				}
-			});
-
-			this.observer.observe(this.element, {
-				characterData: true,
-				childList: true,
-				subtree: true
-			});
-		}
-		else if (!Wysie.is("formControl", this.element)) {
-			// Data in attribute
-			this.observer = new MutationObserver(record => {
+			}
+			else if (!this.editing) {
 				this.update(this.value);
-			});
-
-			this.observer.observe(this.element, {
-				attributes: true,
-				attributeFilter: [this.attribute]
-			});
-		}
+			}
+		});
 	},
 
 	get value() {
@@ -1409,13 +1552,16 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		this.element._.fire("wysie:propertychange", {
+		var evt = {
 			property: this.property,
 			value: value,
 			wysie: this.wysie,
 			unit: this,
 			dirty: this.editing
-		});
+		};
+
+		this.element._.fire("wysie:propertychange", evt);
+		this.element._.fire("wysie:datachange", evt);
 	},
 
 	save: function () {
@@ -1897,7 +2043,7 @@ Stretchy.selectors.filter = ".wysie-editor";
 })(Bliss, Bliss.$);
 
 
-(function($, $$){
+(function($, $$) {
 
 var _ = Wysie.Collection = function (template, wysie) {
 	var me = this;
@@ -1982,12 +2128,6 @@ _.prototype = {
 		return Wysie.readable(this.property || this.type).toLowerCase();
 	},
 
-	get selector() {
-		return ".wysie-item" +
-		       (this.property? '[property="' + this.property + '"]' : '') +
-		       (this.type? '[typeof="' + this.type + '"]' : '');
-	},
-
 	get length() {
 		return this.items.length;
 	},
@@ -1999,9 +2139,9 @@ _.prototype = {
 	getData: function(o) {
 		o = o || {};
 
-		return this.items.map(function(item){
-			return item.getData(o);
-		}).filter(function(item){
+		return this.items.map(function(item) {
+			return item.deleted? null : item.getData(o);
+		}).filter(function(item) {
 			return item !== null;
 		});
 	},
@@ -2073,6 +2213,13 @@ _.prototype = {
 
 		this.items.push(item);
 
+		item.element._.fire("wysie:datachange", {
+			collection: this,
+			wysie: this.wysie,
+			action: "add",
+			item
+		});
+
 		return item;
 	},
 
@@ -2109,9 +2256,16 @@ _.prototype = {
 	},
 
 	delete: function(item) {
-		return $.transition(item.element, {opacity: 0}).then(()=>{
+		return $.transition(item.element, {opacity: 0}).then(() => {
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
+
+			item.element._.fire("wysie:datachange", {
+				collection: this,
+				wysie: this.wysie,
+				action: "delete",
+				item: item
+			});
 		});
 	},
 
@@ -2157,7 +2311,7 @@ _.prototype = {
 		// Using document fragments improved rendering performance by 60%
 		var fragment = document.createDocumentFragment();
 
-		data.forEach(function(datum){
+		data.forEach(function(datum) {
 			var item = this.createItem();
 
 			item.render(datum);
