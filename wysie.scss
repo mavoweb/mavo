@@ -6,22 +6,14 @@ $property: "[itemprop], [property]";
 /// @param {Map} $declarations - Declarations to prefix
 /// @param {List} $prefixes (()) - List of prefixes to print
 @mixin prefix($declarations, $prefixes: ()) {
-  @each $property, $value in $declarations {
-    @each $prefix in $prefixes {
-      #{'-' + $prefix + '-' + $property}: $value;
-    }
+	@each $property, $value in $declarations {
+	@each $prefix in $prefixes {
+		#{'-' + $prefix + '-' + $property}: $value;
+	}
 
-    // Output standard non-prefixed declaration
-    #{$property}: $value;
-  }
-}
-
-%reset {
-	all: initial;
-	font: inherit;
-	color: inherit;
-	text-decoration: inherit;
-	text-align: inherit;
+	// Output standard non-prefixed declaration
+	#{$property}: $value;
+	}
 }
 
 [data-store] {
@@ -33,26 +25,35 @@ $property: "[itemprop], [property]";
 	all: initial;
 	position: absolute;
 	bottom: 100%;
-	bottom: calc(100% - 2px);
+	bottom: calc(100% - 1.1em);
 	right: .1em;
 	z-index: 10;
-	transition: .4s opacity;
-	@include prefix((filter: drop-shadow(0 .1em .2em rgba(0,0,0,.4))), webkit);
+	@include prefix((filter: drop-shadow(0 .1em .1em rgba(0,0,0,.2))), webkit);
+	opacity: 0;
+	pointer-events: none;
+	border: solid transparent;
+	border-width: .4em .5em .8em .5em;
+	border-radius: 1em;
 
-	.wysie-item:not(.wysie-item-hovered):not(:focus):not(.focus-within) > & {
-		opacity: 0;
-		pointer-events: none;
-		transition-delay: .1s;
+
+	.wysie-item:hover:not(.has-hovered-item) &,
+	.wysie-item:focus &,
+	&:hover,
+	&:focus,
+	&.focus-within {
+		transition: .4s opacity;
+		opacity: 1;
+		pointer-events: auto;
 	}
 
 	button {
-		all: initial;
+		all: unset;
 		display: inline-block;
 		vertical-align: middle;
 		padding: .2em .3em;
 		min-width: 1em;
 		min-height: 1em;
-		border: 1px solid rgba(0,0,0, .2);
+		border: 1px solid rgba(0,0,0, .1);
 		cursor: pointer;
 		background: #eee no-repeat center;
 		line-height: 1;
@@ -63,14 +64,16 @@ $property: "[itemprop], [property]";
 			box-shadow: 0 .4em 1em white inset;
 		}
 
+		$radius: .3em;
+
 		&:first-child {
-			border-top-left-radius: .3em;
-			border-bottom-left-radius: .3em;
+			border-top-left-radius: $radius;
+			border-bottom-left-radius: $radius;
 		}
 
 		&:last-child {
-			border-top-right-radius: .3em;
-			border-bottom-right-radius: .3em;
+			border-top-right-radius: $radius;
+			border-bottom-right-radius: $radius;
 		}
 
 		&:not(:first-child) {
@@ -114,10 +117,10 @@ $property: "[itemprop], [property]";
 		}
 	}
 
-    .wysie-wrapper:not(.can-delete) & .delete,
-    .wysie-wrapper:not(.can-add) & .add {
-        display: none;
-    }
+	.wysie-wrapper:not(.can-delete) & .delete,
+	.wysie-wrapper:not(.can-add) & .add {
+		display: none;
+	}
 }
 
 .wysie-item {
@@ -125,13 +128,13 @@ $property: "[itemprop], [property]";
 	margin-right: 1.5em;
 
 	&.delete-hover { // basically &:has(> .delete:hover)
-		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.1) inset;
+		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.1) inset !important;
 		border-radius: .1em;
 	}
 
-    &.deleted {
-        display: none;
-    }
+	&.deleted {
+		display: none;
+	}
 }
 
 .wysie-wrapper {
@@ -143,9 +146,9 @@ $property: "[itemprop], [property]";
 		vertical-align: middle;
 	}
 
-    &:not(.can-add) button.add {
-        display: none;
-    }
+	&:not(.can-add) button.add {
+		display: none;
+	}
 
 	.wysie-popup {
 		all: initial;
@@ -298,7 +301,11 @@ $property: "[itemprop], [property]";
 			input.wysie-editor,
 			select.wysie-editor,
 			textarea.wysie-editor {
-				@extend %reset;
+				all: initial;
+				font: inherit;
+				color: inherit;
+				text-decoration: inherit;
+				text-align: inherit;
 			}
 
 			textarea.wysie-editor {
@@ -321,9 +328,9 @@ $property: "[itemprop], [property]";
 	font-family: inherit;
 	font-size: 1rem;
 
-    // Bar fixed at the top of the screen
+	// Bar fixed at the top of the screen
 	.wysie-wrapper.can-logout &,
-    .wysie-wrapper[data-editing] & {
+	.wysie-wrapper[data-editing] & {
 		top: 0;
 		left: 0;
 		right: 0;
@@ -333,9 +340,9 @@ $property: "[itemprop], [property]";
 		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat, linear-gradient(hsla(0,0%,10%,.9), black);
 	}
 
-    // Floating bar, intended for when there is only 1 button
+	// Floating bar, intended for when there is only 1 button
 	.wysie-wrapper.can-login:not([data-editing]) &,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) & {
+	.wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) & {
 		top: 1em;
 		right: 1em;
 

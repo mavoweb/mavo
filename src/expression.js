@@ -54,12 +54,7 @@ var _ = Wysie.Expression.Text = $.Class({
 	set text(value) {
 		this.oldText = this.text;
 
-		if (this.attribute) {
-			this.attribute.value = value;
-		}
-		else {
-			this.element.textContent = value;
-		}
+		Wysie.Primitive.setValue(this.element, value, this.attribute);
 	},
 
 	update: function(data) {
@@ -172,7 +167,7 @@ var _ = Wysie.Expressions = $.Class({
 
 	update: function callee() {
 		var timePassed = performance.now() - this.lastUpdated;
-		
+
 		if (this.lastUpdated && timePassed < _.THROTTLE) {
 			// Throttle
 			if (!callee.timeout) {

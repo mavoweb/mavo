@@ -6,22 +6,42 @@
 <title>Meaningless wysie test</title>
 <link rel="stylesheet" href="../wysie.css" />
 <style>
-	[property="foo"]::before {
-		content: "title=" attr(data-ref);
-		color: deeppink;
-	}
+body {
+	padding: 50px;
+}
+
+li { padding: 5px; border: 1px solid silver; margin: 10px;}
 </style>
 </head>
 <body>
 
-<ul data-store="none">
-	<li typeof>
-		<div property=foo data-ref="{bar}"></div>
-		<div property=bar></div>
-		Some text {foo}
-		<span>{foo}</span>
-	</li>
-</ul>
+<div data-store="#foo" typeof>
+	<input type="range" property="slider" />
+	<ul>
+		<li property="list">
+			<div property="name">Vector</div>
+			<div property="age">10</div>
+			<ul>
+				<li property="hobbies">purring</li>
+			</ul>
+		</li>
+	</ul>
+</div>
+
+<script type="application/json" id="foo">{
+	"slider": 80,
+	"list": [
+		{"name": "Lea", "age": 30},
+		{"name": "Chris"},
+		{"name": "Eirik", "age": 32},
+		{"name": "Amy", "age": 45},
+		{"name": "Thras", "age": 24},
+		{"name": "Sirma", "age": 24, "hobbies": ["painting", "yoga", "exercise", "flying to Turkey"]}
+	]
+}</script>
+<!-- ,
+
+-->
 
 <script src="../../bliss/bliss.js"></script>
 <script src="../wysie.js"></script>

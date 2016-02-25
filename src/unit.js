@@ -1,7 +1,7 @@
 /*
  * Wysie Unit: Super class that Scope and Primitive inherit from
  */
-(function($, $$){
+(function($, $$) {
 
 var _ = Wysie.Unit = $.Class({ abstract: true,
 	constructor: function(element, wysie, collection) {
@@ -25,6 +25,26 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 
 	get data() {
 		return this.getData();
+	},
+
+	get closestCollection() {
+		if (this.collection) {
+			return this.collection;
+		}
+
+		if (this.scope.collection) {
+			return this.scope.collection;
+		}
+
+		var parentScope;
+
+		while (parentScope = this.parentScope) {
+			if (parentScope.collection) {
+				return parentScope.collection;
+			}
+		}
+
+		return null;
 	},
 
 	live: {

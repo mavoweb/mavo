@@ -12,8 +12,6 @@ var _ = Wysie.Primitive = $.Class({
 		// What is the datatype?
 		this.datatype = _.getDatatype(this.element, this.attribute);
 
-		this.templateValue = this.value;
-
 		/**
 		 * Set up input widget
 		 */
@@ -42,7 +40,20 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
-		this.default = this.element.hasAttribute("data-default")? this.templateValue : (this.editor? this.editorValue : "");
+		this.templateValue = this.value;
+
+		this.default = this.element.getAttribute("data-default");
+
+		if (this.default === "") { // attribute exists, no value, default is template value
+			this.default = this.templateValue;
+		}
+		else {
+			if (this.default === null) { // attribute does not exist
+				this.default = this.editor? this.editorValue : this.emptyValue;
+			}
+
+			this.value = this.default;
+		}
 
 		this.update(this.value);
 
@@ -76,12 +87,16 @@ var _ = Wysie.Primitive = $.Class({
 			this.editorValue = value;
 		}
 
+		$.remove(this.itemControls);
+
 		_.setValue(this.element, value, this.attribute, this.datatype);
 
 		if (Wysie.is("formControl", this.element) || !this.attribute) {
 			// Mutation observer won't catch this, so we have to call update manually
 			this.update(value);
 		}
+
+		$.inside(this.itemControls, this.element);
 	},
 
 	get editorValue() {
@@ -232,6 +247,8 @@ var _ = Wysie.Primitive = $.Class({
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 		this.element.tabIndex = 0;
+
+		$.inside(this.itemControls, this.element);
 	},
 
 	// Called only the first time this primitive is edited
@@ -396,23 +413,42 @@ var _ = Wysie.Primitive = $.Class({
 
 		if (!this.attribute) {
 			if (this.editor.parentNode != this.element && !this.exposed) {
+				$.remove(this.itemControls);
+
 				this.editorValue = this.element.textContent;
 				this.element.textContent = "";
 
 				if (!this.exposed) {
 					this.element.appendChild(this.editor);
 				}
+
+				$.inside(this.itemControls, this.element);
 			}
 		}
 	}, // edit
 
+	import: function() {
+		this.value = this.savedValue = this.templateValue;
+	},
+
 	render: function(data) {
-		this.value = this.savedValue = data;
+		this.value = this.savedValue = data === undefined? this.emptyValue : data;
 	},
 
 	lazy: {
 		label: function() {
 			return Wysie.readable(this.property);
+		},
+
+		emptyValue: function() {
+			switch (this.datatype) {
+				case "boolean":
+					return false;
+				case "number":
+					return 0;
+			}
+
+			return "";
 		}
 	},
 
@@ -503,7 +539,7 @@ var _ = Wysie.Primitive = $.Class({
 				getter = function() {
 					var ret;
 
-					if (attribute in element) {
+					if (attribute in element && _.useProperty(element, attribute)) {
 						// Returning properties (if they exist) instead of attributes
 						// is needed for dynamic elements such as checkboxes, sliders etc
 						ret = element[attribute];
@@ -529,10 +565,12 @@ var _ = Wysie.Primitive = $.Class({
 		},
 
 		setValue: function callee(element, value, attribute) {
-			attribute = attribute || _.getValueAttribute(element);
+			if (attribute !== null) {
+				attribute = attribute? (attribute.name || attribute) :  _.getValueAttribute(element);
+			}
 
-			if (attribute in element) {
-				// Returning properties (if they exist) instead of attributes
+			if (attribute in element && _.useProperty(element, attribute)) {
+				// Setting properties (if they exist) instead of attributes
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				element[attribute] = value;
 			}
@@ -543,6 +581,24 @@ var _ = Wysie.Primitive = $.Class({
 				element.textContent = value;
 			}
 		},
+
+		/**
+		 *  Set/get a property or an attribute?
+		 * @return {Boolean} true to use a property, false to use the attribute
+		 */
+		useProperty: function(element, attribute) {
+			if (["href", "src"].indexOf(attribute) > -1) {
+				// URL properties resolve "" as location.href, fucking up emptiness checks
+				return false;
+			}
+
+			if (element.namespaceURI == "http://www.w3.org/2000/svg") {
+				// SVG has a fucked up DOM, do not use these properties
+				return false;
+			}
+
+			return true;
+		}
 	}
 });
 
@@ -609,7 +665,7 @@ _.editors = {
 
 		set editorValue (value) {
 			if (this.editor) {
-				this.editor.value = value.replace(/\r?\n/g, "");
+				this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
 			}
 		}
 	},

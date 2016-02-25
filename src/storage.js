@@ -1,6 +1,7 @@
-(function($){
+(function($) {
 
-var _ = Wysie.Storage = $.Class({ abstract: true,
+var _ = Wysie.Storage = $.Class({
+	abstract: true,
 
 	constructor: function(wysie) {
 		this.wysie = wysie;
@@ -83,8 +84,9 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		return this.url.href;
 	},
 
-	// localStorage backup (or only storage, in case of local Wysie instances)
-	// TODO Switch to indexedDB
+	/**
+	 * localStorage backup (or only storage, in case of local Wysie instances)
+	 */
 	get backup() {
 		return JSON.parse(localStorage[this.originalHref] || null);
 	},
@@ -93,10 +95,19 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 		localStorage[this.originalHref] = JSON.stringify(data, null, "\t");
 	},
 
+	get isHash() {
+		return this.url.origin === location.origin && this.url.pathname === location.pathname && this.url.hash;
+	},
+
 	// Is the storage ready?
 	// To be be overriden by subclasses
 	ready: Promise.resolve(),
 
+	/**
+	 * load - Fetch data from source and render it.
+	 *
+	 * @return {Promise}  A promise that resolves when the data is loaded.
+	 */
 	load: function() {
 		var ret = this.ready;
 		var backup = this.backup;
@@ -105,7 +116,7 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 
 		if (backup && backup.synced === false) {
 			// Unsynced backup, we need to restore & then save instead of reading remote
-			return ret.then(()=>{
+			return ret.then(() => {
 				this.wysie.render(backup);
 				this.inProgress = false;
 				this.wysie.wrapper._.fire("wysie:load");
@@ -113,44 +124,36 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				return this.save();
 			});
 		}
-		else {
-			if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
-				// URL is not a hash, load it
-				ret = ret.then(() => {
 
-					return this.backendLoad? this.backendLoad() : $.fetch(this.href, {
-						responseType: "json"
-					});
-				}).then(xhr => {
-					this.inProgress = false;
-					this.wysie.wrapper._.fire("wysie:load");
-					// FIXME xhr.response cannot be expected in the case of this.backendLoad()
-					if (xhr.response) {
-						var data = Wysie.queryJSON(xhr.response, this.url.hash.slice(1));
-
-						this.wysie.render(data);
-					}
-
-					this.backup = {
-						synced: true,
-						data: this.wysie.data
-					};
-				});
-			}
-			else {
-				ret = ret.done(function(){
-					// FIXME forcing the promise to fail to load locally is bad style
-					return Promise.reject();
-				});
-			}
-
-			return ret.catch(err => {
-				this.inProgress = false;
-
-				if (err) {
-					console.error(err);
-					console.log(err.stack);
+		if (!this.isHash || this.get) {
+			// URL is not a hash, load it
+			ret = ret.then(() => {
+				if (this.get) {
+					return this.get();
 				}
+
+				return $.fetch(this.href, {
+					responseType: "json"
+				}).then(xhr => Promise.resolve(xhr.response));
+			}).then(response => {
+				this.inProgress = false;
+				this.wysie.wrapper._.fire("wysie:load");
+
+				var response = response && $.type(response) == "string"? JSON.parse(response) : response;
+				var data = Wysie.queryJSON(response, this.param("root"));
+				this.wysie.render(data);
+
+				this.backup = {
+					synced: true,
+					data: this.wysie.data
+				};
+			});
+		}
+		else {
+			ret = ret.then(() => {
+				// No custom load function and the URL is just a hash
+				// Load from localStorage
+				this.inProgress = false;
 
 				if (backup) {
 					this.wysie.render(backup);
@@ -159,26 +162,53 @@ var _ = Wysie.Storage = $.Class({ abstract: true,
 				this.wysie.wrapper._.fire("wysie:load");
 			});
 		}
+
+		return ret.catch(err => {
+			this.inProgress = false;
+
+			if (err) {
+				console.error(err);
+				console.log(err.stack);
+			}
+
+			if (backup) {
+				this.wysie.render(backup);
+			}
+
+			this.wysie.wrapper._.fire("wysie:load");
+		});
 	},
 
 	save: function() {
+		var data = this.wysie.data;
+
 		this.backup = {
 			synced: !this._save,
-			data: this.wysie.data
+			data: data
 		};
 
-		if (this.backendSave) {
-			return this.login().then(()=>{
+		if (this.put) {
+			return this.login().then(() => {
 				this.inProgress = "Saving";
 
-				return this.backendSave().then(()=>{
+				return this.put({
+					name: this.filename,
+					data: this.wysie.toJSON(data)
+				}).then(() => {
 					var backup = this.backup;
 					backup.synced = true;
 					this.backup = backup;
 
 					this.wysie.wrapper._.fire("wysie:save");
-				}).done(()=>{
+
 					this.inProgress = false;
+				}).catch(() => {
+					this.inProgress = false;
+
+					if (err) {
+						console.error(err);
+						console.log(err.stack);
+					}
 				});
 			});
 		}
@@ -259,11 +289,25 @@ _.Default = $.Class({ extends: _,
 	constructor: function() {
 		this.permissions.set({
 			read: true,
-			edit: this.url.origin === location.origin &&
-			      this.url.pathname === location.pathname, // Can edit if local
+			edit: this.isHash, // Can edit if local
 			login: false,
 			logout: false
 		});
+
+		if (this.isHash) {
+			var element = $(this.isHash);
+
+			if (element) {
+				this.get = () => {
+					return element.textContent;
+				};
+
+				this.put = () => {
+					element.textContent = this.wysie.toJSON();
+					return Promise.resolve();
+				};
+			}
+		}
 	},
 
 	static: {

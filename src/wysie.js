@@ -57,7 +57,7 @@ var _ = self.Wysie = $.Class({
 		this.permissions = new Wysie.Permissions(null, this);
 
 		this.bar = $(".wysie-bar", this.wrapper) || $.create({
-			className: "wysie-bar",
+			className: "wysie-bar wysie-ui",
 			start: this.wrapper,
 			contents: {
 				tag: "span",
@@ -95,6 +95,8 @@ var _ = self.Wysie = $.Class({
 		else {
 			this.wrapper._.fire("wysie:load");
 		}
+
+		$.hooks.run("init-end", this);
 	},
 
 	get data() {
@@ -105,28 +107,53 @@ var _ = self.Wysie = $.Class({
 		return this.root.getData(o);
 	},
 
-	toJSON: function() {
-		return JSON.stringify(this.data, null, "\t");
+	toJSON: function(data) {
+		return JSON.stringify(data || this.data, null, "\t");
 	},
 
 	render: function(data) {
-		this.root.render(data.data || data);
+		if (!data) {
+			this.root.import();
+		}
+		else {
+			this.root.render(data.data || data);
+		}
 	},
 
 	edit: function() {
 		this.editing = true;
 		this.root.edit();
+
+		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
+			if (evt.target.matches(".wysie-item-controls .delete")) {
+				evt.target._.toggleClass("delete-hover", evt.type == "mouseenter");
+			}
+
+			if (evt.target.matches(".wysie-item")) {
+				evt.target.classList.remove("has-hovered-item");
+
+				var parent = evt.target.parentNode.closest(".item");
+
+				if (parent) {
+					parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
+				}
+			}
+
+			// evt.stopPropagation();
+		}, true);
 	},
 
 	save: function() {
 		this.root.save();
 		this.editing = false;
 		this.storage && this.storage.save();
+		$.unbind(this.wrapper, ".wysie:edit");
 	},
 
 	cancel: function() {
 		this.editing = false;
 		this.root.cancel();
+		$.unbind(this.wrapper, ".wysie:edit");
 	},
 
 	live: {
@@ -210,7 +237,8 @@ var _ = self.Wysie = $.Class({
 			autoMultiple: ["li", "tr", "option"].map(tag => tag + ":only-of-type").join(", "),
 			required: "[required], [data-required], .required",
 			formControl: "input, select, textarea",
-			computed: ".computed" // Properties or scopes with computed properties, will not be saved
+			computed: ".computed", // Properties or scopes with computed properties, will not be saved
+			item: ".wysie-item"
 		},
 
 		is: function(thing, element) {
@@ -222,10 +250,13 @@ var _ = self.Wysie = $.Class({
 });
 
 // Bliss plugins
+
+// Add or remove a class based on whether the second param is truthy or falsy.
 $.add("toggleClass", function(className, addIf) {
 	this.classList[addIf? "add" : "remove"](className);
 });
 
+// Provide shortcuts to long property chains
 $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 	Object.defineProperty(obj, property, {
 		get: function() {
@@ -248,9 +279,3 @@ $.ready().then(evt => {
 _.prototype.render = _.timed("render", _.prototype.render);
 
 })(Bliss, Bliss.$);
-
-if (self.Promise && !Promise.prototype.done) {
-	Promise.prototype.done = function(callback) {
-		return this.then(callback, callback);
-	};
-}

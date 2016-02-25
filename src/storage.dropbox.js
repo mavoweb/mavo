@@ -1,4 +1,4 @@
-(function($){
+(function($) {
 
 if (!self.Wysie) {
 	return;
@@ -37,14 +37,11 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		});
 	},
 
-	// Super class save() calls this. Do not call directly.
-	backendSave: function() {
-		return this.put({
-			name: this.filename,
-			data: this.wysie.toJSON()
-		});
-	},
-
+	/**
+	 * Saves a file to the backend.
+	 * @param {Object} file - An object with name & data keys
+	 * @return {Promise} A promise that resolves when the file is saved.
+	 */
 	put: function(file) {
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
@@ -59,7 +56,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 	},
 
 	login: function(passive) {
-		return this.ready.then(()=>{
+		return this.ready.then(() => {
 			return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
 				this.client.authDriver(new Dropbox.AuthDriver.Popup({
 				    receiverUrl: new URL(location) + ""
@@ -91,7 +88,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 					this.wysie.wrapper._.fire("wysie:login", accountInfo);
 				}
 			});
-		}).catch(()=>{});
+		}).catch(() => {});
 	},
 
 	logout: function() {

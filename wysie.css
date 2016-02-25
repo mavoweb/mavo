@@ -1,14 +1,3 @@
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor,
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select.wysie-editor,
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor,
-.wysie-wrapper[data-editing] [property]:not([typeof]) select.wysie-editor,
-.wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
-  all: initial;
-  font: inherit;
-  color: inherit;
-  text-decoration: inherit;
-  text-align: inherit; }
-
 [data-store] {
   display: none; }
 
@@ -16,24 +5,29 @@
   all: initial;
   position: absolute;
   bottom: 100%;
-  bottom: calc(100% - 2px);
+  bottom: calc(100% - 1.1em);
   right: .1em;
   z-index: 10;
-  transition: .4s opacity;
-  -webkit-filter: drop-shadow(0 0.1em 0.2em rgba(0, 0, 0, 0.4));
-  filter: drop-shadow(0 0.1em 0.2em rgba(0, 0, 0, 0.4)); }
-  .wysie-item:not(.wysie-item-hovered):not(:focus):not(.focus-within) > .wysie-item-controls {
-    opacity: 0;
-    pointer-events: none;
-    transition-delay: .1s; }
+  -webkit-filter: drop-shadow(0 0.1em 0.1em rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 0.1em 0.1em rgba(0, 0, 0, 0.2));
+  opacity: 0;
+  pointer-events: none;
+  border: solid transparent;
+  border-width: .4em .5em .8em .5em;
+  border-radius: 1em; }
+  .wysie-item:hover:not(.has-hovered-item) .wysie-item-controls,
+  .wysie-item:focus .wysie-item-controls, .wysie-item-controls:hover, .wysie-item-controls:focus, .wysie-item-controls.focus-within {
+    transition: .4s opacity;
+    opacity: 1;
+    pointer-events: auto; }
   .wysie-item-controls button {
-    all: initial;
+    all: unset;
     display: inline-block;
     vertical-align: middle;
     padding: .2em .3em;
     min-width: 1em;
     min-height: 1em;
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     cursor: pointer;
     background: #eee no-repeat center;
     line-height: 1;
@@ -42,11 +36,11 @@
     .wysie-item-controls button:not(:hover):not(:focus) {
       box-shadow: 0 .4em 1em white inset; }
     .wysie-item-controls button:first-child {
-      border-top-left-radius: .3em;
-      border-bottom-left-radius: .3em; }
+      border-top-left-radius: 0.3em;
+      border-bottom-left-radius: 0.3em; }
     .wysie-item-controls button:last-child {
-      border-top-right-radius: .3em;
-      border-bottom-right-radius: .3em; }
+      border-top-right-radius: 0.3em;
+      border-bottom-right-radius: 0.3em; }
     .wysie-item-controls button:not(:first-child) {
       border-left: 0; }
   .wysie-item-controls .delete {
@@ -74,7 +68,7 @@
   position: relative;
   margin-right: 1.5em; }
   .wysie-item.delete-hover {
-    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset;
+    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset !important;
     border-radius: .1em; }
   .wysie-item.deleted {
     display: none; }
@@ -182,6 +176,17 @@
 .wysie-wrapper[data-editing] [property]:not([typeof]) .wysie-editor:focus {
   outline: 1px dashed rgba(51, 119, 153, 0.6);
   outline-offset: 1px; }
+
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor,
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select.wysie-editor,
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]) select.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
+  all: initial;
+  font: inherit;
+  color: inherit;
+  text-decoration: inherit;
+  text-align: inherit; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
   box-sizing: border-box;

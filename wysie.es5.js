@@ -236,7 +236,7 @@
 			this.permissions = new Wysie.Permissions(null, this);
 
 			this.bar = $(".wysie-bar", this.wrapper) || $.create({
-				className: "wysie-bar",
+				className: "wysie-bar wysie-ui",
 				start: this.wrapper,
 				contents: {
 					tag: "span",
@@ -282,6 +282,8 @@
 			} else {
 				this.wrapper._.fire("wysie:load");
 			}
+
+			$.hooks.run("init-end", this);
 		},
 
 		get data() {
@@ -292,28 +294,52 @@
 			return this.root.getData(o);
 		},
 
-		toJSON: function toJSON() {
-			return JSON.stringify(this.data, null, "\t");
+		toJSON: function toJSON(data) {
+			return JSON.stringify(data || this.data, null, "\t");
 		},
 
 		render: function render(data) {
-			this.root.render(data.data || data);
+			if (!data) {
+				this.root.import();
+			} else {
+				this.root.render(data.data || data);
+			}
 		},
 
 		edit: function edit() {
 			this.editing = true;
 			this.root.edit();
+
+			$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", function (evt) {
+				if (evt.target.matches(".wysie-item-controls .delete")) {
+					evt.target._.toggleClass("delete-hover", evt.type == "mouseenter");
+				}
+
+				if (evt.target.matches(".wysie-item")) {
+					evt.target.classList.remove("has-hovered-item");
+
+					var parent = evt.target.parentNode.closest(".item");
+
+					if (parent) {
+						parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
+					}
+				}
+
+				// evt.stopPropagation();
+			}, true);
 		},
 
 		save: function save() {
 			this.root.save();
 			this.editing = false;
 			this.storage && this.storage.save();
+			$.unbind(this.wrapper, ".wysie:edit");
 		},
 
 		cancel: function cancel() {
 			this.editing = false;
 			this.root.cancel();
+			$.unbind(this.wrapper, ".wysie:edit");
 		},
 
 		live: {
@@ -402,7 +428,8 @@
 				}).join(", "),
 				required: "[required], [data-required], .required",
 				formControl: "input, select, textarea",
-				computed: ".computed" // Properties or scopes with computed properties, will not be saved
+				computed: ".computed", // Properties or scopes with computed properties, will not be saved
+				item: ".wysie-item"
 			},
 
 			is: function is(thing, element) {
@@ -414,10 +441,13 @@
 	});
 
 	// Bliss plugins
+
+	// Add or remove a class based on whether the second param is truthy or falsy.
 	$.add("toggleClass", function (className, addIf) {
 		this.classList[addIf ? "add" : "remove"](className);
 	});
 
+	// Provide shortcuts to long property chains
 	$.proxy = $.classProps.proxy = $.overload(function (obj, property, proxy) {
 		Object.defineProperty(obj, property, {
 			get: function get() {
@@ -439,12 +469,6 @@
 
 	_.prototype.render = _.timed("render", _.prototype.render);
 })(Bliss, Bliss.$);
-
-if (self.Promise && !Promise.prototype.done) {
-	Promise.prototype.done = function (callback) {
-		return this.then(callback, callback);
-	};
-}
 
 (function ($) {
 
@@ -627,7 +651,8 @@ if (self.Promise && !Promise.prototype.done) {
 
 (function ($) {
 
-	var _ = Wysie.Storage = $.Class({ abstract: true,
+	var _ = Wysie.Storage = $.Class({
+		abstract: true,
 
 		constructor: function constructor(wysie) {
 			var _this7 = this;
@@ -712,8 +737,9 @@ if (self.Promise && !Promise.prototype.done) {
 			return this.url.href;
 		},
 
-		// localStorage backup (or only storage, in case of local Wysie instances)
-		// TODO Switch to indexedDB
+		/**
+   * localStorage backup (or only storage, in case of local Wysie instances)
+   */
 		get backup() {
 			return JSON.parse(localStorage[this.originalHref] || null);
 		},
@@ -722,10 +748,19 @@ if (self.Promise && !Promise.prototype.done) {
 			localStorage[this.originalHref] = JSON.stringify(data, null, "\t");
 		},
 
+		get isHash() {
+			return this.url.origin === location.origin && this.url.pathname === location.pathname && this.url.hash;
+		},
+
 		// Is the storage ready?
 		// To be be overriden by subclasses
 		ready: Promise.resolve(),
 
+		/**
+   * load - Fetch data from source and render it.
+   *
+   * @return {Promise}  A promise that resolves when the data is loaded.
+   */
 		load: function load() {
 			var _this8 = this;
 
@@ -743,43 +778,38 @@ if (self.Promise && !Promise.prototype.done) {
 
 					return _this8.save();
 				});
-			} else {
-				if (this.url.origin !== location.origin || this.url.pathname !== location.pathname) {
-					// URL is not a hash, load it
-					ret = ret.then(function () {
+			}
 
-						return _this8.backendLoad ? _this8.backendLoad() : $.fetch(_this8.href, {
-							responseType: "json"
-						});
-					}).then(function (xhr) {
-						_this8.inProgress = false;
-						_this8.wysie.wrapper._.fire("wysie:load");
-						// FIXME xhr.response cannot be expected in the case of this.backendLoad()
-						if (xhr.response) {
-							var data = Wysie.queryJSON(xhr.response, _this8.url.hash.slice(1));
-
-							_this8.wysie.render(data);
-						}
-
-						_this8.backup = {
-							synced: true,
-							data: _this8.wysie.data
-						};
-					});
-				} else {
-					ret = ret.done(function () {
-						// FIXME forcing the promise to fail to load locally is bad style
-						return Promise.reject();
-					});
-				}
-
-				return ret.catch(function (err) {
-					_this8.inProgress = false;
-
-					if (err) {
-						console.error(err);
-						console.log(err.stack);
+			if (!this.isHash || this.get) {
+				// URL is not a hash, load it
+				ret = ret.then(function () {
+					if (_this8.get) {
+						return _this8.get();
 					}
+
+					return $.fetch(_this8.href, {
+						responseType: "json"
+					}).then(function (xhr) {
+						return Promise.resolve(xhr.response);
+					});
+				}).then(function (response) {
+					_this8.inProgress = false;
+					_this8.wysie.wrapper._.fire("wysie:load");
+
+					var response = response && $.type(response) == "string" ? JSON.parse(response) : response;
+					var data = Wysie.queryJSON(response, _this8.param("root"));
+					_this8.wysie.render(data);
+
+					_this8.backup = {
+						synced: true,
+						data: _this8.wysie.data
+					};
+				});
+			} else {
+				ret = ret.then(function () {
+					// No custom load function and the URL is just a hash
+					// Load from localStorage
+					_this8.inProgress = false;
 
 					if (backup) {
 						_this8.wysie.render(backup);
@@ -788,28 +818,55 @@ if (self.Promise && !Promise.prototype.done) {
 					_this8.wysie.wrapper._.fire("wysie:load");
 				});
 			}
+
+			return ret.catch(function (err) {
+				_this8.inProgress = false;
+
+				if (err) {
+					console.error(err);
+					console.log(err.stack);
+				}
+
+				if (backup) {
+					_this8.wysie.render(backup);
+				}
+
+				_this8.wysie.wrapper._.fire("wysie:load");
+			});
 		},
 
 		save: function save() {
 			var _this9 = this;
 
+			var data = this.wysie.data;
+
 			this.backup = {
 				synced: !this._save,
-				data: this.wysie.data
+				data: data
 			};
 
-			if (this.backendSave) {
+			if (this.put) {
 				return this.login().then(function () {
 					_this9.inProgress = "Saving";
 
-					return _this9.backendSave().then(function () {
+					return _this9.put({
+						name: _this9.filename,
+						data: _this9.wysie.toJSON(data)
+					}).then(function () {
 						var backup = _this9.backup;
 						backup.synced = true;
 						_this9.backup = backup;
 
 						_this9.wysie.wrapper._.fire("wysie:save");
-					}).done(function () {
+
 						_this9.inProgress = false;
+					}).catch(function () {
+						_this9.inProgress = false;
+
+						if (err) {
+							console.error(err);
+							console.log(err.stack);
+						}
 					});
 				});
 			}
@@ -890,12 +947,29 @@ if (self.Promise && !Promise.prototype.done) {
 
 	_.Default = $.Class({ extends: _,
 		constructor: function constructor() {
+			var _this10 = this;
+
 			this.permissions.set({
 				read: true,
-				edit: this.url.origin === location.origin && this.url.pathname === location.pathname, // Can edit if local
+				edit: this.isHash, // Can edit if local
 				login: false,
 				logout: false
 			});
+
+			if (this.isHash) {
+				var element = $(this.isHash);
+
+				if (element) {
+					this.get = function () {
+						return element.textContent;
+					};
+
+					this.put = function () {
+						element.textContent = _this10.wysie.toJSON();
+						return Promise.resolve();
+					};
+				}
+			}
 		},
 
 		static: {
@@ -933,6 +1007,26 @@ if (self.Promise && !Promise.prototype.done) {
 
 		get data() {
 			return this.getData();
+		},
+
+		get closestCollection() {
+			if (this.collection) {
+				return this.collection;
+			}
+
+			if (this.scope.collection) {
+				return this.scope.collection;
+			}
+
+			var parentScope;
+
+			while (parentScope = this.parentScope) {
+				if (parentScope.collection) {
+					return parentScope.collection;
+				}
+			}
+
+			return null;
 		},
 
 		live: {
@@ -1032,21 +1126,17 @@ if (self.Promise && !Promise.prototype.done) {
 			set text(value) {
 				this.oldText = this.text;
 
-				if (this.attribute) {
-					this.attribute.value = value;
-				} else {
-					this.element.textContent = value;
-				}
+				Wysie.Primitive.setValue(this.element, value, this.attribute);
 			},
 
 			update: function update(data) {
-				var _this10 = this;
+				var _this11 = this;
 
 				this.text = this.template.map(function (expr) {
 					if (expr instanceof Wysie.Expression) {
 						var value = expr.eval(data) || "";
 
-						return expr.simple ? _this10.transform(value) : value;
+						return expr.simple ? _this11.transform(value) : value;
 					}
 
 					return expr;
@@ -1133,7 +1223,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 		var _ = Wysie.Expressions = $.Class({
 			constructor: function constructor(scope) {
-				var _this11 = this;
+				var _this12 = this;
 
 				this.scope = scope;
 				this.scope.expressions = this;
@@ -1153,13 +1243,13 @@ if (self.Promise && !Promise.prototype.done) {
 
 					// Watch changes and update value
 					this.scope.element.addEventListener("wysie:datachange", function (evt) {
-						return _this11.update();
+						return _this12.update();
 					});
 				}
 			},
 
 			update: function callee() {
-				var _this12 = this;
+				var _this13 = this;
 
 				var timePassed = performance.now() - this.lastUpdated;
 
@@ -1167,7 +1257,7 @@ if (self.Promise && !Promise.prototype.done) {
 					// Throttle
 					if (!callee.timeout) {
 						callee.timeout = setTimeout(function () {
-							return _this12.update();
+							return _this13.update();
 						}, _.THROTTLE - timePassed);
 					}
 
@@ -1200,7 +1290,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
 			traverse: function traverse(element) {
-				var _this13 = this;
+				var _this14 = this;
 
 				element = element || this.scope.element;
 
@@ -1208,7 +1298,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 				if (this.expressionRegex.test(element.outerHTML || element.textContent)) {
 					$$(element.attributes).forEach(function (attribute) {
-						return _this13.extract(element, attribute);
+						return _this14.extract(element, attribute);
 					});
 
 					if (element.nodeType === 3) {
@@ -1219,7 +1309,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 					if (element == this.scope.element || !(element._.data.unit instanceof Wysie.Scope)) {
 						$$(element.childNodes).forEach(function (child) {
-							return _this13.traverse(child);
+							return _this14.traverse(child);
 						});
 					}
 				}
@@ -1241,7 +1331,7 @@ if (self.Promise && !Promise.prototype.done) {
 	var _ = Wysie.Scope = $.Class({
 		extends: Wysie.Unit,
 		constructor: function constructor(element, wysie, collection) {
-			var _this14 = this;
+			var _this15 = this;
 
 			var me = this;
 
@@ -1251,19 +1341,20 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// Create Wysie objects for all properties in this scope (primitives or scopes),
 			// but not properties in descendant scopes (they will be handled by their scope)
-			$$(Wysie.selectors.property, this.element).filter(function (property) {
-				return _this14.contains(property);
-			}).forEach(function (prop) {
-				if (Wysie.is("multiple", prop)) {
-					var obj = new Wysie.Collection(prop, me.wysie);
-				} else {
-					obj = _.super.create(prop, _this14.wysie);
-					obj.scope = obj instanceof _ ? obj : _this14;
+			$$(Wysie.selectors.property, this.element).forEach(function (prop) {
+				if (_this15.contains(prop)) {
+					if (Wysie.is("multiple", prop)) {
+						var obj = new Wysie.Collection(prop, me.wysie);
+					} else {
+						// Create wysie objects for all non-collection properties
+						obj = _.super.create(prop, _this15.wysie);
+						obj.scope = obj instanceof _ ? obj : _this15;
+					}
+
+					obj.parentScope = _this15;
+
+					_this15.properties[obj.property] = obj;
 				}
-
-				obj.parentScope = _this14;
-
-				_this14.properties[obj.property] = obj;
 			});
 
 			Wysie.hooks.run("scope-init-end", this);
@@ -1370,9 +1461,17 @@ if (self.Promise && !Promise.prototype.done) {
 			$.unbind(this.element, ".wysie:edit");
 		},
 
+		import: function _import() {
+			$.each(this.properties, function (property, unit) {
+				unit.import();
+			});
+
+			this.everSaved = true;
+		},
+
 		// Inject data in this element
 		render: function render(data) {
-			var _this15 = this;
+			var _this16 = this;
 
 			if (!data) {
 				return;
@@ -1380,14 +1479,12 @@ if (self.Promise && !Promise.prototype.done) {
 
 			data = data.isArray ? data[0] : data;
 
-			this.unhandled = {};
+			this.unhandled = $.extend({}, data, function (property) {
+				return !(property in _this16.properties);
+			});
 
-			$.each(data, function (property, datum) {
-				if (property in _this15.properties) {
-					_this15.properties[property].render(datum);
-				} else {
-					_this15.unhandled[property] = datum;
-				}
+			$.each(this.properties, function (property, unit) {
+				unit.render(data[property]);
 			});
 
 			this.everSaved = true;
@@ -1402,7 +1499,6 @@ if (self.Promise && !Promise.prototype.done) {
 
 			return this.element === property.parentNode.closest(Wysie.selectors.scope);
 		},
-
 
 		static: {
 			is: function is(element) {
@@ -1447,7 +1543,7 @@ if (self.Promise && !Promise.prototype.done) {
 	var _ = Wysie.Primitive = $.Class({
 		extends: Wysie.Unit,
 		constructor: function constructor(element, wysie, collection) {
-			var _this16 = this;
+			var _this17 = this;
 
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
@@ -1455,8 +1551,6 @@ if (self.Promise && !Promise.prototype.done) {
 
 			// What is the datatype?
 			this.datatype = _.getDatatype(this.element, this.attribute);
-
-			this.templateValue = this.value;
 
 			/**
     * Set up input widget
@@ -1469,8 +1563,8 @@ if (self.Promise && !Promise.prototype.done) {
 				if (this.exposed) {
 					// Editing exposed elements saves the wysie
 					this.element.addEventListener("change", function (evt) {
-						if (!_this16.wysie.editing && evt.target === _this16.editor && (_this16.scope.everSaved || !_this16.scope.collection)) {
-							_this16.wysie.save();
+						if (!_this17.wysie.editing && evt.target === _this17.editor && (_this17.scope.everSaved || !_this17.scope.collection)) {
+							_this17.wysie.save();
 						}
 					});
 
@@ -1486,7 +1580,21 @@ if (self.Promise && !Promise.prototype.done) {
 					$.remove(this.editor);
 				}
 
-			this.default = this.element.hasAttribute("data-default") ? this.templateValue : this.editor ? this.editorValue : "";
+			this.templateValue = this.value;
+
+			this.default = this.element.getAttribute("data-default");
+
+			if (this.default === "") {
+				// attribute exists, no value, default is template value
+				this.default = this.templateValue;
+			} else {
+				if (this.default === null) {
+					// attribute does not exist
+					this.default = this.editor ? this.editorValue : this.emptyValue;
+				}
+
+				this.value = this.default;
+			}
 
 			this.update(this.value);
 
@@ -1494,14 +1602,14 @@ if (self.Promise && !Promise.prototype.done) {
 			// Properties like input.checked or input.value cannot be observed that way
 			// so we cannot depend on mutation observers for everything :(
 			this.observer = Wysie.observe(this.element, this.attribute, function (record) {
-				if (_this16.attribute) {
-					var value = _this16.value;
+				if (_this17.attribute) {
+					var value = _this17.value;
 
 					if (record[0].oldValue != value) {
-						_this16.update(value);
+						_this17.update(value);
 					}
-				} else if (!_this16.editing) {
-					_this16.update(_this16.value);
+				} else if (!_this17.editing) {
+					_this17.update(_this17.value);
 				}
 			});
 		},
@@ -1519,12 +1627,16 @@ if (self.Promise && !Promise.prototype.done) {
 				this.editorValue = value;
 			}
 
+			$.remove(this.itemControls);
+
 			_.setValue(this.element, value, this.attribute, this.datatype);
 
 			if (Wysie.is("formControl", this.element) || !this.attribute) {
 				// Mutation observer won't catch this, so we have to call update manually
 				this.update(value);
 			}
+
+			$.inside(this.itemControls, this.element);
 		},
 
 		get editorValue() {
@@ -1642,7 +1754,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Prepare to be edited
 		// Called when root edit button is pressed
 		preEdit: function preEdit() {
-			var _this17 = this;
+			var _this18 = this;
 
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
@@ -1654,19 +1766,19 @@ if (self.Promise && !Promise.prototype.done) {
 			this.element._.events({
 				// click is needed too because it works with the keyboard as well
 				"mousedown.wysie:preedit click.wysie:preedit": function mousedownWysiePreeditClickWysiePreedit(e) {
-					return _this17.edit();
+					return _this18.edit();
 				},
 				"focus.wysie:preedit": function focusWysiePreedit(e) {
-					_this17.edit();
+					_this18.edit();
 
-					if (!_this17.popup) {
-						_this17.editor.focus();
+					if (!_this18.popup) {
+						_this18.editor.focus();
 					}
 				},
 				"click.wysie:edit": function clickWysieEdit(evt) {
 					// Prevent default actions while editing
 					// e.g. following links etc
-					if (!_this17.exposed) {
+					if (!_this18.exposed) {
 						evt.preventDefault();
 					}
 				}
@@ -1675,11 +1787,13 @@ if (self.Promise && !Promise.prototype.done) {
 			// Make element focusable, so it can actually receive focus
 			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 			this.element.tabIndex = 0;
+
+			$.inside(this.itemControls, this.element);
 		},
 
 		// Called only the first time this primitive is edited
 		initEdit: function initEdit() {
-			var _this18 = this;
+			var _this19 = this;
 
 			// Linked widgets
 			if (this.element.hasAttribute("data-input")) {
@@ -1719,31 +1833,31 @@ if (self.Promise && !Promise.prototype.done) {
 
 			this.editor._.events({
 				"input": function input(evt) {
-					if (_this18.attribute) {
-						_this18.element.setAttribute(_this18.attribute, _this18.editorValue);
+					if (_this19.attribute) {
+						_this19.element.setAttribute(_this19.attribute, _this19.editorValue);
 					}
 
-					if (_this18.exposed || !_this18.attribute) {
-						_this18.update(_this18.editorValue);
+					if (_this19.exposed || !_this19.attribute) {
+						_this19.update(_this19.editorValue);
 					}
 				},
 				"focus": function focus(evt) {
-					_this18.editor.select && _this18.editor.select();
+					_this19.editor.select && _this19.editor.select();
 				},
 				"keyup": function keyup(evt) {
-					if (_this18.popup && evt.keyCode == 13 || evt.keyCode == 27) {
-						if (_this18.popup.contains(document.activeElement)) {
-							_this18.element.focus();
+					if (_this19.popup && evt.keyCode == 13 || evt.keyCode == 27) {
+						if (_this19.popup.contains(document.activeElement)) {
+							_this19.element.focus();
 						}
 
 						evt.stopPropagation();
-						_this18.hidePopup();
+						_this19.hidePopup();
 					}
 				},
 				"wysie:propertychange": function wysiePropertychange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
-						$.fire(_this18.editor, "input");
+						$.fire(_this19.editor, "input");
 					}
 				}
 			});
@@ -1778,8 +1892,8 @@ if (self.Promise && !Promise.prototype.done) {
 
 					// Toggle popup events & methods
 					var hideCallback = function hideCallback(evt) {
-						if (!_this18.popup.contains(evt.target) && !_this18.element.contains(evt.target)) {
-							_this18.hidePopup();
+						if (!_this19.popup.contains(evt.target) && !_this19.element.contains(evt.target)) {
+							_this19.hidePopup();
 						}
 					};
 
@@ -1798,18 +1912,18 @@ if (self.Promise && !Promise.prototype.done) {
 					};
 
 					this.hidePopup = function () {
-						var _this19 = this;
+						var _this20 = this;
 
 						$.unbind(document, "focus click", hideCallback, true);
 
 						this.popup.setAttribute("hidden", ""); // trigger transition
 
 						setTimeout(function () {
-							$.remove(_this19.popup);
+							$.remove(_this20.popup);
 						}, 400); // TODO transition-duration could override this
 
 						$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", function (evt) {
-							_this19.showPopup();
+							_this20.showPopup();
 						}, true);
 					};
 				}
@@ -1842,23 +1956,42 @@ if (self.Promise && !Promise.prototype.done) {
 
 			if (!this.attribute) {
 				if (this.editor.parentNode != this.element && !this.exposed) {
+					$.remove(this.itemControls);
+
 					this.editorValue = this.element.textContent;
 					this.element.textContent = "";
 
 					if (!this.exposed) {
 						this.element.appendChild(this.editor);
 					}
+
+					$.inside(this.itemControls, this.element);
 				}
 			}
 		}, // edit
 
+		import: function _import() {
+			this.value = this.savedValue = this.templateValue;
+		},
+
 		render: function render(data) {
-			this.value = this.savedValue = data;
+			this.value = this.savedValue = data === undefined ? this.emptyValue : data;
 		},
 
 		lazy: {
 			label: function label() {
 				return Wysie.readable(this.property);
+			},
+
+			emptyValue: function emptyValue() {
+				switch (this.datatype) {
+					case "boolean":
+						return false;
+					case "number":
+						return 0;
+				}
+
+				return "";
 			}
 		},
 
@@ -1947,7 +2080,7 @@ if (self.Promise && !Promise.prototype.done) {
 					getter = function getter() {
 						var ret;
 
-						if (attribute in element) {
+						if (attribute in element && _.useProperty(element, attribute)) {
 							// Returning properties (if they exist) instead of attributes
 							// is needed for dynamic elements such as checkboxes, sliders etc
 							ret = element[attribute];
@@ -1974,10 +2107,12 @@ if (self.Promise && !Promise.prototype.done) {
 			},
 
 			setValue: function callee(element, value, attribute) {
-				attribute = attribute || _.getValueAttribute(element);
+				if (attribute !== null) {
+					attribute = attribute ? attribute.name || attribute : _.getValueAttribute(element);
+				}
 
-				if (attribute in element) {
-					// Returning properties (if they exist) instead of attributes
+				if (attribute in element && _.useProperty(element, attribute)) {
+					// Setting properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					element[attribute] = value;
 				} else if (attribute) {
@@ -1985,6 +2120,24 @@ if (self.Promise && !Promise.prototype.done) {
 				} else {
 					element.textContent = value;
 				}
+			},
+
+			/**
+    *  Set/get a property or an attribute?
+    * @return {Boolean} true to use a property, false to use the attribute
+    */
+			useProperty: function useProperty(element, attribute) {
+				if (["href", "src"].indexOf(attribute) > -1) {
+					// URL properties resolve "" as location.href, fucking up emptiness checks
+					return false;
+				}
+
+				if (element.namespaceURI == "http://www.w3.org/2000/svg") {
+					// SVG has a fucked up DOM, do not use these properties
+					return false;
+				}
+
+				return true;
 			}
 		}
 	});
@@ -2052,7 +2205,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 			set editorValue(value) {
 				if (this.editor) {
-					this.editor.value = value.replace(/\r?\n/g, "");
+					this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
 				}
 			}
 		},
@@ -2083,20 +2236,20 @@ if (self.Promise && !Promise.prototype.done) {
 
 (function ($, $$) {
 
-	var _ = Wysie.Collection = function (template, wysie) {
-		var _this20 = this;
+	var _ = Wysie.Collection = function (element, wysie) {
+		var _this21 = this;
 
 		var me = this;
 
-		if (!template || !wysie) {
+		if (!element || !wysie) {
 			throw new TypeError("No template and/or Wysie object");
 		}
 
 		/*
    * Create the template, remove it from the DOM and store it
    */
+		this.template = element;
 
-		this.template = template;
 		this.wysie = wysie;
 
 		this.items = [];
@@ -2108,7 +2261,7 @@ if (self.Promise && !Promise.prototype.done) {
 		// Find add button if provided, or generate one
 		var closestCollection = this.template.parentNode.closest(".wysie-item");
 		this.addButton = $$("button.add-" + this.property + ", .wysie-add, button.add", closestCollection).filter(function (button) {
-			return !_this20.template.contains(button);
+			return !_this21.template.contains(button);
 		})[0];
 
 		this.addButton = this.addButton || document.createElement("button")._.set({
@@ -2116,26 +2269,13 @@ if (self.Promise && !Promise.prototype.done) {
 			textContent: "Add " + this.name.replace(/s$/i, "")
 		});
 
+		this.addButton.classList.add("wysie-ui");
+
 		this.addButton.addEventListener("click", function (evt) {
 			evt.preventDefault();
 
-			_this20.add().edit();
+			_this21.add().edit();
 		});
-
-		/*
-   * Add new items at the top or bottom?
-   */
-		if (this.template.hasAttribute("data-bottomup")) {
-			// Attribute data-bottomup has the highest priority and overrides any heuristics
-			// TODO what if we want to override the heuristics and set it to false?
-			this.bottomUp = true;
-		} else if (!this.addButton.parentNode) {
-			// If add button not in DOM, do the default
-			this.bottomUp = false;
-		} else {
-			// If add button is already in the DOM and *before* our template, then we default to prepending
-			this.bottomUp = !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
-		}
 
 		// Keep position of the template in the DOM, since we’re gonna remove it
 		this.marker = $.create("div", {
@@ -2145,8 +2285,6 @@ if (self.Promise && !Promise.prototype.done) {
 		});
 
 		this.template.classList.add("wysie-item");
-
-		// TODO Add clone button to the template
 
 		this.template.remove();
 
@@ -2158,6 +2296,11 @@ if (self.Promise && !Promise.prototype.done) {
 				this.addButton._.after(this.marker);
 			}
 		}
+
+		this.element = element;
+		this.template = this.element.cloneNode(true);
+
+		Wysie.hooks.run("collection-init-end", this);
 	};
 
 	_.prototype = {
@@ -2171,6 +2314,11 @@ if (self.Promise && !Promise.prototype.done) {
 
 		get data() {
 			return this.getData();
+		},
+
+		// Collection still contains its template as data
+		get containsTemplate() {
+			return this.items.length && this.items[0].element === this.element;
 		},
 
 		getData: function getData(o) {
@@ -2187,21 +2335,20 @@ if (self.Promise && !Promise.prototype.done) {
 
 		// Create item but don't insert it anywhere
 		// Mostly used internally
-		createItem: function createItem() {
-			var _this21 = this;
+		createItem: function createItem(element) {
+			var _this22 = this;
 
-			var element = this.template.cloneNode(true);
+			var element = element || this.template.cloneNode(true);
 
 			var item = Wysie.Unit.create(element, this.wysie, this);
 			item.parentScope = this.parentScope;
 			item.scope = item.scope || this.parentScope;
 
-			// Add delete & add buttons to the template
-			// TODO follow persmissions, these might not be allowed
-			var itemControls = $.create({
+			// Add delete & add buttons
+			item.itemControls = $.create({
 				tag: "menu",
 				type: "toolbar",
-				className: "wysie-item-controls",
+				className: "wysie-item-controls wysie-ui",
 				contents: [{
 					tag: "button",
 					title: "Delete this " + this.name.replace(/s$/i, ""),
@@ -2209,11 +2356,8 @@ if (self.Promise && !Promise.prototype.done) {
 					events: {
 						"click": function click(evt) {
 							if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-								_this21.delete(item);
+								_this22.delete(item);
 							}
-						},
-						"mouseenter mouseleave": function mouseenterMouseleave(evt) {
-							element.classList[evt.type == "mouseenter" ? "add" : "remove"]("delete-hover");
 						}
 					}
 				}, {
@@ -2223,12 +2367,12 @@ if (self.Promise && !Promise.prototype.done) {
 					className: "add",
 					events: {
 						"click": function click(evt) {
-							var i = _this21.items.indexOf(item);
+							var i = _this22.items.indexOf(item);
 
 							if (i > -1) {
-								var newItem = _this21.createItem();
+								var newItem = _this22.createItem();
 
-								_this21.items.splice(i, 0, newItem);
+								_this22.items.splice(i, 0, newItem);
 
 								newItem.element._.after(element);
 
@@ -2267,41 +2411,19 @@ if (self.Promise && !Promise.prototype.done) {
 
 			this.items.forEach(function (item) {
 				item.preEdit ? item.preEdit() : item.edit();
-
-				item.element._.events({
-					"mouseover.wysie:edit": function mouseoverWysieEdit(evt) {
-						if (!item.editing) {
-							return;
-						}
-
-						var isClosest = evt.target.closest(".wysie-item") === item.element;
-
-						// CSS :hover would include child collections
-						item.element._.toggleClass("wysie-item-hovered", isClosest);
-
-						evt.stopPropagation();
-					},
-					"mouseout.wysie:edit": function mouseoutWysieEdit(evt) {
-						if (!item.editing) {
-							return;
-						}
-
-						item.element.classList.remove("wysie-item-hovered");
-					}
-				});
 			});
 		},
 
 		delete: function _delete(item) {
-			var _this22 = this;
+			var _this23 = this;
 
 			return $.transition(item.element, { opacity: 0 }).then(function () {
 				item.deleted = true; // schedule for deletion
 				item.element.style.opacity = "";
 
 				item.element._.fire("wysie:datachange", {
-					collection: _this22,
-					wysie: _this22.wysie,
+					collection: _this23,
+					wysie: _this23.wysie,
 					action: "delete",
 					item: item
 				});
@@ -2309,12 +2431,12 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		save: function save() {
-			var _this23 = this;
+			var _this24 = this;
 
 			this.items.forEach(function (item) {
 				if (item.deleted) {
 					$.remove(item.element);
-					_this23.items.splice(_this23.items.indexOf(item), 1);
+					_this24.items.splice(_this24.items.indexOf(item), 1);
 				} else {
 					item.save();
 					item.element.classList.remove("wysie-item-hovered");
@@ -2323,7 +2445,7 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		cancel: function cancel() {
-			var _this24 = this;
+			var _this25 = this;
 
 			this.items.forEach(function (item, i) {
 				// Revert all properties
@@ -2333,7 +2455,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 				// Delete added items
 				if (item instanceof Wysie.Scope && !item.everSaved) {
-					_this24.items.splice(i, 1);
+					_this25.items.splice(i, 1);
 					$.remove(item.element);
 				}
 
@@ -2341,8 +2463,29 @@ if (self.Promise && !Promise.prototype.done) {
 			});
 		},
 
+		import: function _import() {
+			var item = this.createItem(this.element);
+
+			item.import();
+
+			this.items.push(item);
+
+			$.before(item.element, this.marker);
+
+			// TODO import siblings too
+		},
+
 		render: function render(data) {
 			if (!data) {
+				if (data === null || data === undefined) {
+					var parentItem = this.marker.closest(Wysie.selectors.item);
+
+					if (!parentItem || $.value(parentItem._.data.unit, "collection", "containsTemplate")) {
+						// This is not contained in any other collection, display template data
+						this.import();
+					}
+				}
+
 				return;
 			}
 
@@ -2350,20 +2493,41 @@ if (self.Promise && !Promise.prototype.done) {
 				data = [data];
 			}
 
-			// Using document fragments improved rendering performance by 60%
-			var fragment = document.createDocumentFragment();
+			if (data.length > 0) {
+				// Using document fragments improved rendering performance by 60%
+				var fragment = document.createDocumentFragment();
 
-			data.forEach(function (datum) {
-				var item = this.createItem();
+				data.forEach(function (datum) {
+					var item = this.createItem();
 
-				item.render(datum);
+					item.render(datum);
 
-				this.items.push(item);
+					this.items.push(item);
 
-				fragment.appendChild(item.element);
-			}, this);
+					fragment.appendChild(item.element);
+				}, this);
 
-			this.marker.parentNode.insertBefore(fragment, this.marker);
+				this.marker.parentNode.insertBefore(fragment, this.marker);
+			}
+		},
+
+		lazy: {
+			bottomUp: function bottomUp() {
+				/*
+     * Add new items at the top or bottom?
+     */
+				if (this.template.hasAttribute("data-bottomup")) {
+					// Attribute data-bottomup has the highest priority and overrides any heuristics
+					// TODO what if we want to override the heuristics and set it to false?
+					return true;
+				} else if (!this.addButton.parentNode) {
+					// If add button not in DOM, do the default
+					return false;
+				} else {
+					// If add button is already in the DOM and *before* our template, then we default to prepending
+					return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
+				}
+			}
 		}
 	};
 })(Bliss, Bliss.$);
@@ -2378,7 +2542,7 @@ if (self.Promise && !Promise.prototype.done) {
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		constructor: function constructor() {
-			var _this25 = this;
+			var _this26 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			if (this.wysie.store.protocol != "dropbox:") {
@@ -2401,27 +2565,24 @@ if (self.Promise && !Promise.prototype.done) {
 				}
 
 				// Internal filename (to be used for saving)
-				_this25.filename = (_this25.param("path") || "") + new URL(_this25.wysie.store).pathname.match(/[^/]*$/)[0];
+				_this26.filename = (_this26.param("path") || "") + new URL(_this26.wysie.store).pathname.match(/[^/]*$/)[0];
 
-				_this25.client = new Dropbox.Client({ key: _this25.param("key") });
+				_this26.client = new Dropbox.Client({ key: _this26.param("key") });
 			}).then(function () {
-				_this25.login(true);
+				_this26.login(true);
 			});
 		},
 
-		// Super class save() calls this. Do not call directly.
-		backendSave: function backendSave() {
-			return this.put({
-				name: this.filename,
-				data: this.wysie.toJSON()
-			});
-		},
-
+		/**
+   * Saves a file to the backend.
+   * @param {Object} file - An object with name & data keys
+   * @return {Promise} A promise that resolves when the file is saved.
+   */
 		put: function put(file) {
-			var _this26 = this;
+			var _this27 = this;
 
 			return new Promise(function (resolve, reject) {
-				_this26.client.writeFile(file.name, file.data, function (error, stat) {
+				_this27.client.writeFile(file.name, file.data, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -2433,27 +2594,27 @@ if (self.Promise && !Promise.prototype.done) {
 		},
 
 		login: function login(passive) {
-			var _this27 = this;
+			var _this28 = this;
 
 			return this.ready.then(function () {
-				return _this27.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this27.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this28.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this28.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this27.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this28.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this27.client.isAuthenticated()) {
+						if (_this28.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this27.permissions.on(["logout", "edit"]);
+							_this28.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this27.permissions.off(["logout", "edit", "add", "delete"]);
+							_this28.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -2461,22 +2622,22 @@ if (self.Promise && !Promise.prototype.done) {
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this27.client.getAccountInfo(function (error, accountInfo) {
+				_this28.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						_this27.wysie.wrapper._.fire("wysie:login", accountInfo);
+						_this28.wysie.wrapper._.fire("wysie:login", accountInfo);
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this28 = this;
+			var _this29 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this28.client.signOut(null, function () {
-					_this28.permissions.off(["edit", "add", "delete"]).on("login");
+				_this29.client.signOut(null, function () {
+					_this29.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this28.wysie.wrapper._.fire("wysie:logout");
+					_this29.wysie.wrapper._.fire("wysie:logout");
 					resolve();
 				});
 			});

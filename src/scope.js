@@ -11,13 +11,13 @@ var _ = Wysie.Scope = $.Class({
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
-		$$(Wysie.selectors.property, this.element)
-			.filter(property => this.contains(property))
-			.forEach(prop => {
+		$$(Wysie.selectors.property, this.element).forEach(prop => {
+			if (this.contains(prop)) {
 				if (Wysie.is("multiple", prop)) {
 					var obj = new Wysie.Collection(prop, me.wysie);
 				}
 				else {
+					// Create wysie objects for all non-collection properties
 					obj = _.super.create(prop, this.wysie);
 					obj.scope = obj instanceof _? obj : this;
 				}
@@ -25,7 +25,8 @@ var _ = Wysie.Scope = $.Class({
 				obj.parentScope = this;
 
 				this.properties[obj.property] = obj;
-			});
+			}
+		});
 
 		Wysie.hooks.run("scope-init-end", this);
 	},
@@ -132,6 +133,14 @@ var _ = Wysie.Scope = $.Class({
 		$.unbind(this.element, ".wysie:edit");
 	},
 
+	import: function() {
+		$.each(this.properties, (property, unit) => {
+			unit.import();
+		});
+
+		this.everSaved = true;
+	},
+
 	// Inject data in this element
 	render: function(data) {
 		if (!data) {
@@ -140,15 +149,12 @@ var _ = Wysie.Scope = $.Class({
 
 		data = data.isArray? data[0] : data;
 
-		this.unhandled = {};
+		this.unhandled = $.extend({}, data, property => {
+			return !(property in this.properties);
+		});
 
-		$.each(data, (property, datum) => {
-			if (property in this.properties) {
-				this.properties[property].render(datum);
-			}
-			else {
-				this.unhandled[property] = datum;
-			}
+		$.each(this.properties, (property, unit) => {
+			unit.render(data[property]);
 		});
 
 		this.everSaved = true;
@@ -156,7 +162,7 @@ var _ = Wysie.Scope = $.Class({
 
 	// Check if this scope contains a property
 	// property can be either a Wysie.Unit or a Node
-	contains (property) {
+	contains: function(property) {
 		if (property instanceof Wysie.Unit) {
 			return property.parentScope === this;
 		}
