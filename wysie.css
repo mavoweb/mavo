@@ -15,8 +15,9 @@
   border: solid transparent;
   border-width: .4em .5em .8em .5em;
   border-radius: 1em; }
-  .wysie-item:hover:not(.has-hovered-item) .wysie-item-controls,
-  .wysie-item:focus .wysie-item-controls, .wysie-item-controls:hover, .wysie-item-controls:focus, .wysie-item-controls.focus-within {
+  .wysie-item:hover:not(.has-hovered-item) > .wysie-item-controls,
+  .wysie-item:focus > .wysie-item-controls,
+  .wysie-item.focus-within > .wysie-item-controls, .wysie-item-controls:hover, .wysie-item-controls:focus, .wysie-item-controls.focus-within {
     transition: .4s opacity;
     opacity: 1;
     pointer-events: auto; }

@@ -36,8 +36,9 @@ $property: "[itemprop], [property]";
 	border-radius: 1em;
 
 
-	.wysie-item:hover:not(.has-hovered-item) &,
-	.wysie-item:focus &,
+	.wysie-item:hover:not(.has-hovered-item) > &,
+	.wysie-item:focus > &,
+	.wysie-item.focus-within > &,
 	&:hover,
 	&:focus,
 	&.focus-within {

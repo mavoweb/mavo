@@ -312,13 +312,15 @@
 
 			$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", function (evt) {
 				if (evt.target.matches(".wysie-item-controls .delete")) {
-					evt.target._.toggleClass("delete-hover", evt.type == "mouseenter");
+					var item = evt.target.closest(_.selectors.item);
+					$.toggleClass(item, "delete-hover", evt.type == "mouseenter");
 				}
 
-				if (evt.target.matches(".wysie-item")) {
+				if (evt.target.matches(_.selectors.item)) {
+					//console.log("hello");
 					evt.target.classList.remove("has-hovered-item");
 
-					var parent = evt.target.parentNode.closest(".item");
+					var parent = evt.target.parentNode.closest(_.selectors.item);
 
 					if (parent) {
 						parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
@@ -330,8 +332,8 @@
 		},
 
 		save: function save() {
-			this.root.save();
 			this.editing = false;
+			this.root.save();
 			this.storage && this.storage.save();
 			$.unbind(this.wrapper, ".wysie:edit");
 		},
@@ -459,6 +461,19 @@
 
 		return obj;
 	});
+
+	// :focus-within shim
+	document.addEventListener("focus", function (evt) {
+		$$(".focus-within")._.toggleClass("focus-within", false);
+
+		var element = evt.target;
+
+		while (element = element.parentNode) {
+			if (element.classList) {
+				element.classList.add("focus-within");
+			}
+		}
+	}, true);
 
 	// Init wysie
 	$.ready().then(function (evt) {
