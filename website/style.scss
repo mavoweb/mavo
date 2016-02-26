@@ -22,7 +22,7 @@ a {
 	}
 }
 
-pre, code {
+pre, code, .example script[type='application/json'] {
 	background: lighten($accent-color, 28%);
 	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 	tab-size: 4;
@@ -120,6 +120,18 @@ body > section {
 		img {
 			margin-bottom: -.8em;
 		}
+	}
+
+	.example script[type='application/json'] {
+		display: block;
+		padding: 1em;
+	}
+
+	.example-container {
+		transform: scale(1);
+		padding: 2em;
+		border: 1px solid rgba(0,0,0,.3);
+		margin: 1em 0;
 	}
 }
 

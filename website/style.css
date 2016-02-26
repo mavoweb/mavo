@@ -13,7 +13,7 @@ a {
   a:not(:hover) {
     text-decoration: none; }
 
-pre, code {
+pre, code, .example script[type='application/json'] {
   background: #f9f1f3;
   font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   -moz-tab-size: 4;
@@ -111,6 +111,17 @@ body > section > * {
   font-size: 150%; }
   .docs .logo img {
     margin-bottom: -.8em; }
+
+.docs .example script[type='application/json'] {
+  display: block;
+  padding: 1em; }
+
+.docs .example-container {
+  -webkit-transform: scale(1);
+  transform: scale(1);
+  padding: 2em;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  margin: 1em 0; }
 
 .tip::before {
   content: "Tip: ";

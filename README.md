@@ -1,3 +1,10 @@
+# Info for HTML authors
+
+To use:
+
+- Include wysie.css, bliss.js and wysie.js in your page.
+- Some (pretty crappy atm, but better than nothing) docs are here: http://leaverou.github.io/wysie/docs.html
+
 # Info for contributors
 
 - The actual files to edit are in `src`. The `.js` files in the main directory are generated, as follows:
@@ -5,7 +12,7 @@
 	- `wysie.es5.js` is `wysie.js` above, but transpiled using Babel
 	- `wysie.min.js` is `wysie.es5.js` above, but minified (currently transpiling is a necessary step to minify ES6)
 - The naming convention in `src` is:
-	- The entry point is `wysie.js` 
+	- The entry point is `wysie.js`
 	- Main components have a simple filename, without periods, e.g. `collection.js`.
 	- Addons that could be omitted have a period in their name and start with the name of the file they are addons for. For example:
 		- Files defining storage backends are named `storage.xxx.js` where `xxx` is the name of the backend. E.g. `storage.dropbox.js`, `storage.github.js` etc.

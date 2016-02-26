@@ -1,4 +1,4 @@
-/* http://prismjs.com/download.html?themes=prism&languages=markup+css+clike+javascript&plugins=keep-markup+normalize-whitespace */
+/* http://prismjs.com/download.html?themes=prism&languages=markup+css+clike+javascript&plugins=keep-markup+unescaped-markup+normalize-whitespace */
 var _self = (typeof window !== 'undefined')
 	? window   // if in browser
 	: (
@@ -90,19 +90,19 @@ var _ = _self.Prism = {
 		insertBefore: function (inside, before, insert, root) {
 			root = root || _.languages;
 			var grammar = root[inside];
-			
+
 			if (arguments.length == 2) {
 				insert = arguments[1];
-				
+
 				for (var newToken in insert) {
 					if (insert.hasOwnProperty(newToken)) {
 						grammar[newToken] = insert[newToken];
 					}
 				}
-				
+
 				return grammar;
 			}
-			
+
 			var ret = {};
 
 			for (var token in grammar) {
@@ -122,7 +122,7 @@ var _ = _self.Prism = {
 					ret[token] = grammar[token];
 				}
 			}
-			
+
 			// Update references in other language definitions
 			_.languages.DFS(_.languages, function(key, value) {
 				if (value === root[inside] && key != inside) {
@@ -153,12 +153,19 @@ var _ = _self.Prism = {
 		}
 	},
 	plugins: {},
-	
+
 	highlightAll: function(async, callback) {
-		var elements = document.querySelectorAll('code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code');
+		var env = {
+			callback: callback,
+			selector: 'code[class*="language-"], [class*="language-"] code, code[class*="lang-"], [class*="lang-"] code'
+		};
+
+		_.hooks.run("before-highlightall", env);
+
+		var elements = env.elements || document.querySelectorAll(env.selector);
 
 		for (var i=0, element; element = elements[i++];) {
-			_.highlightElement(element, async === true, callback);
+			_.highlightElement(element, async === true, env.callback);
 		}
 	},
 
@@ -268,6 +275,7 @@ var _ = _self.Prism = {
 				var pattern = patterns[j],
 					inside = pattern.inside,
 					lookbehind = !!pattern.lookbehind,
+					greedy = !!pattern.greedy,
 					lookbehindLength = 0,
 					alias = pattern.alias;
 
@@ -288,36 +296,73 @@ var _ = _self.Prism = {
 
 					pattern.lastIndex = 0;
 
-					var match = pattern.exec(str);
+					var match = pattern.exec(str),
+					    delNum = 1;
 
-					if (match) {
-						if(lookbehind) {
-							lookbehindLength = match[1].length;
+					// Greedy patterns can override/remove up to two previously matched tokens
+					if (!match && greedy && i != strarr.length - 1) {
+						// Reconstruct the original text using the next two tokens
+						var nextToken = strarr[i + 1].matchedStr || strarr[i + 1],
+						    combStr = str + nextToken;
+
+						if (i < strarr.length - 2) {
+							combStr += strarr[i + 2].matchedStr || strarr[i + 2];
 						}
 
-						var from = match.index - 1 + lookbehindLength,
-							match = match[0].slice(lookbehindLength),
-							len = match.length,
-							to = from + len,
-							before = str.slice(0, from + 1),
-							after = str.slice(to + 1);
-
-						var args = [i, 1];
-
-						if (before) {
-							args.push(before);
+						// Try the pattern again on the reconstructed text
+						pattern.lastIndex = 0;
+						match = pattern.exec(combStr);
+						if (!match) {
+							continue;
 						}
 
-						var wrapped = new Token(token, inside? _.tokenize(match, inside) : match, alias);
-
-						args.push(wrapped);
-
-						if (after) {
-							args.push(after);
+						var from = match.index + (lookbehind ? match[1].length : 0);
+						// To be a valid candidate, the new match has to start inside of str
+						if (from >= str.length) {
+							continue;
 						}
+						var to = match.index + match[0].length,
+						    len = str.length + nextToken.length;
 
-						Array.prototype.splice.apply(strarr, args);
+						// Number of tokens to delete and replace with the new match
+						delNum = 3;
+
+						if (to <= len) {
+							delNum = 2;
+							combStr = combStr.slice(0, len);
+						}
+						str = combStr;
 					}
+
+					if (!match) {
+						continue;
+					}
+
+					if(lookbehind) {
+						lookbehindLength = match[1].length;
+					}
+
+					var from = match.index + lookbehindLength,
+					    match = match[0].slice(lookbehindLength),
+					    to = from + match.length,
+					    before = str.slice(0, from),
+					    after = str.slice(to);
+
+					var args = [i, delNum];
+
+					if (before) {
+						args.push(before);
+					}
+
+					var wrapped = new Token(token, inside? _.tokenize(match, inside) : match, alias, match);
+
+					args.push(wrapped);
+
+					if (after) {
+						args.push(after);
+					}
+
+					Array.prototype.splice.apply(strarr, args);
 				}
 			}
 		}
@@ -350,10 +395,12 @@ var _ = _self.Prism = {
 	}
 };
 
-var Token = _.Token = function(type, content, alias) {
+var Token = _.Token = function(type, content, alias, matchedStr) {
 	this.type = type;
 	this.content = content;
 	this.alias = alias;
+	// Copy of the full string this token was created from
+	this.matchedStr = matchedStr || null;
 };
 
 Token.stringify = function(o, language, parent) {
@@ -519,7 +566,7 @@ if (Prism.languages.markup) {
 			alias: 'language-css'
 		}
 	});
-	
+
 	Prism.languages.insertBefore('inside', 'attr-value', {
 		'style-attr': {
 			pattern: /\s*style=("|').*?\1/i,
@@ -549,7 +596,10 @@ Prism.languages.clike = {
 			lookbehind: true
 		}
 	],
-	'string': /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,
+	'string': {
+		pattern: /(["'])(\\(?:\r\n|[\s\S])|(?!\1)[^\\\r\n])*\1/,
+		greedy: true
+	},
 	'class-name': {
 		pattern: /((?:\b(?:class|interface|extends|implements|trait|instanceof|new)\s+)|(?:catch\s+\())[a-z0-9_\.\\]+/i,
 		lookbehind: true,
@@ -575,13 +625,14 @@ Prism.languages.javascript = Prism.languages.extend('clike', {
 Prism.languages.insertBefore('javascript', 'keyword', {
 	'regex': {
 		pattern: /(^|[^/])\/(?!\/)(\[.+?]|\\.|[^/\\\r\n])+\/[gimyu]{0,5}(?=\s*($|[\r\n,.;})]))/,
-		lookbehind: true
+		lookbehind: true,
+		greedy: true
 	}
 });
 
 Prism.languages.insertBefore('javascript', 'class-name', {
 	'template-string': {
-		pattern: /`(?:\\`|\\?[^`])*`/,
+		pattern: /`(?:\\\\|\\?[^\\])*?`/,
 		inside: {
 			'interpolation': {
 				pattern: /\$\{[^}]+\}/,
@@ -616,7 +667,13 @@ Prism.languages.js = Prism.languages.javascript;
 		return;
 	}
 
+	Prism.plugins.KeepMarkup = true;
+
 	Prism.hooks.add('before-highlight', function (env) {
+		if (!env.element.children.length) {
+			return;
+		}
+
 		var pos = 0;
 		var data = [];
 		var f = function (elt, baseNode) {
@@ -698,6 +755,46 @@ Prism.languages.js = Prism.languages.javascript;
 					pos: 0
 				});
 			});
+		}
+	});
+}());
+
+(function () {
+
+	if (typeof self === 'undefined' || !self.Prism || !self.document || !Prism.languages.markup) {
+		return;
+	}
+
+	Prism.plugins.UnescapedMarkup = true;
+
+	Prism.hooks.add('before-highlightall', function (env) {
+		env.selector += ", .lang-markup script[type='text/plain'], .language-markup script[type='text/plain']" +
+		                ", script[type='text/plain'].lang-markup, script[type='text/plain'].language-markup";
+	});
+
+	Prism.hooks.add('before-highlight', function (env) {
+		if (env.language != "markup") {
+			return;
+		}
+
+		if (env.element.matches("script[type='text/plain']")) {
+			var code = document.createElement("code");
+			var pre = document.createElement("pre");
+
+			pre.className = code.className = env.element.className;
+
+			env.code = env.code.replace(/&lt;\/script(>|&gt;)/gi, "</scri" + "pt>");
+
+			if (Prism.plugins.NormalizeWhitespace) {
+				env.code = Prism.plugins.NormalizeWhitespace.normalize(env.code);
+			}
+
+			code.textContent = env.code;
+
+		    pre.appendChild(code);
+		    env.element.parentNode.replaceChild(pre, env.element);
+			env.element = code;
+			return;
 		}
 	});
 }());
@@ -839,7 +936,8 @@ Prism.hooks.add('before-highlight', function (env) {
 	var children = pre.childNodes,
 	    before = '',
 	    after = '',
-	    codeFound = false;
+	    codeFound = false,
+	    Normalizer = Prism.plugins.NormalizeWhitespace;
 
 	// Move surrounding whitespace from the <pre> tag into the <code> tag
 	for (var i = 0; i < children.length; ++i) {
@@ -858,9 +956,19 @@ Prism.hooks.add('before-highlight', function (env) {
 			--i;
 		}
 	}
-	env.code = before + env.code + after;
 
-	env.code = Prism.plugins.NormalizeWhitespace.normalize(env.code, env.settings);
+	if (!env.element.children.length || !Prism.plugins.KeepMarkup) {
+		env.code = before + env.code + after;
+		env.code = Normalizer.normalize(env.code, env.settings);
+	} else {
+		// Preserve markup for keep-markup plugin
+		var html = before + env.element.innerHTML + after;
+		env.element.innerHTML = Normalizer.normalize(html, env.settings);
+		env.code = env.element.textContent;
+	}
 });
+// Make sure our callback runs first
+var hooks = Prism.hooks.all['before-highlight'];
+hooks.unshift(hooks.pop());
 
 }());

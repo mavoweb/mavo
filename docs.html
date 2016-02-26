@@ -3,6 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Wysie: Documentation for HTML authors</title>
+	<link rel="stylesheet" href="wysie.css" />
 	<link rel="stylesheet" href="website/style.css">
 </head>
 <body class="language-markup">
@@ -17,12 +18,22 @@
 <section>
 	<h1>Getting started</h1>
 
-	<p>To use wysie to make a page editable, two things are needed as a minimum:</p>
+	<p>To use wysie to make a page editable, you need to take the following easy steps:</p>
 
-	<ul>
-		<li>A <code>data-store</code> attribute with a URI that tells wysie <strong>where</strong> to store the data.</li>
-		<li><code>property</code> attributes on every element that needs to be editable.</li>
-	</ul>
+	<ol>
+		<li>Include Wysie on your page, by including its CSS and JS files:
+			<script type="text/plain">
+			<link rel="stylesheet" href="wysie.css" />
+			<script src="wysie.js">&lt;/script></script>
+		</li>
+		<li>
+			Add <code>property</code> attributes on any element you want to make editable.
+		</li>
+		<li>Find an element that encloses all your editable attributes, and add a <code>data-store</code> attribute to it.
+			The <code>data-store</code> attribute usually takes URI that tells wysie <strong>where</strong> to store the data.
+			However to start experimenting as soon as possible, you can use it without a value, in which case it does not store the data anywhere.
+		</li>
+	</ol>
 
 	<p>You can find details about these attributes below.</p>
 </section>
@@ -108,7 +119,33 @@
 		</script>
 	</article>
 	<article>
-		<h1><code>typeof</code></h1>
+		<h1><code>typeof</code> or <code>itemscope</code> or <code>itemtype</code></h1>
+
+		<p>Makes the element a scope.
+			Rarely needed explicitly, it can usually be inferred from the rest of the markup and the Wysie attributes.
+			If provided without a value or inferred, its value will be “Item”.
+		</p>
+
+		<script type="text/plain">
+			<dl property="character" typeof="Person"></dl>
+				<dt>Name:</dt>
+				<dd property=name>General Leia Organa</dd>
+
+				<dt>Age:</dt>
+				<dd property=age>58</dd>
+
+				<dt>Spouse:</dt>
+				<dd>
+					<dl property="spouse" typeof="Person">
+						<dt>name</dt>
+						<dd property=name>Han Solo</dd>
+
+						<dt>Age:</dt>
+						<dd property=age>71</dd>
+					</dl>
+				</dd>
+			</script>
+		</script>
 	</article>
 	<article>
 		<h1><code>data-input</code></h1>
@@ -122,22 +159,74 @@
 		<p>Overrides the default for which attribute (if any) contains the element’s data.
 			Specify <code>"null"</code> for the data to be in the content.</p>
 	</article>
-	<!-- <article>
-		<h1><code></code></h1>
+	<article>
+		<h1><code>data-default</code></h1>
+
+		<p>Specifies the default value of the property.
+			If specified without a value, the default value of the property will be its content in the template.</p>
 	</article>
 	<article>
-		<h1><code></code></h1>
+		<h1><code>data-store-root</code></h1>
+
+		<p>Allows setting a path to the data, in the form of <code>property/childProperty/grandChildPropery/...</code> to only render a portion.</p>
 	</article>
+</section>
+
+<section id="expressions">
+	<h1>Expressions</h1>
+
 	<article>
-		<h1><code></code></h1>
+		<h1>Simple expressions: <code>{propertyName}</code></h1>
+
+		<p>Dynamically resolves to the current value of a certain property.
+			The property can be in the current scope, in an ancestor scope, even in child scopes.
+			However, there is a precedence order in case of conflicts, which is current > ancestor > children
+		</p>
+
+		<p>On certain attributes, the value is transformed first.
+			For example, if using an expression inside an <code>id</code>, <code>class</code> or <code>name</code> property, it will first be converted to an identifier, i.e. lowercased and with any weird characters stripped.</p>
+
+		<section class="example">
+			<p>Move the slider and check how both expressions are updated:</p>
+			<script type="text/plain">
+				<p>Slider value: {foo}</p>
+				<input type="range" property="foo" title="{foo}" />
+			</script>
+		</section>
 	</article>
+
 	<article>
-		<h1><code></code></h1>
-	</article> -->
+		<h1>Advanced expressions: <code>${code}</code></h1>
+
+		<p>These expresssions allow for the full power of JavaScript.
+			However, the code is executed with several conveniences, so that even authors with the most minimal JavaScript knowledge can use them to do really useful things.</p>
+
+		<ul>
+			<li>Any property that can be used in simple expressions (including ancestor and child properties) can be used as a variable.</li>
+			<li>Multiplied elements (a.k.a. collections) are arrays. Scopes are plain objects.</li>
+			<li>Properties inside collections can also be accessed as a simple variable, whose value will be an array with all values of that property accross the collection.</li>
+		</ul>
+
+		<section class="example">
+			<p>Try adding and removing elements:</p>
+
+			<script type="text/plain">
+				<h2>People (${person.length})</h2>
+				<ul>
+					<li property="person">
+						<div property="name">Lea Verou</div>
+						<div property="age">30</div>
+					</li>
+				</ul>
+			</script>
+		</section>
+
+	</article>
 </section>
 
 <script src="../bliss/bliss.js"></script>
 <script src="website/docs.js"></script>
+<script src="wysie.js"></script>
 <script src="website/prism.js"></script>
 
 </body>
