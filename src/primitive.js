@@ -72,6 +72,36 @@ var _ = Wysie.Primitive = $.Class({
 				this.update(this.value);
 			}
 		});
+
+		if (this.collection) {
+			// Collection of primitives, deal with setting textContent etc without removing UI
+			var swapUI = callback => {
+				this.observer.disconnect();
+				var ui = $.remove($(Wysie.selectors.ui, this.element));
+
+				var ret = callback();
+
+				$.inside(ui, this.element);
+				Wysie.observe(this.element, this.attribute, this.observer);
+
+				return ret;
+			};
+
+			// Intercept certain properties so that any Wysie UI inside this primitive will not be destroyed
+			["textContent", "innerHTML"].forEach(property => {
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+
+				Object.defineProperty(this.element, property, {
+					get: function() {
+						return swapUI(() => descriptor.get.call(this));
+					},
+
+					set: function(value) {
+						swapUI(() => descriptor.set.call(this, value));
+					}
+				});
+			});
+		}
 	},
 
 	get value() {
@@ -87,16 +117,12 @@ var _ = Wysie.Primitive = $.Class({
 			this.editorValue = value;
 		}
 
-		$.remove(this.itemControls);
-
 		_.setValue(this.element, value, this.attribute, this.datatype);
 
 		if (Wysie.is("formControl", this.element) || !this.attribute) {
 			// Mutation observer won't catch this, so we have to call update manually
 			this.update(value);
 		}
-
-		$.inside(this.itemControls, this.element);
 	},
 
 	get editorValue() {
@@ -247,8 +273,6 @@ var _ = Wysie.Primitive = $.Class({
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 		this.element.tabIndex = 0;
-
-		$.inside(this.itemControls, this.element);
 	},
 
 	// Called only the first time this primitive is edited
@@ -409,22 +433,19 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		this.savedValue = this.value;
-		this.editing = true;
 
 		if (!this.attribute) {
 			if (this.editor.parentNode != this.element && !this.exposed) {
-				$.remove(this.itemControls);
-
-				this.editorValue = this.element.textContent;
+				this.editorValue = this.value;
 				this.element.textContent = "";
 
 				if (!this.exposed) {
 					this.element.appendChild(this.editor);
 				}
-
-				$.inside(this.itemControls, this.element);
 			}
 		}
+
+		this.editing = true;
 	}, // edit
 
 	import: function() {
@@ -548,7 +569,8 @@ var _ = Wysie.Primitive = $.Class({
 						ret = element.getAttribute(attribute);
 					}
 					else {
-						ret = element.getAttribute("content") || element.textContent || null;
+						ret = element.textContent || null;
+
 					}
 
 					switch (datatype) {

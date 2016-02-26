@@ -35,7 +35,6 @@ $property: "[itemprop], [property]";
 	border-width: .4em .5em .8em .5em;
 	border-radius: 1em;
 
-
 	.wysie-item:hover:not(.has-hovered-item) > &,
 	.wysie-item:focus > &,
 	.wysie-item.focus-within > &,
@@ -111,6 +110,10 @@ $property: "[itemprop], [property]";
 		$color: hsl(80, 80%, 40%);
 
 		color: $color;
+
+		&::before {
+			content: "✚";
+		}
 
 		&:hover {
 			background-color: $color;

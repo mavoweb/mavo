@@ -106,7 +106,7 @@ _.prototype = {
 		item.scope = item.scope || this.parentScope;
 
 		// Add delete & add buttons
-		item.itemControls = $.create({
+		$.create({
 			tag: "menu",
 			type: "toolbar",
 			className: "wysie-item-controls wysie-ui",
@@ -125,7 +125,6 @@ _.prototype = {
 				}, {
 					tag: "button",
 					title: "Add new " + this.name.replace(/s$/i, ""),
-					textContent: "✚",
 					className: "add",
 					events: {
 						"click": evt => {

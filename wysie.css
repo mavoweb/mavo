@@ -1,3 +1,4 @@
+@charset "UTF-8";
 [data-store] {
   display: none; }
 
@@ -58,6 +59,8 @@
         filter: saturate(0) brightness(600%); }
   .wysie-item-controls .add {
     color: #81b814; }
+    .wysie-item-controls .add::before {
+      content: "✚"; }
     .wysie-item-controls .add:hover {
       background-color: #81b814;
       color: white; }

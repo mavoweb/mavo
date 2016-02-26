@@ -240,7 +240,8 @@ var _ = self.Wysie = $.Class({
 			required: "[required], [data-required], .required",
 			formControl: "input, select, textarea",
 			computed: ".computed", // Properties or scopes with computed properties, will not be saved
-			item: ".wysie-item"
+			item: ".wysie-item",
+			ui: ".wysie-ui"
 		},
 
 		is: function(thing, element) {
