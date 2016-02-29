@@ -1133,14 +1133,53 @@ var _ = Wysie.Expression = $.Class({
 				return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
 			},
 
+			min: array => Math.min.apply(Math, array),
+			max: array => Math.max.apply(Math, array),
+
 			round: function(num, decimals) {
-				return +(Math.round(num + "e+" + decimals)  + "e-" + decimals);
+				if (!num) {
+					return num;
+				}
+
+				// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
+				// Can't just concatenate with e+decimals, because then what happens if it already has an e?
+				// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
+				function decimalShift(num, decimals) {
+					return +(num + "").replace(/e([+-]\d+)$|$/, ($0, e) => {
+						var newE = (+e || 0) + decimals;
+						return "e" + (newE > 0? "+" : "") + newE;
+					});
+				}
+
+				return decimalShift(Math.round(decimalShift(num, 2)), -2);
+			},
+
+			iif: function(condition, iftrue, iffalse) {
+				return condition? iftrue : iffalse;
 			}
 		}
 	}
 });
 
 _.functions.avg = _.functions.average;
+_.functions.iff = _.functions.iif;
+
+// Make function names case insensitive
+if (self.Proxy) {
+	_.functions = new Proxy(_.functions, {
+		get: (functions, property) => {
+			property = property.toLowerCase? property.toLowerCase() : property;
+
+			return functions[property];
+		},
+
+		has: (functions, property) => {
+			property = property.toLowerCase? property.toLowerCase() : property;
+
+			return property in functions;
+		}
+	});
+}
 
 (function() {
 
@@ -1271,25 +1310,26 @@ var _ = Wysie.Expressions = $.Class({
 	},
 
 	update: function callee() {
-		var timePassed = performance.now() - this.lastUpdated;
+		if (_.THROTTLE > 0) {
+			var elapsedTime = performance.now() - this.lastUpdated;
 
-		if (this.lastUpdated && timePassed < _.THROTTLE) {
-			// Throttle
-			if (!callee.timeout) {
-				callee.timeout = setTimeout(() => this.update(), _.THROTTLE - timePassed);
+			clearTimeout(callee.timeout);
+
+			if (this.lastUpdated && (elapsedTime < _.THROTTLE)) {
+				// Throttle
+				callee.timeout = setTimeout(() => this.update(), _.THROTTLE - elapsedTime);
+
+				return;
 			}
-
-			return;
 		}
-
-		clearTimeout(callee.timeout);
 
 		var data = this.scope.getRelativeData();
 
 		$$(this.all).forEach(ref => ref.update(data));
 
-		this.lastUpdated = performance.now();
-		callee.timeout = 0;
+		if (_.THROTTLE > 0) {
+			this.lastUpdated = performance.now();
+		}
 	},
 
 	extract: function(element, attribute) {
@@ -1325,7 +1365,7 @@ var _ = Wysie.Expressions = $.Class({
 	},
 
 	static: {
-		THROTTLE: 25
+		THROTTLE: 0
 	}
 });
 
@@ -1333,6 +1373,11 @@ var _ = Wysie.Expressions = $.Class({
 
 Wysie.hooks.add("scope-init-end", function(scope) {
 	new Wysie.Expressions(scope);
+});
+
+// Enable throttling only after a while to ensure everything has initially run
+document.addEventListener("wysie:load", evt => {
+	setTimeout(() => Wysie.Expressions.THROTTLE = 25, 100);
 });
 
 })(Bliss, Bliss.$);
@@ -1450,7 +1495,14 @@ var _ = Wysie.Scope = $.Class({
 					var ret = this.find(property);
 
 					if (ret !== undefined) {
-						data[property] = Array.isArray(ret)? ret.map(item => item.getData(o)) : ret.getData(o);
+						if (Array.isArray(ret)) {
+							ret = ret.map(item => item.getData(o)).filter(item => item !== null);
+						}
+						else {
+							ret = ret.getData(o);
+						}
+
+						data[property] = ret;
 
 						return true;
 					}

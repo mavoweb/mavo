@@ -110,7 +110,14 @@ var _ = Wysie.Scope = $.Class({
 					var ret = this.find(property);
 
 					if (ret !== undefined) {
-						data[property] = Array.isArray(ret)? ret.map(item => item.getData(o)) : ret.getData(o);
+						if (Array.isArray(ret)) {
+							ret = ret.map(item => item.getData(o)).filter(item => item !== null);
+						}
+						else {
+							ret = ret.getData(o);
+						}
+
+						data[property] = ret;
 
 						return true;
 					}
