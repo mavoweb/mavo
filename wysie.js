@@ -282,6 +282,9 @@ var _ = self.Wysie = $.Class({
 			this.permissions.can("read", () => this.storage.load());
 		}
 		else {
+			this.permissions.on(["read", "edit"]);
+			this.root.import();
+
 			this.wrapper._.fire("wysie:load");
 		}
 
@@ -320,7 +323,6 @@ var _ = self.Wysie = $.Class({
 			}
 
 			if (evt.target.matches(_.selectors.item)) {
-				//console.log("hello");
 				evt.target.classList.remove("has-hovered-item");
 
 				var parent = evt.target.parentNode.closest(_.selectors.item);
@@ -416,6 +418,20 @@ var _ = self.Wysie = $.Class({
 			observer.observe(element, options);
 
 			return observer;
+		},
+
+		// If the passed value is not an array, convert to an array
+		toArray: arr => {
+			return Array.isArray(arr)? arr : [arr];
+		},
+
+		// Recursively flatten a multi-dimensional array
+		flatten: arr => {
+			if (!Array.isArray(arr)) {
+				return [arr];
+			}
+
+			return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 		},
 
 		selectors: {
@@ -1078,7 +1094,9 @@ var _ = Wysie.Expression = $.Class({
 	eval: function(data) {
 		this.oldValue = this.value;
 
-		return this.value = this.simple? data[this.expression] : _.eval(this.expression, data);
+		return this.value = this.simple?
+		                    data[this.expression]
+		                    : _.eval(this.expression, data);
 	},
 
 	toString() {
@@ -1086,21 +1104,43 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	static: {
-		eval: function(expr, data) {
-			// TODO cache function and use cached if Object.keys(data) hasn't changed
-			var properties = Object.keys(data);
-
+		eval: (expr, data) => {
 			try {
-				var compiled = Function.apply(null, properties.concat(`return ${expr};`));
-				return compiled.apply(self, properties.map(property => data[property]));
+				return eval(`with (Math) with(_.functions) with(data) { ${expr} }`);
 			}
 			catch (e) {
-				console.warn(`Error in ${expr}: ` + e);
+				console.warn(`Error in ${expr}: ` + e, e.stack);
 				return `N/A`;
+			}
+		},
+
+		/**
+		 * Utility functions that are available inside expressions.
+		 * TODO proxy so that this works case insensitive
+		 */
+		functions: {
+			sum: function(array) {
+				array = Array.isArray(array)? array : $$(arguments);
+
+				return array.reduce((prev, current) => {
+					return +prev + (+current || 0);
+				}, 0);
+			},
+
+			average: function(array) {
+				array = Array.isArray(array)? array : $$(arguments);
+
+				return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
+			},
+
+			round: function(num, decimals) {
+				return +(Math.round(num + "e+" + decimals)  + "e-" + decimals);
 			}
 		}
 	}
 });
+
+_.functions.avg = _.functions.average;
 
 (function() {
 
@@ -1363,37 +1403,81 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
-	// Get data in JSON format, with ancestor and nested properties flattened,
-	// iff they do not collide with properties of this scope.
-	// Used in expressions.
 	getRelativeData: function() {
-		var scope = this;
-		var data = {};
+		var o = {
+			dirty: true,
+			computed: true,
+			null: true
+		};
 
-		// Get data of this scope and flatten ancestors
-		while (scope) {
-			var property = scope.property;
-			data = $.extend(scope.getData({dirty: true, computed: true, null: true}), data);
+		var data = this.getData(o);
 
-			var parentScope = scope.parentScope;
+		if (self.Proxy) {
+			// TODO proxy child objects too
+			data = new Proxy(data, {
+				get: (data, property) => {
+					if (property in data) {
+						return data[property];
+					}
 
-			scope = parentScope;
-		}
+					// Look in ancestors
+					var scope = this;
 
-		// Flatten nested objects
-		(function flatten(obj) {
-			$.each(obj, (key, value) => {
-				if (!(key in data)) {
-					data[key] = value;
-				}
+					while (scope = scope.parentScope) {
+						if (property in scope.properties) {
+							return scope.properties[property].getData(o);
+						}
+					}
+				},
 
-				if ($.type(value) === "object") {
-					flatten(value);
+				has: (data, property) => {
+					if (property in data) {
+						return true;
+					}
+
+					// Property does not exist, look for it elsewhere
+
+					// First look in ancestors
+					var scope = this;
+
+					while (scope = scope.parentScope) {
+						if (property in scope.properties) {
+							return true;
+						}
+					}
+
+					// Still not found, look in descendants
+					var ret = this.find(property);
+
+					if (ret !== undefined) {
+						data[property] = Array.isArray(ret)? ret.map(item => item.getData(o)) : ret.getData(o);
+
+						return true;
+					}
 				}
 			});
-		}).call(this, data);
+		}
 
 		return data;
+	},
+
+	// Search entire subtree for property, return relative value
+	find: function(property) {
+		if (this.property == property) {
+			return this;
+		}
+
+		if (property in this.properties) {
+			return this.properties[property].find(property);
+		}
+
+		for (var prop in this.properties) {
+			var ret = this.properties[prop].find(property);
+
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
 	},
 
 	edit: function() {
@@ -1570,6 +1654,8 @@ var _ = Wysie.Primitive = $.Class({
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			this.observer.disconnect();
+
 			if (this.attribute) {
 				var value = this.value;
 
@@ -1580,10 +1666,12 @@ var _ = Wysie.Primitive = $.Class({
 			else if (!this.editing) {
 				this.update(this.value);
 			}
-		});
+
+			Wysie.observe(this.element, this.attribute, this.observer, true);
+		}, true);
 
 		if (this.collection) {
-			// Collection of primitives, deal with setting textContent etc without removing UI
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.observer.disconnect();
 				var ui = $.remove($(Wysie.selectors.ui, this.element));
@@ -1965,6 +2053,12 @@ var _ = Wysie.Primitive = $.Class({
 		this.value = this.savedValue = data === undefined? this.emptyValue : data;
 	},
 
+	find: function(property) {
+		if (this.property == property) {
+			return this;
+		}
+	},
+
 	lazy: {
 		label: function() {
 			return Wysie.readable(this.property);
@@ -2105,7 +2199,10 @@ var _ = Wysie.Primitive = $.Class({
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				element[attribute] = value;
 			}
-			else if (attribute) {
+
+			// Set attribute anyway, even if we set a property because when
+			// they're not in sync it gets really fucking confusing.
+			if (attribute) {
 				element.setAttribute(attribute, value);
 			}
 			else {
@@ -2247,6 +2344,13 @@ var _ = Wysie.Collection = function (element, wysie) {
 	this.property = Wysie.Unit.normalizeProperty(this.template);
 	this.type = Wysie.Scope.normalize(this.template);
 
+	// Normalize property names and cache them in array
+	this.properties = []; // ALL descendant properties
+
+	$$(Wysie.selectors.property, this.template).forEach(element => {
+		this.properties.push(Wysie.Unit.normalizeProperty(element));
+	});
+
 	this.required = this.template.matches(Wysie.selectors.required);
 
 	// Find add button if provided, or generate one
@@ -2378,8 +2482,8 @@ _.prototype = {
 		return item;
 	},
 
-	add: function() {
-		var item = this.createItem();
+	add: function(item) {
+		item = item || this.createItem();
 
 		item.element._.before(this.bottomUp && this.items.length > 0? this.items[0].element : this.marker);
 
@@ -2454,9 +2558,7 @@ _.prototype = {
 
 		item.import();
 
-		this.items.push(item);
-
-		$.before(item.element, this.marker);
+		this.add(item);
 
 		// TODO import siblings too
 	},
@@ -2475,9 +2577,7 @@ _.prototype = {
 			return;
 		}
 
-		if (data && !Array.isArray(data)) {
-			data = [data];
-		}
+		data = Wysie.toArray(data);
 
 		if (data.length > 0) {
 			// Using document fragments improved rendering performance by 60%
@@ -2494,6 +2594,18 @@ _.prototype = {
 			}, this);
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
+		}
+	},
+
+	find: function(property) {
+		if (this.property == property) {
+			return this.items;
+		}
+
+		if (this.properties.indexOf(property) > -1) {
+			var ret = this.items.map(item => item.find(property));
+
+			return Wysie.flatten(ret);
 		}
 	},
 

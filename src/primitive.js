@@ -61,6 +61,8 @@ var _ = Wysie.Primitive = $.Class({
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			this.observer.disconnect();
+
 			if (this.attribute) {
 				var value = this.value;
 
@@ -71,10 +73,12 @@ var _ = Wysie.Primitive = $.Class({
 			else if (!this.editing) {
 				this.update(this.value);
 			}
-		});
+
+			Wysie.observe(this.element, this.attribute, this.observer, true);
+		}, true);
 
 		if (this.collection) {
-			// Collection of primitives, deal with setting textContent etc without removing UI
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.observer.disconnect();
 				var ui = $.remove($(Wysie.selectors.ui, this.element));
@@ -456,6 +460,12 @@ var _ = Wysie.Primitive = $.Class({
 		this.value = this.savedValue = data === undefined? this.emptyValue : data;
 	},
 
+	find: function(property) {
+		if (this.property == property) {
+			return this;
+		}
+	},
+
 	lazy: {
 		label: function() {
 			return Wysie.readable(this.property);
@@ -596,7 +606,10 @@ var _ = Wysie.Primitive = $.Class({
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				element[attribute] = value;
 			}
-			else if (attribute) {
+
+			// Set attribute anyway, even if we set a property because when
+			// they're not in sync it gets really fucking confusing.
+			if (attribute) {
 				element.setAttribute(attribute, value);
 			}
 			else {

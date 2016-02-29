@@ -18,6 +18,13 @@ var _ = Wysie.Collection = function (element, wysie) {
 	this.property = Wysie.Unit.normalizeProperty(this.template);
 	this.type = Wysie.Scope.normalize(this.template);
 
+	// Normalize property names and cache them in array
+	this.properties = []; // ALL descendant properties
+
+	$$(Wysie.selectors.property, this.template).forEach(element => {
+		this.properties.push(Wysie.Unit.normalizeProperty(element));
+	});
+
 	this.required = this.template.matches(Wysie.selectors.required);
 
 	// Find add button if provided, or generate one
@@ -149,8 +156,8 @@ _.prototype = {
 		return item;
 	},
 
-	add: function() {
-		var item = this.createItem();
+	add: function(item) {
+		item = item || this.createItem();
 
 		item.element._.before(this.bottomUp && this.items.length > 0? this.items[0].element : this.marker);
 
@@ -225,9 +232,7 @@ _.prototype = {
 
 		item.import();
 
-		this.items.push(item);
-
-		$.before(item.element, this.marker);
+		this.add(item);
 
 		// TODO import siblings too
 	},
@@ -246,9 +251,7 @@ _.prototype = {
 			return;
 		}
 
-		if (data && !Array.isArray(data)) {
-			data = [data];
-		}
+		data = Wysie.toArray(data);
 
 		if (data.length > 0) {
 			// Using document fragments improved rendering performance by 60%
@@ -265,6 +268,18 @@ _.prototype = {
 			}, this);
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
+		}
+	},
+
+	find: function(property) {
+		if (this.property == property) {
+			return this.items;
+		}
+
+		if (this.properties.indexOf(property) > -1) {
+			var ret = this.items.map(item => item.find(property));
+
+			return Wysie.flatten(ret);
 		}
 	},
 

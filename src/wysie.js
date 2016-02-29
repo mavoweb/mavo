@@ -93,6 +93,9 @@ var _ = self.Wysie = $.Class({
 			this.permissions.can("read", () => this.storage.load());
 		}
 		else {
+			this.permissions.on(["read", "edit"]);
+			this.root.import();
+
 			this.wrapper._.fire("wysie:load");
 		}
 
@@ -131,7 +134,6 @@ var _ = self.Wysie = $.Class({
 			}
 
 			if (evt.target.matches(_.selectors.item)) {
-				//console.log("hello");
 				evt.target.classList.remove("has-hovered-item");
 
 				var parent = evt.target.parentNode.closest(_.selectors.item);
@@ -227,6 +229,20 @@ var _ = self.Wysie = $.Class({
 			observer.observe(element, options);
 
 			return observer;
+		},
+
+		// If the passed value is not an array, convert to an array
+		toArray: arr => {
+			return Array.isArray(arr)? arr : [arr];
+		},
+
+		// Recursively flatten a multi-dimensional array
+		flatten: arr => {
+			if (!Array.isArray(arr)) {
+				return [arr];
+			}
+
+			return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 		},
 
 		selectors: {

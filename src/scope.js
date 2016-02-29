@@ -63,37 +63,81 @@ var _ = Wysie.Scope = $.Class({
 		return ret;
 	},
 
-	// Get data in JSON format, with ancestor and nested properties flattened,
-	// iff they do not collide with properties of this scope.
-	// Used in expressions.
 	getRelativeData: function() {
-		var scope = this;
-		var data = {};
+		var o = {
+			dirty: true,
+			computed: true,
+			null: true
+		};
 
-		// Get data of this scope and flatten ancestors
-		while (scope) {
-			var property = scope.property;
-			data = $.extend(scope.getData({dirty: true, computed: true, null: true}), data);
+		var data = this.getData(o);
 
-			var parentScope = scope.parentScope;
+		if (self.Proxy) {
+			// TODO proxy child objects too
+			data = new Proxy(data, {
+				get: (data, property) => {
+					if (property in data) {
+						return data[property];
+					}
 
-			scope = parentScope;
-		}
+					// Look in ancestors
+					var scope = this;
 
-		// Flatten nested objects
-		(function flatten(obj) {
-			$.each(obj, (key, value) => {
-				if (!(key in data)) {
-					data[key] = value;
-				}
+					while (scope = scope.parentScope) {
+						if (property in scope.properties) {
+							return scope.properties[property].getData(o);
+						}
+					}
+				},
 
-				if ($.type(value) === "object") {
-					flatten(value);
+				has: (data, property) => {
+					if (property in data) {
+						return true;
+					}
+
+					// Property does not exist, look for it elsewhere
+
+					// First look in ancestors
+					var scope = this;
+
+					while (scope = scope.parentScope) {
+						if (property in scope.properties) {
+							return true;
+						}
+					}
+
+					// Still not found, look in descendants
+					var ret = this.find(property);
+
+					if (ret !== undefined) {
+						data[property] = Array.isArray(ret)? ret.map(item => item.getData(o)) : ret.getData(o);
+
+						return true;
+					}
 				}
 			});
-		}).call(this, data);
+		}
 
 		return data;
+	},
+
+	// Search entire subtree for property, return relative value
+	find: function(property) {
+		if (this.property == property) {
+			return this;
+		}
+
+		if (property in this.properties) {
+			return this.properties[property].find(property);
+		}
+
+		for (var prop in this.properties) {
+			var ret = this.properties[prop].find(property);
+
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
 	},
 
 	edit: function() {

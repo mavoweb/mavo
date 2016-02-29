@@ -18,6 +18,7 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	white-space: pre;
 	background: hsl(30, 50%, 95%);
 	padding: .5em;
+	margin: 1em 0;
 }
 </style>
 </head>
@@ -28,19 +29,20 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	<ul>
 		<li property="list">
 			<div property="name">Vector</div>
-			<div property="age">10</div>
+			<div property class="age">10</div>
 			<ul>
 				<li property="hobbies">purring</li>
 			</ul>
 		</li>
 	</ul>
+	<span>${average(age)}</span>
 </div>
 
 <script type="application/json" id="foo">{
 	"slider": 80,
 	"list": [
 		{"name": "Lea", "age": 30},
-		{"name": "Chris"},
+		{"name": "Chris", "hobbies": ["wine", "food", "electronics", "SVG"]},
 		{"name": "Eirik", "age": 32},
 		{"name": "Amy", "age": 45},
 		{"name": "Thras", "age": 24},

@@ -13,7 +13,9 @@ var _ = Wysie.Expression = $.Class({
 	eval: function(data) {
 		this.oldValue = this.value;
 
-		return this.value = this.simple? data[this.expression] : _.eval(this.expression, data);
+		return this.value = this.simple?
+		                    data[this.expression]
+		                    : _.eval(this.expression, data);
 	},
 
 	toString() {
@@ -21,21 +23,43 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	static: {
-		eval: function(expr, data) {
-			// TODO cache function and use cached if Object.keys(data) hasn't changed
-			var properties = Object.keys(data);
-
+		eval: (expr, data) => {
 			try {
-				var compiled = Function.apply(null, properties.concat(`return ${expr};`));
-				return compiled.apply(self, properties.map(property => data[property]));
+				return eval(`with (Math) with(_.functions) with(data) { ${expr} }`);
 			}
 			catch (e) {
-				console.warn(`Error in ${expr}: ` + e);
+				console.warn(`Error in ${expr}: ` + e, e.stack);
 				return `N/A`;
+			}
+		},
+
+		/**
+		 * Utility functions that are available inside expressions.
+		 * TODO proxy so that this works case insensitive
+		 */
+		functions: {
+			sum: function(array) {
+				array = Array.isArray(array)? array : $$(arguments);
+
+				return array.reduce((prev, current) => {
+					return +prev + (+current || 0);
+				}, 0);
+			},
+
+			average: function(array) {
+				array = Array.isArray(array)? array : $$(arguments);
+
+				return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
+			},
+
+			round: function(num, decimals) {
+				return +(Math.round(num + "e+" + decimals)  + "e-" + decimals);
 			}
 		}
 	}
 });
+
+_.functions.avg = _.functions.average;
 
 (function() {
 
