@@ -2478,7 +2478,7 @@
 
 		this.addButton = this.addButton || document.createElement("button")._.set({
 			className: "add",
-			textContent: "Add " + this.name.replace(/s$/i, "")
+			textContent: "Add " + this.name
 		});
 
 		this.addButton.classList.add("wysie-ui");

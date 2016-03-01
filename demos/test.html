@@ -31,25 +31,35 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 			<div property="name">Vector</div>
 			<div property class="age">10</div>
 			<ul>
-				<li property="hobbies">purring</li>
+				<li property="hobby">purring</li>
+				<li property="hobby">eating</li>
 			</ul>
 		</li>
 	</ul>
-	<span>Average: ${avg(age)}</span>
-	<span>Min: ${min(age)}</span>
-	<span>Max: ${Max(age)}</span>
-	<span>Sum: ${SUM(age)}</span>
+
+	<h2>Aggregates over age:</h2>
+	<dl>
+		<dt>Average:</dt>
+		<dd>${avg(age)}</dd>
+		<dt>Min:</dt>
+		<dd>${min(age)}</dd>
+		<dt>Max:</dt>
+		<dd>${Max(age)}</dd>
+		<dt>Sum:</dt>
+		<dd>${SUM(age)}</dd>
+	</dl>
+
 </div>
 
 <script type="application/json" id="foo">{
 	"slider": 80,
 	"list": [
 		{"name": "Lea", "age": 30},
-		{"name": "Chris", "hobbies": ["wine", "food", "electronics", "SVG"]},
+		{"name": "Chris", "hobby": ["wine", "food", "electronics", "SVG"]},
 		{"name": "Eirik", "age": 32},
 		{"name": "Amy", "age": 45},
 		{"name": "Thras", "age": 25},
-		{"name": "Sirma", "age": 24, "hobbies": ["painting", "yoga", "exercise", "flying to Turkey"]}
+		{"name": "Sirma", "age": 24, "hobby": ["painting", "yoga", "exercise", "flying to Turkey"]}
 	]
 }</script>
 <!-- ,
