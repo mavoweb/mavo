@@ -1819,7 +1819,8 @@
 
 		get value() {
 			if (this.editing) {
-				return this.editorValue;
+				var ret = this.editorValue;
+				return ret === "" ? null : ret;
 			}
 
 			return _.getValue(this.element, this.attribute, this.datatype);
