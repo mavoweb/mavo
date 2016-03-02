@@ -129,7 +129,6 @@ $property: "[itemprop], [property]";
 
 .wysie-item {
 	position: relative;
-	margin-right: 1.5em;
 
 	&.delete-hover { // basically &:has(> .delete:hover)
 		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.1) inset !important;

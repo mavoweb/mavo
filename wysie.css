@@ -71,8 +71,7 @@
     display: none; }
 
 .wysie-item {
-  position: relative;
-  margin-right: 1.5em; }
+  position: relative; }
   .wysie-item.delete-hover {
     box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset !important;
     border-radius: .1em; }
