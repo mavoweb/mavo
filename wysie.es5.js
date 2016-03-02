@@ -788,7 +788,7 @@
 		},
 
 		get isHash() {
-			return this.url.origin === location.origin && this.url.pathname === location.pathname && this.url.hash;
+			return this.url.origin === location.origin && this.url.pathname === location.pathname && !!this.url.hash;
 		},
 
 		// Is the storage ready?
@@ -996,7 +996,7 @@
 			});
 
 			if (this.isHash) {
-				var element = $(this.isHash);
+				var element = $(this.url.hash);
 
 				if (element) {
 					this.get = function () {
