@@ -51,6 +51,9 @@ var _ = self.Wysie = $.Class({
 
 		element.removeAttribute("data-store");
 
+		// Normalize property names
+		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Unit.normalizeProperty(element));
+
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 

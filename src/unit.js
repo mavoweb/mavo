@@ -13,7 +13,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 		this.element = element;
 		this.element._.data.unit = this;
 
-		this.property = _.normalizeProperty(this.element);
+		this.property = this.element.getAttribute("property");
 		this.collection = collection;
 
 		this.computed = this.element.matches(Wysie.selectors.computed);

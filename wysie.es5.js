@@ -230,6 +230,11 @@
 
 			element.removeAttribute("data-store");
 
+			// Normalize property names
+			$$(_.selectors.property, this.wrapper).forEach(function (element) {
+				return Wysie.Unit.normalizeProperty(element);
+			});
+
 			// Build wysie objects
 			this.root = new (_.is("multiple", this.element) ? _.Collection : _.Scope)(this.element, this);
 
@@ -1029,7 +1034,7 @@
 			this.element = element;
 			this.element._.data.unit = this;
 
-			this.property = _.normalizeProperty(this.element);
+			this.property = this.element.getAttribute("property");
 			this.collection = collection;
 
 			this.computed = this.element.matches(Wysie.selectors.computed);
@@ -1446,19 +1451,39 @@
 
 			// Create Wysie objects for all properties in this scope (primitives or scopes),
 			// but not properties in descendant scopes (they will be handled by their scope)
-			$$(Wysie.selectors.property, this.element).forEach(function (prop) {
-				if (_this15.contains(prop)) {
-					if (Wysie.is("multiple", prop)) {
-						var obj = new Wysie.Collection(prop, me.wysie);
+			$$(Wysie.selectors.property, this.element).forEach(function (element) {
+				var property = element.getAttribute("property");
+
+				if (_this15.contains(element)) {
+					var existing = _this15.properties[property];
+
+					if (existing) {
+						var collection;
+
+						// Property already exists, turn this into an immutable collection if it's not already
+						if (existing instanceof Wysie.Collection) {
+							// Already a collection (this must be the 3+th duplicate)
+							collection = existing;
+						} else {
+							collection = new Wysie.Collection(element, me.wysie);
+							collection.parentScope = _this15;
+							_this15.properties[property] = collection;
+							collection.add(existing);
+						}
+
+						collection.add(element);
 					} else {
-						// Create wysie objects for all non-collection properties
-						obj = _.super.create(prop, _this15.wysie);
-						obj.scope = obj instanceof _ ? obj : _this15;
+						if (Wysie.is("multiple", element)) {
+							var obj = new Wysie.Collection(element, me.wysie);
+						} else {
+							// Create wysie objects for all non-collection properties
+							obj = _.super.create(element, _this15.wysie);
+							obj.scope = obj instanceof _ ? obj : _this15;
+						}
+
+						obj.parentScope = _this15;
+						_this15.properties[property] = obj;
 					}
-
-					obj.parentScope = _this15;
-
-					_this15.properties[obj.property] = obj;
 				}
 			});
 
@@ -2441,81 +2466,60 @@
 
 (function ($, $$) {
 
-	var _ = Wysie.Collection = function (element, wysie) {
-		var _this24 = this;
+	var _ = Wysie.Collection = $.Class({
+		constructor: function constructor(element, wysie) {
+			var me = this;
 
-		var me = this;
-
-		if (!element || !wysie) {
-			throw new TypeError("No template and/or Wysie object");
-		}
-
-		/*
-   * Create the template, remove it from the DOM and store it
-   */
-		this.template = element;
-
-		this.wysie = wysie;
-
-		this.items = [];
-		this.property = Wysie.Unit.normalizeProperty(this.template);
-		this.type = Wysie.Scope.normalize(this.template);
-
-		// Normalize property names and cache them in array
-		this.properties = []; // ALL descendant properties
-
-		$$(Wysie.selectors.property, this.template).forEach(function (element) {
-			_this24.properties.push(Wysie.Unit.normalizeProperty(element));
-		});
-
-		this.required = this.template.matches(Wysie.selectors.required);
-
-		// Find add button if provided, or generate one
-		var closestCollection = this.template.parentNode.closest(".wysie-item");
-		this.addButton = $$("button.add-" + this.property + ", .wysie-add, button.add", closestCollection).filter(function (button) {
-			return !_this24.template.contains(button);
-		})[0];
-
-		this.addButton = this.addButton || document.createElement("button")._.set({
-			className: "add",
-			textContent: "Add " + this.name
-		});
-
-		this.addButton.classList.add("wysie-ui");
-
-		this.addButton.addEventListener("click", function (evt) {
-			evt.preventDefault();
-
-			_this24.add().edit();
-		});
-
-		// Keep position of the template in the DOM, since we’re gonna remove it
-		this.marker = $.create("div", {
-			hidden: true,
-			className: "wysie-marker",
-			after: this.template
-		});
-
-		this.template.classList.add("wysie-item");
-
-		this.template.remove();
-
-		// Insert the add button if it's not already in the DOM
-		if (!this.addButton.parentNode) {
-			if (this.bottomUp) {
-				this.addButton._.before($.value(this.items[0], "element") || this.marker);
-			} else {
-				this.addButton._.after(this.marker);
+			if (!element || !wysie) {
+				throw new TypeError("No template and/or Wysie object");
 			}
-		}
 
-		this.element = element;
-		this.template = this.element.cloneNode(true);
+			/*
+    * Create the template, remove it from the DOM and store it
+    */
+			this.template = element;
 
-		Wysie.hooks.run("collection-init-end", this);
-	};
+			this.wysie = wysie;
 
-	_.prototype = {
+			this.items = [];
+			this.property = this.template.getAttribute("property");
+			this.type = Wysie.Scope.normalize(this.template);
+
+			// ALL descendant property names as an array
+			this.properties = $$(Wysie.selectors.property, this.template)._.getAttribute("property");
+
+			this.mutable = this.template.matches(Wysie.selectors.multiple);
+
+			if (this.mutable) {
+				this.required = this.template.matches(Wysie.selectors.required);
+
+				// Keep position of the template in the DOM, since we’re gonna remove it
+				this.marker = $.create("div", {
+					hidden: true,
+					className: "wysie-marker",
+					after: this.template
+				});
+
+				this.template.classList.add("wysie-item");
+
+				this.template.remove();
+
+				// Insert the add button if it's not already in the DOM
+				if (!this.addButton.parentNode) {
+					if (this.bottomUp) {
+						this.addButton._.before($.value(this.items[0], "element") || this.marker);
+					} else {
+						this.addButton._.after(this.marker);
+					}
+				}
+
+				this.element = element;
+				this.template = this.element.cloneNode(true);
+			}
+
+			Wysie.hooks.run("collection-init-end", this);
+		},
+
 		get name() {
 			return Wysie.readable(this.property || this.type).toLowerCase();
 		},
@@ -2536,11 +2540,17 @@
 		getData: function getData(o) {
 			o = o || {};
 
-			return this.items.map(function (item) {
+			var data = this.items.map(function (item) {
 				return item.deleted ? null : item.getData(o);
 			}).filter(function (item) {
 				return item !== null;
 			});
+
+			if (!o.dirty && this.unhandled) {
+				data = this.unhandled.before.concat(data, this.unhandled.after);
+			}
+
+			return data;
 		},
 
 		toJSON: Wysie.prototype.toJSON,
@@ -2548,62 +2558,67 @@
 		// Create item but don't insert it anywhere
 		// Mostly used internally
 		createItem: function createItem(element) {
-			var _this25 = this;
+			var _this24 = this;
 
 			var element = element || this.template.cloneNode(true);
 
 			var item = Wysie.Unit.create(element, this.wysie, this);
+			item.collection = this;
 			item.parentScope = this.parentScope;
 			item.scope = item.scope || this.parentScope;
 
 			// Add delete & add buttons
-			$.create({
-				tag: "menu",
-				type: "toolbar",
-				className: "wysie-item-controls wysie-ui",
-				contents: [{
-					tag: "button",
-					title: "Delete this " + this.name.replace(/s$/i, ""),
-					className: "delete",
-					events: {
-						"click": function click(evt) {
-							if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-								_this25.delete(item);
+			if (this.mutable) {
+				$.create({
+					tag: "menu",
+					type: "toolbar",
+					className: "wysie-item-controls wysie-ui",
+					contents: [{
+						tag: "button",
+						title: "Delete this " + this.name,
+						className: "delete",
+						events: {
+							"click": function click(evt) {
+								if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
+									_this24.delete(item);
+								}
 							}
 						}
-					}
-				}, {
-					tag: "button",
-					title: "Add new " + this.name.replace(/s$/i, ""),
-					className: "add",
-					events: {
-						"click": function click(evt) {
-							var i = _this25.items.indexOf(item);
-
-							if (i > -1) {
-								var newItem = _this25.createItem();
-
-								_this25.items.splice(i, 0, newItem);
-
-								newItem.element._.after(element);
-
-								newItem.edit();
+					}, {
+						tag: "button",
+						title: "Add new " + this.name.replace(/s$/i, ""),
+						className: "add",
+						events: {
+							"click": function click(evt) {
+								return _this24.add(null, _this24.items.indexOf(item)).edit();
 							}
 						}
-					}
-				}],
-				inside: element
-			});
+					}],
+					inside: element
+				});
+			}
 
 			return item;
 		},
 
-		add: function add(item) {
-			item = item || this.createItem();
+		add: function add(item, index) {
+			if (item instanceof Node) {
+				item = item._.data.unit || this.createItem(item);
+			} else {
+				item = item || this.createItem();
+			}
 
-			item.element._.before(this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker);
+			if (index in this.items) {
+				item.element._.after(this.items[index].element);
 
-			this.items.push(item);
+				this.items.splice(index, 0, item);
+			} else {
+				if (!item.element.parentNode) {
+					item.element._.before(this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker);
+				}
+
+				this.items.push(item);
+			}
 
 			item.element._.fire("wysie:datachange", {
 				collection: this,
@@ -2616,7 +2631,7 @@
 		},
 
 		edit: function edit() {
-			if (this.length === 0 && this.required) {
+			if (this.length === 0 && this.required && this.mutable) {
 				this.add();
 			}
 
@@ -2626,28 +2641,36 @@
 		},
 
 		delete: function _delete(item) {
-			var _this26 = this;
+			var _this25 = this;
 
 			return $.transition(item.element, { opacity: 0 }).then(function () {
 				item.deleted = true; // schedule for deletion
 				item.element.style.opacity = "";
 
 				item.element._.fire("wysie:datachange", {
-					collection: _this26,
-					wysie: _this26.wysie,
+					collection: _this25,
+					wysie: _this25.wysie,
 					action: "delete",
 					item: item
 				});
 			});
 		},
 
+		clear: function clear() {
+			this.items.forEach(function (item) {
+				item.element.remove();
+			});
+
+			this.items = [];
+		},
+
 		save: function save() {
-			var _this27 = this;
+			var _this26 = this;
 
 			this.items.forEach(function (item) {
 				if (item.deleted) {
 					$.remove(item.element);
-					_this27.items.splice(_this27.items.indexOf(item), 1);
+					_this26.items.splice(_this26.items.indexOf(item), 1);
 				} else {
 					item.save();
 					item.element.classList.remove("wysie-item-hovered");
@@ -2656,7 +2679,7 @@
 		},
 
 		cancel: function cancel() {
-			var _this28 = this;
+			var _this27 = this;
 
 			this.items.forEach(function (item, i) {
 				// Revert all properties
@@ -2666,7 +2689,7 @@
 
 				// Delete added items
 				if (item instanceof Wysie.Scope && !item.everSaved) {
-					_this28.items.splice(i, 1);
+					_this27.items.splice(i, 1);
 					$.remove(item.element);
 				}
 
@@ -2675,21 +2698,21 @@
 		},
 
 		import: function _import() {
-			var item = this.createItem(this.element);
+			var item = this.add(this.element);
 
 			item.import();
-
-			this.add(item);
 
 			// TODO import siblings too
 		},
 
 		render: function render(data) {
+			var _this28 = this;
+
+			this.unhandled = { before: [], after: [] };
+
 			if (!data) {
 				if (data === null || data === undefined) {
-					var parentItem = this.marker.closest(Wysie.selectors.item);
-
-					if (!parentItem || $.value(parentItem._.data.unit, "collection", "containsTemplate")) {
+					if (!this.closestCollection || this.closestCollection.containsTemplate) {
 						// This is not contained in any other collection, display template data
 						this.import();
 					}
@@ -2698,21 +2721,29 @@
 				return;
 			}
 
-			data = Wysie.toArray(data);
+			data = data && Wysie.toArray(data);
 
-			if (data.length > 0) {
+			if (!this.mutable) {
+				this.items.forEach(function (item, i) {
+					return item.render(data && data[i]);
+				});
+
+				if (data) {
+					this.unhandled.after = data.slice(this.items.length);
+				}
+			} else if (data && data.length > 0) {
 				// Using document fragments improved rendering performance by 60%
 				var fragment = document.createDocumentFragment();
 
 				data.forEach(function (datum) {
-					var item = this.createItem();
+					var item = _this28.createItem();
 
 					item.render(datum);
 
-					this.items.push(item);
+					_this28.items.push(item);
 
 					fragment.appendChild(item.element);
-				}, this);
+				});
 
 				this.marker.parentNode.insertBefore(fragment, this.marker);
 			}
@@ -2748,9 +2779,38 @@
 					// If add button is already in the DOM and *before* our template, then we default to prepending
 					return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
 				}
+			},
+
+			closestCollection: function closestCollection() {
+				var parent = this.marker ? this.marker.parentNode : this.template.parentNode;
+
+				return parent.closest(Wysie.selectors.item);
+			},
+
+			addButton: function addButton() {
+				var _this29 = this;
+
+				// Find add button if provided, or generate one
+				var selector = "button.add-" + this.property + ", .wysie-add, button.add";
+				var ret = $$(selector, this.closestCollection).filter(function (button) {
+					return !_this29.template.contains(button);
+				})[0] || document.createElement("button")._.set({
+					className: "add",
+					textContent: "Add " + this.name
+				});
+
+				ret.classList.add("wysie-ui");
+
+				ret.addEventListener("click", function (evt) {
+					evt.preventDefault();
+
+					_this29.add().edit();
+				});
+
+				return ret;
 			}
 		}
-	};
+	});
 })(Bliss, Bliss.$);
 
 (function ($) {
@@ -2763,7 +2823,7 @@
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		constructor: function constructor() {
-			var _this29 = this;
+			var _this30 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			if (this.wysie.store.protocol != "dropbox:") {
@@ -2786,11 +2846,11 @@
 				}
 
 				// Internal filename (to be used for saving)
-				_this29.filename = (_this29.param("path") || "") + new URL(_this29.wysie.store).pathname.match(/[^/]*$/)[0];
+				_this30.filename = (_this30.param("path") || "") + new URL(_this30.wysie.store).pathname.match(/[^/]*$/)[0];
 
-				_this29.client = new Dropbox.Client({ key: _this29.param("key") });
+				_this30.client = new Dropbox.Client({ key: _this30.param("key") });
 			}).then(function () {
-				_this29.login(true);
+				_this30.login(true);
 			});
 		},
 
@@ -2800,10 +2860,10 @@
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put(file) {
-			var _this30 = this;
+			var _this31 = this;
 
 			return new Promise(function (resolve, reject) {
-				_this30.client.writeFile(file.name, file.data, function (error, stat) {
+				_this31.client.writeFile(file.name, file.data, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -2815,27 +2875,27 @@
 		},
 
 		login: function login(passive) {
-			var _this31 = this;
+			var _this32 = this;
 
 			return this.ready.then(function () {
-				return _this31.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this31.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this32.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this32.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this31.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this32.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this31.client.isAuthenticated()) {
+						if (_this32.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this31.permissions.on(["logout", "edit"]);
+							_this32.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this31.permissions.off(["logout", "edit", "add", "delete"]);
+							_this32.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -2843,22 +2903,22 @@
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this31.client.getAccountInfo(function (error, accountInfo) {
+				_this32.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						_this31.wysie.wrapper._.fire("wysie:login", accountInfo);
+						_this32.wysie.wrapper._.fire("wysie:login", accountInfo);
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this32 = this;
+			var _this33 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this32.client.signOut(null, function () {
-					_this32.permissions.off(["edit", "add", "delete"]).on("login");
+				_this33.client.signOut(null, function () {
+					_this33.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this32.wysie.wrapper._.fire("wysie:logout");
+					_this33.wysie.wrapper._.fire("wysie:logout");
 					resolve();
 				});
 			});

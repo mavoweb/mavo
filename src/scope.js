@@ -11,20 +11,42 @@ var _ = Wysie.Scope = $.Class({
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
-		$$(Wysie.selectors.property, this.element).forEach(prop => {
-			if (this.contains(prop)) {
-				if (Wysie.is("multiple", prop)) {
-					var obj = new Wysie.Collection(prop, me.wysie);
+		$$(Wysie.selectors.property, this.element).forEach(element => {
+			var property = element.getAttribute("property");
+
+			if (this.contains(element)) {
+				var existing = this.properties[property];
+
+				if (existing) {
+					var collection;
+
+					// Property already exists, turn this into an immutable collection if it's not already
+					if (existing instanceof Wysie.Collection) {
+						// Already a collection (this must be the 3+th duplicate)
+						collection = existing;
+					}
+					else {
+						collection = new Wysie.Collection(element, me.wysie);
+						collection.parentScope = this;
+						this.properties[property] = collection;
+						collection.add(existing);
+					}
+
+					collection.add(element);
 				}
 				else {
-					// Create wysie objects for all non-collection properties
-					obj = _.super.create(prop, this.wysie);
-					obj.scope = obj instanceof _? obj : this;
+					if (Wysie.is("multiple", element)) {
+						var obj = new Wysie.Collection(element, me.wysie);
+					}
+					else {
+						// Create wysie objects for all non-collection properties
+						obj = _.super.create(element, this.wysie);
+						obj.scope = obj instanceof _? obj : this;
+					}
+
+					obj.parentScope = this;
+					this.properties[property] = obj;
 				}
-
-				obj.parentScope = this;
-
-				this.properties[obj.property] = obj;
 			}
 		});
 
