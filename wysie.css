@@ -153,20 +153,20 @@
     vertical-align: middle;
     margin-right: .2em; }
 
+.wysie-wrapper.save-hovered [property].unsaved-changes {
+  box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
+
 .wysie-wrapper:not([data-editing]) .empty,
 .wysie-wrapper:not([data-editing]) .wysie-item-controls,
 .wysie-wrapper:not([data-editing]) button.add,
-.wysie-wrapper:not([data-editing]) .save,
-.wysie-wrapper:not([data-editing]) .cancel {
-  display: none; }
-
-.wysie-wrapper[data-editing] .edit {
+.wysie-wrapper:not([data-editing]):not(.unsaved-changes) .save,
+.wysie-wrapper:not([data-editing]):not(.unsaved-changes) .revert {
   display: none; }
 
 .wysie-wrapper[data-editing] .empty {
   opacity: .5; }
 
-.wysie-wrapper[data-editing] [itemprop]:focus, .wysie-wrapper[data-editing] [property]:focus,
+.wysie-wrapper[data-editing] [property]:focus,
 .wysie-wrapper[data-editing] .wysie-editor:focus,
 .wysie-wrapper[data-editing] .wysie-popup:focus,
 .wysie-wrapper[data-editing] .wysie-item:focus,
@@ -174,7 +174,7 @@
   outline: 3px solid #f06 !important; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):hover {
-  box-shadow: 0 0 0 2px rgba(255, 247, 0, 0.2), 0 0 0 99em rgba(255, 247, 0, 0.2) inset; }
+  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset !important; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):focus,
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) .wysie-editor:focus, .wysie-wrapper[data-editing] [property]:not([typeof]):focus,
@@ -206,9 +206,12 @@
   z-index: 99999;
   color: white;
   font-family: inherit;
-  font-size: 1rem; }
+  font-size: 1rem;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px); }
   .wysie-wrapper.can-logout .wysie-bar,
-  .wysie-wrapper[data-editing] .wysie-bar {
+  .wysie-wrapper[data-editing] .wysie-bar,
+  .wysie-wrapper.unsaved-changes .wysie-bar {
     top: 0;
     left: 0;
     right: 0;
@@ -216,23 +219,23 @@
     display: -ms-flexbox;
     display: flex;
     padding: 0 .5em 0 6em;
-    background: black;
-    background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(rgba(26, 26, 26, 0.9), black); }
+    background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+    background-color: rgba(64, 64, 64, 0.9); }
   .wysie-wrapper.can-login:not([data-editing]) .wysie-bar,
-  .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar {
+  .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar {
     top: 1em;
     right: 1em; }
     .wysie-wrapper.can-login:not([data-editing]) .wysie-bar:not(:hover):not(:focus),
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar:not(:hover):not(:focus) {
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar:not(:hover):not(:focus) {
       opacity: .6; }
     .wysie-wrapper.can-login:not([data-editing]) .wysie-bar button, .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .button,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar button,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar .button {
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar button,
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar .button {
       border-radius: .3em;
       border: 1px solid black;
       background: rgba(0, 0, 0, 0.8); }
     .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .status,
-    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) .wysie-bar .status {
+    .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar .status {
       display: none; }
   .wysie-bar button, .wysie-bar .button {
     padding: .3em .6em .4em;
@@ -242,15 +245,31 @@
     font-weight: bold;
     color: inherit;
     cursor: pointer; }
-    .wysie-bar button:hover, .wysie-bar .button:hover {
+    .wysie-bar button:enabled:hover, .wysie-bar .button:enabled:hover {
       background: rgba(255, 255, 255, 0.2); }
-    .wysie-bar button .icon, .wysie-bar .button .icon {
-      color: rgba(255, 255, 255, 0.5); }
+    .wysie-bar button::before, .wysie-bar .button::before {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: .3em;
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: normal; }
+    .wysie-bar button:disabled, .wysie-bar .button:disabled {
+      opacity: .6;
+      cursor: not-allowed; }
   .wysie-bar a.button {
     text-decoration: none; }
-  .wysie-bar .save:hover {
-    background: #81b814; }
-  .wysie-bar .cancel:hover {
+  .wysie-bar .edit::before {
+    content: "✎"; }
+  .wysie-wrapper[data-editing] .wysie-bar .edit {
+    background: rgba(0, 0, 0, 0.4);
+    box-shadow: .2em 0 .4em -.2em black inset, -.2em 0 .4em -.2em black inset; }
+  .wysie-bar .save::before {
+    content: "✓"; }
+  .wysie-bar .save:enabled:hover {
+    background: #40bfbf; }
+  .wysie-bar .revert::before {
+    content: "✘"; }
+  .wysie-bar .revert:enabled:hover {
     background: #c00; }
   .wysie-bar .status {
     -webkit-flex: 1;

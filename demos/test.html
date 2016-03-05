@@ -28,7 +28,6 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	<input type="range" property="slider" />
 	<ul>
 		<li property="list">
-			<div property="hobby">Foobar</div>
 			<div property="name">Vector</div>
 			<div property class="age">10</div>
 			<ul>
@@ -39,6 +38,10 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 
 	<h2>Aggregates over age:</h2>
 	<dl>
+		<dt>Number of people:</dt>
+		<dd>${list.length}</dd>
+		<dt>Number of people with age:</dt>
+		<dd>${age.length}</dd>
 		<dt>Average:</dt>
 		<dd>${avg(age)}</dd>
 		<dt>Min:</dt>

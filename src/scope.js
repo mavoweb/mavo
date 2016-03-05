@@ -3,10 +3,6 @@
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, collection) {
-		var me = this;
-
-		this.type = _.normalize(this.element);
-
 		this.properties = {};
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
@@ -26,7 +22,7 @@ var _ = Wysie.Scope = $.Class({
 						collection = existing;
 					}
 					else {
-						collection = new Wysie.Collection(element, me.wysie);
+						collection = new Wysie.Collection(element, this.wysie);
 						collection.parentScope = this;
 						this.properties[property] = collection;
 						collection.add(existing);
@@ -36,7 +32,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					if (Wysie.is("multiple", element)) {
-						var obj = new Wysie.Collection(element, me.wysie);
+						var obj = new Wysie.Collection(element, this.wysie);
 					}
 					else {
 						// Create wysie objects for all non-collection properties
@@ -53,10 +49,6 @@ var _ = Wysie.Scope = $.Class({
 		Wysie.hooks.run("scope-init-end", this);
 	},
 
-	get isRoot() {
-		return !this.property;
-	},
-
 	get propertyNames () {
 		return Object.keys(this.properties);
 	},
@@ -64,7 +56,7 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
+		if (this.wysie.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
 			return null;
 		}
 
@@ -169,50 +161,26 @@ var _ = Wysie.Scope = $.Class({
 		}
 	},
 
-	edit: function() {
-		this.editing = true;
-
+	propagate: function(callback) {
 		$.each(this.properties, (property, obj) => {
-			if (obj instanceof Wysie.Collection) {
-				obj.edit();
-			}
-			else {
-				// If scope, edit. If primitive, prepare for edit.
-				obj[obj instanceof _? "edit" : "preEdit"]();
-			}
+			obj.call.apply(obj, arguments);
 		});
 	},
 
 	save: function() {
-		this.editing = false;
-
-		// this should include collections
-		$.each(this.properties, (property, obj) => {
-			obj.save();
-		});
-
-		$.unbind(this.element, ".wysie:edit");
-
 		this.everSaved = true;
+		this.unsavedChanges = false;
 	},
 
-	cancel: function() {
-		this.editing = false;
-
-		$.each(this.properties, (property, obj) => {
-			obj.cancel();
-		});
-
+	done: function() {
 		$.unbind(this.element, ".wysie:edit");
 	},
 
 	import: function() {
-		$.each(this.properties, (property, unit) => {
-			unit.import();
-		});
-
 		this.everSaved = true;
 	},
+
+	propagated: ["save", "done", "import"],
 
 	// Inject data in this element
 	render: function(data) {
@@ -226,11 +194,11 @@ var _ = Wysie.Scope = $.Class({
 			return !(property in this.properties);
 		});
 
-		$.each(this.properties, (property, unit) => {
-			unit.render(data[property]);
+		this.propagate(obj => {
+			obj.render(data[obj.property]);
 		});
 
-		this.everSaved = true;
+		this.save();
 	},
 
 	// Check if this scope contains a property
@@ -273,7 +241,7 @@ var _ = Wysie.Scope = $.Class({
 			}
 
 			return type;
-		},
+		}
 	}
 });
 

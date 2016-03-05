@@ -1,5 +1,4 @@
 $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
-$property: "[itemprop], [property]";
 
 /// Mixin to prefix several properties at once
 /// @author Hugo Giraudel
@@ -14,6 +13,10 @@ $property: "[itemprop], [property]";
 	// Output standard non-prefixed declaration
 	#{$property}: $value;
 	}
+}
+
+@mixin highlight($color) {
+	box-shadow: 0 0 0 50vmax $color inset !important;
 }
 
 [data-store] {
@@ -131,7 +134,7 @@ $property: "[itemprop], [property]";
 	position: relative;
 
 	&.delete-hover { // basically &:has(> .delete:hover)
-		box-shadow: 0 0 0 50vmax hsla(0,100%,50%,.1) inset !important;
+		@include highlight(hsla(0,100%,50%,.1));
 		border-radius: .1em;
 	}
 
@@ -257,27 +260,27 @@ $property: "[itemprop], [property]";
 		}
 	}
 
+	&.save-hovered [property].unsaved-changes {
+		@include highlight(hsla(180, 50%, 50%, .25));
+	}
+
 	&:not([data-editing]) {
 		.empty,
 		.wysie-item-controls,
 		button.add,
-		.save,
-		.cancel {
+		&:not(.unsaved-changes) .save,
+		&:not(.unsaved-changes) .revert {
 			display: none;
 		}
 	}
 
 	&[data-editing] {
-		.edit {
-			display: none;
-		}
-
 		.empty {
 			opacity: .5;
 		}
 
 		// Temporary, good for debugging keyboard usability
-		#{$property},
+		[property],
 		.wysie-editor,
 		.wysie-popup,
 		.wysie-item,
@@ -290,9 +293,7 @@ $property: "[itemprop], [property]";
 		// Primitives
 		#{$primitive} {
 			&:hover {
-				$color: hsla(58, 100%, 50%, .2);
-
-				box-shadow: 0 0 0 2px $color, 0 0 0 99em $color inset;
+				@include highlight(hsla(58, 100%, 50%, .2));
 			}
 
 			&:focus,
@@ -301,9 +302,9 @@ $property: "[itemprop], [property]";
 				outline-offset: 1px;
 			}
 
-			input.wysie-editor,
-			select.wysie-editor,
-			textarea.wysie-editor {
+			& input.wysie-editor,
+			& select.wysie-editor,
+			& textarea.wysie-editor {
 				all: initial;
 				font: inherit;
 				color: inherit;
@@ -311,7 +312,7 @@ $property: "[itemprop], [property]";
 				text-align: inherit;
 			}
 
-			textarea.wysie-editor {
+			& textarea.wysie-editor {
 				box-sizing: border-box;
 				width: 100%;
 			}
@@ -330,22 +331,25 @@ $property: "[itemprop], [property]";
 	color: white;
 	font-family: inherit;
 	font-size: 1rem;
+	@include prefix((backdrop-filter: blur(4px)), webkit);
 
 	// Bar fixed at the top of the screen
 	.wysie-wrapper.can-logout &,
-	.wysie-wrapper[data-editing] & {
+	.wysie-wrapper[data-editing] &,
+	.wysie-wrapper.unsaved-changes & {
 		top: 0;
 		left: 0;
 		right: 0;
 		display: flex;
 		padding: 0 .5em 0 6em;
-		background: black;
-		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat, linear-gradient(hsla(0,0%,10%,.9), black);
+		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat,
+		            linear-gradient(transparent, rgba(0,0,0,.5));
+		background-color: hsla(0,0%,25%,.9);
 	}
 
 	// Floating bar, intended for when there is only 1 button
 	.wysie-wrapper.can-login:not([data-editing]) &,
-	.wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]) & {
+	.wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) & {
 		top: 1em;
 		right: 1em;
 
@@ -373,12 +377,21 @@ $property: "[itemprop], [property]";
 		color: inherit;
 		cursor: pointer;
 
-		&:hover {
+		&:enabled:hover {
 			background: hsla(0,0%,100%,.2);
 		}
 
-		.icon {
+		&::before {
+			display: inline-block;
+			vertical-align: middle;
+			margin-right: .3em;
 			color: hsla(0,0%,100%,.5);
+			font-weight: normal;
+		}
+
+		&:disabled {
+			opacity: .6;
+			cursor: not-allowed;
 		}
 	}
 
@@ -386,16 +399,35 @@ $property: "[itemprop], [property]";
 		text-decoration: none;
 	}
 
-	.edit:hover {
+	.edit {
+		&::before {
+			content: "✎";
+		}
 
+		.wysie-wrapper[data-editing] & {
+			background: rgba(0,0,0,.4);
+			box-shadow: .2em 0 .4em -.2em black inset, -.2em 0 .4em -.2em black inset;
+		}
 	}
 
-	.save:hover {
-		background: hsl(80, 80%, 40%);
+	.save {
+		&::before {
+			content: "✓";
+		}
+
+		&:enabled:hover {
+			background: hsl(180, 50%, 50%);
+		}
 	}
 
-	.cancel:hover {
-		background: #c00;
+	.revert {
+		&::before {
+			content: "✘";
+		}
+
+		&:enabled:hover {
+			background: #c00;
+		}
 	}
 
 	.status {

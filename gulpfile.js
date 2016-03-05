@@ -13,7 +13,7 @@ var babel = require("gulp-babel");
 var autoprefixer = require("gulp-autoprefixer");
 
 gulp.task("concat", function() {
-	var files = "stretchy wysie permissions storage unit expression scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
+	var files = "stretchy wysie permissions storage node unit expression scope primitive collection storage.dropbox ".split(" ").map(path => "src/" + path + ".js");
 
 	return gulp.src(files)
 		.pipe(concat("wysie.js"))

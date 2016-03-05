@@ -1,23 +1,14 @@
 (function($, $$) {
 
 var _ = Wysie.Collection = $.Class({
+	extends: Wysie.Node,
 	constructor: function (element, wysie) {
-		var me = this;
-
-		if (!element || !wysie) {
-			throw new TypeError("No template and/or Wysie object");
-		}
-
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
 		this.template = element;
 
-		this.wysie = wysie;
-
 		this.items = [];
-		this.property = this.template.getAttribute("property");
-		this.type = Wysie.Scope.normalize(this.template);
 
 		// ALL descendant property names as an array
 		this.properties = $$(Wysie.selectors.property, this.template)._.getAttribute("property");
@@ -63,10 +54,6 @@ var _ = Wysie.Collection = $.Class({
 		return this.items.length;
 	},
 
-	get data() {
-		return this.getData();
-	},
-
 	// Collection still contains its template as data
 	get containsTemplate() {
 		return this.items.length && this.items[0].element === this.element;
@@ -87,8 +74,6 @@ var _ = Wysie.Collection = $.Class({
 
 		return data;
 	},
-
-	toJSON: Wysie.prototype.toJSON,
 
 	// Create item but don't insert it anywhere
 	// Mostly used internally
@@ -156,32 +141,35 @@ var _ = Wysie.Collection = $.Class({
 		}
 
 		item.element._.fire("wysie:datachange", {
-			collection: this,
+			unit: this,
 			wysie: this.wysie,
 			action: "add",
 			item
 		});
 
+		item.unsavedChanges = true;
+
 		return item;
 	},
 
-	edit: function() {
-		if (this.length === 0 && this.required && this.mutable) {
-			this.add();
-		}
-
-		this.items.forEach(item => {
-			item.preEdit? item.preEdit() : item.edit();
-		});
+	propagate: function() {
+		this.items.forEach(item => item.call.apply(item, arguments));
 	},
 
-	delete: function(item) {
+	delete: function(item, hard) {
+		if (hard) {
+			// Hard delete
+			$.remove(item.element);
+			this.items.splice(this.items.indexOf(item), 1);
+			return;
+		}
+
 		return $.transition(item.element, {opacity: 0}).then(() => {
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
 
 			item.element._.fire("wysie:datachange", {
-				collection: this,
+				unit: this,
 				wysie: this.wysie,
 				action: "delete",
 				item: item
@@ -190,9 +178,7 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	clear: function() {
-		this.items.forEach(item => {
-			item.element.remove();
-		});
+		this.propagate(item => item.element.remove());
 
 		this.items = [];
 	},
@@ -200,30 +186,32 @@ var _ = Wysie.Collection = $.Class({
 	save: function() {
 		this.items.forEach(item => {
 			if (item.deleted) {
-				$.remove(item.element);
-				this.items.splice(this.items.indexOf(item), 1);
+				this.delete(item, true);
 			}
 			else {
-				item.save();
 				item.element.classList.remove("wysie-item-hovered");
+				item.unsavedChanges = false;
 			}
 		});
 	},
 
-	cancel: function() {
+	propagated: ["save", "done"],
+
+	revert: function() {
 		this.items.forEach((item, i) => {
 			// Revert all properties
 			item.deleted = false;
-			item.cancel();
+			item.revert();
 			item.element.classList.remove("wysie-item-hovered");
 
 			// Delete added items
-			if (item instanceof Wysie.Scope && !item.everSaved) {
-				this.items.splice(i, 1);
-				$.remove(item.element);
+			if (!item.everSaved) {
+				this.delete(item, true);
 			}
-
-			// TODO Bring back deleted items
+			// Bring back deleted items
+			else if (item.deleted) {
+				item.deleted = false;
+			}
 		});
 	},
 
@@ -274,6 +262,8 @@ var _ = Wysie.Collection = $.Class({
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
 		}
+
+		this.save();
 	},
 
 	find: function(property) {

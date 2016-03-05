@@ -52,41 +52,52 @@ var _ = self.Wysie = $.Class({
 		element.removeAttribute("data-store");
 
 		// Normalize property names
-		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Unit.normalizeProperty(element));
+		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Node.normalizeProperty(element));
 
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
 		this.permissions = new Wysie.Permissions(null, this);
 
-		this.bar = $(".wysie-bar", this.wrapper) || $.create({
-			className: "wysie-bar wysie-ui",
-			start: this.wrapper,
-			contents: {
-				tag: "span",
-				className: "status",
-			}
-		});
+		this.ui = {
+			bar: $(".wysie-bar", this.wrapper) || $.create({
+				className: "wysie-bar wysie-ui",
+				start: this.wrapper,
+				contents: {
+					tag: "span",
+					className: "status",
+				}
+			})
+		};
 
 		this.permissions.can(["edit", "add", "delete"], () => {
-			$.contents(this.bar, [{
-				tag: "button",
+			this.ui.edit = $.create("button", {
 				className: "edit",
-				innerHTML: "<span class='icon'>✎</span> Edit",
-				onclick: e => this.edit()
-			}, {
-				tag: "button",
-				innerHTML: "<span class='icon'>✓</span> Save",
+				textContent: "Edit",
+				onclick: e => this[this.editing? "done" : "edit"]()
+			});
+
+			this.ui.save = $.create("button", {
 				className: "save",
-				onclick: e => this.save()
-			}, {
-				tag: "button",
-				innerHTML: "<span class='icon'>✘</span> Cancel",
-				className: "cancel",
-				onclick: e => this.cancel()
-			}]);
+				textContent: "Save",
+				events: {
+					click: e => this.save(),
+					"mouseenter focus": e => this.wrapper.classList.add("save-hovered"),
+					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
+				}
+			});
+
+			this.ui.revert = $.create("button", {
+				className: "revert",
+				textContent: "Revert",
+				onclick: e => this.revert()
+			});
+
+			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
+
+			$.contents(this.ui.bar, this.ui.editButtons);
 		}, () => { // cannot
-			$$(".edit, .save, .cancel", this.bar)._.remove();
+			$.remove(this.ui.editButtons);
 		});
 
 		// Fetch existing data
@@ -128,6 +139,7 @@ var _ = self.Wysie = $.Class({
 
 	edit: function() {
 		this.editing = true;
+
 		this.root.edit();
 
 		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
@@ -148,19 +160,29 @@ var _ = self.Wysie = $.Class({
 
 			// evt.stopPropagation();
 		}, true);
+
+		$.once(this.wrapper, "wysie:datachange.wysie", evt => {
+			this.unsavedChanges = true;
+		});
+
+		this.unsavedChanges = !!this.unsavedChanges;
+	},
+
+	// Conclude editing
+	done: function() {
+		this.root.done();
+		$.unbind(this.wrapper, ".wysie:edit");
+		this.editing = false;
 	},
 
 	save: function() {
-		this.editing = false;
 		this.root.save();
 		this.storage && this.storage.save();
-		$.unbind(this.wrapper, ".wysie:edit");
+		this.unsavedChanges = false;
 	},
 
-	cancel: function() {
-		this.editing = false;
-		this.root.cancel();
-		$.unbind(this.wrapper, ".wysie:edit");
+	revert: function() {
+		this.root.revert();
 	},
 
 	live: {
@@ -175,6 +197,12 @@ var _ = self.Wysie = $.Class({
 					this.wrapper.removeAttribute("data-editing");
 				}
 			}
+		},
+
+		unsavedChanges: function(value) {
+			this.wrapper._.toggleClass("unsaved-changes", value);
+
+			this.ui.save.disabled = this.ui.revert.disabled = !value;
 		}
 	},
 
@@ -263,6 +291,10 @@ var _ = self.Wysie = $.Class({
 			ui: ".wysie-ui"
 		},
 
+		phrases: {
+			unsavedChanges: "You have unsaved edits. If you exit now, you will lose them. Are you sure you want to continue?"
+		},
+
 		is: function(thing, element) {
 			return element.matches && element.matches(_.selectors[thing]);
 		},
@@ -290,6 +322,22 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 
 	return obj;
 });
+
+$.classProps.propagated = function(proto, names) {
+	Wysie.toArray(names).forEach(name => {
+		var existing = proto[name];
+
+		proto[name] = function() {
+			if (existing) {
+				existing.apply(this, arguments);
+			}
+
+			if (this.propagate) {
+				this.propagate(name);
+			}
+		};
+	});
+};
 
 // :focus-within shim
 document.addEventListener("focus", evt => {

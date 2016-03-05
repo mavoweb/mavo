@@ -241,41 +241,52 @@ var _ = self.Wysie = $.Class({
 		element.removeAttribute("data-store");
 
 		// Normalize property names
-		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Unit.normalizeProperty(element));
+		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Node.normalizeProperty(element));
 
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
 		this.permissions = new Wysie.Permissions(null, this);
 
-		this.bar = $(".wysie-bar", this.wrapper) || $.create({
-			className: "wysie-bar wysie-ui",
-			start: this.wrapper,
-			contents: {
-				tag: "span",
-				className: "status",
-			}
-		});
+		this.ui = {
+			bar: $(".wysie-bar", this.wrapper) || $.create({
+				className: "wysie-bar wysie-ui",
+				start: this.wrapper,
+				contents: {
+					tag: "span",
+					className: "status",
+				}
+			})
+		};
 
 		this.permissions.can(["edit", "add", "delete"], () => {
-			$.contents(this.bar, [{
-				tag: "button",
+			this.ui.edit = $.create("button", {
 				className: "edit",
-				innerHTML: "<span class='icon'>✎</span> Edit",
-				onclick: e => this.edit()
-			}, {
-				tag: "button",
-				innerHTML: "<span class='icon'>✓</span> Save",
+				textContent: "Edit",
+				onclick: e => this[this.editing? "done" : "edit"]()
+			});
+
+			this.ui.save = $.create("button", {
 				className: "save",
-				onclick: e => this.save()
-			}, {
-				tag: "button",
-				innerHTML: "<span class='icon'>✘</span> Cancel",
-				className: "cancel",
-				onclick: e => this.cancel()
-			}]);
+				textContent: "Save",
+				events: {
+					click: e => this.save(),
+					"mouseenter focus": e => this.wrapper.classList.add("save-hovered"),
+					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
+				}
+			});
+
+			this.ui.revert = $.create("button", {
+				className: "revert",
+				textContent: "Revert",
+				onclick: e => this.revert()
+			});
+
+			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
+
+			$.contents(this.ui.bar, this.ui.editButtons);
 		}, () => { // cannot
-			$$(".edit, .save, .cancel", this.bar)._.remove();
+			$.remove(this.ui.editButtons);
 		});
 
 		// Fetch existing data
@@ -317,6 +328,7 @@ var _ = self.Wysie = $.Class({
 
 	edit: function() {
 		this.editing = true;
+
 		this.root.edit();
 
 		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
@@ -337,19 +349,29 @@ var _ = self.Wysie = $.Class({
 
 			// evt.stopPropagation();
 		}, true);
+
+		$.once(this.wrapper, "wysie:datachange.wysie", evt => {
+			this.unsavedChanges = true;
+		});
+
+		this.unsavedChanges = !!this.unsavedChanges;
+	},
+
+	// Conclude editing
+	done: function() {
+		this.root.done();
+		$.unbind(this.wrapper, ".wysie:edit");
+		this.editing = false;
 	},
 
 	save: function() {
-		this.editing = false;
 		this.root.save();
 		this.storage && this.storage.save();
-		$.unbind(this.wrapper, ".wysie:edit");
+		this.unsavedChanges = false;
 	},
 
-	cancel: function() {
-		this.editing = false;
-		this.root.cancel();
-		$.unbind(this.wrapper, ".wysie:edit");
+	revert: function() {
+		this.root.revert();
 	},
 
 	live: {
@@ -364,6 +386,12 @@ var _ = self.Wysie = $.Class({
 					this.wrapper.removeAttribute("data-editing");
 				}
 			}
+		},
+
+		unsavedChanges: function(value) {
+			this.wrapper._.toggleClass("unsaved-changes", value);
+
+			this.ui.save.disabled = this.ui.revert.disabled = !value;
 		}
 	},
 
@@ -452,6 +480,10 @@ var _ = self.Wysie = $.Class({
 			ui: ".wysie-ui"
 		},
 
+		phrases: {
+			unsavedChanges: "You have unsaved edits. If you exit now, you will lose them. Are you sure you want to continue?"
+		},
+
 		is: function(thing, element) {
 			return element.matches && element.matches(_.selectors[thing]);
 		},
@@ -479,6 +511,22 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 
 	return obj;
 });
+
+$.classProps.propagated = function(proto, names) {
+	Wysie.toArray(names).forEach(name => {
+		var existing = proto[name];
+
+		proto[name] = function() {
+			if (existing) {
+				existing.apply(this, arguments);
+			}
+
+			if (this.propagate) {
+				this.propagate(name);
+			}
+		};
+	});
+};
 
 // :focus-within shim
 document.addEventListener("focus", evt => {
@@ -988,33 +1036,91 @@ _.Default = $.Class({ extends: _,
 })(Bliss);
 
 
-/*
- * Wysie Unit: Super class that Scope and Primitive inherit from
- */
 (function($, $$) {
 
-var _ = Wysie.Unit = $.Class({ abstract: true,
-	constructor: function(element, wysie, collection) {
+var _ = Wysie.Node = $.Class({
+	abstract: true,
+	constructor: function (element, wysie) {
 		if (!element || !wysie) {
 			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 		}
 
 		this.wysie = wysie;
+		this.property = element.getAttribute("property");
+		this.type = Wysie.Scope.normalize(element);
+
+		Wysie.hooks.run("node-init-end", this);
+	},
+
+	get isRoot() {
+		return !this.property;
+	},
+
+	get data() {
+		return this.getData();
+	},
+
+	call: function(callback, ...args) {
+		args = args || [];
+
+		if (typeof callback === "string") {
+			return this[callback].apply(this, args);
+		}
+		else {
+			return callback.apply(this, [this].concat(args));
+		}
+	},
+
+	edit: function() {
+		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
+	},
+
+	propagated: ["save", "revert", "done", "import"],
+
+	toJSON: Wysie.prototype.toJSON,
+
+	static: {
+		normalizeProperty: function(element) {
+			// Get & normalize property name, if exists
+			var property = element.getAttribute("property") || element.getAttribute("itemprop");
+
+			if (!property && element.hasAttribute("property")) {
+				property = element.name || element.id || element.classList[0];
+			}
+
+			if (property) {
+				element.setAttribute("property", property);
+			}
+
+			return property;
+		}
+	}
+});
+
+})(Bliss, Bliss.$);
+
+
+/*
+ * Wysie Unit: Super class that Scope and Primitive inherit from
+ */
+(function($, $$) {
+
+var _ = Wysie.Unit = $.Class({
+	abstract: true,
+	extends: Wysie.Node,
+	constructor: function(element, wysie, collection) {
+		if (!element || !wysie) {
+			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
+		}
+
 		this.element = element;
 		this.element._.data.unit = this;
 
-		this.property = this.element.getAttribute("property");
 		this.collection = collection;
 
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
-		this.required = this.element.matches("[required], [data-required]");
-	},
-
-	toJSON: Wysie.prototype.toJSON,
-
-	get data() {
-		return this.getData();
+		this.required = this.element.matches(Wysie.selectors.required);
 	},
 
 	get closestCollection() {
@@ -1040,6 +1146,10 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
+		},
+
+		unsavedChanges: function(value) {
+			this.element._.toggleClass("unsaved-changes", value);
 		}
 	},
 
@@ -1060,22 +1170,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 				);
 
 			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie, collection);
-		},
-
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
-			var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-			if (!property && element.hasAttribute("property")) {
-				property = element.name || element.id || element.classList[0];
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
-
-			return property;
-		},
+		}
 	}
 });
 
@@ -1391,10 +1486,6 @@ document.addEventListener("wysie:load", evt => {
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, collection) {
-		var me = this;
-
-		this.type = _.normalize(this.element);
-
 		this.properties = {};
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
@@ -1414,7 +1505,7 @@ var _ = Wysie.Scope = $.Class({
 						collection = existing;
 					}
 					else {
-						collection = new Wysie.Collection(element, me.wysie);
+						collection = new Wysie.Collection(element, this.wysie);
 						collection.parentScope = this;
 						this.properties[property] = collection;
 						collection.add(existing);
@@ -1424,7 +1515,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					if (Wysie.is("multiple", element)) {
-						var obj = new Wysie.Collection(element, me.wysie);
+						var obj = new Wysie.Collection(element, this.wysie);
 					}
 					else {
 						// Create wysie objects for all non-collection properties
@@ -1441,10 +1532,6 @@ var _ = Wysie.Scope = $.Class({
 		Wysie.hooks.run("scope-init-end", this);
 	},
 
-	get isRoot() {
-		return !this.property;
-	},
-
 	get propertyNames () {
 		return Object.keys(this.properties);
 	},
@@ -1452,7 +1539,7 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
+		if (this.wysie.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
 			return null;
 		}
 
@@ -1557,50 +1644,26 @@ var _ = Wysie.Scope = $.Class({
 		}
 	},
 
-	edit: function() {
-		this.editing = true;
-
+	propagate: function(callback) {
 		$.each(this.properties, (property, obj) => {
-			if (obj instanceof Wysie.Collection) {
-				obj.edit();
-			}
-			else {
-				// If scope, edit. If primitive, prepare for edit.
-				obj[obj instanceof _? "edit" : "preEdit"]();
-			}
+			obj.call.apply(obj, arguments);
 		});
 	},
 
 	save: function() {
-		this.editing = false;
-
-		// this should include collections
-		$.each(this.properties, (property, obj) => {
-			obj.save();
-		});
-
-		$.unbind(this.element, ".wysie:edit");
-
 		this.everSaved = true;
+		this.unsavedChanges = false;
 	},
 
-	cancel: function() {
-		this.editing = false;
-
-		$.each(this.properties, (property, obj) => {
-			obj.cancel();
-		});
-
+	done: function() {
 		$.unbind(this.element, ".wysie:edit");
 	},
 
 	import: function() {
-		$.each(this.properties, (property, unit) => {
-			unit.import();
-		});
-
 		this.everSaved = true;
 	},
+
+	propagated: ["save", "done", "import"],
 
 	// Inject data in this element
 	render: function(data) {
@@ -1614,11 +1677,11 @@ var _ = Wysie.Scope = $.Class({
 			return !(property in this.properties);
 		});
 
-		$.each(this.properties, (property, unit) => {
-			unit.render(data[property]);
+		this.propagate(obj => {
+			obj.render(data[obj.property]);
 		});
 
-		this.everSaved = true;
+		this.save();
 	},
 
 	// Check if this scope contains a property
@@ -1661,7 +1724,7 @@ var _ = Wysie.Scope = $.Class({
 			}
 
 			return type;
-		},
+		}
 	}
 });
 
@@ -1714,6 +1777,22 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.default = this.element.getAttribute("data-default");
 
+		// Observe future mutations to this property, if possible
+		// Properties like input.checked or input.value cannot be observed that way
+		// so we cannot depend on mutation observers for everything :(
+		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			if (this.attribute) {
+				var value = this.value;
+
+				if (record[0].oldValue != value) {
+					this.update(value);
+				}
+			}
+			else if (!this.editing) {
+				this.update(this.value);
+			}
+		}, true);
+
 		if (this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
@@ -1727,36 +1806,16 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.update(this.value);
 
-		// Observe future mutations to this property, if possible
-		// Properties like input.checked or input.value cannot be observed that way
-		// so we cannot depend on mutation observers for everything :(
-		this.observer = Wysie.observe(this.element, this.attribute, record => {
-			this.observer.disconnect();
-
-			if (this.attribute) {
-				var value = this.value;
-
-				if (record[0].oldValue != value) {
-					this.update(value);
-				}
-			}
-			else if (!this.editing) {
-				this.update(this.value);
-			}
-
-			Wysie.observe(this.element, this.attribute, this.observer, true);
-		}, true);
-
 		if (this.collection) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
-				this.observer.disconnect();
+				this.unobserve();
 				var ui = $.remove($(Wysie.selectors.ui, this.element));
 
 				var ret = callback();
 
 				$.inside(ui, this.element);
-				Wysie.observe(this.element, this.attribute, this.observer);
+				this.observe();
 
 				return ret;
 			};
@@ -1788,16 +1847,22 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
-		if (this.editing) {
+		if (this.editing && document.activeElement != this.editor) {
 			this.editorValue = value;
 		}
 
-		_.setValue(this.element, value, this.attribute, this.datatype);
+		this.oldValue = this.value;
+
+		if (!this.editing || this.attribute) {
+			_.setValue(this.element, value, this.attribute, this.datatype);
+		}
 
 		if (Wysie.is("formControl", this.element) || !this.attribute) {
 			// Mutation observer won't catch this, so we have to call update manually
 			this.update(value);
 		}
+
+		this.unsavedChanges = true;
 	},
 
 	get editorValue() {
@@ -1865,25 +1930,31 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		var evt = {
+		this.element._.fire("wysie:datachange", {
 			property: this.property,
 			value: value,
 			wysie: this.wysie,
 			unit: this,
-			dirty: this.editing
-		};
-
-		this.element._.fire("wysie:propertychange", evt);
-		this.element._.fire("wysie:datachange", evt);
+			dirty: this.editing,
+			action: "propertychange"
+		});
 	},
 
-	save: function () {
+	save: function() {
+		this.savedValue = this.value;
+		this.everSaved = true;
+		this.unsavedChanges = false;
+	},
+
+	done: function () {
+		this.unobserve();
+
 		if (this.popup) {
 			this.hidePopup();
 		}
 		else if (!this.attribute && !this.exposed && this.editing) {
-			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
+			this.element.textContent = this.editorValue;
 		}
 
 		if (!this.exposed) {
@@ -1900,20 +1971,16 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.element._.unbind(".wysie:edit .wysie:preedit .wysie:showpopup");
 
-		this.element._.fire("wysie:propertysave", {
-			unit: this
-		});
+		this.observe();
 	},
 
-	cancel: function() {
+	revert: function() {
 		if (this.savedValue !== undefined) {
 			// FIXME if we have a collection of properties (not scopes), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;
 		}
-
-		this.save();
 	},
 
 	// Prepare to be edited
@@ -1988,13 +2055,15 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input": evt => {
-				if (this.attribute) {
+				/*if (this.attribute) {
 					this.element.setAttribute(this.attribute, this.editorValue);
 				}
 
 				if (this.exposed || !this.attribute) {
 					this.update(this.editorValue);
 				}
+				*/
+				this.value = this.editorValue;
 			},
 			"focus": evt => {
 				this.editor.select && this.editor.select();
@@ -2009,7 +2078,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.hidePopup();
 				}
 			},
-			"wysie:propertychange": evt => {
+			"wysie:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
@@ -2107,8 +2176,6 @@ var _ = Wysie.Primitive = $.Class({
 			this.showPopup();
 		}
 
-		this.savedValue = this.value;
-
 		if (!this.attribute) {
 			if (this.editor.parentNode != this.element && !this.exposed) {
 				this.editorValue = this.value;
@@ -2124,17 +2191,27 @@ var _ = Wysie.Primitive = $.Class({
 	}, // edit
 
 	import: function() {
-		this.value = this.savedValue = this.templateValue;
+		this.value = this.templateValue;
 	},
 
 	render: function(data) {
-		this.value = this.savedValue = data === undefined? this.emptyValue : data;
+		this.value = data === undefined? this.emptyValue : data;
+
+		this.save();
 	},
 
 	find: function(property) {
 		if (this.property == property) {
 			return this;
 		}
+	},
+
+	observe: function() {
+		Wysie.observe(this.element, this.attribute, this.observer);
+	},
+
+	unobserve: function () {
+		this.observer.disconnect();
 	},
 
 	lazy: {
@@ -2405,23 +2482,14 @@ Stretchy.selectors.filter = ".wysie-editor";
 (function($, $$) {
 
 var _ = Wysie.Collection = $.Class({
+	extends: Wysie.Node,
 	constructor: function (element, wysie) {
-		var me = this;
-
-		if (!element || !wysie) {
-			throw new TypeError("No template and/or Wysie object");
-		}
-
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
 		this.template = element;
 
-		this.wysie = wysie;
-
 		this.items = [];
-		this.property = this.template.getAttribute("property");
-		this.type = Wysie.Scope.normalize(this.template);
 
 		// ALL descendant property names as an array
 		this.properties = $$(Wysie.selectors.property, this.template)._.getAttribute("property");
@@ -2467,10 +2535,6 @@ var _ = Wysie.Collection = $.Class({
 		return this.items.length;
 	},
 
-	get data() {
-		return this.getData();
-	},
-
 	// Collection still contains its template as data
 	get containsTemplate() {
 		return this.items.length && this.items[0].element === this.element;
@@ -2491,8 +2555,6 @@ var _ = Wysie.Collection = $.Class({
 
 		return data;
 	},
-
-	toJSON: Wysie.prototype.toJSON,
 
 	// Create item but don't insert it anywhere
 	// Mostly used internally
@@ -2560,32 +2622,35 @@ var _ = Wysie.Collection = $.Class({
 		}
 
 		item.element._.fire("wysie:datachange", {
-			collection: this,
+			unit: this,
 			wysie: this.wysie,
 			action: "add",
 			item
 		});
 
+		item.unsavedChanges = true;
+
 		return item;
 	},
 
-	edit: function() {
-		if (this.length === 0 && this.required && this.mutable) {
-			this.add();
-		}
-
-		this.items.forEach(item => {
-			item.preEdit? item.preEdit() : item.edit();
-		});
+	propagate: function() {
+		this.items.forEach(item => item.call.apply(item, arguments));
 	},
 
-	delete: function(item) {
+	delete: function(item, hard) {
+		if (hard) {
+			// Hard delete
+			$.remove(item.element);
+			this.items.splice(this.items.indexOf(item), 1);
+			return;
+		}
+
 		return $.transition(item.element, {opacity: 0}).then(() => {
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
 
 			item.element._.fire("wysie:datachange", {
-				collection: this,
+				unit: this,
 				wysie: this.wysie,
 				action: "delete",
 				item: item
@@ -2594,9 +2659,7 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	clear: function() {
-		this.items.forEach(item => {
-			item.element.remove();
-		});
+		this.propagate(item => item.element.remove());
 
 		this.items = [];
 	},
@@ -2604,30 +2667,32 @@ var _ = Wysie.Collection = $.Class({
 	save: function() {
 		this.items.forEach(item => {
 			if (item.deleted) {
-				$.remove(item.element);
-				this.items.splice(this.items.indexOf(item), 1);
+				this.delete(item, true);
 			}
 			else {
-				item.save();
 				item.element.classList.remove("wysie-item-hovered");
+				item.unsavedChanges = false;
 			}
 		});
 	},
 
-	cancel: function() {
+	propagated: ["save", "done"],
+
+	revert: function() {
 		this.items.forEach((item, i) => {
 			// Revert all properties
 			item.deleted = false;
-			item.cancel();
+			item.revert();
 			item.element.classList.remove("wysie-item-hovered");
 
 			// Delete added items
-			if (item instanceof Wysie.Scope && !item.everSaved) {
-				this.items.splice(i, 1);
-				$.remove(item.element);
+			if (!item.everSaved) {
+				this.delete(item, true);
 			}
-
-			// TODO Bring back deleted items
+			// Bring back deleted items
+			else if (item.deleted) {
+				item.deleted = false;
+			}
 		});
 	},
 
@@ -2678,6 +2743,8 @@ var _ = Wysie.Collection = $.Class({
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
 		}
+
+		this.save();
 	},
 
 	find: function(property) {

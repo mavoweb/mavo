@@ -44,6 +44,22 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.default = this.element.getAttribute("data-default");
 
+		// Observe future mutations to this property, if possible
+		// Properties like input.checked or input.value cannot be observed that way
+		// so we cannot depend on mutation observers for everything :(
+		this.observer = Wysie.observe(this.element, this.attribute, record => {
+			if (this.attribute) {
+				var value = this.value;
+
+				if (record[0].oldValue != value) {
+					this.update(value);
+				}
+			}
+			else if (!this.editing) {
+				this.update(this.value);
+			}
+		}, true);
+
 		if (this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
@@ -57,36 +73,16 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.update(this.value);
 
-		// Observe future mutations to this property, if possible
-		// Properties like input.checked or input.value cannot be observed that way
-		// so we cannot depend on mutation observers for everything :(
-		this.observer = Wysie.observe(this.element, this.attribute, record => {
-			this.observer.disconnect();
-
-			if (this.attribute) {
-				var value = this.value;
-
-				if (record[0].oldValue != value) {
-					this.update(value);
-				}
-			}
-			else if (!this.editing) {
-				this.update(this.value);
-			}
-
-			Wysie.observe(this.element, this.attribute, this.observer, true);
-		}, true);
-
 		if (this.collection) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
-				this.observer.disconnect();
+				this.unobserve();
 				var ui = $.remove($(Wysie.selectors.ui, this.element));
 
 				var ret = callback();
 
 				$.inside(ui, this.element);
-				Wysie.observe(this.element, this.attribute, this.observer);
+				this.observe();
 
 				return ret;
 			};
@@ -118,16 +114,22 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
-		if (this.editing) {
+		if (this.editing && document.activeElement != this.editor) {
 			this.editorValue = value;
 		}
 
-		_.setValue(this.element, value, this.attribute, this.datatype);
+		this.oldValue = this.value;
+
+		if (!this.editing || this.attribute) {
+			_.setValue(this.element, value, this.attribute, this.datatype);
+		}
 
 		if (Wysie.is("formControl", this.element) || !this.attribute) {
 			// Mutation observer won't catch this, so we have to call update manually
 			this.update(value);
 		}
+
+		this.unsavedChanges = true;
 	},
 
 	get editorValue() {
@@ -195,25 +197,31 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		var evt = {
+		this.element._.fire("wysie:datachange", {
 			property: this.property,
 			value: value,
 			wysie: this.wysie,
 			unit: this,
-			dirty: this.editing
-		};
-
-		this.element._.fire("wysie:propertychange", evt);
-		this.element._.fire("wysie:datachange", evt);
+			dirty: this.editing,
+			action: "propertychange"
+		});
 	},
 
-	save: function () {
+	save: function() {
+		this.savedValue = this.value;
+		this.everSaved = true;
+		this.unsavedChanges = false;
+	},
+
+	done: function () {
+		this.unobserve();
+
 		if (this.popup) {
 			this.hidePopup();
 		}
 		else if (!this.attribute && !this.exposed && this.editing) {
-			this.element.textContent = this.editorValue;
 			$.remove(this.editor);
+			this.element.textContent = this.editorValue;
 		}
 
 		if (!this.exposed) {
@@ -230,20 +238,16 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.element._.unbind(".wysie:edit .wysie:preedit .wysie:showpopup");
 
-		this.element._.fire("wysie:propertysave", {
-			unit: this
-		});
+		this.observe();
 	},
 
-	cancel: function() {
+	revert: function() {
 		if (this.savedValue !== undefined) {
 			// FIXME if we have a collection of properties (not scopes), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;
 		}
-
-		this.save();
 	},
 
 	// Prepare to be edited
@@ -318,13 +322,15 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input": evt => {
-				if (this.attribute) {
+				/*if (this.attribute) {
 					this.element.setAttribute(this.attribute, this.editorValue);
 				}
 
 				if (this.exposed || !this.attribute) {
 					this.update(this.editorValue);
 				}
+				*/
+				this.value = this.editorValue;
 			},
 			"focus": evt => {
 				this.editor.select && this.editor.select();
@@ -339,7 +345,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.hidePopup();
 				}
 			},
-			"wysie:propertychange": evt => {
+			"wysie:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
@@ -437,8 +443,6 @@ var _ = Wysie.Primitive = $.Class({
 			this.showPopup();
 		}
 
-		this.savedValue = this.value;
-
 		if (!this.attribute) {
 			if (this.editor.parentNode != this.element && !this.exposed) {
 				this.editorValue = this.value;
@@ -454,17 +458,27 @@ var _ = Wysie.Primitive = $.Class({
 	}, // edit
 
 	import: function() {
-		this.value = this.savedValue = this.templateValue;
+		this.value = this.templateValue;
 	},
 
 	render: function(data) {
-		this.value = this.savedValue = data === undefined? this.emptyValue : data;
+		this.value = data === undefined? this.emptyValue : data;
+
+		this.save();
 	},
 
 	find: function(property) {
 		if (this.property == property) {
 			return this;
 		}
+	},
+
+	observe: function() {
+		Wysie.observe(this.element, this.attribute, this.observer);
+	},
+
+	unobserve: function () {
+		this.observer.disconnect();
 	},
 
 	lazy: {

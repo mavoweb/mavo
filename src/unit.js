@@ -3,28 +3,22 @@
  */
 (function($, $$) {
 
-var _ = Wysie.Unit = $.Class({ abstract: true,
+var _ = Wysie.Unit = $.Class({
+	abstract: true,
+	extends: Wysie.Node,
 	constructor: function(element, wysie, collection) {
 		if (!element || !wysie) {
 			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
 		}
 
-		this.wysie = wysie;
 		this.element = element;
 		this.element._.data.unit = this;
 
-		this.property = this.element.getAttribute("property");
 		this.collection = collection;
 
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
-		this.required = this.element.matches("[required], [data-required]");
-	},
-
-	toJSON: Wysie.prototype.toJSON,
-
-	get data() {
-		return this.getData();
+		this.required = this.element.matches(Wysie.selectors.required);
 	},
 
 	get closestCollection() {
@@ -50,6 +44,10 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
+		},
+
+		unsavedChanges: function(value) {
+			this.element._.toggleClass("unsaved-changes", value);
 		}
 	},
 
@@ -70,22 +68,7 @@ var _ = Wysie.Unit = $.Class({ abstract: true,
 				);
 
 			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie, collection);
-		},
-
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
-			var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-			if (!property && element.hasAttribute("property")) {
-				property = element.name || element.id || element.classList[0];
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
-
-			return property;
-		},
+		}
 	}
 });
 
