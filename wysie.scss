@@ -15,8 +15,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	}
 }
 
-@mixin highlight($color) {
-	box-shadow: 0 0 0 50vmax $color inset !important;
+@mixin highlight($color, $important: "") {
+	box-shadow: 0 0 0 50vmax $color inset #{$important};
 }
 
 [data-store] {
@@ -134,7 +134,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	position: relative;
 
 	&.delete-hover { // basically &:has(> .delete:hover)
-		@include highlight(hsla(0,100%,50%,.1));
+		@include highlight(hsla(0,100%,50%,.1), "!important");
 		border-radius: .1em;
 	}
 
@@ -264,7 +264,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	&.save-hovered [typeof].unsaved-changes,
 	&.revert-hovered [property].unsaved-changes,
 	&.revert-hovered [typeof].unsaved-changes {
-		@include highlight(hsla(180, 50%, 50%, .25));
+		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
 	&:not([data-editing]) {

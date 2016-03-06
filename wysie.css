@@ -177,7 +177,7 @@
   outline: 3px solid #f06 !important; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):hover {
-  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset !important; }
+  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):focus,
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) .wysie-editor:focus, .wysie-wrapper[data-editing] [property]:not([typeof]):focus,
