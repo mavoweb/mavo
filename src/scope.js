@@ -56,7 +56,7 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.wysie.editing && !this.everSaved && !o.dirty || this.computed && !o.computed) {
+		if (!this.everSaved && !o.dirty || this.computed && !o.computed) {
 			return null;
 		}
 

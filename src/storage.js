@@ -183,7 +183,7 @@ var _ = Wysie.Storage = $.Class({
 		var data = this.wysie.data;
 
 		this.backup = {
-			synced: !this._save,
+			synced: !this.put,
 			data: data
 		};
 

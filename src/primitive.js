@@ -22,9 +22,23 @@ var _ = Wysie.Primitive = $.Class({
 
 			if (this.exposed) {
 				// Editing exposed elements saves the wysie
-				this.element.addEventListener("change", evt => {
-					if (!this.wysie.editing && evt.target === this.editor && (this.scope.everSaved || !this.scope.collection)) {
-						this.wysie.save();
+				this.element.addEventListener("blur", evt => {
+					if (!this.wysie.editing &&
+					    this.wysie.storage &&
+					    evt.target === this.editor &&
+					    (this.scope.everSaved || !this.scope.collection)
+					) {
+						this.save();
+						this.wysie.storage.save();
+
+						// Are there any unsaved changes from other properties?
+						var unsavedChanges = false;
+
+						this.wysie.walk(obj => {
+							unsavedChanges = obj.unsavedChanges || unsavedChanges;
+						});
+
+						this.wysie.unsavedChanges = unsavedChanges;
 					}
 				});
 
@@ -179,7 +193,7 @@ var _ = Wysie.Primitive = $.Class({
 			return null;
 		}
 
-		var ret = this.editing && !o.dirty && !this.exposed? this.savedValue : this.value;
+		var ret = !o.dirty && !this.exposed? this.savedValue : this.value;
 
 		if (!o.dirty && ret === "" && ret === this.default) {
 			return null;
@@ -242,11 +256,12 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	revert: function() {
-		if (this.savedValue !== undefined) {
+		if (this.unsavedChanges && this.savedValue !== undefined) {
 			// FIXME if we have a collection of properties (not scopes), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;
+			this.unsavedChanges = false;
 		}
 	},
 
@@ -322,14 +337,6 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input": evt => {
-				/*if (this.attribute) {
-					this.element.setAttribute(this.attribute, this.editorValue);
-				}
-
-				if (this.exposed || !this.attribute) {
-					this.update(this.editorValue);
-				}
-				*/
 				this.value = this.editorValue;
 			},
 			"focus": evt => {

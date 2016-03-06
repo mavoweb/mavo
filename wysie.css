@@ -153,7 +153,10 @@
     vertical-align: middle;
     margin-right: .2em; }
 
-.wysie-wrapper.save-hovered [property].unsaved-changes {
+.wysie-wrapper.save-hovered [property].unsaved-changes,
+.wysie-wrapper.save-hovered [typeof].unsaved-changes,
+.wysie-wrapper.revert-hovered [property].unsaved-changes,
+.wysie-wrapper.revert-hovered [typeof].unsaved-changes {
   box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
 
 .wysie-wrapper:not([data-editing]) .empty,

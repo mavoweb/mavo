@@ -62,10 +62,16 @@ var _ = Wysie.Collection = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		var data = this.items.map(function(item) {
-			return item.deleted? null : item.getData(o);
-		}).filter(function(item) {
-			return item !== null;
+		var data = [];
+
+		this.items.forEach(item => {
+			if (!item.deleted) {
+				var itemData = item.getData(o);
+
+				if (itemData) {
+					data.push(itemData);
+				}
+			}
 		});
 
 		if (!o.dirty && this.unhandled) {
@@ -147,7 +153,7 @@ var _ = Wysie.Collection = $.Class({
 			item
 		});
 
-		item.unsavedChanges = true;
+		item.unsavedChanges = this.wysie.unsavedChanges = true;
 
 		return item;
 	},
@@ -174,6 +180,8 @@ var _ = Wysie.Collection = $.Class({
 				action: "delete",
 				item: item
 			});
+
+			item.unsavedChanges = this.wysie.unsavedChanges = true;
 		});
 	},
 

@@ -260,7 +260,10 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 	}
 
-	&.save-hovered [property].unsaved-changes {
+	&.save-hovered [property].unsaved-changes,
+	&.save-hovered [typeof].unsaved-changes,
+	&.revert-hovered [property].unsaved-changes,
+	&.revert-hovered [typeof].unsaved-changes {
 		@include highlight(hsla(180, 50%, 50%, .25));
 	}
 

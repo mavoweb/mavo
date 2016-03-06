@@ -7,7 +7,12 @@
 <link rel="stylesheet" href="../wysie.css" />
 <style>
 body {
+	display: flex;
 	padding: 50px;
+}
+
+main {
+	flex: 1;
 }
 
 li { padding: 5px; border: 1px solid silver; margin: 10px;}
@@ -19,15 +24,18 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	background: hsl(30, 50%, 95%);
 	padding: .5em;
 	margin: 1em 0;
+	overflow: auto;
+	width: 35em;
+	max-width: 50%;
 }
 </style>
 </head>
 <body>
 
-<div data-store="#foo" typeof>
+<main data-store="#foo" typeof>
 	<input type="range" property="slider" />
 	<ul>
-		<li property="list">
+		<li property="person">
 			<div property="name">Vector</div>
 			<div property class="age">10</div>
 			<ul>
@@ -39,7 +47,7 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	<h2>Aggregates over age:</h2>
 	<dl>
 		<dt>Number of people:</dt>
-		<dd>${list.length}</dd>
+		<dd>${person.length}</dd>
 		<dt>Number of people with age:</dt>
 		<dd>${age.length}</dd>
 		<dt>Average:</dt>
@@ -52,11 +60,11 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 		<dd>${SUM(age)}</dd>
 	</dl>
 
-</div>
+</main>
 
 <script type="application/json" id="foo">{
 	"slider": 80,
-	"list": [
+	"person": [
 		{"name": "Lea", "age": 30},
 		{"name": "Chris", "hobby": ["wine", "food", "electronics", "SVG"]},
 		{"name": "Eirik", "age": 32},

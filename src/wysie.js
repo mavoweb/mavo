@@ -90,7 +90,11 @@ var _ = self.Wysie = $.Class({
 			this.ui.revert = $.create("button", {
 				className: "revert",
 				textContent: "Revert",
-				onclick: e => this.revert()
+				events: {
+					click: e => this.revert(),
+					"mouseenter focus": e => this.wrapper.classList.add("revert-hovered"),
+					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
+				}
 			});
 
 			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
@@ -135,6 +139,8 @@ var _ = self.Wysie = $.Class({
 		else {
 			this.root.render(data.data || data);
 		}
+
+		this.unsavedChanges = false;
 	},
 
 	edit: function() {
@@ -161,10 +167,6 @@ var _ = self.Wysie = $.Class({
 			// evt.stopPropagation();
 		}, true);
 
-		$.once(this.wrapper, "wysie:datachange.wysie", evt => {
-			this.unsavedChanges = true;
-		});
-
 		this.unsavedChanges = !!this.unsavedChanges;
 	},
 
@@ -177,12 +179,26 @@ var _ = self.Wysie = $.Class({
 
 	save: function() {
 		this.root.save();
-		this.storage && this.storage.save();
+
+		if (this.storage) {
+			this.storage.save();
+		}
+
 		this.unsavedChanges = false;
 	},
 
 	revert: function() {
 		this.root.revert();
+	},
+
+	walk: function(callback) {
+		var walker = obj => {
+			callback(obj);
+
+			obj.propagate && obj.propagate(walker);
+		};
+
+		walker(this.root);
 	},
 
 	live: {
@@ -202,7 +218,9 @@ var _ = self.Wysie = $.Class({
 		unsavedChanges: function(value) {
 			this.wrapper._.toggleClass("unsaved-changes", value);
 
-			this.ui.save.disabled = this.ui.revert.disabled = !value;
+			if (this.ui) {
+				this.ui.save.disabled = this.ui.revert.disabled = !value;
+			}
 		}
 	},
 

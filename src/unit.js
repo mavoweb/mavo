@@ -47,6 +47,7 @@ var _ = Wysie.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
+			this.wysie.unsavedChanges = this.wysie.unsavedChanges || value;
 			this.element._.toggleClass("unsaved-changes", value);
 		}
 	},
