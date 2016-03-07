@@ -24,3 +24,29 @@ To use:
 - Now, every time you work on wysie:
 	- Run `gulp watch` to automatically build every time you save.
 	- Run `python -m SimpleHTTPServer` to be able to use `http://` locally, since most APIs don't like the `file://` protocol and Chrome doesn't even allow AJAX on it.
+
+# Older versions
+
+## 0.0.4
+
+- https://github.com/LeaVerou/wysie/blob/v0.0.4/wysie.css
+- https://github.com/LeaVerou/wysie/blob/v0.0.4/wysie.js
+- https://github.com/LeaVerou/wysie/blob/v0.0.4/wysie.min.js
+
+## 0.0.3
+
+- https://github.com/LeaVerou/wysie/blob/v0.0.3/wysie.css
+- https://github.com/LeaVerou/wysie/blob/v0.0.3/wysie.js
+- https://github.com/LeaVerou/wysie/blob/v0.0.3/wysie.min.js
+
+## 0.0.2
+
+- https://github.com/LeaVerou/wysie/blob/v0.0.2/wysie.css
+- https://github.com/LeaVerou/wysie/blob/v0.0.2/wysie.js
+- https://github.com/LeaVerou/wysie/blob/v0.0.2/wysie.min.js
+
+## 0.0.1
+
+- https://github.com/LeaVerou/wysie/blob/v0.0.1/wysie.css
+- https://github.com/LeaVerou/wysie/blob/v0.0.1/wysie.js
+- https://github.com/LeaVerou/wysie/blob/v0.0.1/wysie.min.js
