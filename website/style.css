@@ -20,7 +20,8 @@ pre, code, .example script[type='application/json'] {
   tab-size: 4;
   -webkit-hyphens: none;
   -ms-hyphens: none;
-  hyphens: none; }
+  hyphens: none;
+  white-space: pre; }
 
 /* Code blocks */
 pre {
