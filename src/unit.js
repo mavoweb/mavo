@@ -12,7 +12,7 @@ var _ = Wysie.Unit = $.Class({
 		}
 
 		this.element = element;
-		this.element._.data.unit = this;
+		this.constructor.all.set(this.element, this);
 
 		this.collection = collection;
 
@@ -80,22 +80,18 @@ var _ = Wysie.Unit = $.Class({
 	},
 
 	static: {
+		get: function(element, prioritizePrimitive) {
+			var scope = Wysie.Scope.all.get(element);
+
+			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
+		},
+
 		create: function(element, wysie, collection) {
 			if (!element || !wysie) {
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			var isScope = Wysie.is("scope", element)
-				|| ( // Heuristic for matching scopes without a scoping attribute
-					$$(Wysie.selectors.property, element).length // contains properties
-					// TODO what if these properties are in another typeof?
-					&& (
-						Wysie.is("multiple", element)
-						|| !element.matches("[data-attribute], [href], [src], time[datetime]") // content not in attribute
-					)
-				);
-
-			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie, collection);
+			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, collection);
 		}
 	}
 });

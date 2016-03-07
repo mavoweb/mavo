@@ -223,6 +223,18 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper = element.closest(".wysie-wrapper") || element;
 
+		// Apply heuristic for scopes
+		$$(_.selectors.primitive).forEach(element => {
+			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
+			                Wysie.is("multiple", element) || // is a collection...
+			                Wysie.Primitive.getValueAttribute(element) === null
+					      ); // ...or its content is not in an attribute
+
+			if (isScope) {
+				element.setAttribute("typeof", "");
+			}
+		});
+
 		if (this.wrapper === this.element && _.is("multiple", element)) {
 			// Need to create a wrapper
 			var around = this.element;
@@ -1136,7 +1148,7 @@ var _ = Wysie.Unit = $.Class({
 		}
 
 		this.element = element;
-		this.element._.data.unit = this;
+		this.constructor.all.set(this.element, this);
 
 		this.collection = collection;
 
@@ -1204,22 +1216,18 @@ var _ = Wysie.Unit = $.Class({
 	},
 
 	static: {
+		get: function(element, prioritizePrimitive) {
+			var scope = Wysie.Scope.all.get(element);
+
+			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
+		},
+
 		create: function(element, wysie, collection) {
 			if (!element || !wysie) {
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			var isScope = Wysie.is("scope", element)
-				|| ( // Heuristic for matching scopes without a scoping attribute
-					$$(Wysie.selectors.property, element).length // contains properties
-					// TODO what if these properties are in another typeof?
-					&& (
-						Wysie.is("multiple", element)
-						|| !element.matches("[data-attribute], [href], [src], time[datetime]") // content not in attribute
-					)
-				);
-
-			return new Wysie[Wysie.Scope.is(element)? "Scope" : "Primitive"](element, wysie, collection);
+			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, collection);
 		}
 	}
 });
@@ -1506,7 +1514,9 @@ var _ = Wysie.Expressions = $.Class({
 				this.extract(element, null);
 			}
 
-			if (element == this.scope.element || !(element._.data.unit instanceof Wysie.Scope)) {
+			// Traverse children as long as this is NOT the root of a child scope
+			// (otherwise, it will be taken care of its own Expressions object)
+			if (element == this.scope.element || !Wysie.Scope.all.has(element)) {
 				$$(element.childNodes).forEach(child => this.traverse(child));
 			}
 		}
@@ -1745,35 +1755,19 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	static: {
-		is: function(element) {
-
-			var ret = Wysie.is("scope", element);
-
-			if (!ret) {
-				// Heuristic for matching scopes without a scoping attribute
-				if ($$(Wysie.selectors.property, element).length) { // Contains other properties and...
-					ret = Wysie.is("multiple", element) // is a collection...
-						// ...or its content is not in an attribute
-						|| Wysie.Primitive.getValueAttribute(element) === null;
-				}
-			}
-
-			return ret;
-		},
+		all: new WeakMap(),
 
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
-			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
+			if (Wysie.is("scope", element)) {
+				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
 
-			if (!type && _.is(element)) {
-				type = "Item";
-			}
-
-			if (type) {
 				element.setAttribute("typeof", type);
+
+				return type;
 			}
 
-			return type;
+			return null;
 		}
 	}
 });
@@ -1939,7 +1933,7 @@ var _ = Wysie.Primitive = $.Class({
 			var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
 
 			if (output) {
-				return output._.data.unit ? output._.data.unit.value : _.getValue(output);
+				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
 			}
 		}
 	},
@@ -1954,8 +1948,8 @@ var _ = Wysie.Primitive = $.Class({
 				var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
 
 				if (output) {
-					if (output._.data.unit) {
-						output._.data.unit.value = value;
+					if (_.all.has(output)) {
+						_.all.get(output).value = value;
 					}
 					else {
 						_.setValue(output, value);
@@ -2073,7 +2067,6 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
-				console.log("foo");
 				if (!this.exposed) {
 					evt.preventDefault();
 				}
@@ -2328,6 +2321,8 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	static: {
+		all: new WeakMap(),
+
 		getMatch: function (element, all) {
 			// TODO specificity
 			var ret = null;
@@ -2349,8 +2344,8 @@ var _ = Wysie.Primitive = $.Class({
 
 				// TODO refactor this
 				if (ret) {
-					if (ret.humanReadable && element._.data.unit instanceof _) {
-						element._.data.unit.humanReadable = ret.humanReadable;
+					if (ret.humanReadable && _.all.has(element)) {
+						_.all.get(element).humanReadable = ret.humanReadable;
 					}
 
 					ret = ret.value || ret;
@@ -2680,7 +2675,7 @@ var _ = Wysie.Collection = $.Class({
 
 	add: function(item, index) {
 		if (item instanceof Node) {
-			item = item._.data.unit || this.createItem(item);
+			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();

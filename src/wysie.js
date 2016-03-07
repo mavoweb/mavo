@@ -32,6 +32,18 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper = element.closest(".wysie-wrapper") || element;
 
+		// Apply heuristic for scopes
+		$$(_.selectors.primitive).forEach(element => {
+			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
+			                Wysie.is("multiple", element) || // is a collection...
+			                Wysie.Primitive.getValueAttribute(element) === null
+					      ); // ...or its content is not in an attribute
+
+			if (isScope) {
+				element.setAttribute("typeof", "");
+			}
+		});
+
 		if (this.wrapper === this.element && _.is("multiple", element)) {
 			// Need to create a wrapper
 			var around = this.element;

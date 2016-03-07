@@ -212,35 +212,19 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	static: {
-		is: function(element) {
-
-			var ret = Wysie.is("scope", element);
-
-			if (!ret) {
-				// Heuristic for matching scopes without a scoping attribute
-				if ($$(Wysie.selectors.property, element).length) { // Contains other properties and...
-					ret = Wysie.is("multiple", element) // is a collection...
-						// ...or its content is not in an attribute
-						|| Wysie.Primitive.getValueAttribute(element) === null;
-				}
-			}
-
-			return ret;
-		},
+		all: new WeakMap(),
 
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
-			var type = element.getAttribute("typeof") || element.getAttribute("itemtype");
+			if (Wysie.is("scope", element)) {
+				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
 
-			if (!type && _.is(element)) {
-				type = "Item";
-			}
-
-			if (type) {
 				element.setAttribute("typeof", type);
+
+				return type;
 			}
 
-			return type;
+			return null;
 		}
 	}
 });

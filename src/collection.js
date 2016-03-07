@@ -119,7 +119,7 @@ var _ = Wysie.Collection = $.Class({
 
 	add: function(item, index) {
 		if (item instanceof Node) {
-			item = item._.data.unit || this.createItem(item);
+			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();

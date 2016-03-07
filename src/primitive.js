@@ -156,7 +156,7 @@ var _ = Wysie.Primitive = $.Class({
 			var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
 
 			if (output) {
-				return output._.data.unit ? output._.data.unit.value : _.getValue(output);
+				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
 			}
 		}
 	},
@@ -171,8 +171,8 @@ var _ = Wysie.Primitive = $.Class({
 				var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
 
 				if (output) {
-					if (output._.data.unit) {
-						output._.data.unit.value = value;
+					if (_.all.has(output)) {
+						_.all.get(output).value = value;
 					}
 					else {
 						_.setValue(output, value);
@@ -290,7 +290,6 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
-				console.log("foo");
 				if (!this.exposed) {
 					evt.preventDefault();
 				}
@@ -545,6 +544,8 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	static: {
+		all: new WeakMap(),
+
 		getMatch: function (element, all) {
 			// TODO specificity
 			var ret = null;
@@ -566,8 +567,8 @@ var _ = Wysie.Primitive = $.Class({
 
 				// TODO refactor this
 				if (ret) {
-					if (ret.humanReadable && element._.data.unit instanceof _) {
-						element._.data.unit.humanReadable = ret.humanReadable;
+					if (ret.humanReadable && _.all.has(element)) {
+						_.all.get(element).humanReadable = ret.humanReadable;
 					}
 
 					ret = ret.value || ret;

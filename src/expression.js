@@ -277,7 +277,9 @@ var _ = Wysie.Expressions = $.Class({
 				this.extract(element, null);
 			}
 
-			if (element == this.scope.element || !(element._.data.unit instanceof Wysie.Scope)) {
+			// Traverse children as long as this is NOT the root of a child scope
+			// (otherwise, it will be taken care of its own Expressions object)
+			if (element == this.scope.element || !Wysie.Scope.all.has(element)) {
 				$$(element.childNodes).forEach(child => this.traverse(child));
 			}
 		}
