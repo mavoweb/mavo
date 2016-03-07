@@ -275,9 +275,11 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
+		var timer;
+
 		this.element._.events({
 			// click is needed too because it works with the keyboard as well
-			"mousedown.wysie:preedit click.wysie:preedit": e => this.edit(),
+			"click.wysie:preedit": e => this.edit(),
 			"focus.wysie:preedit": e => {
 				this.edit();
 
@@ -293,6 +295,18 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			}
 		});
+
+		if (!this.attribute) {
+			this.element._.events({
+				"mouseenter.wysie:preedit": e => {
+					clearTimeout(timer);
+					timer = setTimeout(() => this.edit(), 150);
+				},
+				"mouseleave.wysie:preedit": e => {
+					clearTimeout(timer);
+				}
+			});
+		}
 
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");

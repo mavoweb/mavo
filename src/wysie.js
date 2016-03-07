@@ -163,8 +163,6 @@ var _ = self.Wysie = $.Class({
 					parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
 				}
 			}
-
-			// evt.stopPropagation();
 		}, true);
 
 		this.unsavedChanges = !!this.unsavedChanges;

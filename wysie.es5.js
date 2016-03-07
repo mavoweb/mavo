@@ -592,8 +592,6 @@
 						parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
 					}
 				}
-
-				// evt.stopPropagation();
 			}, true);
 
 			this.unsavedChanges = !!this.unsavedChanges;
@@ -2332,9 +2330,11 @@
 				return;
 			}
 
+			var timer;
+
 			this.element._.events({
 				// click is needed too because it works with the keyboard as well
-				"mousedown.wysie:preedit click.wysie:preedit": function mousedownWysiePreeditClickWysiePreedit(e) {
+				"click.wysie:preedit": function clickWysiePreedit(e) {
 					return _this21.edit();
 				},
 				"focus.wysie:preedit": function focusWysiePreedit(e) {
@@ -2352,6 +2352,20 @@
 					}
 				}
 			});
+
+			if (!this.attribute) {
+				this.element._.events({
+					"mouseenter.wysie:preedit": function mouseenterWysiePreedit(e) {
+						clearTimeout(timer);
+						timer = setTimeout(function () {
+							return _this21.edit();
+						}, 150);
+					},
+					"mouseleave.wysie:preedit": function mouseleaveWysiePreedit(e) {
+						clearTimeout(timer);
+					}
+				});
+			}
 
 			// Make element focusable, so it can actually receive focus
 			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
