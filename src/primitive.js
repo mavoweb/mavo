@@ -290,6 +290,7 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
+				console.log("foo");
 				if (!this.exposed) {
 					evt.preventDefault();
 				}
@@ -483,6 +484,14 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	render: function(data) {
+		if (Array.isArray(data)) {
+			data = data[0]; // TODO what is gonna happen to the rest? Lost?
+		}
+
+		if (typeof data === "object") {
+			data = data[this.property];
+		}
+
 		this.value = data === undefined? this.emptyValue : data;
 
 		this.save();

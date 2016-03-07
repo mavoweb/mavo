@@ -18,6 +18,10 @@ var _ = Wysie.Node = $.Class({
 		return !this.property;
 	},
 
+	get name() {
+		return Wysie.readable(this.property || this.type).toLowerCase();
+	},
+
 	get data() {
 		return this.getData();
 	},

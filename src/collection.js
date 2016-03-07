@@ -46,10 +46,6 @@ var _ = Wysie.Collection = $.Class({
 		Wysie.hooks.run("collection-init-end", this);
 	},
 
-	get name() {
-		return Wysie.readable(this.property || this.type).toLowerCase();
-	},
-
 	get length() {
 		return this.items.length;
 	},
@@ -103,11 +99,7 @@ var _ = Wysie.Collection = $.Class({
 						title: "Delete this " + this.name,
 						className: "delete",
 						events: {
-							"click": evt => {
-								if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-									this.delete(item);
-								}
-							}
+							"click": evt => this.delete(item)
 						}
 					}, {
 						tag: "button",
@@ -185,6 +177,19 @@ var _ = Wysie.Collection = $.Class({
 		});
 	},
 
+	edit: function() {
+		if (this.length === 0 && this.closestCollection) {
+			// Nested collection with no items, add one
+			var item = this.add();
+			item.autoAdded = true;
+		}
+
+		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
+	},
+
+	/**
+	 * Delete all items in the collection.
+	 */
 	clear: function() {
 		this.propagate(item => item.element.remove());
 
@@ -207,18 +212,19 @@ var _ = Wysie.Collection = $.Class({
 
 	revert: function() {
 		this.items.forEach((item, i) => {
-			// Revert all properties
-			item.deleted = false;
-			item.revert();
-			item.element.classList.remove("wysie-item-hovered");
-
 			// Delete added items
 			if (!item.everSaved) {
 				this.delete(item, true);
 			}
-			// Bring back deleted items
-			else if (item.deleted) {
-				item.deleted = false;
+			else {
+				// Bring back deleted items
+				if (item.deleted) {
+					item.deleted = false;
+				}
+
+				// Revert all properties
+				item.revert();
+				item.element.classList.remove("wysie-item-hovered");
 			}
 		});
 	},

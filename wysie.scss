@@ -37,6 +37,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	border: solid transparent;
 	border-width: .4em .5em .8em .5em;
 	border-radius: 1em;
+	white-space: nowrap;
 
 	.wysie-item:hover:not(.has-hovered-item) > &,
 	.wysie-item:focus > &,
@@ -133,13 +134,14 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 .wysie-item {
 	position: relative;
 
-	&.delete-hover { // basically &:has(> .delete:hover)
+	&.delete-hover, // basically &:has(> .delete:hover)
+	&.deleted {
 		@include highlight(hsla(0,100%,50%,.1), "!important");
-		border-radius: .1em;
 	}
 
-	&.deleted {
-		display: none;
+	&.deleted button {
+		display: inline-block;
+		margin-left: .4em;
 	}
 }
 

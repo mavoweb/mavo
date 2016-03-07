@@ -15,7 +15,8 @@
   pointer-events: none;
   border: solid transparent;
   border-width: .4em .5em .8em .5em;
-  border-radius: 1em; }
+  border-radius: 1em;
+  white-space: nowrap; }
   .wysie-item:hover:not(.has-hovered-item) > .wysie-item-controls,
   .wysie-item:focus > .wysie-item-controls,
   .wysie-item.focus-within:not(:hover) > .wysie-item-controls, .wysie-item-controls:hover,
@@ -72,11 +73,11 @@
 
 .wysie-item {
   position: relative; }
-  .wysie-item.delete-hover {
-    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset !important;
-    border-radius: .1em; }
-  .wysie-item.deleted {
-    display: none; }
+  .wysie-item.delete-hover, .wysie-item.deleted {
+    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset !important; }
+  .wysie-item.deleted button {
+    display: inline-block;
+    margin-left: .4em; }
 
 .wysie-wrapper button.add {
   display: inline-block;

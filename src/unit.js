@@ -44,6 +44,33 @@ var _ = Wysie.Unit = $.Class({
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
+
+			if (value) {
+				// Soft delete, store element contents in a fragment
+				// and replace them with an undo prompt.
+				this.elementContents = document.createDocumentFragment();
+				$$(this.element.childNodes).forEach(node => {
+					this.elementContents.appendChild(node);
+				});
+
+				$.contents(this.element, [
+					"Deleted " + this.name,
+					{
+						tag: "button",
+						textContent: "Undo",
+						events: {
+							"click": evt => this.deleted = false
+						}
+					}
+				]);
+
+				this.element.classList.remove("delete-hover");
+			}
+			else if (this.deleted) {
+				// Undelete
+				this.element.textContent = "";
+				this.element.appendChild(this.elementContents);
+			}
 		},
 
 		unsavedChanges: function(value) {

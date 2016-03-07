@@ -1074,6 +1074,10 @@ var _ = Wysie.Node = $.Class({
 		return !this.property;
 	},
 
+	get name() {
+		return Wysie.readable(this.property || this.type).toLowerCase();
+	},
+
 	get data() {
 		return this.getData();
 	},
@@ -1164,6 +1168,33 @@ var _ = Wysie.Unit = $.Class({
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
+
+			if (value) {
+				// Soft delete, store element contents in a fragment
+				// and replace them with an undo prompt.
+				this.elementContents = document.createDocumentFragment();
+				$$(this.element.childNodes).forEach(node => {
+					this.elementContents.appendChild(node);
+				});
+
+				$.contents(this.element, [
+					"Deleted " + this.name,
+					{
+						tag: "button",
+						textContent: "Undo",
+						events: {
+							"click": evt => this.deleted = false
+						}
+					}
+				]);
+
+				this.element.classList.remove("delete-hover");
+			}
+			else if (this.deleted) {
+				// Undelete
+				this.element.textContent = "";
+				this.element.appendChild(this.elementContents);
+			}
 		},
 
 		unsavedChanges: function(value) {
@@ -2042,6 +2073,7 @@ var _ = Wysie.Primitive = $.Class({
 			"click.wysie:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
+				console.log("foo");
 				if (!this.exposed) {
 					evt.preventDefault();
 				}
@@ -2235,6 +2267,14 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	render: function(data) {
+		if (Array.isArray(data)) {
+			data = data[0]; // TODO what is gonna happen to the rest? Lost?
+		}
+
+		if (typeof data === "object") {
+			data = data[this.property];
+		}
+
 		this.value = data === undefined? this.emptyValue : data;
 
 		this.save();
@@ -2567,10 +2607,6 @@ var _ = Wysie.Collection = $.Class({
 		Wysie.hooks.run("collection-init-end", this);
 	},
 
-	get name() {
-		return Wysie.readable(this.property || this.type).toLowerCase();
-	},
-
 	get length() {
 		return this.items.length;
 	},
@@ -2624,11 +2660,7 @@ var _ = Wysie.Collection = $.Class({
 						title: "Delete this " + this.name,
 						className: "delete",
 						events: {
-							"click": evt => {
-								if (confirm("Are you sure you want to " + evt.target.title.toLowerCase() + "?")) {
-									this.delete(item);
-								}
-							}
+							"click": evt => this.delete(item)
 						}
 					}, {
 						tag: "button",
@@ -2706,6 +2738,19 @@ var _ = Wysie.Collection = $.Class({
 		});
 	},
 
+	edit: function() {
+		if (this.length === 0 && this.closestCollection) {
+			// Nested collection with no items, add one
+			var item = this.add();
+			item.autoAdded = true;
+		}
+
+		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
+	},
+
+	/**
+	 * Delete all items in the collection.
+	 */
 	clear: function() {
 		this.propagate(item => item.element.remove());
 
@@ -2728,18 +2773,19 @@ var _ = Wysie.Collection = $.Class({
 
 	revert: function() {
 		this.items.forEach((item, i) => {
-			// Revert all properties
-			item.deleted = false;
-			item.revert();
-			item.element.classList.remove("wysie-item-hovered");
-
 			// Delete added items
 			if (!item.everSaved) {
 				this.delete(item, true);
 			}
-			// Bring back deleted items
-			else if (item.deleted) {
-				item.deleted = false;
+			else {
+				// Bring back deleted items
+				if (item.deleted) {
+					item.deleted = false;
+				}
+
+				// Revert all properties
+				item.revert();
+				item.element.classList.remove("wysie-item-hovered");
 			}
 		});
 	},
