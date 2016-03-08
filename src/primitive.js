@@ -21,27 +21,6 @@ var _ = Wysie.Primitive = $.Class({
 			this.editor = this.element;
 
 			if (this.exposed) {
-				// Editing exposed elements saves the wysie
-				this.element.addEventListener("blur", evt => {
-					if (!this.wysie.editing &&
-					    this.wysie.storage &&
-					    evt.target === this.editor &&
-					    (this.scope.everSaved || !this.scope.collection)
-					) {
-						this.save();
-						this.wysie.storage.save();
-
-						// Are there any unsaved changes from other properties?
-						var unsavedChanges = false;
-
-						this.wysie.walk(obj => {
-							unsavedChanges = obj.unsavedChanges || unsavedChanges;
-						});
-
-						this.wysie.unsavedChanges = unsavedChanges;
-					}
-				});
-
 				this.edit();
 			}
 		}
