@@ -5,6 +5,12 @@ var _ = Wysie.Scope = $.Class({
 	constructor: function (element, wysie, collection) {
 		this.properties = {};
 
+		// Should this element also create a primitive?
+		if (Wysie.Primitive.getValueAttribute(this.element)) {
+			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie);
+			obj.scope = obj.parentScope = this;
+		}
+
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
 		$$(Wysie.selectors.property, this.element).forEach(element => {
@@ -14,14 +20,10 @@ var _ = Wysie.Scope = $.Class({
 				var existing = this.properties[property];
 
 				if (existing) {
-					var collection;
-
 					// Property already exists, turn this into an immutable collection if it's not already
-					if (existing instanceof Wysie.Collection) {
-						// Already a collection (this must be the 3+th duplicate)
-						collection = existing;
-					}
-					else {
+					var collection = existing;
+
+					if (!(existing instanceof Wysie.Collection)) {
 						collection = new Wysie.Collection(element, this.wysie);
 						collection.parentScope = this;
 						this.properties[property] = collection;
@@ -31,6 +33,7 @@ var _ = Wysie.Scope = $.Class({
 					collection.add(element);
 				}
 				else {
+					// No existing properties with this id, normal case
 					if (Wysie.is("multiple", element)) {
 						var obj = new Wysie.Collection(element, this.wysie);
 					}

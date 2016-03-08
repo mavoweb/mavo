@@ -1,5 +1,7 @@
 (function ($, $$) {
 
+"use strict";
+
 var _ = self.Wysie = $.Class({
 	constructor: function (element) {
 		_.all.push(this);
@@ -13,7 +15,7 @@ var _ = self.Wysie = $.Class({
 		// Assign a unique (for the page) id to this wysie instance
 		this.id = element.id || "wysie-" + _.all.length;
 
-		this.element = _.is("scope", element)? element : $(_.selectors.scope, element);
+		this.element = _.is("scope", element)? element : $(_.selectors.rootScope, element);
 
 		if (!this.element) {
 			element.setAttribute("typeof", element.getAttribute("property") || "");
@@ -304,25 +306,6 @@ var _ = self.Wysie = $.Class({
 			return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 		},
 
-		selectors: {
-			property: "[property], [itemprop]",
-			specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-			output: "[property=output], [itemprop=output], .output, .value",
-			primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-			scope: "[typeof], [itemscope], [itemtype], .scope",
-			multiple: "[multiple], [data-multiple], .multiple",
-			autoMultiple: ["li", "tr", "option"].map(tag => tag + ":only-of-type").join(", "),
-			required: "[required], [data-required], .required",
-			formControl: "input, select, textarea",
-			computed: ".computed", // Properties or scopes with computed properties, will not be saved
-			item: ".wysie-item",
-			ui: ".wysie-ui"
-		},
-
-		phrases: {
-			unsavedChanges: "You have unsaved edits. If you exit now, you will lose them. Are you sure you want to continue?"
-		},
-
 		is: function(thing, element) {
 			return element.matches && element.matches(_.selectors[thing]);
 		},
@@ -330,6 +313,37 @@ var _ = self.Wysie = $.Class({
 		hooks: new $.Hooks()
 	}
 });
+
+{
+
+let s = _.selectors = {
+	property: "[property], [itemprop]",
+	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
+	scope: "[typeof], [itemscope], [itemtype], .scope",
+	multiple: "[multiple], [data-multiple], .multiple",
+	required: "[required], [data-required], .required",
+	formControl: "input, select, textarea",
+	computed: ".computed", // Properties or scopes with computed properties, will not be saved
+	item: ".wysie-item",
+	ui: ".wysie-ui",
+};
+
+let arr = s.arr = selector => selector.split(/\s*,\s*/g);
+let not = s.not = selector => arr(selector).map(s => `:not(${s})`).join("");
+let or = s.or = (selector1, selector2) => selector1 + ", " + selector2;
+let and = s.and = (selector1, selector2) => _.flatten(
+		arr(selector1).map(s1 => arr(selector2).map(s2 => s1 + s2))
+	).join(", ");
+let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2));
+
+$.extend(_.selectors, {
+	primitive: andNot(s.property, s.scope),
+	rootScope: andNot(s.scope, s.property),
+	output: or(s.specificProperty("output"), ".output, .value"),
+	autoMultiple: and("li, tr, option", ":only-of-type")
+});
+
+}
 
 // Bliss plugins
 

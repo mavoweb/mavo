@@ -214,7 +214,8 @@
 			<li>Any property that can be used in simple expressions (including ancestor and child properties) can be used as a variable.</li>
 			<li>Multiplied elements (a.k.a. collections) are arrays. Scopes are plain objects.</li>
 			<li>Properties inside collections can also be accessed as a simple variable, whose value will be an array with all values of that property accross the collection.</li>
-			<li>There are several convenient functions for aggregate calculations on these properties that have multiple values, such as: <code>sum()</code>, <code>min()</code>, <code>max()</code>, <code>average()</code>.</li>
+			<li>There are several convenient functions for aggregate calculations on these properties that have multiple values, such as: <code>sum()</code>, <code>min()</code>, <code>max()</code>, <code>average()</code>.
+				Their names are case insensitive.</li>
 		</ul>
 
 		<section class="example">
@@ -228,6 +229,20 @@
 						<div property="age">30</div>
 					</li>
 				</ul>
+
+				<h2>Aggregates over age:</h2>
+				<dl>
+					<dt>Number of people with age:</dt>
+					<dd>${age.length}</dd>
+					<dt>Average:</dt>
+					<dd>${avg(age)}</dd> <!-- average(age) also works -->
+					<dt>Min:</dt>
+					<dd>${min(age)}</dd>
+					<dt>Max:</dt>
+					<dd>${Max(age)}</dd> <!-- note that capitalization doesn’t matter -->
+					<dt>Sum:</dt>
+					<dd>${SUM(age)}</dd> <!-- note that capitalization doesn’t matter -->
+				</dl>
 			</script>
 		</section>
 

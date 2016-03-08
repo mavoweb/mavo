@@ -413,6 +413,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function ($, $$) {
 
+	"use strict";
+
 	var _ = self.Wysie = $.Class({
 		constructor: function constructor(element) {
 			var _this = this;
@@ -428,7 +430,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			// Assign a unique (for the page) id to this wysie instance
 			this.id = element.id || "wysie-" + _.all.length;
 
-			this.element = _.is("scope", element) ? element : $(_.selectors.scope, element);
+			this.element = _.is("scope", element) ? element : $(_.selectors.rootScope, element);
 
 			if (!this.element) {
 				element.setAttribute("typeof", element.getAttribute("property") || "");
@@ -737,29 +739,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}, []);
 			},
 
-			selectors: {
-				property: "[property], [itemprop]",
-				specificProperty: function specificProperty(name) {
-					return "[property=" + name + "], [itemprop=" + name + "]";
-				},
-				output: "[property=output], [itemprop=output], .output, .value",
-				primitive: "[property]:not([typeof]), [itemprop]:not([itemscope])",
-				scope: "[typeof], [itemscope], [itemtype], .scope",
-				multiple: "[multiple], [data-multiple], .multiple",
-				autoMultiple: ["li", "tr", "option"].map(function (tag) {
-					return tag + ":only-of-type";
-				}).join(", "),
-				required: "[required], [data-required], .required",
-				formControl: "input, select, textarea",
-				computed: ".computed", // Properties or scopes with computed properties, will not be saved
-				item: ".wysie-item",
-				ui: ".wysie-ui"
-			},
-
-			phrases: {
-				unsavedChanges: "You have unsaved edits. If you exit now, you will lose them. Are you sure you want to continue?"
-			},
-
 			is: function is(thing, element) {
 				return element.matches && element.matches(_.selectors[thing]);
 			},
@@ -767,6 +746,54 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			hooks: new $.Hooks()
 		}
 	});
+
+	{
+		(function () {
+
+			var s = _.selectors = {
+				property: "[property], [itemprop]",
+				specificProperty: function specificProperty(name) {
+					return "[property=" + name + "], [itemprop=" + name + "]";
+				},
+				scope: "[typeof], [itemscope], [itemtype], .scope",
+				multiple: "[multiple], [data-multiple], .multiple",
+				required: "[required], [data-required], .required",
+				formControl: "input, select, textarea",
+				computed: ".computed", // Properties or scopes with computed properties, will not be saved
+				item: ".wysie-item",
+				ui: ".wysie-ui"
+			};
+
+			var arr = s.arr = function (selector) {
+				return selector.split(/\s*,\s*/g);
+			};
+			var not = s.not = function (selector) {
+				return arr(selector).map(function (s) {
+					return ":not(" + s + ")";
+				}).join("");
+			};
+			var or = s.or = function (selector1, selector2) {
+				return selector1 + ", " + selector2;
+			};
+			var and = s.and = function (selector1, selector2) {
+				return _.flatten(arr(selector1).map(function (s1) {
+					return arr(selector2).map(function (s2) {
+						return s1 + s2;
+					});
+				})).join(", ");
+			};
+			var andNot = s.andNot = function (selector1, selector2) {
+				return and(selector1, not(selector2));
+			};
+
+			$.extend(_.selectors, {
+				primitive: andNot(s.property, s.scope),
+				rootScope: andNot(s.scope, s.property),
+				output: or(s.specificProperty("output"), ".output, .value"),
+				autoMultiple: and("li, tr, option", ":only-of-type")
+			});
+		})();
+	}
 
 	// Bliss plugins
 
@@ -1847,6 +1874,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.properties = {};
 
+			// Should this element also create a primitive?
+			if (Wysie.Primitive.getValueAttribute(this.element)) {
+				var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie);
+				obj.scope = obj.parentScope = this;
+			}
+
 			// Create Wysie objects for all properties in this scope (primitives or scopes),
 			// but not properties in descendant scopes (they will be handled by their scope)
 			$$(Wysie.selectors.property, this.element).forEach(function (element) {
@@ -1856,13 +1889,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					var existing = _this16.properties[property];
 
 					if (existing) {
-						var collection;
-
 						// Property already exists, turn this into an immutable collection if it's not already
-						if (existing instanceof Wysie.Collection) {
-							// Already a collection (this must be the 3+th duplicate)
-							collection = existing;
-						} else {
+						var collection = existing;
+
+						if (!(existing instanceof Wysie.Collection)) {
 							collection = new Wysie.Collection(element, _this16.wysie);
 							collection.parentScope = _this16;
 							_this16.properties[property] = collection;
@@ -1871,6 +1901,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 						collection.add(element);
 					} else {
+						// No existing properties with this id, normal case
 						if (Wysie.is("multiple", element)) {
 							var obj = new Wysie.Collection(element, _this16.wysie);
 						} else {
@@ -3204,22 +3235,30 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				// Find add button if provided, or generate one
 				var selector = "button.add-" + this.property + ", .wysie-add, button.add";
-				var ret = $$(selector, this.closestCollection).filter(function (button) {
-					return !_this30.template.contains(button);
-				})[0] || document.createElement("button")._.set({
-					className: "add",
-					textContent: "Add " + this.name
-				});
+				var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
 
-				ret.classList.add("wysie-ui");
+				if (scope) {
+					var button = $$(selector, scope).filter(function (button) {
+						return !_this30.template.contains(button);
+					})[0];
+				}
 
-				ret.addEventListener("click", function (evt) {
+				if (!button) {
+					button = $.create("button", {
+						className: "add",
+						textContent: "Add " + this.name
+					});
+				};
+
+				button.classList.add("wysie-ui");
+
+				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
 					_this30.add().edit();
 				});
 
-				return ret;
+				return button;
 			}
 		}
 	});

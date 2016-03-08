@@ -321,22 +321,30 @@ var _ = Wysie.Collection = $.Class({
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.add-${this.property}, .wysie-add, button.add`;
-			var ret = $$(selector, this.closestCollection).filter(button => {
-				return !this.template.contains(button);
-			})[0] || document.createElement("button")._.set({
-				className: "add",
-				textContent: "Add " + this.name
-			});
+			var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
 
-			ret.classList.add("wysie-ui");
+			if (scope) {
+				var button = $$(selector, scope).filter(button => {
+					return !this.template.contains(button);
+				})[0];
+			}
 
-			ret.addEventListener("click", evt => {
+			if (!button) {
+				button = $.create("button", {
+					className: "add",
+					textContent: "Add " + this.name
+				});
+			};
+
+			button.classList.add("wysie-ui");
+
+			button.addEventListener("click", evt => {
 				evt.preventDefault();
 
 				this.add().edit();
 			});
 
-			return ret;
+			return button;
 		}
 	}
 });
