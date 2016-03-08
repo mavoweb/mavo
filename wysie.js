@@ -1814,9 +1814,7 @@ var _ = Wysie.Primitive = $.Class({
 		if (Wysie.is("formControl", this.element)) {
 			this.editor = this.element;
 
-			if (this.exposed) {
-				this.edit();
-			}
+			this.edit();
 		}
 		// Nested widgets
 		else if (!this.editor) {
@@ -1916,7 +1914,7 @@ var _ = Wysie.Primitive = $.Class({
 			this.update(value);
 		}
 
-		this.unsavedChanges = true;
+		this.unsavedChanges = this.wysie.unsavedChanges = true;
 	},
 
 	get editorValue() {
@@ -2123,7 +2121,7 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		this.editor._.events({
-			"input": evt => {
+			"input change": evt => {
 				this.value = this.editorValue;
 			},
 			"focus": evt => {

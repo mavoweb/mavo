@@ -2133,9 +2133,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (Wysie.is("formControl", this.element)) {
 				this.editor = this.element;
 
-				if (this.exposed) {
-					this.edit();
-				}
+				this.edit();
 			}
 			// Nested widgets
 			else if (!this.editor) {
@@ -2243,7 +2241,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.update(value);
 			}
 
-			this.unsavedChanges = true;
+			this.unsavedChanges = this.wysie.unsavedChanges = true;
 		},
 
 		get editorValue() {
@@ -2456,7 +2454,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			this.editor._.events({
-				"input": function input(evt) {
+				"input change": function inputChange(evt) {
 					_this23.value = _this23.editorValue;
 				},
 				"focus": function focus(evt) {
