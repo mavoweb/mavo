@@ -222,8 +222,6 @@ var _ = Wysie.Collection = $.Class({
 				this.delete(item, true);
 				return;
 			}
-
-			item.element.classList.remove("wysie-item-hovered");
 		});
 	},
 
@@ -243,7 +241,6 @@ var _ = Wysie.Collection = $.Class({
 
 				// Revert all properties
 				item.revert();
-				item.element.classList.remove("wysie-item-hovered");
 			}
 		});
 	},

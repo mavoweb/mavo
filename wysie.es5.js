@@ -3242,8 +3242,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this28.delete(item, true);
 					return;
 				}
-
-				item.element.classList.remove("wysie-item-hovered");
 			});
 		},
 
@@ -3264,7 +3262,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 					// Revert all properties
 					item.revert();
-					item.element.classList.remove("wysie-item-hovered");
 				}
 			});
 		},
