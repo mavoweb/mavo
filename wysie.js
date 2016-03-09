@@ -1463,7 +1463,11 @@ var _ = Wysie.Expression.Text = $.Class({
 	update: function(data) {
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
-				var value = expr.eval(data) || "";
+				var value = expr.eval(data);
+
+				if (!value && value !== 0) {
+					value = "";
+				}
 
 				return expr.simple? this.transform(value) : value;
 			}

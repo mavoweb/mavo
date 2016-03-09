@@ -1747,7 +1747,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				this.text = this.template.map(function (expr) {
 					if (expr instanceof Wysie.Expression) {
-						var value = expr.eval(data) || "";
+						var value = expr.eval(data);
+
+						if (!value && value !== 0) {
+							value = "";
+						}
 
 						return expr.simple ? _this12.transform(value) : value;
 					}
