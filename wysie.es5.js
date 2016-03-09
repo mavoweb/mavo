@@ -1653,11 +1653,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			/**
     * Utility functions that are available inside expressions.
-    * TODO proxy so that this works case insensitive
     */
 			functions: {
 				sum: function sum(array) {
-					array = Array.isArray(array) ? array : $$(arguments);
+					array = numbers(array, arguments);
 
 					return array.reduce(function (prev, current) {
 						return +prev + (+current || 0);
@@ -1665,15 +1664,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				},
 
 				average: function average(array) {
-					array = Array.isArray(array) ? array : $$(arguments);
+					array = numbers(array, arguments);
 
 					return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
 				},
 
 				min: function min(array) {
+					array = numbers(array, arguments);
+
 					return Math.min.apply(Math, array);
 				},
+
 				max: function max(array) {
+					array = numbers(array, arguments);
+
 					return Math.max.apply(Math, array);
 				},
 
@@ -1719,6 +1723,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				return property in functions;
 			}
+		});
+	}
+
+	/**
+  * Private helper methods
+  */
+	function numbers(array, args) {
+		array = Array.isArray(array) ? array : $$(args);
+
+		return array.filter(function (number) {
+			return !isNaN(number);
 		});
 	}
 

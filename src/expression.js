@@ -35,11 +35,10 @@ var _ = Wysie.Expression = $.Class({
 
 		/**
 		 * Utility functions that are available inside expressions.
-		 * TODO proxy so that this works case insensitive
 		 */
 		functions: {
 			sum: function(array) {
-				array = Array.isArray(array)? array : $$(arguments);
+				array = numbers(array, arguments);
 
 				return array.reduce((prev, current) => {
 					return +prev + (+current || 0);
@@ -47,13 +46,22 @@ var _ = Wysie.Expression = $.Class({
 			},
 
 			average: function(array) {
-				array = Array.isArray(array)? array : $$(arguments);
+				array = numbers(array, arguments);
 
 				return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
 			},
 
-			min: array => Math.min.apply(Math, array),
-			max: array => Math.max.apply(Math, array),
+			min: function(array) {
+				array = numbers(array, arguments);
+
+				return Math.min.apply(Math, array);
+			},
+
+			max: function(array) {
+				array = numbers(array, arguments);
+
+				return Math.max.apply(Math, array);
+			},
 
 			round: function(num, decimals) {
 				if (!num) {
@@ -98,6 +106,15 @@ if (self.Proxy) {
 			return property in functions;
 		}
 	});
+}
+
+/**
+ * Private helper methods
+ */
+function numbers(array, args) {
+	array = Array.isArray(array)? array : $$(args);
+
+	return array.filter(number => !isNaN(number));
 }
 
 (function() {
