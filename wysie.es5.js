@@ -516,7 +516,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 							return _this.save();
 						},
 						"mouseenter focus": function mouseenterFocus(e) {
-							return _this.wrapper.classList.add("save-hovered");
+							_this.wrapper.classList.add("save-hovered");
+							_this.unsavedChanges = _this.calculateUnsavedChanges();
 						},
 						"mouseleave blur": function mouseleaveBlur(e) {
 							return _this.wrapper.classList.remove("save-hovered");
@@ -532,7 +533,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 							return _this.revert();
 						},
 						"mouseenter focus": function mouseenterFocus(e) {
-							return _this.wrapper.classList.add("revert-hovered");
+							_this.wrapper.classList.add("revert-hovered");
+							_this.unsavedChanges = _this.calculateUnsavedChanges();
 						},
 						"mouseleave blur": function mouseleaveBlur(e) {
 							return _this.wrapper.classList.remove("revert-hovered");
@@ -549,6 +551,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			});
 
 			// Fetch existing data
+
 			if (this.store && this.store.href) {
 				this.storage = _.Storage.create(this);
 
@@ -559,10 +562,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.permissions.on(["read", "edit"]);
 				this.root.import();
 
-				this.wrapper._.fire("wysie:load");
+				$.fire(this.wrapper, "wysie:load");
 			}
 
-			$.hooks.run("init-end", this);
+			Wysie.hooks.run("init-end", this);
 		},
 
 		get data() {
@@ -609,7 +612,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			}, true);
 
-			this.unsavedChanges = !!this.unsavedChanges;
+			this.unsavedChanges = this.calculateUnsavedChanges();
+		},
+
+		calculateUnsavedChanges: function calculateUnsavedChanges() {
+			var unsavedChanges = false;
+
+			this.walk(function (obj) {
+				if (obj.unsavedChanges) {
+					unsavedChanges = true;
+					return false;
+				}
+			});
+
+			return unsavedChanges;
 		},
 
 		// Conclude editing
@@ -634,13 +650,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		walk: function walk(callback) {
-			var walker = function walker(obj) {
-				callback(obj);
-
-				obj.propagate && obj.propagate(walker);
-			};
-
-			walker(this.root);
+			this.root.walk(callback);
 		},
 
 		live: {
@@ -820,11 +830,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			var existing = proto[name];
 
 			proto[name] = function () {
-				if (existing) {
-					existing.apply(this, arguments);
-				}
+				var ret = existing && existing.apply(this, arguments);
 
-				if (this.propagate) {
+				if (this.propagate && ret !== false) {
 					this.propagate(name);
 				}
 			};
@@ -1392,6 +1400,30 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return this.getData();
 		},
 
+		walk: function walk(callback) {
+			var walker = function walker(obj) {
+				var ret = callback(obj);
+
+				if (ret !== false) {
+					obj.propagate && obj.propagate(walker);
+				}
+			};
+
+			walker(this);
+		},
+
+		walkUp: function walkUp(callback) {
+			var scope = this;
+
+			while (scope = scope.parentScope) {
+				var ret = callback(scope);
+
+				if (ret !== undefined) {
+					return ret;
+				}
+			}
+		},
+
 		call: function call(callback) {
 			for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
 				args[_key - 1] = arguments[_key];
@@ -1478,6 +1510,38 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return null;
 		},
 
+		/**
+   * Check if this unit is either deleted or inside a deleted scope
+   */
+		isDeleted: function isDeleted() {
+			var ret = this.deleted;
+
+			if (this.deleted) {
+				return true;
+			}
+
+			return !!this.parentScope && this.parentScope.isDeleted();
+		},
+
+		getData: function getData(o) {
+			o = o || {};
+
+			var isNull = function isNull(unit) {
+				return !unit.everSaved && !o.dirty || unit.deleted && o.dirty || unit.computed && !o.computed || unit.placeholder;
+			};
+
+			if (isNull(this)) {
+				return null;
+			}
+
+			// Check if any of the parent scopes doesn't return data
+			this.walkUp(function (scope) {
+				if (isNull(scope)) {
+					return null;
+				}
+			});
+		},
+
 		live: {
 			deleted: function deleted(value) {
 				var _this11 = this;
@@ -1507,12 +1571,32 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					// Undelete
 					this.element.textContent = "";
 					this.element.appendChild(this.elementContents);
+
+					// otherwise expressions won't update because this will still seem as deleted
+					// Alternatively, we could fire datachange with a timeout.
+					this._deleted = false;
+
+					$.fire(this.element, "wysie:datachange", {
+						unit: this.collection,
+						wysie: this.wysie,
+						action: "undelete",
+						item: this
+					});
 				}
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
-				this.wysie.unsavedChanges = this.wysie.unsavedChanges || value;
-				this.element._.toggleClass("unsaved-changes", value);
+				if (this.placeholder) {
+					value = false;
+				}
+
+				$.toggleClass(this.element, "unsaved-changes", value);
+
+				return value;
+			},
+
+			placeholder: function placeholder(value) {
+				$.toggleClass(this.element, "placeholder", value);
 			}
 		},
 
@@ -1774,22 +1858,38 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					this.scope.element.addEventListener("wysie:datachange", function (evt) {
 						return _this13.update();
 					});
+
+					// Enable throttling only after a while to ensure everything has initially run
+					this.THROTTLE = 0;
+
+					this.scope.wysie.wrapper.addEventListener("wysie:load", function (evt) {
+						setTimeout(function () {
+							return _this13.THROTTLE = 25;
+						}, 100);
+					});
 				}
 			},
 
+			/**
+    * Update all expressions in this scope
+    */
 			update: function callee() {
 				var _this14 = this;
 
-				if (_.THROTTLE > 0) {
+				if (this.scope.isDeleted()) {
+					return;
+				}
+
+				if (this.THROTTLE > 0) {
 					var elapsedTime = performance.now() - this.lastUpdated;
 
 					clearTimeout(callee.timeout);
 
-					if (this.lastUpdated && elapsedTime < _.THROTTLE) {
+					if (this.lastUpdated && elapsedTime < this.THROTTLE) {
 						// Throttle
 						callee.timeout = setTimeout(function () {
 							return _this14.update();
-						}, _.THROTTLE - elapsedTime);
+						}, this.THROTTLE - elapsedTime);
 
 						return;
 					}
@@ -1801,7 +1901,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					return ref.update(data);
 				});
 
-				if (_.THROTTLE > 0) {
+				if (this.THROTTLE > 0) {
 					this.lastUpdated = performance.now();
 				}
 			},
@@ -1855,13 +1955,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	Wysie.hooks.add("scope-init-end", function (scope) {
 		new Wysie.Expressions(scope);
-	});
-
-	// Enable throttling only after a while to ensure everything has initially run
-	document.addEventListener("wysie:load", function (evt) {
-		setTimeout(function () {
-			return Wysie.Expressions.THROTTLE = 25;
-		}, 100);
 	});
 })(Bliss, Bliss.$);
 
@@ -1926,18 +2019,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		getData: function getData(o) {
 			o = o || {};
 
-			if (!this.everSaved && !o.dirty || this.computed && !o.computed) {
-				return null;
+			var ret = this.super.getData.call(this, o);
+
+			if (ret !== undefined) {
+				return ret;
 			}
 
-			var ret = {};
+			ret = {};
 
-			$.each(this.properties, function (property, obj) {
+			this.propagate(function (obj) {
 				if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 					var data = obj.getData(o);
 
 					if (data !== null || o.null) {
-						ret[property] = data;
+						ret[obj.property] = data;
 					}
 				}
 			});
@@ -1958,7 +2053,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			var data = this.getData(o);
 
-			if (self.Proxy) {
+			if (self.Proxy && data) {
 				// TODO proxy child objects too
 				data = new Proxy(data, {
 					get: function get(data, property) {
@@ -1967,13 +2062,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						}
 
 						// Look in ancestors
-						var scope = _this17;
-
-						while (scope = scope.parentScope) {
+						_this17.walkUp(function (scope) {
 							if (property in scope.properties) {
 								return scope.properties[property].getData(o);
-							}
-						}
+							};
+						});
 					},
 
 					has: function has(data, property) {
@@ -1984,13 +2077,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						// Property does not exist, look for it elsewhere
 
 						// First look in ancestors
-						var scope = _this17;
-
-						while (scope = scope.parentScope) {
+						_this17.walkUp(function (scope) {
 							if (property in scope.properties) {
 								return true;
-							}
-						}
+							};
+						});
 
 						// Still not found, look in descendants
 						var ret = _this17.find(property);
@@ -2017,7 +2108,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return data;
 		},
 
-		// Search entire subtree for property, return relative value
+		/**
+   * Search entire subtree for property, return relative value
+   * @return {Wysie.Unit}
+   */
 		find: function find(property) {
 			if (this.property == property) {
 				return this;
@@ -2045,6 +2139,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		save: function save() {
+			if (this.placeholder) {
+				return false;
+			}
+
 			this.everSaved = true;
 			this.unsavedChanges = false;
 		},
@@ -2068,6 +2166,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			data = data.isArray ? data[0] : data;
+
+			// TODO what if it was a primitive and now it's a scope?
+			// In that case, render the this.properties[this.property] with it
 
 			this.unhandled = $.extend({}, data, function (property) {
 				return !(property in _this18.properties);
@@ -2158,7 +2259,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					if (record[0].oldValue != value) {
 						_this19.update(value);
 					}
-				} else if (!_this19.editing) {
+				} else if (!_this19.wysie.editing) {
 					_this19.update(_this19.value);
 				}
 			}, true);
@@ -2214,6 +2315,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					});
 				});
 			}
+
+			this.initialized = true;
 		},
 
 		get value() {
@@ -2285,13 +2388,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		getData: function getData(o) {
 			o = o || {};
 
-			if (this.computed && !o.computed) {
-				return null;
+			var ret = this.super.getData.call(this, o);
+
+			if (ret !== undefined) {
+				return ret;
 			}
 
 			var ret = !o.dirty && !this.exposed ? this.savedValue : this.value;
 
-			if (!o.dirty && ret === "" && ret === this.default) {
+			if (!o.dirty && ret === "") {
 				return null;
 			}
 
@@ -2299,25 +2404,31 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		update: function update(value) {
-			this.empty = value === "" || value === null;
-
 			value = value || value === 0 ? value : "";
+
+			this.empty = value === "";
 
 			if (this.humanReadable && this.attribute) {
 				this.element.textContent = this.humanReadable(value);
 			}
 
-			this.element._.fire("wysie:datachange", {
-				property: this.property,
-				value: value,
-				wysie: this.wysie,
-				unit: this,
-				dirty: this.editing,
-				action: "propertychange"
-			});
+			if (this.initialized) {
+				$.fire(this.element, "wysie:datachange", {
+					property: this.property,
+					value: value,
+					wysie: this.wysie,
+					unit: this,
+					dirty: this.editing,
+					action: "propertychange"
+				});
+			}
 		},
 
 		save: function save() {
+			if (this.placeholder) {
+				return false;
+			}
+
 			this.savedValue = this.value;
 			this.everSaved = true;
 			this.unsavedChanges = false;
@@ -2632,15 +2743,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		live: {
 			empty: function empty(value) {
-				if (!value || this.attribute && $(Wysie.selectors.property, this.element)) {
-					// If it contains other properties, it shouldn’t be hidden
-					this.element.classList.remove("empty");
-				} else {
-					this.element.classList.add("empty");
-				}
+				var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
+				$.toggleClass(this.element, "empty", hide);
 			},
+
 			editing: function editing(value) {
-				this.element.classList[value ? "add" : "remove"]("editing");
+				$.toggleClass(this.element, "editing", value);
 			}
 		},
 
@@ -2997,7 +3105,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return item;
 		},
 
-		add: function add(item, index) {
+		add: function add(item, index, silent) {
 			if (item instanceof Node) {
 				item = Wysie.Unit.get(item) || this.createItem(item);
 			} else {
@@ -3016,14 +3124,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.items.push(item);
 			}
 
-			item.element._.fire("wysie:datachange", {
-				unit: this,
-				wysie: this.wysie,
-				action: "add",
-				item: item
-			});
+			if (!silent) {
+				item.element._.fire("wysie:datachange", {
+					unit: this,
+					wysie: this.wysie,
+					action: "add",
+					item: item
+				});
 
-			item.unsavedChanges = this.wysie.unsavedChanges = true;
+				item.unsavedChanges = this.wysie.unsavedChanges = true;
+			}
 
 			return item;
 		},
@@ -3062,10 +3172,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		edit: function edit() {
-			if (this.length === 0 && this.closestCollection) {
+			if (this.length === 0 && this.required) {
 				// Nested collection with no items, add one
-				var item = this.add();
-				item.autoAdded = true;
+				var item = this.add(null, null, true);
+
+				item.placeholder = true;
+				item.walk(function (obj) {
+					return obj.unsavedChanges = false;
+				});
+
+				$.once(item.element, "wysie:datachange", function (evt) {
+					item.unsavedChanges = true;
+					item.placeholder = false;
+				});
 			}
 
 			this.propagate(function (obj) {
@@ -3091,21 +3210,33 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				if (item.deleted) {
 					_this27.delete(item, true);
 				} else {
-					item.element.classList.remove("wysie-item-hovered");
 					item.unsavedChanges = false;
 				}
+			});
+		},
+
+		done: function done() {
+			var _this28 = this;
+
+			this.items.forEach(function (item) {
+				if (item.placeholder) {
+					_this28.delete(item, true);
+					return;
+				}
+
+				item.element.classList.remove("wysie-item-hovered");
 			});
 		},
 
 		propagated: ["save", "done"],
 
 		revert: function revert() {
-			var _this28 = this;
+			var _this29 = this;
 
 			this.items.forEach(function (item, i) {
 				// Delete added items
-				if (!item.everSaved) {
-					_this28.delete(item, true);
+				if (!item.everSaved && !item.placeholder) {
+					_this29.delete(item, true);
 				} else {
 					// Bring back deleted items
 					if (item.deleted) {
@@ -3128,7 +3259,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		render: function render(data) {
-			var _this29 = this;
+			var _this30 = this;
 
 			this.unhandled = { before: [], after: [] };
 
@@ -3158,11 +3289,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var fragment = document.createDocumentFragment();
 
 				data.forEach(function (datum) {
-					var item = _this29.createItem();
+					var item = _this30.createItem();
 
 					item.render(datum);
 
-					_this29.items.push(item);
+					_this30.items.push(item);
 
 					fragment.appendChild(item.element);
 				});
@@ -3174,12 +3305,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		find: function find(property) {
+			var items = this.items.filter(function (item) {
+				return !item.deleted;
+			});
+
 			if (this.property == property) {
-				return this.items;
+				return items;
 			}
 
 			if (this.properties.indexOf(property) > -1) {
-				var ret = this.items.map(function (item) {
+				var ret = items.map(function (item) {
 					return item.find(property);
 				});
 
@@ -3212,7 +3347,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			addButton: function addButton() {
-				var _this30 = this;
+				var _this31 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.add-" + this.property + ", .wysie-add, button.add";
@@ -3220,7 +3355,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				if (scope) {
 					var button = $$(selector, scope).filter(function (button) {
-						return !_this30.template.contains(button);
+						return !_this31.template.contains(button);
 					})[0];
 				}
 
@@ -3236,7 +3371,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this30.add().edit();
+					_this31.add().edit();
 				});
 
 				return button;
@@ -3255,7 +3390,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		constructor: function constructor() {
-			var _this31 = this;
+			var _this32 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			if (this.wysie.store.protocol != "dropbox:") {
@@ -3278,11 +3413,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				// Internal filename (to be used for saving)
-				_this31.filename = (_this31.param("path") || "") + new URL(_this31.wysie.store).pathname.match(/[^/]*$/)[0];
+				_this32.filename = (_this32.param("path") || "") + new URL(_this32.wysie.store).pathname.match(/[^/]*$/)[0];
 
-				_this31.client = new Dropbox.Client({ key: _this31.param("key") });
+				_this32.client = new Dropbox.Client({ key: _this32.param("key") });
 			}).then(function () {
-				_this31.login(true);
+				_this32.login(true);
 			});
 		},
 
@@ -3292,10 +3427,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put(file) {
-			var _this32 = this;
+			var _this33 = this;
 
 			return new Promise(function (resolve, reject) {
-				_this32.client.writeFile(file.name, file.data, function (error, stat) {
+				_this33.client.writeFile(file.name, file.data, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -3307,27 +3442,27 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		login: function login(passive) {
-			var _this33 = this;
+			var _this34 = this;
 
 			return this.ready.then(function () {
-				return _this33.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this33.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this34.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this34.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this33.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this34.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this33.client.isAuthenticated()) {
+						if (_this34.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this33.permissions.on(["logout", "edit"]);
+							_this34.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this33.permissions.off(["logout", "edit", "add", "delete"]);
+							_this34.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -3335,22 +3470,22 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this33.client.getAccountInfo(function (error, accountInfo) {
+				_this34.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						_this33.wysie.wrapper._.fire("wysie:login", accountInfo);
+						_this34.wysie.wrapper._.fire("wysie:login", accountInfo);
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this34 = this;
+			var _this35 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this34.client.signOut(null, function () {
-					_this34.permissions.off(["edit", "add", "delete"]).on("login");
+				_this35.client.signOut(null, function () {
+					_this35.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this34.wysie.wrapper._.fire("wysie:logout");
+					_this35.wysie.wrapper._.fire("wysie:logout");
 					resolve();
 				});
 			});

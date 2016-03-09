@@ -96,7 +96,10 @@ var _ = self.Wysie = $.Class({
 				textContent: "Save",
 				events: {
 					click: e => this.save(),
-					"mouseenter focus": e => this.wrapper.classList.add("save-hovered"),
+					"mouseenter focus": e => {
+						this.wrapper.classList.add("save-hovered");
+						this.unsavedChanges = this.calculateUnsavedChanges();
+					},
 					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
 				}
 			});
@@ -106,7 +109,10 @@ var _ = self.Wysie = $.Class({
 				textContent: "Revert",
 				events: {
 					click: e => this.revert(),
-					"mouseenter focus": e => this.wrapper.classList.add("revert-hovered"),
+					"mouseenter focus": e => {
+						this.wrapper.classList.add("revert-hovered");
+						this.unsavedChanges = this.calculateUnsavedChanges();
+					},
 					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
 				}
 			});
@@ -119,6 +125,7 @@ var _ = self.Wysie = $.Class({
 		});
 
 		// Fetch existing data
+
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
 
@@ -128,10 +135,10 @@ var _ = self.Wysie = $.Class({
 			this.permissions.on(["read", "edit"]);
 			this.root.import();
 
-			this.wrapper._.fire("wysie:load");
+			$.fire(this.wrapper, "wysie:load");
 		}
 
-		$.hooks.run("init-end", this);
+		Wysie.hooks.run("init-end", this);
 	},
 
 	get data() {
@@ -179,7 +186,20 @@ var _ = self.Wysie = $.Class({
 			}
 		}, true);
 
-		this.unsavedChanges = !!this.unsavedChanges;
+		this.unsavedChanges = this.calculateUnsavedChanges();
+	},
+
+	calculateUnsavedChanges: function() {
+		var unsavedChanges = false;
+
+		this.walk(obj => {
+			if (obj.unsavedChanges) {
+				unsavedChanges = true;
+				return false;
+			}
+		});
+
+		return unsavedChanges;
 	},
 
 	// Conclude editing
@@ -204,13 +224,7 @@ var _ = self.Wysie = $.Class({
 	},
 
 	walk: function(callback) {
-		var walker = obj => {
-			callback(obj);
-
-			obj.propagate && obj.propagate(walker);
-		};
-
-		walker(this.root);
+		this.root.walk(callback);
 	},
 
 	live: {
@@ -370,11 +384,9 @@ $.classProps.propagated = function(proto, names) {
 		var existing = proto[name];
 
 		proto[name] = function() {
-			if (existing) {
-				existing.apply(this, arguments);
-			}
+			var ret = existing && existing.apply(this, arguments);
 
-			if (this.propagate) {
+			if (this.propagate && ret !== false) {
 				this.propagate(name);
 			}
 		};

@@ -78,6 +78,8 @@
   .wysie-item.deleted button {
     display: inline-block;
     margin-left: .4em; }
+  .wysie-wrapper:not([data-editing]) .wysie-item.deleted {
+    display: none; }
 
 .wysie-wrapper button.add {
   display: inline-block;
@@ -167,7 +169,8 @@
 .wysie-wrapper:not([data-editing]):not(.unsaved-changes) .revert {
   display: none; }
 
-.wysie-wrapper[data-editing] .empty {
+.wysie-wrapper[data-editing] .empty,
+.wysie-wrapper[data-editing] .placeholder {
   opacity: .5; }
 
 .wysie-wrapper[data-editing] [property]:focus,

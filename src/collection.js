@@ -117,7 +117,7 @@ var _ = Wysie.Collection = $.Class({
 		return item;
 	},
 
-	add: function(item, index) {
+	add: function(item, index, silent) {
 		if (item instanceof Node) {
 			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
@@ -138,14 +138,16 @@ var _ = Wysie.Collection = $.Class({
 			this.items.push(item);
 		}
 
-		item.element._.fire("wysie:datachange", {
-			unit: this,
-			wysie: this.wysie,
-			action: "add",
-			item
-		});
+		if (!silent) {
+			item.element._.fire("wysie:datachange", {
+				unit: this,
+				wysie: this.wysie,
+				action: "add",
+				item
+			});
 
-		item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.wysie.unsavedChanges = true;
+		}
 
 		return item;
 	},
@@ -178,10 +180,17 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	edit: function() {
-		if (this.length === 0 && this.closestCollection) {
+		if (this.length === 0 && this.required) {
 			// Nested collection with no items, add one
-			var item = this.add();
-			item.autoAdded = true;
+			var item = this.add(null, null, true);
+
+			item.placeholder = true;
+			item.walk(obj => obj.unsavedChanges = false);
+
+			$.once(item.element, "wysie:datachange", evt => {
+				item.unsavedChanges = true;
+				item.placeholder = false;
+			});
 		}
 
 		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
@@ -202,9 +211,19 @@ var _ = Wysie.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.element.classList.remove("wysie-item-hovered");
 				item.unsavedChanges = false;
 			}
+		});
+	},
+
+	done: function() {
+		this.items.forEach(item => {
+			if (item.placeholder) {
+				this.delete(item, true);
+				return;
+			}
+
+			item.element.classList.remove("wysie-item-hovered");
 		});
 	},
 
@@ -213,7 +232,7 @@ var _ = Wysie.Collection = $.Class({
 	revert: function() {
 		this.items.forEach((item, i) => {
 			// Delete added items
-			if (!item.everSaved) {
+			if (!item.everSaved && !item.placeholder) {
 				this.delete(item, true);
 			}
 			else {
@@ -281,12 +300,14 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	find: function(property) {
+		var items = this.items.filter(item => !item.deleted);
+
 		if (this.property == property) {
-			return this.items;
+			return items;
 		}
 
 		if (this.properties.indexOf(property) > -1) {
-			var ret = this.items.map(item => item.find(property));
+			var ret = items.map(item => item.find(property));
 
 			return Wysie.flatten(ret);
 		}

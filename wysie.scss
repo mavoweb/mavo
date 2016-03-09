@@ -143,6 +143,10 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		display: inline-block;
 		margin-left: .4em;
 	}
+
+	.wysie-wrapper:not([data-editing]) &.deleted {
+		display: none;
+	}
 }
 
 .wysie-wrapper {
@@ -280,7 +284,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	}
 
 	&[data-editing] {
-		.empty {
+		.empty,
+		.placeholder {
 			opacity: .5;
 		}
 

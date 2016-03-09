@@ -46,7 +46,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.update(value);
 				}
 			}
-			else if (!this.editing) {
+			else if (!this.wysie.editing) {
 				this.update(this.value);
 			}
 		}, true);
@@ -93,6 +93,8 @@ var _ = Wysie.Primitive = $.Class({
 				});
 			});
 		}
+
+		this.initialized = true;
 	},
 
 	get value() {
@@ -166,13 +168,15 @@ var _ = Wysie.Primitive = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.computed && !o.computed) {
-			return null;
+		var ret = this.super.getData.call(this, o);
+
+		if (ret !== undefined) {
+			return ret;
 		}
 
 		var ret = !o.dirty && !this.exposed? this.savedValue : this.value;
 
-		if (!o.dirty && ret === "" && ret === this.default) {
+		if (!o.dirty && ret === "") {
 			return null;
 		}
 
@@ -180,25 +184,31 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	update: function (value) {
-		this.empty = value === "" || value === null;
-
 		value = value || value === 0? value : "";
+
+		this.empty = value === "";
 
 		if (this.humanReadable && this.attribute) {
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		this.element._.fire("wysie:datachange", {
-			property: this.property,
-			value: value,
-			wysie: this.wysie,
-			unit: this,
-			dirty: this.editing,
-			action: "propertychange"
-		});
+		if (this.initialized) {
+			$.fire(this.element, "wysie:datachange", {
+				property: this.property,
+				value: value,
+				wysie: this.wysie,
+				unit: this,
+				dirty: this.editing,
+				action: "propertychange"
+			});
+		}
 	},
 
 	save: function() {
+		if (this.placeholder) {
+			return false;
+		}
+
 		this.savedValue = this.value;
 		this.everSaved = true;
 		this.unsavedChanges = false;
@@ -506,17 +516,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	live: {
 		empty: function(value) {
-			if (!value || this.attribute && $(Wysie.selectors.property, this.element)) {
-				// If it contains other properties, it shouldn’t be hidden
-				this.element.classList.remove("empty");
-			}
-			else {
-				this.element.classList.add("empty");
-			}
-
+			var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
+			$.toggleClass(this.element, "empty", hide);
 		},
+
 		editing: function (value) {
-			this.element.classList[value? "add" : "remove"]("editing");
+			$.toggleClass(this.element, "editing", value);
 		}
 	},
 

@@ -27,6 +27,7 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	overflow: auto;
 	width: 35em;
 	max-width: 50%;
+	tab-size: 4;
 }
 </style>
 </head>
@@ -40,14 +41,16 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	</label>
 
 	<ul>
-		<li property="person">
+		<li property="person" required>
 			<div property="name">Vector</div>
 			<div property class="age">10</div>
+			<div>Double age: ${age * 2}</div>
 			<ul>
-				<li property="hobby">purring</li>
+				<li property="hobby" data-default required>purring</li>
 			</ul>
-			<a property="url" data-multiple>
-				<span property="name"></span>
+			<span style="display: ${iff(url.length, 'inline', 'none')}">Websites:</span>
+			<a property="url" data-multiple required data-default href="http://google.com">
+				<span property="name" data-default>Google</span>
 			</a>
 		</li>
 	</ul>
@@ -58,6 +61,8 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 		<dd>${person.length}</dd>
 		<dt>Number of people with age:</dt>
 		<dd>${age.length}</dd>
+		<dt>Number of hobbies total:</dt>
+		<dd>${hobby.length}</dd>
 		<dt>Average:</dt>
 		<dd>${avg(age)}</dd>
 		<dt>Min:</dt>

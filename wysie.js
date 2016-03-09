@@ -287,7 +287,10 @@ var _ = self.Wysie = $.Class({
 				textContent: "Save",
 				events: {
 					click: e => this.save(),
-					"mouseenter focus": e => this.wrapper.classList.add("save-hovered"),
+					"mouseenter focus": e => {
+						this.wrapper.classList.add("save-hovered");
+						this.unsavedChanges = this.calculateUnsavedChanges();
+					},
 					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
 				}
 			});
@@ -297,7 +300,10 @@ var _ = self.Wysie = $.Class({
 				textContent: "Revert",
 				events: {
 					click: e => this.revert(),
-					"mouseenter focus": e => this.wrapper.classList.add("revert-hovered"),
+					"mouseenter focus": e => {
+						this.wrapper.classList.add("revert-hovered");
+						this.unsavedChanges = this.calculateUnsavedChanges();
+					},
 					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
 				}
 			});
@@ -310,6 +316,7 @@ var _ = self.Wysie = $.Class({
 		});
 
 		// Fetch existing data
+
 		if (this.store && this.store.href) {
 			this.storage = _.Storage.create(this);
 
@@ -319,10 +326,10 @@ var _ = self.Wysie = $.Class({
 			this.permissions.on(["read", "edit"]);
 			this.root.import();
 
-			this.wrapper._.fire("wysie:load");
+			$.fire(this.wrapper, "wysie:load");
 		}
 
-		$.hooks.run("init-end", this);
+		Wysie.hooks.run("init-end", this);
 	},
 
 	get data() {
@@ -370,7 +377,20 @@ var _ = self.Wysie = $.Class({
 			}
 		}, true);
 
-		this.unsavedChanges = !!this.unsavedChanges;
+		this.unsavedChanges = this.calculateUnsavedChanges();
+	},
+
+	calculateUnsavedChanges: function() {
+		var unsavedChanges = false;
+
+		this.walk(obj => {
+			if (obj.unsavedChanges) {
+				unsavedChanges = true;
+				return false;
+			}
+		});
+
+		return unsavedChanges;
 	},
 
 	// Conclude editing
@@ -395,13 +415,7 @@ var _ = self.Wysie = $.Class({
 	},
 
 	walk: function(callback) {
-		var walker = obj => {
-			callback(obj);
-
-			obj.propagate && obj.propagate(walker);
-		};
-
-		walker(this.root);
+		this.root.walk(callback);
 	},
 
 	live: {
@@ -561,11 +575,9 @@ $.classProps.propagated = function(proto, names) {
 		var existing = proto[name];
 
 		proto[name] = function() {
-			if (existing) {
-				existing.apply(this, arguments);
-			}
+			var ret = existing && existing.apply(this, arguments);
 
-			if (this.propagate) {
+			if (this.propagate && ret !== false) {
 				this.propagate(name);
 			}
 		};
@@ -1108,6 +1120,30 @@ var _ = Wysie.Node = $.Class({
 		return this.getData();
 	},
 
+	walk: function(callback) {
+		var walker = obj => {
+			var ret = callback(obj);
+
+			if (ret !== false) {
+				obj.propagate && obj.propagate(walker);
+			}
+		};
+
+		walker(this);
+	},
+
+	walkUp: function(callback) {
+		var scope = this;
+
+		while (scope = scope.parentScope) {
+			var ret = callback(scope);
+
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
+	},
+
 	call: function(callback, ...args) {
 		args = args || [];
 
@@ -1191,6 +1227,39 @@ var _ = Wysie.Unit = $.Class({
 		return null;
 	},
 
+	/**
+	 * Check if this unit is either deleted or inside a deleted scope
+	 */
+	isDeleted: function() {
+		var ret = this.deleted;
+
+		if (this.deleted) {
+			return true;
+		}
+
+		return !!this.parentScope && this.parentScope.isDeleted();
+	},
+
+	getData: function(o) {
+		o = o || {};
+
+		var isNull = unit => !unit.everSaved && !o.dirty ||
+		                      unit.deleted && o.dirty ||
+		                      unit.computed && !o.computed ||
+		                      unit.placeholder;
+
+		if (isNull(this)) {
+			return null;
+		}
+
+		// Check if any of the parent scopes doesn't return data
+		this.walkUp(scope => {
+			if (isNull(scope)) {
+				return null;
+			}
+		});
+	},
+
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
@@ -1220,12 +1289,32 @@ var _ = Wysie.Unit = $.Class({
 				// Undelete
 				this.element.textContent = "";
 				this.element.appendChild(this.elementContents);
+
+				// otherwise expressions won't update because this will still seem as deleted
+				// Alternatively, we could fire datachange with a timeout.
+				this._deleted = false;
+
+				$.fire(this.element, "wysie:datachange", {
+					unit: this.collection,
+					wysie: this.wysie,
+					action: "undelete",
+					item: this
+				});
 			}
 		},
 
 		unsavedChanges: function(value) {
-			this.wysie.unsavedChanges = this.wysie.unsavedChanges || value;
-			this.element._.toggleClass("unsaved-changes", value);
+			if (this.placeholder) {
+				value = false;
+			}
+
+			$.toggleClass(this.element, "unsaved-changes", value);
+
+			return value;
+		},
+
+		placeholder: function(value) {
+			$.toggleClass(this.element, "placeholder", value);
 		}
 	},
 
@@ -1280,7 +1369,7 @@ var _ = Wysie.Expression = $.Class({
 			}
 			catch (e) {
 				console.warn(`Error in ${expr}: ` + e, e.stack);
-				return `N/A`;
+				return "N/A";
 			}
 		},
 
@@ -1476,18 +1565,32 @@ var _ = Wysie.Expressions = $.Class({
 
 			// Watch changes and update value
 			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
+
+			// Enable throttling only after a while to ensure everything has initially run
+			this.THROTTLE = 0;
+
+			this.scope.wysie.wrapper.addEventListener("wysie:load", evt => {
+				setTimeout(() => this.THROTTLE = 25, 100);
+			});
 		}
 	},
 
+	/**
+	 * Update all expressions in this scope
+	 */
 	update: function callee() {
-		if (_.THROTTLE > 0) {
+		if (this.scope.isDeleted()) {
+			return;
+		}
+
+		if (this.THROTTLE > 0) {
 			var elapsedTime = performance.now() - this.lastUpdated;
 
 			clearTimeout(callee.timeout);
 
-			if (this.lastUpdated && (elapsedTime < _.THROTTLE)) {
+			if (this.lastUpdated && (elapsedTime < this.THROTTLE)) {
 				// Throttle
-				callee.timeout = setTimeout(() => this.update(), _.THROTTLE - elapsedTime);
+				callee.timeout = setTimeout(() => this.update(), this.THROTTLE - elapsedTime);
 
 				return;
 			}
@@ -1497,7 +1600,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		$$(this.all).forEach(ref => ref.update(data));
 
-		if (_.THROTTLE > 0) {
+		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
 		}
 	},
@@ -1545,11 +1648,6 @@ var _ = Wysie.Expressions = $.Class({
 
 Wysie.hooks.add("scope-init-end", function(scope) {
 	new Wysie.Expressions(scope);
-});
-
-// Enable throttling only after a while to ensure everything has initially run
-document.addEventListener("wysie:load", evt => {
-	setTimeout(() => Wysie.Expressions.THROTTLE = 25, 100);
 });
 
 })(Bliss, Bliss.$);
@@ -1616,18 +1714,20 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (!this.everSaved && !o.dirty || this.computed && !o.computed) {
-			return null;
+		var ret = this.super.getData.call(this, o);
+
+		if (ret !== undefined) {
+			return ret;
 		}
 
-		var ret = {};
+		ret = {};
 
-		$.each(this.properties, (property, obj) => {
+		this.propagate(obj => {
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
 				if (data !== null || o.null) {
-					ret[property] = data;
+					ret[obj.property] = data;
 				}
 			}
 		});
@@ -1646,7 +1746,7 @@ var _ = Wysie.Scope = $.Class({
 
 		var data = this.getData(o);
 
-		if (self.Proxy) {
+		if (self.Proxy && data) {
 			// TODO proxy child objects too
 			data = new Proxy(data, {
 				get: (data, property) => {
@@ -1655,13 +1755,11 @@ var _ = Wysie.Scope = $.Class({
 					}
 
 					// Look in ancestors
-					var scope = this;
-
-					while (scope = scope.parentScope) {
+					this.walkUp(scope => {
 						if (property in scope.properties) {
 							return scope.properties[property].getData(o);
-						}
-					}
+						};
+					});
 				},
 
 				has: (data, property) => {
@@ -1672,13 +1770,11 @@ var _ = Wysie.Scope = $.Class({
 					// Property does not exist, look for it elsewhere
 
 					// First look in ancestors
-					var scope = this;
-
-					while (scope = scope.parentScope) {
+					this.walkUp(scope => {
 						if (property in scope.properties) {
 							return true;
-						}
-					}
+						};
+					});
 
 					// Still not found, look in descendants
 					var ret = this.find(property);
@@ -1702,7 +1798,10 @@ var _ = Wysie.Scope = $.Class({
 		return data;
 	},
 
-	// Search entire subtree for property, return relative value
+	/**
+	 * Search entire subtree for property, return relative value
+	 * @return {Wysie.Unit}
+	 */
 	find: function(property) {
 		if (this.property == property) {
 			return this;
@@ -1728,6 +1827,10 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	save: function() {
+		if (this.placeholder) {
+			return false;
+		}
+
 		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
@@ -1749,6 +1852,9 @@ var _ = Wysie.Scope = $.Class({
 		}
 
 		data = data.isArray? data[0] : data;
+
+		// TODO what if it was a primitive and now it's a scope?
+		// In that case, render the this.properties[this.property] with it
 
 		this.unhandled = $.extend({}, data, property => {
 			return !(property in this.properties);
@@ -1840,7 +1946,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.update(value);
 				}
 			}
-			else if (!this.editing) {
+			else if (!this.wysie.editing) {
 				this.update(this.value);
 			}
 		}, true);
@@ -1887,6 +1993,8 @@ var _ = Wysie.Primitive = $.Class({
 				});
 			});
 		}
+
+		this.initialized = true;
 	},
 
 	get value() {
@@ -1960,13 +2068,15 @@ var _ = Wysie.Primitive = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (this.computed && !o.computed) {
-			return null;
+		var ret = this.super.getData.call(this, o);
+
+		if (ret !== undefined) {
+			return ret;
 		}
 
 		var ret = !o.dirty && !this.exposed? this.savedValue : this.value;
 
-		if (!o.dirty && ret === "" && ret === this.default) {
+		if (!o.dirty && ret === "") {
 			return null;
 		}
 
@@ -1974,25 +2084,31 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	update: function (value) {
-		this.empty = value === "" || value === null;
-
 		value = value || value === 0? value : "";
+
+		this.empty = value === "";
 
 		if (this.humanReadable && this.attribute) {
 			this.element.textContent = this.humanReadable(value);
 		}
 
-		this.element._.fire("wysie:datachange", {
-			property: this.property,
-			value: value,
-			wysie: this.wysie,
-			unit: this,
-			dirty: this.editing,
-			action: "propertychange"
-		});
+		if (this.initialized) {
+			$.fire(this.element, "wysie:datachange", {
+				property: this.property,
+				value: value,
+				wysie: this.wysie,
+				unit: this,
+				dirty: this.editing,
+				action: "propertychange"
+			});
+		}
 	},
 
 	save: function() {
+		if (this.placeholder) {
+			return false;
+		}
+
 		this.savedValue = this.value;
 		this.everSaved = true;
 		this.unsavedChanges = false;
@@ -2300,17 +2416,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	live: {
 		empty: function(value) {
-			if (!value || this.attribute && $(Wysie.selectors.property, this.element)) {
-				// If it contains other properties, it shouldn’t be hidden
-				this.element.classList.remove("empty");
-			}
-			else {
-				this.element.classList.add("empty");
-			}
-
+			var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
+			$.toggleClass(this.element, "empty", hide);
 		},
+
 		editing: function (value) {
-			this.element.classList[value? "add" : "remove"]("editing");
+			$.toggleClass(this.element, "editing", value);
 		}
 	},
 
@@ -2667,7 +2778,7 @@ var _ = Wysie.Collection = $.Class({
 		return item;
 	},
 
-	add: function(item, index) {
+	add: function(item, index, silent) {
 		if (item instanceof Node) {
 			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
@@ -2688,14 +2799,16 @@ var _ = Wysie.Collection = $.Class({
 			this.items.push(item);
 		}
 
-		item.element._.fire("wysie:datachange", {
-			unit: this,
-			wysie: this.wysie,
-			action: "add",
-			item
-		});
+		if (!silent) {
+			item.element._.fire("wysie:datachange", {
+				unit: this,
+				wysie: this.wysie,
+				action: "add",
+				item
+			});
 
-		item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.wysie.unsavedChanges = true;
+		}
 
 		return item;
 	},
@@ -2728,10 +2841,17 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	edit: function() {
-		if (this.length === 0 && this.closestCollection) {
+		if (this.length === 0 && this.required) {
 			// Nested collection with no items, add one
-			var item = this.add();
-			item.autoAdded = true;
+			var item = this.add(null, null, true);
+
+			item.placeholder = true;
+			item.walk(obj => obj.unsavedChanges = false);
+
+			$.once(item.element, "wysie:datachange", evt => {
+				item.unsavedChanges = true;
+				item.placeholder = false;
+			});
 		}
 
 		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
@@ -2752,9 +2872,19 @@ var _ = Wysie.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.element.classList.remove("wysie-item-hovered");
 				item.unsavedChanges = false;
 			}
+		});
+	},
+
+	done: function() {
+		this.items.forEach(item => {
+			if (item.placeholder) {
+				this.delete(item, true);
+				return;
+			}
+
+			item.element.classList.remove("wysie-item-hovered");
 		});
 	},
 
@@ -2763,7 +2893,7 @@ var _ = Wysie.Collection = $.Class({
 	revert: function() {
 		this.items.forEach((item, i) => {
 			// Delete added items
-			if (!item.everSaved) {
+			if (!item.everSaved && !item.placeholder) {
 				this.delete(item, true);
 			}
 			else {
@@ -2831,12 +2961,14 @@ var _ = Wysie.Collection = $.Class({
 	},
 
 	find: function(property) {
+		var items = this.items.filter(item => !item.deleted);
+
 		if (this.property == property) {
-			return this.items;
+			return items;
 		}
 
 		if (this.properties.indexOf(property) > -1) {
-			var ret = this.items.map(item => item.find(property));
+			var ret = items.map(item => item.find(property));
 
 			return Wysie.flatten(ret);
 		}

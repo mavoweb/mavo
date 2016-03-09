@@ -29,6 +29,6 @@
         "space-before-blocks": [1, "always"],
         "arrow-spacing": 1,
         "comma-spacing": 1,
-        "space-after-keywords": 1
+        "keyword-spacing": 1
     }
 }

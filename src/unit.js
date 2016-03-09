@@ -41,6 +41,39 @@ var _ = Wysie.Unit = $.Class({
 		return null;
 	},
 
+	/**
+	 * Check if this unit is either deleted or inside a deleted scope
+	 */
+	isDeleted: function() {
+		var ret = this.deleted;
+
+		if (this.deleted) {
+			return true;
+		}
+
+		return !!this.parentScope && this.parentScope.isDeleted();
+	},
+
+	getData: function(o) {
+		o = o || {};
+
+		var isNull = unit => !unit.everSaved && !o.dirty ||
+		                      unit.deleted && o.dirty ||
+		                      unit.computed && !o.computed ||
+		                      unit.placeholder;
+
+		if (isNull(this)) {
+			return null;
+		}
+
+		// Check if any of the parent scopes doesn't return data
+		this.walkUp(scope => {
+			if (isNull(scope)) {
+				return null;
+			}
+		});
+	},
+
 	live: {
 		deleted: function(value) {
 			this.element._.toggleClass("deleted", value);
@@ -70,12 +103,32 @@ var _ = Wysie.Unit = $.Class({
 				// Undelete
 				this.element.textContent = "";
 				this.element.appendChild(this.elementContents);
+
+				// otherwise expressions won't update because this will still seem as deleted
+				// Alternatively, we could fire datachange with a timeout.
+				this._deleted = false;
+
+				$.fire(this.element, "wysie:datachange", {
+					unit: this.collection,
+					wysie: this.wysie,
+					action: "undelete",
+					item: this
+				});
 			}
 		},
 
 		unsavedChanges: function(value) {
-			this.wysie.unsavedChanges = this.wysie.unsavedChanges || value;
-			this.element._.toggleClass("unsaved-changes", value);
+			if (this.placeholder) {
+				value = false;
+			}
+
+			$.toggleClass(this.element, "unsaved-changes", value);
+
+			return value;
+		},
+
+		placeholder: function(value) {
+			$.toggleClass(this.element, "placeholder", value);
 		}
 	},
 

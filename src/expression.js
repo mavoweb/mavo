@@ -29,7 +29,7 @@ var _ = Wysie.Expression = $.Class({
 			}
 			catch (e) {
 				console.warn(`Error in ${expr}: ` + e, e.stack);
-				return `N/A`;
+				return "N/A";
 			}
 		},
 
@@ -225,18 +225,32 @@ var _ = Wysie.Expressions = $.Class({
 
 			// Watch changes and update value
 			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
+
+			// Enable throttling only after a while to ensure everything has initially run
+			this.THROTTLE = 0;
+
+			this.scope.wysie.wrapper.addEventListener("wysie:load", evt => {
+				setTimeout(() => this.THROTTLE = 25, 100);
+			});
 		}
 	},
 
+	/**
+	 * Update all expressions in this scope
+	 */
 	update: function callee() {
-		if (_.THROTTLE > 0) {
+		if (this.scope.isDeleted()) {
+			return;
+		}
+
+		if (this.THROTTLE > 0) {
 			var elapsedTime = performance.now() - this.lastUpdated;
 
 			clearTimeout(callee.timeout);
 
-			if (this.lastUpdated && (elapsedTime < _.THROTTLE)) {
+			if (this.lastUpdated && (elapsedTime < this.THROTTLE)) {
 				// Throttle
-				callee.timeout = setTimeout(() => this.update(), _.THROTTLE - elapsedTime);
+				callee.timeout = setTimeout(() => this.update(), this.THROTTLE - elapsedTime);
 
 				return;
 			}
@@ -246,7 +260,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		$$(this.all).forEach(ref => ref.update(data));
 
-		if (_.THROTTLE > 0) {
+		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
 		}
 	},
@@ -294,11 +308,6 @@ var _ = Wysie.Expressions = $.Class({
 
 Wysie.hooks.add("scope-init-end", function(scope) {
 	new Wysie.Expressions(scope);
-});
-
-// Enable throttling only after a while to ensure everything has initially run
-document.addEventListener("wysie:load", evt => {
-	setTimeout(() => Wysie.Expressions.THROTTLE = 25, 100);
 });
 
 })(Bliss, Bliss.$);

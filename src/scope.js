@@ -59,18 +59,20 @@ var _ = Wysie.Scope = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (!this.everSaved && !o.dirty || this.computed && !o.computed) {
-			return null;
+		var ret = this.super.getData.call(this, o);
+
+		if (ret !== undefined) {
+			return ret;
 		}
 
-		var ret = {};
+		ret = {};
 
-		$.each(this.properties, (property, obj) => {
+		this.propagate(obj => {
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
 				if (data !== null || o.null) {
-					ret[property] = data;
+					ret[obj.property] = data;
 				}
 			}
 		});
@@ -89,7 +91,7 @@ var _ = Wysie.Scope = $.Class({
 
 		var data = this.getData(o);
 
-		if (self.Proxy) {
+		if (self.Proxy && data) {
 			// TODO proxy child objects too
 			data = new Proxy(data, {
 				get: (data, property) => {
@@ -98,13 +100,11 @@ var _ = Wysie.Scope = $.Class({
 					}
 
 					// Look in ancestors
-					var scope = this;
-
-					while (scope = scope.parentScope) {
+					this.walkUp(scope => {
 						if (property in scope.properties) {
 							return scope.properties[property].getData(o);
-						}
-					}
+						};
+					});
 				},
 
 				has: (data, property) => {
@@ -115,13 +115,11 @@ var _ = Wysie.Scope = $.Class({
 					// Property does not exist, look for it elsewhere
 
 					// First look in ancestors
-					var scope = this;
-
-					while (scope = scope.parentScope) {
+					this.walkUp(scope => {
 						if (property in scope.properties) {
 							return true;
-						}
-					}
+						};
+					});
 
 					// Still not found, look in descendants
 					var ret = this.find(property);
@@ -145,7 +143,10 @@ var _ = Wysie.Scope = $.Class({
 		return data;
 	},
 
-	// Search entire subtree for property, return relative value
+	/**
+	 * Search entire subtree for property, return relative value
+	 * @return {Wysie.Unit}
+	 */
 	find: function(property) {
 		if (this.property == property) {
 			return this;
@@ -171,6 +172,10 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	save: function() {
+		if (this.placeholder) {
+			return false;
+		}
+
 		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
@@ -192,6 +197,9 @@ var _ = Wysie.Scope = $.Class({
 		}
 
 		data = data.isArray? data[0] : data;
+
+		// TODO what if it was a primitive and now it's a scope?
+		// In that case, render the this.properties[this.property] with it
 
 		this.unhandled = $.extend({}, data, property => {
 			return !(property in this.properties);

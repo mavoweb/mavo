@@ -26,6 +26,30 @@ var _ = Wysie.Node = $.Class({
 		return this.getData();
 	},
 
+	walk: function(callback) {
+		var walker = obj => {
+			var ret = callback(obj);
+
+			if (ret !== false) {
+				obj.propagate && obj.propagate(walker);
+			}
+		};
+
+		walker(this);
+	},
+
+	walkUp: function(callback) {
+		var scope = this;
+
+		while (scope = scope.parentScope) {
+			var ret = callback(scope);
+
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
+	},
+
 	call: function(callback, ...args) {
 		args = args || [];
 
