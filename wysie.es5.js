@@ -2262,6 +2262,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (Wysie.is("formControl", this.element)) {
 				this.editor = this.element;
 
+				// Editing exposed elements saves the wysie
+				this.element.addEventListener("blur", function (evt) {
+					if (!_this19.wysie.editing && _this19.wysie.storage && evt.target === _this19.editor && (_this19.scope.everSaved || !_this19.scope.collection)) {
+						_this19.save();
+						_this19.wysie.storage.save();
+
+						// Are there any unsaved changes from other properties?
+						var unsavedChanges = false;
+
+						_this19.wysie.walk(function (obj) {
+							unsavedChanges = obj.unsavedChanges || unsavedChanges;
+						});
+
+						_this19.wysie.unsavedChanges = unsavedChanges;
+					}
+				});
+
 				this.edit();
 			}
 			// Nested widgets
