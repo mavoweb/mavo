@@ -31,6 +31,10 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
+		if (!this.exposed) {
+			this.wysie.needsEdit = true;
+		}
+
 		this.templateValue = this.value;
 
 		this.default = this.element.getAttribute("data-default");

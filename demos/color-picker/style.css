@@ -1,6 +1,6 @@
 body {
 	max-width: 40em;
-	margin: 1em auto;
+	margin: 5em auto;
 	background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill-opacity=".05">\
 		<rect width="50" height="50" />\
 		<rect x="50" y="50" width="50" height="50" />\
@@ -44,8 +44,8 @@ header {
 @media (min-width: 70em) {
 	header {
 		position: absolute;
-		left: 1em;
-		top: 1em;
+		left: 2em;
+		top: 5em;
 	}
 }
 

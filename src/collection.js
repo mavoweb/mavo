@@ -16,6 +16,8 @@ var _ = Wysie.Collection = $.Class({
 		this.mutable = this.template.matches(Wysie.selectors.multiple);
 
 		if (this.mutable) {
+			this.wysie.needsEdit = true;
+
 			this.required = this.template.matches(Wysie.selectors.required);
 
 			// Keep position of the template in the DOM, since we’re gonna remove it

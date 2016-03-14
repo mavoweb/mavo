@@ -68,6 +68,9 @@ var _ = self.Wysie = $.Class({
 		// Normalize property names
 		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Node.normalizeProperty(element));
 
+		// Is there any control that requires an edit button?
+		this.needsEdit = false;
+
 		// Build wysie objects
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
 
@@ -133,9 +136,14 @@ var _ = self.Wysie = $.Class({
 		}
 		else {
 			this.permissions.on(["read", "edit"]);
+
 			this.root.import();
 
 			$.fire(this.wrapper, "wysie:load");
+		}
+
+		if (!this.needsEdit) {
+			this.permissions.off(["edit", "add", "delete"]);
 		}
 
 		Wysie.hooks.run("init-end", this);

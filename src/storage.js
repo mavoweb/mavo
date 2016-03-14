@@ -290,6 +290,7 @@ _.Default = $.Class({ extends: _,
 		this.permissions.set({
 			read: true,
 			edit: this.isHash, // Can edit if local
+			save: this.isHash, // Can save if local
 			login: false,
 			logout: false
 		});

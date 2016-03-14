@@ -483,6 +483,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return Wysie.Node.normalizeProperty(element);
 			});
 
+			// Is there any control that requires an edit button?
+			this.needsEdit = false;
+
 			// Build wysie objects
 			this.root = new (_.is("multiple", this.element) ? _.Collection : _.Scope)(this.element, this);
 
@@ -560,9 +563,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			} else {
 				this.permissions.on(["read", "edit"]);
+
 				this.root.import();
 
 				$.fire(this.wrapper, "wysie:load");
+			}
+
+			if (!this.needsEdit) {
+				this.permissions.off(["edit", "add", "delete"]);
 			}
 
 			Wysie.hooks.run("init-end", this);
@@ -1344,6 +1352,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.permissions.set({
 				read: true,
 				edit: this.isHash, // Can edit if local
+				save: this.isHash, // Can save if local
 				login: false,
 				logout: false
 			});
@@ -2264,6 +2273,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					$.remove(this.editor);
 				}
 
+			if (!this.exposed) {
+				this.wysie.needsEdit = true;
+			}
+
 			this.templateValue = this.value;
 
 			this.default = this.element.getAttribute("data-default");
@@ -3020,6 +3033,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.mutable = this.template.matches(Wysie.selectors.multiple);
 
 			if (this.mutable) {
+				this.wysie.needsEdit = true;
+
 				this.required = this.template.matches(Wysie.selectors.required);
 
 				// Keep position of the template in the DOM, since we’re gonna remove it
