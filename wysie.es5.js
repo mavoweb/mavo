@@ -2262,23 +2262,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (Wysie.is("formControl", this.element)) {
 				this.editor = this.element;
 
-				// Editing exposed elements saves the wysie
-				this.element.addEventListener("blur", function (evt) {
-					if (!_this19.wysie.editing && _this19.wysie.storage && evt.target === _this19.editor && (_this19.scope.everSaved || !_this19.scope.collection)) {
-						_this19.save();
-						_this19.wysie.storage.save();
-
-						// Are there any unsaved changes from other properties?
-						var unsavedChanges = false;
-
-						_this19.wysie.walk(function (obj) {
-							unsavedChanges = obj.unsavedChanges || unsavedChanges;
-						});
-
-						_this19.wysie.unsavedChanges = unsavedChanges;
-					}
-				});
-
 				this.edit();
 			}
 			// Nested widgets
@@ -2290,7 +2273,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					$.remove(this.editor);
 				}
 
-			if (!this.exposed) {
+			if (!this.exposed && !this.computed) {
 				this.wysie.needsEdit = true;
 			}
 
@@ -2615,7 +2598,31 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.editor._.events({
 				"input change": function inputChange(evt) {
+					var unsavedChanges = _this23.wysie.unsavedChanges;
+
 					_this23.value = _this23.editorValue;
+
+					// Editing exposed elements outside edit mode is instantly saved
+					if (_this23.exposed && !_this23.wysie.editing && // must not be in edit mode
+					_this23.wysie.permissions.save && // must be able to save
+					_this23.scope.everSaved // must not cause unsaved items to be saved
+					) {
+							// TODO what if change event never fires? What if user
+							_this23.unsavedChanges = false;
+							_this23.wysie.unsavedChanges = unsavedChanges;
+
+							// Must not save too many times (e.g. not while dragging a slider)
+							if (evt.type == "change") {
+								_this23.save(); // Save current element
+
+								// Don’t call this.wysie.save() as it will save other fields too
+								// We only want to save exposed controls, so save current status
+								_this23.wysie.storage.save();
+
+								// Are there any unsaved changes from other properties?
+								_this23.wysie.unsavedChanges = _this23.wysie.calculateUnsavedChanges();
+							}
+						}
 				},
 				"focus": function focus(evt) {
 					_this23.editor.select && _this23.editor.select();

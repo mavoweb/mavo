@@ -1950,27 +1950,6 @@ var _ = Wysie.Primitive = $.Class({
 		if (Wysie.is("formControl", this.element)) {
 			this.editor = this.element;
 
-			// Editing exposed elements saves the wysie
-			this.element.addEventListener("blur", evt => {
-				if (!this.wysie.editing &&
-				    this.wysie.storage &&
-				    evt.target === this.editor &&
-				    (this.scope.everSaved || !this.scope.collection)
-				) {
-					this.save();
-					this.wysie.storage.save();
-
-					// Are there any unsaved changes from other properties?
-					var unsavedChanges = false;
-
-					this.wysie.walk(obj => {
-						unsavedChanges = obj.unsavedChanges || unsavedChanges;
-					});
-
-					this.wysie.unsavedChanges = unsavedChanges;
-				}
-			});
-
 			this.edit();
 		}
 		// Nested widgets
@@ -1982,7 +1961,7 @@ var _ = Wysie.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
-		if (!this.exposed) {
+		if (!this.exposed && !this.computed) {
 			this.wysie.needsEdit = true;
 		}
 
@@ -2293,7 +2272,33 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input change": evt => {
+				var unsavedChanges = this.wysie.unsavedChanges;
+
 				this.value = this.editorValue;
+
+				// Editing exposed elements outside edit mode is instantly saved
+				if (
+					this.exposed &&
+					!this.wysie.editing && // must not be in edit mode
+				    this.wysie.permissions.save && // must be able to save
+				    this.scope.everSaved // must not cause unsaved items to be saved
+				) {
+					// TODO what if change event never fires? What if user
+					this.unsavedChanges = false;
+					this.wysie.unsavedChanges = unsavedChanges;
+
+					// Must not save too many times (e.g. not while dragging a slider)
+					if (evt.type == "change") {
+						this.save(); // Save current element
+
+						// Don’t call this.wysie.save() as it will save other fields too
+						// We only want to save exposed controls, so save current status
+						this.wysie.storage.save();
+
+						// Are there any unsaved changes from other properties?
+						this.wysie.unsavedChanges = this.wysie.calculateUnsavedChanges();
+					}
+				}
 			},
 			"focus": evt => {
 				this.editor.select && this.editor.select();
