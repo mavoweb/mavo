@@ -1848,6 +1848,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						// Limit numbers to 2 decimals
 						// TODO author-level way to set _.PRECISION
+						// TODO this should be presentation and not affect the value of a computed property
 						if (typeof value === "number") {
 							value = Wysie.Expression.functions.round(value, _.PRECISION);
 						}
@@ -1912,9 +1913,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							ret.push(template.substring(lastIndex, match.index));
 						}
 
-						ret.push(new Wysie.Expression(match[0]));
+						var expression = match[0];
 
-						lastIndex = regex.lastIndex;
+						if (expression.indexOf("=") === 0) {
+							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
+							// and we can’t do that with regexes, we need a mini-parser
+							var stack = ["("];
+
+							for (var i = regex.lastIndex; template[i]; i++) {
+								if (template[i] === "(") {
+									stack.push("(");
+								} else if (template[i] === ")") {
+									stack.pop();
+								}
+
+								expression += template[i];
+								regex.lastIndex = lastIndex = i + 1;
+
+								if (stack.length === 0) {
+									break;
+								}
+							}
+
+							expression = expression.replace(/^=/, "${") + "}";
+						} else {
+							lastIndex = regex.lastIndex;
+						}
+
+						ret.push(new Wysie.Expression(expression));
 					}
 
 					// Literal at the end
@@ -1950,7 +1976,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.allProperties = Object.keys(this.scope.getRelativeData());
 
-				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|\\${.+?}", "g");
+				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), [""]).join("|") + ")\\((?=.*\\))", "gi");
 
 				this.traverse();
 

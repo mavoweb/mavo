@@ -205,6 +205,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 				// Limit numbers to 2 decimals
 				// TODO author-level way to set _.PRECISION
+				// TODO this should be presentation and not affect the value of a computed property
 				if (typeof value === "number") {
 					value = Wysie.Expression.functions.round(value, _.PRECISION);
 				}
@@ -263,9 +264,36 @@ var _ = Wysie.Expression.Text = $.Class({
 					ret.push(template.substring(lastIndex, match.index));
 				}
 
-				ret.push(new Wysie.Expression(match[0]));
+				var expression = match[0];
 
-				lastIndex = regex.lastIndex;
+				if (expression.indexOf("=") === 0) {
+					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
+					// and we can’t do that with regexes, we need a mini-parser
+					var stack = ["("];
+
+					for (let i=regex.lastIndex; template[i]; i++) {
+						if (template[i] === "(") {
+							stack.push("(");
+						}
+						else if (template[i] === ")") {
+							stack.pop();
+						}
+
+						expression += template[i];
+						regex.lastIndex = lastIndex = i+1;
+
+						if (stack.length === 0) {
+							break;
+						}
+					}
+
+					expression = expression.replace(/^=/, "${") + "}";
+				}
+				else {
+					lastIndex = regex.lastIndex;
+				}
+
+				ret.push(new Wysie.Expression(expression));
 			}
 
 			// Literal at the end
@@ -300,7 +328,11 @@ var _ = Wysie.Expressions = $.Class({
 
 		this.allProperties = Object.keys(this.scope.getRelativeData());
 
-		this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|\\${.+?}", "g");
+		this.expressionRegex = RegExp(
+				"{(?:" + this.allProperties.join("|") + ")}|" +
+				"\\${.+?}|" +
+				"=\\s*(?:" + [...Object.keys(Wysie.Expression.functions), ...Object.getOwnPropertyNames(Math), ""].join("|") + ")\\((?=.*\\))"
+			, "gi");
 
 		this.traverse();
 

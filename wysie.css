@@ -81,6 +81,15 @@
   .wysie-wrapper:not([data-editing]) .wysie-item.deleted {
     display: none; }
 
+.wysie-wrapper .debug meta[property] {
+  display: block;
+  font-style: italic; }
+  .wysie-wrapper .debug meta[property]::before {
+    content: "(Debug info) " attr(property) " is "; }
+  .wysie-wrapper .debug meta[property]::after {
+    content: attr(content);
+    font-weight: bold; }
+
 .wysie-wrapper button.add {
   display: inline-block;
   vertical-align: middle; }

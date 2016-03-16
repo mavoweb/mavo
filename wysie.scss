@@ -150,7 +150,21 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 }
 
 .wysie-wrapper {
+	.debug {
+		meta[property] {
+			display: block;
+			font-style: italic;
 
+			&::before {
+				content: "(Debug info) " attr(property) " is ";
+			}
+
+			&::after {
+				content: attr(content);
+				font-weight: bold;
+			}
+		}
+	}
 
 	button.add {
 		display: inline-block;
