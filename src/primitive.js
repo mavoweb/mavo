@@ -55,7 +55,7 @@ var _ = Wysie.Primitive = $.Class({
 			}
 		}, true);
 
-		if (this.default === "") { // attribute exists, no value, default is template value
+		if (this.computed || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
 		else {
@@ -496,7 +496,9 @@ var _ = Wysie.Primitive = $.Class({
 	}, // edit
 
 	import: function() {
-		this.value = this.templateValue;
+		if (!this.computed) {
+			this.value = this.templateValue;
+		}
 	},
 
 	render: function(data) {

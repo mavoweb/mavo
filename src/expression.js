@@ -24,11 +24,13 @@ var _ = Wysie.Expression = $.Class({
 
 	static: {
 		eval: (expr, data) => {
+			// TODO convert to new Function() which is more optimizable by JS engines.
+			// Also, cache the function, since only data changes across invocations.
 			try {
 				return eval(`with (Math) with(_.functions) with(data) { ${expr} }`);
 			}
 			catch (e) {
-				console.warn(`Error in ${expr}: ` + e, e.stack);
+				console.warn(`Error in expression ${expr}: ` + e);
 				return "N/A";
 			}
 		},
@@ -37,30 +39,80 @@ var _ = Wysie.Expression = $.Class({
 		 * Utility functions that are available inside expressions.
 		 */
 		functions: {
+			/**
+			 * Aggregate sum
+			 */
 			sum: function(array) {
-				array = numbers(array, arguments);
-
-				return array.reduce((prev, current) => {
+				return numbers(array, arguments).reduce((prev, current) => {
 					return +prev + (+current || 0);
 				}, 0);
 			},
 
+			/**
+			 * Average of an array of numbers
+			 */
 			average: function(array) {
 				array = numbers(array, arguments);
 
-				return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
+				return array.length && _.functions.sum(array) / array.length;
 			},
 
+			/**
+			 * Min of an array of numbers
+			 */
 			min: function(array) {
-				array = numbers(array, arguments);
-
-				return Math.min.apply(Math, array);
+				return Math.min(...numbers(array, arguments));
 			},
 
+			/**
+			 * Max of an array of numbers
+			 */
 			max: function(array) {
-				array = numbers(array, arguments);
+				return Math.max(...numbers(array, arguments));
+			},
 
-				return Math.max.apply(Math, array);
+			/**
+			 * Addition for elements and scalars.
+			 * Addition between arrays happens element-wise.
+			 * Addition between scalars returns their scalar sum (same as +)
+			 * Addition between a scalar and an array will result in the scalar being added to every array element.
+			 */
+			add: function(...operands) {
+				var ret = 0;
+
+				operands.forEach(operand => {
+					if (Array.isArray(operand)) {
+
+						operand = numbers(operand);
+
+						if (Array.isArray(ret)) {
+							operand.forEach((n, i) => {
+								ret[i] = (ret[i] || 0) + n;
+							});
+						}
+						else {
+							ret = operand.map(n => ret + n);
+						}
+					}
+					else {
+						// Operand is scalar
+						if (isNaN(operand)) {
+							// Skip this
+							return;
+						}
+
+						operand = +operand;
+
+						if (Array.isArray(ret)) {
+							ret = ret.map(n => n + operand);
+						}
+						else {
+							ret += operand;
+						}
+					}
+				});
+
+				return ret;
 			},
 
 			round: function(num, decimals) {
@@ -112,9 +164,9 @@ if (self.Proxy) {
  * Private helper methods
  */
 function numbers(array, args) {
-	array = Array.isArray(array)? array : $$(args);
+	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
-	return array.filter(number => !isNaN(number));
+	return array.filter(number => !isNaN(number)).map(n => +n);
 }
 
 (function() {
@@ -142,8 +194,19 @@ var _ = Wysie.Expression.Text = $.Class({
 			if (expr instanceof Wysie.Expression) {
 				var value = expr.eval(data);
 
-				if (!value && value !== 0) {
+				if (!value && value !== 0 && !isNaN(value)) {
+					// Don’t print things like "undefined" or "null"
 					value = "";
+				}
+				else if (value === Infinity || value === -Infinity) {
+					// Pretty print infinity
+					value = value < 0? "-∞" : "∞";
+				}
+
+				// Limit numbers to 2 decimals
+				// TODO author-level way to set _.PRECISION
+				if (typeof value === "number") {
+					value = Wysie.Expression.functions.round(value, _.PRECISION);
 				}
 
 				return expr.simple? this.transform(value) : value;
@@ -218,7 +281,9 @@ var _ = Wysie.Expression.Text = $.Class({
 			"*": {
 				"id, class, name": Wysie.identifier
 			}
-		}
+		},
+
+		PRECISION: 2
 	}
 });
 

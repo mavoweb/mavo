@@ -2,6 +2,8 @@
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 !function () {
 	"use strict";
 	function t(e, r, i) {
@@ -1652,10 +1654,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		static: {
 			eval: function _eval(expr, data) {
+				// TODO convert to new Function() which is more optimizable by JS engines.
+				// Also, cache the function, since only data changes across invocations.
 				try {
 					return eval("with (Math) with(_.functions) with(data) { " + expr + " }");
 				} catch (e) {
-					console.warn("Error in " + expr + ": " + e, e.stack);
+					console.warn("Error in expression " + expr + ": " + e);
 					return "N/A";
 				}
 			},
@@ -1664,30 +1668,89 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     * Utility functions that are available inside expressions.
     */
 			functions: {
+				/**
+     * Aggregate sum
+     */
 				sum: function sum(array) {
-					array = numbers(array, arguments);
-
-					return array.reduce(function (prev, current) {
+					return numbers(array, arguments).reduce(function (prev, current) {
 						return +prev + (+current || 0);
 					}, 0);
 				},
 
+				/**
+     * Average of an array of numbers
+     */
 				average: function average(array) {
 					array = numbers(array, arguments);
 
-					return array.length && _.functions.round(_.functions.sum(array) / array.length, 2);
+					return array.length && _.functions.sum(array) / array.length;
 				},
 
+				/**
+     * Min of an array of numbers
+     */
 				min: function min(array) {
-					array = numbers(array, arguments);
+					var _Math;
 
-					return Math.min.apply(Math, array);
+					return (_Math = Math).min.apply(_Math, _toConsumableArray(numbers(array, arguments)));
 				},
 
+				/**
+     * Max of an array of numbers
+     */
 				max: function max(array) {
-					array = numbers(array, arguments);
+					var _Math2;
 
-					return Math.max.apply(Math, array);
+					return (_Math2 = Math).max.apply(_Math2, _toConsumableArray(numbers(array, arguments)));
+				},
+
+				/**
+     * Addition for elements and scalars.
+     * Addition between arrays happens element-wise.
+     * Addition between scalars returns their scalar sum (same as +)
+     * Addition between a scalar and an array will result in the scalar being added to every array element.
+     */
+				add: function add() {
+					var ret = 0;
+
+					for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+						operands[_key2] = arguments[_key2];
+					}
+
+					operands.forEach(function (operand) {
+						if (Array.isArray(operand)) {
+
+							operand = numbers(operand);
+
+							if (Array.isArray(ret)) {
+								operand.forEach(function (n, i) {
+									ret[i] = (ret[i] || 0) + n;
+								});
+							} else {
+								ret = operand.map(function (n) {
+									return ret + n;
+								});
+							}
+						} else {
+							// Operand is scalar
+							if (isNaN(operand)) {
+								// Skip this
+								return;
+							}
+
+							operand = +operand;
+
+							if (Array.isArray(ret)) {
+								ret = ret.map(function (n) {
+									return n + operand;
+								});
+							} else {
+								ret += operand;
+							}
+						}
+					});
+
+					return ret;
 				},
 
 				round: function round(num, decimals) {
@@ -1739,10 +1802,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
   * Private helper methods
   */
 	function numbers(array, args) {
-		array = Array.isArray(array) ? array : $$(args);
+		array = Array.isArray(array) ? array : args ? $$(args) : [array];
 
 		return array.filter(function (number) {
 			return !isNaN(number);
+		}).map(function (n) {
+			return +n;
 		});
 	}
 
@@ -1773,8 +1838,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					if (expr instanceof Wysie.Expression) {
 						var value = expr.eval(data);
 
-						if (!value && value !== 0) {
+						if (!value && value !== 0 && !isNaN(value)) {
+							// Don’t print things like "undefined" or "null"
 							value = "";
+						} else if (value === Infinity || value === -Infinity) {
+							// Pretty print infinity
+							value = value < 0 ? "-∞" : "∞";
+						}
+
+						// Limit numbers to 2 decimals
+						// TODO author-level way to set _.PRECISION
+						if (typeof value === "number") {
+							value = Wysie.Expression.functions.round(value, _.PRECISION);
 						}
 
 						return expr.simple ? _this12.transform(value) : value;
@@ -1855,7 +1930,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					"*": {
 						"id, class, name": Wysie.identifier
 					}
-				}
+				},
+
+				PRECISION: 2
 			}
 		});
 	})();
@@ -2296,7 +2373,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			}, true);
 
-			if (this.default === "") {
+			if (this.computed || this.default === "") {
 				// attribute exists, no value, default is template value
 				this.default = this.templateValue;
 			} else {
@@ -2749,7 +2826,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}, // edit
 
 		import: function _import() {
-			this.value = this.templateValue;
+			if (!this.computed) {
+				this.value = this.templateValue;
+			}
 		},
 
 		render: function render(data) {
