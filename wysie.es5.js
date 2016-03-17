@@ -1771,6 +1771,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return decimalShift(Math.round(decimalShift(num, 2)), -2);
 				},
 
+				pmt: function pmt(amount, interest, months) {
+					return amount * (interest / 12) * (1 + 1 / (Math.pow(1 + interest / 12, months) - 1));
+				},
+
 				iif: function iif(condition, iftrue) {
 					var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
 

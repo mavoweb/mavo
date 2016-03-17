@@ -1482,6 +1482,10 @@ var _ = Wysie.Expression = $.Class({
 				return decimalShift(Math.round(decimalShift(num, 2)), -2);
 			},
 
+			pmt: function(amount, interest, months) {
+				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12 , months) - 1 ));
+			},
+
 			iif: function(condition, iftrue, iffalse="") {
 				return condition? iftrue : iffalse;
 			}
