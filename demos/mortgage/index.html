@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Meaningless wysie test</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data">
+	<h1>Mortgage calculator</h1>
+
+	<div class="inputs">
+		<label>
+			Loan amount ($):
+			<input type="number" property="amount" value="100000" step="1000" />
+		</label>
+		<label>
+			Interest rate (%):
+			<input type="number" min="0" max="100" step="0.01" value="3.92" property="interest" />
+		</label>
+		<label>
+			Loan period (years):
+			<input type="number" property="years" value="30" />
+		</label>
+	</div>
+
+	<div class="outputs">
+		<div class="total">
+			Total cost of mortgage:
+			<span>$=(payment * years * 12)</span>
+		</div>
+
+		<div>
+			Monthly payment:
+
+			<span property="payment" class="payment computed">
+				=(amount * (interest / 1200) * (1  + 1 / (pow( 1 + interest / 1200 , years * 12) - 1 )))
+			</span>
+		</div>
+
+		<div class="amazing-rate" style="display: =iff(payment < 1500, 'block', 'none')">Amazing rate!</div>
+	</div>
+</main>
+
+<script type="application/json" id="data"></script>
+
+<script src="../../wysie.js"></script>
+
+</body>
+</html>
