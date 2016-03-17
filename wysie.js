@@ -2169,6 +2169,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
+
 		if (this.editing && document.activeElement != this.editor) {
 			this.editorValue = value;
 		}
@@ -2719,7 +2720,7 @@ var _ = Wysie.Primitive = $.Class({
 				attribute = attribute? (attribute.name || attribute) :  _.getValueAttribute(element);
 			}
 
-			if (attribute in element && _.useProperty(element, attribute)) {
+			if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
 				// Setting properties (if they exist) instead of attributes
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				element[attribute] = value;
@@ -2728,7 +2729,9 @@ var _ = Wysie.Primitive = $.Class({
 			// Set attribute anyway, even if we set a property because when
 			// they're not in sync it gets really fucking confusing.
 			if (attribute) {
-				element.setAttribute(attribute, value);
+				if (element.getAttribute(attribute) != value) { // intentionally non-strict, e.g. "3." !== 3
+					element.setAttribute(attribute, value);
+				}
 			}
 			else {
 				element.textContent = value;
