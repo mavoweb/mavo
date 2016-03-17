@@ -1558,7 +1558,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				// Limit numbers to 2 decimals
 				// TODO author-level way to set _.PRECISION
 				// TODO this should be presentation and not affect the value of a computed property
-				if (typeof value === "number") {
+				if (typeof value === "number" && !this.attribute) {
 					value = Wysie.Expression.functions.round(value, _.PRECISION);
 
 					if (!this.primitive) {
@@ -2181,7 +2181,13 @@ var _ = Wysie.Primitive = $.Class({
 		this.oldValue = this.value;
 
 		if (!this.editing || this.attribute) {
-			_.setValue(this.element, value, this.attribute, this.datatype);
+			if (this.datatype == "number" && !this.attribute) {
+				_.setValue(this.element, value, "content", this.datatype);
+				_.setValue(this.element, value.toLocaleString("latn"), null, this.datatype);
+			}
+			else {
+				_.setValue(this.element, value, this.attribute, this.datatype);
+			}
 		}
 
 		if (Wysie.is("formControl", this.element) || !this.attribute) {
@@ -2702,8 +2708,7 @@ var _ = Wysie.Primitive = $.Class({
 						ret = element.getAttribute(attribute);
 					}
 					else {
-						ret = element.textContent || null;
-
+						ret = element.getAttribute("content") || element.textContent || null;
 					}
 
 					switch (datatype) {

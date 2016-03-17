@@ -209,7 +209,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				// Limit numbers to 2 decimals
 				// TODO author-level way to set _.PRECISION
 				// TODO this should be presentation and not affect the value of a computed property
-				if (typeof value === "number") {
+				if (typeof value === "number" && !this.attribute) {
 					value = Wysie.Expression.functions.round(value, _.PRECISION);
 
 					if (!this.primitive) {

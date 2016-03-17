@@ -1854,7 +1854,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// Limit numbers to 2 decimals
 						// TODO author-level way to set _.PRECISION
 						// TODO this should be presentation and not affect the value of a computed property
-						if (typeof value === "number") {
+						if (typeof value === "number" && !_this12.attribute) {
 							value = Wysie.Expression.functions.round(value, _.PRECISION);
 
 							if (!_this12.primitive) {
@@ -2513,7 +2513,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.oldValue = this.value;
 
 			if (!this.editing || this.attribute) {
-				_.setValue(this.element, value, this.attribute, this.datatype);
+				if (this.datatype == "number" && !this.attribute) {
+					_.setValue(this.element, value, "content", this.datatype);
+					_.setValue(this.element, value.toLocaleString("latn"), null, this.datatype);
+				} else {
+					_.setValue(this.element, value, this.attribute, this.datatype);
+				}
 			}
 
 			if (Wysie.is("formControl", this.element) || !this.attribute) {
@@ -3035,7 +3040,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						} else if (attribute) {
 							ret = element.getAttribute(attribute);
 						} else {
-							ret = element.textContent || null;
+							ret = element.getAttribute("content") || element.textContent || null;
 						}
 
 						switch (datatype) {

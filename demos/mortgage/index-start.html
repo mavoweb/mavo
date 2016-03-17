@@ -16,33 +16,31 @@
 	<div class="inputs">
 		<label>
 			Loan amount ($):
-			<input type="number" property="amount" value="100000" step="1000" />
+			<input type="number" value="100000" step="1000" />
 		</label>
 		<label>
 			Interest rate (%):
-			<input type="number" min="0" max="100" step="0.01" value="3.92" property="interest" />
+			<input type="number" min="0" max="100" step="0.01" value="3.92" />
 		</label>
 		<label>
 			Loan period (years):
-			<input type="number" property="years" value="30" min="1" max="100" />
+			<input type="number" value="30" min="1" max="100" />
 		</label>
 	</div>
 
 	<div class="outputs">
 		<div class="total">
 			Total cost of mortgage:
-			<span>$=(payment * years * 12)</span>
+			<span>$0</span>
 		</div>
 
 		<div>
 			Monthly payment:
 
-			<span property class="payment number">
-				=(amount * (interest / 1200) * (1 + 1 / (pow( 1 + interest / 1200 , years * 12) - 1 )))
-			</span>
+			<span class="payment number">0</span>
 		</div>
 
-		<div class="amazing-rate" style="display: =if(payment < 1500, 'block', 'none')">Amazing rate!</div>
+		<div class="amazing-rate" style="display: block">Amazing rate!</div>
 	</div>
 </main>
 
