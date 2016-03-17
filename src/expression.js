@@ -176,7 +176,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.node = o.node;
 		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
 		this.attribute = o.attribute || null;
-		this.all = o.all;
+		this.all = o.all; // the Wysie.Expressions object that this belongs to
 		this.template = this.tokenize(this.text);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -211,6 +211,10 @@ var _ = Wysie.Expression.Text = $.Class({
 				// TODO this should be presentation and not affect the value of a computed property
 				if (typeof value === "number") {
 					value = Wysie.Expression.functions.round(value, _.PRECISION);
+
+					if (!this.primitive) {
+						value = value.toLocaleString("latn");
+					}
 				}
 
 				return expr.simple? this.transform(value) : value;

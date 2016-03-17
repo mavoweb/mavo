@@ -17,12 +17,12 @@ var _ = Wysie.Primitive = $.Class({
 		this.datatype = _.getDatatype(this.element, this.attribute);
 
 		// Primitives containing an expression as their value are implicitly computed
-		if (!this.computed) {
-			var expressions = Wysie.Expression.Text.elements.get(this.element);
+		var expressions = Wysie.Expression.Text.elements.get(this.element);
+		var expressionText = expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute)[0];
 
-			if (expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute).length) {
-				this.computed = true;
-			}
+		if (expressionText) {
+			expressionText.primitive = this;
+			this.computed = true;
 		}
 
 		/**

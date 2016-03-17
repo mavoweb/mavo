@@ -1525,7 +1525,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.node = o.node;
 		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
 		this.attribute = o.attribute || null;
-		this.all = o.all;
+		this.all = o.all; // the Wysie.Expressions object that this belongs to
 		this.template = this.tokenize(this.text);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -1560,6 +1560,10 @@ var _ = Wysie.Expression.Text = $.Class({
 				// TODO this should be presentation and not affect the value of a computed property
 				if (typeof value === "number") {
 					value = Wysie.Expression.functions.round(value, _.PRECISION);
+
+					if (!this.primitive) {
+						value = value.toLocaleString("latn");
+					}
 				}
 
 				return expr.simple? this.transform(value) : value;
@@ -2062,12 +2066,12 @@ var _ = Wysie.Primitive = $.Class({
 		this.datatype = _.getDatatype(this.element, this.attribute);
 
 		// Primitives containing an expression as their value are implicitly computed
-		if (!this.computed) {
-			var expressions = Wysie.Expression.Text.elements.get(this.element);
+		var expressions = Wysie.Expression.Text.elements.get(this.element);
+		var expressionText = expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute)[0];
 
-			if (expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute).length) {
-				this.computed = true;
-			}
+		if (expressionText) {
+			expressionText.primitive = this;
+			this.computed = true;
 		}
 
 		/**

@@ -1820,7 +1820,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.node = o.node;
 				this.element = this.node.nodeType === 3 ? this.node.parentNode : this.node;
 				this.attribute = o.attribute || null;
-				this.all = o.all;
+				this.all = o.all; // the Wysie.Expressions object that this belongs to
 				this.template = this.tokenize(this.text);
 
 				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
@@ -1856,6 +1856,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// TODO this should be presentation and not affect the value of a computed property
 						if (typeof value === "number") {
 							value = Wysie.Expression.functions.round(value, _.PRECISION);
+
+							if (!_this12.primitive) {
+								value = value.toLocaleString("latn");
+							}
 						}
 
 						return expr.simple ? _this12.transform(value) : value;
@@ -2384,14 +2388,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.datatype = _.getDatatype(this.element, this.attribute);
 
 			// Primitives containing an expression as their value are implicitly computed
-			if (!this.computed) {
-				var expressions = Wysie.Expression.Text.elements.get(this.element);
+			var expressions = Wysie.Expression.Text.elements.get(this.element);
+			var expressionText = expressions && expressions.filter(function (e) {
+				return (e.attribute && e.attribute.name) == _this19.attribute;
+			})[0];
 
-				if (expressions && expressions.filter(function (e) {
-					return (e.attribute && e.attribute.name) == _this19.attribute;
-				}).length) {
-					this.computed = true;
-				}
+			if (expressionText) {
+				expressionText.primitive = this;
+				this.computed = true;
 			}
 
 			/**
