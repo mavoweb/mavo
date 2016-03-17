@@ -53,9 +53,14 @@ main {
 		background: transparent;
 		padding: .2em 0;
 		border: none;
-		border-bottom: 1px solid rgba(0,0,0,.5);
+		border-bottom: 1px solid rgba(0,0,0,.4);
 		color: black;
+		outline: none;
 	}
+
+		.inputs input:focus {
+			border-bottom-color: rgba(0,0,0,.8);
+		}
 
 
 .outputs {

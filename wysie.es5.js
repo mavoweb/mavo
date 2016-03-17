@@ -1817,20 +1817,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		var _ = Wysie.Expression.Text = $.Class({
 			constructor: function constructor(o) {
-				this.element = o.element;
+				this.node = o.node;
+				this.element = this.node.nodeType === 3 ? this.node.parentNode : this.node;
 				this.attribute = o.attribute || null;
 				this.all = o.all;
 				this.template = this.tokenize(this.text);
+
+				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 			},
 
 			get text() {
-				return this.attribute ? this.attribute.value : this.element.textContent;
+				return this.attribute ? this.attribute.value : this.node.textContent;
 			},
 
 			set text(value) {
 				this.oldText = this.text;
 
-				Wysie.Primitive.setValue(this.element, value, this.attribute);
+				Wysie.Primitive.setValue(this.node, value, this.attribute);
 			},
 
 			update: function update(data) {
@@ -1872,11 +1875,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						return value;
 					};
 
-					if (this.element.matches) {
+					if (this.node.matches) {
 						var attribute = this.attribute && RegExp("\\b" + this.attribute.name + "\\b", "i");
 
 						for (var selector in _.special) {
-							if (this.element.matches(selector)) {
+							if (this.node.matches(selector)) {
 								var transforms = _.special[selector];
 
 								for (var attrs in transforms) {
@@ -1902,6 +1905,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			static: {
+				elements: new WeakMap(),
+
 				tokenize: function tokenize(template, regex) {
 					var match,
 					    ret = [],
@@ -1924,6 +1929,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (expression.indexOf("=") === 0) {
 							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
 							// and we can’t do that with regexes, we need a mini-parser
+							// TODO handle escaped parentheses
 							var stack = ["("];
 
 							for (var i = regex.lastIndex; template[i]; i++) {
@@ -1973,18 +1979,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		var _ = Wysie.Expressions = $.Class({
 			constructor: function constructor(scope) {
-				var _this13 = this;
-
 				this.scope = scope;
 				this.scope.expressions = this;
 
-				this.all = [];
+				this.all = []; // all Expression.Text objects in this scope
 
-				this.allProperties = Object.keys(this.scope.getRelativeData());
+				this.allProperties = $$("[property]", this.scope.element).map(function (element) {
+					return element.getAttribute("property");
+				});
 
 				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]).join("|") + ")\\((?=.*\\))", "gi");
 
 				this.traverse();
+			},
+
+			init: function init() {
+				var _this13 = this;
 
 				if (this.all.length > 0) {
 					this.lastUpdated = 0;
@@ -2043,41 +2053,41 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			},
 
-			extract: function extract(element, attribute) {
+			extract: function extract(node, attribute) {
 				this.expressionRegex.lastIndex = 0;
 
-				if (this.expressionRegex.test(attribute ? attribute.value : element.textContent)) {
+				if (this.expressionRegex.test(attribute ? attribute.value : node.textContent)) {
 
 					this.all.push(new Wysie.Expression.Text({
-						element: element, attribute: attribute,
+						node: node, attribute: attribute,
 						all: this
 					}));
 				}
 			},
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
-			traverse: function traverse(element) {
+			traverse: function traverse(node) {
 				var _this15 = this;
 
-				element = element || this.scope.element;
+				node = node || this.scope.element;
 
 				this.expressionRegex.lastIndex = 0;
 
-				if (this.expressionRegex.test(element.outerHTML || element.textContent)) {
-					$$(element.attributes).forEach(function (attribute) {
-						return _this15.extract(element, attribute);
+				if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
+					$$(node.attributes).forEach(function (attribute) {
+						return _this15.extract(node, attribute);
 					});
 
-					if (element.nodeType === 3) {
+					if (node.nodeType === 3) {
 						// Text node
 						// Leaf node, extract references from content
-						this.extract(element, null);
+						this.extract(node, null);
 					}
 
 					// Traverse children as long as this is NOT the root of a child scope
 					// (otherwise, it will be taken care of its own Expressions object)
-					if (element == this.scope.element || !Wysie.Scope.all.has(element)) {
-						$$(element.childNodes).forEach(function (child) {
+					if (node == this.scope.element || !Wysie.Scope.all.has(node)) {
+						$$(node.childNodes).forEach(function (child) {
 							return _this15.traverse(child);
 						});
 					}
@@ -2090,8 +2100,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	})();
 
-	Wysie.hooks.add("scope-init-end", function (scope) {
+	Wysie.hooks.add("scope-init-start", function (scope) {
 		new Wysie.Expressions(scope);
+	});
+
+	Wysie.hooks.add("scope-init-end", function (scope) {
+		scope.expressions.init();
 	});
 })(Bliss, Bliss.$);
 
@@ -2103,6 +2117,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var _this16 = this;
 
 			this.properties = {};
+
+			Wysie.hooks.run("scope-init-start", this);
 
 			// Should this element also create a primitive?
 			if (Wysie.Primitive.getValueAttribute(this.element)) {
@@ -2360,8 +2376,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
 
+			if (!this.attribute) {
+				this.element.normalize();
+			}
+
 			// What is the datatype?
 			this.datatype = _.getDatatype(this.element, this.attribute);
+
+			// Primitives containing an expression as their value are implicitly computed
+			if (!this.computed) {
+				var expressions = Wysie.Expression.Text.elements.get(this.element);
+
+				if (expressions && expressions.filter(function (e) {
+					return (e.attribute && e.attribute.name) == _this19.attribute;
+				}).length) {
+					this.computed = true;
+				}
+			}
 
 			/**
     * Set up input widget

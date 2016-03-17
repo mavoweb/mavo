@@ -173,20 +173,23 @@ function numbers(array, args) {
 
 var _ = Wysie.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.element = o.element;
+		this.node = o.node;
+		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
 		this.attribute = o.attribute || null;
 		this.all = o.all;
 		this.template = this.tokenize(this.text);
+
+		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
 	get text() {
-		return this.attribute? this.attribute.value : this.element.textContent;
+		return this.attribute? this.attribute.value : this.node.textContent;
 	},
 
 	set text(value) {
 		this.oldText = this.text;
 
-		Wysie.Primitive.setValue(this.element, value, this.attribute);
+		Wysie.Primitive.setValue(this.node, value, this.attribute);
 	},
 
 	update: function(data) {
@@ -225,11 +228,11 @@ var _ = Wysie.Expression.Text = $.Class({
 		transform: function() {
 			var ret = value => value;
 
-			if (this.element.matches) {
+			if (this.node.matches) {
 				var attribute = this.attribute && RegExp("\\b" + this.attribute.name + "\\b", "i");
 
 				for (var selector in _.special) {
-					if (this.element.matches(selector)) {
+					if (this.node.matches(selector)) {
 						var transforms = _.special[selector];
 
 						for (var attrs in transforms) {
@@ -253,6 +256,8 @@ var _ = Wysie.Expression.Text = $.Class({
 	},
 
 	static: {
+		elements: new WeakMap(),
+
 		tokenize: function(template, regex) {
 			var match, ret = [], lastIndex = 0;
 
@@ -273,6 +278,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				if (expression.indexOf("=") === 0) {
 					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
 					// and we can’t do that with regexes, we need a mini-parser
+					// TODO handle escaped parentheses
 					var stack = ["("];
 
 					for (let i=regex.lastIndex; template[i]; i++) {
@@ -328,9 +334,9 @@ var _ = Wysie.Expressions = $.Class({
 		this.scope = scope;
 		this.scope.expressions = this;
 
-		this.all = [];
+		this.all = []; // all Expression.Text objects in this scope
 
-		this.allProperties = Object.keys(this.scope.getRelativeData());
+		this.allProperties = $$("[property]", this.scope.element).map(element => element.getAttribute("property"));
 
 		this.expressionRegex = RegExp(
 				"{(?:" + this.allProperties.join("|") + ")}|" +
@@ -339,7 +345,9 @@ var _ = Wysie.Expressions = $.Class({
 			, "gi");
 
 		this.traverse();
+	},
 
+	init: function() {
 		if (this.all.length > 0) {
 			this.lastUpdated = 0;
 
@@ -387,36 +395,36 @@ var _ = Wysie.Expressions = $.Class({
 		}
 	},
 
-	extract: function(element, attribute) {
+	extract: function(node, attribute) {
 		this.expressionRegex.lastIndex = 0;
 
-		if (this.expressionRegex.test(attribute? attribute.value : element.textContent)) {
+		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
 
 			this.all.push(new Wysie.Expression.Text({
-				element, attribute,
+				node, attribute,
 				all: this
 			}));
 		}
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
-	traverse: function(element) {
-		element = element || this.scope.element;
+	traverse: function(node) {
+		node = node || this.scope.element;
 
 		this.expressionRegex.lastIndex = 0;
 
-		if (this.expressionRegex.test(element.outerHTML || element.textContent)) {
-			$$(element.attributes).forEach(attribute => this.extract(element, attribute));
+		if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
+			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
 
-			if (element.nodeType === 3) { // Text node
+			if (node.nodeType === 3) { // Text node
 				// Leaf node, extract references from content
-				this.extract(element, null);
+				this.extract(node, null);
 			}
 
 			// Traverse children as long as this is NOT the root of a child scope
 			// (otherwise, it will be taken care of its own Expressions object)
-			if (element == this.scope.element || !Wysie.Scope.all.has(element)) {
-				$$(element.childNodes).forEach(child => this.traverse(child));
+			if (node == this.scope.element || !Wysie.Scope.all.has(node)) {
+				$$(node.childNodes).forEach(child => this.traverse(child));
 			}
 		}
 	},
@@ -428,8 +436,12 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("scope-init-end", function(scope) {
+Wysie.hooks.add("scope-init-start", function(scope) {
 	new Wysie.Expressions(scope);
+});
+
+Wysie.hooks.add("scope-init-end", function(scope) {
+	scope.expressions.init();
 });
 
 })(Bliss, Bliss.$);

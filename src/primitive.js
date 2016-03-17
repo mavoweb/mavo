@@ -9,8 +9,21 @@ var _ = Wysie.Primitive = $.Class({
 		// "null" or null for none (i.e. data is in content).
 		this.attribute = _.getValueAttribute(this.element);
 
+		if (!this.attribute) {
+			this.element.normalize();
+		}
+
 		// What is the datatype?
 		this.datatype = _.getDatatype(this.element, this.attribute);
+
+		// Primitives containing an expression as their value are implicitly computed
+		if (!this.computed) {
+			var expressions = Wysie.Expression.Text.elements.get(this.element);
+
+			if (expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute).length) {
+				this.computed = true;
+			}
+		}
 
 		/**
 		 * Set up input widget

@@ -5,6 +5,8 @@ var _ = Wysie.Scope = $.Class({
 	constructor: function (element, wysie, collection) {
 		this.properties = {};
 
+		Wysie.hooks.run("scope-init-start", this);
+
 		// Should this element also create a primitive?
 		if (Wysie.Primitive.getValueAttribute(this.element)) {
 			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie);
