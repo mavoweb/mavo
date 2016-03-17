@@ -1771,7 +1771,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return decimalShift(Math.round(decimalShift(num, 2)), -2);
 				},
 
-				iif: function iif(condition, iftrue, iffalse) {
+				iif: function iif(condition, iftrue) {
+					var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
+
 					return condition ? iftrue : iffalse;
 				}
 			}
@@ -1915,6 +1917,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						var expression = match[0];
 
+						if (/=\s*if\(/.test(expression)) {
+							expression = "= iff(";
+						}
+
 						if (expression.indexOf("=") === 0) {
 							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
 							// and we can’t do that with regexes, we need a mini-parser
@@ -1976,7 +1982,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.allProperties = Object.keys(this.scope.getRelativeData());
 
-				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), [""]).join("|") + ")\\((?=.*\\))", "gi");
+				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]).join("|") + ")\\((?=.*\\))", "gi");
 
 				this.traverse();
 

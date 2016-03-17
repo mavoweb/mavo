@@ -133,7 +133,7 @@ var _ = Wysie.Expression = $.Class({
 				return decimalShift(Math.round(decimalShift(num, 2)), -2);
 			},
 
-			iif: function(condition, iftrue, iffalse) {
+			iif: function(condition, iftrue, iffalse="") {
 				return condition? iftrue : iffalse;
 			}
 		}
@@ -266,6 +266,10 @@ var _ = Wysie.Expression.Text = $.Class({
 
 				var expression = match[0];
 
+				if (/=\s*if\(/.test(expression)) {
+					expression = "= iff(";
+				}
+
 				if (expression.indexOf("=") === 0) {
 					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
 					// and we can’t do that with regexes, we need a mini-parser
@@ -331,7 +335,7 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex = RegExp(
 				"{(?:" + this.allProperties.join("|") + ")}|" +
 				"\\${.+?}|" +
-				"=\\s*(?:" + [...Object.keys(Wysie.Expression.functions), ...Object.getOwnPropertyNames(Math), ""].join("|") + ")\\((?=.*\\))"
+				"=\\s*(?:" + [...Object.keys(Wysie.Expression.functions), ...Object.getOwnPropertyNames(Math), "if", ""].join("|") + ")\\((?=.*\\))"
 			, "gi");
 
 		this.traverse();
