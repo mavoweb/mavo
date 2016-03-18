@@ -16,6 +16,10 @@ var _ = Wysie.Unit = $.Class({
 
 		this.collection = collection;
 
+		if (this.collection) {
+			this.scope = this.parentScope = this.collection.parentScope;
+		}
+
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
 		this.required = this.element.matches(Wysie.selectors.required);

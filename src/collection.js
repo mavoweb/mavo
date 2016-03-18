@@ -85,9 +85,6 @@ var _ = Wysie.Collection = $.Class({
 		var element = element || this.template.cloneNode(true);
 
 		var item = Wysie.Unit.create(element, this.wysie, this);
-		item.collection = this;
-		item.parentScope = this.parentScope;
-		item.scope = item.scope || this.parentScope;
 
 		// Add delete & add buttons
 		if (this.mutable) {

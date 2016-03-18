@@ -1496,6 +1496,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.collection = collection;
 
+			if (this.collection) {
+				this.scope = this.parentScope = this.collection.parentScope;
+			}
+
 			this.computed = this.element.matches(Wysie.selectors.computed);
 
 			this.required = this.element.matches(Wysie.selectors.required);
@@ -1775,6 +1779,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return amount * (interest / 12) * (1 + 1 / (Math.pow(1 + interest / 12, months) - 1));
 				},
 
+				/**
+     * Logs the arguments and returns the first one. Useful for debugging.
+     */
+				log: function log() {
+					var _console;
+
+					(_console = console).log.apply(_console, arguments);
+					return arguments[0];
+				},
+
 				iif: function iif(condition, iftrue) {
 					var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
 
@@ -1999,6 +2013,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]).join("|") + ")\\((?=.*\\))", "gi");
 
 				this.traverse();
+
+				// TODO less stupid name?
+				this.updateAlso = new Set();
 			},
 
 			init: function init() {
@@ -2059,6 +2076,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (this.THROTTLE > 0) {
 					this.lastUpdated = performance.now();
 				}
+
+				this.updateAlso.forEach(function (exp) {
+					return exp.update();
+				});
 			},
 
 			extract: function extract(node, attribute) {
@@ -2082,19 +2103,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.expressionRegex.lastIndex = 0;
 
 				if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
-					$$(node.attributes).forEach(function (attribute) {
-						return _this15.extract(node, attribute);
-					});
-
 					if (node.nodeType === 3) {
 						// Text node
 						// Leaf node, extract references from content
 						this.extract(node, null);
 					}
 
-					// Traverse children as long as this is NOT the root of a child scope
+					// Traverse children and attributes as long as this is NOT the root of a child scope
 					// (otherwise, it will be taken care of its own Expressions object)
-					if (node == this.scope.element || !Wysie.Scope.all.has(node)) {
+					if (node == this.scope.element || !Wysie.is("scope", node)) {
+						$$(node.attributes).forEach(function (attribute) {
+							return _this15.extract(node, attribute);
+						});
 						$$(node.childNodes).forEach(function (child) {
 							return _this15.traverse(child);
 						});
@@ -2125,6 +2145,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var _this16 = this;
 
 			this.properties = {};
+
+			this.scope = this;
 
 			Wysie.hooks.run("scope-init-start", this);
 
@@ -2223,11 +2245,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 
 						// Look in ancestors
-						_this17.walkUp(function (scope) {
+						var ret = _this17.walkUp(function (scope) {
 							if (property in scope.properties) {
+								scope.expressions.updateAlso.add(_this17.expressions);
+
 								return scope.properties[property].getData(o);
 							};
 						});
+
+						if (ret !== undefined) {
+							return ret;
+						}
 					},
 
 					has: function has(data, property) {
@@ -2238,14 +2266,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// Property does not exist, look for it elsewhere
 
 						// First look in ancestors
-						_this17.walkUp(function (scope) {
+						var ret = _this17.walkUp(function (scope) {
 							if (property in scope.properties) {
 								return true;
 							};
 						});
 
+						if (ret !== undefined) {
+							return ret;
+						}
+
 						// Still not found, look in descendants
-						var ret = _this17.find(property);
+						ret = _this17.find(property);
 
 						if (ret !== undefined) {
 							if (Array.isArray(ret)) {
@@ -3286,9 +3318,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var element = element || this.template.cloneNode(true);
 
 			var item = Wysie.Unit.create(element, this.wysie, this);
-			item.collection = this;
-			item.parentScope = this.parentScope;
-			item.scope = item.scope || this.parentScope;
 
 			// Add delete & add buttons
 			if (this.mutable) {

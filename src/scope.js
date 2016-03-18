@@ -5,6 +5,8 @@ var _ = Wysie.Scope = $.Class({
 	constructor: function (element, wysie, collection) {
 		this.properties = {};
 
+		this.scope = this;
+
 		Wysie.hooks.run("scope-init-start", this);
 
 		// Should this element also create a primitive?
@@ -102,11 +104,17 @@ var _ = Wysie.Scope = $.Class({
 					}
 
 					// Look in ancestors
-					this.walkUp(scope => {
+					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
+							scope.expressions.updateAlso.add(this.expressions);
+
 							return scope.properties[property].getData(o);
 						};
 					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
 				},
 
 				has: (data, property) => {
@@ -117,14 +125,18 @@ var _ = Wysie.Scope = $.Class({
 					// Property does not exist, look for it elsewhere
 
 					// First look in ancestors
-					this.walkUp(scope => {
+					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
 							return true;
 						};
 					});
 
+					if (ret !== undefined) {
+						return ret;
+					}
+
 					// Still not found, look in descendants
-					var ret = this.find(property);
+					ret = this.find(property);
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {

@@ -1211,6 +1211,10 @@ var _ = Wysie.Unit = $.Class({
 
 		this.collection = collection;
 
+		if (this.collection) {
+			this.scope = this.parentScope = this.collection.parentScope;
+		}
+
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
 		this.required = this.element.matches(Wysie.selectors.required);
@@ -1483,7 +1487,15 @@ var _ = Wysie.Expression = $.Class({
 			},
 
 			pmt: function(amount, interest, months) {
-				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12 , months) - 1 ));
+				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12, months) - 1 ));
+			},
+
+			/**
+			 * Logs the arguments and returns the first one. Useful for debugging.
+			 */
+			log: function() {
+				console.log(...arguments);
+				return arguments[0];
 			},
 
 			iif: function(condition, iftrue, iffalse="") {
@@ -1702,6 +1714,9 @@ var _ = Wysie.Expressions = $.Class({
 			, "gi");
 
 		this.traverse();
+
+		// TODO less stupid name?
+		this.updateAlso = new Set();
 	},
 
 	init: function() {
@@ -1750,6 +1765,8 @@ var _ = Wysie.Expressions = $.Class({
 		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
 		}
+
+		this.updateAlso.forEach(exp => exp.update());
 	},
 
 	extract: function(node, attribute) {
@@ -1771,16 +1788,15 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
-
 			if (node.nodeType === 3) { // Text node
 				// Leaf node, extract references from content
 				this.extract(node, null);
 			}
 
-			// Traverse children as long as this is NOT the root of a child scope
+			// Traverse children and attributes as long as this is NOT the root of a child scope
 			// (otherwise, it will be taken care of its own Expressions object)
-			if (node == this.scope.element || !Wysie.Scope.all.has(node)) {
+			if (node == this.scope.element || !Wysie.is("scope", node)) {
+				$$(node.attributes).forEach(attribute => this.extract(node, attribute));
 				$$(node.childNodes).forEach(child => this.traverse(child));
 			}
 		}
@@ -1810,6 +1826,8 @@ var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, collection) {
 		this.properties = {};
+
+		this.scope = this;
 
 		Wysie.hooks.run("scope-init-start", this);
 
@@ -1908,11 +1926,17 @@ var _ = Wysie.Scope = $.Class({
 					}
 
 					// Look in ancestors
-					this.walkUp(scope => {
+					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
+							scope.expressions.updateAlso.add(this.expressions);
+
 							return scope.properties[property].getData(o);
 						};
 					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
 				},
 
 				has: (data, property) => {
@@ -1923,14 +1947,18 @@ var _ = Wysie.Scope = $.Class({
 					// Property does not exist, look for it elsewhere
 
 					// First look in ancestors
-					this.walkUp(scope => {
+					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
 							return true;
 						};
 					});
 
+					if (ret !== undefined) {
+						return ret;
+					}
+
 					// Still not found, look in descendants
-					var ret = this.find(property);
+					ret = this.find(property);
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
@@ -2952,9 +2980,6 @@ var _ = Wysie.Collection = $.Class({
 		var element = element || this.template.cloneNode(true);
 
 		var item = Wysie.Unit.create(element, this.wysie, this);
-		item.collection = this;
-		item.parentScope = this.parentScope;
-		item.scope = item.scope || this.parentScope;
 
 		// Add delete & add buttons
 		if (this.mutable) {

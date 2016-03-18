@@ -29,11 +29,16 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	max-width: 50%;
 	tab-size: 4;
 }
+
+label {
+	display: block;
+}
 </style>
 </head>
 <body>
 
 <main data-store="#foo">
+	<label>Search names: <input type="search" property="search" class="computed" /></label>
 	<input type="range" property="slider" />
 	<label>
 		<input type="checkbox" property="banana" />
@@ -41,14 +46,14 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	</label>
 
 	<ul>
-		<li property="person" required>
+		<li property="person" style="display: =if(search && !name.includes(search), 'none', 'block')">
 			<div property="name">Vector</div>
 			<div property class="age number">10</div>
 			<div>Double age: =(age * 2)</div>
 			<ul>
 				<li property="hobby" data-default required>purring</li>
 			</ul>
-			<span style="display: ${iff(url.length, 'inline', 'none')}">Websites:</span>
+			<span style="display: =if(url.length, 'inline', 'none')">Websites:</span>
 			<a property="url" data-multiple required data-default href="http://google.com">
 				<span property="name" data-default>Google</span>
 			</a>
@@ -58,19 +63,19 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	<h2>Aggregates over age:</h2>
 	<dl>
 		<dt>Number of people:</dt>
-		<dd>${person.length}</dd>
+		<dd>=(person.length)</dd>
 		<dt>Number of people with age:</dt>
-		<dd>${age.length}</dd>
+		<dd>=(age.length)</dd>
 		<dt>Number of hobbies total:</dt>
-		<dd>${hobby.length}</dd>
+		<dd>=(hobby.length)</dd>
 		<dt>Average:</dt>
-		<dd>${avg(age)}</dd>
+		<dd>=avg(age)</dd>
 		<dt>Min:</dt>
-		<dd>${min(age)}</dd>
+		<dd>=min(age)</dd>
 		<dt>Max:</dt>
-		<dd>${Max(age)}</dd>
+		<dd>=Max(age)</dd>
 		<dt>Sum:</dt>
-		<dd>${SUM(age)}</dd>
+		<dd>=SUM(age)</dd>
 	</dl>
 
 </main>

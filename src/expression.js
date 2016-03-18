@@ -134,7 +134,15 @@ var _ = Wysie.Expression = $.Class({
 			},
 
 			pmt: function(amount, interest, months) {
-				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12 , months) - 1 ));
+				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12, months) - 1 ));
+			},
+
+			/**
+			 * Logs the arguments and returns the first one. Useful for debugging.
+			 */
+			log: function() {
+				console.log(...arguments);
+				return arguments[0];
 			},
 
 			iif: function(condition, iftrue, iffalse="") {
@@ -353,6 +361,9 @@ var _ = Wysie.Expressions = $.Class({
 			, "gi");
 
 		this.traverse();
+
+		// TODO less stupid name?
+		this.updateAlso = new Set();
 	},
 
 	init: function() {
@@ -401,6 +412,8 @@ var _ = Wysie.Expressions = $.Class({
 		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
 		}
+
+		this.updateAlso.forEach(exp => exp.update());
 	},
 
 	extract: function(node, attribute) {
@@ -422,16 +435,15 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
-
 			if (node.nodeType === 3) { // Text node
 				// Leaf node, extract references from content
 				this.extract(node, null);
 			}
 
-			// Traverse children as long as this is NOT the root of a child scope
+			// Traverse children and attributes as long as this is NOT the root of a child scope
 			// (otherwise, it will be taken care of its own Expressions object)
-			if (node == this.scope.element || !Wysie.Scope.all.has(node)) {
+			if (node == this.scope.element || !Wysie.is("scope", node)) {
+				$$(node.attributes).forEach(attribute => this.extract(node, attribute));
 				$$(node.childNodes).forEach(child => this.traverse(child));
 			}
 		}
