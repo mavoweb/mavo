@@ -2,6 +2,8 @@
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 !function () {
@@ -48,10 +50,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			    r = t.hasOwnProperty("constructor") ? t.constructor : n.noop,
 			    i = function i() {
 				if (t["abstract"] && this.constructor === i) throw new Error("Abstract classes cannot be directly instantiated.");i["super"] && i["super"].apply(this, arguments), r.apply(this, arguments);
-			};i["super"] = t["extends"] || null, i.prototype = n.extend(Object.create(i["super"] ? i["super"].prototype : Object), { constructor: i }), n.extend(i, t["static"]), n.extend(i.prototype, t, function (n) {
-				return t.hasOwnProperty(n) && -1 === e.indexOf(n);
-			});for (var s in n.classProps) {
-				s in t && n.classProps[s].call(i, i.prototype, t[s]);
+			};i["super"] = t["extends"] || null, i.prototype = n.extend(Object.create(i["super"] ? i["super"].prototype : Object), { constructor: i });var s = function s(t) {
+				return this.hasOwnProperty(t) && -1 === e.indexOf(t);
+			};if (t["static"]) {
+				n.extend(i, t["static"], s);for (var o in n.classProps) {
+					o in t["static"] && n.classProps[o](i, t["static"][o]);
+				}
+			}n.extend(i.prototype, t, s);for (var o in n.classProps) {
+				o in t && n.classProps[o](i.prototype, t[o]);
 			}return i.prototype["super"] = i["super"] ? i["super"].prototype : null, i;
 		}, classProps: { lazy: t(function (t, e, n) {
 				return Object.defineProperty(t, e, { get: function get() {
@@ -489,7 +495,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.needsEdit = false;
 
 			// Build wysie objects
+			console.time("Building wysie tree");
 			this.root = new (_.is("multiple", this.element) ? _.Collection : _.Scope)(this.element, this);
+			console.timeEnd("Building wysie tree");
 
 			this.permissions = new Wysie.Permissions(null, this);
 
@@ -1636,9 +1644,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($, $$) {
 
 	var _ = Wysie.Expression = $.Class({
-		constructor: function constructor(expression) {
-			this.simple = expression[0] !== "$";
-			this.expression = expression.replace(/\$?\{|\}/g, "").trim();
+		constructor: function constructor(expression, simple) {
+			this.simple = !!simple;
+			this.expression = expression.trim();
 		},
 
 		get regex() {
@@ -1661,175 +1669,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// TODO convert to new Function() which is more optimizable by JS engines.
 				// Also, cache the function, since only data changes across invocations.
 				try {
-					return eval("with (Math) with(_.functions) with(data) { " + expr + " }");
+					return eval("with (Math) with(Wysie.Functions) with(data) { " + expr + " }");
 				} catch (e) {
 					console.warn("Error in expression " + expr + ": " + e);
 					return "N/A";
 				}
-			},
-
-			/**
-    * Utility functions that are available inside expressions.
-    */
-			functions: {
-				/**
-     * Aggregate sum
-     */
-				sum: function sum(array) {
-					return numbers(array, arguments).reduce(function (prev, current) {
-						return +prev + (+current || 0);
-					}, 0);
-				},
-
-				/**
-     * Average of an array of numbers
-     */
-				average: function average(array) {
-					array = numbers(array, arguments);
-
-					return array.length && _.functions.sum(array) / array.length;
-				},
-
-				/**
-     * Min of an array of numbers
-     */
-				min: function min(array) {
-					var _Math;
-
-					return (_Math = Math).min.apply(_Math, _toConsumableArray(numbers(array, arguments)));
-				},
-
-				/**
-     * Max of an array of numbers
-     */
-				max: function max(array) {
-					var _Math2;
-
-					return (_Math2 = Math).max.apply(_Math2, _toConsumableArray(numbers(array, arguments)));
-				},
-
-				/**
-     * Addition for elements and scalars.
-     * Addition between arrays happens element-wise.
-     * Addition between scalars returns their scalar sum (same as +)
-     * Addition between a scalar and an array will result in the scalar being added to every array element.
-     */
-				add: function add() {
-					var ret = 0;
-
-					for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-						operands[_key2] = arguments[_key2];
-					}
-
-					operands.forEach(function (operand) {
-						if (Array.isArray(operand)) {
-
-							operand = numbers(operand);
-
-							if (Array.isArray(ret)) {
-								operand.forEach(function (n, i) {
-									ret[i] = (ret[i] || 0) + n;
-								});
-							} else {
-								ret = operand.map(function (n) {
-									return ret + n;
-								});
-							}
-						} else {
-							// Operand is scalar
-							if (isNaN(operand)) {
-								// Skip this
-								return;
-							}
-
-							operand = +operand;
-
-							if (Array.isArray(ret)) {
-								ret = ret.map(function (n) {
-									return n + operand;
-								});
-							} else {
-								ret += operand;
-							}
-						}
-					});
-
-					return ret;
-				},
-
-				round: function round(num, decimals) {
-					if (!num) {
-						return num;
-					}
-
-					// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
-					// Can't just concatenate with e+decimals, because then what happens if it already has an e?
-					// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
-					function decimalShift(num, decimals) {
-						return +(num + "").replace(/e([+-]\d+)$|$/, function ($0, e) {
-							var newE = (+e || 0) + decimals;
-							return "e" + (newE > 0 ? "+" : "") + newE;
-						});
-					}
-
-					return decimalShift(Math.round(decimalShift(num, 2)), -2);
-				},
-
-				pmt: function pmt(amount, interest, months) {
-					return amount * (interest / 12) * (1 + 1 / (Math.pow(1 + interest / 12, months) - 1));
-				},
-
-				/**
-     * Logs the arguments and returns the first one. Useful for debugging.
-     */
-				log: function log() {
-					var _console;
-
-					(_console = console).log.apply(_console, arguments);
-					return arguments[0];
-				},
-
-				iif: function iif(condition, iftrue) {
-					var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
-
-					return condition ? iftrue : iffalse;
-				}
 			}
 		}
 	});
-
-	_.functions.avg = _.functions.average;
-	_.functions.iff = _.functions.iif;
-
-	// Make function names case insensitive
-	if (self.Proxy) {
-		_.functions = new Proxy(_.functions, {
-			get: function get(functions, property) {
-				property = property.toLowerCase ? property.toLowerCase() : property;
-
-				return functions[property];
-			},
-
-			has: function has(functions, property) {
-				property = property.toLowerCase ? property.toLowerCase() : property;
-
-				return property in functions;
-			}
-		});
-	}
-
-	/**
-  * Private helper methods
-  */
-	function numbers(array, args) {
-		array = Array.isArray(array) ? array : args ? $$(args) : [array];
-
-		return array.filter(function (number) {
-			return !isNaN(number);
-		}).map(function (n) {
-			return +n;
-		});
-	}
 
 	(function () {
 
@@ -1873,7 +1720,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// TODO author-level way to set _.PRECISION
 						// TODO this should be presentation and not affect the value of a computed property
 						if (typeof value === "number" && !_this12.attribute) {
-							value = Wysie.Expression.functions.round(value, _.PRECISION);
+							value = Wysie.Functions.round(value, _.PRECISION);
 
 							if (!_this12.primitive) {
 								value = value.toLocaleString("latn");
@@ -1922,7 +1769,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			proxy: {
 				scope: "all",
-				allProperties: "all",
 				expressionRegex: "all"
 			},
 
@@ -1942,39 +1788,53 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							ret.push(template.substring(lastIndex, match.index));
 						}
 
-						var expression = match[0];
-
-						if (/=\s*if\(/.test(expression)) {
-							expression = "= iff(";
-						}
+						var expression = match[0],
+						    simple;
 
 						if (expression.indexOf("=") === 0) {
-							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
-							// and we can’t do that with regexes, we need a mini-parser
-							// TODO handle escaped parentheses
-							var stack = ["("];
+							_.rootFunctionRegExp.lastIndex = 0;
 
-							for (var i = regex.lastIndex; template[i]; i++) {
-								if (template[i] === "(") {
-									stack.push("(");
-								} else if (template[i] === ")") {
-									stack.pop();
+							if (_.rootFunctionRegExp.test(expression)) {
+								// If expression is spreadsheet-style (=func(...)), we need to find where it ends
+								// and we can’t do that with regexes, we need a mini-parser
+								// TODO handle escaped parentheses
+								var stack = ["("];
+
+								for (var i = regex.lastIndex; template[i]; i++) {
+									if (template[i] === "(") {
+										stack.push("(");
+									} else if (template[i] === ")") {
+										stack.pop();
+									}
+
+									expression += template[i];
+									regex.lastIndex = lastIndex = i + 1;
+
+									if (stack.length === 0) {
+										break;
+									}
 								}
 
-								expression += template[i];
-								regex.lastIndex = lastIndex = i + 1;
+								expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
+							} else {
+								// Bare = expression, must be followed by a property reference
+								lastIndex = regex.lastIndex;
+								simple = true;
 
-								if (stack.length === 0) {
-									break;
-								}
+								var _ref = template.slice(match.index + 1).match(/^\s*\w+/) || [];
+
+								var _ref2 = _slicedToArray(_ref, 1);
+
+								expression = _ref2[0];
 							}
-
-							expression = expression.replace(/^=/, "${") + "}";
 						} else {
+							// Template style, ${} and {} syntax
 							lastIndex = regex.lastIndex;
+							simple = expression[0] === "{";
+							expression = expression.replace(/\$?\{|\}/g, "");
 						}
 
-						ret.push(new Wysie.Expression(expression));
+						ret.push(new Wysie.Expression(expression, simple));
 					}
 
 					// Literal at the end
@@ -1992,7 +1852,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				},
 
-				PRECISION: 2
+				PRECISION: 2,
+
+				lazy: {
+					rootFunctionRegExp: function rootFunctionRegExp() {
+						return RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i");
+					}
+				}
 			}
 		});
 	})();
@@ -2005,12 +1871,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.scope.expressions = this;
 
 				this.all = []; // all Expression.Text objects in this scope
-
-				this.allProperties = $$("[property]", this.scope.element).map(function (element) {
-					return element.getAttribute("property");
-				});
-
-				this.expressionRegex = RegExp("{(?:" + this.allProperties.join("|") + ")}|" + "\\${.+?}|" + "=\\s*(?:" + [].concat(_toConsumableArray(Object.keys(Wysie.Expression.functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]).join("|") + ")\\((?=.*\\))", "gi");
 
 				this.traverse();
 
@@ -2086,7 +1946,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.expressionRegex.lastIndex = 0;
 
 				if (this.expressionRegex.test(attribute ? attribute.value : node.textContent)) {
-
 					this.all.push(new Wysie.Expression.Text({
 						node: node, attribute: attribute,
 						all: this
@@ -2100,30 +1959,49 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				node = node || this.scope.element;
 
-				this.expressionRegex.lastIndex = 0;
+				if (node.classList && node.classList.contains("ignore-expressions")) {
+					return;
+				}
 
-				if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
-					if (node.nodeType === 3) {
-						// Text node
-						// Leaf node, extract references from content
-						this.extract(node, null);
-					}
+				if (node.nodeType === 3) {
+					// Text node
+					// Leaf node, extract references from content
+					this.extract(node, null);
+				}
 
-					// Traverse children and attributes as long as this is NOT the root of a child scope
-					// (otherwise, it will be taken care of its own Expressions object)
-					if (node == this.scope.element || !Wysie.is("scope", node)) {
-						$$(node.attributes).forEach(function (attribute) {
-							return _this15.extract(node, attribute);
-						});
-						$$(node.childNodes).forEach(function (child) {
-							return _this15.traverse(child);
-						});
-					}
+				// Traverse children and attributes as long as this is NOT the root of a child scope
+				// (otherwise, it will be taken care of its own Expressions object)
+				if (node == this.scope.element || !Wysie.is("scope", node)) {
+					$$(node.attributes).forEach(function (attribute) {
+						return _this15.extract(node, attribute);
+					});
+					$$(node.childNodes).forEach(function (child) {
+						return _this15.traverse(child);
+					});
+				}
+			},
+
+			lazy: {
+				// Regex that loosely matches all possible expressions
+				// False positives are ok, but false negatives are not.
+				expressionRegex: function expressionRegex() {
+					this.propertyNames = $$("[property]", this.scope.element).map(function (element) {
+						return element.getAttribute("property");
+					});
+					var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
+
+					return RegExp(["{\\s*" + propertyRegex + "\\s*}", "\\${.+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=.*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
 				}
 			},
 
 			static: {
-				THROTTLE: 0
+				THROTTLE: 0,
+
+				lazy: {
+					rootFunctions: function rootFunctions() {
+						return [].concat(_toConsumableArray(Object.keys(Wysie.Functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]);
+					}
+				}
 			}
 		});
 	})();
@@ -2136,6 +2014,171 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		scope.expressions.init();
 	});
 })(Bliss, Bliss.$);
+
+/**
+ * Functions available inside Wysie expressions
+ */
+
+(function () {
+
+	var _ = Wysie.Functions = {
+		/**
+   * Aggregate sum
+   */
+		sum: function sum(array) {
+			return numbers(array, arguments).reduce(function (prev, current) {
+				return +prev + (+current || 0);
+			}, 0);
+		},
+
+		/**
+   * Average of an array of numbers
+   */
+		average: function average(array) {
+			array = numbers(array, arguments);
+
+			return array.length && _.sum(array) / array.length;
+		},
+
+		/**
+   * Min of an array of numbers
+   */
+		min: function min(array) {
+			var _Math;
+
+			return (_Math = Math).min.apply(_Math, _toConsumableArray(numbers(array, arguments)));
+		},
+
+		/**
+   * Max of an array of numbers
+   */
+		max: function max(array) {
+			var _Math2;
+
+			return (_Math2 = Math).max.apply(_Math2, _toConsumableArray(numbers(array, arguments)));
+		},
+
+		count: function count(array) {
+			return Array.isArray(array) ? array.length : +(array === null);
+		},
+
+		/**
+   * Addition for elements and scalars.
+   * Addition between arrays happens element-wise.
+   * Addition between scalars returns their scalar sum (same as +)
+   * Addition between a scalar and an array will result in the scalar being added to every array element.
+   */
+		add: function add() {
+			var ret = 0;
+
+			for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+				operands[_key2] = arguments[_key2];
+			}
+
+			operands.forEach(function (operand) {
+				if (Array.isArray(operand)) {
+
+					operand = numbers(operand);
+
+					if (Array.isArray(ret)) {
+						operand.forEach(function (n, i) {
+							ret[i] = (ret[i] || 0) + n;
+						});
+					} else {
+						ret = operand.map(function (n) {
+							return ret + n;
+						});
+					}
+				} else {
+					// Operand is scalar
+					if (isNaN(operand)) {
+						// Skip this
+						return;
+					}
+
+					operand = +operand;
+
+					if (Array.isArray(ret)) {
+						ret = ret.map(function (n) {
+							return n + operand;
+						});
+					} else {
+						ret += operand;
+					}
+				}
+			});
+
+			return ret;
+		},
+
+		round: function round(num, decimals) {
+			if (!num) {
+				return num;
+			}
+
+			// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
+			// Can't just concatenate with e+decimals, because then what happens if it already has an e?
+			// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
+			function decimalShift(num, decimals) {
+				return +(num + "").replace(/e([+-]\d+)$|$/, function ($0, e) {
+					var newE = (+e || 0) + decimals;
+					return "e" + (newE > 0 ? "+" : "") + newE;
+				});
+			}
+
+			return decimalShift(Math.round(decimalShift(num, 2)), -2);
+		},
+
+		/**
+   * Logs the arguments and returns the first one. Useful for debugging.
+   */
+		log: function log() {
+			var _console;
+
+			(_console = console).log.apply(_console, arguments);
+			return arguments[0];
+		},
+
+		iff: function iff(condition, iftrue) {
+			var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
+
+			return condition ? iftrue : iffalse;
+		}
+	};
+
+	_.avg = _.average;
+	_.iif = _.iff;
+
+	// Make function names case insensitive
+	if (self.Proxy) {
+		_ = Wysie.Functions = new Proxy(_, {
+			get: function get(functions, property) {
+				property = property.toLowerCase ? property.toLowerCase() : property;
+
+				return functions[property];
+			},
+
+			has: function has(functions, property) {
+				property = property.toLowerCase ? property.toLowerCase() : property;
+
+				return property in functions;
+			}
+		});
+	}
+
+	/**
+  * Private helper methods
+  */
+	function numbers(array, args) {
+		array = Array.isArray(array) ? array : args ? $$(args) : [array];
+
+		return array.filter(function (number) {
+			return !isNaN(number);
+		}).map(function (n) {
+			return +n;
+		});
+	}
+})();
 
 (function ($, $$) {
 

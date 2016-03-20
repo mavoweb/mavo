@@ -13,7 +13,7 @@ var babel = require("gulp-babel");
 var autoprefixer = require("gulp-autoprefixer");
 
 gulp.task("concat", function() {
-	var files = "stretchy wysie permissions storage node unit expression scope primitive collection storage.dropbox "
+	var files = "stretchy wysie permissions storage node unit expression functions scope primitive collection storage.dropbox "
 	            .split(" ").map(path => "src/" + path + ".js");
 	files.unshift("../bliss/bliss.min.js");
 
@@ -65,7 +65,7 @@ gulp.task("minify", ["concat", "transpile"], function() {
 });
 
 gulp.task("watch", function() {
-	gulp.watch(["src/*.js"], ["concat", "transpile", "minify"]);
+	gulp.watch(["src/*.js", "../bliss/bliss.min.js"], ["concat", "transpile", "minify"]);
 	gulp.watch(["**/*.scss"], ["sass"]);
 });
 

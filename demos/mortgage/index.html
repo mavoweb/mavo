@@ -38,7 +38,7 @@
 			Monthly payment:
 
 			<span property class="payment number">
-				=pmt(amount, interest / 100, years * 12)
+				=(amount * (interest / 1200) * (1 + 1 / (pow( 1 + interest / 1200 , years * 12) - 1 )))
 			</span>
 		</div>
 

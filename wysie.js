@@ -1,4 +1,4 @@
-!function(){"use strict";function t(e,r,i){return r=void 0===r?1:r,i=i||r+1,1>=i-r?function(){if(arguments.length<=r||"string"===n.type(arguments[r]))return e.apply(this,arguments);var t,i=arguments[r];for(var s in i){var o=Array.from(arguments);o.splice(r,1,s,i[s]),t=e.apply(this,o)}return t}:t(t(e,r+1,i),r,i-1)}function e(t,e,r){for(var i in e){if(r){var s=n.type(r);if("own"===r&&!e.hasOwnProperty(i)||"array"===s&&-1===r.indexOf(i)||"regexp"===s&&!r.test(i)||"function"===s&&!r.call(e,i))continue}var o=Object.getOwnPropertyDescriptor(e,i);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[i]=e[i]:(delete t[i],Object.defineProperty(t,i,o))}return t}var n=self.Bliss=e(function(t,e){return"string"===n.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(n,{extend:e,overload:t,property:n.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[])},type:function(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?n.set(t,e):(1===arguments.length&&("string"===n.type(t)?e={}:(e=t,t=e.tag,e=n.extend({},e,function(t){return"tag"!==t}))),n.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e=["constructor","extends","abstract","static"].concat(Object.keys(n.classProps)),r=t.hasOwnProperty("constructor")?t.constructor:n.noop,i=function(){if(t["abstract"]&&this.constructor===i)throw new Error("Abstract classes cannot be directly instantiated.");i["super"]&&i["super"].apply(this,arguments),r.apply(this,arguments)};i["super"]=t["extends"]||null,i.prototype=n.extend(Object.create(i["super"]?i["super"].prototype:Object),{constructor:i}),n.extend(i,t["static"]),n.extend(i.prototype,t,function(n){return t.hasOwnProperty(n)&&-1===e.indexOf(n)});for(var s in n.classProps)s in t&&n.classProps[s].call(i,i.prototype,t[s]);return i.prototype["super"]=i["super"]?i["super"].prototype:null,i},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,r){return"function"===n.type(r)&&(r={set:r}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],n=r.get&&r.get.call(this,t);return void 0!==n?n:t},set:function(t){var n=this["_"+e],i=r.set&&r.set.call(this,t,n);this["_"+e]=void 0!==i?i:t},configurable:r.configurable,enumerable:r.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,r=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){n.set(r,{async:!0,onload:function(){e(),n.remove(r)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,r){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},r);i.method=i.method.toUpperCase(),n.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var s in r)if(s in i.xhr)try{i.xhr[s]=r[s]}catch(o){self.console&&console.error(o)}"GET"===i.method||i.headers["Content-type"]||i.headers["Content-Type"]||i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in i.headers)i.xhr.setRequestHeader(a,i.headers[a]);return new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(n.extend(Error(i.xhr.statusText),{get status(){return this.xhr.status},xhr:i.xhr}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)})},value:function(t){var e="string"!==n.type(t);return n.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),n.Hooks=new n.Class({add:function(t,e){this[t]=this[t]||[],this[t].push(e)},run:function(t,e){(this[t]||[]).forEach(function(t){t(e)})}}),n.hooks=new n.Hooks;var r=n.property;n.Element=function(t){this.subject=t,this.data={},this.bliss={}},n.Element.prototype={set:t(function(t,e){t in n.setProps?n.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(r,i){if("transition"in this.style){var s=n.extend({},this.style,/^transition(Duration|Property)$/);n.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),n.once(this,"transitionend",function(){clearTimeout(o),n.style(this,s),r(this)});var o=setTimeout(r,e+50,this);n.style(this,t)}else n.style(this,t),r(this)}.bind(this))},fire:function(t,e){var r=document.createEvent("HTMLEvents");return r.initEvent(t,!0,!0),this.dispatchEvent(n.extend(r,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(r in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var i=this[r].bliss.listeners=this[r].bliss.listeners||{};for(var s in i)if(!t||s===t)for(var o,a=0;o=i[s][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener.call(this,s,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},n.setProps={style:function(t){n.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){n.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[r]&&t[r].bliss){var i=t[r].bliss.listeners;for(var s in i)i[s].forEach(function(t){e.addEventListener(s,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===n.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)n.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=n.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=n.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&n.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},n.Array=function(t){this.subject=t},n.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},n.add=t(function(t,e,r,i){r=n.extend({$:!0,element:!0,array:!0},r),"function"==n.type(e)&&(!r.element||t in n.Element.prototype&&i||(n.Element.prototype[t]=function(){return this.subject&&n.defined(e.apply(this.subject,arguments),this.subject)}),!r.array||t in n.Array.prototype&&i||(n.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(r){return r&&n.defined(e.apply(r,t),r)})}),r.$&&(n.sources[t]=n[t]=e,(r.array||r.element)&&(n[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),s=r.array&&Array.isArray(i)?"Array":"Element";return n[s].prototype[t].apply({subject:i},e)})))},0),n.add(n.Array.prototype,{element:!1}),n.add(n.Element.prototype),n.add(n.setProps),n.add(n.classProps,{element:!1,array:!1});var i=document.createElement("_");n.add(n.extend({},HTMLElement.prototype,function(t){return"function"===n.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,i){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,i=function(t,e,n){return n.callback===t&&n.capture==e},s=function(){return!i.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,s){if(this&&this[e]&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(i.bind(null,r,s)).length&&o[t].push({callback:r,capture:s,className:a})}return n.call(this,t,r,s)},EventTarget.prototype.removeEventListener=function(t,n,i){if(this&&this[e]&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(s.bind(null,n,i)))}return r.call(this,t,n,i)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
+!function(){"use strict";function t(e,r,i){return r=void 0===r?1:r,i=i||r+1,1>=i-r?function(){if(arguments.length<=r||"string"===n.type(arguments[r]))return e.apply(this,arguments);var t,i=arguments[r];for(var s in i){var o=Array.from(arguments);o.splice(r,1,s,i[s]),t=e.apply(this,o)}return t}:t(t(e,r+1,i),r,i-1)}function e(t,e,r){for(var i in e){if(r){var s=n.type(r);if("own"===r&&!e.hasOwnProperty(i)||"array"===s&&-1===r.indexOf(i)||"regexp"===s&&!r.test(i)||"function"===s&&!r.call(e,i))continue}var o=Object.getOwnPropertyDescriptor(e,i);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[i]=e[i]:(delete t[i],Object.defineProperty(t,i,o))}return t}var n=self.Bliss=e(function(t,e){return"string"===n.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(n,{extend:e,overload:t,property:n.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[])},type:function(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?n.set(t,e):(1===arguments.length&&("string"===n.type(t)?e={}:(e=t,t=e.tag,e=n.extend({},e,function(t){return"tag"!==t}))),n.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e=["constructor","extends","abstract","static"].concat(Object.keys(n.classProps)),r=t.hasOwnProperty("constructor")?t.constructor:n.noop,i=function(){if(t["abstract"]&&this.constructor===i)throw new Error("Abstract classes cannot be directly instantiated.");i["super"]&&i["super"].apply(this,arguments),r.apply(this,arguments)};i["super"]=t["extends"]||null,i.prototype=n.extend(Object.create(i["super"]?i["super"].prototype:Object),{constructor:i});var s=function(t){return this.hasOwnProperty(t)&&-1===e.indexOf(t)};if(t["static"]){n.extend(i,t["static"],s);for(var o in n.classProps)o in t["static"]&&n.classProps[o](i,t["static"][o])}n.extend(i.prototype,t,s);for(var o in n.classProps)o in t&&n.classProps[o](i.prototype,t[o]);return i.prototype["super"]=i["super"]?i["super"].prototype:null,i},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,r){return"function"===n.type(r)&&(r={set:r}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],n=r.get&&r.get.call(this,t);return void 0!==n?n:t},set:function(t){var n=this["_"+e],i=r.set&&r.set.call(this,t,n);this["_"+e]=void 0!==i?i:t},configurable:r.configurable,enumerable:r.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,r=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){n.set(r,{async:!0,onload:function(){e(),n.remove(r)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,r){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},r);i.method=i.method.toUpperCase(),n.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var s in r)if(s in i.xhr)try{i.xhr[s]=r[s]}catch(o){self.console&&console.error(o)}"GET"===i.method||i.headers["Content-type"]||i.headers["Content-Type"]||i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in i.headers)i.xhr.setRequestHeader(a,i.headers[a]);return new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(n.extend(Error(i.xhr.statusText),{get status(){return this.xhr.status},xhr:i.xhr}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)})},value:function(t){var e="string"!==n.type(t);return n.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),n.Hooks=new n.Class({add:function(t,e){this[t]=this[t]||[],this[t].push(e)},run:function(t,e){(this[t]||[]).forEach(function(t){t(e)})}}),n.hooks=new n.Hooks;var r=n.property;n.Element=function(t){this.subject=t,this.data={},this.bliss={}},n.Element.prototype={set:t(function(t,e){t in n.setProps?n.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(r,i){if("transition"in this.style){var s=n.extend({},this.style,/^transition(Duration|Property)$/);n.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),n.once(this,"transitionend",function(){clearTimeout(o),n.style(this,s),r(this)});var o=setTimeout(r,e+50,this);n.style(this,t)}else n.style(this,t),r(this)}.bind(this))},fire:function(t,e){var r=document.createEvent("HTMLEvents");return r.initEvent(t,!0,!0),this.dispatchEvent(n.extend(r,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(r in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var i=this[r].bliss.listeners=this[r].bliss.listeners||{};for(var s in i)if(!t||s===t)for(var o,a=0;o=i[s][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener.call(this,s,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},n.setProps={style:function(t){n.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){n.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[r]&&t[r].bliss){var i=t[r].bliss.listeners;for(var s in i)i[s].forEach(function(t){e.addEventListener(s,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===n.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)n.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=n.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=n.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&n.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},n.Array=function(t){this.subject=t},n.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},n.add=t(function(t,e,r,i){r=n.extend({$:!0,element:!0,array:!0},r),"function"==n.type(e)&&(!r.element||t in n.Element.prototype&&i||(n.Element.prototype[t]=function(){return this.subject&&n.defined(e.apply(this.subject,arguments),this.subject)}),!r.array||t in n.Array.prototype&&i||(n.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(r){return r&&n.defined(e.apply(r,t),r)})}),r.$&&(n.sources[t]=n[t]=e,(r.array||r.element)&&(n[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),s=r.array&&Array.isArray(i)?"Array":"Element";return n[s].prototype[t].apply({subject:i},e)})))},0),n.add(n.Array.prototype,{element:!1}),n.add(n.Element.prototype),n.add(n.setProps),n.add(n.classProps,{element:!1,array:!1});var i=document.createElement("_");n.add(n.extend({},HTMLElement.prototype,function(t){return"function"===n.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,i){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,i=function(t,e,n){return n.callback===t&&n.capture==e},s=function(){return!i.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,s){if(this&&this[e]&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(i.bind(null,r,s)).length&&o[t].push({callback:r,capture:s,className:a})}return n.call(this,t,r,s)},EventTarget.prototype.removeEventListener=function(t,n,i){if(this&&this[e]&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(s.bind(null,n,i)))}return r.call(this,t,n,i)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
 
 /*
  * Stretchy: Form element autosizing, the way it should be.
@@ -263,7 +263,9 @@ var _ = self.Wysie = $.Class({
 		this.needsEdit = false;
 
 		// Build wysie objects
+		console.time("Building wysie tree");
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+		console.timeEnd("Building wysie tree");
 
 		this.permissions = new Wysie.Permissions(null, this);
 
@@ -1354,9 +1356,9 @@ var _ = Wysie.Unit = $.Class({
 (function($, $$) {
 
 var _ = Wysie.Expression = $.Class({
-	constructor: function(expression) {
-		this.simple = expression[0] !== "$";
-		this.expression = expression.replace(/\$?\{|\}/g, "").trim();
+	constructor: function(expression, simple) {
+		this.simple = !!simple;
+		this.expression = expression.trim();
 	},
 
 	get regex() {
@@ -1380,159 +1382,15 @@ var _ = Wysie.Expression = $.Class({
 			// TODO convert to new Function() which is more optimizable by JS engines.
 			// Also, cache the function, since only data changes across invocations.
 			try {
-				return eval(`with (Math) with(_.functions) with(data) { ${expr} }`);
+				return eval(`with (Math) with(Wysie.Functions) with(data) { ${expr} }`);
 			}
 			catch (e) {
 				console.warn(`Error in expression ${expr}: ` + e);
 				return "N/A";
 			}
-		},
-
-		/**
-		 * Utility functions that are available inside expressions.
-		 */
-		functions: {
-			/**
-			 * Aggregate sum
-			 */
-			sum: function(array) {
-				return numbers(array, arguments).reduce((prev, current) => {
-					return +prev + (+current || 0);
-				}, 0);
-			},
-
-			/**
-			 * Average of an array of numbers
-			 */
-			average: function(array) {
-				array = numbers(array, arguments);
-
-				return array.length && _.functions.sum(array) / array.length;
-			},
-
-			/**
-			 * Min of an array of numbers
-			 */
-			min: function(array) {
-				return Math.min(...numbers(array, arguments));
-			},
-
-			/**
-			 * Max of an array of numbers
-			 */
-			max: function(array) {
-				return Math.max(...numbers(array, arguments));
-			},
-
-			/**
-			 * Addition for elements and scalars.
-			 * Addition between arrays happens element-wise.
-			 * Addition between scalars returns their scalar sum (same as +)
-			 * Addition between a scalar and an array will result in the scalar being added to every array element.
-			 */
-			add: function(...operands) {
-				var ret = 0;
-
-				operands.forEach(operand => {
-					if (Array.isArray(operand)) {
-
-						operand = numbers(operand);
-
-						if (Array.isArray(ret)) {
-							operand.forEach((n, i) => {
-								ret[i] = (ret[i] || 0) + n;
-							});
-						}
-						else {
-							ret = operand.map(n => ret + n);
-						}
-					}
-					else {
-						// Operand is scalar
-						if (isNaN(operand)) {
-							// Skip this
-							return;
-						}
-
-						operand = +operand;
-
-						if (Array.isArray(ret)) {
-							ret = ret.map(n => n + operand);
-						}
-						else {
-							ret += operand;
-						}
-					}
-				});
-
-				return ret;
-			},
-
-			round: function(num, decimals) {
-				if (!num) {
-					return num;
-				}
-
-				// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
-				// Can't just concatenate with e+decimals, because then what happens if it already has an e?
-				// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
-				function decimalShift(num, decimals) {
-					return +(num + "").replace(/e([+-]\d+)$|$/, ($0, e) => {
-						var newE = (+e || 0) + decimals;
-						return "e" + (newE > 0? "+" : "") + newE;
-					});
-				}
-
-				return decimalShift(Math.round(decimalShift(num, 2)), -2);
-			},
-
-			pmt: function(amount, interest, months) {
-				return amount * (interest / 12) * (1 + 1 / (Math.pow( 1 + interest / 12, months) - 1 ));
-			},
-
-			/**
-			 * Logs the arguments and returns the first one. Useful for debugging.
-			 */
-			log: function() {
-				console.log(...arguments);
-				return arguments[0];
-			},
-
-			iif: function(condition, iftrue, iffalse="") {
-				return condition? iftrue : iffalse;
-			}
 		}
 	}
 });
-
-_.functions.avg = _.functions.average;
-_.functions.iff = _.functions.iif;
-
-// Make function names case insensitive
-if (self.Proxy) {
-	_.functions = new Proxy(_.functions, {
-		get: (functions, property) => {
-			property = property.toLowerCase? property.toLowerCase() : property;
-
-			return functions[property];
-		},
-
-		has: (functions, property) => {
-			property = property.toLowerCase? property.toLowerCase() : property;
-
-			return property in functions;
-		}
-	});
-}
-
-/**
- * Private helper methods
- */
-function numbers(array, args) {
-	array = Array.isArray(array)? array : (args? $$(args) : [array]);
-
-	return array.filter(number => !isNaN(number)).map(n => +n);
-}
 
 (function() {
 
@@ -1575,7 +1433,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				// TODO author-level way to set _.PRECISION
 				// TODO this should be presentation and not affect the value of a computed property
 				if (typeof value === "number" && !this.attribute) {
-					value = Wysie.Expression.functions.round(value, _.PRECISION);
+					value = Wysie.Functions.round(value, _.PRECISION);
 
 					if (!this.primitive) {
 						value = value.toLocaleString("latn");
@@ -1620,7 +1478,6 @@ var _ = Wysie.Expression.Text = $.Class({
 
 	proxy: {
 		scope: "all",
-		allProperties: "all",
 		expressionRegex: "all"
 	},
 
@@ -1638,41 +1495,50 @@ var _ = Wysie.Expression.Text = $.Class({
 					ret.push(template.substring(lastIndex, match.index));
 				}
 
-				var expression = match[0];
-
-				if (/=\s*if\(/.test(expression)) {
-					expression = "= iff(";
-				}
+				var expression = match[0], simple;
 
 				if (expression.indexOf("=") === 0) {
-					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
-					// and we can’t do that with regexes, we need a mini-parser
-					// TODO handle escaped parentheses
-					var stack = ["("];
+					_.rootFunctionRegExp.lastIndex = 0;
 
-					for (let i=regex.lastIndex; template[i]; i++) {
-						if (template[i] === "(") {
-							stack.push("(");
-						}
-						else if (template[i] === ")") {
-							stack.pop();
+					if (_.rootFunctionRegExp.test(expression)) {
+						// If expression is spreadsheet-style (=func(...)), we need to find where it ends
+						// and we can’t do that with regexes, we need a mini-parser
+						// TODO handle escaped parentheses
+						var stack = ["("];
+
+						for (let i=regex.lastIndex; template[i]; i++) {
+							if (template[i] === "(") {
+								stack.push("(");
+							}
+							else if (template[i] === ")") {
+								stack.pop();
+							}
+
+							expression += template[i];
+							regex.lastIndex = lastIndex = i+1;
+
+							if (stack.length === 0) {
+								break;
+							}
 						}
 
-						expression += template[i];
-						regex.lastIndex = lastIndex = i+1;
-
-						if (stack.length === 0) {
-							break;
-						}
+						expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
 					}
-
-					expression = expression.replace(/^=/, "${") + "}";
+					else {
+						// Bare = expression, must be followed by a property reference
+						lastIndex = regex.lastIndex;
+						simple = true;
+						[expression] = template.slice(match.index + 1).match(/^\s*\w+/) || [];
+					}
 				}
 				else {
+					// Template style, ${} and {} syntax
 					lastIndex = regex.lastIndex;
+					simple = expression[0] === "{";
+					expression = expression.replace(/\$?\{|\}/g, "");
 				}
 
-				ret.push(new Wysie.Expression(expression));
+				ret.push(new Wysie.Expression(expression, simple));
 			}
 
 			// Literal at the end
@@ -1690,7 +1556,11 @@ var _ = Wysie.Expression.Text = $.Class({
 			}
 		},
 
-		PRECISION: 2
+		PRECISION: 2,
+
+		lazy: {
+			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
+		}
 	}
 });
 
@@ -1704,14 +1574,6 @@ var _ = Wysie.Expressions = $.Class({
 		this.scope.expressions = this;
 
 		this.all = []; // all Expression.Text objects in this scope
-
-		this.allProperties = $$("[property]", this.scope.element).map(element => element.getAttribute("property"));
-
-		this.expressionRegex = RegExp(
-				"{(?:" + this.allProperties.join("|") + ")}|" +
-				"\\${.+?}|" +
-				"=\\s*(?:" + [...Object.keys(Wysie.Expression.functions), ...Object.getOwnPropertyNames(Math), "if", ""].join("|") + ")\\((?=.*\\))"
-			, "gi");
 
 		this.traverse();
 
@@ -1773,7 +1635,6 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
-
 			this.all.push(new Wysie.Expression.Text({
 				node, attribute,
 				all: this
@@ -1785,25 +1646,49 @@ var _ = Wysie.Expressions = $.Class({
 	traverse: function(node) {
 		node = node || this.scope.element;
 
-		this.expressionRegex.lastIndex = 0;
+		if (node.classList && node.classList.contains("ignore-expressions")) {
+			return;
+		}
 
-		if (this.expressionRegex.test(node.outerHTML || node.textContent)) {
-			if (node.nodeType === 3) { // Text node
-				// Leaf node, extract references from content
-				this.extract(node, null);
-			}
+		if (node.nodeType === 3) { // Text node
+			// Leaf node, extract references from content
+			this.extract(node, null);
+		}
 
-			// Traverse children and attributes as long as this is NOT the root of a child scope
-			// (otherwise, it will be taken care of its own Expressions object)
-			if (node == this.scope.element || !Wysie.is("scope", node)) {
-				$$(node.attributes).forEach(attribute => this.extract(node, attribute));
-				$$(node.childNodes).forEach(child => this.traverse(child));
-			}
+		// Traverse children and attributes as long as this is NOT the root of a child scope
+		// (otherwise, it will be taken care of its own Expressions object)
+		if (node == this.scope.element || !Wysie.is("scope", node)) {
+			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
+			$$(node.childNodes).forEach(child => this.traverse(child));
+		}
+	},
+
+	lazy: {
+		// Regex that loosely matches all possible expressions
+		// False positives are ok, but false negatives are not.
+		expressionRegex: function() {
+			this.propertyNames = $$("[property]", this.scope.element).map(element => element.getAttribute("property"));
+			var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
+
+			return RegExp([
+					"{\\s*" + propertyRegex + "\\s*}",
+					"\\${.+?}",
+					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=.*\\))",
+					"=" + propertyRegex + "\\b"
+				].join("|"), "gi");
 		}
 	},
 
 	static: {
-		THROTTLE: 0
+		THROTTLE: 0,
+
+		lazy: {
+			rootFunctions: () => [
+				...Object.keys(Wysie.Functions),
+				...Object.getOwnPropertyNames(Math),
+				"if", ""
+			]
+		}
 	}
 });
 
@@ -1818,6 +1703,156 @@ Wysie.hooks.add("scope-init-end", function(scope) {
 });
 
 })(Bliss, Bliss.$);
+
+
+/**
+ * Functions available inside Wysie expressions
+ */
+
+(function() {
+
+var _ = Wysie.Functions = {
+	/**
+	 * Aggregate sum
+	 */
+	sum: function(array) {
+		return numbers(array, arguments).reduce((prev, current) => {
+			return +prev + (+current || 0);
+		}, 0);
+	},
+
+	/**
+	 * Average of an array of numbers
+	 */
+	average: function(array) {
+		array = numbers(array, arguments);
+
+		return array.length && _.sum(array) / array.length;
+	},
+
+	/**
+	 * Min of an array of numbers
+	 */
+	min: function(array) {
+		return Math.min(...numbers(array, arguments));
+	},
+
+	/**
+	 * Max of an array of numbers
+	 */
+	max: function(array) {
+		return Math.max(...numbers(array, arguments));
+	},
+
+	count: function(array) {
+		return Array.isArray(array)? array.length : +(array === null);
+	},
+
+	/**
+	 * Addition for elements and scalars.
+	 * Addition between arrays happens element-wise.
+	 * Addition between scalars returns their scalar sum (same as +)
+	 * Addition between a scalar and an array will result in the scalar being added to every array element.
+	 */
+	add: function(...operands) {
+		var ret = 0;
+
+		operands.forEach(operand => {
+			if (Array.isArray(operand)) {
+
+				operand = numbers(operand);
+
+				if (Array.isArray(ret)) {
+					operand.forEach((n, i) => {
+						ret[i] = (ret[i] || 0) + n;
+					});
+				}
+				else {
+					ret = operand.map(n => ret + n);
+				}
+			}
+			else {
+				// Operand is scalar
+				if (isNaN(operand)) {
+					// Skip this
+					return;
+				}
+
+				operand = +operand;
+
+				if (Array.isArray(ret)) {
+					ret = ret.map(n => n + operand);
+				}
+				else {
+					ret += operand;
+				}
+			}
+		});
+
+		return ret;
+	},
+
+	round: function(num, decimals) {
+		if (!num) {
+			return num;
+		}
+
+		// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
+		// Can't just concatenate with e+decimals, because then what happens if it already has an e?
+		// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
+		function decimalShift(num, decimals) {
+			return +(num + "").replace(/e([+-]\d+)$|$/, ($0, e) => {
+				var newE = (+e || 0) + decimals;
+				return "e" + (newE > 0? "+" : "") + newE;
+			});
+		}
+
+		return decimalShift(Math.round(decimalShift(num, 2)), -2);
+	},
+
+	/**
+	 * Logs the arguments and returns the first one. Useful for debugging.
+	 */
+	log: function() {
+		console.log(...arguments);
+		return arguments[0];
+	},
+
+	iff: function(condition, iftrue, iffalse="") {
+		return condition? iftrue : iffalse;
+	}
+};
+
+_.avg = _.average;
+_.iif = _.iff;
+
+// Make function names case insensitive
+if (self.Proxy) {
+	_ = Wysie.Functions = new Proxy(_, {
+		get: (functions, property) => {
+			property = property.toLowerCase? property.toLowerCase() : property;
+
+			return functions[property];
+		},
+
+		has: (functions, property) => {
+			property = property.toLowerCase? property.toLowerCase() : property;
+
+			return property in functions;
+		}
+	});
+}
+
+/**
+ * Private helper methods
+ */
+function numbers(array, args) {
+	array = Array.isArray(array)? array : (args? $$(args) : [array]);
+
+	return array.filter(number => !isNaN(number)).map(n => +n);
+}
+
+})();
 
 
 (function($, $$) {

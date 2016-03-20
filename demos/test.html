@@ -38,8 +38,11 @@ label {
 <body>
 
 <main data-store="#foo">
-	<label>Search names: <input type="search" property="search" class="computed" /></label>
+	<label>Search names: <input type='search' property="search" class="computed" /></label>
 	<input type="range" property="slider" />
+	=slider
+	5 = 2 + 3
+	=slider.length
 	<label>
 		<input type="checkbox" property="banana" />
 		I am a banana!
@@ -63,11 +66,11 @@ label {
 	<h2>Aggregates over age:</h2>
 	<dl>
 		<dt>Number of people:</dt>
-		<dd>=(person.length)</dd>
+		<dd>=count(person)</dd>
 		<dt>Number of people with age:</dt>
-		<dd>=(age.length)</dd>
+		<dd>=count(age)</dd>
 		<dt>Number of hobbies total:</dt>
-		<dd>=(hobby.length)</dd>
+		<dd>=count(hobby)</dd>
 		<dt>Average:</dt>
 		<dd>=avg(age)</dd>
 		<dt>Min:</dt>

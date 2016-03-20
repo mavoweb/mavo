@@ -72,7 +72,9 @@ var _ = self.Wysie = $.Class({
 		this.needsEdit = false;
 
 		// Build wysie objects
+		console.time("Building wysie tree");
 		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+		console.timeEnd("Building wysie tree");
 
 		this.permissions = new Wysie.Permissions(null, this);
 
