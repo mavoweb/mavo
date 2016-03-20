@@ -18,7 +18,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		// Primitives containing an expression as their value are implicitly computed
 		var expressions = Wysie.Expression.Text.elements.get(this.element);
-		var expressionText = expressions && expressions.filter(e => (e.attribute && e.attribute.name) == this.attribute)[0];
+		var expressionText = expressions && expressions.filter(e => e.attribute == this.attribute)[0];
 
 		if (expressionText) {
 			expressionText.primitive = this;
@@ -684,7 +684,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		setValue: function callee(element, value, attribute) {
 			if (attribute !== null) {
-				attribute = attribute? (attribute.name || attribute) :  _.getValueAttribute(element);
+				attribute = attribute ||  _.getValueAttribute(element);
 			}
 
 			if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {

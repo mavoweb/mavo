@@ -150,25 +150,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 }
 
 .wysie-wrapper {
-	.debug {
-		meta[property] {
-			display: block;
-			font-style: italic;
-
-			&::before {
-				content: "(Debug info) " attr(property) " is ";
-			}
-
-			&::after {
-				content: attr(content);
-				font-weight: bold;
-			}
-		}
-	}
-
 	button.add {
 		display: inline-block;
-		//margin-left: .5em;
 		vertical-align: middle;
 	}
 
@@ -465,5 +448,62 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 	.status:empty {
 		content: "Not logged in";
+	}
+}
+
+.wysie-debuginfo {
+	all: initial;
+	display: table;
+	border: 1em solid transparent;
+	width: 100%;
+	table-layout: fixed;
+	border-spacing: 0;
+	background: rgba(0,0,0,.7);
+	background-clip: padding-box;
+	box-shadow: 0 0 .4em black inset;
+	font: inherit;
+	font-size: 80%;
+	color: white;
+
+	thead {
+		background: rgba(0,0,0,.5);
+	}
+
+	tbody tr:nth-child(odd) {
+		background: rgba(0,0,0,.15);
+	}
+
+	th, td {
+		&:nth-child(1) {
+			width: 40%;
+		}
+
+		&:nth-child(2) {
+			width: 30%;
+
+			&.error {
+				color: #f88;
+				font-weight: bold;
+			}
+		}
+
+		&:nth-child(3) {
+			width: 30%;
+		}
+
+		input {
+			all: unset;
+			width: 100%;
+		}
+	}
+
+	th {
+		text-align: left;
+		padding: .5em;
+	}
+
+	td {
+		padding: .7em;
+		font-family: Consolas, Monaco, monospace;
 	}
 }

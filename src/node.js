@@ -11,6 +11,8 @@ var _ = Wysie.Node = $.Class({
 		this.property = element.getAttribute("property");
 		this.type = Wysie.Scope.normalize(element);
 
+		this.debug = !!element.closest(Wysie.selectors.debug);
+
 		Wysie.hooks.run("node-init-end", this);
 	},
 

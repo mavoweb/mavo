@@ -23,6 +23,10 @@ var _ = Wysie.Unit = $.Class({
 		this.computed = this.element.matches(Wysie.selectors.computed);
 
 		this.required = this.element.matches(Wysie.selectors.required);
+
+		if (this.collection && this.collection.debug) {
+			this.debug = true;
+		}
 	},
 
 	get closestCollection() {

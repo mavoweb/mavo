@@ -81,15 +81,6 @@
   .wysie-wrapper:not([data-editing]) .wysie-item.deleted {
     display: none; }
 
-.wysie-wrapper .debug meta[property] {
-  display: block;
-  font-style: italic; }
-  .wysie-wrapper .debug meta[property]::before {
-    content: "(Debug info) " attr(property) " is "; }
-  .wysie-wrapper .debug meta[property]::after {
-    content: attr(content);
-    font-weight: bold; }
-
 .wysie-wrapper button.add {
   display: inline-block;
   vertical-align: middle; }
@@ -296,3 +287,39 @@
     margin-left: .6em; }
   .wysie-bar .status:empty {
     content: "Not logged in"; }
+
+.wysie-debuginfo {
+  all: initial;
+  display: table;
+  border: 1em solid transparent;
+  width: 100%;
+  table-layout: fixed;
+  border-spacing: 0;
+  background: rgba(0, 0, 0, 0.7);
+  background-clip: padding-box;
+  box-shadow: 0 0 .4em black inset;
+  font: inherit;
+  font-size: 80%;
+  color: white; }
+  .wysie-debuginfo thead {
+    background: rgba(0, 0, 0, 0.5); }
+  .wysie-debuginfo tbody tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.15); }
+  .wysie-debuginfo th:nth-child(1), .wysie-debuginfo td:nth-child(1) {
+    width: 40%; }
+  .wysie-debuginfo th:nth-child(2), .wysie-debuginfo td:nth-child(2) {
+    width: 30%; }
+    .wysie-debuginfo th:nth-child(2).error, .wysie-debuginfo td:nth-child(2).error {
+      color: #f88;
+      font-weight: bold; }
+  .wysie-debuginfo th:nth-child(3), .wysie-debuginfo td:nth-child(3) {
+    width: 30%; }
+  .wysie-debuginfo th input, .wysie-debuginfo td input {
+    all: unset;
+    width: 100%; }
+  .wysie-debuginfo th {
+    text-align: left;
+    padding: .5em; }
+  .wysie-debuginfo td {
+    padding: .7em;
+    font-family: Consolas, Monaco, monospace; }

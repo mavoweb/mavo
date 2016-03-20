@@ -1,9 +1,10 @@
 (function($, $$) {
 
 var _ = Wysie.Expression = $.Class({
-	constructor: function(expression, simple) {
+	constructor: function(expression, simple, expressionText) {
 		this.simple = !!simple;
 		this.expression = expression.trim();
+		this.expressionText = expressionText;
 	},
 
 	get regex() {
@@ -15,25 +16,43 @@ var _ = Wysie.Expression = $.Class({
 
 		return this.value = this.simple?
 		                    data[this.expression]
-		                    : _.eval(this.expression, data);
+		                    : _.eval(this.expression, data, this.debug);
 	},
 
 	toString() {
-		return (this.simple? "{" : "${") + this.expression + "}";
+		return (this.simple? "" : "$") + `{${this.expression}}`;
+	},
+
+	lazy: {
+		debug: function() {
+			var ret = this.expressionText.debug;
+			ret = ret && ret[this.expression].cells[1];
+			return ret;
+		}
 	},
 
 	static: {
-		eval: (expr, data) => {
+		eval: (expr, data, debug) => {
 			// TODO convert to new Function() which is more optimizable by JS engines.
 			// Also, cache the function, since only data changes across invocations.
+			if (debug) {
+				debug.classList.remove("error");
+			}
+
 			try {
 				return eval(`with (Math) with(Wysie.Functions) with(data) { ${expr} }`);
 			}
 			catch (e) {
-				console.warn(`Error in expression ${expr}: ` + e);
-				return "N/A";
+				if (debug) {
+					debug.textContent = e;
+					debug.classList.add("error");
+				}
+
+				return _.ERROR;
 			}
-		}
+		},
+
+		ERROR: "N/A"
 	}
 });
 
@@ -45,13 +64,64 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
 		this.attribute = o.attribute || null;
 		this.all = o.all; // the Wysie.Expressions object that this belongs to
-		this.template = this.tokenize(this.text.trim());
+		this.expression = this.text.trim();
+		this.template = this.tokenize(this.expression);
+
+		if (this.all.debug) {
+			if (this.all.debug === true) {
+				// Still haven't created table, create now
+				this.all.debug = $.create("tbody", {
+					inside: $.create("table", {
+						className: "wysie-ui wysie-debuginfo",
+						innerHTML: `<thead><tr>
+							<th>Expression</th>
+							<th>Value</th>
+							<th>Element</th>
+						</tr></thead>`,
+						inside: this.scope.element
+					})
+				});
+			}
+
+			this.debug = {};
+
+			this.template.forEach(expr => {
+				if (expr instanceof Wysie.Expression) {
+					this.debug[expr.expression] = this.debug[expr.expression] || $.create("tr", {
+						contents: [
+							{
+								tag: "td",
+								contents: {
+									tag: "input",
+									value: expr.expression,
+									events: {
+										input: evt => {
+											var newExpression = evt.target.value;
+											this.debug[newExpression] = this.debug[expr.expression];
+											delete this.debug[expr.expression];
+											expr.expression = newExpression;
+											this.update(this.data);
+										}
+									}
+								}
+							},
+							{tag: "td"},
+							{tag: "td", textContent: _.elementLabel(this.element, this.attribute)}
+						],
+						properties: {
+							expression: expr
+						},
+						inside: this.all.debug
+					});
+				}
+			});
+		}
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
 	get text() {
-		return this.attribute? this.attribute.value : this.node.textContent;
+		return this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent;
 	},
 
 	set text(value) {
@@ -61,18 +131,32 @@ var _ = Wysie.Expression.Text = $.Class({
 	},
 
 	update: function(data) {
-		var contentText = [];
+		this.value = [];
+		this.data = data;
 
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
+				if (this.debug) {
+					var tr = this.debug[expr.expression];
+
+					if (tr) {
+						var td = tr.cells[1];
+						td.classList.remove("error");
+					}
+				}
+
 				var value = expr.eval(data);
+
+				if (td && value !== Wysie.Expression.ERROR) {
+					td.textContent = value;
+				}
 
 				if (value === undefined || value === null) {
 					// Don’t print things like "undefined" or "null"
 					return "";
 				}
 
-				contentText.push(value);
+				this.value.push(value);
 
 				if (typeof value === "number" && !this.attribute) {
 					value = _.formatNumber(value);
@@ -81,23 +165,89 @@ var _ = Wysie.Expression.Text = $.Class({
 				return expr.simple? this.transform(value) : value;
 			}
 
-			contentText.push(expr);
+			this.value.push(expr);
 			return expr;
 		}).join("");
 
 		if (this.primitive) {
-			if (this.template.length === 1 && typeof contentText[0] === "number") {
+			if (this.template.length === 1 && typeof this.value[0] === "number") {
 				this.primitive.datatype = "number";
 			}
+		}
 
+		this.value = this.value.join("");
+
+		if (this.primitive) {
 			if (!this.attribute) {
-				Wysie.Primitive.setValue(this.element, contentText.join(""), "content");
+				Wysie.Primitive.setValue(this.element, this.value, "content");
 			}
 		}
 	},
 
 	tokenize: function(template) {
-		return _.tokenize(template, this.expressionRegex);
+		var regex = this.expressionRegex;
+		var match, ret = [], lastIndex = 0;
+
+		regex.lastIndex = 0;
+
+		while ((match = regex.exec(template)) !== null) {
+			// Literal before the expression
+			if (match.index > lastIndex) {
+				ret.push(template.substring(lastIndex, match.index));
+			}
+
+			var expression = match[0], simple;
+
+			if (expression.indexOf("=") === 0) {
+				_.rootFunctionRegExp.lastIndex = 0;
+
+				if (_.rootFunctionRegExp.test(expression)) {
+					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
+					// and we can’t do that with regexes, we need a mini-parser
+					// TODO handle escaped parentheses
+					var stack = ["("];
+
+					for (let i=regex.lastIndex; template[i]; i++) {
+						if (template[i] === "(") {
+							stack.push("(");
+						}
+						else if (template[i] === ")") {
+							stack.pop();
+						}
+
+						expression += template[i];
+						regex.lastIndex = lastIndex = i+1;
+
+						if (stack.length === 0) {
+							break;
+						}
+					}
+
+					expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
+				}
+				else {
+					// Bare = expression, must be followed by a property reference
+					lastIndex = regex.lastIndex;
+					simple = true;
+					[expression] = template.slice(match.index + 1).match(/^\s*\w+/) || [];
+				}
+			}
+			else {
+				// Template style, ${} and {} syntax
+				lastIndex = regex.lastIndex;
+				simple = expression[0] === "{";
+				expression = expression.replace(/\$?\{|\}/g, "");
+			}
+
+			ret.push(new Wysie.Expression(expression, simple, this));
+		}
+
+		// Literal at the end
+		if (lastIndex < template.length) {
+			ret.push(template.substring(lastIndex));
+		}
+
+		return ret;
 	},
 
 	lazy: {
@@ -105,7 +255,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			var ret = value => value;
 
 			if (this.node.matches) {
-				var attribute = this.attribute && RegExp("\\b" + this.attribute.name + "\\b", "i");
+				var attribute = this.attribute && RegExp("\\b" + this.attribute + "\\b", "i");
 
 				for (var selector in _.special) {
 					if (this.node.matches(selector)) {
@@ -133,71 +283,6 @@ var _ = Wysie.Expression.Text = $.Class({
 	static: {
 		elements: new WeakMap(),
 
-		tokenize: function(template, regex) {
-			var match, ret = [], lastIndex = 0;
-
-			regex.lastIndex = 0;
-
-			while ((match = regex.exec(template)) !== null) {
-				// Literal before the expression
-				if (match.index > lastIndex) {
-					ret.push(template.substring(lastIndex, match.index));
-				}
-
-				var expression = match[0], simple;
-
-				if (expression.indexOf("=") === 0) {
-					_.rootFunctionRegExp.lastIndex = 0;
-
-					if (_.rootFunctionRegExp.test(expression)) {
-						// If expression is spreadsheet-style (=func(...)), we need to find where it ends
-						// and we can’t do that with regexes, we need a mini-parser
-						// TODO handle escaped parentheses
-						var stack = ["("];
-
-						for (let i=regex.lastIndex; template[i]; i++) {
-							if (template[i] === "(") {
-								stack.push("(");
-							}
-							else if (template[i] === ")") {
-								stack.pop();
-							}
-
-							expression += template[i];
-							regex.lastIndex = lastIndex = i+1;
-
-							if (stack.length === 0) {
-								break;
-							}
-						}
-
-						expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
-					}
-					else {
-						// Bare = expression, must be followed by a property reference
-						lastIndex = regex.lastIndex;
-						simple = true;
-						[expression] = template.slice(match.index + 1).match(/^\s*\w+/) || [];
-					}
-				}
-				else {
-					// Template style, ${} and {} syntax
-					lastIndex = regex.lastIndex;
-					simple = expression[0] === "{";
-					expression = expression.replace(/\$?\{|\}/g, "");
-				}
-
-				ret.push(new Wysie.Expression(expression, simple));
-			}
-
-			// Literal at the end
-			if (lastIndex < template.length) {
-				ret.push(template.substring(lastIndex));
-			}
-
-			return ret;
-		},
-
 		// Handle simple expressions specially if they are in these elements/attributes
 		special: {
 			"*": {
@@ -215,8 +300,28 @@ var _ = Wysie.Expression.Text = $.Class({
 				}
 
 				return numberFormat.format(value);
-			}
+			};
 		})(),
+
+		elementLabel: function(element, attribute) {
+			var ret = element.nodeName.toLowerCase();
+
+			if (element.id) {
+				ret += `#${element.id}`;
+			}
+			else if (element.classList.length) {
+				ret += $$(element.classList).map(c => `.${c}`).join("");
+			}
+			else if (element.hasAttribute("property")) {
+				ret += `[property=${element.getAttribute("property")}]`;
+			}
+
+			if (attribute) {
+				ret += `@${attribute}`;
+			}
+
+			return ret;
+		},
 
 		lazy: {
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
@@ -234,6 +339,8 @@ var _ = Wysie.Expressions = $.Class({
 		this.scope.expressions = this;
 
 		this.all = []; // all Expression.Text objects in this scope
+
+		this.debug = this.scope.debug;
 
 		this.traverse();
 
@@ -296,7 +403,8 @@ var _ = Wysie.Expressions = $.Class({
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
 			this.all.push(new Wysie.Expression.Text({
-				node, attribute,
+				node,
+				attribute: attribute && attribute.name,
 				all: this
 			}));
 		}
