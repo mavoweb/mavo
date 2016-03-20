@@ -2,6 +2,9 @@
 [data-store] {
   display: none; }
 
+.wysie-highlight {
+  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.5) inset ; }
+
 .wysie-item-controls {
   all: initial;
   position: absolute;
@@ -323,3 +326,8 @@
   .wysie-debuginfo td {
     padding: .7em;
     font-family: Consolas, Monaco, monospace; }
+    .wysie-debuginfo td:nth-child(3) {
+      width: 30%;
+      cursor: help; }
+      .wysie-debuginfo td:nth-child(3):hover {
+        background: rgba(255, 247, 0, 0.3); }

@@ -1749,7 +1749,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 											}
 										}
 									}
-								}, { tag: "td" }, { tag: "td", textContent: _.elementLabel(_this12.element, _this12.attribute) }],
+								}, { tag: "td" }, {
+									tag: "td",
+									textContent: _.elementLabel(_this12.element, _this12.attribute),
+									events: {
+										"mouseenter mouseleave": function mouseenterMouseleave(evt) {
+											$.toggleClass(_this12.element, "wysie-highlight", evt.type === "mouseenter");
+										}
+									}
+								}],
 								properties: {
 									expression: expr
 								},

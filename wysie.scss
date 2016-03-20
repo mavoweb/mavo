@@ -24,6 +24,10 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	display: none;
 }
 
+.wysie-highlight {
+	@include highlight(hsla(58, 100%, 50%, .5));
+}
+
 .wysie-item-controls {
 	all: initial;
 	position: absolute;
@@ -505,5 +509,14 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	td {
 		padding: .7em;
 		font-family: Consolas, Monaco, monospace;
+
+		&:nth-child(3) {
+			width: 30%;
+			cursor: help;
+
+			&:hover {
+				background: hsla(58, 100%, 50%, .3);
+			}
+		}
 	}
 }

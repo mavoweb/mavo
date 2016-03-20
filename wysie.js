@@ -1468,7 +1468,15 @@ var _ = Wysie.Expression.Text = $.Class({
 								}
 							},
 							{tag: "td"},
-							{tag: "td", textContent: _.elementLabel(this.element, this.attribute)}
+							{
+								tag: "td",
+								textContent: _.elementLabel(this.element, this.attribute),
+								events: {
+									"mouseenter mouseleave": evt => {
+										$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
+									}
+								}
+							}
 						],
 						properties: {
 							expression: expr
