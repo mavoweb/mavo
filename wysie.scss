@@ -21,7 +21,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 [data-store] {
 	// Unprocessed items
-	display: none;
+	opacity: .5;
 }
 
 .wysie-highlight {
@@ -477,40 +477,69 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		background: rgba(0,0,0,.15);
 	}
 
-	th, td {
+	th {
+		text-align: left;
+		padding: .5em;
+
 		&:nth-child(1) {
 			width: 40%;
 		}
 
 		&:nth-child(2) {
 			width: 30%;
-
-			&.error {
-				color: #f88;
-				font-weight: bold;
-			}
 		}
 
 		&:nth-child(3) {
 			width: 30%;
 		}
-
-		input {
-			all: unset;
-			width: 100%;
-		}
-	}
-
-	th {
-		text-align: left;
-		padding: .5em;
 	}
 
 	td {
-		padding: .7em;
+		padding: .3em .7em;
+		line-height: 1.8;
 		font-family: Consolas, Monaco, monospace;
 
+		&:nth-child(1) {
+			// Expression column
+			position: relative;
+			padding: 0;
+			white-space: nowrap;
+
+			textarea {
+				all: unset;
+				position: absolute;
+				top: 0;
+				left: 0;
+				padding: .3em .7em;
+				width: 100%;
+				box-sizing: border-box;
+
+				&:not(:focus) {
+					max-height: 2.2em;
+					max-width: 100% !important;
+
+					&:hover {
+						background: #333;
+					}
+				}
+
+				&:focus {
+					resize: horizontal;
+					z-index: 10;
+					background: #222;
+					box-shadow: 1px 1px .3em rgba(0,0,0,.5),
+					            0 0 0 1px rgba(0,0,0,.5) inset;
+				}
+			}
+		}
+
+		&.error {
+			color: #f88;
+			font-weight: bold;
+		}
+
 		&:nth-child(3) {
+			// Element column
 			width: 30%;
 			overflow: hidden;
 			text-overflow: ellipsis;

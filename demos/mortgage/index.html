@@ -38,7 +38,9 @@
 			Monthly payment:
 			<meta property="interest1200" content="=(interest / 1200)" />
 			<span property class="payment number">
-				=(amount * interest1200 * (1 + 1 / (pow(1 + interest1200 , years * 12) - 1 )))
+				=(amount * interest1200 *
+				(1 + 1 / (pow(1 + interest1200 , years * 12) - 1 ))
+				)
 			</span>
 		</div>
 

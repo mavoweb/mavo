@@ -426,4 +426,6 @@ $.ready().then(evt => {
 
 _.prototype.render = _.timed("render", _.prototype.render);
 
+Stretchy.selectors.filter = ".wysie-editor, .wysie-debuginfo *";
+
 })(Bliss, Bliss.$);

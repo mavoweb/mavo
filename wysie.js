@@ -617,6 +617,8 @@ $.ready().then(evt => {
 
 _.prototype.render = _.timed("render", _.prototype.render);
 
+Stretchy.selectors.filter = ".wysie-editor, .wysie-debuginfo *";
+
 })(Bliss, Bliss.$);
 
 
@@ -1459,13 +1461,16 @@ var _ = Wysie.Expression.Text = $.Class({
 							{
 								tag: "td",
 								contents: {
-									tag: "input",
+									tag: "textarea",
 									value: expr.expression,
 									events: {
 										input: evt => {
 											expr.expression = evt.target.value;
 											this.update(this.data);
 										}
+									},
+									once: {
+										focus: evt => Stretchy.resize(evt.target)
 									}
 								}
 							},
@@ -1814,8 +1819,8 @@ var _ = Wysie.Expressions = $.Class({
 
 			return RegExp([
 					"{\\s*" + propertyRegex + "\\s*}",
-					"\\${.+?}",
-					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=.*\\))",
+					"\\${[\\S\\s]+?}",
+					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))",
 					"=" + propertyRegex + "\\b"
 				].join("|"), "gi");
 		}
@@ -3064,8 +3069,6 @@ _.editors = {
 		return $.create("input", {type: type});
 	}
 };
-
-Stretchy.selectors.filter = ".wysie-editor";
 
 })(Bliss, Bliss.$);
 

@@ -814,6 +814,4 @@ _.editors = {
 	}
 };
 
-Stretchy.selectors.filter = ".wysie-editor";
-
 })(Bliss, Bliss.$);

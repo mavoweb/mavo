@@ -879,6 +879,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	_.prototype.render = _.timed("render", _.prototype.render);
+
+	Stretchy.selectors.filter = ".wysie-editor, .wysie-debuginfo *";
 })(Bliss, Bliss.$);
 
 (function ($) {
@@ -1742,12 +1744,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								contents: [{
 									tag: "td",
 									contents: {
-										tag: "input",
+										tag: "textarea",
 										value: expr.expression,
 										events: {
 											input: function input(evt) {
 												expr.expression = evt.target.value;
 												_this12.update(_this12.data);
+											}
+										},
+										once: {
+											focus: function focus(evt) {
+												return Stretchy.resize(evt.target);
 											}
 										}
 									}
@@ -2126,7 +2133,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					});
 					var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
 
-					return RegExp(["{\\s*" + propertyRegex + "\\s*}", "\\${.+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=.*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
+					return RegExp(["{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
 				}
 			},
 
@@ -3405,8 +3412,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return $.create("input", { type: type });
 		}
 	};
-
-	Stretchy.selectors.filter = ".wysie-editor";
 })(Bliss, Bliss.$);
 
 (function ($, $$) {
