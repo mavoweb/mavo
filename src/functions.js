@@ -86,21 +86,14 @@ var _ = Wysie.Functions = {
 	},
 
 	round: function(num, decimals) {
-		if (!num) {
-			return num;
+		if (!num || !decimals || !isFinite(num)) {
+			return Math.round(num);
 		}
 
-		// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
-		// Can't just concatenate with e+decimals, because then what happens if it already has an e?
-		// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
-		function decimalShift(num, decimals) {
-			return +(num + "").replace(/e([+-]\d+)$|$/, ($0, e) => {
-				var newE = (+e || 0) + decimals;
-				return "e" + (newE > 0? "+" : "") + newE;
-			});
-		}
-
-		return decimalShift(Math.round(decimalShift(num, 2)), -2);
+		return +num.toLocaleString("en-US", {
+			useGrouping: false,
+			maximumFractionDigits: decimals
+		});
 	},
 
 	/**

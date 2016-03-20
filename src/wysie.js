@@ -350,6 +350,7 @@ let s = _.selectors = {
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
 	ui: ".wysie-ui",
+	debug: ".debug, .debug *"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);

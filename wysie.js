@@ -541,6 +541,7 @@ let s = _.selectors = {
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
 	ui: ".wysie-ui",
+	debug: ".debug, .debug *"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
@@ -1561,7 +1562,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		formatNumber: (() => {
-			var numberFormat = new Intl.NumberFormat("latn", {maximumFractionDigits:2});
+			var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
 
 			return function(value) {
 				if (value === Infinity || value === -Infinity) {
@@ -1808,21 +1809,14 @@ var _ = Wysie.Functions = {
 	},
 
 	round: function(num, decimals) {
-		if (!num) {
-			return num;
+		if (!num || !decimals || !isFinite(num)) {
+			return Math.round(num);
 		}
 
-		// Multiply/divide by 10^decimals in a safe way, to prevent IEEE754 weirdness.
-		// Can't just concatenate with e+decimals, because then what happens if it already has an e?
-		// Code inspired by https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/round
-		function decimalShift(num, decimals) {
-			return +(num + "").replace(/e([+-]\d+)$|$/, ($0, e) => {
-				var newE = (+e || 0) + decimals;
-				return "e" + (newE > 0? "+" : "") + newE;
-			});
-		}
-
-		return decimalShift(Math.round(decimalShift(num, 2)), -2);
+		return +num.toLocaleString("en-US", {
+			useGrouping: false,
+			maximumFractionDigits: decimals
+		});
 	},
 
 	/**
@@ -1880,6 +1874,8 @@ var _ = Wysie.Scope = $.Class({
 		this.scope = this;
 
 		Wysie.hooks.run("scope-init-start", this);
+
+		this.debug = this.element.matches(Wysie.selectors.debug);
 
 		// Should this element also create a primitive?
 		if (Wysie.Primitive.getValueAttribute(this.element)) {

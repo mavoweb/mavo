@@ -206,7 +206,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		formatNumber: (() => {
-			var numberFormat = new Intl.NumberFormat("latn", {maximumFractionDigits:2});
+			var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
 
 			return function(value) {
 				if (value === Infinity || value === -Infinity) {
