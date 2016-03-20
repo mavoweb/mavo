@@ -328,6 +328,8 @@
     font-family: Consolas, Monaco, monospace; }
     .wysie-debuginfo td:nth-child(3) {
       width: 30%;
+      overflow: hidden;
+      text-overflow: ellipsis;
       cursor: help; }
       .wysie-debuginfo td:nth-child(3):hover {
         background: rgba(255, 247, 0, 0.3); }

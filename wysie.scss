@@ -512,6 +512,8 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 		&:nth-child(3) {
 			width: 30%;
+			overflow: hidden;
+			text-overflow: ellipsis;
 			cursor: help;
 
 			&:hover {

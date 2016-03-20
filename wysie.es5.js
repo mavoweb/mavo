@@ -1651,10 +1651,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($, $$) {
 
 	var _ = Wysie.Expression = $.Class({
-		constructor: function constructor(expression, simple, expressionText) {
+		constructor: function constructor(expression, simple) {
 			this.simple = !!simple;
-			this.expression = expression.trim();
-			this.expressionText = expressionText;
+			this.expression = expression;
 		},
 
 		get regex() {
@@ -1672,11 +1671,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 
-		lazy: {
-			debug: function debug() {
-				var ret = this.expressionText.debug;
-				ret = ret && ret[this.expression].cells[1];
-				return ret;
+		live: {
+			expression: function expression(value) {
+				value = value.trim();
+
+				if (/^if\([\S\s]+\)$/i.test(value)) {
+					value = value.replace(/^if\(/, "iff(");
+				}
+
+				return value;
 			}
 		},
 
@@ -1733,7 +1736,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					this.template.forEach(function (expr) {
 						if (expr instanceof Wysie.Expression) {
-							_this12.debug[expr.expression] = _this12.debug[expr.expression] || $.create("tr", {
+							var elementLabel = _.elementLabel(_this12.element, _this12.attribute);
+
+							$.create("tr", {
 								contents: [{
 									tag: "td",
 									contents: {
@@ -1741,17 +1746,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 										value: expr.expression,
 										events: {
 											input: function input(evt) {
-												var newExpression = evt.target.value;
-												_this12.debug[newExpression] = _this12.debug[expr.expression];
-												delete _this12.debug[expr.expression];
-												expr.expression = newExpression;
+												expr.expression = evt.target.value;
 												_this12.update(_this12.data);
 											}
 										}
 									}
-								}, { tag: "td" }, {
+								}, expr.debug = $.create("td"), {
 									tag: "td",
-									textContent: _.elementLabel(_this12.element, _this12.attribute),
+									textContent: elementLabel,
+									title: elementLabel,
 									events: {
 										"mouseenter mouseleave": function mouseenterMouseleave(evt) {
 											$.toggleClass(_this12.element, "wysie-highlight", evt.type === "mouseenter");
@@ -1789,10 +1792,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.text = this.template.map(function (expr) {
 					if (expr instanceof Wysie.Expression) {
 						if (_this13.debug) {
-							var tr = _this13.debug[expr.expression];
+							var td = expr.debug;
 
-							if (tr) {
-								var td = tr.cells[1];
+							if (td) {
 								td.classList.remove("error");
 							}
 						}
@@ -1805,6 +1807,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (value === undefined || value === null) {
 							// Don’t print things like "undefined" or "null"
+							_this13.value.push("");
 							return "";
 						}
 
@@ -1877,7 +1880,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								}
 							}
 
-							expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
+							expression = expression.replace(/^=/, "").replace(/^\(([\S\s]+)\)$/, "$1");
 						} else {
 							// Bare = expression, must be followed by a property reference
 							lastIndex = regex.lastIndex;
@@ -1896,7 +1899,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						expression = expression.replace(/\$?\{|\}/g, "");
 					}
 
-					ret.push(new Wysie.Expression(expression, simple, this));
+					ret.push(new Wysie.Expression(expression, simple));
 				}
 
 				// Literal at the end

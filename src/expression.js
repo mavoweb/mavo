@@ -1,10 +1,9 @@
 (function($, $$) {
 
 var _ = Wysie.Expression = $.Class({
-	constructor: function(expression, simple, expressionText) {
+	constructor: function(expression, simple) {
 		this.simple = !!simple;
-		this.expression = expression.trim();
-		this.expressionText = expressionText;
+		this.expression = expression;
 	},
 
 	get regex() {
@@ -23,11 +22,15 @@ var _ = Wysie.Expression = $.Class({
 		return (this.simple? "" : "$") + `{${this.expression}}`;
 	},
 
-	lazy: {
-		debug: function() {
-			var ret = this.expressionText.debug;
-			ret = ret && ret[this.expression].cells[1];
-			return ret;
+	live: {
+		expression: function(value) {
+			value = value.trim();
+
+			if (/^if\([\S\s]+\)$/i.test(value)) {
+				value = value.replace(/^if\(/, "iff(");
+			}
+
+			return value;
 		}
 	},
 
@@ -87,7 +90,9 @@ var _ = Wysie.Expression.Text = $.Class({
 
 			this.template.forEach(expr => {
 				if (expr instanceof Wysie.Expression) {
-					this.debug[expr.expression] = this.debug[expr.expression] || $.create("tr", {
+					var elementLabel = _.elementLabel(this.element, this.attribute);
+
+					$.create("tr", {
 						contents: [
 							{
 								tag: "td",
@@ -96,19 +101,17 @@ var _ = Wysie.Expression.Text = $.Class({
 									value: expr.expression,
 									events: {
 										input: evt => {
-											var newExpression = evt.target.value;
-											this.debug[newExpression] = this.debug[expr.expression];
-											delete this.debug[expr.expression];
-											expr.expression = newExpression;
+											expr.expression = evt.target.value;
 											this.update(this.data);
 										}
 									}
 								}
 							},
-							{tag: "td"},
+							expr.debug = $.create("td"),
 							{
 								tag: "td",
-								textContent: _.elementLabel(this.element, this.attribute),
+								textContent: elementLabel,
+								title: elementLabel,
 								events: {
 									"mouseenter mouseleave": evt => {
 										$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
@@ -145,10 +148,9 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
 				if (this.debug) {
-					var tr = this.debug[expr.expression];
+					var td = expr.debug;
 
-					if (tr) {
-						var td = tr.cells[1];
+					if (td) {
 						td.classList.remove("error");
 					}
 				}
@@ -161,6 +163,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 				if (value === undefined || value === null) {
 					// Don’t print things like "undefined" or "null"
+					this.value.push("");
 					return "";
 				}
 
@@ -231,7 +234,8 @@ var _ = Wysie.Expression.Text = $.Class({
 						}
 					}
 
-					expression = expression.replace(/^=\s*if\(/, "=iff(").replace(/^=/, "");
+					expression = expression.replace(/^=/, "")
+										   .replace(/^\(([\S\s]+)\)$/, "$1");
 				}
 				else {
 					// Bare = expression, must be followed by a property reference
@@ -247,7 +251,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				expression = expression.replace(/\$?\{|\}/g, "");
 			}
 
-			ret.push(new Wysie.Expression(expression, simple, this));
+			ret.push(new Wysie.Expression(expression, simple));
 		}
 
 		// Literal at the end
