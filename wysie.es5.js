@@ -1686,7 +1686,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element = this.node.nodeType === 3 ? this.node.parentNode : this.node;
 				this.attribute = o.attribute || null;
 				this.all = o.all; // the Wysie.Expressions object that this belongs to
-				this.template = this.tokenize(this.text);
+				this.template = this.tokenize(this.text.trim());
 
 				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 			},
@@ -1704,34 +1704,39 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			update: function update(data) {
 				var _this12 = this;
 
+				var contentText = [];
+
 				this.text = this.template.map(function (expr) {
 					if (expr instanceof Wysie.Expression) {
 						var value = expr.eval(data);
 
-						if (!value && value !== 0 && !isNaN(value)) {
+						if (value === undefined || value === null) {
 							// Don’t print things like "undefined" or "null"
-							value = "";
-						} else if (value === Infinity || value === -Infinity) {
-							// Pretty print infinity
-							value = value < 0 ? "-∞" : "∞";
+							return "";
 						}
 
-						// Limit numbers to 2 decimals
-						// TODO author-level way to set _.PRECISION
-						// TODO this should be presentation and not affect the value of a computed property
-						if (typeof value === "number" && !_this12.attribute) {
-							value = Wysie.Functions.round(value, _.PRECISION);
+						contentText.push(value);
 
-							if (!_this12.primitive) {
-								value = value.toLocaleString("latn");
-							}
+						if (typeof value === "number" && !_this12.attribute) {
+							value = _.formatNumber(value);
 						}
 
 						return expr.simple ? _this12.transform(value) : value;
 					}
 
+					contentText.push(expr);
 					return expr;
 				}).join("");
+
+				if (this.primitive) {
+					if (this.template.length === 1 && typeof contentText[0] === "number") {
+						this.primitive.datatype = "number";
+					}
+
+					if (!this.attribute) {
+						Wysie.Primitive.setValue(this.element, contentText.join(""), "content");
+					}
+				}
 			},
 
 			tokenize: function tokenize(template) {
@@ -1852,7 +1857,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				},
 
-				PRECISION: 2,
+				formatNumber: function () {
+					var numberFormat = new Intl.NumberFormat("latn", { maximumFractionDigits: 2 });
+
+					return function (value) {
+						if (value === Infinity || value === -Infinity) {
+							// Pretty print infinity
+							return value < 0 ? "-∞" : "∞";
+						}
+
+						return numberFormat.format(value);
+					};
+				}(),
 
 				lazy: {
 					rootFunctionRegExp: function rootFunctionRegExp() {
@@ -2594,7 +2610,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (!this.editing || this.attribute) {
 				if (this.datatype == "number" && !this.attribute) {
 					_.setValue(this.element, value, "content", this.datatype);
-					_.setValue(this.element, value.toLocaleString("latn"), null, this.datatype);
+					_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
 				} else {
 					_.setValue(this.element, value, this.attribute, this.datatype);
 				}
@@ -3036,6 +3052,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			editing: function editing(value) {
 				$.toggleClass(this.element, "editing", value);
+			},
+
+			datatype: function datatype(value) {
+				// Purge caches if datatype changes
+				if (_.getValue.cache) {
+					_.getValue.cache.delete(this.element);
+				}
 			}
 		},
 

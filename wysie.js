@@ -1400,7 +1400,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
 		this.attribute = o.attribute || null;
 		this.all = o.all; // the Wysie.Expressions object that this belongs to
-		this.template = this.tokenize(this.text);
+		this.template = this.tokenize(this.text.trim());
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -1416,35 +1416,39 @@ var _ = Wysie.Expression.Text = $.Class({
 	},
 
 	update: function(data) {
+		var contentText = [];
+
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
 				var value = expr.eval(data);
 
-				if (!value && value !== 0 && !isNaN(value)) {
+				if (value === undefined || value === null) {
 					// Don’t print things like "undefined" or "null"
-					value = "";
-				}
-				else if (value === Infinity || value === -Infinity) {
-					// Pretty print infinity
-					value = value < 0? "-∞" : "∞";
+					return "";
 				}
 
-				// Limit numbers to 2 decimals
-				// TODO author-level way to set _.PRECISION
-				// TODO this should be presentation and not affect the value of a computed property
+				contentText.push(value);
+
 				if (typeof value === "number" && !this.attribute) {
-					value = Wysie.Functions.round(value, _.PRECISION);
-
-					if (!this.primitive) {
-						value = value.toLocaleString("latn");
-					}
+					value = _.formatNumber(value);
 				}
 
 				return expr.simple? this.transform(value) : value;
 			}
 
+			contentText.push(expr);
 			return expr;
 		}).join("");
+
+		if (this.primitive) {
+			if (this.template.length === 1 && typeof contentText[0] === "number") {
+				this.primitive.datatype = "number";
+			}
+
+			if (!this.attribute) {
+				Wysie.Primitive.setValue(this.element, contentText.join(""), "content");
+			}
+		}
 	},
 
 	tokenize: function(template) {
@@ -1556,7 +1560,18 @@ var _ = Wysie.Expression.Text = $.Class({
 			}
 		},
 
-		PRECISION: 2,
+		formatNumber: (() => {
+			var numberFormat = new Intl.NumberFormat("latn", {maximumFractionDigits:2});
+
+			return function(value) {
+				if (value === Infinity || value === -Infinity) {
+					// Pretty print infinity
+					return value < 0? "-∞" : "∞";
+				}
+
+				return numberFormat.format(value);
+			}
+		})(),
 
 		lazy: {
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
@@ -2250,7 +2265,7 @@ var _ = Wysie.Primitive = $.Class({
 		if (!this.editing || this.attribute) {
 			if (this.datatype == "number" && !this.attribute) {
 				_.setValue(this.element, value, "content", this.datatype);
-				_.setValue(this.element, value.toLocaleString("latn"), null, this.datatype);
+				_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
 			}
 			else {
 				_.setValue(this.element, value, this.attribute, this.datatype);
@@ -2690,6 +2705,13 @@ var _ = Wysie.Primitive = $.Class({
 
 		editing: function (value) {
 			$.toggleClass(this.element, "editing", value);
+		},
+
+		datatype: function (value) {
+			// Purge caches if datatype changes
+			if (_.getValue.cache) {
+				_.getValue.cache.delete(this.element);
+			}
 		}
 	},
 

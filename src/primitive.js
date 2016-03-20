@@ -134,7 +134,7 @@ var _ = Wysie.Primitive = $.Class({
 		if (!this.editing || this.attribute) {
 			if (this.datatype == "number" && !this.attribute) {
 				_.setValue(this.element, value, "content", this.datatype);
-				_.setValue(this.element, value.toLocaleString("latn"), null, this.datatype);
+				_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
 			}
 			else {
 				_.setValue(this.element, value, this.attribute, this.datatype);
@@ -574,6 +574,13 @@ var _ = Wysie.Primitive = $.Class({
 
 		editing: function (value) {
 			$.toggleClass(this.element, "editing", value);
+		},
+
+		datatype: function (value) {
+			// Purge caches if datatype changes
+			if (_.getValue.cache) {
+				_.getValue.cache.delete(this.element);
+			}
 		}
 	},
 
