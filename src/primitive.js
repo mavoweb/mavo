@@ -281,7 +281,8 @@ var _ = Wysie.Primitive = $.Class({
 	preEdit: function () {
 		// Empty properties should become editable immediately
 		// otherwise they could be invisible!
-		if (this.empty && !this.attribute) {
+		// Also properties that already have an editor
+		if (this.empty && !this.attribute || this.editor) {
 			this.edit();
 			return;
 		}

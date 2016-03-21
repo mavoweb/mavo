@@ -2568,7 +2568,8 @@ var _ = Wysie.Primitive = $.Class({
 	preEdit: function () {
 		// Empty properties should become editable immediately
 		// otherwise they could be invisible!
-		if (this.empty && !this.attribute) {
+		// Also properties that already have an editor
+		if (this.empty && !this.attribute || this.editor) {
 			this.edit();
 			return;
 		}
@@ -3443,7 +3444,7 @@ var _ = Wysie.Collection = $.Class({
 
 		addButton: function() {
 			// Find add button if provided, or generate one
-			var selector = `button.add-${this.property}, .wysie-add, button.add`;
+			var selector = `button.add-${this.property}`;
 			var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
 
 			if (scope) {

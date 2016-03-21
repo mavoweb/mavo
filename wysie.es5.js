@@ -2906,7 +2906,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
-			if (this.empty && !this.attribute) {
+			// Also properties that already have an editor
+			if (this.empty && !this.attribute || this.editor) {
 				this.edit();
 				return;
 			}
@@ -3809,7 +3810,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var _this32 = this;
 
 				// Find add button if provided, or generate one
-				var selector = "button.add-" + this.property + ", .wysie-add, button.add";
+				var selector = "button.add-" + this.property;
 				var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
 
 				if (scope) {

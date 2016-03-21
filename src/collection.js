@@ -337,7 +337,7 @@ var _ = Wysie.Collection = $.Class({
 
 		addButton: function() {
 			// Find add button if provided, or generate one
-			var selector = `button.add-${this.property}, .wysie-add, button.add`;
+			var selector = `button.add-${this.property}`;
 			var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
 
 			if (scope) {
