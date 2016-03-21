@@ -499,7 +499,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 	td {
 		padding: .3em .7em;
-		line-height: 1.8;
+		line-height: 1.7;
 		font-family: $font-mono;
 
 		&:nth-child(1) {
@@ -543,6 +543,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			.type {
 				display: block;
 				font: 80% $font-sans;
+				line-height: inherit;
 
 				&::after {
 					content: "😳";

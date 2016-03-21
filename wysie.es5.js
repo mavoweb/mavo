@@ -1694,7 +1694,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				try {
-					return eval("with (Math) with(Wysie.Functions) with(data) { " + expr + " }");
+					return eval("with(Wysie.Functions.Trap) with(data) { " + expr + " }");
 				} catch (e) {
 					if (debug) {
 						debug.innerHTML = _.friendlyError(e, expr);
@@ -2297,21 +2297,39 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	};
 
 	_.avg = _.average;
-	_.iif = _.iff;
+	_.iif = _.IF = _.iff;
 
 	// Make function names case insensitive
 	if (self.Proxy) {
-		_ = Wysie.Functions = new Proxy(_, {
+		Wysie.Functions.Trap = new Proxy(_, {
 			get: function get(functions, property) {
-				property = property.toLowerCase ? property.toLowerCase() : property;
+				if (property in functions) {
+					return functions[property];
+				}
 
-				return functions[property];
+				var propertyL = property.toLowerCase && property.toLowerCase();
+
+				if (propertyL && functions.hasOwnProperty(propertyL)) {
+					return functions[propertyL];
+				}
+
+				if (property in Math || propertyL in Math) {
+					return Math[property] || Math[propertyL];
+				}
+
+				if (property in self) {
+					return self[property];
+				}
+
+				// Prevent undefined at all costs
+				return property;
 			},
 
+			// Super ugly hack, but otherwise data is not
+			// the local variable it should be, but the string "data"
+			// so all property lookups fail.
 			has: function has(functions, property) {
-				property = property.toLowerCase ? property.toLowerCase() : property;
-
-				return functions.hasOwnProperty(property);
+				return property != "data";
 			}
 		});
 	}

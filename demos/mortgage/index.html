@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<main data-store="#data" class="debug">
+<main data-store="#data1" class="debug">
 	<h1>Mortgage calculator</h1>
 
 	<div class="inputs">
@@ -37,18 +37,19 @@
 		<div>
 			Monthly payment:
 			<meta property="interest1200" content="=(interest / 1200)" />
-			<span property class="payment number">
-				=(amount * interest1200 *
-				(1 + 1 / (pow(1 + interest1200 , years * 12) - 1 ))
+			<span property class="payment">
+				=(
+					amount * interest1200 *
+					(1 + 1 / (pow(1 + interest1200 , years * 12) - 1 ))
 				)
 			</span>
 		</div>
 
-		<div class="amazing-rate" style="display: =if(payment < 1500, 'block', 'none')">Amazing rate!</div>
+		<div class="amazing-rate" style="display: =if(payment < 1500, block, none)">Amazing rate!</div>
 	</div>
 </main>
 
-<script type="application/json" id="data"></script>
+<script type="application/json" id="data1"></script>
 
 <script src="../../wysie.js"></script>
 

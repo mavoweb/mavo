@@ -319,7 +319,7 @@
       width: 30%; }
   .wysie-debuginfo td {
     padding: .3em .7em;
-    line-height: 1.8;
+    line-height: 1.7;
     font-family: Consolas, Monaco, monospace; }
     .wysie-debuginfo td:nth-child(1) {
       position: relative;
@@ -348,7 +348,8 @@
       font-weight: bold; }
       .wysie-debuginfo td.error .type {
         display: block;
-        font: 80% "Helvetica Neue", sans-serif; }
+        font: 80% "Helvetica Neue", sans-serif;
+        line-height: inherit; }
         .wysie-debuginfo td.error .type::after {
           content: "😳";
           display: inline-block;

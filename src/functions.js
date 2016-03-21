@@ -110,22 +110,38 @@ var _ = Wysie.Functions = {
 };
 
 _.avg = _.average;
-_.iif = _.iff;
+_.iif = _.IF = _.iff;
 
 // Make function names case insensitive
 if (self.Proxy) {
-	_ = Wysie.Functions = new Proxy(_, {
+	Wysie.Functions.Trap = new Proxy(_, {
 		get: (functions, property) => {
-			property = property.toLowerCase? property.toLowerCase() : property;
+			if (property in functions) {
+				return functions[property];
+			}
 
-			return functions[property];
+			var propertyL = property.toLowerCase && property.toLowerCase();
+
+			if (propertyL && functions.hasOwnProperty(propertyL)) {
+				return functions[propertyL];
+			}
+
+			if (property in Math || propertyL in Math) {
+				return Math[property] || Math[propertyL];
+			}
+
+			if (property in self) {
+				return self[property];
+			}
+
+			// Prevent undefined at all costs
+			return property;
 		},
 
-		has: (functions, property) => {
-			property = property.toLowerCase? property.toLowerCase() : property;
-
-			return functions.hasOwnProperty(property);
-		}
+		// Super ugly hack, but otherwise data is not
+		// the local variable it should be, but the string "data"
+		// so all property lookups fail.
+		has: (functions, property) => property != "data"
 	});
 }
 

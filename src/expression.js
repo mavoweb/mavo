@@ -43,7 +43,7 @@ var _ = Wysie.Expression = $.Class({
 			}
 
 			try {
-				return eval(`with (Math) with(Wysie.Functions) with(data) { ${expr} }`);
+				return eval(`with(Wysie.Functions.Trap) with(data) { ${expr} }`);
 			}
 			catch (e) {
 				if (debug) {
