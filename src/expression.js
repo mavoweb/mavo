@@ -60,7 +60,7 @@ var _ = Wysie.Expression = $.Class({
 			var message = e.message;
 
 			// Friendlify common errors
-			if (message == "Unexpected token }" && expr.indexOf("{") === -1) {
+			if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
 				message = "Missing a )";
 			}
 			else if (message === "Unexpected token )") {
@@ -176,7 +176,7 @@ var _ = Wysie.Expression.Text = $.Class({
 				var value = expr.eval(data);
 
 				if (td && !td.classList.contains("error")) {
-					td.textContent = typeof value == "string"? `"${value}"` : value;
+					td.textContent = typeof value == "string"? `"${value}"` : value + "";
 				}
 
 				if (value === undefined || value === null) {

@@ -520,6 +520,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 				&:not(:focus) {
 					max-height: 2.2em;
 					max-width: 100% !important;
+					overflow: hidden;
 
 					&:hover {
 						background: #333;
@@ -538,11 +539,13 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 		&.error {
 			color: #f88;
-			font-weight: bold;
+			font-weight: normal;
+			font-family: $font-sans;
 
 			.type {
 				display: block;
-				font: 80% $font-sans;
+				font-size: 80%;
+				font-weight: bold;
 				line-height: inherit;
 
 				&::after {
@@ -550,8 +553,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 					display: inline-block;
 					vertical-align: middle;
 					margin-left: .3em;
-					font-size: 150%;
-					line-height: .8;
+					font: 150%/.8 sans-serif;
 				}
 			}
 		}

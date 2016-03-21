@@ -1710,7 +1710,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var message = e.message;
 
 				// Friendlify common errors
-				if (message == "Unexpected token }" && expr.indexOf("{") === -1) {
+				if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
 					message = "Missing a )";
 				} else if (message === "Unexpected token )") {
 					message = "Missing a (";
@@ -1823,7 +1823,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						var value = expr.eval(data);
 
 						if (td && !td.classList.contains("error")) {
-							td.textContent = typeof value == "string" ? "\"" + value + "\"" : value;
+							td.textContent = typeof value == "string" ? "\"" + value + "\"" : value + "";
 						}
 
 						if (value === undefined || value === null) {

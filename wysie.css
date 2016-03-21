@@ -335,7 +335,8 @@
         box-sizing: border-box; }
         .wysie-debuginfo td:nth-child(1) textarea:not(:focus) {
           max-height: 2.2em;
-          max-width: 100% !important; }
+          max-width: 100% !important;
+          overflow: hidden; }
           .wysie-debuginfo td:nth-child(1) textarea:not(:focus):hover {
             background: #333; }
         .wysie-debuginfo td:nth-child(1) textarea:focus {
@@ -345,18 +346,19 @@
           box-shadow: 1px 1px 0.3em rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.5) inset; }
     .wysie-debuginfo td.error {
       color: #f88;
-      font-weight: bold; }
+      font-weight: normal;
+      font-family: "Helvetica Neue", sans-serif; }
       .wysie-debuginfo td.error .type {
         display: block;
-        font: 80% "Helvetica Neue", sans-serif;
+        font-size: 80%;
+        font-weight: bold;
         line-height: inherit; }
         .wysie-debuginfo td.error .type::after {
           content: "😳";
           display: inline-block;
           vertical-align: middle;
           margin-left: .3em;
-          font-size: 150%;
-          line-height: .8; }
+          font: 150%/.8 sans-serif; }
     .wysie-debuginfo td:nth-child(3) {
       width: 30%;
       overflow: hidden;
