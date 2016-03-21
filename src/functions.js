@@ -124,7 +124,7 @@ if (self.Proxy) {
 		has: (functions, property) => {
 			property = property.toLowerCase? property.toLowerCase() : property;
 
-			return property in functions;
+			return functions.hasOwnProperty(property);
 		}
 	});
 }

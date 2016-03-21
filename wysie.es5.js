@@ -1697,12 +1697,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return eval("with (Math) with(Wysie.Functions) with(data) { " + expr + " }");
 				} catch (e) {
 					if (debug) {
-						debug.textContent = e;
+						debug.innerHTML = _.friendlyError(e, expr);
 						debug.classList.add("error");
 					}
 
 					return _.ERROR;
 				}
+			},
+
+			friendlyError: function friendlyError(e, expr) {
+				var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
+				var message = e.message;
+
+				// Friendlify common errors
+				if (message == "Unexpected token }" && expr.indexOf("{") === -1) {
+					message = "Missing a )";
+				} else if (message === "Unexpected token )") {
+					message = "Missing a (";
+				}
+
+				return "<span class=\"type\">Oh noes, a " + type + " error!</span> " + message;
 			},
 
 			ERROR: "N/A"
@@ -1808,8 +1822,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						var value = expr.eval(data);
 
-						if (td && value !== Wysie.Expression.ERROR) {
-							td.textContent = value;
+						if (td && !td.classList.contains("error")) {
+							td.textContent = typeof value == "string" ? "\"" + value + "\"" : value;
 						}
 
 						if (value === undefined || value === null) {
@@ -2297,7 +2311,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			has: function has(functions, property) {
 				property = property.toLowerCase ? property.toLowerCase() : property;
 
-				return property in functions;
+				return functions.hasOwnProperty(property);
 			}
 		});
 	}

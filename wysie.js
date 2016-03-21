@@ -1411,12 +1411,27 @@ var _ = Wysie.Expression = $.Class({
 			}
 			catch (e) {
 				if (debug) {
-					debug.textContent = e;
+					debug.innerHTML = _.friendlyError(e, expr);
 					debug.classList.add("error");
 				}
 
 				return _.ERROR;
 			}
+		},
+
+		friendlyError: (e, expr) => {
+			var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
+			var message = e.message;
+
+			// Friendlify common errors
+			if (message == "Unexpected token }" && expr.indexOf("{") === -1) {
+				message = "Missing a )";
+			}
+			else if (message === "Unexpected token )") {
+				message = "Missing a (";
+			}
+
+			return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
 		},
 
 		ERROR: "N/A"
@@ -1524,8 +1539,8 @@ var _ = Wysie.Expression.Text = $.Class({
 
 				var value = expr.eval(data);
 
-				if (td && value !== Wysie.Expression.ERROR) {
-					td.textContent = value;
+				if (td && !td.classList.contains("error")) {
+					td.textContent = typeof value == "string"? `"${value}"` : value;
 				}
 
 				if (value === undefined || value === null) {
@@ -1978,7 +1993,7 @@ if (self.Proxy) {
 		has: (functions, property) => {
 			property = property.toLowerCase? property.toLowerCase() : property;
 
-			return property in functions;
+			return functions.hasOwnProperty(property);
 		}
 	});
 }

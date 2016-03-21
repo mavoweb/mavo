@@ -296,13 +296,13 @@
   display: table;
   border: 1em solid transparent;
   width: 100%;
+  box-sizing: border-box;
   table-layout: fixed;
   border-spacing: 0;
   background: rgba(0, 0, 0, 0.7);
   background-clip: padding-box;
   box-shadow: 0 0 .4em black inset;
-  font: inherit;
-  font-size: 80%;
+  font: 80% "Helvetica Neue", sans-serif;
   color: white; }
   .wysie-debuginfo thead {
     background: rgba(0, 0, 0, 0.5); }
@@ -346,6 +346,16 @@
     .wysie-debuginfo td.error {
       color: #f88;
       font-weight: bold; }
+      .wysie-debuginfo td.error .type {
+        display: block;
+        font: 80% "Helvetica Neue", sans-serif; }
+        .wysie-debuginfo td.error .type::after {
+          content: "😳";
+          display: inline-block;
+          vertical-align: middle;
+          margin-left: .3em;
+          font-size: 150%;
+          line-height: .8; }
     .wysie-debuginfo td:nth-child(3) {
       width: 30%;
       overflow: hidden;

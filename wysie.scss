@@ -456,17 +456,20 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 }
 
 .wysie-debuginfo {
+	$font-sans: 'Helvetica Neue', sans-serif;
+	$font-mono: Consolas, Monaco, monospace;
+
 	all: initial;
 	display: table;
 	border: 1em solid transparent;
 	width: 100%;
+	box-sizing: border-box;
 	table-layout: fixed;
 	border-spacing: 0;
 	background: rgba(0,0,0,.7);
 	background-clip: padding-box;
 	box-shadow: 0 0 .4em black inset;
-	font: inherit;
-	font-size: 80%;
+	font: 80% $font-sans;
 	color: white;
 
 	thead {
@@ -497,7 +500,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	td {
 		padding: .3em .7em;
 		line-height: 1.8;
-		font-family: Consolas, Monaco, monospace;
+		font-family: $font-mono;
 
 		&:nth-child(1) {
 			// Expression column
@@ -536,6 +539,20 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		&.error {
 			color: #f88;
 			font-weight: bold;
+
+			.type {
+				display: block;
+				font: 80% $font-sans;
+
+				&::after {
+					content: "😳";
+					display: inline-block;
+					vertical-align: middle;
+					margin-left: .3em;
+					font-size: 150%;
+					line-height: .8;
+				}
+			}
 		}
 
 		&:nth-child(3) {
