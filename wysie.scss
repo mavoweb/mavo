@@ -140,7 +140,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 	&.delete-hover, // basically &:has(> .delete:hover)
 	&.deleted {
-		@include highlight(hsla(0,100%,50%,.1), "!important");
+		@include highlight(hsla(0,100%,50%,.2), "!important");
 	}
 
 	&.deleted button {
@@ -499,6 +499,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 	td {
 		padding: .3em .7em;
+		vertical-align: top;
 		line-height: 1.7;
 		font-family: $font-mono;
 
@@ -563,6 +564,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			width: 30%;
 			overflow: hidden;
 			text-overflow: ellipsis;
+			white-space: nowrap;
 			cursor: help;
 
 			&:hover {

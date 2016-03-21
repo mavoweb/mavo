@@ -233,7 +233,7 @@ var _ = Wysie.Scope = $.Class({
 			return property.parentScope === this;
 		}
 
-		return this.element === property.parentNode.closest(Wysie.selectors.scope);
+		return property.parentNode && (this.element === property.parentNode.closest(Wysie.selectors.scope));
 	},
 
 	static: {

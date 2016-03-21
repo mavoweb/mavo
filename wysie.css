@@ -77,7 +77,7 @@
 .wysie-item {
   position: relative; }
   .wysie-item.delete-hover, .wysie-item.deleted {
-    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.1) inset !important; }
+    box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.2) inset !important; }
   .wysie-item.deleted button {
     display: inline-block;
     margin-left: .4em; }
@@ -319,6 +319,7 @@
       width: 30%; }
   .wysie-debuginfo td {
     padding: .3em .7em;
+    vertical-align: top;
     line-height: 1.7;
     font-family: Consolas, Monaco, monospace; }
     .wysie-debuginfo td:nth-child(1) {
@@ -363,6 +364,7 @@
       width: 30%;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
       cursor: help; }
       .wysie-debuginfo td:nth-child(3):hover {
         background: rgba(255, 247, 0, 0.3); }

@@ -710,6 +710,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Inverse of _.readable(): Take a readable string and turn it into an identifier
 			identifier: function identifier(readable) {
+				readable = readable + "";
 				return readable && readable.replace(/\s+/g, "-") // Convert whitespace to hyphens
 				.replace(/[^\w-]/g, "") // Remove weird characters
 				.toLowerCase();
@@ -1763,6 +1764,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 										events: {
 											input: function input(evt) {
 												expr.expression = evt.target.value;
+												expr.simple = false;
 												_this12.update(_this12.data);
 											}
 										},
@@ -2116,7 +2118,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				node = node || this.scope.element;
 
-				if (node.classList && node.classList.contains("ignore-expressions")) {
+				if (node.matches && node.matches(".ignore-expressions, .wysie-debuginfo")) {
 					return;
 				}
 
@@ -2592,7 +2594,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return property.parentScope === this;
 			}
 
-			return this.element === property.parentNode.closest(Wysie.selectors.scope);
+			return property.parentNode && this.element === property.parentNode.closest(Wysie.selectors.scope);
 		},
 
 		static: {
@@ -2906,8 +2908,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
-			// Also properties that already have an editor
-			if (this.empty && !this.attribute || this.editor) {
+			if (this.empty && !this.attribute) {
 				this.edit();
 				return;
 			}
@@ -3361,7 +3362,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	_.attributes = {
 		"img, video, audio": "src",
 		"a, link": "href",
-		"select, input, textarea": "value",
+		"select, input, textarea, meter, progress": "value",
 		"input[type=checkbox]": "checked",
 		"time": {
 			value: "datetime",
@@ -3387,7 +3388,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		"input[type=checkbox]": {
 			"checked": "boolean"
 		},
-		"input[type=range], input[type=number]": {
+		"input[type=range], input[type=number], meter, progress": {
 			"value": "number"
 		}
 	};
@@ -3423,6 +3424,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
 				}
 			}
+		},
+
+		"meter, progress": function meterProgress() {
+			return $.create({
+				tag: "input",
+				type: "range",
+				min: this.element.getAttribute("min") || 0,
+				max: this.element.getAttribute("max") || 100
+			});
 		},
 
 		"time, .date": function timeDate() {

@@ -274,6 +274,7 @@ var _ = self.Wysie = $.Class({
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
 		identifier: function (readable) {
+			readable = readable + "";
 			return readable && readable
 			         .replace(/\s+/g, "-") // Convert whitespace to hyphens
 			         .replace(/[^\w-]/g, "") // Remove weird characters

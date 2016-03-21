@@ -465,6 +465,7 @@ var _ = self.Wysie = $.Class({
 
 		// Inverse of _.readable(): Take a readable string and turn it into an identifier
 		identifier: function (readable) {
+			readable = readable + "";
 			return readable && readable
 			         .replace(/\s+/g, "-") // Convert whitespace to hyphens
 			         .replace(/[^\w-]/g, "") // Remove weird characters
@@ -1481,6 +1482,7 @@ var _ = Wysie.Expression.Text = $.Class({
 									events: {
 										input: evt => {
 											expr.expression = evt.target.value;
+											expr.simple = false;
 											this.update(this.data);
 										}
 									},
@@ -1808,7 +1810,7 @@ var _ = Wysie.Expressions = $.Class({
 	traverse: function(node) {
 		node = node || this.scope.element;
 
-		if (node.classList && node.classList.contains("ignore-expressions")) {
+		if (node.matches && node.matches(".ignore-expressions, .wysie-debuginfo")) {
 			return;
 		}
 
@@ -2261,7 +2263,7 @@ var _ = Wysie.Scope = $.Class({
 			return property.parentScope === this;
 		}
 
-		return this.element === property.parentNode.closest(Wysie.selectors.scope);
+		return property.parentNode && (this.element === property.parentNode.closest(Wysie.selectors.scope));
 	},
 
 	static: {
@@ -2568,8 +2570,7 @@ var _ = Wysie.Primitive = $.Class({
 	preEdit: function () {
 		// Empty properties should become editable immediately
 		// otherwise they could be invisible!
-		// Also properties that already have an editor
-		if (this.empty && !this.attribute || this.editor) {
+		if (this.empty && !this.attribute) {
 			this.edit();
 			return;
 		}
@@ -3017,7 +3018,7 @@ var _ = Wysie.Primitive = $.Class({
 _.attributes = {
 	"img, video, audio": "src",
 	"a, link": "href",
-	"select, input, textarea": "value",
+	"select, input, textarea, meter, progress": "value",
 	"input[type=checkbox]": "checked",
 	"time": {
 		value: "datetime",
@@ -3043,7 +3044,7 @@ _.datatypes = {
 	"input[type=checkbox]": {
 		"checked": "boolean"
 	},
-	"input[type=range], input[type=number]": {
+	"input[type=range], input[type=number], meter, progress": {
 		"value": "number"
 	}
 };
@@ -3079,6 +3080,15 @@ _.editors = {
 				this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
 			}
 		}
+	},
+
+	"meter, progress": function() {
+		return $.create({
+			tag: "input",
+			type: "range",
+			min: this.element.getAttribute("min") || 0,
+			max: this.element.getAttribute("max") || 100
+		});
 	},
 
 	"time, .date": function() {

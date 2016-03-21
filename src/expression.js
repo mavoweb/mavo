@@ -117,6 +117,7 @@ var _ = Wysie.Expression.Text = $.Class({
 									events: {
 										input: evt => {
 											expr.expression = evt.target.value;
+											expr.simple = false;
 											this.update(this.data);
 										}
 									},
@@ -444,7 +445,7 @@ var _ = Wysie.Expressions = $.Class({
 	traverse: function(node) {
 		node = node || this.scope.element;
 
-		if (node.classList && node.classList.contains("ignore-expressions")) {
+		if (node.matches && node.matches(".ignore-expressions, .wysie-debuginfo")) {
 			return;
 		}
 
