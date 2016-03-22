@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Decisions, decisions</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data" class="debug">
+	<h1>
+		Decisions
+		<span>Decisions</span>
+	</h1>
+
+	<article>
+		<h1 property="decision">Should I go to the party?</h1>
+
+		<div property="pros">
+			<h2>Pros (=count(pro), =sum(weight))</h2>
+			<ul>
+				<li property="pro" class="weight-=weight">
+					<meter property="weight" min="1" low="2" value="1" high="4" max="5"></meter>
+					<p property="argument">Fun with friends!</p>
+
+				</li>
+			</ul>
+		</div>
+
+		<div property="cons">
+			<h2>Cons (=count(con), =sum(weight))</h2>
+			<ul>
+				<li property="con" class="weight-=weight">
+					<meter property="weight" min="1" low="2" value="1" high="4" max="5"></meter>
+					<p property="argument">I have tons of work to do.</p>
+
+				</li>
+			</ul>
+		</div>
+	</article>
+</main>
+
+<script type="application/json" id="data"></script>
+
+<script src="../../wysie.js"></script>
+
+</body>
+</html>

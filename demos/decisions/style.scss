@@ -1,0 +1,158 @@
+$background: hsl(220,8%,60%);
+
+body {
+	min-height: 100vh;
+	box-sizing: border-box;
+	padding: 1em;
+	background: $background;
+	font: 120% Helvetica Neue, sans-serif;
+}
+
+main > h1 {
+	position: relative;
+	width: fit-content;
+	margin: .5em auto 1em;
+	color: white;
+	font-size: 180%;
+	line-height: 1.1;
+
+	span {
+		display: block;
+		color: black;
+		position: relative;
+		z-index: 1;
+	}
+
+	&::before,
+	&::after {
+		content: "?";
+		position: absolute;
+		right: -1.2rem;
+		top: -0.89rem;
+		min-width: 1.1em;
+		text-align: center;
+		border-radius: 50%;
+
+		color: $background;
+		font-size: 250%;
+		font-weight: bold;
+	}
+
+	&::before {
+		background: rgba(0,0,0,.1);
+		z-index: -1;
+		color: transparent;
+	}
+}
+
+h1 {
+	text-align: center;
+}
+
+article {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	max-width: 30em;
+	padding: 2.5em;
+	margin: 1em auto;
+	background: white;
+	color: black;
+	box-shadow: 1px 1px 5px rgba(0,0,0,.3);
+}
+
+	article > h1 {
+		width: 100%;
+		margin: 0 0 2rem;
+		font-size: 250%;
+		font-weight: 300;
+	}
+
+	article > div {
+		flex: 1;
+		margin: 0 1px;
+
+		h2 {
+			color: white;
+			margin: 0;
+			padding: .3rem .5rem;
+			border-bottom: .2em solid;
+			line-height: 1;
+		}
+
+		ul {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+
+			li {
+				margin: 1px 0;
+
+				p {
+					margin: 0;
+				}
+
+				meter {
+					width: 2em;
+					height: .5em;
+					float: right;
+				}
+			}
+		}
+
+		li {
+			padding: .8em;
+			margin-bottom: 1em;
+		}
+
+		// Pros
+		&:first-of-type {
+			h2 {
+				color: hsl(80, 80%, 40%);
+			}
+
+			li {
+				$color: hsl(80, 80%, 50%);
+				background: lighten($color, 40%);
+				color: darken($color, 30%);
+
+				@for $i from 1 through 5 {
+					&.weight-#{$i} { background: lighten($color, 50% - $i*8%); }
+				}
+			}
+		}
+
+		// Cons
+		&:nth-of-type(2) {
+			h2 {
+				color: hsl(0, 100%, 40%);
+			}
+
+			li {
+				$color: hsl(0, 100%, 50%);
+
+				background: lighten($color, 47%);
+				color: darken($color, 25%);
+
+				@for $i from 1 through 5 {
+					&.weight-#{$i} { background: lighten($color, 52% - $i*5%); }
+				}
+			}
+		}
+	}
+
+#data {
+	display: block;
+	font: 100%/1.5 Consolas, Monaco, monospace;
+	white-space: pre;
+	background: hsl(0, 0%, 96%);
+	padding: .6em;
+	margin: 3em 0 1em;
+	overflow: auto;
+	tab-size: 4;
+	box-shadow: 1px 1px 4px rgba(0,0,0,.2) inset;
+}
+
+	#data:empty {
+		visibility: hidden;
+	}
