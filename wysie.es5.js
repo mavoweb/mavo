@@ -1654,23 +1654,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($, $$) {
 
 	var _ = Wysie.Expression = $.Class({
-		constructor: function constructor(expression, simple) {
-			this.simple = !!simple;
+		constructor: function constructor(expression) {
 			this.expression = expression;
-		},
-
-		get regex() {
-			return RegExp((this.simple ? "\\{" : "\\$\\{") + this.expression + "\\}");
 		},
 
 		eval: function _eval(data) {
 			this.oldValue = this.value;
 
-			return this.value = this.simple ? data[this.expression] : _.eval(this.expression, data, this.debug);
+			return this.value = _.eval(this.expression, data, this.debug);
 		},
 
 		toString: function toString() {
-			return (this.simple ? "" : "$") + ("{" + this.expression + "}");
+			return "=(" + this.expression + ")";
 		},
 
 
@@ -1764,7 +1759,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 										events: {
 											input: function input(evt) {
 												expr.expression = evt.target.value;
-												expr.simple = false;
 												_this12.update(_this12.data);
 											}
 										},
@@ -1840,7 +1834,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							value = _.formatNumber(value);
 						}
 
-						return expr.simple ? _this13.transform(value) : value;
+						return value;
 					}
 
 					_this13.value.push(expr);
@@ -1876,8 +1870,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						ret.push(template.substring(lastIndex, match.index));
 					}
 
-					var expression = match[0],
-					    simple;
+					var expression = match[0];
 
 					if (expression.indexOf("=") === 0) {
 						_.rootFunctionRegExp.lastIndex = 0;
@@ -1885,7 +1878,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (_.rootFunctionRegExp.test(expression)) {
 							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
 							// and we can’t do that with regexes, we need a mini-parser
-							// TODO handle escaped parentheses
+							// TODO handle escaped parentheses and parens in strings and comments
 							var stack = ["("];
 
 							for (var i = regex.lastIndex; template[i]; i++) {
@@ -1907,7 +1900,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						} else {
 							// Bare = expression, must be followed by a property reference
 							lastIndex = regex.lastIndex;
-							simple = true;
 
 							var _ref = template.slice(match.index + 1).match(/^\s*\w+/) || [];
 
@@ -1918,11 +1910,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					} else {
 						// Template style, ${} and {} syntax
 						lastIndex = regex.lastIndex;
-						simple = expression[0] === "{";
 						expression = expression.replace(/\$?\{|\}/g, "");
 					}
 
-					ret.push(new Wysie.Expression(expression, simple));
+					ret.push(new Wysie.Expression(expression));
 				}
 
 				// Literal at the end
@@ -1933,34 +1924,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return ret;
 			},
 
-			lazy: {
-				transform: function transform() {
-					var ret = function ret(value) {
-						return value;
-					};
-
-					if (this.node.matches) {
-						var attribute = this.attribute && RegExp("\\b" + this.attribute + "\\b", "i");
-
-						for (var selector in _.special) {
-							if (this.node.matches(selector)) {
-								var transforms = _.special[selector];
-
-								for (var attrs in transforms) {
-									if (this.attribute && attribute.test(attrs) || !this.attribute && attrs == "null") {
-										var _ret = ret;
-										ret = function ret(value) {
-											return transforms[attrs](_ret(value));
-										};
-									}
-								}
-							}
-						}
-					}
-
-					return ret;
-				}
-			},
+			lazy: {},
 
 			proxy: {
 				scope: "all",
@@ -1969,13 +1933,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			static: {
 				elements: new WeakMap(),
-
-				// Handle simple expressions specially if they are in these elements/attributes
-				special: {
-					"*": {
-						"id, class, name": Wysie.identifier
-					}
-				},
 
 				formatNumber: function () {
 					var numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
