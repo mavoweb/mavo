@@ -133,6 +133,34 @@
 <section>
 	<h1>Expressions</h1>
 
+	<p>You can dynamically refer to the value of any property you have defined anywhere, by putting an <code>=</code> sign in front of it.</p>
+
+	<section class="example">
+		<p>Move the slider and check how both expressions are updated:</p>
+		<script type="text/plain">
+			<p>Slider value: =strength/100</p>
+			<input type="range" property="strength" title="=strength%" />
+		</script>
+	</section>
+
+	<p>Note how in the example above, <code>=strength/100</code> did not actually divide the value of the <code>strength</code> property by <code>100</code>.
+		This is because we wanted to use "/100" as a literal, to express a value out of a 100.
+	To not just print the values of properties, but also do calculations with them, you need to enclose the expression in parentheses.</p>
+
+	<section class="example">
+		<p>Move the slider and check how both expressions are updated:</p>
+		<script type="text/plain">
+			<p>Slider value: =(strength/100)</p>
+			<input type="range" property="strength" title="=strength%" />
+		</script>
+	</section>
+
+	@@@ TODO explain intermediate variables, functions, aggregates, scoping @@@
+</section>
+
+<section>
+	<h1>Debugging</h1>
+
 	@@@ TODO @@@
 </section>
 
