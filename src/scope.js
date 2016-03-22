@@ -38,14 +38,8 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					if (Wysie.is("multiple", element)) {
-						var obj = new Wysie.Collection(element, this.wysie);
-					}
-					else {
-						// Create wysie objects for all non-collection properties
-						obj = _.super.create(element, this.wysie);
-						obj.scope = obj instanceof _? obj : this;
-					}
+					var obj = Wysie.Node.create(element, this.wysie);
+					obj.scope = obj instanceof _? obj : this;
 
 					obj.parentScope = this;
 					this.properties[property] = obj;

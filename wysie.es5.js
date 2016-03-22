@@ -487,7 +487,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			element.removeAttribute("data-store");
 
 			// Normalize property names
-			$$(_.selectors.property, this.wrapper).forEach(function (element) {
+			this.propertyNames = $$(_.selectors.property, this.wrapper).map(function (element) {
 				return Wysie.Node.normalizeProperty(element);
 			});
 
@@ -496,7 +496,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Build wysie objects
 			console.time("Building wysie tree");
-			this.root = new (_.is("multiple", this.element) ? _.Collection : _.Scope)(this.element, this);
+			this.root = Wysie.Node.create(this.element, this);
 			console.timeEnd("Building wysie tree");
 
 			this.permissions = new Wysie.Permissions(null, this);
@@ -1474,6 +1474,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		toJSON: Wysie.prototype.toJSON,
 
 		static: {
+			create: function create(element, wysie, collection) {
+				var _Wysie$Unit;
+
+				if (Wysie.is("multiple", element) && !collection) {
+					return new Wysie.Collection(element, wysie);
+				}
+
+				return (_Wysie$Unit = Wysie.Unit).create.apply(_Wysie$Unit, arguments);
+			},
+
 			normalizeProperty: function normalizeProperty(element) {
 				// Get & normalize property name, if exists
 				var property = element.getAttribute("property") || element.getAttribute("itemprop");
@@ -2101,10 +2111,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Regex that loosely matches all possible expressions
 				// False positives are ok, but false negatives are not.
 				expressionRegex: function expressionRegex() {
-					this.propertyNames = $$("[property]", this.scope.element).map(function (element) {
-						return element.getAttribute("property");
-					});
-					var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
+					var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
 					return RegExp(["{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
 				}
@@ -2348,13 +2355,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						collection.add(element);
 					} else {
 						// No existing properties with this id, normal case
-						if (Wysie.is("multiple", element)) {
-							var obj = new Wysie.Collection(element, _this17.wysie);
-						} else {
-							// Create wysie objects for all non-collection properties
-							obj = _.super.create(element, _this17.wysie);
-							obj.scope = obj instanceof _ ? obj : _this17;
-						}
+						var obj = Wysie.Node.create(element, _this17.wysie);
+						obj.scope = obj instanceof _ ? obj : _this17;
 
 						obj.parentScope = _this17;
 						_this17.properties[property] = obj;

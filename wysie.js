@@ -257,14 +257,16 @@ var _ = self.Wysie = $.Class({
 		element.removeAttribute("data-store");
 
 		// Normalize property names
-		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Node.normalizeProperty(element));
+		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
+			return Wysie.Node.normalizeProperty(element);
+		});
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
 		// Build wysie objects
 		console.time("Building wysie tree");
-		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+		this.root = Wysie.Node.create(this.element, this);
 		console.timeEnd("Building wysie tree");
 
 		this.permissions = new Wysie.Permissions(null, this);
@@ -1181,6 +1183,14 @@ var _ = Wysie.Node = $.Class({
 	toJSON: Wysie.prototype.toJSON,
 
 	static: {
+		create: function(element, wysie, collection) {
+			if (Wysie.is("multiple", element) && !collection) {
+				return new Wysie.Collection(element, wysie);
+			}
+
+			return Wysie.Unit.create(...arguments);
+		},
+
 		normalizeProperty: function(element) {
 			// Get & normalize property name, if exists
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
@@ -1791,8 +1801,7 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			this.propertyNames = $$("[property]", this.scope.element).map(element => element.getAttribute("property"));
-			var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
+			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
 			return RegExp([
 					"{\\s*" + propertyRegex + "\\s*}",
@@ -2028,14 +2037,8 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					if (Wysie.is("multiple", element)) {
-						var obj = new Wysie.Collection(element, this.wysie);
-					}
-					else {
-						// Create wysie objects for all non-collection properties
-						obj = _.super.create(element, this.wysie);
-						obj.scope = obj instanceof _? obj : this;
-					}
+					var obj = Wysie.Node.create(element, this.wysie);
+					obj.scope = obj instanceof _? obj : this;
 
 					obj.parentScope = this;
 					this.properties[property] = obj;

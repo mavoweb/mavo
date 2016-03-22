@@ -66,14 +66,16 @@ var _ = self.Wysie = $.Class({
 		element.removeAttribute("data-store");
 
 		// Normalize property names
-		$$(_.selectors.property, this.wrapper).forEach(element => Wysie.Node.normalizeProperty(element));
+		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
+			return Wysie.Node.normalizeProperty(element);
+		});
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
 		// Build wysie objects
 		console.time("Building wysie tree");
-		this.root = new (_.is("multiple", this.element)? _.Collection : _.Scope)(this.element, this);
+		this.root = Wysie.Node.create(this.element, this);
 		console.timeEnd("Building wysie tree");
 
 		this.permissions = new Wysie.Permissions(null, this);

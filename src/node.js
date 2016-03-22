@@ -72,6 +72,14 @@ var _ = Wysie.Node = $.Class({
 	toJSON: Wysie.prototype.toJSON,
 
 	static: {
+		create: function(element, wysie, collection) {
+			if (Wysie.is("multiple", element) && !collection) {
+				return new Wysie.Collection(element, wysie);
+			}
+
+			return Wysie.Unit.create(...arguments);
+		},
+
 		normalizeProperty: function(element) {
 			// Get & normalize property name, if exists
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");

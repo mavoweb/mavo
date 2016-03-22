@@ -426,8 +426,7 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			this.propertyNames = $$("[property]", this.scope.element).map(element => element.getAttribute("property"));
-			var propertyRegex = "(?:" + this.propertyNames.join("|") + ")";
+			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
 			return RegExp([
 					"{\\s*" + propertyRegex + "\\s*}",
