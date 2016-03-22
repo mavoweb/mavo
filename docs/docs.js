@@ -24,7 +24,7 @@ $$(".example").forEach((example, i) => {
 		contents: [
 			{
 				tag: "summary",
-				textContent: "Show JSON data"
+				textContent: "Show saved data"
 			}, data
 		],
 		after: container
