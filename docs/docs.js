@@ -1,10 +1,13 @@
+// Create the live examples
 $$(".example").forEach((example, i) => {
 	example.id = example.id || "example" + (i + 1);
 
-	$.create("h1", {
-		textContent: "Example",
-		start: example
-	});
+	if (!$("h1", example)) {
+		$.create("h1", {
+			textContent: "Example",
+			start: example
+		});
+	}
 
 	var code = $("script[type='text/plain']", example);
 
@@ -35,6 +38,14 @@ $$(".example").forEach((example, i) => {
 	wysieRoot.setAttribute("data-store", "#" + data.id);
 });
 
+// ???
 $$('a[href^="#"]:empty').forEach(function (a) {
 	a.textContent = a.getAttribute("href").slice(1);
+});
+
+// Give every top-level heading an id
+$$("body > section > h1").forEach(function (h1) {
+	if (!h1.id) {
+		h1.id = h1.textContent.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+	}
 });

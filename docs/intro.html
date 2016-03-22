@@ -15,6 +15,9 @@
 	</h1>
 </header>
 
+<input type="checkbox" id="show-examples" checked />
+<label for="show-examples">Show examples?</label>
+
 <section>
 	<h1>Defining a wysie app</h1>
 
@@ -67,7 +70,7 @@
 
 	<hr />
 
-	<p>Wysie knows that different elements need different editing UI:</p>
+	<p>You can put the <code>property</code> attribute on <strong>any</strong> HTML5 element, and wysie knows how to make it editable:</p>
 
 	<section class="example">
 		<script type="text/plain">
@@ -94,6 +97,24 @@
 	</section>
 
 	<p>Note how there is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
+</section>
+
+<section>
+	<h1>Grouping</h1>
+
+	<p>Sometimes the value of a property is not a simple piece of data that can be described with one element, but a group of elements.
+	If an element with a <code>property</code> attribute contains other properties inside it, it becomes a group.</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<article property="author">
+				<h1 property="name">Lea Verou</h1>
+				<img property="avatar" src="http://lea.verou.me/logo.svg"/>
+			</article>
+		</script>
+	</section>
+
+	<p>On their own, groups don’t do much, but they can be very useful when combined with lists and expressions, explained next.</p>
 </section>
 
 <section>
@@ -125,7 +146,7 @@
 		</script>
 	</section>
 
-	<p>Note that the <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
+	<p class="note">Note that the <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
 
 	@@@ TODO explain collections of objects @@@
 </section>
@@ -133,7 +154,7 @@
 <section>
 	<h1>Expressions</h1>
 
-	<p>You can dynamically refer to the value of any property you have defined anywhere, by putting an <code>=</code> sign in front of it.</p>
+	<p>You can dynamically refer to the value of any property you have defined, anywhere, by putting an <code>=</code> sign in front of it.</p>
 
 	<section class="example">
 		<p>Move the slider and check how both expressions are updated:</p>
@@ -145,7 +166,7 @@
 
 	<p>Note how in the example above, <code>=strength/100</code> did not actually divide the value of the <code>strength</code> property by <code>100</code>.
 		This is because we wanted to use "/100" as a literal, to express a value out of a 100.
-	To not just print the values of properties, but also do calculations with them, you need to enclose the expression in parentheses.</p>
+	To not just print the values of properties, but also do calculations with them, you need to <strong>enclose the expression in parentheses</strong>.</p>
 
 	<section class="example">
 		<p>Move the slider and check how both expressions are updated:</p>
@@ -155,13 +176,79 @@
 		</script>
 	</section>
 
-	@@@ TODO explain intermediate variables, functions, aggregates, scoping @@@
+	<p>You can also refer to properties whose value depends on an expression.</p>
+
+	<section class="example color-picker">
+		<p>Making a bare-bones HSL color picker with Wysie expressions:</p>
+		<script type="text/plain">
+			<div style="background-color: =color;">
+				<input type="range" property="hue" max="360" />
+				<input type="range" property="saturation" />
+				<input type="range" property="lightness" />
+
+				<input property="color" value="hsl(=hue, =saturation%, =lightness%)" readonly />
+			</div>
+		</script>
+	</section>
+
+	<p class="note">Note that properties whose values are expressions are called “computed properties” and are not saved.</p>
+
+	<hr />
+
+	<p>If there are <a href="#groups">groups</a> and there are properties with the same name inside and outside the group,
+		the value <strong>closest to your expression</strong> will be used, with parent groups having priority over inner groups.</p>
+
+	<section class="example scoped-expressions">
+		<h1>Example: Grouping & Expressions</h1>
+		<script type="text/plain">
+			<p>Hi, I’m =firstname =lastname</p> <!-- From inner group -->
+
+			<div property="person">
+				<span property="firstname">Lea</span>
+				<span property="lastname">Verou</span>
+				<p>Hi, I’m =firstname =lastname</p>
+
+				<div property="mother">
+					<span property="firstname">Maria</span>
+					<!-- Last name from parent group -->
+					<p>Hi, I’m =firstname =lastname</p>
+
+					<div property="mother">
+						<span property="firstname">Areti</span>
+						<!-- Last name from grandparent group -->
+						<p>Hi, I’m =firstname =lastname</p>
+					</div>
+				</div>
+			</div>
+		</script>
+	</section>
+
+	@@@ TODO explain functions, aggregates @@@
 </section>
 
 <section>
-	<h1>Debugging</h1>
+	<h1>Finding mistakes</h1>
 
-	@@@ TODO @@@
+	<p>You can add a <code>debug</code> class on any element and after reloading you will get a table on every group inside it with all its expressions.
+	<strong>The expressions in the table are editable</strong> and you can see the results of your edits as you type, both in the table and in your app.
+	Hovering over the elements in the last column will reveal them in the app.</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<div data-store class="debug">
+				<p>
+					<label>x: <input type="number" property="x" value="15" /></label>
+					<label>Y: <input type="number" property="y" value="5" /></label>
+				</p>
+				<ul>
+					<li>x + y is =(x + y)</li>
+					<li>x - y is =(x - y)</li>
+					<li>x * y is =(x * y)</li>
+					<li>x / y is =(x / y)</li>
+				</ul>
+			</div>
+		</script>
+	</section>
 </section>
 
 <script src="../../bliss/bliss.js"></script>

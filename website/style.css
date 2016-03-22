@@ -119,20 +119,32 @@ body > section > * {
   .docs .logo img {
     margin-bottom: -.8em; }
 
-.docs .example script[type='application/json'] {
-  display: block;
-  padding: 1em; }
+.docs .example > h1 {
+  color: #80b3ae; }
 
-.docs .example-container {
+.docs .example.color-picker .example-container {
+  padding: 0; }
+  .docs .example.color-picker .example-container div[style] {
+    padding: 2em; }
+  .docs .example.color-picker .example-container input {
+    display: block; }
+
+.docs .example.scoped-expressions .example-container [typeof] {
+  padding: 1em;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.05);
+  margin: 1em; }
+
+.docs .example .example-container {
   position: relative;
   -webkit-transform: scale(1);
   transform: scale(1);
   padding: 2.5em 2em 2em;
   border: 1px solid rgba(0, 0, 0, 0.3);
   margin: 1em 0 0; }
-  .docs .example-container + details {
+  .docs .example .example-container + details {
     margin-bottom: 1em; }
-    .docs .example-container + details summary {
+    .docs .example .example-container + details summary {
       display: block;
       padding: .3em .8em;
       background: rgba(0, 0, 0, 0.3);
@@ -141,8 +153,25 @@ body > section > * {
       font-weight: bold;
       cursor: pointer;
       outline: none; }
-      .docs .example-container + details summary:hover, .docs .example-container + details summary:focus {
+      .docs .example .example-container + details summary:hover, .docs .example .example-container + details summary:focus {
         background: rgba(0, 0, 0, 0.6); }
+
+.docs .example script[type='application/json'] {
+  display: block;
+  padding: 1em; }
+
+.docs #show-examples, .docs #show-examples + label {
+  position: fixed;
+  bottom: 2rem;
+  left: 2rem;
+  margin: 0;
+  line-height: 1; }
+
+.docs #show-examples + label {
+  left: 3.5rem; }
+
+.docs #show-examples:not(:checked) ~ section .example {
+  display: none; }
 
 .tip::before {
   content: "Tip: ";
