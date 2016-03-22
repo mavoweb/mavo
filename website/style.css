@@ -38,6 +38,12 @@ pre {
   padding: .2em .4em;
   border-radius: .25em; }
 
+hr {
+  height: 2em;
+  margin: 1.5em 0 1em;
+  background: url(hr.svg) no-repeat center;
+  border: none; }
+
 .logo {
   font: 300 180% Helvetica Neue, sans-serif;
   letter-spacing: .15em;
@@ -118,11 +124,25 @@ body > section > * {
   padding: 1em; }
 
 .docs .example-container {
+  position: relative;
   -webkit-transform: scale(1);
   transform: scale(1);
-  padding: 2em;
+  padding: 2.5em 2em 2em;
   border: 1px solid rgba(0, 0, 0, 0.3);
-  margin: 1em 0; }
+  margin: 1em 0 0; }
+  .docs .example-container + details {
+    margin-bottom: 1em; }
+    .docs .example-container + details summary {
+      display: block;
+      padding: .3em .8em;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      font-size: 75%;
+      font-weight: bold;
+      cursor: pointer;
+      outline: none; }
+      .docs .example-container + details summary:hover, .docs .example-container + details summary:focus {
+        background: rgba(0, 0, 0, 0.6); }
 
 .tip::before {
   content: "Tip: ";

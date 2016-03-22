@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" class="docs">
+<head>
+	<meta charset="UTF-8">
+	<title>Wysie: Documentation for HTML authors</title>
+	<link rel="stylesheet" href="../wysie.css" />
+	<link rel="stylesheet" href="../website/style.css">
+</head>
+<body class="language-markup">
+
+<header>
+	<h1 class="logo">
+		<img src="../logo.svg" alt="Wysie: What you see is editable">
+		Introduction and first steps
+	</h1>
+</header>
+
+<section>
+	<h1>Defining a wysie app</h1>
+
+	<p>The <code>data-store</code> attribute has two purposes: its presence tells wysie that it should pay attention to what is inside that element
+		and its value tells wysie where to store any data.
+		The value of the <code>data-store</code> attribute is always a valid URL and has the following meaning:</p>
+
+	<dl>
+		<dt><code>""</code></dt>
+		<dd>An empty value (or no value) disables storage.</dd>
+
+		<dt><code>#hash</code></dt>
+		<dd>A local hash can mean two things, depending on whether an element exists in the page with that id:
+			<ol>
+				<li>If an element exists, that element will receive any saved data.</li>
+				<li>If there is no corresponding element, the data will be saved in the browser (<code>localStorage</code>).</li>
+			</ol>
+		</dd>
+
+		<dt><code>https://www.dropbox.com/s/[lettersandnumbers]/[filename]?dl=0</code></dt>
+		<dd>
+			This is the URL that Dropbox gives you if you click “Share” on a file.
+			In that case, the data will be saved back to Dropbox, and wysie will ask you to log in to edit or save.
+		</dd>
+	</dl>
+</section>
+
+<section>
+	<h1>The property attribute</h1>
+
+	<p>The <code>property</code> attribute tells wysie which elements should be editable. Its value should describe the element, similarly to a <code>id</code> or <code>class</code> attribute.
+		It can contain letters, numbers and underscores (_).</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<span property="firstName">Lea</span> <span property="last_name">Verou</span>
+			<span>- I don’t have a property attribute, so I’m not editable.</span>
+		</script>
+	</section>
+
+	<p>If it happens to be the same as the element’s <code>id</code> or <code>class</code> attributes,
+		you don’t need to provide a value:</p>
+
+	<script type="text/plain">
+		<!-- In all of the following, the property value is "name" -->
+		<div property class="name">Lea Verou</div>
+		<div property id="name">Lea Verou</div>
+		<div property="name">Lea Verou</div>
+	</script>
+
+	<hr />
+
+	<p>Wysie knows that different elements need different editing UI:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<meter property="rating" min="1" value="3" max="5"></meter>
+			<time property="birthday" datetime="2014-06-01"></time>
+			<img property="avatar" src="http://i.imgur.com/LPeWcag.png" />
+		</script>
+	</section>
+
+	<hr />
+
+	<p>Form elements don’t need any editing UI, since they are already editable:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<input property="name" value="Lea Verou"/>
+			<input property="strength" type="range" />
+			<select property="country">
+				<option value="us">United States</option>
+				<option value="gb">United Kingdom</option>
+				<option value="jp">Japan</option>
+			</select>
+		</script>
+	</section>
+
+	<p>Note how there is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
+</section>
+
+<section>
+	<h1>Creating lists: The data-multiple attribute</h1>
+
+	<p>Let’s assume we have a list of hobbies that we want to make editable.
+		We <em>could</em> add <code>property</code> attributes to every item:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			Hobbies:
+			<ul>
+				<li property="hobby">Eating</li>
+				<li property="hobby2">Sleeping</li>
+				<li property="hobby3">Purring</li>
+			</ul>
+		</script>
+	</section>
+
+	<p>This works, but we cannot add new hobbies or delete existing ones.
+		To do that, we need the <code>data-multiple</code> attribute, which tells wysie that <strong>this element can be multiplied</strong>:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			Hobbies:
+			<ul>
+				<li property="hobby" data-multiple>Eating</li>
+			</ul>
+		</script>
+	</section>
+
+	<p>Note that the <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
+
+	@@@ TODO explain collections of objects @@@
+</section>
+
+<section>
+	<h1>Expressions</h1>
+
+	@@@ TODO @@@
+</section>
+
+<script src="../../bliss/bliss.js"></script>
+<script src="docs.js"></script>
+<script src="../wysie.js"></script>
+<script src="../website/prism.js"></script>
+
+</body>
+</html>
