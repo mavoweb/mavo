@@ -2742,10 +2742,11 @@ var _ = Wysie.Primitive = $.Class({
 					$.unbind([this.element, this.popup], ".wysie:showpopup");
 					this.popup._.after(this.element);
 
-					this.popup._.style({ // TODO what if it doesn’t fit?
-						top: this.element.offsetTop + this.element.offsetHeight + "px",
-						left: this.element.offsetLeft + "px"
-					});
+					var x = this.element.offsetLeft;
+					var y = this.element.offsetTop + this.element.offsetHeight;
+
+					 // TODO what if it doesn’t fit?
+					this.popup._.style({ top:  `${y}px`, left: `${x}px` });
 
 					this.popup._.removeAttribute("hidden"); // trigger transition
 
@@ -3030,9 +3031,17 @@ _.attributes = {
 			}
 
 			// TODO do this properly (account for other datetime datatypes and different formats)
-			var months = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+			var options = {
+				"date": {day: "numeric", month: "short", year: "numeric"},
+				"month": {month: "long"},
+				"time": {hour: "numeric", minute: "numeric"},
+				"datetime-local": {day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric"}
+			};
 
-			return date.getDate() + " " + months[date.getMonth()] + " " + date.getFullYear();
+			var format = options[this.editor && this.editor.type] || options.date;
+			format.timeZone = "UTC";
+
+			return date.toLocaleString("en-GB", format);
 		}
 	},
 	"meta": "content"
