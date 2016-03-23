@@ -37,7 +37,13 @@ label {
 </head>
 <body>
 
-<main data-store="#foo" class="debug">
+<main data-store="#foo2" class="debug">
+	<article property="pet" data-multiple>
+
+		Born on <time property="birthday" datetime="2014-06-01"></time>
+	</article>
+
+	<!--
 	<label>Search names: <input type='search' property="search" class="computed" /></label>
 	<input type="range" property="slider" />
 	=slider
@@ -80,7 +86,7 @@ label {
 		<dt>Sum:</dt>
 		<dd>=SUM(age)</dd>
 	</dl>
-
+	-->
 </main>
 
 <script type="application/json" id="foo2"></script>

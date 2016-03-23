@@ -59,7 +59,7 @@ var _ = Wysie.Primitive = $.Class({
 			if (this.attribute) {
 				var value = this.value;
 
-				if (record[0].oldValue != value) {
+				if (record[record.length - 1].oldValue != value) {
 					this.update(value);
 				}
 			}
@@ -97,7 +97,7 @@ var _ = Wysie.Primitive = $.Class({
 
 			// Intercept certain properties so that any Wysie UI inside this primitive will not be destroyed
 			["textContent", "innerHTML"].forEach(property => {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
 				Object.defineProperty(this.element, property, {
 					get: function() {

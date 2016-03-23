@@ -2640,7 +2640,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (_this20.attribute) {
 					var value = _this20.value;
 
-					if (record[0].oldValue != value) {
+					if (record[record.length - 1].oldValue != value) {
 						_this20.update(value);
 					}
 				} else if (!_this20.wysie.editing) {
@@ -2678,7 +2678,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				// Intercept certain properties so that any Wysie UI inside this primitive will not be destroyed
 				["textContent", "innerHTML"].forEach(function (property) {
-					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
 					Object.defineProperty(_this20.element, property, {
 						get: function get() {
