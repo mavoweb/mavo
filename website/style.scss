@@ -226,6 +226,10 @@ body > section {
 			display: block;
 			padding: 1em;
 		}
+
+		@media print {
+			display: none;
+		}
 	}
 
 	#show-examples {
@@ -235,6 +239,10 @@ body > section {
 			left: 2rem;
 			margin: 0;
 			line-height: 1;
+
+			@media print {
+				display: none;
+			}
 		}
 
 		& + label {
@@ -246,16 +254,29 @@ body > section {
 		}
 	}
 
-	.note {
-		border-left: .5em solid mix(white, $secondary-color, 30%);
-		padding-left: .5em;
-		margin-left: -1em;
+	#summary {
+		break-inside: avoid;
 
-		&::before {
-			content: "Note: ";
+		dt {
+			font-size: 120%;
 			font-weight: bold;
-			color: $secondary-color;
 		}
+
+		dd + dt {
+			margin-top: 1.5em;
+		}
+	}
+}
+
+.note {
+	border-left: .5em solid mix(white, $secondary-color, 30%);
+	padding-left: .5em;
+	margin-left: -1em;
+
+	&::before {
+		content: "Note: ";
+		font-weight: bold;
+		color: $secondary-color;
 	}
 }
 

@@ -27,7 +27,7 @@ $$(".example").forEach((example, i) => {
 		contents: [
 			{
 				tag: "summary",
-				textContent: "Show saved data"
+				textContent: "Saved data"
 			}, data
 		],
 		after: container
@@ -45,7 +45,9 @@ $$('a[href^="#"]:empty').forEach(function (a) {
 
 // Give every top-level heading an id
 $$("body > section > h1").forEach(function (h1) {
-	if (!h1.id) {
-		h1.id = h1.textContent.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+	var section = h1.parentNode;
+
+	if (!section.id) {
+		section.id = h1.textContent.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 	}
 });

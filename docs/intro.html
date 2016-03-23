@@ -18,7 +18,7 @@
 <input type="checkbox" id="show-examples" checked />
 <label for="show-examples">Show examples?</label>
 
-<section>
+<section id="data-store">
 	<h1>Defining a wysie app</h1>
 
 	<p>The <code>data-store</code> attribute has two purposes: its presence tells wysie that it should pay attention to what is inside that element
@@ -45,7 +45,7 @@
 	</dl>
 </section>
 
-<section>
+<section id="property">
 	<h1>The property attribute</h1>
 
 	<p>The <code>property</code> attribute tells wysie which elements should be editable. Its value should describe the element, similarly to a <code>id</code> or <code>class</code> attribute.
@@ -117,7 +117,7 @@
 	<p>On their own, groups don’t do much, but they can be very useful when combined with lists and expressions, explained next.</p>
 </section>
 
-<section>
+<section id="data-multiple">
 	<h1>Creating lists: The data-multiple attribute</h1>
 
 	<p>Let’s assume we have a list of hobbies that we want to make editable.
@@ -237,7 +237,10 @@
 		</script>
 	</section>
 
-	<hr />
+</section>
+
+<section id="functions">
+	<h1>Expression functions</h1>
 
 	<p>References and simple arithmetic are useful, but not always enough.
 		For this purpose, wysie defines a number of common math functions you can use inside expressions, such as:
@@ -345,7 +348,7 @@
 	</section>
 </section>
 
-<section>
+<section id="debugging">
 	<h1>Finding mistakes</h1>
 
 	<p>You can add a <code>debug</code> class on any element and after reloading you will get a table on every group inside it with all its expressions.
@@ -369,6 +372,35 @@
 			</div>
 		</script>
 	</section>
+</section>
+
+<section id="summary">
+	<h1>Summary/Cheatsheet</h1>
+
+	<dl>
+		<dt><a href="#data-store"><code>data-store</code> attribute</a></dt>
+		<dd>Wysify an element and its contents. Its value specifies where data is stored.</dd>
+
+		<dt><a href="#property"><code>property</code> attribute</a></dt>
+		<dd>Name an element and make it editable, or group other properties.</dd>
+
+		<dt><a href="#data-multiple"><code>data-multiple</code> attribute</a></dt>
+		<dd>This element will be multiplied (i.e. create a list).
+			Can only be used on elements with <code>property</code> or <code>data-store</code> attributes.</dd>
+
+		<dt><a href="#expressions"><code>=foo</code></a></dt>
+		<dd>Print out the value of the "foo" property.</dd>
+
+		<dt><a href="#expressions"><code>=(foo * sqrt(foo))</code></a></dt>
+		<dd>Print out the value of an expression. Can be used anywhere. <strong>Yes, in attributes too</strong>.</dd>
+
+		<dt><a href="#functions"><code>=count(foo)</code>, <code>=sum(foo)</code>, <code>=average(foo)</code>, <code>=min(foo)</code>, <code>=max(foo)</code></a></dt>
+		<dd>Display the count, sum, average, minimum or maximum of the different values of the "foo" property respectively.
+		The "foo" property must be either a list (i.e. an element with <code>data-multiple</code>) or contained in a list for this to work.</dd>
+
+		<dt><a href="#debugging"><code>class="debug"</code></a></dt>
+		<dd>Display an editable table with expressions and their current values in every group inside the <code>class="debug"</code> element.</dd>
+	</dl>
 </section>
 
 <script src="../../bliss/bliss.js"></script>

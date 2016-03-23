@@ -185,12 +185,19 @@ body > section > * {
   display: block;
   padding: 1em; }
 
+@media print {
+  .docs .example {
+    display: none; } }
+
 .docs #show-examples, .docs #show-examples + label {
   position: fixed;
   bottom: 2rem;
   left: 2rem;
   margin: 0;
   line-height: 1; }
+  @media print {
+    .docs #show-examples, .docs #show-examples + label {
+      display: none; } }
 
 .docs #show-examples + label {
   left: 3.5rem; }
@@ -198,11 +205,21 @@ body > section > * {
 .docs #show-examples:not(:checked) ~ section .example {
   display: none; }
 
-.docs .note {
+.docs #summary {
+  -webkit-column-break-inside: avoid;
+  page-break-inside: avoid;
+  break-inside: avoid; }
+  .docs #summary dt {
+    font-size: 120%;
+    font-weight: bold; }
+  .docs #summary dd + dt {
+    margin-top: 1.5em; }
+
+.note {
   border-left: 0.5em solid #a6c9c6;
   padding-left: .5em;
   margin-left: -1em; }
-  .docs .note::before {
+  .note::before {
     content: "Note: ";
     font-weight: bold;
     color: #80b3ae; }
