@@ -128,8 +128,8 @@
 			Hobbies:
 			<ul>
 				<li property="hobby">Eating</li>
-				<li property="hobby2">Sleeping</li>
-				<li property="hobby3">Purring</li>
+				<li property="hobby">Sleeping</li>
+				<li property="hobby">Purring</li>
 			</ul>
 		</script>
 	</section>
@@ -311,29 +311,32 @@
 				<li>Sum of all ages (why? because we can): =SUM(age)</li> <!-- caps don’t matter -->
 			</ul>
 		</script>
-		<script type="application/json">
-			{
-				"cat": [
-					{
-						"name": "Vector",
-						"age": 10
-					}, {
-						"name": "Jean"
-					}, {
-						"name": "Pixel",
-						"age": 6
-					}, {
-						"name": "Adam Catlace",
-						"age": 2.5
-					}, {
-						"name": "Eva"
-					}, {
-						"name": "Chlebis",
-						"age": 8
-					}
-				]
-			}
-		</script>
+		<script type="application/json">{
+	"cat": [
+		{
+			"name": "Vector",
+			"age": 10
+		},
+		{
+			"name": "Jean"
+		},
+		{
+			"name": "Pixel",
+			"age": 6
+		},
+		{
+			"name": "Adam Catlace",
+			"age": 2.5
+		},
+		{
+			"name": "Eva"
+		},
+		{
+			"name": "Chlebis",
+			"age": 8
+		}
+	]
+}</script>
 	</section>
 </section>
 
@@ -342,7 +345,7 @@
 
 	<p>You can add a <code>debug</code> class on any element and after reloading you will get a table on every group inside it with all its expressions.
 	<strong>The expressions in the table are editable</strong> and you can see the results of your edits as you type, both in the table and in your app.
-	Hovering over the elements in the last column will reveal them in the app.</p>
+	Hovering over the elements in the last column will highlight them in the app.</p>
 
 	<section class="example">
 		<script type="text/plain">

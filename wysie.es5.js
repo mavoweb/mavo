@@ -62,6 +62,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}, classProps: { lazy: t(function (t, e, n) {
 				return Object.defineProperty(t, e, { get: function get() {
 						var t = n.call(this);return Object.defineProperty(this, e, { value: t, configurable: !0, enumerable: !0, writable: !0 }), t;
+					}, set: function set(t) {
+						Object.defineProperty(this, e, { value: t, configurable: !0, enumerable: !0, writable: !0 });
 					}, configurable: !0, enumerable: !0 }), t;
 			}), live: t(function (t, e, r) {
 				return "function" === n.type(r) && (r = { set: r }), Object.defineProperty(t, e, { get: function get() {
@@ -1401,8 +1403,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		abstract: true,
 		constructor: function constructor(element, wysie) {
 			if (!element || !wysie) {
-				throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
+				throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
 			}
+
+			this.element = element;
 
 			this.wysie = wysie;
 			this.property = element.getAttribute("property");
@@ -1511,29 +1515,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		abstract: true,
 		extends: Wysie.Node,
 		constructor: function constructor(element, wysie, collection) {
-			if (!element || !wysie) {
-				throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
-			}
-
-			this.element = element;
 			this.constructor.all.set(this.element, this);
 
 			this.collection = collection;
 
 			if (this.collection) {
+				// This is a collection item
 				this.scope = this.parentScope = this.collection.parentScope;
+				this.debug = this.collection.debug;
 			}
 
-			this.computed = this.element.matches(Wysie.selectors.computed);
-
-			this.required = this.element.matches(Wysie.selectors.required);
-
-			if (this.collection && this.collection.debug) {
-				this.debug = true;
-			}
+			this.computed = Wysie.is("computed", this.element);
+			this.computed = Wysie.is("required", this.element);
 		},
 
 		get closestCollection() {
+			// TODO refactor using this.walkUp()
 			if (this.collection) {
 				return this.collection;
 			}
@@ -2342,14 +2339,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var existing = _this17.properties[property];
 
 					if (existing) {
-						// Property already exists, turn this into an immutable collection if it's not already
+						// Two scopes with the same property, convert to static collection
 						var collection = existing;
 
 						if (!(existing instanceof Wysie.Collection)) {
-							collection = new Wysie.Collection(element, _this17.wysie);
+							collection = new Wysie.Collection(existing.element, _this17.wysie);
 							collection.parentScope = _this17;
-							_this17.properties[property] = collection;
+							_this17.properties[property] = existing.collection = collection;
 							collection.add(existing);
+						}
+
+						if (!collection.mutable && Wysie.is("multiple", element)) {
+							collection.mutable = true;
 						}
 
 						collection.add(element);
@@ -3442,35 +3443,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mutable = this.template.matches(Wysie.selectors.multiple);
 
-			if (this.mutable) {
-				this.wysie.needsEdit = true;
-
-				this.required = this.template.matches(Wysie.selectors.required);
-
-				// Keep position of the template in the DOM, since we’re gonna remove it
-				this.marker = $.create("div", {
-					hidden: true,
-					className: "wysie-marker",
-					after: this.template
-				});
-
-				this.template.classList.add("wysie-item");
-
-				this.template.remove();
-
-				// Insert the add button if it's not already in the DOM
-				if (!this.addButton.parentNode) {
-					if (this.bottomUp) {
-						this.addButton._.before($.value(this.items[0], "element") || this.marker);
-					} else {
-						this.addButton._.after(this.marker);
-					}
-				}
-
-				this.element = element;
-				this.template = this.element.cloneNode(true);
-			}
-
 			Wysie.hooks.run("collection-init-end", this);
 		},
 
@@ -3559,7 +3531,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.items.splice(index, 0, item);
 			} else {
 				if (!item.element.parentNode) {
-					item.element._.before(this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker);
+					if (this.mutable) {
+						var preceding = this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker;
+					} else {
+						var preceding = this.items[this.length - 1].element;
+					}
+
+					item.element._.before(preceding);
 				}
 
 				this.items.push(item);
@@ -3689,11 +3667,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		import: function _import() {
-			var item = this.add(this.element);
+			if (this.mutable) {
+				this.add(this.element);
+			}
 
-			item.import();
-
-			// TODO import siblings too
+			this.items.forEach(function (item) {
+				return item.import();
+			});
 		},
 
 		render: function render(data) {
@@ -3760,22 +3740,60 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
+		live: {
+			mutable: function mutable(value) {
+				if (value && value !== this.mutable) {
+					this.wysie.needsEdit = true;
+
+					this.required = this.template.matches(Wysie.selectors.required);
+
+					// Keep position of the template in the DOM, since we’re gonna remove it
+					this.marker = $.create("div", {
+						hidden: true,
+						className: "wysie-marker",
+						after: this.template
+					});
+
+					this.template.classList.add("wysie-item");
+
+					this.template.remove();
+
+					// Insert the add button if it's not already in the DOM
+					if (!this.addButton.parentNode) {
+						if (this.bottomUp) {
+							this.addButton._.before($.value(this.items[0], "element") || this.marker);
+						} else {
+							this.addButton._.after(this.marker);
+						}
+					}
+
+					this.template = this.element.cloneNode(true);
+				}
+			}
+		},
+
 		lazy: {
 			bottomUp: function bottomUp() {
 				/*
      * Add new items at the top or bottom?
      */
+				if (!this.mutable) {
+					return false;
+				}
+
 				if (this.template.hasAttribute("data-bottomup")) {
 					// Attribute data-bottomup has the highest priority and overrides any heuristics
 					// TODO what if we want to override the heuristics and set it to false?
 					return true;
-				} else if (!this.addButton.parentNode) {
+				}
+
+				if (!this.addButton.parentNode) {
 					// If add button not in DOM, do the default
 					return false;
-				} else {
-					// If add button is already in the DOM and *before* our template, then we default to prepending
-					return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
 				}
+
+				// If add button is already in the DOM and *before* our template, then we default to prepending
+				return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
 			},
 
 			closestCollection: function closestCollection() {

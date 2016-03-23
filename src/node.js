@@ -4,8 +4,10 @@ var _ = Wysie.Node = $.Class({
 	abstract: true,
 	constructor: function (element, wysie) {
 		if (!element || !wysie) {
-			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
+			throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
 		}
+
+		this.element = element;
 
 		this.wysie = wysie;
 		this.property = element.getAttribute("property");

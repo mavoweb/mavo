@@ -7,29 +7,22 @@ var _ = Wysie.Unit = $.Class({
 	abstract: true,
 	extends: Wysie.Node,
 	constructor: function(element, wysie, collection) {
-		if (!element || !wysie) {
-			throw new Error("Wysie.Unit constructor requires an element argument and a wysie object");
-		}
-
-		this.element = element;
 		this.constructor.all.set(this.element, this);
 
 		this.collection = collection;
 
 		if (this.collection) {
+			// This is a collection item
 			this.scope = this.parentScope = this.collection.parentScope;
+			this.debug = this.collection.debug;
 		}
 
-		this.computed = this.element.matches(Wysie.selectors.computed);
-
-		this.required = this.element.matches(Wysie.selectors.required);
-
-		if (this.collection && this.collection.debug) {
-			this.debug = true;
-		}
+		this.computed = Wysie.is("computed", this.element);
+		this.computed = Wysie.is("required", this.element);
 	},
 
 	get closestCollection() {
+		// TODO refactor using this.walkUp()
 		if (this.collection) {
 			return this.collection;
 		}

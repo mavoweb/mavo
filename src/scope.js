@@ -24,14 +24,18 @@ var _ = Wysie.Scope = $.Class({
 				var existing = this.properties[property];
 
 				if (existing) {
-					// Property already exists, turn this into an immutable collection if it's not already
+					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(element, this.wysie);
+						collection = new Wysie.Collection(existing.element, this.wysie);
 						collection.parentScope = this;
-						this.properties[property] = collection;
+						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
+					}
+
+					if (!collection.mutable && Wysie.is("multiple", element)) {
+						collection.mutable = true;
 					}
 
 					collection.add(element);
