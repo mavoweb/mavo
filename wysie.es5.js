@@ -2644,7 +2644,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (record[record.length - 1].oldValue != value) {
 						_this20.update(value);
 					}
-				} else if (!_this20.wysie.editing) {
+				} else if (!_this20.wysie.editing || _this20.computed) {
 					_this20.update(_this20.value);
 				}
 			}, true);

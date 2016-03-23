@@ -63,7 +63,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.update(value);
 				}
 			}
-			else if (!this.wysie.editing) {
+			else if (!this.wysie.editing || this.computed) {
 				this.update(this.value);
 			}
 		}, true);
