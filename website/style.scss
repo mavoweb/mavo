@@ -23,6 +23,10 @@ a {
 	}
 }
 
+dd + dt {
+	margin-top: 1.5em;
+}
+
 pre, code, .example script[type='application/json'] {
 	background: lighten($accent-color, 28%);
 	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
@@ -45,7 +49,6 @@ pre, code, .example script[type='application/json'] {
 			}
 		}
 	}
-
 
 	:not(pre) > code {
 		padding: .2em .4em;
@@ -263,10 +266,6 @@ body > section {
 		dt {
 			font-size: 120%;
 			font-weight: bold;
-		}
-
-		dd + dt {
-			margin-top: 1.5em;
 		}
 	}
 }

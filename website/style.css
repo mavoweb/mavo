@@ -13,6 +13,9 @@ a {
   a:not(:hover) {
     text-decoration: none; }
 
+dd + dt {
+  margin-top: 1.5em; }
+
 pre, code, .example script[type='application/json'] {
   background: #f9f1f3;
   font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
@@ -214,8 +217,6 @@ body > section > * {
   .docs #summary dt {
     font-size: 120%;
     font-weight: bold; }
-  .docs #summary dd + dt {
-    margin-top: 1.5em; }
 
 .note {
   border-left: 0.5em solid #a6c9c6;
