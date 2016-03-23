@@ -881,7 +881,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	_.prototype.render = _.timed("render", _.prototype.render);
 
-	Stretchy.selectors.filter = ".wysie-editor, .wysie-debuginfo *";
+	Stretchy.selectors.filter = ".wysie-editor:not([property]), .wysie-debuginfo *";
 })(Bliss, Bliss.$);
 
 (function ($) {
