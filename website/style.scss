@@ -234,14 +234,17 @@ body > section {
 
 	#show-examples {
 		&, & + label {
-			position: fixed;
-			bottom: 2rem;
-			left: 2rem;
 			margin: 0;
 			line-height: 1;
 
 			@media print {
 				display: none;
+			}
+
+			@media (min-width: 1300px) {
+				position: fixed;
+				bottom: 2rem;
+				left: 2rem;
 			}
 		}
 

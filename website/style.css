@@ -190,14 +190,16 @@ body > section > * {
     display: none; } }
 
 .docs #show-examples, .docs #show-examples + label {
-  position: fixed;
-  bottom: 2rem;
-  left: 2rem;
   margin: 0;
   line-height: 1; }
   @media print {
     .docs #show-examples, .docs #show-examples + label {
       display: none; } }
+  @media (min-width: 1300px) {
+    .docs #show-examples, .docs #show-examples + label {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem; } }
 
 .docs #show-examples + label {
   left: 3.5rem; }
