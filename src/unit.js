@@ -14,11 +14,12 @@ var _ = Wysie.Unit = $.Class({
 		if (this.collection) {
 			// This is a collection item
 			this.scope = this.parentScope = this.collection.parentScope;
-			this.debug = this.collection.debug;
 		}
 
 		this.computed = Wysie.is("computed", this.element);
 		this.computed = Wysie.is("required", this.element);
+
+		Wysie.hooks.run("unit-init-end", this);
 	},
 
 	get closestCollection() {

@@ -291,15 +291,6 @@ var _ = self.Wysie = $.Class({
 			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
-		// Debugging function, should be moved
-		timed: function(id, callback) {
-			return function() {
-				console.time(id);
-				callback.apply(this, arguments);
-				console.timeEnd(id);
-			};
-		},
-
 		observe: function(element, attribute, callback, oldValue) {
 			var observer = $.type(callback) == "function"? new MutationObserver(callback) : callback;
 
@@ -352,8 +343,7 @@ let s = _.selectors = {
 	formControl: "input, select, textarea",
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
-	ui: ".wysie-ui",
-	debug: ".debug"
+	ui: ".wysie-ui"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
@@ -427,8 +417,6 @@ $.ready().then(evt => {
 	});
 });
 
-_.prototype.render = _.timed("render", _.prototype.render);
-
-Stretchy.selectors.filter = ".wysie-editor:not([property]), .wysie-debuginfo *";
+Stretchy.selectors.filter = ".wysie-editor:not([property])";
 
 })(Bliss, Bliss.$);

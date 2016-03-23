@@ -1,20 +1,5 @@
 $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
-/// Mixin to prefix several properties at once
-/// @author Hugo Giraudel
-/// @param {Map} $declarations - Declarations to prefix
-/// @param {List} $prefixes (()) - List of prefixes to print
-@mixin prefix($declarations, $prefixes: ()) {
-	@each $property, $value in $declarations {
-	@each $prefix in $prefixes {
-		#{'-' + $prefix + '-' + $property}: $value;
-	}
-
-	// Output standard non-prefixed declaration
-	#{$property}: $value;
-	}
-}
-
 @mixin highlight($color, $important: "") {
 	box-shadow: 0 0 0 50vmax $color inset #{$important};
 }
@@ -35,7 +20,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	bottom: calc(100% - 1.1em);
 	right: .1em;
 	z-index: 10;
-	@include prefix((filter: drop-shadow(0 .1em .1em rgba(0,0,0,.2))), webkit);
+	filter: drop-shadow(0 .1em .1em rgba(0,0,0,.2));
 	opacity: 0;
 	pointer-events: none;
 	border: solid transparent;
@@ -109,7 +94,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			color: white;
 
 			&::before {
-				@include prefix((filter: saturate(0) brightness(600%)), webkit);
+				filter: saturate(0) brightness(600%);
 			}
 		}
 	}
@@ -342,7 +327,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	color: white;
 	font-family: inherit;
 	font-size: 1rem;
-	@include prefix((backdrop-filter: blur(4px)), webkit);
+	backdrop-filter: blur(4px);
 
 	// Bar fixed at the top of the screen
 	.wysie-wrapper.can-logout &,

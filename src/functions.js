@@ -96,14 +96,6 @@ var _ = Wysie.Functions = {
 		});
 	},
 
-	/**
-	 * Logs the arguments and returns the first one. Useful for debugging.
-	 */
-	log: function() {
-		console.log(...arguments);
-		return arguments[0];
-	},
-
 	iff: function(condition, iftrue, iffalse="") {
 		return condition? iftrue : iffalse;
 	}

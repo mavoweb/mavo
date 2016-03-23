@@ -1,4 +1,4 @@
-!function(){"use strict";function t(e,r,i){return r=void 0===r?1:r,i=i||r+1,1>=i-r?function(){if(arguments.length<=r||"string"===n.type(arguments[r]))return e.apply(this,arguments);var t,i=arguments[r];for(var s in i){var o=Array.from(arguments);o.splice(r,1,s,i[s]),t=e.apply(this,o)}return t}:t(t(e,r+1,i),r,i-1)}function e(t,e,r){for(var i in e){if(r){var s=n.type(r);if("own"===r&&!e.hasOwnProperty(i)||"array"===s&&-1===r.indexOf(i)||"regexp"===s&&!r.test(i)||"function"===s&&!r.call(e,i))continue}var o=Object.getOwnPropertyDescriptor(e,i);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[i]=e[i]:(delete t[i],Object.defineProperty(t,i,o))}return t}var n=self.Bliss=e(function(t,e){return"string"===n.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(n,{extend:e,overload:t,property:n.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[])},type:function(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?n.set(t,e):(1===arguments.length&&("string"===n.type(t)?e={}:(e=t,t=e.tag,e=n.extend({},e,function(t){return"tag"!==t}))),n.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e=["constructor","extends","abstract","static"].concat(Object.keys(n.classProps)),r=t.hasOwnProperty("constructor")?t.constructor:n.noop,i=function(){if(t["abstract"]&&this.constructor===i)throw new Error("Abstract classes cannot be directly instantiated.");i["super"]&&i["super"].apply(this,arguments),r.apply(this,arguments)};i["super"]=t["extends"]||null,i.prototype=n.extend(Object.create(i["super"]?i["super"].prototype:Object),{constructor:i});var s=function(t){return this.hasOwnProperty(t)&&-1===e.indexOf(t)};if(t["static"]){n.extend(i,t["static"],s);for(var o in n.classProps)o in t["static"]&&n.classProps[o](i,t["static"][o])}n.extend(i.prototype,t,s);for(var o in n.classProps)o in t&&n.classProps[o](i.prototype,t[o]);return i.prototype["super"]=i["super"]?i["super"].prototype:null,i},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,r){return"function"===n.type(r)&&(r={set:r}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],n=r.get&&r.get.call(this,t);return void 0!==n?n:t},set:function(t){var n=this["_"+e],i=r.set&&r.set.call(this,t,n);this["_"+e]=void 0!==i?i:t},configurable:r.configurable,enumerable:r.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,r=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){n.set(r,{async:!0,onload:function(){e(),n.remove(r)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,r){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},r);i.method=i.method.toUpperCase(),n.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var s in r)if(s in i.xhr)try{i.xhr[s]=r[s]}catch(o){self.console&&console.error(o)}"GET"===i.method||i.headers["Content-type"]||i.headers["Content-Type"]||i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in i.headers)i.xhr.setRequestHeader(a,i.headers[a]);return new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(n.extend(Error(i.xhr.statusText),{get status(){return this.xhr.status},xhr:i.xhr}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)})},value:function(t){var e="string"!==n.type(t);return n.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),n.Hooks=new n.Class({add:function(t,e){this[t]=this[t]||[],this[t].push(e)},run:function(t,e){(this[t]||[]).forEach(function(t){t(e)})}}),n.hooks=new n.Hooks;var r=n.property;n.Element=function(t){this.subject=t,this.data={},this.bliss={}},n.Element.prototype={set:t(function(t,e){t in n.setProps?n.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(r,i){if("transition"in this.style){var s=n.extend({},this.style,/^transition(Duration|Property)$/);n.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),n.once(this,"transitionend",function(){clearTimeout(o),n.style(this,s),r(this)});var o=setTimeout(r,e+50,this);n.style(this,t)}else n.style(this,t),r(this)}.bind(this))},fire:function(t,e){var r=document.createEvent("HTMLEvents");return r.initEvent(t,!0,!0),this.dispatchEvent(n.extend(r,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(r in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var i=this[r].bliss.listeners=this[r].bliss.listeners||{};for(var s in i)if(!t||s===t)for(var o,a=0;o=i[s][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener.call(this,s,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},n.setProps={style:function(t){n.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){n.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[r]&&t[r].bliss){var i=t[r].bliss.listeners;for(var s in i)i[s].forEach(function(t){e.addEventListener(s,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===n.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)n.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=n.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=n.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&n.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},n.Array=function(t){this.subject=t},n.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},n.add=t(function(t,e,r,i){r=n.extend({$:!0,element:!0,array:!0},r),"function"==n.type(e)&&(!r.element||t in n.Element.prototype&&i||(n.Element.prototype[t]=function(){return this.subject&&n.defined(e.apply(this.subject,arguments),this.subject)}),!r.array||t in n.Array.prototype&&i||(n.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(r){return r&&n.defined(e.apply(r,t),r)})}),r.$&&(n.sources[t]=n[t]=e,(r.array||r.element)&&(n[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),s=r.array&&Array.isArray(i)?"Array":"Element";return n[s].prototype[t].apply({subject:i},e)})))},0),n.add(n.Array.prototype,{element:!1}),n.add(n.Element.prototype),n.add(n.setProps),n.add(n.classProps,{element:!1,array:!1});var i=document.createElement("_");n.add(n.extend({},HTMLElement.prototype,function(t){return"function"===n.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,i){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,i=function(t,e,n){return n.callback===t&&n.capture==e},s=function(){return!i.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,s){if(this&&this[e]&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(i.bind(null,r,s)).length&&o[t].push({callback:r,capture:s,className:a})}return n.call(this,t,r,s)},EventTarget.prototype.removeEventListener=function(t,n,i){if(this&&this[e]&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(s.bind(null,n,i)))}return r.call(this,t,n,i)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
+!function(){"use strict";function t(e,r,i){return r=void 0===r?1:r,i=i||r+1,1>=i-r?function(){if(arguments.length<=r||"string"===n.type(arguments[r]))return e.apply(this,arguments);var t,i=arguments[r];for(var s in i){var o=Array.from(arguments);o.splice(r,1,s,i[s]),t=e.apply(this,o)}return t}:t(t(e,r+1,i),r,i-1)}function e(t,e,r){for(var i in e){if(r){var s=n.type(r);if("own"===r&&!e.hasOwnProperty(i)||"array"===s&&-1===r.indexOf(i)||"regexp"===s&&!r.test(i)||"function"===s&&!r.call(e,i))continue}var o=Object.getOwnPropertyDescriptor(e,i);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[i]=e[i]:(delete t[i],Object.defineProperty(t,i,o))}return t}var n=self.Bliss=e(function(t,e){return"string"===n.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(n,{extend:e,overload:t,property:n.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[])},type:function(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?n.set(t,e):(1===arguments.length&&("string"===n.type(t)?e={}:(e=t,t=e.tag,e=n.extend({},e,function(t){return"tag"!==t}))),n.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e=["constructor","extends","abstract","static"].concat(Object.keys(n.classProps)),r=t.hasOwnProperty("constructor")?t.constructor:n.noop,i=function(){if(t["abstract"]&&this.constructor===i)throw new Error("Abstract classes cannot be directly instantiated.");i["super"]&&i["super"].apply(this,arguments),r.apply(this,arguments)};i["super"]=t["extends"]||null,i.prototype=n.extend(Object.create(i["super"]?i["super"].prototype:Object),{constructor:i});var s=function(t){return this.hasOwnProperty(t)&&-1===e.indexOf(t)};if(t["static"]){n.extend(i,t["static"],s);for(var o in n.classProps)o in t["static"]&&n.classProps[o](i,t["static"][o])}n.extend(i.prototype,t,s);for(var o in n.classProps)o in t&&n.classProps[o](i.prototype,t[o]);return i.prototype["super"]=i["super"]?i["super"].prototype:null,i},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,r){return"function"===n.type(r)&&(r={set:r}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],n=r.get&&r.get.call(this,t);return void 0!==n?n:t},set:function(t){var n=this["_"+e],i=r.set&&r.set.call(this,t,n);this["_"+e]=void 0!==i?i:t},configurable:r.configurable,enumerable:r.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,r=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){n.set(r,{async:!0,onload:function(){e(),n.remove(r)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,r){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},r);i.method=i.method.toUpperCase(),n.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var s in r)if(s in i.xhr)try{i.xhr[s]=r[s]}catch(o){self.console&&console.error(o)}"GET"===i.method||i.headers["Content-type"]||i.headers["Content-Type"]||i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in i.headers)i.xhr.setRequestHeader(a,i.headers[a]);return new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(n.extend(Error(i.xhr.statusText),{get status(){return this.xhr.status},xhr:i.xhr}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)})},value:function(t){var e="string"!==n.type(t);return n.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),n.Hooks=new n.Class({add:function(t,e){this[t]=this[t]||[],this[t].push(e)},run:function(t,e){(this[t]||[]).forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),n.hooks=new n.Hooks;var r=n.property;n.Element=function(t){this.subject=t,this.data={},this.bliss={}},n.Element.prototype={set:t(function(t,e){t in n.setProps?n.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(r,i){if("transition"in this.style){var s=n.extend({},this.style,/^transition(Duration|Property)$/);n.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),n.once(this,"transitionend",function(){clearTimeout(o),n.style(this,s),r(this)});var o=setTimeout(r,e+50,this);n.style(this,t)}else n.style(this,t),r(this)}.bind(this))},fire:function(t,e){var r=document.createEvent("HTMLEvents");return r.initEvent(t,!0,!0),this.dispatchEvent(n.extend(r,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(r in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var i=this[r].bliss.listeners=this[r].bliss.listeners||{};for(var s in i)if(!t||s===t)for(var o,a=0;o=i[s][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener.call(this,s,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},n.setProps={style:function(t){n.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){n.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[r]&&t[r].bliss){var i=t[r].bliss.listeners;for(var s in i)i[s].forEach(function(t){e.addEventListener(s,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===n.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)n.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=n.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=n.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&n.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},n.Array=function(t){this.subject=t},n.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},n.add=t(function(t,e,r,i){r=n.extend({$:!0,element:!0,array:!0},r),"function"==n.type(e)&&(!r.element||t in n.Element.prototype&&i||(n.Element.prototype[t]=function(){return this.subject&&n.defined(e.apply(this.subject,arguments),this.subject)}),!r.array||t in n.Array.prototype&&i||(n.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(r){return r&&n.defined(e.apply(r,t),r)})}),r.$&&(n.sources[t]=n[t]=e,(r.array||r.element)&&(n[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),s=r.array&&Array.isArray(i)?"Array":"Element";return n[s].prototype[t].apply({subject:i},e)})))},0),n.add(n.Array.prototype,{element:!1}),n.add(n.Element.prototype),n.add(n.setProps),n.add(n.classProps,{element:!1,array:!1});var i=document.createElement("_");n.add(n.extend({},HTMLElement.prototype,function(t){return"function"===n.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,i){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,i=function(t,e,n){return n.callback===t&&n.capture==e},s=function(){return!i.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,s){if(this&&this[e]&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(i.bind(null,r,s)).length&&o[t].push({callback:r,capture:s,className:a})}return n.call(this,t,r,s)},EventTarget.prototype.removeEventListener=function(t,n,i){if(this&&this[e]&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(s.bind(null,n,i)))}return r.call(this,t,n,i)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
 
 /*
  * Stretchy: Form element autosizing, the way it should be.
@@ -482,15 +482,6 @@ var _ = self.Wysie = $.Class({
 			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
-		// Debugging function, should be moved
-		timed: function(id, callback) {
-			return function() {
-				console.time(id);
-				callback.apply(this, arguments);
-				console.timeEnd(id);
-			};
-		},
-
 		observe: function(element, attribute, callback, oldValue) {
 			var observer = $.type(callback) == "function"? new MutationObserver(callback) : callback;
 
@@ -543,8 +534,7 @@ let s = _.selectors = {
 	formControl: "input, select, textarea",
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
-	ui: ".wysie-ui",
-	debug: ".debug"
+	ui: ".wysie-ui"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
@@ -618,9 +608,7 @@ $.ready().then(evt => {
 	});
 });
 
-_.prototype.render = _.timed("render", _.prototype.render);
-
-Stretchy.selectors.filter = ".wysie-editor:not([property]), .wysie-debuginfo *";
+Stretchy.selectors.filter = ".wysie-editor:not([property])";
 
 })(Bliss, Bliss.$);
 
@@ -1124,8 +1112,6 @@ var _ = Wysie.Node = $.Class({
 		this.property = element.getAttribute("property");
 		this.type = Wysie.Scope.normalize(element);
 
-		this.debug = !!element.closest(Wysie.selectors.debug);
-
 		Wysie.hooks.run("node-init-end", this);
 	},
 
@@ -1229,11 +1215,12 @@ var _ = Wysie.Unit = $.Class({
 		if (this.collection) {
 			// This is a collection item
 			this.scope = this.parentScope = this.collection.parentScope;
-			this.debug = this.collection.debug;
 		}
 
 		this.computed = Wysie.is("computed", this.element);
 		this.computed = Wysie.is("required", this.element);
+
+		Wysie.hooks.run("unit-init-end", this);
 	},
 
 	get closestCollection() {
@@ -1378,7 +1365,24 @@ var _ = Wysie.Expression = $.Class({
 	eval: function(data) {
 		this.oldValue = this.value;
 
-		return this.value = _.eval(this.expression, data, this.debug);
+		// TODO convert to new Function() which is more optimizable by JS engines.
+		// Also, cache the function, since only data changes across invocations.
+		Wysie.hooks.run("expression-eval-beforeeval", this);
+
+		try {
+			this.value = eval(`
+				with(Wysie.Functions.Trap)
+					with(data) {
+						${this.expression}
+					}`);
+		}
+		catch (exception) {
+			Wysie.hooks.run("expression-eval-error", {context: this, exception});
+
+			this.value = _.ERROR;
+		}
+
+		return this.value;
 	},
 
 	toString() {
@@ -1398,41 +1402,6 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	static: {
-		eval: (expr, data, debug) => {
-			// TODO convert to new Function() which is more optimizable by JS engines.
-			// Also, cache the function, since only data changes across invocations.
-			if (debug) {
-				debug.classList.remove("error");
-			}
-
-			try {
-				return eval(`with(Wysie.Functions.Trap) with(data) { ${expr} }`);
-			}
-			catch (e) {
-				if (debug) {
-					debug.innerHTML = _.friendlyError(e, expr);
-					debug.classList.add("error");
-				}
-
-				return _.ERROR;
-			}
-		},
-
-		friendlyError: (e, expr) => {
-			var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
-			var message = e.message;
-
-			// Friendlify common errors
-			if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
-				message = "Missing a )";
-			}
-			else if (message === "Unexpected token )") {
-				message = "Missing a (";
-			}
-
-			return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
-		},
-
 		ERROR: "N/A"
 	}
 });
@@ -1448,66 +1417,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.expression = this.text.trim();
 		this.template = this.tokenize(this.expression);
 
-		if (this.all.debug) {
-			if (this.all.debug === true) {
-				// Still haven't created table, create now
-				this.all.debug = $.create("tbody", {
-					inside: $.create("table", {
-						className: "wysie-ui wysie-debuginfo",
-						innerHTML: `<thead><tr>
-							<th>Expression</th>
-							<th>Value</th>
-							<th>Element</th>
-						</tr></thead>`,
-						inside: this.scope.element
-					})
-				});
-			}
-
-			this.debug = {};
-
-			this.template.forEach(expr => {
-				if (expr instanceof Wysie.Expression) {
-					var elementLabel = _.elementLabel(this.element, this.attribute);
-
-					$.create("tr", {
-						contents: [
-							{
-								tag: "td",
-								contents: {
-									tag: "textarea",
-									value: expr.expression,
-									events: {
-										input: evt => {
-											expr.expression = evt.target.value;
-											this.update(this.data);
-										}
-									},
-									once: {
-										focus: evt => Stretchy.resize(evt.target)
-									}
-								}
-							},
-							expr.debug = $.create("td"),
-							{
-								tag: "td",
-								textContent: elementLabel,
-								title: elementLabel,
-								events: {
-									"mouseenter mouseleave": evt => {
-										$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
-									}
-								}
-							}
-						],
-						properties: {
-							expression: expr
-						},
-						inside: this.all.debug
-					});
-				}
-			});
-		}
+		Wysie.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -1528,33 +1438,27 @@ var _ = Wysie.Expression.Text = $.Class({
 
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
-				if (this.debug) {
-					var td = expr.debug;
+				var env = {context: this, expr};
 
-					if (td) {
-						td.classList.remove("error");
-					}
-				}
+				Wysie.hooks.run("expressiontext-update-beforeeval", env);
 
-				var value = expr.eval(data);
+				env.value = env.expr.eval(data);
 
-				if (td && !td.classList.contains("error")) {
-					td.textContent = typeof value == "string"? `"${value}"` : value + "";
-				}
+				Wysie.hooks.run("expressiontext-update-aftereval", env);
 
-				if (value === undefined || value === null) {
+				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
 					this.value.push("");
 					return "";
 				}
 
-				this.value.push(value);
+				this.value.push(env.value);
 
-				if (typeof value === "number" && !this.attribute) {
-					value = _.formatNumber(value);
+				if (typeof env.value === "number" && !this.attribute) {
+					env.value = _.formatNumber(env.value);
 				}
 
-				return value;
+				return env.value;
 			}
 
 			this.value.push(expr);
@@ -1698,10 +1602,9 @@ var _ = Wysie.Expressions = $.Class({
 	constructor: function(scope) {
 		this.scope = scope;
 		this.scope.expressions = this;
-
 		this.all = []; // all Expression.Text objects in this scope
 
-		this.debug = this.scope.debug;
+		Wysie.hooks.run("expressions-init-start", this);
 
 		this.traverse();
 
@@ -1775,7 +1678,7 @@ var _ = Wysie.Expressions = $.Class({
 	traverse: function(node) {
 		node = node || this.scope.element;
 
-		if (node.matches && node.matches(".ignore-expressions, .wysie-debuginfo")) {
+		if (node.matches && node.matches(_.escape)) {
 			return;
 		}
 
@@ -1809,6 +1712,8 @@ var _ = Wysie.Expressions = $.Class({
 
 	static: {
 		THROTTLE: 0,
+
+		escape: ".ignore-expressions",
 
 		lazy: {
 			rootFunctions: () => [
@@ -1929,14 +1834,6 @@ var _ = Wysie.Functions = {
 			useGrouping: false,
 			maximumFractionDigits: decimals
 		});
-	},
-
-	/**
-	 * Logs the arguments and returns the first one. Useful for debugging.
-	 */
-	log: function() {
-		console.log(...arguments);
-		return arguments[0];
 	},
 
 	iff: function(condition, iftrue, iffalse="") {
@@ -3465,6 +3362,150 @@ var _ = Wysie.Collection = $.Class({
 
 			return button;
 		}
+	}
+});
+
+})(Bliss, Bliss.$);
+
+
+(function($, $$) {
+
+var _ = Wysie.Debug = {
+	friendlyError: (e, expr) => {
+		var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
+		var message = e.message;
+
+		// Friendlify common errors
+		if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
+			message = "Missing a )";
+		}
+		else if (message === "Unexpected token )") {
+			message = "Missing a (";
+		}
+
+		return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
+	},
+
+	timed: function(id, callback) {
+		return function() {
+			console.time(id);
+			callback.apply(this, arguments);
+			console.timeEnd(id);
+		};
+	},
+};
+
+Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
+
+Wysie.selectors.debug = ".debug";
+
+var selector = ", .wysie-debuginfo";
+Wysie.Expressions.escape += selector;
+Stretchy.selectors.filter += selector;
+
+Wysie.hooks.add("node-init-end", function() {
+	this.debug = !!this.element.closest(Wysie.selectors.debug);
+});
+
+Wysie.hooks.add("unit-init-end", function() {
+	if (this.collection) {
+		this.debug = this.collection.debug;
+	}
+});
+
+Wysie.hooks.add("expressions-init-start", function() {
+	this.debug = this.scope.debug;
+});
+
+Wysie.hooks.add("expression-eval-beforeeval", function() {
+	if (this.debug) {
+		this.debug.classList.remove("error");
+	}
+});
+
+Wysie.hooks.add("expression-eval-error", function(env) {
+	if (this.debug) {
+		this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
+		this.debug.classList.add("error");
+	}
+});
+
+Wysie.hooks.add("expressiontext-init-end", function() {
+	if (this.all.debug) {
+		if (this.all.debug === true) {
+			// Still haven't created table, create now
+			this.all.debug = $.create("tbody", {
+				inside: $.create("table", {
+					className: "wysie-ui wysie-debuginfo",
+					innerHTML: `<thead><tr>
+						<th>Expression</th>
+						<th>Value</th>
+						<th>Element</th>
+					</tr></thead>`,
+					inside: this.scope.element
+				})
+			});
+		}
+
+		this.debug = {};
+
+		this.template.forEach(expr => {
+			if (expr instanceof Wysie.Expression) {
+				var elementLabel = this.constructor.elementLabel(this.element, this.attribute);
+
+				$.create("tr", {
+					contents: [
+						{
+							tag: "td",
+							contents: {
+								tag: "textarea",
+								value: expr.expression,
+								events: {
+									input: evt => {
+										expr.expression = evt.target.value;
+										this.update(this.data);
+									}
+								},
+								once: {
+									focus: evt => Stretchy.resize(evt.target)
+								}
+							}
+						},
+						expr.debug = $.create("td"),
+						{
+							tag: "td",
+							textContent: elementLabel,
+							title: elementLabel,
+							events: {
+								"mouseenter mouseleave": evt => {
+									$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
+								}
+							}
+						}
+					],
+					properties: {
+						expression: expr
+					},
+					inside: this.all.debug
+				});
+			}
+		});
+	}
+});
+
+Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
+	if (this.debug) {
+		env.td = env.expr.debug;
+
+		if (env.td) {
+			env.td.classList.remove("error");
+		}
+	}
+});
+
+Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
+	if (env.td && !env.td.classList.contains("error")) {
+		env.td.textContent = typeof env.value == "string"? `"${env.value}"` : env.value + "";
 	}
 });
 

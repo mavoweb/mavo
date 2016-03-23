@@ -8,7 +8,24 @@ var _ = Wysie.Expression = $.Class({
 	eval: function(data) {
 		this.oldValue = this.value;
 
-		return this.value = _.eval(this.expression, data, this.debug);
+		// TODO convert to new Function() which is more optimizable by JS engines.
+		// Also, cache the function, since only data changes across invocations.
+		Wysie.hooks.run("expression-eval-beforeeval", this);
+
+		try {
+			this.value = eval(`
+				with(Wysie.Functions.Trap)
+					with(data) {
+						${this.expression}
+					}`);
+		}
+		catch (exception) {
+			Wysie.hooks.run("expression-eval-error", {context: this, exception});
+
+			this.value = _.ERROR;
+		}
+
+		return this.value;
 	},
 
 	toString() {
@@ -28,41 +45,6 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	static: {
-		eval: (expr, data, debug) => {
-			// TODO convert to new Function() which is more optimizable by JS engines.
-			// Also, cache the function, since only data changes across invocations.
-			if (debug) {
-				debug.classList.remove("error");
-			}
-
-			try {
-				return eval(`with(Wysie.Functions.Trap) with(data) { ${expr} }`);
-			}
-			catch (e) {
-				if (debug) {
-					debug.innerHTML = _.friendlyError(e, expr);
-					debug.classList.add("error");
-				}
-
-				return _.ERROR;
-			}
-		},
-
-		friendlyError: (e, expr) => {
-			var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
-			var message = e.message;
-
-			// Friendlify common errors
-			if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
-				message = "Missing a )";
-			}
-			else if (message === "Unexpected token )") {
-				message = "Missing a (";
-			}
-
-			return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
-		},
-
 		ERROR: "N/A"
 	}
 });
@@ -78,66 +60,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.expression = this.text.trim();
 		this.template = this.tokenize(this.expression);
 
-		if (this.all.debug) {
-			if (this.all.debug === true) {
-				// Still haven't created table, create now
-				this.all.debug = $.create("tbody", {
-					inside: $.create("table", {
-						className: "wysie-ui wysie-debuginfo",
-						innerHTML: `<thead><tr>
-							<th>Expression</th>
-							<th>Value</th>
-							<th>Element</th>
-						</tr></thead>`,
-						inside: this.scope.element
-					})
-				});
-			}
-
-			this.debug = {};
-
-			this.template.forEach(expr => {
-				if (expr instanceof Wysie.Expression) {
-					var elementLabel = _.elementLabel(this.element, this.attribute);
-
-					$.create("tr", {
-						contents: [
-							{
-								tag: "td",
-								contents: {
-									tag: "textarea",
-									value: expr.expression,
-									events: {
-										input: evt => {
-											expr.expression = evt.target.value;
-											this.update(this.data);
-										}
-									},
-									once: {
-										focus: evt => Stretchy.resize(evt.target)
-									}
-								}
-							},
-							expr.debug = $.create("td"),
-							{
-								tag: "td",
-								textContent: elementLabel,
-								title: elementLabel,
-								events: {
-									"mouseenter mouseleave": evt => {
-										$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
-									}
-								}
-							}
-						],
-						properties: {
-							expression: expr
-						},
-						inside: this.all.debug
-					});
-				}
-			});
-		}
+		Wysie.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -158,33 +81,27 @@ var _ = Wysie.Expression.Text = $.Class({
 
 		this.text = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
-				if (this.debug) {
-					var td = expr.debug;
+				var env = {context: this, expr};
 
-					if (td) {
-						td.classList.remove("error");
-					}
-				}
+				Wysie.hooks.run("expressiontext-update-beforeeval", env);
 
-				var value = expr.eval(data);
+				env.value = env.expr.eval(data);
 
-				if (td && !td.classList.contains("error")) {
-					td.textContent = typeof value == "string"? `"${value}"` : value + "";
-				}
+				Wysie.hooks.run("expressiontext-update-aftereval", env);
 
-				if (value === undefined || value === null) {
+				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
 					this.value.push("");
 					return "";
 				}
 
-				this.value.push(value);
+				this.value.push(env.value);
 
-				if (typeof value === "number" && !this.attribute) {
-					value = _.formatNumber(value);
+				if (typeof env.value === "number" && !this.attribute) {
+					env.value = _.formatNumber(env.value);
 				}
 
-				return value;
+				return env.value;
 			}
 
 			this.value.push(expr);
@@ -328,10 +245,9 @@ var _ = Wysie.Expressions = $.Class({
 	constructor: function(scope) {
 		this.scope = scope;
 		this.scope.expressions = this;
-
 		this.all = []; // all Expression.Text objects in this scope
 
-		this.debug = this.scope.debug;
+		Wysie.hooks.run("expressions-init-start", this);
 
 		this.traverse();
 
@@ -405,7 +321,7 @@ var _ = Wysie.Expressions = $.Class({
 	traverse: function(node) {
 		node = node || this.scope.element;
 
-		if (node.matches && node.matches(".ignore-expressions, .wysie-debuginfo")) {
+		if (node.matches && node.matches(_.escape)) {
 			return;
 		}
 
@@ -439,6 +355,8 @@ var _ = Wysie.Expressions = $.Class({
 
 	static: {
 		THROTTLE: 0,
+
+		escape: ".ignore-expressions",
 
 		lazy: {
 			rootFunctions: () => [
