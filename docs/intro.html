@@ -138,6 +138,7 @@
 		To do that, we need the <code>data-multiple</code> attribute, which tells wysie that <strong>this element can be multiplied</strong>:</p>
 
 	<section class="example">
+		<h1>Example: Simple list</h1>
 		<script type="text/plain">
 			Hobbies:
 			<ul>
@@ -146,9 +147,22 @@
 		</script>
 	</section>
 
-	<p class="note">Note that the <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
+	<p class="note">The <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
 
-	@@@ TODO explain collections of objects @@@
+	<hr />
+
+	<p>Any element with a <code>property</code> attribute can be turned into such a dynamic list, including <a href="#grouping">groups</a>.
+		If our list items are more complex that just one element, we can just put the <code>data-multiple</code> attribute on the grouping element, and then we get controls to multiply it.</p>
+
+	<section class="example">
+		<h1>Example: Lists of groups</h1>
+		<script type="text/plain">
+			<article property="pet" data-multiple>
+				<h1 property="name">Adam Catlace</h1>
+				Born on <time property="birthday" datetime="2014-06-01"></time>
+			</article>
+		</script>
+	</section>
 </section>
 
 <section>
@@ -191,7 +205,7 @@
 		</script>
 	</section>
 
-	<p class="note">Note that properties whose values are expressions are called “computed properties” and are not saved.</p>
+	<p class="note">Properties whose values are expressions are called <em>“computed properties”</em> and are <strong>not saved</strong>.</p>
 
 	<hr />
 
@@ -223,7 +237,112 @@
 		</script>
 	</section>
 
-	@@@ TODO explain functions, aggregates @@@
+	<hr />
+
+	<p>References and simple arithmetic are useful, but not always enough.
+		For this purpose, wysie defines a number of common math functions you can use inside expressions, such as:
+		<code>pow(base, exponent)</code>, <code>round(number, decimals)</code>, <code>sqrt(number)</code> and many more.</p>
+
+	<section class="example pow">
+		<script type="text/plain">
+			<input property="base" type="number" value="2" />
+			<input property="exponent" type="number" value="3" /> = =pow(base, exponent)
+		</script>
+	</section>
+
+	<p class="note">Note that parentheses can be omitted if the entire expression is inside a function,
+		to avoid awkwardness like <code>=(pow(x, y))</code></p>
+
+	<hr />
+
+	<p>You can use the <code>iff(condition, ifyes, ifno)</code> function to print out different text depending on a condition.
+	</p>
+
+	<section class="example movie">
+		<script type="text/plain">
+			<style>
+				.movie .bad { background: #fee; }
+				.movie .ok { background: #ffe; }
+				.movie .good { background: #efd; }
+			</style>
+
+			<div data-store class="=iff(rating < 3, bad, iff(rating > 3, good, ok))">
+				<label>Rating:
+					<input property="rating" type="range" min="1" max="5" />
+				</label>
+
+				<p style="display: =iff(rating == 1, block,  none)">Wow, you hated that movie!</p>
+				<p style="display: =iff(rating > 3, block,  none)">Glad you liked it!</p>
+			</div>
+		</script>
+	</section>
+
+	<p class="note">If what you’re printing contains characters other than letters, numbers and underscores,
+		you will need to use quotes around it, just like in CSS <code>font-family</code>.</p>
+
+	<hr />
+
+	<p>There are functions that work with lists of values, such as
+		<code>count(property)</code>, <code>sum(property)</code>, <code>average(property)</code>,
+		<code>min(property)</code>, <code>max(property)</code>.</p>
+
+	<section class="example">
+		<p>Try adding and removing elements:</p>
+
+		<script type="text/plain">
+			<h2>My cats</h2>
+			<ul>
+				<li property="cat" data-multiple>
+					<div property="name">Vector</div>
+					<div property="age">10</div>
+				</li>
+			</ul>
+
+			<h2>Aggregates over age:</h2>
+			<dl>
+				<dt>Number of cats:</dt>
+				<dd>=count(cat)</dd>
+
+				<dt>Number of cats with age:</dt>
+				<dd>=count(age)</dd>
+
+				<dt>Average cat age:</dt>
+				<dd>=average(age)</dd> <!-- avg(age) also works -->
+
+				<dt>Minimum age:</dt>
+				<dd>=min(age)</dd>
+
+				<dt>Maximum age:</dt>
+				<dd>=Max(age)</dd> <!-- caps don’t matter -->
+
+				<dt>Sum of all ages (why? because we can):</dt>
+				<dd>=SUM(age)</dd> <!-- caps don’t matter -->
+			</dl>
+		</script>
+		<script type="application/json">
+			{
+				"cat": [
+					{
+						"name": "Vector",
+						"age": 10
+					}, {
+						"name": "Jean"
+					}, {
+						"name": "Pixel",
+						"age": 6
+					}, {
+						"name": "Adam Catlace",
+						"age": 2.5
+					}, {
+						"name": "Eva"
+					}, {
+						"name": "Chlebis",
+						"age": 8
+					}
+				]
+			}
+		</script>
+	</section>
 </section>
 
 <section>
@@ -237,14 +356,15 @@
 		<script type="text/plain">
 			<div data-store class="debug">
 				<p>
-					<label>x: <input type="number" property="x" value="15" /></label>
-					<label>Y: <input type="number" property="y" value="5" /></label>
+					<label>x = <input type="number" property="x" value="15" /></label>,
+					<label>y = <input type="number" property="y" value="5" /></label>
 				</p>
 				<ul>
-					<li>x + y is =(x + y)</li>
-					<li>x - y is =(x - y)</li>
-					<li>x * y is =(x * y)</li>
-					<li>x / y is =(x / y)</li>
+					<li>x + y = <span property="sum">=(x + y)</span></li>
+					<li>x - y = =(x - y)</li>
+					<li>x * y = =(x * y)</li>
+					<li>x / y = =(x / y)</li>
+					<li>(x + y)<sup>2</sup> = =pow(sum, 2)</li>
 				</ul>
 			</div>
 		</script>

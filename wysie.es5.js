@@ -3330,7 +3330,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var date = new Date(value);
 
 				if (!value || isNaN(date)) {
-					return "(" + this.label + ")";
+					return "(No " + this.label + ")";
 				}
 
 				// TODO do this properly (account for other datetime datatypes and different formats)

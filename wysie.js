@@ -2990,7 +2990,7 @@ _.attributes = {
 			var date = new Date(value);
 
 			if (!value || isNaN(date)) {
-				return "(" + this.label + ")";
+				return "(No " + this.label + ")";
 			}
 
 			// TODO do this properly (account for other datetime datatypes and different formats)

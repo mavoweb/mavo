@@ -59,6 +59,13 @@ hr {
 	border: none;
 }
 
+input {
+	font: inherit;
+	color: inherit;
+	border: none;
+	border-bottom: .1em solid rgba(0,0,0,.4);
+}
+
 .logo {
 	font: 300 180% Helvetica Neue, sans-serif;
 	letter-spacing: .15em;
@@ -157,12 +164,43 @@ body > section {
 			}
 		}
 
+		&.pow .example-container {
+			font-size: 300%;
+
+			input {
+				background: rgba(0,0,0,.05);
+				border: none;
+			}
+
+			input {
+				text-align: center;
+			}
+
+			[property="exponent"] {
+				font-size: 60%;
+				vertical-align: top;
+			}
+		}
+
+		&.movie .example-container {
+			padding: 0;
+
+			div[class] {
+				padding: 2em;
+			}
+		}
+
 		.example-container {
 			position: relative;
 			transform: scale(1);
 			padding: 2.5em 2em 2em;
 			border: 1px solid rgba(0,0,0,.3);
 			margin: 1em 0 0;
+
+			input[type="number"] {
+				font-size: 150%;
+				max-width: 2em;
+			}
 
 			& + details {
 				margin-bottom: 1em;
@@ -190,20 +228,34 @@ body > section {
 		}
 	}
 
-	#show-examples, #show-examples + label {
-		position: fixed;
-		bottom: 2rem;
-		left: 2rem;
-		margin: 0;
-		line-height: 1;
+	#show-examples {
+		&, & + label {
+			position: fixed;
+			bottom: 2rem;
+			left: 2rem;
+			margin: 0;
+			line-height: 1;
+		}
+
+		& + label {
+			left: 3.5rem;
+		}
+
+		&:not(:checked) ~ section .example {
+			display: none;
+		}
 	}
 
-	#show-examples + label {
-		left: 3.5rem;
-	}
+	.note {
+		border-left: .5em solid mix(white, $secondary-color, 30%);
+		padding-left: .5em;
+		margin-left: -1em;
 
-	#show-examples:not(:checked) ~ section .example {
-		display: none;
+		&::before {
+			content: "Note: ";
+			font-weight: bold;
+			color: $secondary-color;
+		}
 	}
 }
 

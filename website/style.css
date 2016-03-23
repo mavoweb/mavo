@@ -44,6 +44,12 @@ hr {
   background: url(hr.svg) no-repeat center;
   border: none; }
 
+input {
+  font: inherit;
+  color: inherit;
+  border: none;
+  border-bottom: 0.1em solid rgba(0, 0, 0, 0.4); }
+
 .logo {
   font: 300 180% Helvetica Neue, sans-serif;
   letter-spacing: .15em;
@@ -135,6 +141,22 @@ body > section > * {
   background: rgba(0, 0, 0, 0.05);
   margin: 1em; }
 
+.docs .example.pow .example-container {
+  font-size: 300%; }
+  .docs .example.pow .example-container input {
+    background: rgba(0, 0, 0, 0.05);
+    border: none; }
+  .docs .example.pow .example-container input {
+    text-align: center; }
+  .docs .example.pow .example-container [property="exponent"] {
+    font-size: 60%;
+    vertical-align: top; }
+
+.docs .example.movie .example-container {
+  padding: 0; }
+  .docs .example.movie .example-container div[class] {
+    padding: 2em; }
+
 .docs .example .example-container {
   position: relative;
   -webkit-transform: scale(1);
@@ -142,6 +164,9 @@ body > section > * {
   padding: 2.5em 2em 2em;
   border: 1px solid rgba(0, 0, 0, 0.3);
   margin: 1em 0 0; }
+  .docs .example .example-container input[type="number"] {
+    font-size: 150%;
+    max-width: 2em; }
   .docs .example .example-container + details {
     margin-bottom: 1em; }
     .docs .example .example-container + details summary {
@@ -172,6 +197,15 @@ body > section > * {
 
 .docs #show-examples:not(:checked) ~ section .example {
   display: none; }
+
+.docs .note {
+  border-left: 0.5em solid #a6c9c6;
+  padding-left: .5em;
+  margin-left: -1em; }
+  .docs .note::before {
+    content: "Note: ";
+    font-weight: bold;
+    color: #80b3ae; }
 
 .tip::before {
   content: "Tip: ";
