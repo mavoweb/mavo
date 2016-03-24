@@ -123,34 +123,34 @@ article {
       margin-bottom: 1em; }
     article > section:first-of-type h2, article > section:first-of-type p:last-of-type {
       color: #81b814; }
+    article > section:first-of-type .weight-1:not(#enough-specificity) {
+      background: #f0fbda; }
+    article > section:first-of-type .weight-2:not(#enough-specificity) {
+      background: #e1f7b6; }
+    article > section:first-of-type .weight-3:not(#enough-specificity) {
+      background: #d2f391; }
+    article > section:first-of-type .weight-4:not(#enough-specificity) {
+      background: #c3ef6c; }
+    article > section:first-of-type .weight-5:not(#enough-specificity) {
+      background: #b4eb47; }
     article > section:first-of-type li {
       background: #ecfad1;
       color: #415c0a; }
-      article > section:first-of-type li.weight-1 {
-        background: #f0fbda; }
-      article > section:first-of-type li.weight-2 {
-        background: #e1f7b6; }
-      article > section:first-of-type li.weight-3 {
-        background: #d2f391; }
-      article > section:first-of-type li.weight-4 {
-        background: #c3ef6c; }
-      article > section:first-of-type li.weight-5 {
-        background: #b4eb47; }
     article > section:nth-of-type(2) h2, article > section:nth-of-type(2) p:last-of-type {
       color: #cc0000; }
+    article > section:nth-of-type(2) .weight-1:not(#enough-specificity) {
+      background: #fff0f0; }
+    article > section:nth-of-type(2) .weight-2:not(#enough-specificity) {
+      background: #ffd6d6; }
+    article > section:nth-of-type(2) .weight-3:not(#enough-specificity) {
+      background: #ffbdbd; }
+    article > section:nth-of-type(2) .weight-4:not(#enough-specificity) {
+      background: #ffa3a3; }
+    article > section:nth-of-type(2) .weight-5:not(#enough-specificity) {
+      background: #ff8a8a; }
     article > section:nth-of-type(2) li {
       background: #fff0f0;
       color: maroon; }
-      article > section:nth-of-type(2) li.weight-1 {
-        background: #fff0f0; }
-      article > section:nth-of-type(2) li.weight-2 {
-        background: #ffd6d6; }
-      article > section:nth-of-type(2) li.weight-3 {
-        background: #ffbdbd; }
-      article > section:nth-of-type(2) li.weight-4 {
-        background: #ffa3a3; }
-      article > section:nth-of-type(2) li.weight-5 {
-        background: #ff8a8a; }
 
 main > .wysie-add {
   padding: .4em .6em;

@@ -169,13 +169,13 @@ article {
 				color: darken($pro-color, 10%);
 			}
 
+			@for $i from 1 through 5 {
+				.weight-#{$i}:not(#enough-specificity) { background: lighten($pro-color, 50% - $i*8%); }
+			}
+
 			li {
 				background: lighten($pro-color, 40%);
 				color: darken($pro-color, 30%);
-
-				@for $i from 1 through 5 {
-					&.weight-#{$i} { background: lighten($pro-color, 50% - $i*8%); }
-				}
 			}
 		}
 
@@ -185,13 +185,13 @@ article {
 				color: darken($con-color, 10%);
 			}
 
+			@for $i from 1 through 5 {
+				.weight-#{$i}:not(#enough-specificity) { background: lighten($con-color, 52% - $i*5%); }
+			}
+
 			li {
 				background: lighten($con-color, 47%);
 				color: darken($con-color, 25%);
-
-				@for $i from 1 through 5 {
-					&.weight-#{$i} { background: lighten($con-color, 52% - $i*5%); }
-				}
 			}
 		}
 	}
