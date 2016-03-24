@@ -108,7 +108,7 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 							title: elementLabel,
 							events: {
 								"mouseenter mouseleave": evt => {
-									$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
+									this.element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
 								}
 							}
 						}

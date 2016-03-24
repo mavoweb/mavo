@@ -367,7 +367,11 @@ var _ = Wysie.Collection = $.Class({
 				});
 			};
 
-			button.classList.add("wysie-ui");
+			button.classList.add("wysie-ui", "wysie-add");
+
+			if (this.property) {
+				button.classList.add(`add-${this.property}`);
+			}
 
 			button.addEventListener("click", evt => {
 				evt.preventDefault();

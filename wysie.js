@@ -375,7 +375,7 @@ var _ = self.Wysie = $.Class({
 		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
 			if (evt.target.matches(".wysie-item-controls .delete")) {
 				var item = evt.target.closest(_.selectors.item);
-				$.toggleClass(item, "delete-hover", evt.type == "mouseenter");
+				item.classList.toggle("delete-hover", evt.type == "mouseenter");
 			}
 
 			if (evt.target.matches(_.selectors.item)) {
@@ -384,7 +384,7 @@ var _ = self.Wysie = $.Class({
 				var parent = evt.target.parentNode.closest(_.selectors.item);
 
 				if (parent) {
-					parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
+					parent.classList.toggle("has-hovered-item", evt.type == "mouseenter");
 				}
 			}
 		}, true);
@@ -433,7 +433,7 @@ var _ = self.Wysie = $.Class({
 	live: {
 		editing: {
 			set: function(value) {
-				this.wrapper._.toggleClass("editing", value);
+				this.wrapper.classList.toggle("editing", value);
 
 				if (value) {
 					this.wrapper.setAttribute("data-editing", "");
@@ -445,7 +445,7 @@ var _ = self.Wysie = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			this.wrapper._.toggleClass("unsaved-changes", value);
+			this.wrapper.classList.toggle("unsaved-changes", value);
 
 			if (this.ui) {
 				this.ui.save.disabled = this.ui.revert.disabled = !value;
@@ -556,11 +556,6 @@ $.extend(_.selectors, {
 
 // Bliss plugins
 
-// Add or remove a class based on whether the second param is truthy or falsy.
-$.add("toggleClass", function(className, addIf) {
-	this.classList[addIf? "add" : "remove"](className);
-});
-
 // Provide shortcuts to long property chains
 $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 	Object.defineProperty(obj, property, {
@@ -590,7 +585,7 @@ $.classProps.propagated = function(proto, names) {
 
 // :focus-within shim
 document.addEventListener("focus", evt => {
-	$$(".focus-within")._.toggleClass("focus-within", false);
+	$$(".focus-within").forEach(el => el.classList.remove("focus-within"));
 
 	var element = evt.target;
 
@@ -700,7 +695,7 @@ var _ = Wysie.Permissions = $.Class({
 			return;
 		}
 
-		this.wysie.wrapper._.toggleClass("can-" + action, value);
+		this.wysie.wrapper.classList.toggle(`can-${action}`, value);
 
 		// $.live() calls the setter before the actual property is set so we
 		// need to set it manually, otherwise it still has its previous value
@@ -1279,7 +1274,7 @@ var _ = Wysie.Unit = $.Class({
 
 	live: {
 		deleted: function(value) {
-			this.element._.toggleClass("deleted", value);
+			this.element.classList.toggle("deleted", value);
 
 			if (value) {
 				// Soft delete, store element contents in a fragment
@@ -1325,13 +1320,13 @@ var _ = Wysie.Unit = $.Class({
 				value = false;
 			}
 
-			$.toggleClass(this.element, "unsaved-changes", value);
+			this.element.classList.toggle("unsaved-changes", value);
 
 			return value;
 		},
 
 		placeholder: function(value) {
-			$.toggleClass(this.element, "placeholder", value);
+			this.element.classList.toggle("placeholder", value);
 		}
 	},
 
@@ -2718,11 +2713,11 @@ var _ = Wysie.Primitive = $.Class({
 	live: {
 		empty: function(value) {
 			var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
-			$.toggleClass(this.element, "empty", hide);
+			this.element.classList.toggle("empty", hide);
 		},
 
 		editing: function (value) {
-			$.toggleClass(this.element, "editing", value);
+			this.element.classList.toggle("editing", value);
 		},
 
 		datatype: function (value) {
@@ -3352,7 +3347,11 @@ var _ = Wysie.Collection = $.Class({
 				});
 			};
 
-			button.classList.add("wysie-ui");
+			button.classList.add("wysie-ui", "wysie-add");
+
+			if (this.property) {
+				button.classList.add(`add-${this.property}`);
+			}
 
 			button.addEventListener("click", evt => {
 				evt.preventDefault();
@@ -3478,7 +3477,7 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 							title: elementLabel,
 							events: {
 								"mouseenter mouseleave": evt => {
-									$.toggleClass(this.element, "wysie-highlight", evt.type === "mouseenter");
+									this.element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
 								}
 							}
 						}

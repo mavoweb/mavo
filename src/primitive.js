@@ -570,11 +570,11 @@ var _ = Wysie.Primitive = $.Class({
 	live: {
 		empty: function(value) {
 			var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
-			$.toggleClass(this.element, "empty", hide);
+			this.element.classList.toggle("empty", hide);
 		},
 
 		editing: function (value) {
-			$.toggleClass(this.element, "editing", value);
+			this.element.classList.toggle("editing", value);
 		},
 
 		datatype: function (value) {

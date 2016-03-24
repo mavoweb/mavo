@@ -85,7 +85,7 @@ var _ = Wysie.Permissions = $.Class({
 			return;
 		}
 
-		this.wysie.wrapper._.toggleClass("can-" + action, value);
+		this.wysie.wrapper.classList.toggle(`can-${action}`, value);
 
 		// $.live() calls the setter before the actual property is set so we
 		// need to set it manually, otherwise it still has its previous value

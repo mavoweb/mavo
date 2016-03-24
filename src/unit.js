@@ -78,7 +78,7 @@ var _ = Wysie.Unit = $.Class({
 
 	live: {
 		deleted: function(value) {
-			this.element._.toggleClass("deleted", value);
+			this.element.classList.toggle("deleted", value);
 
 			if (value) {
 				// Soft delete, store element contents in a fragment
@@ -124,13 +124,13 @@ var _ = Wysie.Unit = $.Class({
 				value = false;
 			}
 
-			$.toggleClass(this.element, "unsaved-changes", value);
+			this.element.classList.toggle("unsaved-changes", value);
 
 			return value;
 		},
 
 		placeholder: function(value) {
-			$.toggleClass(this.element, "placeholder", value);
+			this.element.classList.toggle("placeholder", value);
 		}
 	},
 

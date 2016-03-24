@@ -618,7 +618,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", function (evt) {
 				if (evt.target.matches(".wysie-item-controls .delete")) {
 					var item = evt.target.closest(_.selectors.item);
-					$.toggleClass(item, "delete-hover", evt.type == "mouseenter");
+					item.classList.toggle("delete-hover", evt.type == "mouseenter");
 				}
 
 				if (evt.target.matches(_.selectors.item)) {
@@ -627,7 +627,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var parent = evt.target.parentNode.closest(_.selectors.item);
 
 					if (parent) {
-						parent._.toggleClass("has-hovered-item", evt.type == "mouseenter");
+						parent.classList.toggle("has-hovered-item", evt.type == "mouseenter");
 					}
 				}
 			}, true);
@@ -676,7 +676,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		live: {
 			editing: {
 				set: function set(value) {
-					this.wrapper._.toggleClass("editing", value);
+					this.wrapper.classList.toggle("editing", value);
 
 					if (value) {
 						this.wrapper.setAttribute("data-editing", "");
@@ -687,7 +687,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
-				this.wrapper._.toggleClass("unsaved-changes", value);
+				this.wrapper.classList.toggle("unsaved-changes", value);
 
 				if (this.ui) {
 					this.ui.save.disabled = this.ui.revert.disabled = !value;
@@ -819,11 +819,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// Bliss plugins
 
-	// Add or remove a class based on whether the second param is truthy or falsy.
-	$.add("toggleClass", function (className, addIf) {
-		this.classList[addIf ? "add" : "remove"](className);
-	});
-
 	// Provide shortcuts to long property chains
 	$.proxy = $.classProps.proxy = $.overload(function (obj, property, proxy) {
 		Object.defineProperty(obj, property, {
@@ -853,7 +848,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// :focus-within shim
 	document.addEventListener("focus", function (evt) {
-		$$(".focus-within")._.toggleClass("focus-within", false);
+		$$(".focus-within").forEach(function (el) {
+			return el.classList.remove("focus-within");
+		});
 
 		var element = evt.target;
 
@@ -978,7 +975,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return;
 			}
 
-			this.wysie.wrapper._.toggleClass("can-" + action, value);
+			this.wysie.wrapper.classList.toggle("can-" + action, value);
 
 			// $.live() calls the setter before the actual property is set so we
 			// need to set it manually, otherwise it still has its previous value
@@ -1573,7 +1570,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			deleted: function deleted(value) {
 				var _this11 = this;
 
-				this.element._.toggleClass("deleted", value);
+				this.element.classList.toggle("deleted", value);
 
 				if (value) {
 					// Soft delete, store element contents in a fragment
@@ -1617,13 +1614,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					value = false;
 				}
 
-				$.toggleClass(this.element, "unsaved-changes", value);
+				this.element.classList.toggle("unsaved-changes", value);
 
 				return value;
 			},
 
 			placeholder: function placeholder(value) {
-				$.toggleClass(this.element, "placeholder", value);
+				this.element.classList.toggle("placeholder", value);
 			}
 		},
 
@@ -3058,11 +3055,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		live: {
 			empty: function empty(value) {
 				var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
-				$.toggleClass(this.element, "empty", hide);
+				this.element.classList.toggle("empty", hide);
 			},
 
 			editing: function editing(value) {
-				$.toggleClass(this.element, "editing", value);
+				this.element.classList.toggle("editing", value);
 			},
 
 			datatype: function datatype(value) {
@@ -3718,7 +3715,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					});
 				};
 
-				button.classList.add("wysie-ui");
+				button.classList.add("wysie-ui", "wysie-add");
+
+				if (this.property) {
+					button.classList.add("add-" + this.property);
+				}
 
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
@@ -3838,7 +3839,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							title: elementLabel,
 							events: {
 								"mouseenter mouseleave": function mouseenterMouseleave(evt) {
-									$.toggleClass(_this32.element, "wysie-highlight", evt.type === "mouseenter");
+									_this32.element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
 								}
 							}
 						}],
