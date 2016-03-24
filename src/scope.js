@@ -81,21 +81,8 @@ var _ = Wysie.Scope = $.Class({
 
 		$.extend(ret, this.unhandled);
 
-		return ret;
-	},
-
-	getRelativeData: function() {
-		var o = {
-			dirty: true,
-			computed: true,
-			null: true
-		};
-
-		var data = this.getData(o);
-
-		if (self.Proxy && data) {
-			// TODO proxy child objects too
-			data = new Proxy(data, {
+		if (o.relative && self.Proxy && ret) {
+			ret = new Proxy(ret, {
 				get: (data, property) => {
 					if (property in data) {
 						return data[property];
@@ -104,6 +91,7 @@ var _ = Wysie.Scope = $.Class({
 					// Look in ancestors
 					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
+							// TODO decouple
 							scope.expressions.updateAlso.add(this.expressions);
 
 							return scope.properties[property].getData(o);
@@ -138,7 +126,8 @@ var _ = Wysie.Scope = $.Class({
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getData(o)).filter(item => item !== null);
+							ret = ret.map(item => item.getData(o))
+							         .filter(item => item !== null);
 						}
 						else {
 							ret = ret.getData(o);
@@ -152,7 +141,16 @@ var _ = Wysie.Scope = $.Class({
 			});
 		}
 
-		return data;
+		return ret;
+	},
+
+	getRelativeData: function() {
+		return this.getData({
+			dirty: true,
+			computed: true,
+			null: true,
+			relative: true
+		});
 	},
 
 	/**

@@ -2332,6 +2332,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getData: function getData(o) {
+			var _this17 = this;
+
 			o = o || {};
 
 			var ret = this.super.getData.call(this, o);
@@ -2354,23 +2356,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			$.extend(ret, this.unhandled);
 
-			return ret;
-		},
-
-		getRelativeData: function getRelativeData() {
-			var _this17 = this;
-
-			var o = {
-				dirty: true,
-				computed: true,
-				null: true
-			};
-
-			var data = this.getData(o);
-
-			if (self.Proxy && data) {
-				// TODO proxy child objects too
-				data = new Proxy(data, {
+			if (o.relative && self.Proxy && ret) {
+				ret = new Proxy(ret, {
 					get: function get(data, property) {
 						if (property in data) {
 							return data[property];
@@ -2379,6 +2366,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// Look in ancestors
 						var ret = _this17.walkUp(function (scope) {
 							if (property in scope.properties) {
+								// TODO decouple
 								scope.expressions.updateAlso.add(_this17.expressions);
 
 								return scope.properties[property].getData(o);
@@ -2430,7 +2418,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			return data;
+			return ret;
+		},
+
+		getRelativeData: function getRelativeData() {
+			return this.getData({
+				dirty: true,
+				computed: true,
+				null: true,
+				relative: true
+			});
 		},
 
 		/**

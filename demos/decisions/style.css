@@ -152,14 +152,14 @@ article {
       article > section:nth-of-type(2) li.weight-5 {
         background: #ff8a8a; }
 
-.add-decision {
+main > .wysie-add {
   padding: .4em .6em;
   border: 1px solid rgba(0, 0, 0, 0.05);
   background: #757c8a;
   color: white;
   font-size: 120%;
   border-radius: .2em; }
-  .add-decision:hover {
+  main > .wysie-add:hover {
     background: #5e636e; }
 
 footer {
