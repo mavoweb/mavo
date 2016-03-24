@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Decisions, decisions</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data" class="debug">
+	<h1>
+		Decisions
+		<span>Decisions</span>
+	</h1>
+
+	<article data-multiple>
+		<header class="answer-Maybe">
+			<h1>Should I go to the party?</h1>
+
+			<p>
+				Answer: Maybe!
+				(score: 0)
+			</p>
+		</header>
+
+		<section>
+			<h2>Pros (1)</h2>
+			<ul>
+				<li class="weight-1">
+					<p>Fun with friends!</p>
+					<p>
+						Weight:
+						<meter min="1" value="1" max="5"></meter>
+						1
+					</p>
+				</li>
+			</ul>
+		</section>
+
+		<section>
+			<h2>Cons (1)</h2>
+			<ul>
+				<li class="weight-1">
+					<p>I have tons of work to do.</p>
+					<p>
+						Weight:
+						<meter min="1" value="1" max="5"></meter>
+						1
+					</p>
+				</li>
+			</ul>
+		</section>
+	</article>
+</main>
+
+<script type="application/json" id="data"></script>
+<script src="../../wysie.js"></script>
+
+</body>
+</html>

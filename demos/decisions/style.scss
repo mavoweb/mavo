@@ -1,4 +1,6 @@
 $background: hsl(220,8%,60%);
+$pro-color: hsl(80, 80%, 50%);
+$con-color: hsl(0, 100%, 50%);
 
 body {
 	min-height: 100vh;
@@ -6,6 +8,11 @@ body {
 	padding: 1em;
 	background: $background;
 	font: 120% Helvetica Neue, sans-serif;
+	text-align: center;
+}
+
+button {
+	cursor: pointer;
 }
 
 main > h1 {
@@ -50,27 +57,55 @@ h1 {
 }
 
 article {
+	$padding: 2.5em;
+
 	position: relative;
 	display: flex;
 	flex-wrap: wrap;
-	max-width: 30em;
-	padding: 2.5em;
-	margin: 1em auto;
+	max-width: 35em;
+	padding: $padding;
+	margin: 2em auto;
 	background: white;
 	color: black;
 	box-shadow: 1px 1px 5px rgba(0,0,0,.3);
-}
 
-	article > h1 {
+	& > header {
 		width: 100%;
-		margin: 0 0 2rem;
-		font-size: 250%;
-		font-weight: 300;
+		padding: inherit;
+		padding-bottom: $padding/2;
+		margin: -$padding;
+		margin-bottom: 0;
+		transition: .5s background;
+
+		&.answer-Yes {
+			background: darken($pro-color, 10%);
+			color: white;
+		}
+
+		&.answer-Maybe {
+			background: gold;
+		}
+
+		&.answer-No {
+			background: darken($con-color, 10%);
+			color: white;
+		}
+
+		h1 {
+			margin: 0;
+			font-size: 250%;
+			font-weight: 300;
+
+			& + p {
+				text-align: center;
+			}
+		}
 	}
 
-	article > div {
+	& > section {
 		flex: 1;
-		margin: 0 1px;
+		margin: 2em 1px 0;
+		text-align: left;
 
 		h2 {
 			color: white;
@@ -78,6 +113,7 @@ article {
 			padding: .3rem .5rem;
 			border-bottom: .2em solid;
 			line-height: 1;
+			font-weight: normal;
 		}
 
 		ul {
@@ -87,15 +123,37 @@ article {
 
 			li {
 				margin: 1px 0;
+				transition: .5s background;
 
 				p {
 					margin: 0;
 				}
 
+				p + p {
+					margin-top: 1em;
+					font-size: 80%;
+				}
+
 				meter {
-					width: 2em;
-					height: .5em;
-					float: right;
+					$width: 8em;
+					display: inline-block;
+					vertical-align: middle;
+					width: $width;
+					height: .8em;
+					margin-right: .3em;
+					appearance: none;
+					background: transparent;
+					border: 1px solid;
+					border-left: $width/5 solid;
+
+					&::-webkit-meter-bar {
+						background: transparent;
+					}
+
+					&::-webkit-meter-optimum-value,
+					&::-webkit-meter-suboptimum-value {
+						background: currentColor;
+					}
 				}
 			}
 		}
@@ -107,52 +165,67 @@ article {
 
 		// Pros
 		&:first-of-type {
-			h2 {
-				color: hsl(80, 80%, 40%);
+			h2, p:last-of-type {
+				color: darken($pro-color, 10%);
 			}
 
 			li {
-				$color: hsl(80, 80%, 50%);
-				background: lighten($color, 40%);
-				color: darken($color, 30%);
+				background: lighten($pro-color, 40%);
+				color: darken($pro-color, 30%);
 
 				@for $i from 1 through 5 {
-					&.weight-#{$i} { background: lighten($color, 50% - $i*8%); }
+					&.weight-#{$i} { background: lighten($pro-color, 50% - $i*8%); }
 				}
 			}
 		}
 
 		// Cons
 		&:nth-of-type(2) {
-			h2 {
-				color: hsl(0, 100%, 40%);
+			h2, p:last-of-type {
+				color: darken($con-color, 10%);
 			}
 
 			li {
-				$color: hsl(0, 100%, 50%);
-
-				background: lighten($color, 47%);
-				color: darken($color, 25%);
+				background: lighten($con-color, 47%);
+				color: darken($con-color, 25%);
 
 				@for $i from 1 through 5 {
-					&.weight-#{$i} { background: lighten($color, 52% - $i*5%); }
+					&.weight-#{$i} { background: lighten($con-color, 52% - $i*5%); }
 				}
 			}
 		}
 	}
+}
+
+.add-decision {
+	padding: .4em .6em;
+	border: 1px solid rgba(0,0,0,.05);
+	background: darken($background, 10%);
+	color: white;
+	font-size: 120%;
+	border-radius: .1em;
+
+	&:hover {
+		background: darken($background, 20%);
+	}
+}
 
 #data {
 	display: block;
 	font: 100%/1.5 Consolas, Monaco, monospace;
 	white-space: pre;
-	background: hsl(0, 0%, 96%);
+	background: hsla(0,0,90%,.2);
 	padding: .6em;
 	margin: 3em 0 1em;
 	overflow: auto;
 	tab-size: 4;
-	box-shadow: 1px 1px 4px rgba(0,0,0,.2) inset;
+	box-shadow: 1px 1px 4px rgba(0,0,0,.3) inset;
 }
 
 	#data:empty {
 		visibility: hidden;
 	}
+
+::placeholder {
+	color: hsla(0,0%,46%,.6);
+}

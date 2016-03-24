@@ -10,41 +10,53 @@
 </head>
 <body>
 
-<main data-store="#data" class="debug">
+<main data-store="#data">
 	<h1>
 		Decisions
 		<span>Decisions</span>
 	</h1>
 
-	<article>
-		<h1 property="decision">Should I go to the party?</h1>
+	<article property="decision" data-multiple>
+		<header class="answer-=answer">
+			<h1 property="decision">Should I go to the party?</h1>
 
-		<div property="pros">
-			<h2>Pros (=count(pro), =sum(weight))</h2>
+			<p>
+				Answer: <span property="answer">=iff(score > 0, Yes, iff(score < 0, No, Maybe))</span>!
+				(score: <span property="score">=(sum(proWeight) - sum(conWeight))</span>)
+			</p>
+		</header>
+
+		<section>
+			<h2>Pros (=count(pro))</h2>
 			<ul>
-				<li property="pro" class="weight-=weight">
-					<meter property="weight" min="1" low="2" value="1" high="4" max="5"></meter>
+				<li property="pro" class="weight-=proWeight">
 					<p property="argument">Fun with friends!</p>
-
+					<p>
+						Weight:
+						<meter property="proWeight" min="1" value="1" max="5"></meter>
+						=proWeight
+					</p>
 				</li>
 			</ul>
-		</div>
+		</section>
 
-		<div property="cons">
-			<h2>Cons (=count(con), =sum(weight))</h2>
+		<section>
+			<h2>Cons (=count(con))</h2>
 			<ul>
-				<li property="con" class="weight-=weight">
-					<meter property="weight" min="1" low="2" value="1" high="4" max="5"></meter>
+				<li property="con" class="weight-=conWeight">
 					<p property="argument">I have tons of work to do.</p>
-
+					<p>
+						Weight:
+						<meter property="conWeight" min="1" value="1" max="5"></meter>
+						=conWeight
+					</p>
 				</li>
 			</ul>
-		</div>
+		</section>
 	</article>
 </main>
 
 <script type="application/json" id="data"></script>
-
 <script src="../../wysie.js"></script>
 
 </body>

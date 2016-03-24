@@ -3,7 +3,11 @@ body {
   box-sizing: border-box;
   padding: 1em;
   background: #9196a1;
-  font: 120% Helvetica Neue, sans-serif; }
+  font: 120% Helvetica Neue, sans-serif;
+  text-align: center; }
+
+button {
+  cursor: pointer; }
 
 main > h1 {
   position: relative;
@@ -46,87 +50,141 @@ article {
   -webkit-flex-wrap: wrap;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  max-width: 30em;
+  max-width: 35em;
   padding: 2.5em;
-  margin: 1em auto;
+  margin: 2em auto;
   background: white;
   color: black;
   box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3); }
+  article > header {
+    width: 100%;
+    padding: inherit;
+    padding-bottom: 1.25em;
+    margin: -2.5em;
+    margin-bottom: 0;
+    transition: .5s background; }
+    article > header.answer-Yes {
+      background: #81b814;
+      color: white; }
+    article > header.answer-Maybe {
+      background: gold; }
+    article > header.answer-No {
+      background: #cc0000;
+      color: white; }
+    article > header h1 {
+      margin: 0;
+      font-size: 250%;
+      font-weight: 300; }
+      article > header h1 + p {
+        text-align: center; }
+  article > section {
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    margin: 2em 1px 0;
+    text-align: left; }
+    article > section h2 {
+      color: white;
+      margin: 0;
+      padding: .3rem .5rem;
+      border-bottom: .2em solid;
+      line-height: 1;
+      font-weight: normal; }
+    article > section ul {
+      list-style: none;
+      padding: 0;
+      margin: 0; }
+      article > section ul li {
+        margin: 1px 0;
+        transition: .5s background; }
+        article > section ul li p {
+          margin: 0; }
+        article > section ul li p + p {
+          margin-top: 1em;
+          font-size: 80%; }
+        article > section ul li meter {
+          display: inline-block;
+          vertical-align: middle;
+          width: 8em;
+          height: .8em;
+          margin-right: .3em;
+          -webkit-appearance: none;
+          -moz-appearance: none;
+          appearance: none;
+          background: transparent;
+          border: 1px solid;
+          border-left: 1.6em solid; }
+          article > section ul li meter::-webkit-meter-bar {
+            background: transparent; }
+          article > section ul li meter::-webkit-meter-optimum-value, article > section ul li meter::-webkit-meter-suboptimum-value {
+            background: currentColor; }
+    article > section li {
+      padding: .8em;
+      margin-bottom: 1em; }
+    article > section:first-of-type h2, article > section:first-of-type p:last-of-type {
+      color: #81b814; }
+    article > section:first-of-type li {
+      background: #ecfad1;
+      color: #415c0a; }
+      article > section:first-of-type li.weight-1 {
+        background: #f0fbda; }
+      article > section:first-of-type li.weight-2 {
+        background: #e1f7b6; }
+      article > section:first-of-type li.weight-3 {
+        background: #d2f391; }
+      article > section:first-of-type li.weight-4 {
+        background: #c3ef6c; }
+      article > section:first-of-type li.weight-5 {
+        background: #b4eb47; }
+    article > section:nth-of-type(2) h2, article > section:nth-of-type(2) p:last-of-type {
+      color: #cc0000; }
+    article > section:nth-of-type(2) li {
+      background: #fff0f0;
+      color: maroon; }
+      article > section:nth-of-type(2) li.weight-1 {
+        background: #fff0f0; }
+      article > section:nth-of-type(2) li.weight-2 {
+        background: #ffd6d6; }
+      article > section:nth-of-type(2) li.weight-3 {
+        background: #ffbdbd; }
+      article > section:nth-of-type(2) li.weight-4 {
+        background: #ffa3a3; }
+      article > section:nth-of-type(2) li.weight-5 {
+        background: #ff8a8a; }
 
-article > h1 {
-  width: 100%;
-  margin: 0 0 2rem;
-  font-size: 250%;
-  font-weight: 300; }
-
-article > div {
-  -webkit-flex: 1;
-  -ms-flex: 1;
-  flex: 1;
-  margin: 0 1px; }
-  article > div h2 {
-    color: white;
-    margin: 0;
-    padding: .3rem .5rem;
-    border-bottom: .2em solid;
-    line-height: 1; }
-  article > div ul {
-    list-style: none;
-    padding: 0;
-    margin: 0; }
-    article > div ul li {
-      margin: 1px 0; }
-      article > div ul li p {
-        margin: 0; }
-      article > div ul li meter {
-        width: 2em;
-        height: .5em;
-        float: right; }
-  article > div li {
-    padding: .8em;
-    margin-bottom: 1em; }
-  article > div:first-of-type h2 {
-    color: #81b814; }
-  article > div:first-of-type li {
-    background: #ecfad1;
-    color: #415c0a; }
-    article > div:first-of-type li.weight-1 {
-      background: #f0fbda; }
-    article > div:first-of-type li.weight-2 {
-      background: #e1f7b6; }
-    article > div:first-of-type li.weight-3 {
-      background: #d2f391; }
-    article > div:first-of-type li.weight-4 {
-      background: #c3ef6c; }
-    article > div:first-of-type li.weight-5 {
-      background: #b4eb47; }
-  article > div:nth-of-type(2) h2 {
-    color: #cc0000; }
-  article > div:nth-of-type(2) li {
-    background: #fff0f0;
-    color: maroon; }
-    article > div:nth-of-type(2) li.weight-1 {
-      background: #fff0f0; }
-    article > div:nth-of-type(2) li.weight-2 {
-      background: #ffd6d6; }
-    article > div:nth-of-type(2) li.weight-3 {
-      background: #ffbdbd; }
-    article > div:nth-of-type(2) li.weight-4 {
-      background: #ffa3a3; }
-    article > div:nth-of-type(2) li.weight-5 {
-      background: #ff8a8a; }
+.add-decision {
+  padding: .4em .6em;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: #757c8a;
+  color: white;
+  font-size: 120%;
+  border-radius: .1em; }
+  .add-decision:hover {
+    background: #5e636e; }
 
 #data {
   display: block;
   font: 100%/1.5 Consolas, Monaco, monospace;
   white-space: pre;
-  background: whitesmoke;
+  background: rgba(230, 230, 230, 0.2);
   padding: .6em;
   margin: 3em 0 1em;
   overflow: auto;
   -moz-tab-size: 4;
   tab-size: 4;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2) inset; }
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset; }
 
 #data:empty {
   visibility: hidden; }
+
+::-webkit-input-placeholder {
+  color: rgba(117, 117, 117, 0.6); }
+
+::-moz-placeholder {
+  color: rgba(117, 117, 117, 0.6); }
+
+:-ms-input-placeholder {
+  color: rgba(117, 117, 117, 0.6); }
+
+::placeholder {
+  color: rgba(117, 117, 117, 0.6); }
