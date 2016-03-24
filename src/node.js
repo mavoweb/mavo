@@ -56,10 +56,10 @@ var _ = Wysie.Node = $.Class({
 		args = args || [];
 
 		if (typeof callback === "string") {
-			return this[callback].apply(this, args);
+			return this[callback](...args);
 		}
 		else {
-			return callback.apply(this, [this].concat(args));
+			return callback.apply(this, [this, ...args]);
 		}
 	},
 

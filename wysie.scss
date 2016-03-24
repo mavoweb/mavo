@@ -491,8 +491,9 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		&:nth-child(1) {
 			// Expression column
 			position: relative;
-			padding: 0;
+			padding: 0 .7em;
 			white-space: nowrap;
+			vertical-align: middle;
 
 			textarea {
 				all: unset;

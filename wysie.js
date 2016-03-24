@@ -259,7 +259,7 @@ var _ = self.Wysie = $.Class({
 		// Normalize property names
 		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
 			return Wysie.Node.normalizeProperty(element);
-		});
+		}).sort((a, b) => b.length - a.length);
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
@@ -1150,10 +1150,10 @@ var _ = Wysie.Node = $.Class({
 		args = args || [];
 
 		if (typeof callback === "string") {
-			return this[callback].apply(this, args);
+			return this[callback](...args);
 		}
 		else {
-			return callback.apply(this, [this].concat(args));
+			return callback.apply(this, [this, ...args]);
 		}
 	},
 
@@ -1563,26 +1563,6 @@ var _ = Wysie.Expression.Text = $.Class({
 			};
 		})(),
 
-		elementLabel: function(element, attribute) {
-			var ret = element.nodeName.toLowerCase();
-
-			if (element.id) {
-				ret += `#${element.id}`;
-			}
-			else if (element.classList.length) {
-				ret += $$(element.classList).map(c => `.${c}`).join("");
-			}
-			else if (element.hasAttribute("property")) {
-				ret += `[property=${element.getAttribute("property")}]`;
-			}
-
-			if (attribute) {
-				ret += `@${attribute}`;
-			}
-
-			return ret;
-		},
-
 		lazy: {
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
@@ -1646,9 +1626,11 @@ var _ = Wysie.Expressions = $.Class({
 			}
 		}
 
-		var data = this.scope.getRelativeData();
+		env = { context: this, data: this.scope.getRelativeData() };
 
-		$$(this.all).forEach(ref => ref.update(data));
+		Wysie.hooks.run("expressions-update-start", env);
+
+		$$(this.all).forEach(ref => ref.update(env.data));
 
 		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
@@ -1722,12 +1704,12 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("scope-init-start", function(scope) {
-	new Wysie.Expressions(scope);
+Wysie.hooks.add("scope-init-start", function() {
+	new Wysie.Expressions(this);
 });
 
-Wysie.hooks.add("scope-init-end", function(scope) {
-	scope.expressions.init();
+Wysie.hooks.add("scope-init-end", function() {
+	this.expressions.init();
 });
 
 })(Bliss, Bliss.$);
@@ -2102,7 +2084,7 @@ var _ = Wysie.Scope = $.Class({
 
 	propagate: function(callback) {
 		$.each(this.properties, (property, obj) => {
-			obj.call.apply(obj, arguments);
+			obj.call(...arguments);
 		});
 	},
 
@@ -3425,6 +3407,26 @@ var _ = Wysie.Debug = {
 		return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
 	},
 
+	elementLabel: function(element, attribute) {
+		var ret = element.nodeName.toLowerCase();
+
+		if (element.hasAttribute("property")) {
+			ret += `[property=${element.getAttribute("property")}]`;
+		}
+		else if (element.id) {
+			ret += `#${element.id}`;
+		}
+		else if (element.classList.length) {
+			ret += $$(element.classList).map(c => `.${c}`).join("");
+		}
+
+		if (attribute) {
+			ret += `@${attribute}`;
+		}
+
+		return ret;
+	},
+
 	timed: function(id, callback) {
 		return function() {
 			console.time(id);
@@ -3490,9 +3492,10 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 
 		this.template.forEach(expr => {
 			if (expr instanceof Wysie.Expression) {
-				var elementLabel = this.constructor.elementLabel(this.element, this.attribute);
+				var elementLabel = _.elementLabel(this.element, this.attribute);
 
 				$.create("tr", {
+					className: "debug-expression",
 					contents: [
 						{
 							tag: "td",
@@ -3528,6 +3531,37 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 					inside: this.all.debug
 				});
 			}
+		});
+	}
+});
+
+Wysie.hooks.add("scope-init-end", function() {
+	// TODO make properties update, collapse duplicate expressions
+	if (this.expressions.debug instanceof Node) {
+		// We have a debug table, add properties to it
+		this.propagate(obj => {
+			if (!(obj instanceof Wysie.Primitive)) {
+				return;
+			}
+
+			$.create("tr", {
+				className: "debug-property",
+				contents: [
+					{tag: "td", textContent: obj.property},
+					{tag: "td", textContent: obj.value},
+					{tag: "td", textContent: _.elementLabel(obj.element)}
+				],
+				inside: this.expressions.debug
+			});
+		});
+	}
+});
+
+Wysie.hooks.add("expressions-update-start", function(env) {
+	if (this.debug instanceof Node) {
+		$$("tr.debug-property", this.debug).forEach(tr => {
+			var property = tr.cells[0].textContent;
+			tr.cells[1].textContent = env.data[property];
 		});
 	}
 });

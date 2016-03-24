@@ -211,26 +211,6 @@ var _ = Wysie.Expression.Text = $.Class({
 			};
 		})(),
 
-		elementLabel: function(element, attribute) {
-			var ret = element.nodeName.toLowerCase();
-
-			if (element.id) {
-				ret += `#${element.id}`;
-			}
-			else if (element.classList.length) {
-				ret += $$(element.classList).map(c => `.${c}`).join("");
-			}
-			else if (element.hasAttribute("property")) {
-				ret += `[property=${element.getAttribute("property")}]`;
-			}
-
-			if (attribute) {
-				ret += `@${attribute}`;
-			}
-
-			return ret;
-		},
-
 		lazy: {
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
@@ -294,9 +274,11 @@ var _ = Wysie.Expressions = $.Class({
 			}
 		}
 
-		var data = this.scope.getRelativeData();
+		env = { context: this, data: this.scope.getRelativeData() };
 
-		$$(this.all).forEach(ref => ref.update(data));
+		Wysie.hooks.run("expressions-update-start", env);
+
+		$$(this.all).forEach(ref => ref.update(env.data));
 
 		if (this.THROTTLE > 0) {
 			this.lastUpdated = performance.now();
@@ -370,12 +352,12 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("scope-init-start", function(scope) {
-	new Wysie.Expressions(scope);
+Wysie.hooks.add("scope-init-start", function() {
+	new Wysie.Expressions(this);
 });
 
-Wysie.hooks.add("scope-init-end", function(scope) {
-	scope.expressions.init();
+Wysie.hooks.add("scope-init-end", function() {
+	this.expressions.init();
 });
 
 })(Bliss, Bliss.$);

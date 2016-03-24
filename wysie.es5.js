@@ -491,6 +491,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Normalize property names
 			this.propertyNames = $$(_.selectors.property, this.wrapper).map(function (element) {
 				return Wysie.Node.normalizeProperty(element);
+			}).sort(function (a, b) {
+				return b.length - a.length;
 			});
 
 			// Is there any control that requires an edit button?
@@ -1444,9 +1446,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			args = args || [];
 
 			if (typeof callback === "string") {
-				return this[callback].apply(this, args);
+				return this[callback].apply(this, _toConsumableArray(args));
 			} else {
-				return callback.apply(this, [this].concat(args));
+				return callback.apply(this, [this].concat(_toConsumableArray(args)));
 			}
 		},
 
@@ -1856,26 +1858,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					};
 				}(),
 
-				elementLabel: function elementLabel(element, attribute) {
-					var ret = element.nodeName.toLowerCase();
-
-					if (element.id) {
-						ret += "#" + element.id;
-					} else if (element.classList.length) {
-						ret += $$(element.classList).map(function (c) {
-							return "." + c;
-						}).join("");
-					} else if (element.hasAttribute("property")) {
-						ret += "[property=" + element.getAttribute("property") + "]";
-					}
-
-					if (attribute) {
-						ret += "@" + attribute;
-					}
-
-					return ret;
-				},
-
 				lazy: {
 					rootFunctionRegExp: function rootFunctionRegExp() {
 						return RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i");
@@ -1950,10 +1932,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 
-				var data = this.scope.getRelativeData();
+				env = { context: this, data: this.scope.getRelativeData() };
+
+				Wysie.hooks.run("expressions-update-start", env);
 
 				$$(this.all).forEach(function (ref) {
-					return ref.update(data);
+					return ref.update(env.data);
 				});
 
 				if (this.THROTTLE > 0) {
@@ -2029,12 +2013,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	})();
 
-	Wysie.hooks.add("scope-init-start", function (scope) {
-		new Wysie.Expressions(scope);
+	Wysie.hooks.add("scope-init-start", function () {
+		new Wysie.Expressions(this);
 	});
 
-	Wysie.hooks.add("scope-init-end", function (scope) {
-		scope.expressions.init();
+	Wysie.hooks.add("scope-init-end", function () {
+		this.expressions.init();
 	});
 })(Bliss, Bliss.$);
 
@@ -3816,6 +3800,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return "<span class=\"type\">Oh noes, a " + type + " error!</span> " + message;
 		},
 
+		elementLabel: function elementLabel(element, attribute) {
+			var ret = element.nodeName.toLowerCase();
+
+			if (element.hasAttribute("property")) {
+				ret += "[property=" + element.getAttribute("property") + "]";
+			} else if (element.id) {
+				ret += "#" + element.id;
+			} else if (element.classList.length) {
+				ret += $$(element.classList).map(function (c) {
+					return "." + c;
+				}).join("");
+			}
+
+			if (attribute) {
+				ret += "@" + attribute;
+			}
+
+			return ret;
+		},
+
 		timed: function timed(id, callback) {
 			return function () {
 				console.time(id);
@@ -3879,9 +3883,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.template.forEach(function (expr) {
 				if (expr instanceof Wysie.Expression) {
-					var elementLabel = _this32.constructor.elementLabel(_this32.element, _this32.attribute);
+					var elementLabel = _.elementLabel(_this32.element, _this32.attribute);
 
 					$.create("tr", {
+						className: "debug-expression",
 						contents: [{
 							tag: "td",
 							contents: {
@@ -3919,6 +3924,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
+	Wysie.hooks.add("scope-init-end", function () {
+		var _this33 = this;
+
+		// TODO make properties update, collapse duplicate expressions
+		if (this.expressions.debug instanceof Node) {
+			// We have a debug table, add properties to it
+			this.propagate(function (obj) {
+				if (!(obj instanceof Wysie.Primitive)) {
+					return;
+				}
+
+				$.create("tr", {
+					className: "debug-property",
+					contents: [{ tag: "td", textContent: obj.property }, { tag: "td", textContent: obj.value }, { tag: "td", textContent: _.elementLabel(obj.element) }],
+					inside: _this33.expressions.debug
+				});
+			});
+		}
+	});
+
+	Wysie.hooks.add("expressions-update-start", function (env) {
+		if (this.debug instanceof Node) {
+			$$("tr.debug-property", this.debug).forEach(function (tr) {
+				var property = tr.cells[0].textContent;
+				tr.cells[1].textContent = env.data[property];
+			});
+		}
+	});
+
 	Wysie.hooks.add("expressiontext-update-beforeeval", function (env) {
 		if (this.debug) {
 			env.td = env.expr.debug;
@@ -3946,7 +3980,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 		constructor: function constructor() {
-			var _this33 = this;
+			var _this34 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			if (this.wysie.store.protocol != "dropbox:") {
@@ -3969,11 +4003,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				// Internal filename (to be used for saving)
-				_this33.filename = (_this33.param("path") || "") + new URL(_this33.wysie.store).pathname.match(/[^/]*$/)[0];
+				_this34.filename = (_this34.param("path") || "") + new URL(_this34.wysie.store).pathname.match(/[^/]*$/)[0];
 
-				_this33.client = new Dropbox.Client({ key: _this33.param("key") });
+				_this34.client = new Dropbox.Client({ key: _this34.param("key") });
 			}).then(function () {
-				_this33.login(true);
+				_this34.login(true);
 			});
 		},
 
@@ -3983,10 +4017,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put(file) {
-			var _this34 = this;
+			var _this35 = this;
 
 			return new Promise(function (resolve, reject) {
-				_this34.client.writeFile(file.name, file.data, function (error, stat) {
+				_this35.client.writeFile(file.name, file.data, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -3998,27 +4032,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		login: function login(passive) {
-			var _this35 = this;
+			var _this36 = this;
 
 			return this.ready.then(function () {
-				return _this35.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this35.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this36.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this36.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this35.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this36.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this35.client.isAuthenticated()) {
+						if (_this36.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this35.permissions.on(["logout", "edit"]);
+							_this36.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this35.permissions.off(["logout", "edit", "add", "delete"]);
+							_this36.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -4026,22 +4060,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this35.client.getAccountInfo(function (error, accountInfo) {
+				_this36.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						_this35.wysie.wrapper._.fire("wysie:login", accountInfo);
+						_this36.wysie.wrapper._.fire("wysie:login", accountInfo);
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this36 = this;
+			var _this37 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this36.client.signOut(null, function () {
-					_this36.permissions.off(["edit", "add", "delete"]).on("login");
+				_this37.client.signOut(null, function () {
+					_this37.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this36.wysie.wrapper._.fire("wysie:logout");
+					_this37.wysie.wrapper._.fire("wysie:logout");
 					resolve();
 				});
 			});

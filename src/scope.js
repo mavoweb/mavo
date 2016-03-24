@@ -177,7 +177,7 @@ var _ = Wysie.Scope = $.Class({
 
 	propagate: function(callback) {
 		$.each(this.properties, (property, obj) => {
-			obj.call.apply(obj, arguments);
+			obj.call(...arguments);
 		});
 	},
 

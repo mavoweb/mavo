@@ -68,7 +68,7 @@ var _ = self.Wysie = $.Class({
 		// Normalize property names
 		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
 			return Wysie.Node.normalizeProperty(element);
-		});
+		}).sort((a, b) => b.length - a.length);
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;

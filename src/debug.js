@@ -16,6 +16,26 @@ var _ = Wysie.Debug = {
 		return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
 	},
 
+	elementLabel: function(element, attribute) {
+		var ret = element.nodeName.toLowerCase();
+
+		if (element.hasAttribute("property")) {
+			ret += `[property=${element.getAttribute("property")}]`;
+		}
+		else if (element.id) {
+			ret += `#${element.id}`;
+		}
+		else if (element.classList.length) {
+			ret += $$(element.classList).map(c => `.${c}`).join("");
+		}
+
+		if (attribute) {
+			ret += `@${attribute}`;
+		}
+
+		return ret;
+	},
+
 	timed: function(id, callback) {
 		return function() {
 			console.time(id);
@@ -81,9 +101,10 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 
 		this.template.forEach(expr => {
 			if (expr instanceof Wysie.Expression) {
-				var elementLabel = this.constructor.elementLabel(this.element, this.attribute);
+				var elementLabel = _.elementLabel(this.element, this.attribute);
 
 				$.create("tr", {
+					className: "debug-expression",
 					contents: [
 						{
 							tag: "td",
@@ -119,6 +140,37 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 					inside: this.all.debug
 				});
 			}
+		});
+	}
+});
+
+Wysie.hooks.add("scope-init-end", function() {
+	// TODO make properties update, collapse duplicate expressions
+	if (this.expressions.debug instanceof Node) {
+		// We have a debug table, add properties to it
+		this.propagate(obj => {
+			if (!(obj instanceof Wysie.Primitive)) {
+				return;
+			}
+
+			$.create("tr", {
+				className: "debug-property",
+				contents: [
+					{tag: "td", textContent: obj.property},
+					{tag: "td", textContent: obj.value},
+					{tag: "td", textContent: _.elementLabel(obj.element)}
+				],
+				inside: this.expressions.debug
+			});
+		});
+	}
+});
+
+Wysie.hooks.add("expressions-update-start", function(env) {
+	if (this.debug instanceof Node) {
+		$$("tr.debug-property", this.debug).forEach(tr => {
+			var property = tr.cells[0].textContent;
+			tr.cells[1].textContent = env.data[property];
 		});
 	}
 });

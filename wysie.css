@@ -324,8 +324,9 @@
     font-family: Consolas, Monaco, monospace; }
     .wysie-debuginfo td:nth-child(1) {
       position: relative;
-      padding: 0;
-      white-space: nowrap; }
+      padding: 0 .7em;
+      white-space: nowrap;
+      vertical-align: middle; }
       .wysie-debuginfo td:nth-child(1) textarea {
         all: unset;
         position: absolute;
