@@ -83,7 +83,7 @@ var aliases = {
 	multiply: "mult product",
 	divide: "div",
 	lt: "lessThan smaller",
-	gt: "moreThan bigger",
+	gt: "moreThan greater greaterThan bigger",
 	eq: "equal equality"
 };
 

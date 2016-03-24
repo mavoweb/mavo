@@ -2151,7 +2151,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		multiply: "mult product",
 		divide: "div",
 		lt: "lessThan smaller",
-		gt: "moreThan bigger",
+		gt: "moreThan greater greaterThan bigger",
 		eq: "equal equality"
 	};
 
