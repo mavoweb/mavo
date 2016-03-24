@@ -3795,6 +3795,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				message = "Missing a )";
 			} else if (message === "Unexpected token )") {
 				message = "Missing a (";
+			} else if (message === "Invalid left-hand side in assignment") {
+				message = "Invalid assignment. Maybe you typed = instead of ==?";
+			} else if (message == "Unexpected token ILLEGAL") {
+				message = "There is an invalid character somewhere.";
+			} else {
+				message = message.replace(/\stoken\s/g, " ");
 			}
 
 			return "<span class=\"type\">Oh noes, a " + type + " error!</span> " + message;
