@@ -158,9 +158,13 @@ article {
   background: #757c8a;
   color: white;
   font-size: 120%;
-  border-radius: .1em; }
+  border-radius: .2em; }
   .add-decision:hover {
     background: #5e636e; }
+
+footer {
+  margin-top: 2em;
+  color: #6a707c; }
 
 #data {
   display: block;

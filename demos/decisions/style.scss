@@ -203,11 +203,16 @@ article {
 	background: darken($background, 10%);
 	color: white;
 	font-size: 120%;
-	border-radius: .1em;
+	border-radius: .2em;
 
 	&:hover {
 		background: darken($background, 20%);
 	}
+}
+
+footer {
+	margin-top: 2em;
+	color: darken($background, 15%);
 }
 
 #data {
