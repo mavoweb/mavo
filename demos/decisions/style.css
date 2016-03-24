@@ -176,7 +176,8 @@ footer {
   overflow: auto;
   -moz-tab-size: 4;
   tab-size: 4;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset; }
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset;
+  text-align: left; }
 
 #data:empty {
   visibility: hidden; }
