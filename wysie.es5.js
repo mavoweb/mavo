@@ -1657,7 +1657,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Wysie.hooks.run("expression-eval-beforeeval", this);
 
 			try {
-				this.value = eval("\n\t\t\t\twith(Wysie.Functions.Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\t" + this.expression + "\n\t\t\t\t\t}");
+				this.value = eval("\n\t\t\t\twith(Wysie.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\t" + this.expression + "\n\t\t\t\t\t}");
 			} catch (exception) {
 				Wysie.hooks.run("expression-eval-error", { context: this, exception: exception });
 
@@ -2091,48 +2091,40 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Addition between scalars returns their scalar sum (same as +)
    * Addition between a scalar and an array will result in the scalar being added to every array element.
    */
-		add: function add() {
-			var ret = 0;
+		add: arrayOp(function (a, b) {
+			return a + b;
+		}),
+		subtract: arrayOp(function (a, b) {
+			return a - b;
+		}),
+		multiply: arrayOp(function (a, b) {
+			return a * b;
+		}, 1),
+		divide: arrayOp(function (a, b) {
+			return a / b;
+		}, 1),
 
-			for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-				operands[_key2] = arguments[_key2];
-			}
+		and: arrayOp(function (a, b) {
+			return !!a && !!b;
+		}, true),
+		or: arrayOp(function (a, b) {
+			return !!a || !!b;
+		}, false),
+		not: arrayOp(function (a) {
+			return function (a) {
+				return !a;
+			};
+		}),
 
-			operands.forEach(function (operand) {
-				if (Array.isArray(operand)) {
-
-					operand = numbers(operand);
-
-					if (Array.isArray(ret)) {
-						operand.forEach(function (n, i) {
-							ret[i] = (ret[i] || 0) + n;
-						});
-					} else {
-						ret = operand.map(function (n) {
-							return ret + n;
-						});
-					}
-				} else {
-					// Operand is scalar
-					if (isNaN(operand)) {
-						// Skip this
-						return;
-					}
-
-					operand = +operand;
-
-					if (Array.isArray(ret)) {
-						ret = ret.map(function (n) {
-							return n + operand;
-						});
-					} else {
-						ret += operand;
-					}
-				}
-			});
-
-			return ret;
-		},
+		eq: arrayOp(function (a, b) {
+			return a == b;
+		}),
+		lt: arrayOp(function (a, b) {
+			return a < b;
+		}),
+		gt: arrayOp(function (a, b) {
+			return a > b;
+		}),
 
 		round: function round(num, decimals) {
 			if (!num || !decimals || !isFinite(num)) {
@@ -2152,12 +2144,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	};
 
-	_.avg = _.average;
-	_.iif = _.IF = _.iff;
+	var aliases = {
+		average: "avg",
+		iff: "iff IF",
+		subtract: "minus",
+		multiply: "mult product",
+		divide: "div",
+		lt: "lessThan smaller",
+		gt: "moreThan bigger",
+		eq: "equal equality"
+	};
+
+	for (name in aliases) {
+		aliases[name].split(/\s+/g).forEach(function (alias) {
+			return _[alias] = _[name];
+		});
+	}
 
 	// Make function names case insensitive
 	if (self.Proxy) {
-		Wysie.Functions.Trap = new Proxy(_, {
+		Wysie.Functions._Trap = new Proxy(_, {
 			get: function get(functions, property) {
 				if (property in functions) {
 					return functions[property];
@@ -2201,6 +2207,66 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}).map(function (n) {
 			return +n;
 		});
+	}
+
+	/**
+  * Extend a scalar operator to arrays, or arrays and scalars
+  * The operation between arrays is applied element-wise.
+  * The operation operation between a scalar and an array will result in
+  * the operation being applied between the scalar and every array element.
+  * @param op {Function} The operation between two scalars
+  * @param identity The operation’s identity element. Defaults to 0.
+  */
+	function arrayOp(op) {
+		var identity = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+
+		if (op.length < 2) {
+			// Unary operator
+			return function (operand) {
+				return Array.isArray(operand) ? operand.map(op) : op(operand);
+			};
+		}
+
+		return function () {
+			for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+				operands[_key2] = arguments[_key2];
+			}
+
+			if (operands.length === 1) {
+				operands = [].concat(_toConsumableArray(operands), [identity]);
+			}
+
+			return operands.reduce(function (a, b) {
+				if (Array.isArray(b)) {
+					if (typeof identity == "number") {
+						b = numbers(b);
+					}
+
+					if (Array.isArray(a)) {
+						return [].concat(_toConsumableArray(b.map(function (n, i) {
+							return op(a[i] === undefined ? identity : a[i], n);
+						})), _toConsumableArray(a.slice(b.length)));
+					} else {
+						return b.map(function (n) {
+							return op(a, n);
+						});
+					}
+				} else {
+					// Operand is scalar
+					if (typeof identity == "number") {
+						b = +b;
+					}
+
+					if (Array.isArray(a)) {
+						return a.map(function (n) {
+							return op(n, b);
+						});
+					} else {
+						return op(a, b);
+					}
+				}
+			});
+		};
 	}
 })();
 

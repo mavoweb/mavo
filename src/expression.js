@@ -14,7 +14,7 @@ var _ = Wysie.Expression = $.Class({
 
 		try {
 			this.value = eval(`
-				with(Wysie.Functions.Trap)
+				with(Wysie.Functions._Trap)
 					with(data) {
 						${this.expression}
 					}`);
