@@ -2670,7 +2670,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		set value(value) {
-
 			if (this.editing && document.activeElement != this.editor) {
 				this.editorValue = value;
 			}
@@ -2821,6 +2820,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		// Called when root edit button is pressed
 		preEdit: function preEdit() {
 			var _this22 = this;
+
+			if (this.computed) {
+				return;
+			}
 
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
@@ -3036,7 +3039,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		edit: function edit() {
-			if (this.editing) {
+			if (this.computed || this.editing) {
 				return;
 			}
 

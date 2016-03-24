@@ -2304,7 +2304,6 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	set value(value) {
-
 		if (this.editing && document.activeElement != this.editor) {
 			this.editorValue = value;
 		}
@@ -2459,6 +2458,10 @@ var _ = Wysie.Primitive = $.Class({
 	// Prepare to be edited
 	// Called when root edit button is pressed
 	preEdit: function () {
+		if (this.computed) {
+			return;
+		}
+
 		// Empty properties should become editable immediately
 		// otherwise they could be invisible!
 		if (this.empty && !this.attribute) {
@@ -2668,7 +2671,7 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.editing) {
+		if (this.computed || this.editing) {
 			return;
 		}
 
