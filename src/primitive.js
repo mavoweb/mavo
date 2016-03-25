@@ -791,7 +791,8 @@ _.editors = {
 		"placeholder": "http://"
 	},
 
-	"p, div, .multiline": {
+	// Block elements
+	"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, .multiline": {
 		create: {tag: "textarea"},
 
 		get editorValue () {

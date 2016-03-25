@@ -440,6 +440,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Assign a unique (for the page) id to this wysie instance
 			this.id = element.id || "wysie-" + _.all.length;
 
+			this.autoEdit = _.has("autoedit", element);
+
 			this.element = _.is("scope", element) ? element : $(_.selectors.rootScope, element);
 
 			if (!this.element) {
@@ -521,7 +523,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					className: "edit",
 					textContent: "Edit",
 					onclick: function onclick(e) {
-						return _this[_this.editing ? "done" : "edit"]();
+						return _this.editing ? _this.done() : _this.edit();
 					}
 				});
 
@@ -562,6 +564,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_this.ui.editButtons = [_this.ui.edit, _this.ui.save, _this.ui.revert];
 
 				$.contents(_this.ui.bar, _this.ui.editButtons);
+
+				if (_this.autoEdit) {
+					_this.ui.edit.click();
+				}
 			}, function () {
 				// cannot
 				$.remove(_this.ui.editButtons);
@@ -767,6 +773,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return element.matches && element.matches(_.selectors[thing]);
 			},
 
+			has: function has(option, element) {
+				return element.matches && element.matches(_.selectors.option(option));
+			},
+
 			hooks: new $.Hooks()
 		}
 	});
@@ -785,7 +795,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				formControl: "input, select, textarea",
 				computed: ".computed", // Properties or scopes with computed properties, will not be saved
 				item: ".wysie-item",
-				ui: ".wysie-ui"
+				ui: ".wysie-ui",
+				option: function option(name) {
+					return "[" + name + "], [data-" + name + "], [data-wysie-options~='" + name + "'], ." + name;
+				}
 			};
 
 			var arr = s.arr = function (selector) {
@@ -3324,7 +3337,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			"placeholder": "http://"
 		},
 
-		"p, div, .multiline": {
+		// Block elements
+		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, .multiline": {
 			create: { tag: "textarea" },
 
 			get editorValue() {

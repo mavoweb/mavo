@@ -15,6 +15,8 @@ var _ = self.Wysie = $.Class({
 		// Assign a unique (for the page) id to this wysie instance
 		this.id = element.id || "wysie-" + _.all.length;
 
+		this.autoEdit = _.has("autoedit", element);
+
 		this.element = _.is("scope", element)? element : $(_.selectors.rootScope, element);
 
 		if (!this.element) {
@@ -95,7 +97,7 @@ var _ = self.Wysie = $.Class({
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this[this.editing? "done" : "edit"]()
+				onclick: e => this.editing? this.done() : this.edit()
 			});
 
 			this.ui.save = $.create("button", {
@@ -127,6 +129,10 @@ var _ = self.Wysie = $.Class({
 			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
 
 			$.contents(this.ui.bar, this.ui.editButtons);
+
+			if (this.autoEdit) {
+				this.ui.edit.click();
+			}
 		}, () => { // cannot
 			$.remove(this.ui.editButtons);
 		});
@@ -328,6 +334,10 @@ var _ = self.Wysie = $.Class({
 			return element.matches && element.matches(_.selectors[thing]);
 		},
 
+		has: function(option, element) {
+			return element.matches && element.matches(_.selectors.option(option));
+		},
+
 		hooks: new $.Hooks()
 	}
 });
@@ -343,7 +353,8 @@ let s = _.selectors = {
 	formControl: "input, select, textarea",
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
-	ui: ".wysie-ui"
+	ui: ".wysie-ui",
+	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
