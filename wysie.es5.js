@@ -566,7 +566,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				$.contents(_this.ui.bar, _this.ui.editButtons);
 
 				if (_this.autoEdit) {
-					_this.ui.edit.click();
+					requestAnimationFrame(function () {
+						return _this.ui.edit.click();
+					});
 				}
 			}, function () {
 				// cannot

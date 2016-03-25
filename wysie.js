@@ -322,7 +322,7 @@ var _ = self.Wysie = $.Class({
 			$.contents(this.ui.bar, this.ui.editButtons);
 
 			if (this.autoEdit) {
-				this.ui.edit.click();
+				requestAnimationFrame(() => this.ui.edit.click());
 			}
 		}, () => { // cannot
 			$.remove(this.ui.editButtons);
