@@ -309,6 +309,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			}
 
 			& textarea.wysie-editor {
+				display: block;
 				box-sizing: border-box;
 				width: 100%;
 			}

@@ -204,6 +204,7 @@
   text-align: inherit; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.wysie-editor {
+  display: block;
   box-sizing: border-box;
   width: 100%; }
 
