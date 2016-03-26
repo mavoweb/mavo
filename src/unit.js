@@ -23,24 +23,15 @@ var _ = Wysie.Unit = $.Class({
 	},
 
 	get closestCollection() {
-		// TODO refactor using this.walkUp()
 		if (this.collection) {
 			return this.collection;
 		}
 
-		if (this.scope.collection) {
-			return this.scope.collection;
-		}
-
-		var parentScope;
-
-		while (parentScope = this.parentScope) {
-			if (parentScope.collection) {
-				return parentScope.collection;
+		return this.walkUp(scope => {
+			if (scope.collection) {
+				return scope.collection;
 			}
-		}
-
-		return null;
+		}) || null;
 	},
 
 	/**

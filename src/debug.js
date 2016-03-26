@@ -6,20 +6,21 @@ var _ = Wysie.Debug = {
 		var message = e.message;
 
 		// Friendlify common errors
-		if (message == "Unexpected token }" && !/[{}]/.test(expr)) {
+
+		// Non-developers don't know wtf a token is.
+		message = message.replace(/\s+token\s+/g, " ");
+
+		if (message == "Unexpected }" && !/[{}]/.test(expr)) {
 			message = "Missing a )";
 		}
-		else if (message === "Unexpected token )") {
+		else if (message === "Unexpected )") {
 			message = "Missing a (";
 		}
 		else if (message === "Invalid left-hand side in assignment") {
-			message = "Invalid assignment. Maybe you typed = instead of ==?";
+			message = "Invalid assignment. Maybe you typed = instead of == ?";
 		}
-		else if (message == "Unexpected token ILLEGAL") {
+		else if (message == "Unexpected ILLEGAL") {
 			message = "There is an invalid character somewhere.";
-		}
-		else {
-			message = message.replace(/\stoken\s/g, " ");
 		}
 
 		return `<span class="type">Oh noes, a ${type} error!</span> ${message}`;
@@ -62,9 +63,17 @@ var selector = ", .wysie-debuginfo";
 Wysie.Expressions.escape += selector;
 Stretchy.selectors.filter += selector;
 
-Wysie.hooks.add("node-init-end", function() {
-	this.debug = !!this.element.closest(Wysie.selectors.debug);
-});
+Wysie.hooks.add("scope-init-start", function() {
+	this.debug = this.debug || this.walkUp(scope => {
+		if (scope.debug) {
+			return true;
+		}
+	});
+
+	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
+		this.debug = true;
+	}
+}, true);
 
 Wysie.hooks.add("unit-init-end", function() {
 	if (this.collection) {
