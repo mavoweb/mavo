@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Foodie log</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data" class="autoedit">
+	<h1>
+		Foodie<span>log</span>
+	</h1>
+
+	<article property="restaurant" data-multiple>
+		<header style="background-image: url('=picture')">
+			<img property="picture" src="http://www.toscanoboston.com/common/images/thumb-cucina.jpg">
+			<a property="url" href="http://www.toscanoboston.com/beacon-hill">
+				<h1 property="name">Toscano</h1>
+			</a>
+
+			<p>
+				<meta property="good", content="=if(rating > 3, 1)" />
+				<meter property="rating" min="0" max="5" value="=average(visitRating)" title="Overall rating: =rating"</span>
+			</p>
+		</header>
+
+		<section>
+			<h1>Visits (=count(visit))</h1>
+
+			<article property="visit" data-multiple>
+				<header>
+					<h1>
+						<time datetime="2016-03-15" property="date">15 Mar 2016</time>
+						<div property="title">Date night!</div>
+					</h1>
+					<p>
+						Average dish rating
+						<span property="visitRating">=average(dishRating)</span>
+					</p>
+				</header>
+
+				<section>
+					<h1>Notable dishes (=count(dish))</h1>
+					<ul>
+						<li property="dish" data-multiple>
+							<p property="name">Filet mignon with black truffle and foie gras</p>
+							<p>
+								Rating:
+								<meter property="dishRating" min="0" value="4" max="5"></meter>
+								=dishRating/5
+							</p>
+						</li>
+					</ul>
+				</section>
+			</article>
+		</section>
+	</article>
+
+	<footer>Total: =sum(good) good restaurants out of =count(restaurant) total</footer>
+</main>
+
+<script type="application/json" id="data"></script>
+<script src="../../wysie.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Foodie log</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data" class="autoedit debug">
+	<h1>
+		Foodie<span>log</span>
+	</h1>
+
+	<article>
+		<header style="background-image: url('http://www.toscanoboston.com/common/images/thumb-cucina.jpg')">
+			<img src="http://www.toscanoboston.com/common/images/thumb-cucina.jpg">
+			<a href="http://www.toscanoboston.com/beacon-hill">
+				<h1>Toscano</h1>
+			</a>
+
+			<p>
+				<meter min="0" max="5" value="4" title="Overall rating: 4"</span>
+			</p>
+		</header>
+
+		<section>
+			<h1>Visits (1)</h1>
+
+			<article>
+				<header>
+					<h1>
+						<time datetime="2016-03-15">15 Mar 2016</time>
+						<div>Date night!</div>
+					</h1>
+					<p>
+						Average dish rating
+						<span>4</span>
+					</p>
+				</header>
+
+				<section>
+					<h1>Notable dishes (1)</h1>
+					<ul>
+						<li>
+							<p>Filet mignon with black truffle and foie gras</p>
+							<p>
+								Rating:
+								<meter min="0" value="4" max="5"></meter>
+								4/5
+							</p>
+						</li>
+					</ul>
+				</section>
+			</article>
+		</section>
+	</article>
+
+	<footer>Total: 1 good restaurants out of 1 total</footer>
+</main>
+
+<script type="application/json" id="data"></script>
+<script src="../../wysie.js"></script>
+
+</body>
+</html>
