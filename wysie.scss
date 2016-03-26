@@ -287,7 +287,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 
 		// Primitives
-		#{$primitive} {
+		#{$primitive}:not(.computed) {
 			&:hover {
 				@include highlight(hsla(58, 100%, 50%, .2));
 			}
@@ -487,6 +487,9 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		vertical-align: top;
 		line-height: 1.7;
 		font-family: $font-mono;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 
 		&:nth-child(1) {
 			// Expression column
@@ -494,6 +497,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			padding: 0 .7em;
 			white-space: nowrap;
 			vertical-align: middle;
+			overflow: visible;
 
 			textarea {
 				all: unset;
@@ -548,9 +552,6 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		&:nth-child(3) {
 			// Element column
 			width: 30%;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
 			cursor: help;
 
 			&:hover {

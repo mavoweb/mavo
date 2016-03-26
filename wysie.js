@@ -2753,6 +2753,10 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.classList.toggle("editing", value);
 		},
 
+		computed: function (value) {
+			this.element.classList.toggle("computed", value);
+		},
+
 		datatype: function (value) {
 			// Purge caches if datatype changes
 			if (_.getValue.cache) {

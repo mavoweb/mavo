@@ -183,31 +183,31 @@
 .wysie-wrapper[data-editing] .wysie-item-controls *:focus {
   outline: 3px solid #f06 !important; }
 
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):hover {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed):hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]):focus,
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) .wysie-editor:focus, .wysie-wrapper[data-editing] [property]:not([typeof]):focus,
-.wysie-wrapper[data-editing] [property]:not([typeof]) .wysie-editor:focus {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) .wysie-editor:focus, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed):focus,
+.wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) .wysie-editor:focus {
   outline: 1px dashed rgba(51, 119, 153, 0.6);
   outline-offset: 1px; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor,
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) select.wysie-editor,
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor,
-.wysie-wrapper[data-editing] [property]:not([typeof]) select.wysie-editor,
-.wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) select.wysie-editor,
+.wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.wysie-editor {
   all: initial;
   font: inherit;
   color: inherit;
   text-decoration: inherit;
   text-align: inherit; }
 
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) textarea.wysie-editor {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.wysie-editor {
   box-sizing: border-box;
   width: 100%; }
 
-.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]) input.wysie-editor {
+.wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.wysie-editor {
   max-width: 100%; }
 
 .wysie-bar {
@@ -321,12 +321,16 @@
     padding: .3em .7em;
     vertical-align: top;
     line-height: 1.7;
-    font-family: Consolas, Monaco, monospace; }
+    font-family: Consolas, Monaco, monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; }
     .wysie-debuginfo td:nth-child(1) {
       position: relative;
       padding: 0 .7em;
       white-space: nowrap;
-      vertical-align: middle; }
+      vertical-align: middle;
+      overflow: visible; }
       .wysie-debuginfo td:nth-child(1) textarea {
         all: unset;
         position: absolute;
@@ -363,9 +367,6 @@
           font: 150%/.8 sans-serif; }
     .wysie-debuginfo td:nth-child(3) {
       width: 30%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       cursor: help; }
       .wysie-debuginfo td:nth-child(3):hover {
         background: rgba(255, 247, 0, 0.3); }

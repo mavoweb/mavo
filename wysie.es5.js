@@ -3127,6 +3127,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element.classList.toggle("editing", value);
 			},
 
+			computed: function computed(value) {
+				this.element.classList.toggle("computed", value);
+			},
+
 			datatype: function datatype(value) {
 				// Purge caches if datatype changes
 				if (_.getValue.cache) {
