@@ -92,8 +92,7 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	set backup(data) {
-		data = typeof data === "string"? data : this.wysie.toJSON(data);
-		localStorage[this.originalHref] = data;
+		localStorage[this.originalHref] = this.wysie.toJSON(data);
 	},
 
 	get isHash() {
@@ -181,12 +180,12 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	save: function(data = this.wysie.data) {
-		data = this.wysie.toJSON(data);
-
 		this.backup = {
 			synced: !this.put,
 			data: data
 		};
+
+		data = this.wysie.toJSON(data);
 
 		if (this.put) {
 			return this.login().then(() => {

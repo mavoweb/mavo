@@ -387,14 +387,14 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 		&::before {
 			display: inline-block;
-			vertical-align: middle;
+			vertical-align: -.1em;
 			margin-right: .3em;
 			color: white;
 			opacity: .5;
 			font-weight: normal;
 		}
 
-		&:hover::before {
+		&:enabled:hover::before {
 			opacity: .8;
 		}
 
@@ -442,8 +442,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	.clear {
 		&::before {
 			@extend %rubbish-bin;
-			display: inline-block;
-			vertical-align: middle;
+			vertical-align: -.25em;
 			width: .9em;
 			filter: saturate(0) brightness(600%);
 		}

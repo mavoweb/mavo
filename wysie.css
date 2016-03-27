@@ -263,12 +263,12 @@
       background: rgba(255, 255, 255, 0.2); }
     .wysie-bar button::before, .wysie-bar .button::before {
       display: inline-block;
-      vertical-align: middle;
+      vertical-align: -.1em;
       margin-right: .3em;
       color: white;
       opacity: .5;
       font-weight: normal; }
-    .wysie-bar button:hover::before, .wysie-bar .button:hover::before {
+    .wysie-bar button:enabled:hover::before, .wysie-bar .button:enabled:hover::before {
       opacity: .8; }
     .wysie-bar button:disabled, .wysie-bar .button:disabled {
       opacity: .6;
@@ -289,8 +289,7 @@
   .wysie-bar .revert:enabled:hover {
     background: #c50; }
   .wysie-bar .clear::before {
-    display: inline-block;
-    vertical-align: middle;
+    vertical-align: -.25em;
     width: .9em;
     -webkit-filter: saturate(0) brightness(600%);
     filter: saturate(0) brightness(600%); }

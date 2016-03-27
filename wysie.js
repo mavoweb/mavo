@@ -307,11 +307,14 @@ var _ = self.Wysie = $.Class({
 			this.ui.revert = $.create("button", {
 				className: "revert",
 				textContent: "Revert",
+				disabled: true,
 				events: {
 					click: e => this.revert(),
 					"mouseenter focus": e => {
-						this.wrapper.classList.add("revert-hovered");
-						this.unsavedChanges = this.calculateUnsavedChanges();
+						if (this.everSaved) {
+							this.wrapper.classList.add("revert-hovered");
+							this.unsavedChanges = this.calculateUnsavedChanges();
+						}
 					},
 					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
 				}
@@ -385,6 +388,7 @@ var _ = self.Wysie = $.Class({
 			this.root.import();
 		}
 		else {
+			this.everSaved = true;
 			this.root.render(data.data || data);
 		}
 
@@ -450,6 +454,7 @@ var _ = self.Wysie = $.Class({
 			this.storage.save();
 		}
 
+		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 
@@ -479,7 +484,14 @@ var _ = self.Wysie = $.Class({
 			this.wrapper.classList.toggle("unsaved-changes", value);
 
 			if (this.ui) {
-				this.ui.save.disabled = this.ui.revert.disabled = !value;
+				this.ui.save.disabled = !value;
+				this.ui.revert.disabled = !this.everSaved || !value;
+			}
+		},
+
+		everSaved: function(value) {
+			if (this.ui && this.ui.revert) {
+				this.ui.revert.disabled = !value;
 			}
 		}
 	},
@@ -901,8 +913,7 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	set backup(data) {
-		data = typeof data === "string"? data : this.wysie.toJSON(data);
-		localStorage[this.originalHref] = data;
+		localStorage[this.originalHref] = this.wysie.toJSON(data);
 	},
 
 	get isHash() {
@@ -990,12 +1001,12 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	save: function(data = this.wysie.data) {
-		data = this.wysie.toJSON(data);
-
 		this.backup = {
 			synced: !this.put,
 			data: data
 		};
+
+		data = this.wysie.toJSON(data);
 
 		if (this.put) {
 			return this.login().then(() => {

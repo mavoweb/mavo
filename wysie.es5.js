@@ -547,13 +547,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_this.ui.revert = $.create("button", {
 					className: "revert",
 					textContent: "Revert",
+					disabled: true,
 					events: {
 						click: function click(e) {
 							return _this.revert();
 						},
 						"mouseenter focus": function mouseenterFocus(e) {
-							_this.wrapper.classList.add("revert-hovered");
-							_this.unsavedChanges = _this.calculateUnsavedChanges();
+							if (_this.everSaved) {
+								_this.wrapper.classList.add("revert-hovered");
+								_this.unsavedChanges = _this.calculateUnsavedChanges();
+							}
 						},
 						"mouseleave blur": function mouseleaveBlur(e) {
 							return _this.wrapper.classList.remove("revert-hovered");
@@ -637,6 +640,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (!data) {
 				this.root.import();
 			} else {
+				this.everSaved = true;
 				this.root.render(data.data || data);
 			}
 
@@ -702,6 +706,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.storage.save();
 			}
 
+			this.everSaved = true;
 			this.unsavedChanges = false;
 		},
 
@@ -730,7 +735,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.wrapper.classList.toggle("unsaved-changes", value);
 
 				if (this.ui) {
-					this.ui.save.disabled = this.ui.revert.disabled = !value;
+					this.ui.save.disabled = !value;
+					this.ui.revert.disabled = !this.everSaved || !value;
+				}
+			},
+
+			everSaved: function everSaved(value) {
+				if (this.ui && this.ui.revert) {
+					this.ui.revert.disabled = !value;
 				}
 			}
 		},
@@ -1193,8 +1205,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		set backup(data) {
-			data = typeof data === "string" ? data : this.wysie.toJSON(data);
-			localStorage[this.originalHref] = data;
+			localStorage[this.originalHref] = this.wysie.toJSON(data);
 		},
 
 		get isHash() {
@@ -1289,12 +1300,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			var data = arguments.length <= 0 || arguments[0] === undefined ? this.wysie.data : arguments[0];
 
-			data = this.wysie.toJSON(data);
-
 			this.backup = {
 				synced: !this.put,
 				data: data
 			};
+
+			data = this.wysie.toJSON(data);
 
 			if (this.put) {
 				return this.login().then(function () {
