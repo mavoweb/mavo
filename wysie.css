@@ -422,14 +422,16 @@
     border-collapse: collapse;
     width: 100%; }
     .wysie-debug-storage table th, .wysie-debug-storage table td {
-      padding: 5px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: .4em;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       vertical-align: top; }
     .wysie-debug-storage table td {
       white-space: nowrap; }
     .wysie-debug-storage table,
     .wysie-debug-storage table th {
       text-align: left; }
+    .wysie-debug-storage table thead th {
+      font-family: "Helvetica Neue", sans-serif; }
     .wysie-debug-storage table.list > thead th {
       background: #6DBD2A; }
     .wysie-debug-storage table.object > thead th {

@@ -12,7 +12,7 @@ are met:
 	  notice, this list of conditions and the following disclaimer in the
 	  documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY James Padolsey ``AS IS'' AND
+THIS SOFTWARE IS PROVIDED BY James Padolsey ``AS IS"" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL James Padolsey OR CONTRIBUTORS BE LIABLE
@@ -37,7 +37,7 @@ policies, either expressed or implied, of James Padolsey.
 
 */
 
-var prettyPrint = (function(){
+var prettyPrint = (function() {
 
 	/* These "util" functions are not part of the core
 	   functionality but are  all necessary - mostly DOM helpers */
@@ -46,43 +46,35 @@ var prettyPrint = (function(){
 
 		txt: function(t) {
 			/* Create text node */
+			t = t + "";
 			return document.createTextNode(t);
 		},
 
 		row: function(cells, type, cellType) {
 
 			/* Creates new <tr> */
-			cellType = cellType || 'td';
+			cellType = cellType || "td";
 
 			/* colSpan is calculated by length of null items in array */
 			var colSpan = util.count(cells, null) + 1,
-				tr = $.create('tr'), td,
+				tr = $.create("tr"), td,
 				attrs = {
-					colSpan: colSpan,
-					onmouseover: function() {
-						var tds = this.parentNode.childNodes;
-						util.forEach(tds, function(cell){
-							if (cell.nodeName.toLowerCase() !== 'td') { return; }
-						});
-					},
-					onmouseout: function() {
-						var tds = this.parentNode.childNodes;
-						util.forEach(tds, function(cell){
-							if (cell.nodeName.toLowerCase() !== 'td') { return; }
-						});
-					}
+					colSpan: colSpan
 				};
 
-			util.forEach(cells, function(cell){
+			$$(cells).forEach(function(cell) {
+				if (cell === null) {
+					return;
+				}
 
-				if (cell === null) { return; }
 				/* Default cell type is <td> */
 				td = $.create(cellType, attrs);
 
 				if (cell.nodeType) {
 					/* IsDomElement */
 					td.appendChild(cell);
-				} else {
+				}
+				else {
 					/* IsString */
 					td.innerHTML = util.shorten(cell.toString());
 				}
@@ -93,19 +85,19 @@ var prettyPrint = (function(){
 			return tr;
 		},
 
-		hRow: function(cells, type){
+		hRow: function(cells, type) {
 			/* Return new <th> */
-			return util.row(cells, type, 'th');
+			return util.row(cells, type, "th");
 		},
 
-		table: function(headings, type){
+		table: function(headings, type) {
 
 			headings = headings || [];
 
 			/* Creates new table: */
-			var tbl = $.create('table');
-			var thead = $.create('thead');
-			var tbody = $.create('tbody');
+			var tbl = $.create("table");
+			var thead = $.create("thead");
+			var tbody = $.create("tbody");
 
 			tbl.classList.add(type);
 
@@ -125,8 +117,8 @@ var prettyPrint = (function(){
 				appendChild: function(node) {
 					this.tbody.appendChild(node);
 				},
-				addRow: function(cells, _type, cellType){
-					this.appendChild(util.row.call(util, cells, (_type || type), cellType));
+				addRow: function(cells, _type, cellType) {
+					this.appendChild(util.row(cells, (_type || type), cellType));
 					return this;
 				}
 			};
@@ -134,12 +126,12 @@ var prettyPrint = (function(){
 
 		shorten: function(str) {
 			var max = 40;
-			str = str.replace(/^\s\s*|\s\s*$|\n/g,'');
-			return str.length > max ? (str.substring(0, max-1) + '...') : str;
+			str = str.replace(/^\s\s*|\s\s*$|\n/g, "");
+			return str.length > max ? (str.substring(0, max-1) + "...") : str;
 		},
 
 		htmlentities: function(str) {
-			return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		},
 
 		count: function(arr, item) {
@@ -153,54 +145,7 @@ var prettyPrint = (function(){
 		},
 
 		thead: function(tbl) {
-			return tbl.getElementsByTagName('thead')[0];
-		},
-
-		forEach: function(arr, max, fn) {
-
-			if (!fn) {
-				fn = max;
-			}
-
-			/* Helper: iteration */
-			var len = arr.length,
-				index = -1;
-
-			while (++index < len) {
-				if(fn( arr[index], index, arr ) === false) {
-					break;
-				}
-			}
-
-			return true;
-		},
-
-		type: function(v){
-			try {
-				/* Returns type, e.g. "string", "number", "array" etc.
-				   Note, this is only used for precise typing. */
-				if (v === null) { return 'null'; }
-				if (v === undefined) { return 'undefined'; }
-				var oType = Object.prototype.toString.call(v).match(/\s(.+?)\]/)[1].toLowerCase();
-				if (v.nodeType) {
-					if (v.nodeType === 1) {
-						return 'domelement';
-					}
-					return 'domnode';
-				}
-				if (/^(string|number|array|regexp|function|date|boolean)$/.test(oType)) {
-					return oType;
-				}
-				if (typeof v === 'object') {
-					return v.jquery && typeof v.jquery === 'string' ? 'jquery' : 'object';
-				}
-				if (v === window || v === document) {
-					return 'object';
-				}
-				return 'default';
-			} catch(e) {
-				return 'default';
-			}
+			return tbl.getElementsByTagName("thead")[0];
 		},
 
 		within: function(ref) {
@@ -213,7 +158,7 @@ var prettyPrint = (function(){
 							return i;
 						}
 					}
-					return '';
+					return "";
 				}
 			};
 		},
@@ -221,84 +166,50 @@ var prettyPrint = (function(){
 		common: {
 			circRef: function(obj, key, settings) {
 				return util.expander(
-					'[POINTS BACK TO <strong>' + (key) + '</strong>]',
-					'Click to show this item anyway',
+					"[POINTS BACK TO <strong>" + (key) + "</strong>]",
+					"Click to show this item anyway",
 					function() {
-						this.parentNode.appendChild( prettyPrintThis(obj,{maxDepth:1}) );
+						this.parentNode.appendChild(prettyPrintThis(obj, {maxDepth:1}));
 					}
 				);
 			},
 			depthReached: function(obj, settings) {
 				return util.expander(
-					'[DEPTH REACHED]',
-					'Click to show this item anyway',
+					"[DEPTH REACHED]",
+					"Click to show this item anyway",
 					function() {
 						try {
-							this.parentNode.appendChild( prettyPrintThis(obj,{maxDepth:1}) );
-						} catch(e) {
+							this.parentNode.appendChild( prettyPrintThis(obj, {maxDepth:1}) );
+						}
+						catch (e) {
 							this.parentNode.appendChild(
-								util.table(['ERROR OCCURED DURING OBJECT RETRIEVAL'],'error').addRow([e.message]).node
+								util.table(["ERROR OCCURED DURING OBJECT RETRIEVAL"], "error").addRow([e.message]).node
 							);
 						}
 					}
 				);
 			}
 		},
-		
+
 		expander: function(text, title, clickFn) {
-			return $.create('a', {
+			return $.create("a", {
 				innerHTML:  util.shorten(text) + ' <b style="visibility:hidden;">[+]</b>',
 				title: title,
 				onmouseover: function() {
-					this.getElementsByTagName('b')[0].style.visibility = 'visible';
+					this.getElementsByTagName("b")[0].style.visibility = "visible";
 				},
 				onmouseout: function() {
-					this.getElementsByTagName('b')[0].style.visibility = 'hidden';
+					this.getElementsByTagName("b")[0].style.visibility = "hidden";
 				},
 				onclick: function() {
-					this.style.display = 'none';
+					this.style.display = "none";
 					clickFn.call(this);
 					return false;
 				},
 				style: {
-					cursor: 'pointer'
+					cursor: "pointer"
 				}
 			});
-		},
-
-		stringify: function(obj) {
-
-			/* Bit of an ugly duckling!
-			   - This fn returns an ATTEMPT at converting an object/array/anyType
-				 into a string, kinda like a JSON-deParser
-			   - This is used for when |settings.expanded === false| */
-
-			var type = util.type(obj),
-				str, first = true;
-			if ( type === 'array' ) {
-				str = '[';
-				util.forEach(obj, function(item,i){
-					str += (i===0?'':', ') + util.stringify(item);
-				});
-				return str + ']';
-			}
-			if (typeof obj === 'object') {
-				str = '{';
-				for (var i in obj){
-					if (obj.hasOwnProperty(i)) {
-						str += (first?'':', ') + i + ':' + util.stringify(obj[i]);
-						first = false;
-					}
-				}
-				return str + '}';
-			}
-			if (type === 'regexp') {
-				return '/' + obj.source + '/';
-			}
-			if (type === 'string') {
-				return '"' + obj.replace(/"/g,'\\"') + '"';
-			}
-			return obj.toString();
 		}
 	};
 
@@ -313,7 +224,7 @@ var prettyPrint = (function(){
 		options = options || {};
 
 		var settings = $.extend( {}, prettyPrintThis.config, options ),
-			container = $.create('div'),
+			container = $.create("div"),
 			config = prettyPrintThis.config,
 			currentDepth = 0,
 			stack = {},
@@ -325,11 +236,8 @@ var prettyPrint = (function(){
 		prettyPrintThis.settings = settings;
 
 		var typeDealer = {
-			string : function(item){
-				return util.txt('"' + util.shorten(item.replace(/"/g,'\\"')) + '"');
-			},
-			number : function(item) {
-				return util.txt(item);
+			string : function(item) {
+				return util.txt('"' + util.shorten(item.replace(/"/g, '\\"')) + '"');
 			},
 
 			object : function(obj, depth, key) {
@@ -342,23 +250,24 @@ var prettyPrint = (function(){
 					return util.common.circRef(obj, stackKey, settings);
 				}
 
-				stack[key||'TOP'] = obj;
+				stack[key||"TOP"] = obj;
 
 				if (depth === settings.maxDepth) {
 					return util.common.depthReached(obj, settings);
 				}
 
-				var table = util.table(['Group', null], 'object'),
+				var table = util.table(["Group", null], "object"),
 					isEmpty = true;
 
 				for (var i in obj) {
 					if (!obj.hasOwnProperty || obj.hasOwnProperty(i)) {
 						var item = obj[i],
-							type = util.type(item);
+							type = $.type(item);
 						isEmpty = false;
 						try {
 							table.addRow([i, typeDealer[ type ](item, depth+1, i)], type);
-						} catch(e) {
+						}
+						catch (e) {
 							/* Security errors are thrown on certain Window/DOM properties */
 							if (window.console && window.console.log) {
 								console.log(e.message);
@@ -368,8 +277,8 @@ var prettyPrint = (function(){
 				}
 
 				var ret = (settings.expanded || hasRunOnce) ? table.node : util.expander(
-					util.stringify(obj),
-					'Click to show more',
+					JSON.stringify(obj),
+					"Click to show more",
 					function() {
 						this.parentNode.appendChild(table.node);
 					}
@@ -386,34 +295,37 @@ var prettyPrint = (function(){
 				/* Checking depth + circular refs */
 				/* Note, check for circular refs before depth; just makes more sense */
 				var stackKey = util.within(stack).is(arr);
+
 				if ( stackKey ) {
 					return util.common.circRef(arr, stackKey);
 				}
-				stack[key||'TOP'] = arr;
+
+				stack[key||"TOP"] = arr;
+
 				if (depth === settings.maxDepth) {
 					return util.common.depthReached(arr);
 				}
 
 				/* Accepts a table and modifies it */
-				var table = util.table(['List' + ' (' + arr.length + ')', null], "list");
+				var table = util.table(["List (" + arr.length + " items)", null], "list");
 				var isEmpty = true;
                 var count = 0;
 
-				util.forEach(arr, function(item,i){
+				$$(arr).forEach(function (item, i) {
                     if (settings.maxArray >= 0 && ++count > settings.maxArray) {
                         table.addRow([
-                            i + '..' + (arr.length-1),
-                            typeDealer[ util.type(item) ]('...', depth+1, i)
+                            i + ".." + (arr.length-1),
+                            typeDealer[ $.type(item) ]("...", depth+1, i)
                         ]);
                         return false;
                     }
 					isEmpty = false;
-					table.addRow([i, typeDealer[ util.type(item) ](item, depth+1, i)]);
+					table.addRow([i, typeDealer[ $.type(item) ](item, depth+1, i)]);
 				});
 
 				return settings.expanded ? table.node : util.expander(
-					util.stringify(arr),
-					'Click to show more',
+					JSON.stringify(arr),
+					"Click to show more",
 					function() {
 						this.parentNode.appendChild(table.node);
 					}
@@ -421,45 +333,36 @@ var prettyPrint = (function(){
 
 			},
 
-			'date' : function(date) {
+			"date" : function(date) {
 
-				var miniTable = util.table(['Date',null], 'date'),
+				var miniTable = util.table(["Date", null], "date"),
 					sDate = date.toString().split(/\s/);
 
 				/* TODO: Make this work well in IE! */
 				miniTable
-					.addRow(['Time', sDate[4]])
-					.addRow(['Date', sDate.slice(0,4).join('-')]);
+					.addRow(["Time", sDate[4]])
+					.addRow(["Date", sDate.slice(0, 4).join("-")]);
 
 				return settings.expanded ? miniTable.node : util.expander(
-					'Date (timestamp): ' + (+date),
-					'Click to see a little more info about this date',
+					"Date (timestamp): " + (+date),
+					"Click to see a little more info about this date",
 					function() {
 						this.parentNode.appendChild(miniTable.node);
 					}
 				);
 
-			},
-
-			'boolean' : function(bool) {
-				return util.txt( bool.toString() );
-			},
-
-			'undefined' : function() {
-				return util.txt('undefined');
-			},
-
-			'null' : function() {
-				return util.txt('null');
-			},
-
-			'default' : function() {
-				/* When a type cannot be found */
-				return util.txt('prettyPrint: TypeNotFound Error');
 			}
 		};
 
-		container.appendChild( typeDealer[ (settings.forceObject) ? 'object' : util.type(obj) ](obj, currentDepth) );
+		typeDealer.number =
+		typeDealer.boolean =
+		typeDealer.undefined =
+		typeDealer.null =
+		typeDealer.default = function(value) {
+			return util.txt(value);
+		},
+
+		container.appendChild(typeDealer[$.type(obj)](obj, currentDepth));
 
 		return container;
 
@@ -473,7 +376,6 @@ var prettyPrint = (function(){
 		/* Try setting this to false to save space */
 		expanded: true,
 
-		forceObject: false,
 		maxDepth: 10,
 		maxArray: -1  // default is unlimited
 	};

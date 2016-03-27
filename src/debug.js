@@ -88,6 +88,7 @@ Wysie.hooks.add("init-tree-after", function() {
 			},
 
 			set: function(value) {
+				this.innerHTML = "";
 				this.appendChild(prettyPrint(JSON.parse(value)));
 			}
 		});

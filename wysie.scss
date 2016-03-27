@@ -634,8 +634,8 @@ $font-mono: Consolas, Monaco, monospace;
 		width: 100%;
 
 		th, td {
-			padding: 5px;
-			border: 1px solid hsla(0,0%,100%,.3);
+			padding: .4em;
+			border: 1px solid hsla(0,0%,100%,.2);
 			vertical-align: top;
 		}
 
@@ -645,6 +645,10 @@ $font-mono: Consolas, Monaco, monospace;
 
 		th {
 			text-align: left;
+		}
+
+		thead th {
+			font-family: $font-sans;
 		}
 
 		&.list > thead th {
