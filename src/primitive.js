@@ -220,7 +220,7 @@ var _ = Wysie.Primitive = $.Class({
 				property: this.property,
 				value: value,
 				wysie: this.wysie,
-				unit: this,
+				node: this,
 				dirty: this.editing,
 				action: "propertychange"
 			});

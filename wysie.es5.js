@@ -2794,7 +2794,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					property: this.property,
 					value: value,
 					wysie: this.wysie,
-					unit: this,
+					node: this,
 					dirty: this.editing,
 					action: "propertychange"
 				});
@@ -3544,7 +3544,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (!silent) {
 				item.element._.fire("wysie:datachange", {
-					unit: this,
+					node: this,
 					wysie: this.wysie,
 					action: "add",
 					item: item
@@ -3579,7 +3579,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				item.element.style.opacity = "";
 
 				item.element._.fire("wysie:datachange", {
-					unit: _this25,
+					node: _this25,
 					wysie: _this25.wysie,
 					action: "delete",
 					item: item
@@ -3614,11 +3614,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Delete all items in the collection.
    */
 		clear: function clear() {
-			this.propagate(function (item) {
-				return item.element.remove();
-			});
+			if (this.mutable) {
+				this.propagate(function (item) {
+					return item.element.remove();
+				});
 
-			this.items = [];
+				this.items = [];
+
+				this.marker._.fire("wysie:datachange", {
+					node: this,
+					wysie: this.wysie,
+					action: "clear"
+				});
+			}
 		},
 
 		save: function save() {

@@ -116,7 +116,7 @@ var _ = Wysie.Collection = $.Class({
 
 		if (!silent) {
 			item.element._.fire("wysie:datachange", {
-				unit: this,
+				node: this,
 				wysie: this.wysie,
 				action: "add",
 				item
@@ -145,7 +145,7 @@ var _ = Wysie.Collection = $.Class({
 			item.element.style.opacity = "";
 
 			item.element._.fire("wysie:datachange", {
-				unit: this,
+				node: this,
 				wysie: this.wysie,
 				action: "delete",
 				item: item
@@ -176,9 +176,17 @@ var _ = Wysie.Collection = $.Class({
 	 * Delete all items in the collection.
 	 */
 	clear: function() {
-		this.propagate(item => item.element.remove());
+		if (this.mutable) {
+			this.propagate(item => item.element.remove());
 
-		this.items = [];
+			this.items = [];
+
+			this.marker._.fire("wysie:datachange", {
+				node: this,
+				wysie: this.wysie,
+				action: "clear"
+			});
+		}
 	},
 
 	save: function() {
