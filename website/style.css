@@ -18,7 +18,7 @@ dd + dt {
 
 pre, code, .example script[type='application/json'] {
   background: #f9f1f3;
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
   -moz-tab-size: 4;
   tab-size: 4;
   -webkit-hyphens: none;
@@ -217,6 +217,17 @@ body > section > * {
   .docs #summary dt {
     font-size: 120%;
     font-weight: bold; }
+
+.docs body > section > table {
+  border-spacing: 0;
+  border-collapse: collapse; }
+  .docs body > section > table th, .docs body > section > table td {
+    text-align: left; }
+  .docs body > section > table td {
+    padding: .1em .5em;
+    border: 1px solid rgba(0, 0, 0, 0.1); }
+    .docs body > section > table td:not(:nth-child(3)) {
+      font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace; }
 
 .note {
   border-left: 0.5em solid #a6c9c6;

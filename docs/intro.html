@@ -281,7 +281,7 @@
 	</section>
 
 	<p class="note">If what you’re printing contains characters other than letters, numbers and underscores,
-		you will need to use quotes around it, just like in CSS <code>font-family</code>.</p>
+		you will need to use quotes around it, just like in CSS <code>font-family</code> or HTML attributes.</p>
 
 	<hr />
 
@@ -293,6 +293,7 @@
 		<p>Try adding and removing elements!</p>
 
 		<script type="text/plain">
+		<div property="foo" class="debug">
 			<h2>My cats</h2>
 			<ul>
 				<li property="cat" data-multiple>
@@ -309,9 +310,11 @@
 				<li>Minimum age: =min(age)</li>
 				<li>Maximum age: =Max(age)</li> <!-- caps don’t matter -->
 				<li>Sum of all ages (why? because we can): =SUM(age)</li> <!-- caps don’t matter -->
+				<li>Number of older cats: =count(eq(age, 8))</li>
 			</ul>
+		</div>
 		</script>
-		<script type="application/json">{
+		<script type="application/json">{"foo": {
 	"cat": [
 		{
 			"name": "Vector",
@@ -336,13 +339,77 @@
 			"age": 8
 		}
 	]
-}</script>
-		<p class="note">You can also do math with lists, e.g. <code>=sum(add(age, 5))</code> will add 5 to every age and then sum the result.
-			There are many such functions that work well with lists (but not just lists): <code>add</code>, <code>multiply</code>, <code>divide</code>, <code>subtract</code>,
-			<code>and</code>, <code>or</code>, <code>not</code>,
-			<code>lt</code> (less than), <code>gt</code> (greater than), <code>eq</code> (equality).
-		</p>
+}}</script>
 	</section>
+
+	<p>You can also do math with lists. For example, <code>=sum(add(age, 5))</code> will add 5 to every age and then sum the result.
+		There are many such functions that work well with lists (but not just lists) and are more human readable than their operator counterparts:
+	</p>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Math</th>
+				<th>Function</th>
+				<th>What it does</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>a + b</td>
+				<td>add(a, b)</td>
+				<td>Addition</td>
+			</tr>
+			<tr>
+				<td>a - b</td>
+				<td>subtract(a, b)</td>
+				<td>Subtraction</td>
+			</tr>
+			<tr>
+				<td>a * b</td>
+				<td>multiply(a, b)</td>
+				<td>Multiplication</td>
+			</tr>
+			<tr>
+				<td>a / b</td>
+				<td>div(a, b)</td>
+				<td>Division. Note that division by 0 will show up as ±∞ or <code>NaN</code> if it’s 0/0.</td>
+			</tr>
+			<tr>
+				<td>a && b</td>
+				<td>and(a, b)</td>
+				<td>Check that both a and b have a value</td>
+			</tr>
+			<tr>
+				<td>a || b</td>
+				<td>or(a, b)</td>
+				<td>Check that at least a or b have a value</td>
+			</tr>
+			<tr>
+				<td>!a</td>
+				<td>not(a)</td>
+				<td>Check if a doesn’t have a value</td>
+			</tr>
+			<tr>
+				<td>a < b</td>
+				<td>lt(a, b)</td>
+				<td>Check if a is less than b</td>
+			</tr>
+			<tr>
+				<td>a > b</td>
+				<td>gt(a, b)</td>
+				<td>Check if a is greater than b</td>
+			</tr>
+			<tr>
+				<td>a == b</td>
+				<td>eq(a, b)</td>
+				<td>Check if a is equal to b</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<p class="note">If you have more operands you don’t need to nest these functions, just provide more parameters.
+		E.g. you don’t need to do <code>add(a, add(b, c))</code>, <code>add(a, b, c)</code> will just work.</p>
 </section>
 
 <section id="debugging">

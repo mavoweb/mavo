@@ -5,6 +5,7 @@ $secondary-color: hsl(175, 25%, 60%);
 // Fonts
 $body-font: Helvetica Neue, sans-serif;
 $heading-font: Didot, 'Didot LT STD', "Bodoni 72", Bodoni, 'Bodoni MT', 'Libre Bodoni', 'Hoefler Text', Cambria, Georgia, serif;
+$mono-font: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 
 @import url("https://fontlibrary.org/face/libre-bodoni");
 
@@ -29,7 +30,7 @@ dd + dt {
 
 pre, code, .example script[type='application/json'] {
 	background: lighten($accent-color, 28%);
-	font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+	font-family: $mono-font;
 	tab-size: 4;
 	hyphens: none;
 	white-space: pre;
@@ -266,6 +267,24 @@ body > section {
 		dt {
 			font-size: 120%;
 			font-weight: bold;
+		}
+	}
+
+	body > section > table {
+		border-spacing: 0;
+		border-collapse: collapse;
+
+		th, td {
+			text-align: left;
+		}
+
+		td {
+			padding: .1em .5em;
+			border: 1px solid rgba(0,0,0,.1);
+
+			&:not(:nth-child(3)) {
+				font-family: $mono-font;
+			}
 		}
 	}
 }
