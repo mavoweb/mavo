@@ -23,11 +23,14 @@
 
 	<p>The <code>data-store</code> attribute has two purposes: its presence tells wysie that it should pay attention to what is inside that element
 		and its value tells wysie where to store any data.
-		The value of the <code>data-store</code> attribute is always a valid URL and has the following meaning:</p>
+		The value of the <code>data-store</code> attribute is a valid URL or a keyword and has the following meaning:</p>
 
 	<dl>
-		<dt><code>""</code></dt>
-		<dd>An empty value (or no value) disables storage.</dd>
+		<dt><code>""</code> or <code>none</code></dt>
+		<dd>Disable storage.</dd>
+
+		<dt><code>local</code></dt>
+		<dd>Save in the browser (in <code>localStorage</code>).</dd>
 
 		<dt><code>#hash</code></dt>
 		<dd>A local hash can mean two things, depending on whether an element exists in the page with that id:

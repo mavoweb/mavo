@@ -1,13 +1,20 @@
 (function($) {
 
 var _ = Wysie.Storage = $.Class({
-	abstract: true,
-
 	constructor: function(wysie) {
 		this.wysie = wysie;
 
-		// Used in localStorage, in case the backend subclass modifies the URL
-		this.originalHref = new URL(this.href, location);
+		this.urls = wysie.store.split(/\s+/).map(url => {
+			if (url === "local") {
+				url = `#${this.wysie.id}-store`;
+			}
+
+			return new URL(url, location);
+		});
+
+		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
+
+		this.ready = Promise.all(this.backends.map(backend => backend.ready));
 
 		this.loaded = new Promise((resolve, reject) => {
 			this.wysie.wrapper.addEventListener("wysie:load", resolve);
@@ -48,23 +55,22 @@ var _ = Wysie.Storage = $.Class({
 			this.wysie.wrapper._.unbind("hashchange.wysie");
 		});
 
-		this.permissions.can("logout", () => {
-			this.authControls.logout = $.create({
-				tag: "button",
-				textContent: "Logout",
-				className: "logout",
-				events: {
-					click: this.logout.bind(this)
-				},
-				after: $(".status", this.wysie.bar)
-			});
-		}, () => {
-			$.remove(this.authControls.logout);
-		});
-
 		// Update login status
 		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
-			$(".status", this.wysie.bar).innerHTML = "Logged in to " + this.id + " as <strong>" + evt.name + "</strong>";
+			var status = $(".status", this.wysie.bar);
+			status.innerHTML = "";
+			status._.contents([
+				"Logged in to " + evt.backend.id + " as ",
+				{tag: "strong", textContent: evt.name},
+				{
+					tag: "button",
+					textContent: "Logout",
+					className: "logout",
+					events: {
+						click: e => evt.backend.logout()
+					},
+				}
+			]);
 		});
 
 		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
@@ -72,36 +78,21 @@ var _ = Wysie.Storage = $.Class({
 		});
 	},
 
-	get url () {
-		return this.wysie.store;
-	},
-
 	get permissions () {
 		return this.wysie.permissions;
 	},
 
-	get href () {
-		return this.url.href;
+	get getBackends () {
+		return this.backends.filter(backend => !!backend.get);
 	},
 
-	/**
-	 * localStorage backup (or only storage, in case of local Wysie instances)
-	 */
-	get backup() {
-		return JSON.parse(localStorage[this.originalHref] || null);
+	get putBackends () {
+		return this.backends.filter(backend => !!backend.put);
 	},
 
-	set backup(data) {
-		localStorage[this.originalHref] = this.wysie.toJSON(data);
+	get authBackends () {
+		return this.backends.filter(backend => !!backend.login);
 	},
-
-	get isHash() {
-		return (this.url.origin === location.origin) && (this.url.pathname === location.pathname) && !!this.url.hash;
-	},
-
-	// Is the storage ready?
-	// To be be overriden by subclasses
-	ready: Promise.resolve(),
 
 	/**
 	 * load - Fetch data from source and render it.
@@ -110,117 +101,73 @@ var _ = Wysie.Storage = $.Class({
 	 */
 	load: function() {
 		var ret = this.ready;
-		var backup = this.backup;
 
 		this.inProgress = "Loading";
 
-		if (backup && backup.synced === false) {
-			// Unsynced backup, we need to restore & then save instead of reading remote
-			return ret.then(() => {
-				this.wysie.render(backup);
-				this.inProgress = false;
-				this.wysie.wrapper._.fire("wysie:load");
+		var getBackend = this.getBackends[0];
 
-				return this.save();
-			});
-		}
-
-		if (!this.isHash || this.get) {
-			// URL is not a hash, load it
-			ret = ret.then(() => {
-				if (this.get) {
-					return this.get();
-				}
-
-				return $.fetch(this.href, {
-					responseType: "json"
-				}).then(xhr => Promise.resolve(xhr.response));
+		if (getBackend) {
+			getBackend.ready.then(() => {
+				return getBackend.get();
 			}).then(response => {
 				this.inProgress = false;
 				this.wysie.wrapper._.fire("wysie:load");
 
-				var response = response && $.type(response) == "string"? JSON.parse(response) : response;
+				if (response && $.type(response) == "string") {
+					response = JSON.parse(response);
+				}
+
 				var data = Wysie.queryJSON(response, this.param("root"));
 				this.wysie.render(data);
-
-				this.backup = {
-					synced: true,
-					data: this.wysie.data
-				};
-			});
-		}
-		else {
-			ret = ret.then(() => {
-				// No custom load function and the URL is just a hash
-				// Load from localStorage
+			}).catch(err => {
+				// TODO try more backends if this fails
 				this.inProgress = false;
 
-				if (backup) {
-					this.wysie.render(backup);
+				if (err) {
+					console.error(err);
+					console.log(err.stack);
 				}
 
 				this.wysie.wrapper._.fire("wysie:load");
 			});
 		}
+	},
 
-		return ret.catch(err => {
+	save: function(data = this.wysie.data) {
+		this.inProgress = "Saving";
+
+		Promise.all(this.putBackends.map(backend => {
+			return backend.login().then(() => {
+				return backend.put({
+					name: backend.filename,
+					data: data
+				});
+			});
+		})).then(() => {
+			this.wysie.wrapper._.fire("wysie:save");
+
+			this.inProgress = false;
+		}).catch(err => {
 			this.inProgress = false;
 
 			if (err) {
 				console.error(err);
 				console.log(err.stack);
 			}
-
-			if (backup) {
-				this.wysie.render(backup);
-			}
-
-			this.wysie.wrapper._.fire("wysie:load");
 		});
 	},
 
-	save: function(data = this.wysie.data) {
-		this.backup = {
-			synced: !this.put,
-			data: data
-		};
+	login: function() {
+		return this.authBackends[0] && this.authBackends[0].login();
+	},
 
-		data = this.wysie.toJSON(data);
-
-		if (this.put) {
-			return this.login().then(() => {
-				this.inProgress = "Saving";
-
-				return this.put({
-					name: this.filename,
-					data: data
-				}).then(() => {
-					var backup = this.backup;
-					backup.synced = true;
-					this.backup = backup;
-
-					this.wysie.wrapper._.fire("wysie:save");
-
-					this.inProgress = false;
-				}).catch(() => {
-					this.inProgress = false;
-
-					if (err) {
-						console.error(err);
-						console.log(err.stack);
-					}
-				});
-			});
-		}
+	logout: function() {
+		return this.authBackends[0] && this.authBackends[0].logout();
 	},
 
 	clear: function() {
 		this.save(null);
 	},
-
-	// To be overriden by subclasses
-	login: () => Promise.resolve(),
-	logout: () => Promise.resolve(),
 
 	// Get storage parameters from the main element and cache them. Used for API keys and the like.
 	param: function(id) {
@@ -256,68 +203,132 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	static: {
-		// Factory method to return the right storage subclass for a given wysie object
-		create: function(wysie) {
-			var priority = -1;
-			var Id;
-
-			for (var id in _) {
-				var backend = _[id];
-
-				if (backend && backend.super === _ && backend.test(wysie.store)) {
-
-					// Exists, is an backend and matches our URL!
-					backend.priority = backend.priority || 0;
-
-					if (priority <= backend.priority) {
-						Id = id;
-						priority = backend.priority;
-					}
-				}
-			}
-
-			if (Id) {
-				var ret = new _[Id](wysie);
-				ret.id = Id;
-				return ret;
-			}
-			else {
-				// No backend matched, using default
-				return new _.Default(wysie);
-			}
-		}
+		isHash: url => (url.origin === location.origin) && (url.pathname === location.pathname) && !!url.hash,
 	}
 });
 
-_.Default = $.Class({ extends: _,
-	constructor: function() {
-		this.permissions.set({
-			read: true,
-			edit: this.isHash, // Can edit if local
-			save: this.isHash, // Can save if local
-			login: false,
-			logout: false
+// Base class for all backends
+_.Backend = $.Class({
+	constructor: function(url, storage) {
+		this.url = url;
+		this.storage = storage;
+		this.id = this.constructor.id;
+
+		// Permissions of this particular backend.
+		// Global permissions are OR(all permissions)
+		this.permissions = new Wysie.Permissions();
+
+		Wysie.Permissions.actions.forEach(action => {
+			this.permissions.can(action, () => {
+				this.storage.permissions.on(action);
+			}, () => {
+				// TODO off
+			});
 		});
+	},
 
-		if (this.isHash) {
-			var element = $(this.url.hash);
+	// To be be overriden by subclasses
+	ready: Promise.resolve(),
+	login: () => Promise.resolve(),
+	logout: () => Promise.resolve(),
 
-			if (element) {
-				this.get = () => {
-					return element.textContent;
-				};
-
-				this.put = ({data = ""}) => {
-					element.textContent = data;
-					return Promise.resolve();
-				};
-			}
-		}
+	proxy: {
+		wysie: "storage",
+		permissions: "storage"
 	},
 
 	static: {
-		test: () => false
+		// Return the appropriate backend(s) for this url
+		create: function(url, storage) {
+			var ret = [];
+
+			_.Backend.backends.forEach(Backend => {
+				if (Backend && Backend.test(url)) {
+					var backend = new Backend(url, storage);
+					backend.id = Backend.id;
+					ret.push(backend);
+				}
+			});
+
+			return ret;
+		},
+
+		backends: [],
+
+		add: function(name, Class, first) {
+			_.Backend[name] = Class;
+			_.Backend.backends[first? "unshift" : "push"](Class);
+			Class.id = name;
+		}
 	}
 });
+
+// Save in an element
+_.Backend.add("Element", $.Class({ extends: _.Backend,
+	constructor: function () {
+		this.permissions.on(["read", "edit", "save"]);
+
+		this.element = $(this.url.hash);
+	},
+
+	get: function() {
+		return Promise.resolve(this.element.textContent);
+	},
+
+	put: function({data = ""}) {
+		this.element.textContent = data;
+		return Promise.resolve();
+	},
+
+	static: {
+		test: (url) => {
+			if (_.isHash(url)) {
+				return !!$(url.hash);
+			}
+		}
+	}
+}));
+
+// Load from a remote URL, no save
+_.Backend.add("Remote", $.Class({ extends: _.Backend,
+	constructor: function() {
+		this.permissions.on(["read"]);
+	},
+
+	get: function() {
+		return $.fetch(this.url.href, {
+			responseType: "json"
+		}).then(xhr => Promise.resolve(xhr.response));
+	},
+
+	static: {
+		test: url => !_.isHash(url)
+	}
+}));
+
+// Save in localStorage
+_.Backend.add("Local", $.Class({ extends: _.Backend,
+	constructor: function() {
+		this.permissions.on(["read", "edit", "save"]);
+		this.key = this.url + "";
+	},
+
+	get: function() {
+		return Promise.resolve(localStorage[this.key]);
+	},
+
+	put: function({data = ""}) {
+		localStorage[this.key] = this.wysie.toJSON(data);
+		return Promise.resolve();
+	},
+
+	static: {
+		test: (url) => {
+			if (_.isHash(url)) {
+				return !$(url.hash);
+			}
+		}
+	}
+}));
 
 })(Bliss);

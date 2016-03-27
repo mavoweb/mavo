@@ -15,7 +15,6 @@
         "semi": 1,
         "no-dupe-args": 1,
         "no-dupe-keys": 1,
-        "no-empty": 1,
         "no-unreachable": 1,
         "valid-typeof": 1,
         "curly": 1,

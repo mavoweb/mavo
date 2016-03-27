@@ -17,9 +17,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Set a bunch of permissions to true. Chainable.
 	on: function(actions) {
-		actions = Array.isArray(actions)? actions : [actions];
-
-		actions.forEach(action => this[action] = true);
+		Wysie.toArray(actions).forEach(action => this[action] = true);
 
 		return this;
 	},
@@ -85,7 +83,9 @@ var _ = Wysie.Permissions = $.Class({
 			return;
 		}
 
-		this.wysie.wrapper.classList.toggle(`can-${action}`, value);
+		if (this.wysie) {
+			this.wysie.wrapper.classList.toggle(`can-${action}`, value);
+		}
 
 		// $.live() calls the setter before the actual property is set so we
 		// need to set it manually, otherwise it still has its previous value

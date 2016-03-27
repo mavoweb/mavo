@@ -225,7 +225,7 @@
   backdrop-filter: blur(3px); }
   .wysie-wrapper.can-logout .wysie-bar,
   .wysie-wrapper[data-editing] .wysie-bar,
-  .wysie-wrapper.unsaved-changes .wysie-bar {
+  .wysie-wrapper.unsaved-changes.can-save .wysie-bar {
     top: 0;
     left: 0;
     right: 0;
@@ -251,9 +251,22 @@
     .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .status,
     .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar .status {
       display: none; }
-  .wysie-bar button, .wysie-bar .button {
+  .wysie-bar > button,
+  .wysie-bar > .button {
     padding: .3em .6em .4em;
-    border: 0;
+    border: 0; }
+    .wysie-bar > button::before,
+    .wysie-bar > .button::before {
+      display: inline-block;
+      vertical-align: -.1em;
+      margin-right: .3em;
+      color: white;
+      opacity: .5;
+      font-weight: normal; }
+    .wysie-bar > button:enabled:hover::before,
+    .wysie-bar > .button:enabled:hover::before {
+      opacity: .8; }
+  .wysie-bar button, .wysie-bar .button {
     background: transparent;
     font: inherit;
     font-weight: bold;
@@ -261,15 +274,6 @@
     cursor: pointer; }
     .wysie-bar button:enabled:hover, .wysie-bar .button:enabled:hover {
       background: rgba(255, 255, 255, 0.2); }
-    .wysie-bar button::before, .wysie-bar .button::before {
-      display: inline-block;
-      vertical-align: -.1em;
-      margin-right: .3em;
-      color: white;
-      opacity: .5;
-      font-weight: normal; }
-    .wysie-bar button:enabled:hover::before, .wysie-bar .button:enabled:hover::before {
-      opacity: .8; }
     .wysie-bar button:disabled, .wysie-bar .button:disabled {
       opacity: .6;
       cursor: not-allowed; }
@@ -300,8 +304,17 @@
     -ms-flex: 1;
     flex: 1;
     line-height: 1.8; }
-  .wysie-bar .logout {
-    margin-left: .6em; }
+    .wysie-bar .status .logout {
+      border: 1px solid rgba(0, 0, 0, 0.4);
+      border-radius: .3em;
+      box-shadow: 0 1px rgba(255, 255, 255, 0.4) inset, 0 0.1em 0.1em rgba(0, 0, 0, 0.3);
+      padding: 0 .4em;
+      margin: -.1em 0 -.1em .6em;
+      font-size: 75%;
+      line-height: 1.6; }
+      .wysie-bar .status .logout:active {
+        background: transparent;
+        box-shadow: 0 1px .1em black inset; }
   .wysie-bar .status:empty {
     content: "Not logged in"; }
 
@@ -384,3 +397,24 @@
       cursor: help; }
       .wysie-debuginfo td:nth-child(3):hover {
         background: rgba(255, 247, 0, 0.3); }
+
+.wysie-debug-storage {
+  display: block;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: .6em;
+  margin: 3em 0 1em;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset;
+  text-align: left;
+  font-size: 80%; }
+  .wysie-debug-storage summary {
+    cursor: pointer; }
+  .wysie-debug-storage pre {
+    font: 100%/1.5 Consolas, Monaco, monospace;
+    -moz-tab-size: 4;
+    tab-size: 4;
+    overflow: auto; }
+    .wysie-debug-storage pre:empty::before {
+      content: "(Empty)";
+      font-style: italic;
+      opacity: .5; }

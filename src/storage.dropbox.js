@@ -6,16 +6,18 @@ if (!self.Wysie) {
 
 var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
+Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	constructor: function() {
+		this.storage.permissions = this.permissions;
+
 		// Transform the dropbox shared URL into something raw and CORS-enabled
-		if (this.wysie.store.protocol != "dropbox:") {
-			this.wysie.store.hostname = "dl.dropboxusercontent.com";
-			this.wysie.store.search = this.wysie.store.search.replace(/\bdl=0|^$/, "raw=1");
-			this.permissions.read = true; // TODO check if file actually is publicly readable
+		if (this.url.protocol != "dropbox:") {
+			this.url.hostname = "dl.dropboxusercontent.com";
+			this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
+			this.permissions.on("read"); // TODO check if file actually is publicly readable
 		}
 
-		this.permissions.login = true;
+		this.permissions.on("login");
 
 		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
 			var referrer = new URL(document.referrer, location);
@@ -29,9 +31,9 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			}
 
 			// Internal filename (to be used for saving)
-			this.filename = (this.param("path") || "") + (new URL(this.wysie.store)).pathname.match(/[^/]*$/)[0];
+			this.filename = (this.storage.param("path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.client = new Dropbox.Client({ key: this.param("key") });
+			this.client = new Dropbox.Client({ key: this.storage.param("key") });
 		})).then(() => {
 			this.login(true);
 		});
@@ -85,7 +87,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.wysie.wrapper._.fire("wysie:login", accountInfo);
+					this.wysie.wrapper._.fire("wysie:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -96,7 +98,7 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			this.client.signOut(null, () => {
 				this.permissions.off(["edit", "add", "delete"]).on("login");
 
-				this.wysie.wrapper._.fire("wysie:logout");
+				this.wysie.wrapper._.fire("wysie:logout", {backend: this});
 				resolve();
 			});
 		});
@@ -108,6 +110,6 @@ var _ = Wysie.Storage.Dropbox = $.Class({ extends: Wysie.Storage,
 			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
 		}
 	}
-});
+}), true);
 
 })(Bliss);

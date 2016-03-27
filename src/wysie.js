@@ -6,11 +6,9 @@ var _ = self.Wysie = $.Class({
 	constructor: function (element) {
 		_.all.push(this);
 
-		var me = this;
-
 		// TODO escaping of # and \
 		var dataStore = element.getAttribute("data-store") || "none";
-		this.store = dataStore === "none"? null : new URL(dataStore || this.id, location);
+		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance
 		this.id = element.id || "wysie-" + _.all.length;
@@ -76,9 +74,9 @@ var _ = self.Wysie = $.Class({
 		this.needsEdit = false;
 
 		// Build wysie objects
-		console.time("Building wysie tree");
+		Wysie.hooks.run("init-tree-before", this);
 		this.root = Wysie.Node.create(this.element, this);
-		console.timeEnd("Building wysie tree");
+		Wysie.hooks.run("init-tree-after", this);
 
 		this.permissions = new Wysie.Permissions(null, this);
 
@@ -156,12 +154,13 @@ var _ = self.Wysie = $.Class({
 
 		// Fetch existing data
 
-		if (this.store && this.store.href) {
-			this.storage = _.Storage.create(this);
+		if (this.store) {
+			this.storage = new _.Storage(this);
 
 			this.permissions.can("read", () => this.storage.load());
 		}
 		else {
+			// No storage
 			this.permissions.on(["read", "edit"]);
 
 			this.root.import();
@@ -193,6 +192,8 @@ var _ = self.Wysie = $.Class({
 	},
 
 	render: function(data) {
+		_.hooks.run("render-start", {context: this, data});
+
 		if (!data) {
 			this.root.import();
 		}
@@ -292,7 +293,7 @@ var _ = self.Wysie = $.Class({
 		unsavedChanges: function(value) {
 			this.wrapper.classList.toggle("unsaved-changes", value);
 
-			if (this.ui) {
+			if (this.ui && this.ui.save) {
 				this.ui.save.disabled = !value;
 				this.ui.revert.disabled = !this.everSaved || !value;
 			}

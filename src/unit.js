@@ -17,7 +17,7 @@ var _ = Wysie.Unit = $.Class({
 		}
 
 		this.computed = Wysie.is("computed", this.element);
-		this.computed = Wysie.is("required", this.element);
+		this.required = Wysie.is("required", this.element);
 
 		Wysie.hooks.run("unit-init-end", this);
 	},

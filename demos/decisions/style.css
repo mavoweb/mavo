@@ -166,22 +166,6 @@ footer {
   margin-top: 2em;
   color: #6a707c; }
 
-#data {
-  display: block;
-  font: 100%/1.5 Consolas, Monaco, monospace;
-  white-space: pre;
-  background: rgba(230, 230, 230, 0.2);
-  padding: .6em;
-  margin: 3em 0 1em;
-  overflow: auto;
-  -moz-tab-size: 4;
-  tab-size: 4;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset;
-  text-align: left; }
-
-#data:empty {
-  visibility: hidden; }
-
 ::-webkit-input-placeholder {
   color: rgba(117, 117, 117, 0.6); }
 

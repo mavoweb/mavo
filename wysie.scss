@@ -1,4 +1,6 @@
 $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
+$font-sans: 'Helvetica Neue', sans-serif;
+$font-mono: Consolas, Monaco, monospace;
 
 @mixin highlight($color, $important: "") {
 	box-shadow: 0 0 0 50vmax $color inset #{$important};
@@ -340,7 +342,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	// Bar fixed at the top of the screen
 	.wysie-wrapper.can-logout &,
 	.wysie-wrapper[data-editing] &,
-	.wysie-wrapper.unsaved-changes & {
+	.wysie-wrapper.unsaved-changes.can-save & {
 		top: 0;
 		left: 0;
 		right: 0;
@@ -372,18 +374,10 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 		}
 	}
 
-	button, .button {
+	& > button,
+	& > .button {
 		padding: .3em .6em .4em;
 		border: 0;
-		background: transparent;
-		font: inherit;
-		font-weight: bold;
-		color: inherit;
-		cursor: pointer;
-
-		&:enabled:hover {
-			background: hsla(0,0%,100%,.2);
-		}
 
 		&::before {
 			display: inline-block;
@@ -396,6 +390,18 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 
 		&:enabled:hover::before {
 			opacity: .8;
+		}
+	}
+
+	button, .button {
+		background: transparent;
+		font: inherit;
+		font-weight: bold;
+		color: inherit;
+		cursor: pointer;
+
+		&:enabled:hover {
+			background: hsla(0,0%,100%,.2);
 		}
 
 		&:disabled {
@@ -455,10 +461,21 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 	.status {
 		flex: 1;
 		line-height: 1.8;
-	}
 
-	.logout {
-		margin-left: .6em;
+		.logout {
+			border: 1px solid rgba(0,0,0,.4);
+			border-radius: .3em;
+			box-shadow: 0 1px hsla(0,0%,100%,.4) inset, 0 .1em .1em rgba(0,0,0,.3);
+			padding: 0 .4em;
+			margin: -.1em 0 -.1em .6em;
+			font-size: 75%;
+			line-height: 1.6;
+
+			&:active {
+				background: transparent;
+				box-shadow: 0 1px .1em black inset;
+			}
+		}
 	}
 
 	.status:empty {
@@ -467,8 +484,7 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 }
 
 .wysie-debuginfo {
-	$font-sans: 'Helvetica Neue', sans-serif;
-	$font-mono: Consolas, Monaco, monospace;
+
 
 	all: initial;
 	display: table;
@@ -583,6 +599,33 @@ $primitive: "[itemprop]:not([itemscope]), [property]:not([typeof])";
 			&:hover {
 				background: hsla(58, 100%, 50%, .3);
 			}
+		}
+	}
+}
+
+.wysie-debug-storage {
+	display: block;
+	background: hsla(0,0,0%,.8);
+	color: white;
+	padding: .6em;
+	margin: 3em 0 1em;
+	box-shadow: 1px 1px 4px rgba(0,0,0,.3) inset;
+	text-align: left;
+	font-size: 80%;
+
+	summary {
+		cursor: pointer;
+	}
+
+	pre {
+		font: 100%/1.5 $font-mono;
+		tab-size: 4;
+		overflow: auto;
+
+		&:empty::before {
+			content: "(Empty)";
+			font-style: italic;
+			opacity: .5;
 		}
 	}
 }

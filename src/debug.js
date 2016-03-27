@@ -63,6 +63,34 @@ var selector = ", .wysie-debuginfo";
 Wysie.Expressions.escape += selector;
 Stretchy.selectors.filter += selector;
 
+// Add element to show saved data
+Wysie.hooks.add("init-tree-after", function() {
+	if (this.root.debug && this.store) {
+		var id = this.id + "-debug-storage";
+
+		var details = $.create("details", {
+			className: "wysie-debug-storage",
+			contents: [
+				{tag: "Summary", textContent: "Saved data"},
+				{tag: "pre", id}
+			],
+			inside: this.wrapper
+		});
+
+		this.store += " #" + id, location;
+	}
+});
+
+Wysie.hooks.add("render-start", function({data}) {
+	if (this.root.debug && this.storage) {
+		var element = $(`#${this.id}-debug-storage`);
+
+		if (element) {
+			element.textContent = data? this.toJSON(data) : "";
+		}
+	}
+});
+
 Wysie.hooks.add("scope-init-start", function() {
 	this.debug = this.debug || this.walkUp(scope => {
 		if (scope.debug) {
