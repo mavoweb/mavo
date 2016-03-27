@@ -429,5 +429,10 @@
       white-space: nowrap; }
     .wysie-debug-storage table,
     .wysie-debug-storage table th {
-      font-size: 12px;
       text-align: left; }
+    .wysie-debug-storage table.list > thead th {
+      background: #6DBD2A; }
+    .wysie-debug-storage table.object > thead th {
+      background: #1F96CF; }
+    .wysie-debug-storage table.date > thead th {
+      background: #A725D8; }

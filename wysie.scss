@@ -644,8 +644,19 @@ $font-mono: Consolas, Monaco, monospace;
 		},
 
 		th {
-			font-size: 12px;
 			text-align: left;
+		}
+
+		&.list > thead th {
+			background: #6DBD2A;
+		}
+
+		&.object > thead th {
+			background: #1F96CF;
+		}
+
+		&.date > thead th {
+			background: #A725D8;
 		}
 	}
 }
