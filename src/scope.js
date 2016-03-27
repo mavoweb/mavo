@@ -198,11 +198,12 @@ var _ = Wysie.Scope = $.Class({
 		this.everSaved = true;
 	},
 
-	propagated: ["save", "done", "import"],
+	propagated: ["save", "done", "import", "clear"],
 
 	// Inject data in this element
 	render: function(data) {
 		if (!data) {
+			this.clear();
 			return;
 		}
 

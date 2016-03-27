@@ -92,7 +92,8 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	set backup(data) {
-		localStorage[this.originalHref] = JSON.stringify(data, null, "\t");
+		data = typeof data === "string"? data : this.wysie.toJSON(data);
+		localStorage[this.originalHref] = data;
 	},
 
 	get isHash() {
@@ -179,8 +180,8 @@ var _ = Wysie.Storage = $.Class({
 		});
 	},
 
-	save: function() {
-		var data = this.wysie.data;
+	save: function(data = this.wysie.data) {
+		data = this.wysie.toJSON(data);
 
 		this.backup = {
 			synced: !this.put,
@@ -193,7 +194,7 @@ var _ = Wysie.Storage = $.Class({
 
 				return this.put({
 					name: this.filename,
-					data: this.wysie.toJSON(data)
+					data: data
 				}).then(() => {
 					var backup = this.backup;
 					backup.synced = true;
@@ -212,6 +213,10 @@ var _ = Wysie.Storage = $.Class({
 				});
 			});
 		}
+	},
+
+	clear: function() {
+		this.save(null);
 	},
 
 	// To be overriden by subclasses
@@ -303,8 +308,8 @@ _.Default = $.Class({ extends: _,
 					return element.textContent;
 				};
 
-				this.put = () => {
-					element.textContent = this.wysie.toJSON();
+				this.put = ({data = ""}) => {
+					element.textContent = data;
 					return Promise.resolve();
 				};
 			}

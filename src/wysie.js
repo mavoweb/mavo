@@ -137,6 +137,20 @@ var _ = self.Wysie = $.Class({
 			$.remove(this.ui.editButtons);
 		});
 
+		this.permissions.can(["delete"], () => {
+			this.ui.clear = $.create("button", {
+				className: "clear",
+				textContent: "Clear",
+				onclick: e => this.clear()
+			});
+
+			this.ui.editButtons.push(this.ui.clear);
+
+			this.ui.bar.appendChild(this.ui.clear);
+		}, () => { // cannot
+			$.remove(this.ui.clear);
+		});
+
 		// Fetch existing data
 
 		if (this.store && this.store.href) {
@@ -167,8 +181,12 @@ var _ = self.Wysie = $.Class({
 		return this.root.getData(o);
 	},
 
-	toJSON: function(data) {
-		return JSON.stringify(data || this.data, null, "\t");
+	toJSON: function(data = this.data) {
+		if (data === null) {
+			return "";
+		}
+
+		return JSON.stringify(data, null, "\t");
 	},
 
 	render: function(data) {
@@ -180,6 +198,13 @@ var _ = self.Wysie = $.Class({
 		}
 
 		this.unsavedChanges = false;
+	},
+
+	clear: function() {
+		if (confirm("This will delete all your data. Are you sure?")) {
+			this.storage && this.storage.clear();
+			this.root.clear();
+		}
 	},
 
 	edit: function() {

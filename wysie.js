@@ -328,6 +328,20 @@ var _ = self.Wysie = $.Class({
 			$.remove(this.ui.editButtons);
 		});
 
+		this.permissions.can(["delete"], () => {
+			this.ui.clear = $.create("button", {
+				className: "clear",
+				textContent: "Clear",
+				onclick: e => this.clear()
+			});
+
+			this.ui.editButtons.push(this.ui.clear);
+
+			this.ui.bar.appendChild(this.ui.clear);
+		}, () => { // cannot
+			$.remove(this.ui.clear);
+		});
+
 		// Fetch existing data
 
 		if (this.store && this.store.href) {
@@ -358,8 +372,12 @@ var _ = self.Wysie = $.Class({
 		return this.root.getData(o);
 	},
 
-	toJSON: function(data) {
-		return JSON.stringify(data || this.data, null, "\t");
+	toJSON: function(data = this.data) {
+		if (data === null) {
+			return "";
+		}
+
+		return JSON.stringify(data, null, "\t");
 	},
 
 	render: function(data) {
@@ -371,6 +389,13 @@ var _ = self.Wysie = $.Class({
 		}
 
 		this.unsavedChanges = false;
+	},
+
+	clear: function() {
+		if (confirm("This will delete all your data. Are you sure?")) {
+			this.storage && this.storage.clear();
+			this.root.clear();
+		}
 	},
 
 	edit: function() {
@@ -876,7 +901,8 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	set backup(data) {
-		localStorage[this.originalHref] = JSON.stringify(data, null, "\t");
+		data = typeof data === "string"? data : this.wysie.toJSON(data);
+		localStorage[this.originalHref] = data;
 	},
 
 	get isHash() {
@@ -963,8 +989,8 @@ var _ = Wysie.Storage = $.Class({
 		});
 	},
 
-	save: function() {
-		var data = this.wysie.data;
+	save: function(data = this.wysie.data) {
+		data = this.wysie.toJSON(data);
 
 		this.backup = {
 			synced: !this.put,
@@ -977,7 +1003,7 @@ var _ = Wysie.Storage = $.Class({
 
 				return this.put({
 					name: this.filename,
-					data: this.wysie.toJSON(data)
+					data: data
 				}).then(() => {
 					var backup = this.backup;
 					backup.synced = true;
@@ -996,6 +1022,10 @@ var _ = Wysie.Storage = $.Class({
 				});
 			});
 		}
+	},
+
+	clear: function() {
+		this.save(null);
 	},
 
 	// To be overriden by subclasses
@@ -1087,8 +1117,8 @@ _.Default = $.Class({ extends: _,
 					return element.textContent;
 				};
 
-				this.put = () => {
-					element.textContent = this.wysie.toJSON();
+				this.put = ({data = ""}) => {
+					element.textContent = data;
 					return Promise.resolve();
 				};
 			}
@@ -2107,11 +2137,12 @@ var _ = Wysie.Scope = $.Class({
 		this.everSaved = true;
 	},
 
-	propagated: ["save", "done", "import"],
+	propagated: ["save", "done", "import", "clear"],
 
 	// Inject data in this element
 	render: function(data) {
 		if (!data) {
+			this.clear();
 			return;
 		}
 
@@ -2683,6 +2714,10 @@ var _ = Wysie.Primitive = $.Class({
 		this.editing = true;
 	}, // edit
 
+	clear: function() {
+		this.value = this.emptyValue;
+	},
+
 	import: function() {
 		if (!this.computed) {
 			this.value = this.templateValue;
@@ -3245,6 +3280,7 @@ var _ = Wysie.Collection = $.Class({
 			if (data === null || data === undefined) {
 				if (!this.closestCollection || this.closestCollection.containsTemplate) {
 					// This is not contained in any other collection, display template data
+					this.clear();
 					this.import();
 				}
 			}

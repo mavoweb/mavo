@@ -519,6 +519,10 @@ var _ = Wysie.Primitive = $.Class({
 		this.editing = true;
 	}, // edit
 
+	clear: function() {
+		this.value = this.emptyValue;
+	},
+
 	import: function() {
 		if (!this.computed) {
 			this.value = this.templateValue;

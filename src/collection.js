@@ -236,6 +236,7 @@ var _ = Wysie.Collection = $.Class({
 			if (data === null || data === undefined) {
 				if (!this.closestCollection || this.closestCollection.containsTemplate) {
 					// This is not contained in any other collection, display template data
+					this.clear();
 					this.import();
 				}
 			}
