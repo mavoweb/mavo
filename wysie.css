@@ -221,8 +221,8 @@
   color: white;
   font-family: inherit;
   font-size: 1rem;
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px); }
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px); }
   .wysie-wrapper.can-logout .wysie-bar,
   .wysie-wrapper[data-editing] .wysie-bar,
   .wysie-wrapper.unsaved-changes .wysie-bar {
@@ -233,7 +233,7 @@
     display: -ms-flexbox;
     display: flex;
     padding: 0 .5em 0 6em;
-    background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(transparent, rgba(0, 0, 0, 0.5));
+    background: url("logo-small.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
     background-color: rgba(64, 64, 64, 0.9); }
   .wysie-wrapper.can-login:not([data-editing]) .wysie-bar,
   .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar {
@@ -265,8 +265,11 @@
       display: inline-block;
       vertical-align: middle;
       margin-right: .3em;
-      color: rgba(255, 255, 255, 0.5);
+      color: white;
+      opacity: .5;
       font-weight: normal; }
+    .wysie-bar button:hover::before, .wysie-bar .button:hover::before {
+      opacity: .8; }
     .wysie-bar button:disabled, .wysie-bar .button:disabled {
       opacity: .6;
       cursor: not-allowed; }
@@ -275,8 +278,8 @@
   .wysie-bar .edit::before {
     content: "✎"; }
   .wysie-wrapper[data-editing] .wysie-bar .edit {
-    background: rgba(0, 0, 0, 0.4);
-    box-shadow: .2em 0 .4em -.2em black inset, -.2em 0 .4em -.2em black inset; }
+    background: rgba(0, 0, 0, 0.6);
+    box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset; }
   .wysie-bar .save::before {
     content: "✓"; }
   .wysie-bar .save:enabled:hover {
@@ -284,13 +287,13 @@
   .wysie-bar .revert::before {
     content: "✘"; }
   .wysie-bar .revert:enabled:hover {
-    background: #c00; }
+    background: #c50; }
   .wysie-bar .clear::before {
     display: inline-block;
     vertical-align: middle;
     width: .9em;
-    -webkit-filter: saturate(0) brightness(600%) opacity(0.5);
-    filter: saturate(0) brightness(600%) opacity(0.5); }
+    -webkit-filter: saturate(0) brightness(600%);
+    filter: saturate(0) brightness(600%); }
   .wysie-bar .clear:enabled:hover {
     background: #b00; }
   .wysie-bar .status {
