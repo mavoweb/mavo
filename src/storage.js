@@ -276,7 +276,7 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 	},
 
 	put: function({data = ""}) {
-		this.element.textContent = data;
+		this.element.textContent = this.wysie.toJSON(data);
 		return Promise.resolve();
 	},
 

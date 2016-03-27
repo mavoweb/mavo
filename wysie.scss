@@ -628,4 +628,24 @@ $font-mono: Consolas, Monaco, monospace;
 			opacity: .5;
 		}
 	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+
+		th, td {
+			padding: 5px;
+			border: 1px solid hsla(0,0%,100%,.3);
+			vertical-align: top;
+		}
+
+		td {
+			white-space: nowrap;
+		},
+
+		th {
+			font-size: 12px;
+			text-align: left;
+		}
+	}
 }

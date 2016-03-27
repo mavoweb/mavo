@@ -418,3 +418,16 @@
       content: "(Empty)";
       font-style: italic;
       opacity: .5; }
+  .wysie-debug-storage table {
+    border-collapse: collapse;
+    width: 100%; }
+    .wysie-debug-storage table th, .wysie-debug-storage table td {
+      padding: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      vertical-align: top; }
+    .wysie-debug-storage table td {
+      white-space: nowrap; }
+    .wysie-debug-storage table,
+    .wysie-debug-storage table th {
+      font-size: 12px;
+      text-align: left; }

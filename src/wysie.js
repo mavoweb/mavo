@@ -188,6 +188,11 @@ var _ = self.Wysie = $.Class({
 			return "";
 		}
 
+		if (typeof data === "string") {
+			// Do not stringify twice!
+			return data;
+		}
+
 		return JSON.stringify(data, null, "\t");
 	},
 

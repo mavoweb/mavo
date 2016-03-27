@@ -66,18 +66,33 @@ Stretchy.selectors.filter += selector;
 // Add element to show saved data
 Wysie.hooks.add("init-tree-after", function() {
 	if (this.root.debug && this.store) {
-		var id = this.id + "-debug-storage";
+		var element;
 
 		var details = $.create("details", {
 			className: "wysie-debug-storage",
+			open: "open",
 			contents: [
 				{tag: "Summary", textContent: "Saved data"},
-				{tag: "pre", id}
+				element = $.create("pre", {id: this.id + "-debug-storage"})
 			],
 			inside: this.wrapper
 		});
 
-		this.store += " #" + id, location;
+		// Intercept textContent
+
+		var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
+
+		Object.defineProperty(element, "textContent", {
+			get: function() {
+				return descriptor.get.call(this);
+			},
+
+			set: function(value) {
+				this.appendChild(prettyPrint(JSON.parse(value)));
+			}
+		});
+
+		this.store += " #" + element.id;
 	}
 });
 
