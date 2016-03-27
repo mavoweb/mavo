@@ -38,7 +38,7 @@ var _ = Wysie.Functions = {
 	},
 
 	count: function(array) {
-		return Array.isArray(array)? array.length : +(array === null);
+		return Wysie.toArray(array).filter(a => a !== null && a !== false).length;
 	},
 
 	/**

@@ -229,18 +229,17 @@ body > section > * {
     .docs body > section > table td:not(:nth-child(3)) {
       font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace; }
 
-.note {
+.note, .tip {
   border-left: 0.5em solid #a6c9c6;
   padding-left: .5em;
   margin-left: -1em; }
-  .note::before {
+  .note::before, .tip::before {
     content: "Note: ";
     font-weight: bold;
     color: #80b3ae; }
 
 .tip::before {
-  content: "Tip: ";
-  font-weight: bold; }
+  content: "Tip: "; }
 
 .token.comment,
 .token.prolog,

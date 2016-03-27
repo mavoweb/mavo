@@ -289,7 +289,7 @@ body > section {
 	}
 }
 
-.note {
+.note, .tip {
 	border-left: .5em solid mix(white, $secondary-color, 30%);
 	padding-left: .5em;
 	margin-left: -1em;
@@ -304,7 +304,6 @@ body > section {
 .tip {
 	&::before {
 		content: "Tip: ";
-		font-weight: bold;
 	}
 }
 

@@ -310,7 +310,7 @@
 				<li>Minimum age: =min(age)</li>
 				<li>Maximum age: =Max(age)</li> <!-- caps don’t matter -->
 				<li>Sum of all ages (why? because we can): =SUM(age)</li> <!-- caps don’t matter -->
-				<li>Number of older cats: =count(eq(age, 8))</li>
+				<li>Number of cats over 5 years old: =count(gt(age, 5))</li>
 			</ul>
 		</div>
 		</script>
@@ -408,7 +408,7 @@
 		</tbody>
 	</table>
 
-	<p class="note">If you have more operands you don’t need to nest these functions, just provide more parameters.
+	<p class="tip">If you have more operands you don’t need to nest these functions, just provide more parameters.
 		E.g. you don’t need to do <code>add(a, add(b, c))</code>, <code>add(a, b, c)</code> will just work.</p>
 </section>
 

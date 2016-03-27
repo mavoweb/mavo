@@ -2072,7 +2072,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		count: function count(array) {
-			return Array.isArray(array) ? array.length : +(array === null);
+			return Wysie.toArray(array).filter(function (a) {
+				return a !== null && a !== false;
+			}).length;
 		},
 
 		/**
