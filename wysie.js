@@ -4010,6 +4010,9 @@ Wysie.hooks.add("scope-init-start", function() {
 					<th>Value</th>
 					<th>Element</th>
 				</tr></thead>`,
+				style: {
+					display: "none"
+				},
 				inside: this.element
 			})
 		});
@@ -4043,6 +4046,8 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 	if (!this.debug) {
 		return;
 	}
+
+	this.debug.parentNode.style.display = "";
 
 	var type = tds[0];
 
