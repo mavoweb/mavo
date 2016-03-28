@@ -3927,6 +3927,8 @@ var _ = Wysie.Debug = {
 			console.timeEnd(id);
 		};
 	},
+
+	reservedWords: "as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield".split("|")
 };
 
 Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
@@ -4044,10 +4046,6 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 
 	var type = tds[0];
 
-	if (type == "Warning") {
-		tds[1].colspan = 2;
-	}
-
 	tds[0] = $.create("td", {
 		title: type
 	});
@@ -4076,6 +4074,10 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 
 		return td;
 	});
+
+	if (type == "Warning") {
+		tds[1].setAttribute("colspan", 2);
+	}
 
 	var tr = $.create("tr", {
 		className: "debug-" + type.toLowerCase(),
@@ -4120,7 +4122,16 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 Wysie.hooks.add("scope-init-end", function() {
 	// TODO make properties update, collapse duplicate expressions
 	if (this.debug instanceof Node) {
-		// We have a debug table, add properties to it
+		// We have a debug table, add stuff to it
+
+		var selector = Wysie.selectors.andNot(Wysie.selectors.multiple, Wysie.selectors.property);
+		$$(selector, this.element).forEach(element => {
+			this.debugRow({
+				element,
+				tds: ["Warning", "data-multiple without a property attribute"]
+			})
+		})
+
 		this.propagate(obj => {
 			if (!(obj instanceof Wysie.Primitive)) {
 				return;
@@ -4130,6 +4141,22 @@ Wysie.hooks.add("scope-init-end", function() {
 				element: obj.element,
 				tds: ["Property", obj.property, obj.value]
 			});
+
+			if (_.reservedWords.indexOf(obj.property) > -1) {
+				this.debugRow({
+					element: obj.element,
+					tds: ["Warning", `You can’t use "${obj.property}" as a property name, it’s a reserved word.`]
+				});
+			}
+			else if (/^\d|[\W$]/.test(obj.property)) {
+				this.debugRow({
+					element: obj.element,
+					tds: ["Warning", {
+						textContent: `You can’t use "${obj.property}" as a property name.`,
+						title: "Property names can only contain letters, numbers and underscores and cannot start with a number."
+					}]
+				});
+			}
 		});
 
 		this.scope.element.addEventListener("wysie:datachange", evt => {

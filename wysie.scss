@@ -545,9 +545,7 @@ $font-mono: Consolas, Monaco, monospace;
 				background: hsl(210, 50%, 55%);
 				color: white;
 				text-align: center;
-				font-size: 80%;
-				line-height: 1.5;
-				font-weight: bold;
+				font: bold 80%/1.5 $font-sans;
 			}
 		}
 
@@ -600,13 +598,33 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 
 	tr {
-		&.debug-property td:nth-child(1)::before {
-			content: "P";
+		&.debug-property {
+			td:nth-child(1)::before {
+				content: "P";
+			},
+
+			td:nth-child(2) {
+				overflow: hidden;
+			}
 		}
 
-		&.debug-expression td:nth-child(1)::before {
-			content: "=";
-			background: hsl(30, 80%, 50%);
+		&.debug-expression {
+			td:nth-child(1)::before {
+				content: "=";
+				background: hsl(30, 80%, 50%);
+			}
+		}
+
+		&.debug-warning {
+			td:nth-child(1)::before {
+				content: "!";
+				background: hsl(10, 90%, 50%);
+			}
+
+			td:nth-child(2) {
+				overflow: hidden;
+				font-family: $font-sans;
+			}
 		}
 	}
 

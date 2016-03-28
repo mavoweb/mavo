@@ -363,9 +363,7 @@
         background: #538cc6;
         color: white;
         text-align: center;
-        font-size: 80%;
-        line-height: 1.5;
-        font-weight: bold; }
+        font: bold 80%/1.5 "Helvetica Neue", sans-serif; }
     .wysie-debuginfo td:nth-child(2) {
       position: relative;
       padding: 0 .7em;
@@ -398,9 +396,18 @@
         background: rgba(255, 247, 0, 0.3); }
   .wysie-debuginfo tr.debug-property td:nth-child(1)::before {
     content: "P"; }
+  .wysie-debuginfo tr.debug-property,
+  .wysie-debuginfo tr.debug-property td:nth-child(2) {
+    overflow: hidden; }
   .wysie-debuginfo tr.debug-expression td:nth-child(1)::before {
     content: "=";
     background: #e6801a; }
+  .wysie-debuginfo tr.debug-warning td:nth-child(1)::before {
+    content: "!";
+    background: #f2330d; }
+  .wysie-debuginfo tr.debug-warning td:nth-child(2) {
+    overflow: hidden;
+    font-family: "Helvetica Neue", sans-serif; }
   .wysie-debuginfo .error {
     color: #f88;
     font-weight: normal;
