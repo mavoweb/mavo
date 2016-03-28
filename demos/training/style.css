@@ -1,0 +1,51 @@
+body {
+	max-width: 50em;
+	margin: 3em auto;
+}
+
+article, li {
+	padding: .5em;
+	border: 1px solid rgba(0,0,0,.2);
+	margin: .5em 0;
+}
+
+article > h1 {
+	margin: 0;
+	padding: .3em .5em;
+	background: hsl(175, 80%, 40%);
+	color: white;
+}
+
+ul {
+	font-size: 80%;
+	padding: 0;
+	list-style: none;
+}
+
+li {
+	display: inline-block;
+	vertical-align: top;
+	margin: .5em;
+	border-color: 1px solid rgba(0,0,0,.1);
+	width: calc(33% - 1em);
+	box-sizing: border-box;
+}
+
+li img {
+	display: block;
+	width: 100%;
+	min-height: 12em;
+	ovject-fit: cover;
+	background: linear-gradient(to bottom right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0),
+				linear-gradient(to top right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0);
+	background-color: rgba(0,0,0,.1);
+}
+
+.wysie-wrapper button.wysie-add {
+	display: block;
+}
+
+.expensive {
+	color: red;
+	font-weight: bold;
+}

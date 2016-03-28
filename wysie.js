@@ -3946,7 +3946,10 @@ Wysie.hooks.add("init-tree-after", function() {
 
 			set: function(value) {
 				this.innerHTML = "";
-				this.appendChild(prettyPrint(JSON.parse(value)));
+
+				if (value) {
+					this.appendChild(prettyPrint(JSON.parse(value)));
+				}
 			}
 		});
 

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>Meaningless wysie test</title>
+<link rel="stylesheet" href="../../wysie.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body>
+
+<main data-store="#data" class="autoedit xdebug">
+	<h1>CSAIL offices (=count(room))</h1>
+
+	<article property="room" data-multiple>
+		<h1>Room <span property="name">32-G596</span></h1>
+
+		<p>People: <span property="people">4</span></p>
+
+		<p>Equipment (=count(equipment)):</p>
+
+		<ul>
+			<li property="equipment">
+				<img property="photo" src="http://ecx.images-amazon.com/images/I/71r1E7x7PlL._SL1500_.jpg" />
+
+				<dl>
+					<dt>Item:</dt>
+					<dd property="item">Asus monitor</dd>
+
+					<dt>Unit cost ($):</dt>
+					<dd property="unitCost">1500</dd>
+
+					<dt>Quantity:</dt>
+					<dd property="quantity">4</dd>
+
+					<dt>Cost ($):</dt>
+					<dd property="cost">=(unitCost * quantity)</dd>
+				</dl>
+			</li>
+		</ul>
+
+		<footer>
+			Total cost of equipment for this office is $<span property="officeCost">=sum(cost)</span>
+			<p class="expensive" style="display: =iff(officeCost > 10000, block, none)">Expensive!</p>
+		</footer>
+	</article>
+
+	<h2>Stats</h2>
+	<dl>
+		<dt>Number of people:</dt>
+		<dd>=count(people)</dd>
+
+		<dt>Number of articles of equipment:</dt>
+		<dd>=count(equipment)</dd>
+
+		<dt>Total equipment cost ($):</dt>
+		<dd>=sum(officeCost)</dd>
+
+		<dt>Average office cost ($):</dt>
+		<dd>=average(officeCost)</dd>
+	</dl>
+</main>
+
+<script src="../../wysie.js"></script>
+
+</body>
+</html>
