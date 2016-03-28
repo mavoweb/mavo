@@ -76,6 +76,10 @@ main > article {
 			filter: brightness(.8) blur(.8em);
 		}
 
+		& > a {
+			display: block;
+		}
+
 		img {
 			width: 5em;
 			height: 5em;

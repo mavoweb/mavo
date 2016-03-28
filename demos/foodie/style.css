@@ -60,6 +60,8 @@ main > article {
       background-image: inherit;
       -webkit-filter: brightness(0.8) blur(0.8em);
       filter: brightness(0.8) blur(0.8em); }
+    main > article > header > a {
+      display: block; }
     main > article > header img {
       width: 5em;
       height: 5em;
