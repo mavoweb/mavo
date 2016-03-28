@@ -260,6 +260,7 @@ var _ = self.Wysie = $.Class({
 		this.root.done();
 		$.unbind(this.wrapper, ".wysie:edit");
 		this.editing = false;
+		this.unsavedChanges = false;
 	},
 
 	save: function() {
