@@ -23,18 +23,9 @@ $$(".example").forEach((example, i) => {
 
 	data.id = data.id || "data-" + example.id;
 
-	$.create("details", {
-		contents: [
-			{
-				tag: "summary",
-				textContent: "Saved data"
-			}, data
-		],
-		after: container
-	});
-
 	var wysieRoot = $("[data-store]", container) || container;
 
+	wysieRoot.classList.add("debug-saving");
 	wysieRoot.setAttribute("data-store", "#" + data.id);
 });
 

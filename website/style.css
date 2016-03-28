@@ -16,7 +16,7 @@ a {
 dd + dt {
   margin-top: 1.5em; }
 
-pre, code, .example script[type='application/json'] {
+pre, code {
   background: #f9f1f3;
   font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
   -moz-tab-size: 4;
@@ -170,23 +170,32 @@ body > section > * {
   .docs .example .example-container input[type="number"] {
     font-size: 150%;
     max-width: 2em; }
-  .docs .example .example-container + details {
-    margin-bottom: 1em; }
-    .docs .example .example-container + details summary {
-      display: block;
-      padding: .3em .8em;
-      background: rgba(0, 0, 0, 0.3);
-      color: white;
-      font-size: 75%;
-      font-weight: bold;
-      cursor: pointer;
-      outline: none; }
-      .docs .example .example-container + details summary:hover, .docs .example .example-container + details summary:focus {
-        background: rgba(0, 0, 0, 0.6); }
 
-.docs .example script[type='application/json'] {
-  display: block;
-  padding: 1em; }
+.docs .example .wysie-debug-storage {
+  margin: 0;
+  background: rgba(0, 0, 0, 0.06);
+  color: black .docs .example .wysie-debug-storage; }
+  .docs .example .wysie-debug-storage :not(:last-child) {
+    margin-bottom: 1em; }
+  .docs .example .wysie-debug-storage summary {
+    display: block;
+    padding: .3em .8em;
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 75%;
+    font-weight: bold;
+    cursor: pointer;
+    outline: none; }
+    .docs .example .wysie-debug-storage summary:hover, .docs .example .wysie-debug-storage summary:focus {
+      background: rgba(0, 0, 0, 0.6); }
+  .docs .example .wysie-debug-storage pre {
+    background: none;
+    margin: 0;
+    color: black; }
+    .docs .example .wysie-debug-storage pre th {
+      color: white; }
+    .docs .example .wysie-debug-storage pre th, .docs .example .wysie-debug-storage pre td {
+      border-color: rgba(0, 0, 0, 0.1); }
 
 @media print {
   .docs .example {

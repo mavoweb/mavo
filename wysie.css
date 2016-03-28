@@ -402,14 +402,13 @@
   display: block;
   background: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: .6em;
-  margin: 3em 0 1em;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.3) inset;
+  margin: 1em 0;
   text-align: left;
   font-size: 80%; }
   .wysie-debug-storage summary {
     cursor: pointer; }
   .wysie-debug-storage pre {
+    padding: .6em;
     font: 100%/1.5 Consolas, Monaco, monospace;
     -moz-tab-size: 4;
     tab-size: 4;

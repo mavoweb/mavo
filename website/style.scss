@@ -28,7 +28,7 @@ dd + dt {
 	margin-top: 1.5em;
 }
 
-pre, code, .example script[type='application/json'] {
+pre, code {
 	background: lighten($accent-color, 28%);
 	font-family: $mono-font;
 	tab-size: 4;
@@ -205,30 +205,45 @@ body > section {
 				font-size: 150%;
 				max-width: 2em;
 			}
-
-			& + details {
-				margin-bottom: 1em;
-
-				summary {
-				   display: block;
-				   padding: .3em .8em;
-				   background: rgba(0,0,0,.3);
-				   color: white;
-				   font-size: 75%;
-				   font-weight: bold;
-				   cursor: pointer;
-				   outline: none;
-
-				   &:hover, &:focus {
-					   background: rgba(0,0,0,.6);
-				   }
-			   }
-			}
 		}
 
-		script[type='application/json'] {
-			display: block;
-			padding: 1em;
+		.wysie-debug-storage {
+			margin: 0;
+			background: rgba(0,0,0,.06);
+			color: black
+
+			&:not(:last-child) {
+				margin-bottom: 1em;
+			}
+
+			summary {
+			   display: block;
+			   padding: .3em .8em;
+			   background: rgba(0,0,0,.3);
+			   color: white;
+			   font-size: 75%;
+			   font-weight: bold;
+			   cursor: pointer;
+			   outline: none;
+
+			   &:hover, &:focus {
+				   background: rgba(0,0,0,.6);
+			   }
+		   }
+
+		   pre {
+			   background: none;
+			   margin: 0;
+			   color: black;
+
+			   th {
+				   color: white;
+			   }
+
+				th, td {
+					border-color: hsla(0,0%,0%,.1);
+				}
+		   }
 		}
 
 		@media print {

@@ -607,9 +607,7 @@ $font-mono: Consolas, Monaco, monospace;
 	display: block;
 	background: hsla(0,0,0%,.8);
 	color: white;
-	padding: .6em;
-	margin: 3em 0 1em;
-	box-shadow: 1px 1px 4px rgba(0,0,0,.3) inset;
+	margin: 1em 0;
 	text-align: left;
 	font-size: 80%;
 
@@ -618,6 +616,7 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 
 	pre {
+		padding: .6em;
 		font: 100%/1.5 $font-mono;
 		tab-size: 4;
 		overflow: auto;

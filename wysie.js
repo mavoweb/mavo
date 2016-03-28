@@ -3923,17 +3923,20 @@ Stretchy.selectors.filter += selector;
 
 // Add element to show saved data
 Wysie.hooks.add("init-tree-after", function() {
-	if (this.root.debug && this.store) {
+	if (this.root.debug) {
+		this.wrapper.classList.add("debug-saving");
+	}
+
+	if (this.store && this.wrapper.classList.contains("debug-saving")) {
 		var element;
 
 		var details = $.create("details", {
 			className: "wysie-debug-storage",
-			open: "open",
 			contents: [
 				{tag: "Summary", textContent: "Saved data"},
 				element = $.create("pre", {id: this.id + "-debug-storage"})
 			],
-			inside: this.wrapper
+			after: this.wrapper
 		});
 
 		// Intercept textContent
@@ -3959,7 +3962,7 @@ Wysie.hooks.add("init-tree-after", function() {
 });
 
 Wysie.hooks.add("render-start", function({data}) {
-	if (this.root.debug && this.storage) {
+	if (this.storage && this.wrapper.classList.contains("debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
