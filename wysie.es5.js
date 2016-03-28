@@ -347,7 +347,7 @@ if(this.url.protocol!="dropbox:"){this.url.hostname="dl.dropboxusercontent.com";
 }this.permissions.on("login");this.ready=$.include(self.Dropbox,dropboxURL).then(function(){var referrer=new URL(document.referrer,location);if(referrer.hostname==="www.dropbox.com"&&location.hash.indexOf("#access_token=")===0){ // We’re in an OAuth response popup, do what you need then close this
 Dropbox.AuthDriver.Popup.oauthReceiver();$.fire(window,"load"); // hack because dropbox.js didn't foresee use cases like ours :/
 close();return;} // Internal filename (to be used for saving)
-_this34.filename=(_this34.storage.param("path")||"")+new URL(_this34.url).pathname.match(/[^/]*$/)[0];_this34.client=new Dropbox.Client({key:_this34.storage.param("key")});}).then(function(){_this34.login(true);});}, /**
+_this34.filename=(_this34.storage.param("path")||"")+new URL(_this34.url).pathname.match(/[^/]*$/)[0];_this34.key=_this34.storage.param("key")||"fle6gsc61w5v79j";_this34.client=new Dropbox.Client({key:_this34.key});}).then(function(){_this34.login(true);});}, /**
 	 * Saves a file to the backend.
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.

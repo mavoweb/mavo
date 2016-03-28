@@ -208,6 +208,10 @@
 		</script>
 	</section>
 
+	<p class="tip">If you’re just using an element to hold an intermediate result so you can refer to it, we recommend using
+		<code>&lt;meta property="propertyName" content="=expression" /></code> which is hidden, both semantically and visually.
+	</p>
+
 	<p class="note">Properties whose values are expressions are called <em>“computed properties”</em> and are <strong>not saved</strong>.</p>
 
 	<hr />
@@ -288,9 +292,38 @@
 
 	<hr />
 
-	<p>There are functions that work with lists of values, such as
-		<code>count(property)</code>, <code>sum(property)</code>, <code>average(property)</code>,
-		<code>min(property)</code>, <code>max(property)</code>.</p>
+	<p>There are functions that calculate a value out of a list of values (usually numbers):</p>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Expression</th>
+				<th>Meaning</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>count(property)</code></td>
+				<td>Count how many items in the list actually have a value.</td>
+			</tr>
+			<tr>
+				<td><code>sum(property)</code></td>
+				<td>Sum all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>average(property)</code></td>
+				<td>Calculate the average of all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>min(property)</code></td>
+				<td>Calculate the minimum of all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>max(property)</code></td>
+				<td>Calculate the maximum of all numbers in the list.</td>
+			</tr>
+		</tbody>
+	</table>
 
 	<section class="example">
 		<p>Try adding and removing elements!</p>
@@ -345,6 +378,8 @@
 }}</script>
 	</section>
 
+	<hr />
+
 	<p>You can also do math with lists. For example, <code>=sum(add(age, 5))</code> will add 5 to every age and then sum the result.
 		There are many such functions that work well with lists (but not just lists) and are more human readable than their operator counterparts:
 	</p>
@@ -359,53 +394,53 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td>a + b</td>
-				<td>add(a, b)</td>
+				<td><code>a + b</code></td>
+				<td><code>add(a, b)</code></td>
 				<td>Addition</td>
 			</tr>
 			<tr>
-				<td>a - b</td>
-				<td>subtract(a, b)</td>
+				<td><code>a - b</code></td>
+				<td><code>subtract(a, b)</code></td>
 				<td>Subtraction</td>
 			</tr>
 			<tr>
-				<td>a * b</td>
-				<td>multiply(a, b)</td>
+				<td><code>a * b</code></td>
+				<td><code>multiply(a, b)</code></td>
 				<td>Multiplication</td>
 			</tr>
 			<tr>
-				<td>a / b</td>
-				<td>div(a, b)</td>
+				<td><code>a / b</code></td>
+				<td><code>div(a, b)</code></td>
 				<td>Division. Note that division by 0 will show up as ±∞ or <code>NaN</code> if it’s 0/0.</td>
 			</tr>
 			<tr>
-				<td>a && b</td>
-				<td>and(a, b)</td>
+				<td><code>a && b</code></td>
+				<td><code>and(a, b)</code></td>
 				<td>Check that both a and b have a value</td>
 			</tr>
 			<tr>
-				<td>a || b</td>
-				<td>or(a, b)</td>
+				<td><code>a || b</code></td>
+				<td><code>or(a, b)</code></td>
 				<td>Check that at least a or b have a value</td>
 			</tr>
 			<tr>
-				<td>!a</td>
-				<td>not(a)</td>
+				<td><code>!a</code></td>
+				<td><code>not(a)</code></td>
 				<td>Check if a doesn’t have a value</td>
 			</tr>
 			<tr>
-				<td>a < b</td>
-				<td>lt(a, b)</td>
+				<td><code>a < b</code></td>
+				<td><code>lt(a, b)</code></td>
 				<td>Check if a is less than b</td>
 			</tr>
 			<tr>
-				<td>a > b</td>
-				<td>gt(a, b)</td>
+				<td><code>a > b</code></td>
+				<td><code>gt(a, b)</code></td>
 				<td>Check if a is greater than b</td>
 			</tr>
 			<tr>
-				<td>a == b</td>
-				<td>eq(a, b)</td>
+				<td><code>a == b</code></td>
+				<td><code>eq(a, b)</code></td>
 				<td>Check if a is equal to b</td>
 			</tr>
 		</tbody>

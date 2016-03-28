@@ -226,8 +226,8 @@ body > section > * {
   .docs body > section > table td {
     padding: .1em .5em;
     border: 1px solid rgba(0, 0, 0, 0.1); }
-    .docs body > section > table td:not(:nth-child(3)) {
-      font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace; }
+  .docs body > section > table code {
+    background: transparent; }
 
 .note, .tip {
   border-left: 0.5em solid #a6c9c6;

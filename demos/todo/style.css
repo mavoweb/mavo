@@ -110,15 +110,19 @@ input::-moz-placeholder {
 
 body > header {
 	display: block;
-	margin: 0 0 .7em;
-	font-size: 250%;
+	margin: 2em 0 3.5em;
+	text-shadow: 0 -1px 3px black;
+	opacity: .9;
 }
 
 	body > header > h1 {
 		font-weight: 100;
-		font-size: 150%;
-		text-shadow: 0 -1px 3px black;
-		opacity: .9;
+		font-size: 400%;
+		opacity: .6;
+	}
+
+	body > header > p {
+		margin-top: .5em;
 	}
 
 body > footer {
