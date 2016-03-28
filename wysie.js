@@ -1466,8 +1466,17 @@ var _ = Wysie.Expression = $.Class({
 
 var _ = Wysie.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.node = o.node;
-		this.element = this.node.nodeType === 3? this.node.parentNode : this.node;
+		this.node = this.element = o.node;
+
+		if (this.node.nodeType === 3) {
+			this.element = this.node.parentNode;
+
+			if (!this.node.previousElementSibling && !this.node.nextElementSibling) {
+				this.node = this.element;
+				this.element.normalize();
+			}
+		}
+
 		this.attribute = o.attribute || null;
 		this.all = o.all; // the Wysie.Expressions object that this belongs to
 		this.expression = this.text.trim();
@@ -1484,7 +1493,10 @@ var _ = Wysie.Expression.Text = $.Class({
 
 	set text(value) {
 		this.oldText = this.text;
+		if (this.primitive && this.primitive.property == "marginal_cost") {
 
+
+		}
 		Wysie.Primitive.setValue(this.node, value, this.attribute);
 	},
 
