@@ -339,10 +339,12 @@
     text-align: left;
     padding: .5em; }
     .wysie-debuginfo th:nth-child(1) {
-      width: 40%; }
+      width: 1em; }
     .wysie-debuginfo th:nth-child(2) {
-      width: 30%; }
+      width: 40%; }
     .wysie-debuginfo th:nth-child(3) {
+      width: 30%; }
+    .wysie-debuginfo th:nth-child(4) {
       width: 30%; }
   .wysie-debuginfo td {
     padding: .3em .7em;
@@ -353,12 +355,24 @@
     text-overflow: ellipsis;
     white-space: nowrap; }
     .wysie-debuginfo td:nth-child(1) {
+      padding: .5em;
+      overflow: visible; }
+      .wysie-debuginfo td:nth-child(1)::before {
+        display: block;
+        border-radius: .3em;
+        background: #538cc6;
+        color: white;
+        text-align: center;
+        font-size: 80%;
+        line-height: 1.5;
+        font-weight: bold; }
+    .wysie-debuginfo td:nth-child(2) {
       position: relative;
       padding: 0 .7em;
       white-space: nowrap;
       vertical-align: middle;
       overflow: visible; }
-      .wysie-debuginfo td:nth-child(1) textarea {
+      .wysie-debuginfo td:nth-child(2) textarea {
         all: unset;
         position: absolute;
         top: 0;
@@ -366,37 +380,42 @@
         padding: .3em .7em;
         width: 100%;
         box-sizing: border-box; }
-        .wysie-debuginfo td:nth-child(1) textarea:not(:focus) {
+        .wysie-debuginfo td:nth-child(2) textarea:not(:focus) {
           max-height: 2.2em;
           max-width: 100% !important;
           overflow: hidden; }
-          .wysie-debuginfo td:nth-child(1) textarea:not(:focus):hover {
+          .wysie-debuginfo td:nth-child(2) textarea:not(:focus):hover {
             background: #333; }
-        .wysie-debuginfo td:nth-child(1) textarea:focus {
+        .wysie-debuginfo td:nth-child(2) textarea:focus {
           resize: horizontal;
           z-index: 10;
           background: #222;
           box-shadow: 1px 1px 0.3em rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.5) inset; }
-    .wysie-debuginfo td.error {
-      color: #f88;
-      font-weight: normal;
-      font-family: "Helvetica Neue", sans-serif; }
-      .wysie-debuginfo td.error .type {
-        display: block;
-        font-size: 80%;
-        font-weight: bold;
-        line-height: inherit; }
-        .wysie-debuginfo td.error .type::after {
-          content: "😳";
-          display: inline-block;
-          vertical-align: middle;
-          margin-left: .3em;
-          font: 150%/.8 sans-serif; }
-    .wysie-debuginfo td:nth-child(3) {
+    .wysie-debuginfo td:nth-child(4) {
       width: 30%;
       cursor: help; }
-      .wysie-debuginfo td:nth-child(3):hover {
+      .wysie-debuginfo td:nth-child(4):hover {
         background: rgba(255, 247, 0, 0.3); }
+  .wysie-debuginfo tr.debug-property td:nth-child(1)::before {
+    content: "P"; }
+  .wysie-debuginfo tr.debug-expression td:nth-child(1)::before {
+    content: "=";
+    background: #e6801a; }
+  .wysie-debuginfo .error {
+    color: #f88;
+    font-weight: normal;
+    font-family: "Helvetica Neue", sans-serif; }
+    .wysie-debuginfo .error .type {
+      display: block;
+      font-size: 80%;
+      font-weight: bold;
+      line-height: inherit; }
+      .wysie-debuginfo .error .type::after {
+        content: "😳";
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: .3em;
+        font: 150%/.8 sans-serif; }
 
 .wysie-debug-storage {
   display: block;
@@ -406,7 +425,8 @@
   text-align: left;
   font-size: 80%; }
   .wysie-debug-storage summary {
-    cursor: pointer; }
+    cursor: pointer;
+    padding: .4em .5em; }
   .wysie-debug-storage pre {
     padding: .6em;
     font: 100%/1.5 Consolas, Monaco, monospace;

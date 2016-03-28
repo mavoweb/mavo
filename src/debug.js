@@ -123,6 +123,21 @@ Wysie.hooks.add("scope-init-start", function() {
 	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
 		this.debug = true;
 	}
+
+	if (this.debug) {
+		this.debug = $.create("tbody", {
+			inside: $.create("table", {
+				className: "wysie-ui wysie-debuginfo",
+				innerHTML: `<thead><tr>
+					<th></th>
+					<th>Expression</th>
+					<th>Value</th>
+					<th>Element</th>
+				</tr></thead>`,
+				inside: this.element
+			})
+		});
+	}
 }, true);
 
 Wysie.hooks.add("unit-init-end", function() {
@@ -148,33 +163,63 @@ Wysie.hooks.add("expression-eval-error", function(env) {
 	}
 });
 
-Wysie.hooks.add("expressiontext-init-end", function() {
-	if (this.all.debug) {
-		if (this.all.debug === true) {
-			// Still haven't created table, create now
-			this.all.debug = $.create("tbody", {
-				inside: $.create("table", {
-					className: "wysie-ui wysie-debuginfo",
-					innerHTML: `<thead><tr>
-						<th>Expression</th>
-						<th>Value</th>
-						<th>Element</th>
-					</tr></thead>`,
-					inside: this.scope.element
-				})
-			});
+Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
+	if (!this.debug) {
+		return;
+	}
+
+	var type = tds[0];
+
+	if (type == "Warning") {
+		tds[1].colspan = 2;
+	}
+
+	tds[0] = $.create("td", {
+		title: type
+	});
+
+	if (!tds[3]) {
+		var elementLabel = _.elementLabel(element, attribute);
+
+		tds[3] = $.create("td", {
+			textContent: elementLabel,
+			title: elementLabel,
+			events: {
+				"mouseenter mouseleave": evt => {
+					element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
+				},
+				"click": evt => {
+					element.scrollIntoView({behavior: "smooth"});
+				}
+			}
+		});
+	}
+
+	tds = tds.map(td => {
+		if (!(td instanceof Node)) {
+			return $.create("td", typeof td == "object"? td : { textContent: td });
 		}
 
+		return td;
+	});
+
+	var tr = $.create("tr", {
+		className: "debug-" + type.toLowerCase(),
+		contents: tds,
+		inside: this.debug
+	});
+};
+
+Wysie.hooks.add("expressiontext-init-end", function() {
+	if (this.scope.debug) {
 		this.debug = {};
 
 		this.template.forEach(expr => {
 			if (expr instanceof Wysie.Expression) {
-				var elementLabel = _.elementLabel(this.element, this.attribute);
-
-				$.create("tr", {
-					className: "debug-expression",
-					contents: [
-						{
+				this.scope.debugRow({
+					element: this.element,
+					attribute: this.attribute,
+					tds: ["Expression", {
 							tag: "td",
 							contents: {
 								tag: "textarea",
@@ -190,22 +235,8 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 								}
 							}
 						},
-						expr.debug = $.create("td"),
-						{
-							tag: "td",
-							textContent: elementLabel,
-							title: elementLabel,
-							events: {
-								"mouseenter mouseleave": evt => {
-									this.element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
-								}
-							}
-						}
-					],
-					properties: {
-						expression: expr
-					},
-					inside: this.all.debug
+						expr.debug = $.create("td")
+					]
 				});
 			}
 		});
@@ -214,31 +245,24 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 
 Wysie.hooks.add("scope-init-end", function() {
 	// TODO make properties update, collapse duplicate expressions
-	if (this.expressions.debug instanceof Node) {
+	if (this.debug instanceof Node) {
 		// We have a debug table, add properties to it
 		this.propagate(obj => {
 			if (!(obj instanceof Wysie.Primitive)) {
 				return;
 			}
 
-			$.create("tr", {
-				className: "debug-property",
-				contents: [
-					{tag: "td", textContent: obj.property},
-					{tag: "td", textContent: obj.value},
-					{tag: "td", textContent: _.elementLabel(obj.element)}
-				],
-				inside: this.expressions.debug
+			this.debugRow({
+				element: obj.element,
+				tds: ["Property", obj.property, obj.value]
 			});
 		});
-	}
-});
 
-Wysie.hooks.add("expressions-update-start", function(env) {
-	if (this.debug instanceof Node) {
-		$$("tr.debug-property", this.debug).forEach(tr => {
-			var property = tr.cells[0].textContent;
-			tr.cells[1].textContent = env.data[property];
+		this.scope.element.addEventListener("wysie:datachange", evt => {
+			$$("tr.debug-property", this.debug).forEach(tr => {
+				var property = tr.cells[1].textContent;
+				tr.cells[2].textContent = env.data[property];
+			});
 		});
 	}
 });

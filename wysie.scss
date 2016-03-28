@@ -484,8 +484,6 @@ $font-mono: Consolas, Monaco, monospace;
 }
 
 .wysie-debuginfo {
-
-
 	all: initial;
 	display: table;
 	border: 1em solid transparent;
@@ -512,14 +510,18 @@ $font-mono: Consolas, Monaco, monospace;
 		padding: .5em;
 
 		&:nth-child(1) {
-			width: 40%;
+			width: 1em;
 		}
 
 		&:nth-child(2) {
-			width: 30%;
+			width: 40%;
 		}
 
 		&:nth-child(3) {
+			width: 30%;
+		}
+
+		&:nth-child(4) {
 			width: 30%;
 		}
 	}
@@ -534,6 +536,22 @@ $font-mono: Consolas, Monaco, monospace;
 		white-space: nowrap;
 
 		&:nth-child(1) {
+			padding: .5em;
+			overflow: visible;
+
+			&::before {
+				display: block;
+				border-radius: .3em;
+				background: hsl(210, 50%, 55%);
+				color: white;
+				text-align: center;
+				font-size: 80%;
+				line-height: 1.5;
+				font-weight: bold;
+			}
+		}
+
+		&:nth-child(2) {
 			// Expression column
 			position: relative;
 			padding: 0 .7em;
@@ -570,34 +588,45 @@ $font-mono: Consolas, Monaco, monospace;
 			}
 		}
 
-		&.error {
-			color: #f88;
-			font-weight: normal;
-			font-family: $font-sans;
-
-			.type {
-				display: block;
-				font-size: 80%;
-				font-weight: bold;
-				line-height: inherit;
-
-				&::after {
-					content: "😳";
-					display: inline-block;
-					vertical-align: middle;
-					margin-left: .3em;
-					font: 150%/.8 sans-serif;
-				}
-			}
-		}
-
-		&:nth-child(3) {
+		&:nth-child(4) {
 			// Element column
 			width: 30%;
 			cursor: help;
 
 			&:hover {
 				background: hsla(58, 100%, 50%, .3);
+			}
+		}
+	}
+
+	tr {
+		&.debug-property td:nth-child(1)::before {
+			content: "P";
+		}
+
+		&.debug-expression td:nth-child(1)::before {
+			content: "=";
+			background: hsl(30, 80%, 50%);
+		}
+	}
+
+	.error {
+		color: #f88;
+		font-weight: normal;
+		font-family: $font-sans;
+
+		.type {
+			display: block;
+			font-size: 80%;
+			font-weight: bold;
+			line-height: inherit;
+
+			&::after {
+				content: "😳";
+				display: inline-block;
+				vertical-align: middle;
+				margin-left: .3em;
+				font: 150%/.8 sans-serif;
 			}
 		}
 	}
@@ -613,6 +642,7 @@ $font-mono: Consolas, Monaco, monospace;
 
 	summary {
 		cursor: pointer;
+		padding: .4em .5em;
 	}
 
 	pre {
