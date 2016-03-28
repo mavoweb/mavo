@@ -47,6 +47,8 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
+		file.data = Wysie.toJSON(file.data);
+		
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
 				if (error) {

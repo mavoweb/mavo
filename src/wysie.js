@@ -184,16 +184,7 @@ var _ = self.Wysie = $.Class({
 	},
 
 	toJSON: function(data = this.data) {
-		if (data === null) {
-			return "";
-		}
-
-		if (typeof data === "string") {
-			// Do not stringify twice!
-			return data;
-		}
-
-		return JSON.stringify(data, null, "\t");
+		return _.toJSON(data);
 	},
 
 	render: function(data) {
@@ -314,6 +305,19 @@ var _ = self.Wysie = $.Class({
 
 	static: {
 		all: [],
+
+		toJSON: data => {
+			if (data === null) {
+				return "";
+			}
+
+			if (typeof data === "string") {
+				// Do not stringify twice!
+				return data;
+			}
+
+			return JSON.stringify(data, null, "\t");
+		},
 
 		// Convert an identifier to readable text that can be used as a label
 		readable: function (identifier) {
