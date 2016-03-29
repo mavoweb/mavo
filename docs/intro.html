@@ -173,45 +173,43 @@
 <section>
 	<h1>Expressions</h1>
 
-	<p>You can dynamically refer to the value of any property you have defined, anywhere, by putting an <code>=</code> sign in front of it.</p>
+	<p>You can dynamically refer to the value of any property you have defined, anywhere, by putting its name inside brackets (like this: <code>[propertyName]</code>).</p>
 
 	<section class="example">
 		<p>Move the slider and check how both expressions are updated:</p>
 		<script type="text/plain">
-			<p>Slider value: =strength/100</p>
-			<input type="range" property="strength" title="=strength%" />
+			<p>Slider value: [strength]/100</p>
+			<input type="range" property="strength" title="[strength]%" />
 		</script>
 	</section>
 
-	<p>Note how in the example above, <code>=strength/100</code> did not actually divide the value of the <code>strength</code> property by <code>100</code>.
-		This is because we wanted to use "/100" as a literal, to express a value out of a 100.
-	To not just print the values of properties, but also do calculations with them, you need to <strong>enclose the expression in parentheses</strong>.</p>
+	<p>We can also do math with properties, e.g. divide by a 100:</p>
 
 	<section class="example">
 		<p>Move the slider and check how both expressions are updated:</p>
 		<script type="text/plain">
-			<p>Slider value: =(strength/100)</p>
-			<input type="range" property="strength" title="=strength%" />
+			<p>Slider value: [strength/100]</p>
+			<input type="range" property="strength" title="[strength]%" />
 		</script>
 	</section>
 
-	<p>You can also refer to properties whose value depends on an expression.</p>
+	<p>If you set a <code>property</code> attribute on an element with an expression, then you can use that property in other attributes too.</p>
 
 	<section class="example color-picker">
 		<p>Making a bare-bones HSL color picker with Wysie expressions:</p>
 		<script type="text/plain">
-			<div style="background-color: =color;">
+			<div style="background-color: [color];">
 				<input type="range" property="hue" max="360" />
 				<input type="range" property="saturation" />
 				<input type="range" property="lightness" />
 
-				<input property="color" value="hsl(=hue, =saturation%, =lightness%)" readonly />
+				<input property="color" value="hsl([hue], [saturation]%, [lightness]%)" readonly />
 			</div>
 		</script>
 	</section>
 
 	<p class="tip">If you’re just using an element to hold an intermediate result so you can refer to it, we recommend using
-		<code>&lt;meta property="propertyName" content="=expression" /></code> which is hidden, both semantically and visually.
+		<code>&lt;meta property="propertyName" content="[expression]" /></code> which is hidden, both semantically and visually.
 	</p>
 
 	<p class="note">Properties whose values are expressions are called <em>“computed properties”</em> and are <strong>not saved</strong>.</p>
@@ -224,22 +222,22 @@
 	<section class="example scoped-expressions">
 		<h1>Example: Grouping & Expressions</h1>
 		<script type="text/plain">
-			<p>Hi, I’m =firstname =lastname</p> <!-- From inner group -->
+			<p>Hi, I’m [firstname] [lastname]</p> <!-- From inner group -->
 
 			<div property="person">
 				<span property="firstname">Lea</span>
 				<span property="lastname">Verou</span>
-				<p>Hi, I’m =firstname =lastname</p>
+				<p>Hi, I’m [firstname] [lastname]</p>
 
 				<div property="mother">
 					<span property="firstname">Maria</span>
 					<!-- Last name from parent group -->
-					<p>Hi, I’m =firstname =lastname</p>
+					<p>Hi, I’m [firstname] [lastname]</p>
 
 					<div property="mother">
 						<span property="firstname">Areti</span>
 						<!-- Last name from grandparent group -->
-						<p>Hi, I’m =firstname =lastname</p>
+						<p>Hi, I’m [firstname] [lastname]</p>
 					</div>
 				</div>
 			</div>
@@ -251,21 +249,18 @@
 <section id="functions">
 	<h1>Expression functions</h1>
 
-	<p>References and simple arithmetic are useful, but not always enough.
+	<!-- <p>References and simple arithmetic are useful, but not always enough.
 		For this purpose, wysie defines a number of common math functions you can use inside expressions, such as:
 		<code>pow(base, exponent)</code>, <code>round(number, decimals)</code>, <code>sqrt(number)</code> and many more.</p>
 
 	<section class="example pow">
 		<script type="text/plain">
 			<input property="base" type="number" value="2" />
-			<input property="exponent" type="number" value="3" /> = =pow(base, exponent)
+			<input property="exponent" type="number" value="3" /> = [pow(base, exponent)]
 		</script>
 	</section>
 
-	<p class="note">Note that parentheses can be omitted if the entire expression is inside a function,
-		to avoid awkwardness like <code>=(pow(x, y))</code></p>
-
-	<hr />
+	<hr /> -->
 
 	<p>There are functions that calculate a value out of a list of values (usually numbers):</p>
 
@@ -278,23 +273,23 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td><code>count(property)</code></td>
-				<td>Count how many items in the list actually have a value.</td>
+				<td><code>[count(property)]</code></td>
+				<td>Count how many items in a list actually have a value.</td>
 			</tr>
 			<tr>
-				<td><code>sum(property)</code></td>
+				<td><code>[sum(property)]</code></td>
 				<td>Sum all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>average(property)</code></td>
+				<td><code>[average(property)]</code></td>
 				<td>Calculate the average of all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>min(property)</code></td>
+				<td><code>[min(property)]</code></td>
 				<td>Calculate the minimum of all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>max(property)</code></td>
+				<td><code>[max(property)]</code></td>
 				<td>Calculate the maximum of all numbers in the list.</td>
 			</tr>
 		</tbody>
@@ -315,13 +310,13 @@
 
 			<h2>My cats’ ages</h2>
 			<ul>
-				<li>Number of cats: =count(cat)</li>
-				<li>Number of cats with age: =count(age)</li>
-				<li>Average cat age: =average(age)</li> <!-- avg(age) also works -->
-				<li>Minimum age: =min(age)</li>
-				<li>Maximum age: =Max(age)</li> <!-- caps don’t matter -->
-				<li>Sum of all ages (why? because we can): =SUM(age)</li> <!-- caps don’t matter -->
-				<li>Number of cats over 5 years old: =count(gt(age, 5))</li>
+				<li>Number of cats: [count(cat)]</li>
+				<li>Number of cats with age: [count(age)]</li>
+				<li>Average cat age: [average(age)]</li> <!-- avg(age) also works -->
+				<li>Minimum age: [min(age)]</li>
+				<li>Maximum age: [Max(age)]</li> <!-- caps don’t matter -->
+				<li>Sum of all ages (why? because we can): [SUM(age)]</li> <!-- caps don’t matter -->
+				<li>Number of cats over 5 years old: [count(gt(age, 5))]</li>
 			</ul>
 		</div>
 		</script>
@@ -355,7 +350,7 @@
 
 	<hr />
 
-	<p>You can also do math with lists. For example, <code>=sum(add(age, 5))</code> will add 5 to every age and then sum the result.
+	<p>You can also do math with lists. For example, <code>[sum(add(age, 5))]</code> will add 5 to every age and then sum the result.
 		There are many such functions that work well with lists (but not just lists) and are more human readable than their operator counterparts:
 	</p>
 
@@ -436,13 +431,13 @@
 				.movie .good { background: #efd; }
 			</style>
 
-			<div data-store class="=iff(rating < 3, bad, iff(rating > 3, good, ok))">
+			<div data-store class="[iff(rating < 3, bad, iff(rating > 3, good, ok))]">
 				<label>Rating:
 					<input property="rating" type="range" min="1" max="5" />
 				</label>
 
-				<p style="display: =iff(rating == 1, block,  none)">Wow, you hated that movie!</p>
-				<p style="display: =iff(rating > 3, block,  none)">Glad you liked it!</p>
+				<p style="display: [iff(rating == 1, block,  none)]">Wow, you hated that movie!</p>
+				<p style="display: [iff(rating > 3, block,  none)]">Glad you liked it!</p>
 			</div>
 		</script>
 	</section>
@@ -466,11 +461,11 @@
 					<label>y = <input type="number" property="y" value="5" /></label>
 				</p>
 				<ul>
-					<li>x + y = <span property="sum">=(x + y)</span></li>
-					<li>x - y = =(x - y)</li>
-					<li>x * y = =(x * y)</li>
-					<li>x / y = =(x / y)</li>
-					<li>(x + y)<sup>2</sup> = =pow(sum, 2)</li>
+					<li>x + y = <span property="sum">[x + y]</span></li>
+					<li>x - y = [x - y]</li>
+					<li>x * y = [x * y]</li>
+					<li>x / y = [x / y]</li>
+					<li>(x + y)<sup>2</sup> = [pow(sum, 2)]</li>
 				</ul>
 			</div>
 		</script>
@@ -491,13 +486,13 @@
 		<dd>This element will be multiplied (i.e. create a list).
 			Can only be used on elements with <code>property</code> or <code>data-store</code> attributes.</dd>
 
-		<dt><a href="#expressions"><code>=foo</code></a></dt>
+		<dt><a href="#expressions"><code>[foo]</code></a></dt>
 		<dd>Print out the value of the "foo" property.</dd>
 
-		<dt><a href="#expressions"><code>=(foo * sqrt(foo))</code></a></dt>
+		<dt><a href="#expressions"><code>[foo * sqrt(foo)]</code></a></dt>
 		<dd>Print out the value of an expression. Can be used anywhere. <strong>Yes, in attributes too</strong>.</dd>
 
-		<dt><a href="#functions"><code>=count(foo)</code>, <code>=sum(foo)</code>, <code>=average(foo)</code>, <code>=min(foo)</code>, <code>=max(foo)</code></a></dt>
+		<dt><a href="#functions"><code>[count(foo)]</code>, <code>[sum(foo)]</code>, <code>[average(foo)]</code>, <code>[min(foo)]</code>, <code>[max(foo)]</code></a></dt>
 		<dd>Display the count, sum, average, minimum or maximum of the different values of the "foo" property respectively.
 		The "foo" property must be either a list (i.e. an element with <code>data-multiple</code>) or contained in a list for this to work.</dd>
 
