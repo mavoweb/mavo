@@ -764,7 +764,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Convert an identifier to readable text that can be used as a label
 			readable: function readable(identifier) {
 				// Is it camelCase?
-				return identifier && identifier.replace(/([a-z])([A-Z][a-z])/g, function ($0, $1, $2) {
+				return identifier && identifier.replace(/([a-z])([A-Z])(?=[a-z])/g, function ($0, $1, $2) {
 					return $1 + " " + $2.toLowerCase();
 				}) // camelCase?
 				.replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
@@ -4701,3 +4701,5 @@ var prettyPrint = function () {
 		}
 	}), true);
 })(Bliss);
+
+//# sourceMappingURL=wysie.js.map

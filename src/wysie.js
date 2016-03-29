@@ -323,7 +323,7 @@ var _ = self.Wysie = $.Class({
 		readable: function (identifier) {
 			// Is it camelCase?
 			return identifier && identifier
-			         .replace(/([a-z])([A-Z][a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
+			         .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
 			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 			         .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 		},
