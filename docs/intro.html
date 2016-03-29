@@ -267,33 +267,6 @@
 
 	<hr />
 
-	<p>You can use the <code>iff(condition, ifyes, ifno)</code> function to print out different text depending on a condition.
-	</p>
-
-	<section class="example movie">
-		<script type="text/plain">
-			<style>
-				.movie .bad { background: #fee; }
-				.movie .ok { background: #ffe; }
-				.movie .good { background: #efd; }
-			</style>
-
-			<div data-store class="=iff(rating < 3, bad, iff(rating > 3, good, ok))">
-				<label>Rating:
-					<input property="rating" type="range" min="1" max="5" />
-				</label>
-
-				<p style="display: =iff(rating == 1, block,  none)">Wow, you hated that movie!</p>
-				<p style="display: =iff(rating > 3, block,  none)">Glad you liked it!</p>
-			</div>
-		</script>
-	</section>
-
-	<p class="note">If what you’re printing contains characters other than letters, numbers and underscores,
-		you will need to use quotes around it, just like in CSS <code>font-family</code> or HTML attributes.</p>
-
-	<hr />
-
 	<p>There are functions that calculate a value out of a list of values (usually numbers):</p>
 
 	<table>
@@ -450,6 +423,32 @@
 
 	<p class="tip">If you have more operands you don’t need to nest these functions, just provide more parameters.
 		E.g. you don’t need to do <code>add(a, add(b, c))</code>, <code>add(a, b, c)</code> will just work.</p>
+
+	<hr />
+
+	<p>You can use the <code>iff(condition, ifyes, ifno)</code> function to print out different text depending on a condition.</p>
+
+	<section class="example movie">
+		<script type="text/plain">
+			<style>
+				.movie .bad { background: #fee; }
+				.movie .ok { background: #ffe; }
+				.movie .good { background: #efd; }
+			</style>
+
+			<div data-store class="=iff(rating < 3, bad, iff(rating > 3, good, ok))">
+				<label>Rating:
+					<input property="rating" type="range" min="1" max="5" />
+				</label>
+
+				<p style="display: =iff(rating == 1, block,  none)">Wow, you hated that movie!</p>
+				<p style="display: =iff(rating > 3, block,  none)">Glad you liked it!</p>
+			</div>
+		</script>
+	</section>
+
+	<p class="note">If what you’re printing contains characters other than letters, numbers and underscores,
+		you will need to use quotes around it, just like in CSS <code>font-family</code> or HTML attributes.</p>
 </section>
 
 <section id="debugging">

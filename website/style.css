@@ -170,6 +170,9 @@ body > section > * {
   .docs .example .example-container input[type="number"] {
     font-size: 150%;
     max-width: 2em; }
+  @media print {
+    .docs .example .example-container {
+      display: none; } }
 
 .docs .example .wysie-debug-storage {
   margin: 0;
@@ -196,10 +199,9 @@ body > section > * {
       color: white; }
     .docs .example .wysie-debug-storage pre th, .docs .example .wysie-debug-storage pre td {
       border-color: rgba(0, 0, 0, 0.1); }
-
-@media print {
-  .docs .example {
-    display: none; } }
+  @media print {
+    .docs .example .wysie-debug-storage {
+      display: none; } }
 
 .docs #show-examples, .docs #show-examples + label {
   margin: 0;

@@ -205,6 +205,10 @@ body > section {
 				font-size: 150%;
 				max-width: 2em;
 			}
+
+			@media print {
+				display: none;
+			}
 		}
 
 		.wysie-debug-storage {
@@ -244,10 +248,10 @@ body > section {
 					border-color: hsla(0,0%,0%,.1);
 				}
 		   }
-		}
 
-		@media print {
-			display: none;
+		   @media print {
+			   display: none;
+		   }
 		}
 	}
 
