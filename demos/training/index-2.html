@@ -10,29 +10,29 @@
 </head>
 <body>
 
-<main data-store="#data" class="autoedit debug">
+<main data-store="#data" class="autoedit">
 	<h1>CSAIL offices (1)</h1>
 
-	<article>
-		<h1>Room 32-G596</h1>
+	<article property="room" data-multiple>
+		<h1>Room <span property="name">32-G596</span></h1>
 
-		<p>People: 4</p>
+		<p>People: <span property="people">4</span></p>
 
 		<p>Equipment (1):</p>
 
 		<ul>
-			<li>
-				<img src="http://ecx.images-amazon.com/images/I/71r1E7x7PlL._SL1500_.jpg" />
+			<li property="equipment" data-multiple>
+				<img property="photo" src="http://ecx.images-amazon.com/images/I/71r1E7x7PlL._SL1500_.jpg" />
 
 				<dl>
 					<dt>Item:</dt>
-					<dd>Asus monitor</dd>
+					<dd property="item">Asus monitor</dd>
 
 					<dt>Unit cost ($):</dt>
-					<dd>1500</dd>
+					<dd property="unitCost">1500</dd>
 
 					<dt>Quantity:</dt>
-					<dd>4</dd>
+					<dd property="quantity">4</dd>
 
 					<dt>Cost ($):</dt>
 					<dd>6,000</dd>
