@@ -17,29 +17,57 @@ article > h1 {
 }
 
 ul {
-	font-size: 80%;
 	padding: 0;
 	list-style: none;
 }
 
 li {
-	display: inline-block;
-	vertical-align: top;
+	display: block;
+	padding: .5em .8em;
 	margin: .5em;
 	border-color: 1px solid rgba(0,0,0,.1);
-	width: calc(33% - 1em);
 	box-sizing: border-box;
 }
 
-li img {
-	display: block;
-	width: 100%;
-	min-height: 12em;
-	ovject-fit: cover;
-	background: linear-gradient(to bottom right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0),
-				linear-gradient(to top right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0);
-	background-color: rgba(0,0,0,.1);
-}
+	li::after {
+		content: "";
+		display: block;
+		clear: both;
+	}
+
+	li img {
+		display: block;
+		float: left;
+		width: 10em;
+		min-height: 8em;
+		margin-right: 2em;
+		object-fit: cover;
+		background: linear-gradient(to bottom right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0),
+					linear-gradient(to top right, transparent 49.5%, rgba(0,0,0,.1) 0, rgba(0,0,0,.1) 50.5%, transparent 0);
+		background-color: rgba(0,0,0,.1);
+	}
+
+	li dl {
+
+	}
+
+	li dt {
+		display: inline-block;
+		min-width: 6em;
+	}
+
+	li dd {
+		display: inline;
+	}
+
+	li dd:not(:last-child)::after {
+		content: "\A";
+		white-space: pre;
+	}
+
+	li dd {
+		font-weight: bold;
+	}
 
 .wysie-wrapper button.wysie-add {
 	display: block;
@@ -48,4 +76,10 @@ li img {
 .expensive {
 	color: red;
 	font-weight: bold;
+}
+
+.room-total {
+	margin: 0;
+	padding: .5em;
+	background: hsl(176, 20%, 95%);
 }
