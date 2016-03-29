@@ -11,14 +11,14 @@
 <body>
 
 <main data-store="#data" class="autoedit">
-	<h1>=count(room) CSAIL office(s)</h1>
+	<h1>[count(room)] CSAIL office(s)</h1>
 
 	<article property="room" data-multiple>
 		<h1>Room <span property="name">32-G596</span></h1>
 
 		<p>People: <span property="people">4</span></p>
 
-		<h2>=count(equipment) equipment type(s)</h2>
+		<h2>[count(equipment)] equipment type(s)</h2>
 
 		<ul>
 			<li property="equipment" data-multiple>
@@ -35,27 +35,27 @@
 					<dd property="quantity">4</dd>
 
 					<dt>Cost ($):</dt>
-					<dd property="cost">=(unitCost * quantity)</dd>
+					<dd property="cost">[unitCost * quantity]</dd>
 				</dl>
 			</li>
 		</ul>
 
 		<p class="room-total">
-			Total cost of equipment for this office is $<span property="officeCost">=sum(cost)</span>.
-			<span class="expensive" style="display: =iff(officeCost > 10000, inline, none)">Expensive!</span>
+			Total cost of equipment for this office is $<span property="officeCost">[sum(cost)]</span>.
+			<span class="expensive" style="display: [iff(officeCost > 10000, inline, none)]">Expensive!</span>
 		</p>
 	</article>
 
 	<h2>Stats</h2>
 	<dl>
 		<dt>Number of people:</dt>
-		<dd>=sum(people)</dd>
+		<dd>[sum(people)]</dd>
 
 		<dt>Number of articles of equipment:</dt>
-		<dd>=count(equipment)</dd>
+		<dd>[count(equipment)]</dd>
 
 		<dt>Average office cost ($):</dt>
-		<dd>=average(officeCost)</dd>
+		<dd>[average(officeCost)]</dd>
 	</dl>
 </main>
 
