@@ -46,6 +46,53 @@ var _ = Wysie.Debug = {
 		return ret;
 	},
 
+	printValue: function(obj) {
+		var ret;
+
+		if (typeof obj !== "object" || obj === null) {
+			return typeof obj == "string"? `"${obj}"` : obj + "";
+		}
+
+		if (Array.isArray(obj)) {
+			if (obj.length > 0) {
+				if (typeof obj[0] === "object") {
+					return `List: ${obj.length} group(s)`;
+				}
+				else {
+					return "List: " + obj.map(_.printValue).join(", ");
+				}
+			}
+			else {
+				return "List: (Empty)";
+			}
+		}
+
+		if (obj.constructor === Object) {
+			return `Group with ${Object.keys(obj).length} properties`;
+		}
+
+		if (obj instanceof Wysie.Primitive) {
+			return _.printValue(obj.value);
+		}
+		else if (obj instanceof Wysie.Collection) {
+			if (obj.items.length > 0) {
+				if (obj.items[0] instanceof Wysie.Scope) {
+					return `List: ${obj.items.length} group(s)`;
+				}
+				else {
+					return "List: " + obj.items.map(_.printValue).join(", ");
+				}
+			}
+			else {
+				return _.printValue([]);
+			}
+		}
+		else if (obj instanceof Wysie.Scope) {
+			// Group
+			return `Group with ${obj.propertyNames.length} properties`;
+		}
+	},
+
 	timed: function(id, callback) {
 		return function() {
 			console.time(id);
@@ -264,9 +311,7 @@ Wysie.hooks.add("scope-init-end", function() {
 		})
 
 		this.propagate(obj => {
-			if (!(obj instanceof Wysie.Primitive)) {
-				return;
-			}
+			var value = _.printValue(obj);
 
 			this.debugRow({
 				element: obj.element,
@@ -293,11 +338,11 @@ Wysie.hooks.add("scope-init-end", function() {
 		this.scope.element.addEventListener("wysie:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
-				var value = this.properties[property].value;
-				value = typeof value == "string"? `"${value}"` : value + ""
+				var value = _.printValue(this.properties[property]);
 
 				if (tr.cells[2]) {
-					tr.cells[2].textContent = value;
+					var td = tr.cells[2];
+					td.textContent = td.title = value;
 				}
 			});
 		});
@@ -316,7 +361,8 @@ Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
 
 Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
 	if (env.td && !env.td.classList.contains("error")) {
-		env.td.textContent = typeof env.value == "string"? `"${env.value}"` : env.value + "";
+		var value = _.printValue(env.value);
+		env.td.textContent = env.td.title = value;
 	}
 });
 
