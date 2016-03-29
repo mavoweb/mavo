@@ -1566,7 +1566,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 			var expression = match[0];
 
-			if (expression.indexOf("=") === 0) {
+			if (expression[0] == "=") {
 				_.rootFunctionRegExp.lastIndex = 0;
 
 				if (_.rootFunctionRegExp.test(expression)) {
@@ -1599,6 +1599,11 @@ var _ = Wysie.Expression.Text = $.Class({
 					lastIndex = regex.lastIndex;
 					[expression] = template.slice(match.index + 1).match(/^\s*\w+/) || [];
 				}
+			}
+			else if (expression[0] === "[") {
+				// [] syntax
+				lastIndex = regex.lastIndex;
+				expression = expression.slice(1, expression.length - 1);
 			}
 			else {
 				// Template style, ${} and {} syntax
@@ -1756,6 +1761,7 @@ var _ = Wysie.Expressions = $.Class({
 			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
 			return RegExp([
+					"[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?]",
 					"{\\s*" + propertyRegex + "\\s*}",
 					"\\${[\\S\\s]+?}",
 					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))",

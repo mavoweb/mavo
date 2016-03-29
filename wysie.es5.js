@@ -1886,7 +1886,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					var expression = match[0];
 
-					if (expression.indexOf("=") === 0) {
+					if (expression[0] == "=") {
 						_.rootFunctionRegExp.lastIndex = 0;
 
 						if (_.rootFunctionRegExp.test(expression)) {
@@ -1921,6 +1921,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 							expression = _ref4[0];
 						}
+					} else if (expression[0] === "[") {
+						// [] syntax
+						lastIndex = regex.lastIndex;
+						expression = expression.slice(1, expression.length - 1);
 					} else {
 						// Template style, ${} and {} syntax
 						lastIndex = regex.lastIndex;
@@ -2098,7 +2102,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				expressionRegex: function expressionRegex() {
 					var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
-					return RegExp(["{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
+					return RegExp(["[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
 				}
 			},
 

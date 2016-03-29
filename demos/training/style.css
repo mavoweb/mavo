@@ -47,25 +47,27 @@ li {
 		background-color: rgba(0,0,0,.1);
 	}
 
-	li dl {
-
-	}
-
 	li dt {
-		display: inline-block;
 		min-width: 6em;
 	}
 
-	li dd {
+dl {}
+
+	dt {
+		display: inline-block;
+		min-width: 15em;
+	}
+
+	dd {
 		display: inline;
 	}
 
-	li dd:not(:last-child)::after {
+	dd:not(:last-child)::after {
 		content: "\A";
 		white-space: pre;
 	}
 
-	li dd {
+	dd {
 		font-weight: bold;
 	}
 
