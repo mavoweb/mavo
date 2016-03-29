@@ -1703,7 +1703,7 @@ var _ = Wysie.Expressions = $.Class({
 			}
 		}
 
-		env = { context: this, data: this.scope.getRelativeData() };
+		var env = { context: this, data: this.scope.getRelativeData() };
 
 		Wysie.hooks.run("expressions-update-start", env);
 
@@ -4167,7 +4167,12 @@ Wysie.hooks.add("scope-init-end", function() {
 		this.scope.element.addEventListener("wysie:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
-				tr.cells[2].textContent = env.data[property];
+				var value = this.properties[property].value;
+				value = typeof value == "string"? `"${value}"` : value + ""
+
+				if (tr.cells[2]) {
+					tr.cells[2].textContent = value;
+				}
 			});
 		});
 	}

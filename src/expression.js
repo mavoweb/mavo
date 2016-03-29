@@ -286,7 +286,7 @@ var _ = Wysie.Expressions = $.Class({
 			}
 		}
 
-		env = { context: this, data: this.scope.getRelativeData() };
+		var env = { context: this, data: this.scope.getRelativeData() };
 
 		Wysie.hooks.run("expressions-update-start", env);
 

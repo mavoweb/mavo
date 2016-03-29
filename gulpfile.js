@@ -36,7 +36,8 @@ gulp.task("sass", function() {
 gulp.task("transpile", ["concat"], function() {
 	return gulp.src(["wysie.js"])
 	.pipe(babel({
-		"presets": ["ES2015"]
+		"presets": ["ES2015"],
+		compact: false
 	}))
 	.on("error", function(error) {
 		console.error(error.message, error.loc);
