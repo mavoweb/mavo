@@ -1925,11 +1925,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// [] syntax
 						lastIndex = regex.lastIndex;
 						expression = expression.slice(1, expression.length - 1);
+
+						// TODO if expression contains an opening bracket, do some parsing
 					} else {
-						// Template style, ${} and {} syntax
-						lastIndex = regex.lastIndex;
-						expression = expression.replace(/\$?\{|\}/g, "");
-					}
+							// Template style, ${} and {} syntax
+							lastIndex = regex.lastIndex;
+							expression = expression.replace(/\$?\{|\}/g, "");
+						}
 
 					ret.push(new Wysie.Expression(expression));
 				}
@@ -2102,7 +2104,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				expressionRegex: function expressionRegex() {
 					var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
-					return RegExp(["[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
+					return RegExp(["\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
 				}
 			},
 

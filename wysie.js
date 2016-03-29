@@ -1604,6 +1604,8 @@ var _ = Wysie.Expression.Text = $.Class({
 				// [] syntax
 				lastIndex = regex.lastIndex;
 				expression = expression.slice(1, expression.length - 1);
+
+				// TODO if expression contains an opening bracket, do some parsing
 			}
 			else {
 				// Template style, ${} and {} syntax
@@ -1761,7 +1763,7 @@ var _ = Wysie.Expressions = $.Class({
 			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
 			return RegExp([
-					"[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?]",
+					"\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]",
 					"{\\s*" + propertyRegex + "\\s*}",
 					"\\${[\\S\\s]+?}",
 					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))",
