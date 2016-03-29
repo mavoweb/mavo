@@ -3440,7 +3440,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Block elements
 		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, .multiline": {
-			create: { tag: "textarea" },
+			create: function create() {
+				var display = getComputedStyle(this.element).display;
+				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";
+				var editor = $.create(tag);
+
+				if (tag == "textarea") {
+					var width = this.element.offsetWidth;
+
+					if (width) {
+						editor.width = width;
+					}
+				}
+
+				return editor;
+			},
 
 			get editorValue() {
 				return this.editor && this.editor.value;
