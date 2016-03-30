@@ -13,11 +13,11 @@ var _ = Wysie.Expression = $.Class({
 		Wysie.hooks.run("expression-eval-beforeeval", this);
 
 		try {
-			this.value = eval(`
-				with(Wysie.Functions._Trap)
-					with(data) {
-						${this.expression}
-					}`);
+			if (!this.function) {
+				this.function = this.createFunction();
+			}
+
+			this.value = this.function(data);
 		}
 		catch (exception) {
 			Wysie.hooks.run("expression-eval-error", {context: this, exception});
@@ -32,20 +32,49 @@ var _ = Wysie.Expression = $.Class({
 		return `=(${this.expression})`;
 	},
 
+	createFunction: function() {
+		var code = this.expression;
+
+		if (/^if\([\S\s]+\)$/i.test(code)) {
+			code = code.replace(/^if\(/, "iff(");
+		}
+
+		// Transform simple operators to array-friendly math functions
+		code = code.replace(_.simpleOperation, (expr, operand1, operator, operand2) => {
+			var ret = `(${Wysie.Functions.operators[operator]}(${operand1}, ${operand2}))`;
+			console.log(ret);
+			return ret;
+		});
+
+		return new Function("data", `with(Wysie.Functions._Trap)
+				with(data) {
+					return ${code};
+				}`);
+	},
+
 	live: {
 		expression: function(value) {
-			value = value.trim();
+			var code = value = value.trim();
 
-			if (/^if\([\S\s]+\)$/i.test(value)) {
-				value = value.replace(/^if\(/, "iff(");
-			}
+			this.function = null;
+
+
 
 			return value;
 		}
 	},
 
 	static: {
-		ERROR: "N/A"
+		ERROR: "N/A",
+
+		lazy: {
+			simpleOperation: function() {
+				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$0"), "\\$0").join("|");
+				var operand = "\\s*([\\w.]+)\\s*";
+
+				return RegExp(`\\(${operand}(${operator})${operand}\\)`, "g");
+			}
+		}
 	}
 });
 

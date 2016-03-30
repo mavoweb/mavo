@@ -5,6 +5,8 @@
 (function() {
 
 var _ = Wysie.Functions = {
+	operators: {},
+
 	/**
 	 * Aggregate sum
 	 */
@@ -41,25 +43,6 @@ var _ = Wysie.Functions = {
 		return Wysie.toArray(array).filter(a => a !== null && a !== false).length;
 	},
 
-	/**
-	 * Addition for elements and scalars.
-	 * Addition between arrays happens element-wise.
-	 * Addition between scalars returns their scalar sum (same as +)
-	 * Addition between a scalar and an array will result in the scalar being added to every array element.
-	 */
-	add: arrayOp((a, b) => a + b),
-	subtract: arrayOp((a, b) => a - b),
-	multiply: arrayOp((a, b) => a * b, 1),
-	divide: arrayOp((a, b) => a / b, 1),
-
-	and: arrayOp((a, b) => !!a && !!b, true),
-	or: arrayOp((a, b) => !!a || !!b, false),
-	not: arrayOp(a => a => !a),
-
-	eq: arrayOp((a, b) => a == b),
-	lt: arrayOp((a, b) => a < b),
-	gt: arrayOp((a, b) => a > b),
-
 	round: function(num, decimals) {
 		if (!num || !decimals || !isFinite(num)) {
 			return Math.round(num);
@@ -75,6 +58,26 @@ var _ = Wysie.Functions = {
 		return condition? iftrue : iffalse;
 	}
 };
+
+/**
+ * Addition for elements and scalars.
+ * Addition between arrays happens element-wise.
+ * Addition between scalars returns their scalar sum (same as +)
+ * Addition between a scalar and an array will result in the scalar being added to every array element.
+ * Ordered by precedence (higher to lower)
+ */
+operator("not", a => a => !a);
+operator("multiply", (a, b) => a * b, {identity: 1, symbol: "*"});
+operator("divide", (a, b) => a / b, {identity: 1, symbol: "/"});
+operator("add", (a, b) => a + b, {symbol: "+"});
+operator("subtract", (a, b) => a - b, {symbol: "-"});
+operator("lte", (a, b) => a <= b, {symbol: "<="});
+operator("lt", (a, b) => a < b, {symbol: "<"});
+operator("gte", (a, b) => a >= b, {symbol: ">="});
+operator("gt", (a, b) => a > b, {symbol: ">"});
+operator("eq", (a, b) => a == b, {symbol: "=="});
+operator("and", (a, b) => !!a && !!b, { identity: true, symbol: "&&" });
+operator("or", (a, b) => !!a || !!b, { identity: false, symbol: "||" } );
 
 var aliases = {
 	average: "avg",
@@ -141,26 +144,30 @@ function numbers(array, args) {
  * @param op {Function} The operation between two scalars
  * @param identity The operation’s identity element. Defaults to 0.
  */
-function arrayOp(op, identity = 0) {
+function operator(name, op, o = {}) {
 	if (op.length < 2) {
 		// Unary operator
 		return operand => Array.isArray(operand)? operand.map(op) : op(operand);
 	}
 
-	return function(...operands) {
+	if (o.symbol) {
+		_.operators[o.symbol] = name;
+	}
+
+	return _[name] = function(...operands) {
 		if (operands.length === 1) {
-			operands = [...operands, identity];
+			operands = [...operands, o.identity];
 		}
 
 		return operands.reduce((a, b) => {
 			if (Array.isArray(b)) {
-				if (typeof identity == "number") {
+				if (typeof o.identity == "number") {
 					b = numbers(b);
 				}
 
 				if (Array.isArray(a)) {
 					return [
-						...b.map((n, i) => op(a[i] === undefined? identity : a[i], n)),
+						...b.map((n, i) => op(a[i] === undefined? o.identity : a[i], n)),
 						...a.slice(b.length)
 					];
 				}
@@ -170,7 +177,7 @@ function arrayOp(op, identity = 0) {
 			}
 			else {
 				// Operand is scalar
-				if (typeof identity == "number") {
+				if (typeof o.identity == "number") {
 					b = +b;
 				}
 

@@ -81,76 +81,7 @@ var _ = Wysie.Scope = $.Class({
 
 		$.extend(ret, this.unhandled);
 
-		if (o.relative && self.Proxy && ret) {
-			ret = new Proxy(ret, {
-				get: (data, property) => {
-					if (property in data) {
-						return data[property];
-					}
-
-					// Look in ancestors
-					var ret = this.walkUp(scope => {
-						if (property in scope.properties) {
-							// TODO decouple
-							scope.expressions.updateAlso.add(this.expressions);
-
-							return scope.properties[property].getData(o);
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-				},
-
-				has: (data, property) => {
-					if (property in data) {
-						return true;
-					}
-
-					// Property does not exist, look for it elsewhere
-
-					// First look in ancestors
-					var ret = this.walkUp(scope => {
-						if (property in scope.properties) {
-							return true;
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-
-					// Still not found, look in descendants
-					ret = this.find(property);
-
-					if (ret !== undefined) {
-						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getData(o))
-							         .filter(item => item !== null);
-						}
-						else {
-							ret = ret.getData(o);
-						}
-
-						data[property] = ret;
-
-						return true;
-					}
-				}
-			});
-		}
-
 		return ret;
-	},
-
-	getRelativeData: function() {
-		return this.getData({
-			dirty: true,
-			computed: true,
-			null: true,
-			relative: true
-		});
 	},
 
 	/**

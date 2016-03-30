@@ -24,7 +24,6 @@
 				Answer: <span property="answer">[iff(score > 0, Yes, iff(score < 0, No, Maybe))]</span>!
 				(score: <span property="score">[sum(proWeight) - sum(conWeight)]</span>)
 			</p>
-			<meta property="good", content="[iff(score > 0, 1, 0)]">
 		</header>
 
 		<section>
@@ -57,7 +56,7 @@
 	</article>
 
 	<!-- Showing here two ways to do this: One with intermediate variables and one without -->
-	<footer>Total: [sum(good)] “yes” decision(s) and [sum(lt(score, 0))] “no” decision(s)</footer>
+	<footer>Total: [sum(score > 0)] “yes” decision(s) and [sum(score < 0)] “no” decision(s)</footer>
 </main>
 
 <script type="application/json" id="data"></script>

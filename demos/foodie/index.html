@@ -23,7 +23,6 @@
 			</a>
 
 			<p>
-				<meta property="good", content="[iff(rating > 3, 1)]" />
 				<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
 			</p>
 		</header>
@@ -60,7 +59,7 @@
 		</section>
 	</article>
 
-	<footer>Total: [sum(good)] good restaurants out of [count(restaurant)] total</footer>
+	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
 </main>
 
 <script src="../../wysie.js"></script>

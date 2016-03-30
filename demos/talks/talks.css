@@ -192,38 +192,38 @@ main:empty:before {
 		vertical-align:-3px;
 	}
 
-	.talks address.flag-the-netherlands:before { content: url(flags/nl.png); }
-	.talks address.flag-new-zealand:before { content: url(flags/nz.png); }
-	.talks address.flag-uk:before { content: url(flags/gb.png); }
-	.talks address.flag-sweden:before { content: url(flags/se.png); }
-	.talks address.flag-finland:before { content: url(flags/fi.png); }
-	.talks address.flag-russia:before { content: url(flags/ru.png); }
-	.talks address.flag-norway:before { content: url(flags/no.png); }
-	.talks address.flag-poland:before { content: url(flags/pl.png); }
-	.talks address.flag-greece:before { content: url(flags/gr.png); }
-	.talks address.flag-switzerland:before { content: url(flags/ch.png); }
-	.talks address.flag-germany:before { content: url(flags/de.png); }
-	.talks address.flag-italy:before { content: url(flags/it.png); }
-	.talks address.flag-usa:before { content: url(flags/us.png); }
-	.talks address.flag-australia:before { content: url(flags/au.png); }
-	.talks address.flag-czech-republic:before { content: url(flags/cz.png); }
-	.talks address.flag-canada:before { content: url(flags/ca.png); }
+	.talks address.flag-nl:before { content: url(flags/nl.png); }
+	.talks address.flag-nz:before { content: url(flags/nz.png); }
+	.talks address.flag-gb:before { content: url(flags/gb.png); }
+	.talks address.flag-se:before { content: url(flags/se.png); }
+	.talks address.flag-fi:before { content: url(flags/fi.png); }
+	.talks address.flag-ru:before { content: url(flags/ru.png); }
+	.talks address.flag-no:before { content: url(flags/no.png); }
+	.talks address.flag-pl:before { content: url(flags/pl.png); }
+	.talks address.flag-gr:before { content: url(flags/gr.png); }
+	.talks address.flag-ch:before { content: url(flags/ch.png); }
+	.talks address.flag-de:before { content: url(flags/de.png); }
+	.talks address.flag-it:before { content: url(flags/it.png); }
+	.talks address.flag-us:before { content: url(flags/us.png); }
+	.talks address.flag-au:before { content: url(flags/au.png); }
+	.talks address.flag-cz:before { content: url(flags/cz.png); }
+	.talks address.flag-ca:before { content: url(flags/ca.png); }
 	.talks address.flag-cl:before { content: url(flags/cl.png); }
-	.talks address.flag-brazil:before { content: url(flags/br.png); }
-	.talks address.flag-belgium:before { content: url(flags/be.png); }
-	.talks address.flag-france:before { content: url(flags/fr.png); }
-	.talks address.flag-philippines:before { content: url(flags/ph.png); }
+	.talks address.flag-br:before { content: url(flags/br.png); }
+	.talks address.flag-be:before { content: url(flags/be.png); }
+	.talks address.flag-fr:before { content: url(flags/fr.png); }
+	.talks address.flag-ph:before { content: url(flags/ph.png); }
 	.talks address.flag-at:before { content: url(flags/at.png); }
-	.talks address.flag-spain:before { content: url(flags/es.png); }
+	.talks address.flag-es:before { content: url(flags/es.png); }
 	.talks address.flag-hu:before { content: url(flags/hu.png); }
 	.talks address.flag-mx:before { content: url(flags/mx.png); }
-	.talks address.flag-india:before { content: url(flags/in.png); }
+	.talks address.flag-in:before { content: url(flags/in.png); }
 	.talks address.flag-uy:before { content: url(flags/uy.png); }
-	.talks address.flag-israel:before { content: url(flags/il.png); }
-	.talks address.flag-singapore:before { content: url(flags/sg.png); }
-	.talks address.flag-china:before { content: url(flags/cn.png); }
-	.talks address.flag-japan:before { content: url(flags/jp.png); }
-	.talks address.flag-austria:before { content: url(flags/at.png); }
+	.talks address.flag-il:before { content: url(flags/il.png); }
+	.talks address.flag-sg:before { content: url(flags/sg.png); }
+	.talks address.flag-cn:before { content: url(flags/cn.png); }
+	.talks address.flag-jp:before { content: url(flags/jp.png); }
+	.talks address.flag-at:before { content: url(flags/at.png); }
 
 	.talks .comment,
 	.talks .comment a {

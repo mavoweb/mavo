@@ -1,8 +1,8 @@
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -1517,6 +1517,82 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.getData();
 		},
 
+		getRelativeData: function getRelativeData() {
+			var _this11 = this;
+
+			var o = arguments.length <= 0 || arguments[0] === undefined ? { dirty: true, computed: true, null: true } : arguments[0];
+
+			var ret = this.getData(o);
+
+			if (self.Proxy && ret && (typeof ret === "undefined" ? "undefined" : _typeof(ret)) === "object") {
+				ret = new Proxy(ret, {
+					get: function get(data, property) {
+						if (property in data) {
+							return data[property];
+						}
+
+						// Look in ancestors
+						var ret = _this11.walkUp(function (scope) {
+							if (property in scope.properties) {
+								// TODO decouple
+								scope.expressions.updateAlso.add(_this11.expressions);
+
+								return scope.properties[property].getRelativeData(o);
+							};
+						});
+
+						if (ret !== undefined) {
+							return ret;
+						}
+					},
+
+					has: function has(data, property) {
+						if (property in data) {
+							return true;
+						}
+
+						// Property does not exist, look for it elsewhere
+
+						// First look in ancestors
+						var ret = _this11.walkUp(function (scope) {
+							if (property in scope.properties) {
+								return true;
+							};
+						});
+
+						if (ret !== undefined) {
+							return ret;
+						}
+
+						// Still not found, look in descendants
+						ret = _this11.find(property);
+
+						if (ret !== undefined) {
+							if (Array.isArray(ret)) {
+								ret = ret.map(function (item) {
+									return item.getData(o);
+								}).filter(function (item) {
+									return item !== null;
+								});
+							} else {
+								ret = ret.getData(o);
+							}
+
+							data[property] = ret;
+
+							return true;
+						}
+					},
+
+					set: function set(data, property, value) {
+						throw Error("You can’t set data via expressions.");
+					}
+				});
+			}
+
+			return ret;
+		},
+
 		walk: function walk(callback) {
 			var walker = function walker(obj) {
 				var ret = callback(obj);
@@ -1664,7 +1740,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		live: {
 			deleted: function deleted(value) {
-				var _this11 = this;
+				var _this12 = this;
 
 				this.element.classList.toggle("deleted", value);
 
@@ -1673,7 +1749,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// and replace them with an undo prompt.
 					this.elementContents = document.createDocumentFragment();
 					$$(this.element.childNodes).forEach(function (node) {
-						_this11.elementContents.appendChild(node);
+						_this12.elementContents.appendChild(node);
 					});
 
 					$.contents(this.element, ["Deleted " + this.name, {
@@ -1681,7 +1757,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						textContent: "Undo",
 						events: {
 							"click": function click(evt) {
-								return _this11.deleted = false;
+								return _this12.deleted = false;
 							}
 						}
 					}]);
@@ -1753,7 +1829,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Wysie.hooks.run("expression-eval-beforeeval", this);
 
 			try {
-				this.value = eval("\n\t\t\t\twith(Wysie.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\t" + this.expression + "\n\t\t\t\t\t}");
+				if (!this.function) {
+					this.function = this.createFunction();
+				}
+
+				this.value = this.function(data);
 			} catch (exception) {
 				Wysie.hooks.run("expression-eval-error", { context: this, exception: exception });
 
@@ -1768,20 +1848,46 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 
+		createFunction: function createFunction() {
+			var code = this.expression;
+
+			if (/^if\([\S\s]+\)$/i.test(code)) {
+				code = code.replace(/^if\(/, "iff(");
+			}
+
+			// Transform simple operators to array-friendly math functions
+			code = code.replace(_.simpleOperation, function (expr, operand1, operator, operand2) {
+				var ret = "(" + Wysie.Functions.operators[operator] + "(" + operand1 + ", " + operand2 + "))";
+				console.log(ret);
+				return ret;
+			});
+
+			return new Function("data", "with(Wysie.Functions._Trap)\n\t\t\t\twith(data) {\n\t\t\t\t\treturn " + code + ";\n\t\t\t\t}");
+		},
+
 		live: {
 			expression: function expression(value) {
-				value = value.trim();
+				var code = value = value.trim();
 
-				if (/^if\([\S\s]+\)$/i.test(value)) {
-					value = value.replace(/^if\(/, "iff(");
-				}
+				this.function = null;
 
 				return value;
 			}
 		},
 
 		static: {
-			ERROR: "N/A"
+			ERROR: "N/A",
+
+			lazy: {
+				simpleOperation: function simpleOperation() {
+					var operator = Object.keys(Wysie.Functions.operators).map(function (o) {
+						return o.replace(/[|*+]/g, "\\$0");
+					}, "\\$0").join("|");
+					var operand = "\\s*([\\w.]+)\\s*";
+
+					return RegExp("\\(" + operand + "(" + operator + ")" + operand + "\\)", "g");
+				}
+			}
 		}
 	});
 
@@ -1821,14 +1927,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			update: function update(data) {
-				var _this12 = this;
+				var _this13 = this;
 
 				this.value = [];
 				this.data = data;
 
 				this.text = this.template.map(function (expr) {
 					if (expr instanceof Wysie.Expression) {
-						var env = { context: _this12, expr: expr };
+						var env = { context: _this13, expr: expr };
 
 						Wysie.hooks.run("expressiontext-update-beforeeval", env);
 
@@ -1838,20 +1944,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (env.value === undefined || env.value === null) {
 							// Don’t print things like "undefined" or "null"
-							_this12.value.push("");
+							_this13.value.push("");
 							return "";
 						}
 
-						_this12.value.push(env.value);
+						_this13.value.push(env.value);
 
-						if (typeof env.value === "number" && !_this12.attribute) {
+						if (typeof env.value === "number" && !_this13.attribute) {
 							env.value = _.formatNumber(env.value);
 						}
 
 						return env.value;
 					}
 
-					_this12.value.push(expr);
+					_this13.value.push(expr);
 					return expr;
 				}).join("");
 
@@ -1993,7 +2099,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			init: function init() {
-				var _this13 = this;
+				var _this14 = this;
 
 				if (this.all.length > 0) {
 					this.lastUpdated = 0;
@@ -2002,7 +2108,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					// Watch changes and update value
 					this.scope.element.addEventListener("wysie:datachange", function (evt) {
-						return _this13.update();
+						return _this14.update();
 					});
 
 					// Enable throttling only after a while to ensure everything has initially run
@@ -2010,7 +2116,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					this.scope.wysie.wrapper.addEventListener("wysie:load", function (evt) {
 						setTimeout(function () {
-							return _this13.THROTTLE = 25;
+							return _this14.THROTTLE = 25;
 						}, 100);
 					});
 				}
@@ -2020,7 +2126,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     * Update all expressions in this scope
     */
 			update: function callee() {
-				var _this14 = this;
+				var _this15 = this;
 
 				if (this.scope.isDeleted()) {
 					return;
@@ -2034,7 +2140,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (this.lastUpdated && elapsedTime < this.THROTTLE) {
 						// Throttle
 						callee.timeout = setTimeout(function () {
-							return _this14.update();
+							return _this15.update();
 						}, this.THROTTLE - elapsedTime);
 
 						return;
@@ -2072,7 +2178,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
 			traverse: function traverse(node) {
-				var _this15 = this;
+				var _this16 = this;
 
 				node = node || this.scope.element;
 
@@ -2090,10 +2196,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// (otherwise, it will be taken care of its own Expressions object)
 				if (node == this.scope.element || !Wysie.is("scope", node)) {
 					$$(node.attributes).forEach(function (attribute) {
-						return _this15.extract(node, attribute);
+						return _this16.extract(node, attribute);
 					});
 					$$(node.childNodes).forEach(function (child) {
-						return _this15.traverse(child);
+						return _this16.traverse(child);
 					});
 				}
 			},
@@ -2138,6 +2244,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function () {
 
 	var _ = Wysie.Functions = {
+		operators: {},
+
 		/**
    * Aggregate sum
    */
@@ -2180,47 +2288,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}).length;
 		},
 
-		/**
-   * Addition for elements and scalars.
-   * Addition between arrays happens element-wise.
-   * Addition between scalars returns their scalar sum (same as +)
-   * Addition between a scalar and an array will result in the scalar being added to every array element.
-   */
-		add: arrayOp(function (a, b) {
-			return a + b;
-		}),
-		subtract: arrayOp(function (a, b) {
-			return a - b;
-		}),
-		multiply: arrayOp(function (a, b) {
-			return a * b;
-		}, 1),
-		divide: arrayOp(function (a, b) {
-			return a / b;
-		}, 1),
-
-		and: arrayOp(function (a, b) {
-			return !!a && !!b;
-		}, true),
-		or: arrayOp(function (a, b) {
-			return !!a || !!b;
-		}, false),
-		not: arrayOp(function (a) {
-			return function (a) {
-				return !a;
-			};
-		}),
-
-		eq: arrayOp(function (a, b) {
-			return a == b;
-		}),
-		lt: arrayOp(function (a, b) {
-			return a < b;
-		}),
-		gt: arrayOp(function (a, b) {
-			return a > b;
-		}),
-
 		round: function round(num, decimals) {
 			if (!num || !decimals || !isFinite(num)) {
 				return Math.round(num);
@@ -2238,6 +2305,52 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return condition ? iftrue : iffalse;
 		}
 	};
+
+	/**
+  * Addition for elements and scalars.
+  * Addition between arrays happens element-wise.
+  * Addition between scalars returns their scalar sum (same as +)
+  * Addition between a scalar and an array will result in the scalar being added to every array element.
+  * Ordered by precedence (higher to lower)
+  */
+	operator("not", function (a) {
+		return function (a) {
+			return !a;
+		};
+	});
+	operator("multiply", function (a, b) {
+		return a * b;
+	}, { identity: 1, symbol: "*" });
+	operator("divide", function (a, b) {
+		return a / b;
+	}, { identity: 1, symbol: "/" });
+	operator("add", function (a, b) {
+		return a + b;
+	}, { symbol: "+" });
+	operator("subtract", function (a, b) {
+		return a - b;
+	}, { symbol: "-" });
+	operator("lte", function (a, b) {
+		return a <= b;
+	}, { symbol: "<=" });
+	operator("lt", function (a, b) {
+		return a < b;
+	}, { symbol: "<" });
+	operator("gte", function (a, b) {
+		return a >= b;
+	}, { symbol: ">=" });
+	operator("gt", function (a, b) {
+		return a > b;
+	}, { symbol: ">" });
+	operator("eq", function (a, b) {
+		return a == b;
+	}, { symbol: "==" });
+	operator("and", function (a, b) {
+		return !!a && !!b;
+	}, { identity: true, symbol: "&&" });
+	operator("or", function (a, b) {
+		return !!a || !!b;
+	}, { identity: false, symbol: "||" });
 
 	var aliases = {
 		average: "avg",
@@ -2312,8 +2425,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
   * @param op {Function} The operation between two scalars
   * @param identity The operation’s identity element. Defaults to 0.
   */
-	function arrayOp(op) {
-		var identity = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+	function operator(name, op) {
+		var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 		if (op.length < 2) {
 			// Unary operator
@@ -2322,24 +2435,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			};
 		}
 
-		return function () {
+		if (o.symbol) {
+			_.operators[o.symbol] = name;
+		}
+
+		return _[name] = function () {
 			for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
 				operands[_key2] = arguments[_key2];
 			}
 
 			if (operands.length === 1) {
-				operands = [].concat(_toConsumableArray(operands), [identity]);
+				operands = [].concat(_toConsumableArray(operands), [o.identity]);
 			}
 
 			return operands.reduce(function (a, b) {
 				if (Array.isArray(b)) {
-					if (typeof identity == "number") {
+					if (typeof o.identity == "number") {
 						b = numbers(b);
 					}
 
 					if (Array.isArray(a)) {
 						return [].concat(_toConsumableArray(b.map(function (n, i) {
-							return op(a[i] === undefined ? identity : a[i], n);
+							return op(a[i] === undefined ? o.identity : a[i], n);
 						})), _toConsumableArray(a.slice(b.length)));
 					} else {
 						return b.map(function (n) {
@@ -2348,7 +2465,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				} else {
 					// Operand is scalar
-					if (typeof identity == "number") {
+					if (typeof o.identity == "number") {
 						b = +b;
 					}
 
@@ -2370,7 +2487,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var _ = Wysie.Scope = $.Class({
 		extends: Wysie.Unit,
 		constructor: function constructor(element, wysie, collection) {
-			var _this16 = this;
+			var _this17 = this;
 
 			this.properties = {};
 
@@ -2389,17 +2506,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			$$(Wysie.selectors.property, this.element).forEach(function (element) {
 				var property = element.getAttribute("property");
 
-				if (_this16.contains(element)) {
-					var existing = _this16.properties[property];
+				if (_this17.contains(element)) {
+					var existing = _this17.properties[property];
 
 					if (existing) {
 						// Two scopes with the same property, convert to static collection
 						var collection = existing;
 
 						if (!(existing instanceof Wysie.Collection)) {
-							collection = new Wysie.Collection(existing.element, _this16.wysie);
-							collection.parentScope = _this16;
-							_this16.properties[property] = existing.collection = collection;
+							collection = new Wysie.Collection(existing.element, _this17.wysie);
+							collection.parentScope = _this17;
+							_this17.properties[property] = existing.collection = collection;
 							collection.add(existing);
 						}
 
@@ -2410,11 +2527,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						collection.add(element);
 					} else {
 						// No existing properties with this id, normal case
-						var obj = Wysie.Node.create(element, _this16.wysie);
-						obj.scope = obj instanceof _ ? obj : _this16;
+						var obj = Wysie.Node.create(element, _this17.wysie);
+						obj.scope = obj instanceof _ ? obj : _this17;
 
-						obj.parentScope = _this16;
-						_this16.properties[property] = obj;
+						obj.parentScope = _this17;
+						_this17.properties[property] = obj;
 					}
 				}
 			});
@@ -2427,8 +2544,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getData: function getData(o) {
-			var _this17 = this;
-
 			o = o || {};
 
 			var ret = this.super.getData.call(this, o);
@@ -2451,78 +2566,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			$.extend(ret, this.unhandled);
 
-			if (o.relative && self.Proxy && ret) {
-				ret = new Proxy(ret, {
-					get: function get(data, property) {
-						if (property in data) {
-							return data[property];
-						}
-
-						// Look in ancestors
-						var ret = _this17.walkUp(function (scope) {
-							if (property in scope.properties) {
-								// TODO decouple
-								scope.expressions.updateAlso.add(_this17.expressions);
-
-								return scope.properties[property].getData(o);
-							};
-						});
-
-						if (ret !== undefined) {
-							return ret;
-						}
-					},
-
-					has: function has(data, property) {
-						if (property in data) {
-							return true;
-						}
-
-						// Property does not exist, look for it elsewhere
-
-						// First look in ancestors
-						var ret = _this17.walkUp(function (scope) {
-							if (property in scope.properties) {
-								return true;
-							};
-						});
-
-						if (ret !== undefined) {
-							return ret;
-						}
-
-						// Still not found, look in descendants
-						ret = _this17.find(property);
-
-						if (ret !== undefined) {
-							if (Array.isArray(ret)) {
-								ret = ret.map(function (item) {
-									return item.getData(o);
-								}).filter(function (item) {
-									return item !== null;
-								});
-							} else {
-								ret = ret.getData(o);
-							}
-
-							data[property] = ret;
-
-							return true;
-						}
-					}
-				});
-			}
-
 			return ret;
-		},
-
-		getRelativeData: function getRelativeData() {
-			return this.getData({
-				dirty: true,
-				computed: true,
-				null: true,
-				relative: true
-			});
 		},
 
 		/**
