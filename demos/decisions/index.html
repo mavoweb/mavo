@@ -17,39 +17,39 @@
 	</h1>
 
 	<article property="decision" data-multiple>
-		<header class="answer-=answer">
+		<header class="answer-[answer]">
 			<h1 property="decision">Should I go to the party?</h1>
 
 			<p>
-				Answer: <span property="answer">=iff(score > 0, Yes, iff(score < 0, No, Maybe))</span>!
-				(score: <span property="score">=(sum(proWeight) - sum(conWeight))</span>)
+				Answer: <span property="answer">[iff(score > 0, Yes, iff(score < 0, No, Maybe))]</span>!
+				(score: <span property="score">[sum(proWeight) - sum(conWeight)]</span>)
 			</p>
-			<meta property="good", content="=if(score > 0, 1, 0)">
+			<meta property="good", content="[iff(score > 0, 1, 0)]">
 		</header>
 
 		<section>
-			<h2>=count(pro) pro(s)</h2>
+			<h2>[count(pro)] pro(s)</h2>
 			<ul>
-				<li property="pro" class="weight-=proWeight">
+				<li property="pro" class="weight-[proWeight]">
 					<p property="argument">Fun with friends!</p>
 					<p>
 						Weight:
 						<meter property="proWeight" min="1" value="1" max="5"></meter>
-						=proWeight
+						[proWeight]
 					</p>
 				</li>
 			</ul>
 		</section>
 
 		<section>
-			<h2>=count(con) con(s)</h2>
+			<h2>[count(con)] con(s)</h2>
 			<ul>
-				<li property="con" class="weight-=conWeight">
+				<li property="con" class="weight-[conWeight]">
 					<p property="argument">I have tons of work to do.</p>
 					<p>
 						Weight:
 						<meter property="conWeight" min="1" value="1" max="5"></meter>
-						=conWeight
+						[conWeight]
 					</p>
 				</li>
 			</ul>
@@ -57,7 +57,7 @@
 	</article>
 
 	<!-- Showing here two ways to do this: One with intermediate variables and one without -->
-	<footer>Total: =sum(good) “yes” decision(s) and =sum(lt(score, 0)) “no” decision(s)</footer>
+	<footer>Total: [sum(good)] “yes” decision(s) and [sum(lt(score, 0))] “no” decision(s)</footer>
 </main>
 
 <script type="application/json" id="data"></script>
