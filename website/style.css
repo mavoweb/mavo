@@ -170,6 +170,12 @@ body > section > * {
   .docs .example .example-container input[type="number"] {
     font-size: 150%;
     max-width: 2em; }
+  .docs .example .example-container [data-multiple] {
+    padding: .5em;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    margin: .5em 0; }
+    .docs .example .example-container [data-multiple] h1 {
+      margin-top: 0; }
   @media print {
     .docs .example .example-container {
       display: none; } }

@@ -102,26 +102,6 @@
 	<p>Note how there is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
 </section>
 
-<section>
-	<h1>Grouping</h1>
-
-	<p>Sometimes the value of a property is not a simple piece of data that can be described with one element, but a group of elements.
-	If an element with a <code>property</code> attribute contains other properties inside it, it becomes a group.</p>
-
-	<section class="example">
-		<script type="text/plain">
-			<article property="author">
-				<h1 property="name">Lea Verou</h1>
-				<img property="avatar" src="http://lea.verou.me/logo.svg"/>
-			</article>
-		</script>
-	</section>
-
-	<p>Groups can be nested. In fact, the wysie root (the element with the <code>data-store</code> attribute) is also a group.</p>
-
-	<p>On their own, groups don’t do much, but they can be very useful when combined with lists and expressions, explained next.</p>
-</section>
-
 <section id="data-multiple">
 	<h1>Creating lists: The data-multiple attribute</h1>
 
@@ -156,11 +136,10 @@
 
 	<hr />
 
-	<p>Any element with a <code>property</code> attribute can be turned into such a dynamic list, including <a href="#grouping">groups</a>.
-		If our list items are more complex that just one element, we can just put the <code>data-multiple</code> attribute on the grouping element, and then we get controls to multiply it.</p>
+	<p>We can use <code>property</code> and <code>data-multiple</code> to create lists of more complex structures with multiple properties.</p>
 
 	<section class="example">
-		<h1>Example: Lists of groups</h1>
+		<h1>Example: More complex lists</h1>
 		<script type="text/plain">
 			<article property="pet" data-multiple>
 				<h1 property="name">Adam Catlace</h1>
@@ -168,6 +147,12 @@
 			</article>
 		</script>
 	</section>
+
+	<p>Note that in the example above, the <code>property</code> attribute on <code>&lt;article></code> does not actually make
+		the entire <code>&lt;article></code> element editable, but instead acts as a <strong>grouping element</strong>.
+		This will always happen when you use the <code>property</code> attribute on elements that contain other properties inside them.
+		Groups have many interesting characteristics when combined with expressions, which we will see next.
+	</p>
 </section>
 
 <section>
@@ -262,7 +247,8 @@
 
 	<hr /> -->
 
-	<p>There are functions that calculate a value out of a list of values (usually numbers):</p>
+	<p>Using a property with multiple values (i.e. referring to a property inside a list from outside the list) in an expression is not very useful on its own.
+		However, there are functions that help you use such lists of values in interesting ways:</p>
 
 	<table>
 		<thead>
@@ -273,23 +259,23 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td><code>[count(property)]</code></td>
+				<td><code>count(property)</code></td>
 				<td>Count how many items in a list actually have a value.</td>
 			</tr>
 			<tr>
-				<td><code>[sum(property)]</code></td>
+				<td><code>sum(property)</code></td>
 				<td>Sum all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>[average(property)]</code></td>
+				<td><code>average(property)</code></td>
 				<td>Calculate the average of all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>[min(property)]</code></td>
+				<td><code>min(property)</code></td>
 				<td>Calculate the minimum of all numbers in the list.</td>
 			</tr>
 			<tr>
-				<td><code>[max(property)]</code></td>
+				<td><code>max(property)</code></td>
 				<td>Calculate the maximum of all numbers in the list.</td>
 			</tr>
 		</tbody>
@@ -305,6 +291,7 @@
 				<li property="cat" data-multiple>
 					<div property="name">Vector</div>
 					<div property="age">10</div>
+					<p>Age in 2 years: [age + 2]</p>
 				</li>
 			</ul>
 
@@ -316,7 +303,7 @@
 				<li>Minimum age: [min(age)]</li>
 				<li>Maximum age: [Max(age)]</li> <!-- caps don’t matter -->
 				<li>Sum of all ages (why? because we can): [SUM(age)]</li> <!-- caps don’t matter -->
-				<li>Number of cats over 5 years old: [count(gt(age, 5))]</li>
+				<li>Number of cats over 5 years old: [count(age > 5)]</li>
 			</ul>
 		</div>
 		</script>
@@ -350,8 +337,8 @@
 
 	<hr />
 
-	<p>You can also do math with lists. For example, <code>[sum(add(age, 5))]</code> will add 5 to every age and then sum the result.
-		There are many such functions that work well with lists (but not just lists) and are more human readable than their operator counterparts:
+	<p>You can also do math or comparisons with lists. For example, <code>[sum(age + 5)]</code> will add 5 to every age and then sum the result.
+		You can use either symbols (e.g. <code>+</code>, <code>*</code>, <code>></code>, <code>==</code>) etc to perform these operations, or their function counterparts:
 	</p>
 
 	<table>
@@ -404,9 +391,19 @@
 				<td>Check if a is less than b</td>
 			</tr>
 			<tr>
+				<td><code>a < b</code></td>
+				<td><code>lte(a, b)</code></td>
+				<td>Check if a is less than, or equal to b</td>
+			</tr>
+			<tr>
 				<td><code>a > b</code></td>
 				<td><code>gt(a, b)</code></td>
 				<td>Check if a is greater than b</td>
+			</tr>
+			<tr>
+				<td><code>a >= b</code></td>
+				<td><code>gte(a, b)</code></td>
+				<td>Check if a is greater than, or equal to b</td>
 			</tr>
 			<tr>
 				<td><code>a == b</code></td>

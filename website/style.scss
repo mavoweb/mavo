@@ -206,6 +206,16 @@ body > section {
 				max-width: 2em;
 			}
 
+			[data-multiple] {
+				padding: .5em;
+				border: 1px solid rgba(0,0,0,.1);
+				margin: .5em 0;
+
+				h1 {
+					margin-top: 0;
+				}
+			}
+
 			@media print {
 				display: none;
 			}

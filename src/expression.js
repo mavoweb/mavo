@@ -42,7 +42,6 @@ var _ = Wysie.Expression = $.Class({
 		// Transform simple operators to array-friendly math functions
 		code = code.replace(_.simpleOperation, (expr, operand1, operator, operand2) => {
 			var ret = `(${Wysie.Functions.operators[operator]}(${operand1}, ${operand2}))`;
-			console.log(ret);
 			return ret;
 		});
 
@@ -70,7 +69,7 @@ var _ = Wysie.Expression = $.Class({
 		lazy: {
 			simpleOperation: function() {
 				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$0"), "\\$0").join("|");
-				var operand = "\\s*([\\w.]+)\\s*";
+				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
 
 				return RegExp(`\\(${operand}(${operator})${operand}\\)`, "g");
 			}
