@@ -15,42 +15,44 @@
 		Foodie<span>log</span>
 	</h1>
 
-	<article>
-		<header style="background-image: url('http://www.toscanoboston.com/common/images/thumb-cucina.jpg')">
-			<img src="http://www.toscanoboston.com/common/images/thumb-cucina.jpg">
-			<a href="http://www.toscanoboston.com/beacon-hill">
-				<h1>Toscano</h1>
+	<article property="new_restaurant" data-multiple>
+		<header style="background-image: url('[thumbnail_image]')">
+			<img src="http://www.toscanoboston.com/common/images/thumb-cucina.jpg" property="thumbnail_image">
+			<a href="http://www.toscanoboston.com/beacon-hill" property="restaurant_link">
+				<h1 property="title">Toscano</h1>
 			</a>
 
 			<p>
-				<meter min="0" max="5" value="4" title="Overall rating: 4"></meter>
+				<meta property="restaurant_average" content="[average(visit_average)]" />
+
+				<meter min="0" max="5" value="[average(visit_average)]" property="restaurant_average" title="Overall rating: [average(visit_average)]"></meter>
 			</p>
 		</header>
 
 		<section>
-			<h1>1 Visit(s)</h1>
+			<h1>[count(new_visit)] Visit(s)</h1>
 
-			<article>
+			<article property="new_visit" data-multiple>
 				<header>
 					<h1>
-						<time datetime="2016-03-15">15 Mar 2016</time>
-						<div>Date night!</div>
+						<time datetime="2016-03-15" property="date">15 Mar 2016</time>
+						<div property="occasion">Date night!</div>
 					</h1>
 					<p>
 						Average dish rating
-						<span>4</span>
+						<span property="visit_average">[average(dish_rating)]</span>
 					</p>
 				</header>
 
 				<section>
-					<h1>1 Notable Dish(es)</h1>
+					<h1>[count(new_entry)] Notable Dish(es)</h1>
 					<ul>
-						<li>
-							<p>Filet mignon with black truffle and foie gras</p>
+						<li property="new_entry" data-multiple>
+							<p property="name_of_dish">Filet mignon with black truffle and foie gras</p>
 							<p>
 								Rating:
-								<meter min="0" value="4" max="5"></meter>
-								4
+								<meter min="0" value="4" max="5" property="dish_rating"></meter>
+								[dish_rating]
 							</p>
 						</li>
 					</ul>
@@ -59,7 +61,7 @@
 		</section>
 	</article>
 
-	<footer>Total: 1 good restaurants out of 1 total</footer>
+	<footer>Total: [iff(restaurant_average > 3, count(iff(restaurant_average > 3)), ] good restaurants out of [count(new_restaurant)] total</footer>
 </main>
 
 <script type="application/json" id="data"></script>

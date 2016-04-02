@@ -3382,7 +3382,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
 					// Setting properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
-					element[attribute] = value;
+					try {
+						element[attribute] = value;
+					} catch (e) {}
 				}
 
 				// Set attribute anyway, even if we set a property because when
