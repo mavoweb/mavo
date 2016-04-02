@@ -199,7 +199,7 @@
 
 	<p class="note">Properties whose values are expressions are called <em>“computed properties”</em> and are <strong>not saved</strong>.</p>
 
-	<hr />
+	<!-- <hr />
 
 	<p>If there are <a href="#groups">groups</a> and there are properties with the same name inside and outside the group,
 		the value <strong>closest to your expression</strong> will be used, with parent groups having priority over inner groups.</p>
@@ -227,7 +227,7 @@
 				</div>
 			</div>
 		</script>
-	</section>
+	</section> -->
 
 </section>
 
@@ -291,12 +291,14 @@
 				<li property="cat" data-multiple>
 					<div property="name">Vector</div>
 					<div property="age">10</div>
+					<!-- Note that expression inside list item refers to the value in the current item -->
 					<p>Age in 2 years: [age + 2]</p>
 				</li>
 			</ul>
 
 			<h2>My cats’ ages</h2>
 			<ul>
+				<li>All cat ages: [age]</li>
 				<li>Number of cats: [count(cat)]</li>
 				<li>Number of cats with age: [count(age)]</li>
 				<li>Average cat age: [average(age)]</li> <!-- avg(age) also works -->
@@ -334,6 +336,9 @@
 	]
 }}</script>
 	</section>
+
+	<p>Note that if your expression is inside a list item, any properties inside that item will refer to their current values,
+	whereas if your expression is outside the collection, you will get all values.</p>
 
 	<hr />
 

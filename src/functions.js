@@ -69,7 +69,7 @@ var _ = Wysie.Functions = {
 operator("not", a => a => !a);
 operator("multiply", (a, b) => a * b, {identity: 1, symbol: "*"});
 operator("divide", (a, b) => a / b, {identity: 1, symbol: "/"});
-operator("add", (a, b) => a + b, {symbol: "+"});
+operator("add", (a, b) => +a + +b, {symbol: "+"});
 operator("subtract", (a, b) => a - b, {symbol: "-"});
 operator("lte", (a, b) => a <= b, {symbol: "<="});
 operator("lt", (a, b) => a < b, {symbol: "<"});

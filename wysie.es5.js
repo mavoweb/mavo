@@ -1,7 +1,5 @@
 "use strict";
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -1861,6 +1859,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return ret;
 			});
 
+			_.simpleOperation.lastIndex = 0;
+
 			return new Function("data", "with(Wysie.Functions._Trap)\n\t\t\t\twith(data) {\n\t\t\t\t\treturn " + code + ";\n\t\t\t\t}");
 		},
 
@@ -1869,8 +1869,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var code = value = value.trim();
 
 				this.function = null;
-
-				return value;
 			}
 		},
 
@@ -1880,11 +1878,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			lazy: {
 				simpleOperation: function simpleOperation() {
 					var operator = Object.keys(Wysie.Functions.operators).map(function (o) {
-						return o.replace(/[|*+]/g, "\\$0");
-					}, "\\$0").join("|");
+						return o.replace(/[|*+]/g, "\\$&");
+					}).join("|");
 					var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
 
-					return RegExp("\\(" + operand + "(" + operator + ")" + operand + "\\)", "g");
+					return RegExp("(?:^|\\()" + operand + "(" + operator + ")" + operand + "(?:$|\\))", "g");
 				}
 			}
 		}
@@ -1951,7 +1949,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (typeof env.value === "number" && !_this13.attribute) {
 							env.value = _.formatNumber(env.value);
-						}
+						} else if (Array.isArray(env.value)) {
+							env.value = env.value.join(", ");
+						};
 
 						return env.value;
 					}
@@ -1991,42 +1991,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					var expression = match[0];
 
-					if (expression[0] == "=") {
-						_.rootFunctionRegExp.lastIndex = 0;
-
-						if (_.rootFunctionRegExp.test(expression)) {
-							// If expression is spreadsheet-style (=func(...)), we need to find where it ends
-							// and we can’t do that with regexes, we need a mini-parser
-							// TODO handle escaped parentheses and parens in strings and comments
-							var stack = ["("];
-
-							for (var i = regex.lastIndex; template[i]; i++) {
-								if (template[i] === "(") {
-									stack.push("(");
-								} else if (template[i] === ")") {
-									stack.pop();
-								}
-
-								expression += template[i];
-								regex.lastIndex = lastIndex = i + 1;
-
-								if (stack.length === 0) {
-									break;
-								}
-							}
-
-							expression = expression.replace(/^=/, "").replace(/^\(([\S\s]+)\)$/, "$1");
-						} else {
-							// Bare = expression, must be followed by a property reference
-							lastIndex = regex.lastIndex;
-
-							var _ref3 = template.slice(match.index + 1).match(/^\s*\w+/) || [];
-
-							var _ref4 = _slicedToArray(_ref3, 1);
-
-							expression = _ref4[0];
-						}
-					} else if (expression[0] === "[") {
+					if (expression[0] === "[") {
 						// [] syntax
 						lastIndex = regex.lastIndex;
 						expression = expression.slice(1, expression.length - 1);
@@ -2209,7 +2174,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				expressionRegex: function expressionRegex() {
 					var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
 
-					return RegExp(["\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}", "=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))", "=" + propertyRegex + "\\b"].join("|"), "gi");
+					return RegExp(["\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}"].join("|"), "gi");
 				}
 			},
 
@@ -2324,7 +2289,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		return a / b;
 	}, { identity: 1, symbol: "/" });
 	operator("add", function (a, b) {
-		return a + b;
+		return +a + +b;
 	}, { symbol: "+" });
 	operator("subtract", function (a, b) {
 		return a - b;
@@ -4458,8 +4423,8 @@ var prettyPrint = function () {
 		}
 	});
 
-	Wysie.hooks.add("render-start", function (_ref5) {
-		var data = _ref5.data;
+	Wysie.hooks.add("render-start", function (_ref3) {
+		var data = _ref3.data;
 
 		if (this.storage && this.wrapper.classList.contains("debug-saving")) {
 			var element = $("#" + this.id + "-debug-storage");
@@ -4518,12 +4483,12 @@ var prettyPrint = function () {
 		}
 	});
 
-	Wysie.Scope.prototype.debugRow = function (_ref6) {
-		var element = _ref6.element;
-		var _ref6$attribute = _ref6.attribute;
-		var attribute = _ref6$attribute === undefined ? null : _ref6$attribute;
-		var _ref6$tds = _ref6.tds;
-		var tds = _ref6$tds === undefined ? [] : _ref6$tds;
+	Wysie.Scope.prototype.debugRow = function (_ref4) {
+		var element = _ref4.element;
+		var _ref4$attribute = _ref4.attribute;
+		var attribute = _ref4$attribute === undefined ? null : _ref4$attribute;
+		var _ref4$tds = _ref4.tds;
+		var tds = _ref4$tds === undefined ? [] : _ref4$tds;
 
 		if (!this.debug) {
 			return;

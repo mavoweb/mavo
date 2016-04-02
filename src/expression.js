@@ -45,6 +45,8 @@ var _ = Wysie.Expression = $.Class({
 			return ret;
 		});
 
+		_.simpleOperation.lastIndex = 0;
+
 		return new Function("data", `with(Wysie.Functions._Trap)
 				with(data) {
 					return ${code};
@@ -56,10 +58,6 @@ var _ = Wysie.Expression = $.Class({
 			var code = value = value.trim();
 
 			this.function = null;
-
-
-
-			return value;
 		}
 	},
 
@@ -68,10 +66,10 @@ var _ = Wysie.Expression = $.Class({
 
 		lazy: {
 			simpleOperation: function() {
-				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$0"), "\\$0").join("|");
+				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
 				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
 
-				return RegExp(`\\(${operand}(${operator})${operand}\\)`, "g");
+				return RegExp(`(?:^|\\()${operand}(${operator})${operand}(?:$|\\))`, "g");
 			}
 		}
 	}
@@ -140,6 +138,9 @@ var _ = Wysie.Expression.Text = $.Class({
 				if (typeof env.value === "number" && !this.attribute) {
 					env.value = _.formatNumber(env.value);
 				}
+				else if (Array.isArray(env.value)) {
+					env.value = env.value.join(", ");
+				};
 
 				return env.value;
 			}
@@ -177,41 +178,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 			var expression = match[0];
 
-			if (expression[0] == "=") {
-				_.rootFunctionRegExp.lastIndex = 0;
-
-				if (_.rootFunctionRegExp.test(expression)) {
-					// If expression is spreadsheet-style (=func(...)), we need to find where it ends
-					// and we can’t do that with regexes, we need a mini-parser
-					// TODO handle escaped parentheses and parens in strings and comments
-					var stack = ["("];
-
-					for (let i=regex.lastIndex; template[i]; i++) {
-						if (template[i] === "(") {
-							stack.push("(");
-						}
-						else if (template[i] === ")") {
-							stack.pop();
-						}
-
-						expression += template[i];
-						regex.lastIndex = lastIndex = i+1;
-
-						if (stack.length === 0) {
-							break;
-						}
-					}
-
-					expression = expression.replace(/^=/, "")
-										   .replace(/^\(([\S\s]+)\)$/, "$1");
-				}
-				else {
-					// Bare = expression, must be followed by a property reference
-					lastIndex = regex.lastIndex;
-					[expression] = template.slice(match.index + 1).match(/^\s*\w+/) || [];
-				}
-			}
-			else if (expression[0] === "[") {
+			if (expression[0] === "[") {
 				// [] syntax
 				lastIndex = regex.lastIndex;
 				expression = expression.slice(1, expression.length - 1);
@@ -376,9 +343,7 @@ var _ = Wysie.Expressions = $.Class({
 			return RegExp([
 					"\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]",
 					"{\\s*" + propertyRegex + "\\s*}",
-					"\\${[\\S\\s]+?}",
-					"=\\s*(?:" + _.rootFunctions.join("|") + ")\\((?=[\\S\\s]*\\))",
-					"=" + propertyRegex + "\\b"
+					"\\${[\\S\\s]+?}"
 				].join("|"), "gi");
 		}
 	},

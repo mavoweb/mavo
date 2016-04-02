@@ -7,17 +7,16 @@
 <link rel="stylesheet" href="../wysie.css" />
 <style>
 body {
-	display: flex;
 	padding: 50px;
 }
 
 main {
-	flex: 1;
+
 }
 
 li { padding: 5px; border: 1px solid silver; margin: 10px;}
 
-#foo {
+/*#foo {
 	display: block;
 	font: 100%/1.5 Consolas, Monaco, monospace;
 	white-space: pre;
@@ -28,7 +27,7 @@ li { padding: 5px; border: 1px solid silver; margin: 10px;}
 	width: 35em;
 	max-width: 50%;
 	tab-size: 4;
-}
+}*/
 
 label {
 	display: block;
@@ -37,28 +36,33 @@ label {
 </head>
 <body>
 
-<main data-store="#data" class="debug">
+<main data-store="#foo" class="debug">
 	Hobbies:
 
 	<label>Search names: <input type='search' property="search" class="computed" /></label>
 	<input type="range" property="slider" />
-	=slider
-	5 = 2 + 3
-	=slider.length
+
 	<label>
 		<input type="checkbox" property="banana" />
 		I am a banana!
 	</label>
 
+	<p class="flag-[country]">Country: <span property="country">
+		<select>
+			<option value="us" selected>United States</option>
+			<option value="gb">United Kingdom</option>
+		</select>
+	</span></p>
+
 	<ul>
-		<li property="person" style="display: =if(search && !name.includes(search), 'none', 'block')">
+		<li property="person" style="display: [iff(search && !name.includes(search), none, block)]">
 			<div property="name">Vector</div>
 			<div property class="age number">10</div>
-			<div>Double age: =(age * 2)</div>
+			<div>Age in 2 years: [age + 2]</div>
 			<ul>
 				<li property="hobby" data-default required>purring</li>
 			</ul>
-			<span style="display: =if(url.length, 'inline', 'none')">Websites:</span>
+			<span style="display: [if(url.length, inline, none)]">Websites:</span>
 			<a property="url" data-multiple required data-default href="http://google.com">
 				<span property="name" data-default>Google</span>
 			</a>
@@ -67,22 +71,24 @@ label {
 
 	<h2>Aggregates over age:</h2>
 	<dl>
+		<dt>All ages:</dt>
+		<dd>[age]</dd>
 		<dt>Number of people:</dt>
-		<dd>=count(person)</dd>
+		<dd>[count(person)]</dd>
 		<dt>Number of people with age:</dt>
-		<dd>=count(age)</dd>
+		<dd>[count(age)]</dd>
 		<dt>Number of hobbies total:</dt>
-		<dd>=count(hobby)</dd>
+		<dd>[count(hobby)]</dd>
 		<dt>Average:</dt>
-		<dd>=avg(age)</dd>
+		<dd>[avg(age)]</dd>
 		<dt>Min:</dt>
-		<dd>=min(age)</dd>
+		<dd>[min(age)]</dd>
 		<dt>Max:</dt>
-		<dd>=Max(age)</dd>
+		<dd>[Max(age)]</dd>
 		<dt>Sum:</dt>
-		<dd>=SUM(age)</dd>
+		<dd>[SUM(age)]</dd>
 		<dt>Number of young people:</dt>
-		<dd>=count(lt(age, 25))</dd>
+		<dd>[count(age < 25)]</dd>
 	</dl>
 </main>
 
