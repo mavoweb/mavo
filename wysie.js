@@ -1663,20 +1663,8 @@ var _ = Wysie.Expression.Text = $.Class({
 				ret.push(template.substring(lastIndex, match.index));
 			}
 
-			var expression = match[0];
-
-			if (expression[0] === "[") {
-				// [] syntax
-				lastIndex = regex.lastIndex;
-				expression = expression.slice(1, expression.length - 1);
-
-				// TODO if expression contains an opening bracket, do some parsing
-			}
-			else {
-				// Template style, ${} and {} syntax
-				lastIndex = regex.lastIndex;
-				expression = expression.replace(/\$?\{|\}/g, "");
-			}
+			lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
+			expression = template.slice(match.index + 1, lastIndex - 1);
 
 			ret.push(new Wysie.Expression(expression));
 		}
@@ -1698,6 +1686,45 @@ var _ = Wysie.Expression.Text = $.Class({
 
 	static: {
 		elements: new WeakMap(),
+
+		// Find where a ( or [ or { ends.
+		findEnd: function(expr) {
+			var stack = [];
+			var inside, insides = "\"'`";
+			var open = "([{", close = ")]}";
+			var isEscape;
+
+			for (var i=0; expr[i]; i++) {
+				var char = expr[i];
+
+				if (inside) {
+					if (char === inside && !isEscape) {
+						inside = "";
+					}
+				}
+				else if (!isEscape && insides.indexOf(char) > -1) {
+					inside = char;
+				}
+				else if (open.indexOf(char) > -1) {
+					stack.push(char);
+				}
+				else {
+					var peek = stack[stack.length - 1];
+
+					if (char === close[open.indexOf(peek)]) {
+						stack.pop();
+					}
+
+					if (stack.length === 0) {
+						break;
+					}
+				}
+
+				isEscape = char == "\\";
+			}
+
+			return i;
+		},
 
 		formatNumber: (() => {
 			var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
