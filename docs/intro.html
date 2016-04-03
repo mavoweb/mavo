@@ -207,7 +207,7 @@
 	<section class="example scoped-expressions">
 		<h1>Example: Grouping & Expressions</h1>
 		<script type="text/plain">
-			<p>Hi, I’m [firstname] [lastname]</p> <!-- From inner group -->
+			<p>Hi, I’m [firstname] [lastname]</p> <!-- From inner group --
 
 			<div property="person">
 				<span property="firstname">Lea</span>
@@ -216,12 +216,12 @@
 
 				<div property="mother">
 					<span property="firstname">Maria</span>
-					<!-- Last name from parent group -->
+					<!-- Last name from parent group --
 					<p>Hi, I’m [firstname] [lastname]</p>
 
 					<div property="mother">
 						<span property="firstname">Areti</span>
-						<!-- Last name from grandparent group -->
+						<!-- Last name from grandparent group --
 						<p>Hi, I’m [firstname] [lastname]</p>
 					</div>
 				</div>
@@ -497,6 +497,9 @@
 		<dt><a href="#functions"><code>[count(foo)]</code>, <code>[sum(foo)]</code>, <code>[average(foo)]</code>, <code>[min(foo)]</code>, <code>[max(foo)]</code></a></dt>
 		<dd>Display the count, sum, average, minimum or maximum of the different values of the "foo" property respectively.
 		The "foo" property must be either a list (i.e. an element with <code>data-multiple</code>) or contained in a list for this to work.</dd>
+
+		<dt><a href="#functions"><code>[iff(condition, ifyes, ifno)]</code></a></dt>
+		<dd>Output out different text depending a condition.</dd>
 
 		<dt><a href="#debugging"><code>class="debug"</code></a></dt>
 		<dd>Display an editable table with expressions and their current values in every group inside the <code>class="debug"</code> element.</dd>
