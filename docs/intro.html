@@ -60,17 +60,17 @@
 			<span>- I don’t have a property attribute, so I’m not editable.</span>
 		</script>
 	</section>
-
+	<!--
 	<p>If it happens to be the same as the element’s <code>id</code> or <code>class</code> attributes,
 		you don’t need to provide a value:</p>
 
 	<script type="text/plain">
-		<!-- In all of the following, the property value is "name" -->
+		<!-- In all of the following, the property value is "name" --
 		<div property class="name">Lea Verou</div>
 		<div property id="name">Lea Verou</div>
 		<div property="name">Lea Verou</div>
 	</script>
-
+-->
 	<hr />
 
 	<p>You can put the <code>property</code> attribute on <strong>any</strong> HTML5 element, and wysie knows how to make it editable:</p>
@@ -85,7 +85,7 @@
 
 	<hr />
 
-	<p>Form elements don’t need any editing UI, since they are already editable:</p>
+	<p>Form elements don’t need any editing UI, since they are already editable, but are still saved:</p>
 
 	<section class="example">
 		<script type="text/plain">
@@ -99,7 +99,7 @@
 		</script>
 	</section>
 
-	<p>Note how there is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
+	<p class="note">There is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
 </section>
 
 <section id="data-multiple">
@@ -417,10 +417,10 @@
 			</tr>
 		</tbody>
 	</table>
-
+<!--
 	<p class="tip">If you have more operands you don’t need to nest these functions, just provide more parameters.
 		E.g. you don’t need to do <code>add(a, add(b, c))</code>, <code>add(a, b, c)</code> will just work.</p>
-
+-->
 	<hr />
 
 	<p>You can use the <code>iff(condition, ifyes, ifno)</code> function to print out different text depending on a condition.</p>
@@ -498,8 +498,8 @@
 		<dd>Display the count, sum, average, minimum or maximum of the different values of the "foo" property respectively.
 		The "foo" property must be either a list (i.e. an element with <code>data-multiple</code>) or contained in a list for this to work.</dd>
 
-		<dt><a href="#functions"><code>[iff(condition, ifyes, ifno)]</code></a></dt>
-		<dd>Output out different text depending a condition.</dd>
+		<dt><a href="#functions"><code>[iff(foo > 5, 'Yes!', No)]</code></a></dt>
+		<dd>Output different text depending a condition.</dd>
 
 		<dt><a href="#debugging"><code>class="debug"</code></a></dt>
 		<dd>Display an editable table with expressions and their current values in every group inside the <code>class="debug"</code> element.</dd>
