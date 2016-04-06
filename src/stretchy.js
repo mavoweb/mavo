@@ -136,6 +136,34 @@ var _ = self.Stretchy = {
 	},
 
 	init: function(){
+		document.body.addEventListener("input", listener);
+
+		// Firefox fires a change event instead of an input event
+		document.body.addEventListener("change", listener);
+
+		// Listen for changes
+		var listener = function(evt) {
+			if (_.active) {
+				_.resize(evt.target);
+			}
+		};
+
+		// Listen for new elements
+		if (self.MutationObserver) {
+			(new MutationObserver(function(mutations) {
+				if (_.active) {
+					mutations.forEach(function(mutation) {
+						if (mutation.type == "childList") {
+							Stretchy.resizeAll(mutation.addedNodes);
+						}
+					});
+				}
+			})).observe(document.body, {
+				childList: true,
+				subtree: true
+			});
+		}
+
 		_.selectors.filter = _.script.getAttribute("data-filter") ||
 		                     ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
@@ -154,34 +182,6 @@ if (document.readyState !== "loading") {
 else {
 	// Wait for it
 	document.addEventListener("DOMContentLoaded", _.init);
-}
-
-// Listen for changes
-var listener = function(evt) {
-	if (_.active) {
-		_.resize(evt.target);
-	}
-};
-
-document.body.addEventListener("input", listener);
-
-// Firefox fires a change event instead of an input event
-document.body.addEventListener("change", listener);
-
-// Listen for new elements
-if (self.MutationObserver) {
-	(new MutationObserver(function(mutations) {
-		if (_.active) {
-			mutations.forEach(function(mutation) {
-				if (mutation.type == "childList") {
-					Stretchy.resizeAll(mutation.addedNodes);
-				}
-			});
-		}
-	})).observe(document.body, {
-		childList: true,
-		subtree: true
-	});
 }
 
 })();

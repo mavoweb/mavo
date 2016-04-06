@@ -372,6 +372,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		init: function init() {
+			document.body.addEventListener("input", listener);
+
+			// Firefox fires a change event instead of an input event
+			document.body.addEventListener("change", listener);
+
+			// Listen for changes
+			var listener = function listener(evt) {
+				if (_.active) {
+					_.resize(evt.target);
+				}
+			};
+
+			// Listen for new elements
+			if (self.MutationObserver) {
+				new MutationObserver(function (mutations) {
+					if (_.active) {
+						mutations.forEach(function (mutation) {
+							if (mutation.type == "childList") {
+								Stretchy.resizeAll(mutation.addedNodes);
+							}
+						});
+					}
+				}).observe(document.body, {
+					childList: true,
+					subtree: true
+				});
+			}
+
 			_.selectors.filter = _.script.getAttribute("data-filter") || ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
 			_.resizeAll();
@@ -388,34 +416,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	} else {
 		// Wait for it
 		document.addEventListener("DOMContentLoaded", _.init);
-	}
-
-	// Listen for changes
-	var listener = function listener(evt) {
-		if (_.active) {
-			_.resize(evt.target);
-		}
-	};
-
-	document.body.addEventListener("input", listener);
-
-	// Firefox fires a change event instead of an input event
-	document.body.addEventListener("change", listener);
-
-	// Listen for new elements
-	if (self.MutationObserver) {
-		new MutationObserver(function (mutations) {
-			if (_.active) {
-				mutations.forEach(function (mutation) {
-					if (mutation.type == "childList") {
-						Stretchy.resizeAll(mutation.addedNodes);
-					}
-				});
-			}
-		}).observe(document.body, {
-			childList: true,
-			subtree: true
-		});
 	}
 })();
 
