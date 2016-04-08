@@ -372,34 +372,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		init: function init() {
-			document.body.addEventListener("input", listener);
-
-			// Firefox fires a change event instead of an input event
-			document.body.addEventListener("change", listener);
-
-			// Listen for changes
-			var listener = function listener(evt) {
-				if (_.active) {
-					_.resize(evt.target);
-				}
-			};
-
-			// Listen for new elements
-			if (self.MutationObserver) {
-				new MutationObserver(function (mutations) {
-					if (_.active) {
-						mutations.forEach(function (mutation) {
-							if (mutation.type == "childList") {
-								Stretchy.resizeAll(mutation.addedNodes);
-							}
-						});
-					}
-				}).observe(document.body, {
-					childList: true,
-					subtree: true
-				});
-			}
-
 			_.selectors.filter = _.script.getAttribute("data-filter") || ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
 			_.resizeAll();
@@ -416,6 +388,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	} else {
 		// Wait for it
 		document.addEventListener("DOMContentLoaded", _.init);
+	}
+
+	// Listen for changes
+	var listener = function listener(evt) {
+		if (_.active) {
+			_.resize(evt.target);
+		}
+	};
+
+	document.documentElement.addEventListener("input", listener);
+
+	// Firefox fires a change event instead of an input event
+	document.documentElement.addEventListener("change", listener);
+
+	// Listen for new elements
+	if (self.MutationObserver) {
+		new MutationObserver(function (mutations) {
+			if (_.active) {
+				mutations.forEach(function (mutation) {
+					if (mutation.type == "childList") {
+						Stretchy.resizeAll(mutation.addedNodes);
+					}
+				});
+			}
+		}).observe(document.documentElement, {
+			childList: true,
+			subtree: true
+		});
 	}
 })();
 
@@ -851,6 +851,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				ui: ".wysie-ui",
 				option: function option(name) {
 					return "[" + name + "], [data-" + name + "], [data-wysie-options~='" + name + "'], ." + name;
+				},
+				container: {
+					"li": "ul, ol",
+					"tr": "table",
+					"option": "select",
+					"dt": "dl",
+					"dd": "dl"
 				}
 			};
 
@@ -2555,7 +2562,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			$.extend(ret, this.unhandled);
+			if (!o.dirty) {
+				$.extend(ret, this.unhandled);
+			}
 
 			return ret;
 		},
@@ -3887,7 +3896,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (this.bottomUp) {
 							this.addButton._.before($.value(this.items[0], "element") || this.marker);
 						} else {
-							this.addButton._.after(this.marker);
+							var tag = this.element.tagName.toLowerCase();
+							var containerSelector = Wysie.selectors.container[tag];
+
+							if (containerSelector) {
+								var after = this.marker.closest(containerSelector);
+							}
+
+							this.addButton._.after(after || this.marker);
 						}
 					}
 

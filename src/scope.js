@@ -79,7 +79,9 @@ var _ = Wysie.Scope = $.Class({
 			}
 		});
 
-		$.extend(ret, this.unhandled);
+		if (!o.dirty) {
+			$.extend(ret, this.unhandled);
+		}
 
 		return ret;
 	},

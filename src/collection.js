@@ -319,7 +319,14 @@ var _ = Wysie.Collection = $.Class({
 						this.addButton._.before($.value(this.items[0], "element") || this.marker);
 					}
 					else {
-						this.addButton._.after(this.marker);
+						var tag = this.element.tagName.toLowerCase();
+						var containerSelector = Wysie.selectors.container[tag];
+
+						if (containerSelector) {
+							var after = this.marker.closest(containerSelector);
+						}
+
+						this.addButton._.after(after || this.marker);
 					}
 				}
 

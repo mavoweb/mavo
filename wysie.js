@@ -138,34 +138,6 @@ var _ = self.Stretchy = {
 	},
 
 	init: function(){
-		document.body.addEventListener("input", listener);
-
-		// Firefox fires a change event instead of an input event
-		document.body.addEventListener("change", listener);
-
-		// Listen for changes
-		var listener = function(evt) {
-			if (_.active) {
-				_.resize(evt.target);
-			}
-		};
-
-		// Listen for new elements
-		if (self.MutationObserver) {
-			(new MutationObserver(function(mutations) {
-				if (_.active) {
-					mutations.forEach(function(mutation) {
-						if (mutation.type == "childList") {
-							Stretchy.resizeAll(mutation.addedNodes);
-						}
-					});
-				}
-			})).observe(document.body, {
-				childList: true,
-				subtree: true
-			});
-		}
-
 		_.selectors.filter = _.script.getAttribute("data-filter") ||
 		                     ($$("[data-stretchy-filter]").pop() || document.body).getAttribute("data-stretchy-filter") || Stretchy.selectors.filter || "*";
 
@@ -184,6 +156,34 @@ if (document.readyState !== "loading") {
 else {
 	// Wait for it
 	document.addEventListener("DOMContentLoaded", _.init);
+}
+
+// Listen for changes
+var listener = function(evt) {
+	if (_.active) {
+		_.resize(evt.target);
+	}
+};
+
+document.documentElement.addEventListener("input", listener);
+
+// Firefox fires a change event instead of an input event
+document.documentElement.addEventListener("change", listener);
+
+// Listen for new elements
+if (self.MutationObserver) {
+	(new MutationObserver(function(mutations) {
+		if (_.active) {
+			mutations.forEach(function(mutation) {
+				if (mutation.type == "childList") {
+					Stretchy.resizeAll(mutation.addedNodes);
+				}
+			});
+		}
+	})).observe(document.documentElement, {
+		childList: true,
+		subtree: true
+	});
 }
 
 })();
@@ -593,7 +593,14 @@ let s = _.selectors = {
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
 	ui: ".wysie-ui",
-	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`
+	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`,
+	container: {
+		"li": "ul, ol",
+		"tr": "table",
+		"option": "select",
+		"dt": "dl",
+		"dd": "dl"
+	}
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
@@ -2168,7 +2175,9 @@ var _ = Wysie.Scope = $.Class({
 			}
 		});
 
-		$.extend(ret, this.unhandled);
+		if (!o.dirty) {
+			$.extend(ret, this.unhandled);
+		}
 
 		return ret;
 	},
@@ -3461,7 +3470,14 @@ var _ = Wysie.Collection = $.Class({
 						this.addButton._.before($.value(this.items[0], "element") || this.marker);
 					}
 					else {
-						this.addButton._.after(this.marker);
+						var tag = this.element.tagName.toLowerCase();
+						var containerSelector = Wysie.selectors.container[tag];
+
+						if (containerSelector) {
+							var after = this.marker.closest(containerSelector);
+						}
+
+						this.addButton._.after(after || this.marker);
 					}
 				}
 

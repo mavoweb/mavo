@@ -402,7 +402,14 @@ let s = _.selectors = {
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
 	item: ".wysie-item",
 	ui: ".wysie-ui",
-	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`
+	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`,
+	container: {
+		"li": "ul, ol",
+		"tr": "table",
+		"option": "select",
+		"dt": "dl",
+		"dd": "dl"
+	}
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
