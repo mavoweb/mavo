@@ -326,7 +326,7 @@ var _ = Wysie.Collection = $.Class({
 							var after = this.marker.closest(containerSelector);
 						}
 
-						this.addButton._.after(after || this.marker);
+						this.addButton._.after(after && after.parentNode? after : this.marker);
 					}
 				}
 

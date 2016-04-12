@@ -3903,7 +3903,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								var after = this.marker.closest(containerSelector);
 							}
 
-							this.addButton._.after(after || this.marker);
+							this.addButton._.after(after && after.parentNode ? after : this.marker);
 						}
 					}
 
