@@ -407,7 +407,9 @@
     background: #f2330d; }
   .wysie-debuginfo tr.debug-warning td:nth-child(2) {
     overflow: hidden;
-    font-family: "Helvetica Neue", sans-serif; }
+    font-family: "Helvetica Neue", sans-serif;
+    color: #f88;
+    font-weight: bold; }
   .wysie-debuginfo .error {
     color: #f88;
     font-weight: normal;

@@ -10,13 +10,13 @@
 </head>
 <body>
 
-<main data-store="local" class="autoedit" id="decisions">
+<main data-store="local" class="autoedit debug" id="decisions">
 	<h1>
 		Decisions
 		<span>Decisions</span>
 	</h1>
 
-	<article property="decision" data-multiple>
+	<article xproperty="decision" data-multiple>
 		<header class="answer-[answer]">
 			<h1 property="decision">Should I go to the party?</h1>
 
@@ -56,7 +56,7 @@
 	</article>
 
 	<!-- Showing here two ways to do this: One with intermediate variables and one without -->
-	<footer>Total: [sum(score > 0)] “yes” decision(s) and [sum(score < 0)] “no” decision(s)</footer>
+	<footer>Total: [count(score > 0)] “yes” decision(s) and [count(score < 0)] “no” decision(s)</footer>
 </main>
 
 <script type="application/json" id="data"></script>

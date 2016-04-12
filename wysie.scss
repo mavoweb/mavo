@@ -624,6 +624,8 @@ $font-mono: Consolas, Monaco, monospace;
 			td:nth-child(2) {
 				overflow: hidden;
 				font-family: $font-sans;
+				color: #f88;
+				font-weight: bold;
 			}
 		}
 	}
