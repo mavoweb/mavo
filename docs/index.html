@@ -11,248 +11,500 @@
 <header>
 	<h1 class="logo">
 		<img src="../logo.svg" alt="Wysie: What you see is editable">
-		Documentation for HTML authors
+		Introduction and first steps
 	</h1>
 </header>
 
+<input type="checkbox" id="show-examples" checked />
+<label for="show-examples">Show examples?</label>
+
+<section id="data-store">
+	<h1>Defining a wysie app</h1>
+
+	<p>The <code>data-store</code> attribute has two purposes: its presence tells wysie that it should pay attention to what is inside that element
+		and its value tells wysie where to store any data.
+		The value of the <code>data-store</code> attribute is a valid URL or a keyword and has the following meaning:</p>
+
+	<dl>
+		<dt>No value or <code>""</code> or <code>none</code></dt>
+		<dd>Disable storage.</dd>
+
+		<dt><code>local</code></dt>
+		<dd>Save in the browser (in <code>localStorage</code>).</dd>
+
+		<dt><code>#hash</code></dt>
+		<dd>A local hash can mean two things, depending on whether an element exists in the page with that id:
+			<ol>
+				<li>If an element exists, that element will receive any saved data.</li>
+				<li>If there is no corresponding element, the data will be saved in the browser (<code>localStorage</code>).</li>
+			</ol>
+		</dd>
+
+		<dt><code>https://www.dropbox.com/s/[lettersandnumbers]/[filename]?dl=0</code></dt>
+		<dd>
+			This is the URL that Dropbox gives you if you click “Share” on a file.
+			In that case, the data will be saved back to Dropbox, and wysie will ask you to log in to edit or save.
+		</dd>
+	</dl>
+</section>
+
+<section id="property">
+	<h1>The property attribute</h1>
+
+	<p>The <code>property</code> attribute tells wysie which elements should be editable. Its value should describe the element, similarly to a <code>id</code> or <code>class</code> attribute.
+		It can contain <strong>only</strong> letters, numbers and underscores (_).</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<span property="firstName">Lea</span> <span property="last_name">Verou</span>
+			<span>- I don’t have a property attribute, so I’m not editable.</span>
+		</script>
+	</section>
+	<!--
+	<p>If it happens to be the same as the element’s <code>id</code> or <code>class</code> attributes,
+		you don’t need to provide a value:</p>
+
+	<script type="text/plain">
+		<!-- In all of the following, the property value is "name" --
+		<div property class="name">Lea Verou</div>
+		<div property id="name">Lea Verou</div>
+		<div property="name">Lea Verou</div>
+	</script>
+-->
+	<hr />
+
+	<p>You can put the <code>property</code> attribute on <strong>any</strong> HTML5 element, and wysie knows how to make it editable:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<meter property="rating" min="1" value="3" max="5"></meter>
+			<time property="birthday" datetime="2014-06-01"></time>
+			<img property="avatar" src="http://i.imgur.com/LPeWcag.png" />
+		</script>
+	</section>
+
+	<hr />
+
+	<p>Form elements don’t need any editing UI, since they are already editable, but are still saved:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<input property="name" value="Lea Verou"/>
+			<input property="strength" type="range" />
+			<select property="country">
+				<option value="us">United States</option>
+				<option value="gb">United Kingdom</option>
+				<option value="jp">Japan</option>
+			</select>
+		</script>
+	</section>
+
+	<p class="note">There is no “Edit” button in the example above since all its properties are form elements, which are always editable.</p>
+</section>
+
+<section id="data-multiple">
+	<h1>Creating lists: The data-multiple attribute</h1>
+
+	<p>Let’s assume we have a list of hobbies that we want to make editable.
+		We <em>could</em> add <code>property</code> attributes to every item:</p>
+
+	<section class="example">
+		<script type="text/plain">
+			Hobbies:
+			<ul>
+				<li property="hobby">Eating</li>
+				<li property="hobby">Sleeping</li>
+				<li property="hobby">Purring</li>
+			</ul>
+		</script>
+	</section>
+
+	<p>This works, but we cannot add new hobbies or delete existing ones.
+		To do that, we need the <code>data-multiple</code> attribute, which tells wysie that <strong>this element can be multiplied</strong>:</p>
+
+	<section class="example">
+		<h1>Example: Simple list</h1>
+		<script type="text/plain">
+			Hobbies:
+			<ul>
+				<li property="hobby" data-multiple>Eating</li>
+			</ul>
+		</script>
+	</section>
+
+	<p class="note">The <code>data-multiple</code> attribute goes on <strong>the element that will be multiplied, NOT the container of the collection</strong>!</p>
+
+	<hr />
+
+	<p>We can use <code>property</code> and <code>data-multiple</code> to create lists of more complex structures with multiple properties.</p>
+
+	<section class="example">
+		<h1>Example: More complex lists</h1>
+		<script type="text/plain">
+			<article property="pet" data-multiple>
+				<h1 property="name">Adam Catlace</h1>
+				Born on <time property="birthday" datetime="2014-06-01"></time>
+			</article>
+		</script>
+	</section>
+
+	<p>Note that in the example above, the <code>property</code> attribute on <code>&lt;article></code> does not actually make
+		the entire <code>&lt;article></code> element editable, but instead acts as a <strong>grouping element</strong>.
+		This will always happen when you use the <code>property</code> attribute on elements that contain other properties inside them.
+		Groups have many interesting characteristics when combined with expressions, which we will see next.
+	</p>
+</section>
+
 <section>
-	<h1>Quick start</h1>
-
-	<p>To use wysie to make a page editable, you need to take the following easy steps:</p>
-
-	<ol>
-		<li>Include Wysie on your page, by including its CSS and JS files:
-			<script type="text/plain">
-			<link rel="stylesheet" href="wysie.css" />
-			<script src="wysie.js">&lt;/script></script>
-		</li>
-		<li>
-			Add <code>property</code> attributes on any element you want to make editable.
-		</li>
-		<li>Find an element that encloses all your editable attributes, and add a <code>data-store</code> attribute to it.
-			The <code>data-store</code> attribute usually takes URI that tells wysie <strong>where</strong> to store the data.
-			However to start experimenting as soon as possible, you can use it without a value, in which case it does not store the data anywhere.
-		</li>
-	</ol>
-
-	<p>You can find details about these attributes below.</p>
-</section>
-
-<section id="attributes">
-	<h1>HTML attribute reference</h1>
-
-	<article>
-		<h1><code>data-store</code></h1>
-
-		<p>A URL that tells wysie <strong>where</strong> to find the data. It’s exact format depends on the backend used.
-		Each backend might also require more <code>data-store-*</code> properties.</p>
-
-		<p>You can use any URL you want, but if there is no supported backend associated with such URLs, the data will not be editable.</p>
-
-		<p>If the value is a hash (e.g. <code>data-store="#todo"</code>), wysie only stores the data locally.
-			If the value is <code>none</code>, the data is not stored anywhere.
-			This can be useful for experimenting, or for applications that don't require storage (e.g. a colour picker).</p>
-	</article>
-	<article>
-		<h1><code>property</code> or <code>itemprop</code></h1>
-
-		<p>The presence of any of these attributes on an element tells wysie that the element contains data and should be editable.
-			The attribute value can be anything you want, as long as it’s different from other unrelated elements.
-			It should describe the type of data the element will hold, because it will be used in various places in the editing interface.
-			The rules for a good property name are the same as those for a good CSS class name.</p>
-
-		<p>For example, this is what the markup for a person could look like if you want the name, image and website url to be editable:</p>
-
-		<script type="text/plain">
-			<article>
-				<h1 property="name">Lea Verou</h1>
-				<img property="image" src="lea.png" alt="Avatar"/>
-				<a property="url" href="http://lea.verou.me">Visit website</a>
-			</article>
-		</script>
-
-		<p>Note that if the <code>property</code> attribute is specified but without a value, wysie will try to find an identifier
-			in the following attributes, in this order:</p>
-
-		<ul>
-			<li><code>itemprop</code></li>
-			<li><code>name</code></li>
-			<li><code>id</code></li>
-			<li><code>class</code> (only the first class will be considered)</li>
-		</ul>
-
-		<p>For example, the following markup has the same result as the one above:</p>
-
-		<script type="text/plain">
-			<article>
-				<h1 property id="name">Lea Verou</h1> <!-- Getting an identifier from the id -->
-				<img property class="image" src="lea.png" alt="Avatar"/> <!-- Getting an identifier from the class name -->
-				<a itemprop="url" href="http://lea.verou.me">Visit website</a>
-			</article>
-		</script>
-
-		<p class="tip">You can also use <code>property</code> attributes for styling, through attribute selectors. For example:</p>
-		<pre><code class="language-css">
-		h1[property="name"] {
-			font-size: 300%;
-		}</code></pre>
-	</article>
-	<article>
-		<h1><code>data-multiple</code></h1>
-
-		<p>Tells wysie that this element can be multiplied (i.e. is a collection).
-			This way wysie knows to add controls for adding new elements, deleting existing ones<span class="unimplemented"> and dragging to rearrange</span>.</p>
-
-		<p>Some elements get this attribute automatically<span class="unimplemented">, which can be disabled with <code>data-multiple="false"</code></span>.
-			These elements are:</p>
-
-		<ul>
-			<li><code>&lt;li></code> without any other <code>&lt;li></code>s adjacent to it</li>
-			<li><code>&lt;tr></code> without any other <code>&lt;tr></code>s adjacent to it</li>
-		</ul>
-
-		<section class="example">
-			<p>For example, this could be the markup for a basic to-do list, saved locally:</p>
-			<script type="text/plain">
-				<ul data-store="#todo">
-					<li property="task">
-						<input type="checkbox" property="done" />
-						<span property="title">Sample task</span>
-					</li>
-				</ul>
-			</script>
-
-			<p>Note that the <code>&lt;li></code> element is automatically turned into a collection, even though we did not specify a <code>data-multiple</code> attribute.</p>
-		</section>
-
-
-	</article>
-	<article>
-		<h1><code>typeof</code> or <code>itemscope</code> or <code>itemtype</code></h1>
-
-		<p>Makes the element a scope.
-			Rarely needed explicitly, it can usually be inferred from the rest of the markup and the Wysie attributes.
-			If provided without a value or inferred, its value will be “Item”.
-		</p>
-
-		<script type="text/plain">
-			<dl property="character" typeof="Person"></dl>
-				<dt>Name:</dt>
-				<dd property=name>General Leia Organa</dd>
-
-				<dt>Age:</dt>
-				<dd property=age>58</dd>
-
-				<dt>Spouse:</dt>
-				<dd>
-					<dl property="spouse" typeof="Person">
-						<dt>name</dt>
-						<dd property=name>Han Solo</dd>
-
-						<dt>Age:</dt>
-						<dd property=age>71</dd>
-					</dl>
-				</dd>
-			</script>
-		</script>
-	</article>
-	<article>
-		<h1><code>data-input</code></h1>
-
-		<p>A CSS selector that points to a form element or HTML structure used for editing the current property.
-			For more details on editing widgets see the <a href="#editors"></a> section.</p>
-	</article>
-	<article>
-		<h1><code>data-attribute</code></h1>
-
-		<p>Overrides the default for which attribute (if any) contains the element’s data.
-			Specify <code>"null"</code> for the data to be in the content.</p>
-	</article>
-	<article>
-		<h1><code>data-default</code></h1>
-
-		<p>Specifies the default value of the property.
-			If specified without a value, the default value of the property will be its content in the template.
-			Note that the default values will be saved with the data. Therefore, if you change them in the future,
-			your existing stored data will still use the previous default values, if they had been used when entering the data.
-		</p>
-	</article>
-	<article>
-		<h1><code>data-store-root</code></h1>
-
-		<p>Allows setting a path to the data, in the form of <code>property/childProperty/grandChildPropery/...</code> to only render a portion.</p>
-	</article>
-</section>
-
-<section id="expressions">
 	<h1>Expressions</h1>
 
-	<article>
-		<h1>Simple expressions: <code>{propertyName}</code></h1>
+	<p>You can dynamically refer to the value of any property you have defined, anywhere, by putting its name inside brackets (like this: <code>[propertyName]</code>).</p>
 
-		<p>Dynamically resolves to the current value of a certain property.
-			The property can be in the current scope, in an ancestor scope, even in child scopes.
-			However, there is a precedence order in case of conflicts, which is current > ancestor > children
-		</p>
+	<section class="example">
+		<p>Move the slider and check how both expressions are updated:</p>
+		<script type="text/plain">
+			<p>Slider value: [strength]/100</p>
+			<input type="range" property="strength" title="[strength]%" />
+		</script>
+	</section>
 
-		<p>On certain attributes, the value is transformed first.
-			For example, if using an expression inside an <code>id</code>, <code>class</code> or <code>name</code> property, it will first be converted to an identifier, i.e. lowercased and with any weird characters stripped.</p>
+	<p>We can also do math with properties, e.g. divide by a 100:</p>
 
-		<section class="example">
-			<p>Move the slider and check how both expressions are updated:</p>
-			<script type="text/plain">
-				<p>Slider value: {foo}</p>
-				<input type="range" property="foo" title="{foo}" />
-			</script>
-		</section>
-	</article>
+	<section class="example">
+		<p>Move the slider and check how both expressions are updated:</p>
+		<script type="text/plain">
+			<p>Slider value: [strength/100]</p>
+			<input type="range" property="strength" title="[strength]%" />
+		</script>
+	</section>
 
-	<article>
-		<h1>Advanced expressions: <code>${code}</code></h1>
+	<p>If you set a <code>property</code> attribute on an element with an expression, then you can use that property in other attributes too.</p>
 
-		<p>These expresssions allow for the full power of JavaScript.
-			However, the code is executed with several conveniences, so that even authors with the most minimal JavaScript knowledge can use them to do really useful things.</p>
+	<section class="example color-picker">
+		<p>Making a bare-bones HSL color picker with Wysie expressions:</p>
+		<script type="text/plain">
+			<div style="background-color: [color];">
+				<input type="range" property="hue" max="360" />
+				<input type="range" property="saturation" />
+				<input type="range" property="lightness" />
 
-		<ul>
-			<li>Any property that can be used in simple expressions (including ancestor and child properties) can be used as a variable.</li>
-			<li>Multiplied elements (a.k.a. collections) are arrays. Scopes are plain objects.</li>
-			<li>Properties inside collections can also be accessed as a simple variable, whose value will be an array with all values of that property accross the collection.</li>
-			<li>There are several convenient functions for aggregate calculations on these properties that have multiple values, such as: <code>sum()</code>, <code>min()</code>, <code>max()</code>, <code>average()</code>.
-				Their names are case insensitive.</li>
-		</ul>
+				<input property="color" value="hsl([hue], [saturation]%, [lightness]%)" readonly />
+			</div>
+		</script>
+	</section>
 
-		<section class="example">
-			<p>Try adding and removing elements:</p>
+	<p class="tip">If you’re just using an element to hold an intermediate result so you can refer to it, we recommend using
+		<code>&lt;meta property="propertyName" content="[expression]" /></code> which is hidden, both semantically and visually.
+	</p>
 
-			<script type="text/plain">
-				<h2>People (${person.length})</h2>
-				<ul>
-					<li property="person">
-						<div property="name">Lea Verou</div>
-						<div property="age">30</div>
-					</li>
-				</ul>
+	<p class="note">Properties whose values are expressions are called <em>“computed properties”</em> and are <strong>not saved</strong>.</p>
 
-				<h2>Aggregates over age:</h2>
-				<dl>
-					<dt>Number of people with age:</dt>
-					<dd>${age.length}</dd>
-					<dt>Average:</dt>
-					<dd>${avg(age)}</dd> <!-- average(age) also works -->
-					<dt>Min:</dt>
-					<dd>${min(age)}</dd>
-					<dt>Max:</dt>
-					<dd>${Max(age)}</dd> <!-- note that capitalization doesn’t matter -->
-					<dt>Sum:</dt>
-					<dd>${SUM(age)}</dd> <!-- note that capitalization doesn’t matter -->
-				</dl>
-			</script>
-		</section>
+	<!-- <hr />
 
-	</article>
+	<p>If there are <a href="#groups">groups</a> and there are properties with the same name inside and outside the group,
+		the value <strong>closest to your expression</strong> will be used, with parent groups having priority over inner groups.</p>
+
+	<section class="example scoped-expressions">
+		<h1>Example: Grouping & Expressions</h1>
+		<script type="text/plain">
+			<p>Hi, I’m [firstname] [lastname]</p> <!-- From inner group --
+
+			<div property="person">
+				<span property="firstname">Lea</span>
+				<span property="lastname">Verou</span>
+				<p>Hi, I’m [firstname] [lastname]</p>
+
+				<div property="mother">
+					<span property="firstname">Maria</span>
+					<!-- Last name from parent group --
+					<p>Hi, I’m [firstname] [lastname]</p>
+
+					<div property="mother">
+						<span property="firstname">Areti</span>
+						<!-- Last name from grandparent group --
+						<p>Hi, I’m [firstname] [lastname]</p>
+					</div>
+				</div>
+			</div>
+		</script>
+	</section> -->
+
 </section>
 
-<script src="../bliss/bliss.js"></script>
+<section id="functions">
+	<h1>Expression functions</h1>
+
+	<!-- <p>References and simple arithmetic are useful, but not always enough.
+		For this purpose, wysie defines a number of common math functions you can use inside expressions, such as:
+		<code>pow(base, exponent)</code>, <code>round(number, decimals)</code>, <code>sqrt(number)</code> and many more.</p>
+
+	<section class="example pow">
+		<script type="text/plain">
+			<input property="base" type="number" value="2" />
+			<input property="exponent" type="number" value="3" /> = [pow(base, exponent)]
+		</script>
+	</section>
+
+	<hr /> -->
+
+	<p>Using a property with multiple values (i.e. referring to a property inside a list from outside the list) in an expression is not very useful on its own.
+		However, there are functions that help you use such lists of values in interesting ways:</p>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Expression</th>
+				<th>Meaning</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>count(property)</code></td>
+				<td>Count how many items in a list actually have a value.</td>
+			</tr>
+			<tr>
+				<td><code>sum(property)</code></td>
+				<td>Sum all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>average(property)</code></td>
+				<td>Calculate the average of all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>min(property)</code></td>
+				<td>Calculate the minimum of all numbers in the list.</td>
+			</tr>
+			<tr>
+				<td><code>max(property)</code></td>
+				<td>Calculate the maximum of all numbers in the list.</td>
+			</tr>
+		</tbody>
+	</table>
+
+	<section class="example">
+		<p>Try adding and removing elements!</p>
+
+		<script type="text/plain">
+		<div property="foo">
+			<h2>My cats</h2>
+			<ul>
+				<li property="cat" data-multiple>
+					<div property="name">Vector</div>
+					<div property="age">10</div>
+					<!-- Note that expression inside list item refers to the value in the current item -->
+					<p>Age in 2 years: [age + 2]</p>
+				</li>
+			</ul>
+
+			<h2>My cats’ ages</h2>
+			<ul>
+				<li>All cat ages: [age]</li>
+				<li>Number of cats: [count(cat)]</li>
+				<li>Number of cats with age: [count(age)]</li>
+				<li>Average cat age: [average(age)]</li> <!-- avg(age) also works -->
+				<li>Sum of all ages (why? because we can): [SUM(age)]</li> <!-- caps don’t matter -->
+				<li>Number of cats over 5 years old: [count(age > 5)]</li>
+			</ul>
+		</div>
+		</script>
+		<script type="application/json">{"foo": {
+	"cat": [
+		{
+			"name": "Vector",
+			"age": 10
+		},
+		{
+			"name": "Jean"
+		},
+		{
+			"name": "Pixel",
+			"age": 6
+		},
+		{
+			"name": "Adam Catlace",
+			"age": 2.5
+		},
+		{
+			"name": "Eva"
+		},
+		{
+			"name": "Chlebis",
+			"age": 8
+		}
+	]
+}}</script>
+	</section>
+
+	<p>Note that if your expression is inside a list item, any properties inside that item will refer to their current values,
+	whereas if your expression is outside the collection, you will get all values.</p>
+
+	<hr />
+
+	<p>You can also do math or comparisons with lists. For example, <code>[sum(age + 5)]</code> will add 5 to every age and then sum the result.
+		You can use either symbols (e.g. <code>+</code>, <code>*</code>, <code>></code>, <code>==</code>) etc to perform these operations, or their function counterparts:
+	</p>
+
+	<table>
+		<thead>
+			<tr>
+				<th>Math</th>
+				<th>Function</th>
+				<th>What it does</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td><code>a + b</code></td>
+				<td><code>add(a, b)</code></td>
+				<td>Addition</td>
+			</tr>
+			<tr>
+				<td><code>a - b</code></td>
+				<td><code>subtract(a, b)</code></td>
+				<td>Subtraction</td>
+			</tr>
+			<tr>
+				<td><code>a * b</code></td>
+				<td><code>multiply(a, b)</code></td>
+				<td>Multiplication</td>
+			</tr>
+			<tr>
+				<td><code>a / b</code></td>
+				<td><code>div(a, b)</code></td>
+				<td>Division. Note that division by 0 will show up as ±∞ or <code>NaN</code> if it’s 0/0.</td>
+			</tr>
+			<tr>
+				<td><code>a && b</code></td>
+				<td><code>and(a, b)</code></td>
+				<td>Check that both a and b have a value</td>
+			</tr>
+			<tr>
+				<td><code>a || b</code></td>
+				<td><code>or(a, b)</code></td>
+				<td>Check that at least a or b have a value</td>
+			</tr>
+			<tr>
+				<td><code>!a</code></td>
+				<td><code>not(a)</code></td>
+				<td>Check if a doesn’t have a value</td>
+			</tr>
+			<tr>
+				<td><code>a < b</code></td>
+				<td><code>lt(a, b)</code></td>
+				<td>Check if a is less than b</td>
+			</tr>
+			<tr>
+				<td><code>a < b</code></td>
+				<td><code>lte(a, b)</code></td>
+				<td>Check if a is less than, or equal to b</td>
+			</tr>
+			<tr>
+				<td><code>a > b</code></td>
+				<td><code>gt(a, b)</code></td>
+				<td>Check if a is greater than b</td>
+			</tr>
+			<tr>
+				<td><code>a >= b</code></td>
+				<td><code>gte(a, b)</code></td>
+				<td>Check if a is greater than, or equal to b</td>
+			</tr>
+			<tr>
+				<td><code>a == b</code></td>
+				<td><code>eq(a, b)</code></td>
+				<td>Check if a is equal to b</td>
+			</tr>
+		</tbody>
+	</table>
+<!--
+	<p class="tip">If you have more operands you don’t need to nest these functions, just provide more parameters.
+		E.g. you don’t need to do <code>add(a, add(b, c))</code>, <code>add(a, b, c)</code> will just work.</p>
+-->
+	<hr />
+
+	<p>You can use the <code>iff(condition, ifyes, ifno)</code> function to print out different text depending on a condition.</p>
+
+	<section class="example movie">
+		<script type="text/plain">
+			<style>
+				.movie .bad { background: #fee; }
+				.movie .ok { background: #ffe; }
+				.movie .good { background: #efd; }
+			</style>
+
+			<div data-store class="[iff(rating < 3, bad, iff(rating > 3, good, ok))]">
+				<label>Rating:
+					<input property="rating" type="range" min="1" max="5" />
+				</label>
+
+				<p style="display: [iff(rating == 1, block,  none)]">Wow, you hated that movie!</p>
+				<p style="display: [iff(rating > 3, block,  none)]">Glad you liked it!</p>
+			</div>
+		</script>
+	</section>
+
+	<p class="note">If what you’re printing contains characters other than letters, numbers and underscores,
+		you will need to use quotes around it, just like in CSS <code>font-family</code> or HTML attributes.</p>
+</section>
+
+<section id="debugging">
+	<h1>Finding mistakes</h1>
+
+	<p>You can add a <code>debug</code> class on any element and after reloading you will get a table on every group inside it with all its expressions.
+	<strong>The expressions in the table are editable</strong> and you can see the results of your edits as you type, both in the table and in your app.
+	Hovering over the elements in the last column will highlight them in the app.</p>
+
+	<section class="example">
+		<script type="text/plain">
+			<div data-store class="debug">
+				<p>
+					<label>x = <input type="number" property="x" value="15" /></label>,
+					<label>y = <input type="number" property="y" value="5" /></label>
+				</p>
+				<ul>
+					<li>x + y = <span property="sum">[x + y]</span></li>
+					<li>x - y = [x - y]</li>
+					<li>x * y = [x * y]</li>
+					<li>x / y = [x / y]</li>
+					<li>(x + y)<sup>2</sup> = [pow(sum, 2)]</li>
+				</ul>
+			</div>
+		</script>
+	</section>
+</section>
+
+<section id="summary">
+	<h1>Summary/Cheatsheet</h1>
+
+	<dl>
+		<dt><a href="#data-store"><code>data-store</code> attribute</a></dt>
+		<dd>Wysify an element and its contents. Its value specifies where data is stored.</dd>
+
+		<dt><a href="#property"><code>property</code> attribute</a></dt>
+		<dd>Name an element and make it editable, or group other properties.</dd>
+
+		<dt><a href="#data-multiple"><code>data-multiple</code> attribute</a></dt>
+		<dd>This element will be multiplied (i.e. create a list).
+			Can only be used on elements with <code>property</code> or <code>data-store</code> attributes.</dd>
+
+		<dt><a href="#expressions"><code>[foo]</code></a></dt>
+		<dd>Print out the value of the "foo" property.</dd>
+
+		<dt><a href="#expressions"><code>[foo * sqrt(foo)]</code></a></dt>
+		<dd>Print out the value of an expression. Can be used anywhere. <strong>Yes, in attributes too</strong>.</dd>
+
+		<dt><a href="#functions"><code>[count(foo)]</code>, <code>[sum(foo)]</code>, <code>[average(foo)]</code>, <code>[min(foo)]</code>, <code>[max(foo)]</code></a></dt>
+		<dd>Display the count, sum, average, minimum or maximum of the different values of the "foo" property respectively.
+		The "foo" property must be either a list (i.e. an element with <code>data-multiple</code>) or contained in a list for this to work.</dd>
+
+		<dt><a href="#functions"><code>[iff(foo > 5, 'Yes!', No)]</code></a></dt>
+		<dd>Output different text depending a condition.</dd>
+
+		<dt><a href="#debugging"><code>class="debug"</code></a></dt>
+		<dd>Display an editable table with expressions and their current values in every group inside the <code>class="debug"</code> element.</dd>
+	</dl>
+</section>
+
+<script src="../../bliss/bliss.js"></script>
 <script src="docs.js"></script>
 <script src="../wysie.js"></script>
 <script src="../website/prism.js"></script>

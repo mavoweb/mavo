@@ -6,7 +6,7 @@ Wysie.Primitive.editors.img = {
 			events: {
 				"dragenter dragover drop": function(evt) {
 					evt.stopPropagation();
-  					evt.preventDefault();
+					evt.preventDefault();
 				},
 
 				drop: function(evt) {
@@ -38,7 +38,7 @@ Wysie.Primitive.editors.img = {
 							// Show image locally
 							$("img", root).file = file;
 
-							// Upload 
+							// Upload
 
 							// Once uploaded, share and get public URL
 

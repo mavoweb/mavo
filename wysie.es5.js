@@ -3550,6 +3550,71 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	};
 })(Bliss, Bliss.$);
 
+// Image upload widget via imgur
+Wysie.Primitive.editors.img = {
+	create: function create() {
+		var root = $.create("div", {
+			className: "image-popup",
+			events: {
+				"dragenter dragover drop": function dragenterDragoverDrop(evt) {
+					evt.stopPropagation();
+					evt.preventDefault();
+				},
+
+				drop: function drop(evt) {
+					var file = $.value(evt.dataTransfer, "files", 0);
+
+					// Do upload stuff
+				}
+			},
+			contents: [{
+				tag: "input",
+				type: "url",
+				className: "value"
+			}, {
+				tag: "label",
+				className: "upload",
+				contents: ["Upload: ", {
+					tag: "input",
+					type: "file",
+					accept: "image/*",
+					events: {
+						change: function change(evt) {
+							var file = this.files[0];
+
+							if (!file) {
+								return;
+							}
+
+							// Show image locally
+							$("img", root).file = file;
+
+							// Upload
+
+							// Once uploaded, share and get public URL
+
+							// Set public URL as the value of the URL input
+						}
+					}
+				}]
+			}, {
+				className: "image-preview",
+				contents: [{
+					tag: "progress",
+					value: "0",
+					max: "100"
+				}, {
+					tag: "img"
+				}]
+			}, {
+				className: "tip",
+				innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste the image to be uploaded!"
+			}] });
+
+		return root;
+	}
+};
+
 (function ($, $$) {
 
 	var _ = Wysie.Collection = $.Class({
