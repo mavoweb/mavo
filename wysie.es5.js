@@ -5026,9 +5026,10 @@ var prettyPrint = function () {
 			var _this40 = this;
 
 			return this.req("user").then(function (accountInfo) {
+				var name = accountInfo.name || accountInfo.login;
 				_this40.wysie.wrapper._.fire("wysie:login", {
 					backend: _this40,
-					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + accountInfo.name + "\n\t\t\t\t\t\t</a>"
+					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + name + "\n\t\t\t\t\t\t</a>"
 				});
 			});
 		},

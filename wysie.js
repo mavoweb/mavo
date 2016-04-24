@@ -4641,10 +4641,11 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 	getUser: function() {
 		return this.req("user").then(accountInfo => {
+			var name = accountInfo.name || accountInfo.login;
 			this.wysie.wrapper._.fire("wysie:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
-							<img class="avatar" src="${accountInfo.avatar_url}" /> ${accountInfo.name}
+							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}
 						</a>`
 			});
 		});
