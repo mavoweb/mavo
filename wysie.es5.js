@@ -229,13 +229,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			    s = function s() {
 				return !i.apply(this, arguments);
 			};EventTarget.prototype.addEventListener = function (t, r, s) {
-				if (this && this[e] && r) {
+				if (this && this[e] && this[e].bliss && r) {
 					var o = this[e].bliss.listeners = this[e].bliss.listeners || {};if (t.indexOf(".") > -1) {
 						t = t.split(".");var a = t[1];t = t[0];
 					}o[t] = o[t] || [], 0 === o[t].filter(i.bind(null, r, s)).length && o[t].push({ callback: r, capture: s, className: a });
 				}return n.call(this, t, r, s);
 			}, EventTarget.prototype.removeEventListener = function (t, n, i) {
-				if (this && this[e] && n) {
+				if (this && this[e] && this[e].bliss && n) {
 					var o = this[e].bliss.listeners = this[e].bliss.listeners || {};o[t] && (o[t] = o[t].filter(s.bind(null, n, i)));
 				}return r.call(this, t, n, i);
 			};
@@ -434,7 +434,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.store = dataStore === "none" ? null : dataStore;
 
 			// Assign a unique (for the page) id to this wysie instance
-			this.id = element.id || "wysie-" + _.all.length;
+			this.id = Wysie.Node.normalizeProperty(element) || "wysie-" + _.all.length;
 
 			this.autoEdit = _.has("autoedit", element);
 
@@ -572,6 +572,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}, function () {
 				// cannot
 				$.remove(_this.ui.editButtons);
+
+				if (_this.editing) {
+					_this.done();
+				}
 			});
 
 			this.permissions.can(["delete"], function () {
@@ -1178,6 +1182,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var login;
 				(login = function login() {
 					if (location.hash === _this7.loginHash) {
+						// This just does location.hash = "" without getting a pointless # at the end of the URL
 						history.replaceState(null, document.title, new URL("", location) + "");
 						_this7.login();
 					}
@@ -1192,7 +1197,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.wysie.wrapper.addEventListener("wysie:login.wysie", function (evt) {
 				var status = $(".status", _this7.wysie.bar);
 				status.innerHTML = "";
-				status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", textContent: evt.name }, {
+				status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", innerHTML: evt.name }, {
 					tag: "button",
 					textContent: "Logout",
 					className: "logout",
@@ -1283,6 +1288,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return backend.login().then(function () {
 					return backend.put({
 						name: backend.filename,
+						path: backend.path,
 						data: data
 					});
 				});
@@ -4875,6 +4881,195 @@ var prettyPrint = function () {
 			test: function test(url) {
 				return (/dropbox.com/.test(url.host) || url.protocol === "dropbox:"
 				);
+			}
+		}
+	}), true);
+})(Bliss);
+
+(function ($) {
+
+	if (!self.Wysie) {
+		return;
+	}
+
+	Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend,
+		constructor: function constructor() {
+			this.storage.permissions = this.permissions;
+			this.permissions.on("login");
+
+			this.key = this.storage.param("key") || "7e08e016048000bc594e";
+
+			// Extract info for username, repo, branch, filename, filepath from URL
+			$.extend(this, _.parseURL(this.url));
+			this.repo = this.repo || "wysie-data";
+			this.path = this.path || this.wysie.id + ".json";
+
+			// Transform the Github URL into something raw and CORS-enabled
+			this.url = new URL("https://raw.githubusercontent.com/" + this.username + "/" + this.repo + "/" + this.branch + "/" + this.path + "?ts=" + Date.now());
+			this.permissions.on("read"); // TODO check if file actually is publicly readable
+
+			this.login(true);
+		},
+
+		get: Wysie.Storage.Backend.Remote.prototype.get,
+
+		/**
+   * Saves a file to the backend.
+   * @param {Object} file - An object with name & data keys
+   * @return {Promise} A promise that resolves when the file is saved.
+   */
+		put: function put(file) {
+			var _this38 = this;
+
+			file.data = Wysie.toJSON(file.data);
+			file.path = file.path || "";
+
+			var call = "repos/" + this.username + "/" + this.repo + "/contents/" + file.path;
+
+			return this.req(call, {
+				data: JSON.stringify({
+					ref: this.branch
+				})
+			}).then(function (fileInfo) {
+				return _this38.req(call, {
+					method: "PUT",
+					data: JSON.stringify({
+						message: "Updated " + file.name,
+						content: btoa(file.data),
+						branch: _this38.branch,
+						sha: fileInfo.sha
+					})
+				});
+			}).then(function (xhr) {
+				console.log("success");
+			});
+		},
+
+		get authenticated() {
+			return !!this.accessToken;
+		},
+
+		req: function req(call) {
+			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+			return $.fetch("https://api.github.com/" + call, $.extend(o, {
+				responseType: "json",
+				headers: {
+					"Authorization": "token " + this.accessToken
+				}
+			})).then(function (xhr) {
+				return Promise.resolve(xhr.response);
+			});
+		},
+
+		login: function login(passive) {
+			var _this39 = this;
+
+			return this.ready.then(function () {
+				if (_this39.authenticated) {
+					return Promise.resolve();
+				}
+
+				return new Promise(function (resolve, reject) {
+					if (passive) {
+						_this39.accessToken = localStorage["wysie:githubtoken"];
+
+						if (_this39.accessToken) {
+							resolve(_this39.accessToken);
+						}
+					} else {
+						// Show window
+						_this39.authPopup = open("https://github.com/login/oauth/authorize?client_id=" + _this39.key + "&scope=repo,gist&state=" + location.href, "popup", "width=900,height=500");
+
+						addEventListener("message", function (evt) {
+							if (evt.source === _this39.authPopup) {
+								_this39.accessToken = localStorage["wysie:githubtoken"] = evt.data;
+
+								if (!_this39.accessToken) {
+									reject(Error("Authentication error"));
+								}
+
+								resolve(_this39.accessToken);
+							}
+						});
+					}
+				}).then(function () {
+					return _this39.getUser();
+				}).then(function (u) {
+					_this39.permissions.on("logout");
+
+					return _this39.req("repos/" + _this39.username + "/" + _this39.repo);
+				}).then(function (repoInfo) {
+					if (repoInfo.permissions.push) {
+						_this39.permissions.on("edit");
+					}
+				}).catch(function (err) {
+					return console.error(err);
+				});
+			});
+		},
+
+		logout: function logout() {
+			if (this.authenticated) {
+				localStorage.removeItem("wysie:githubtoken");
+				delete this.accessToken;
+
+				this.permissions.off(["edit", "add", "delete"]).on("login");
+
+				this.wysie.wrapper._.fire("wysie:logout", { backend: this });
+			}
+
+			return Promise.resolve();
+		},
+
+		getUser: function getUser() {
+			var _this40 = this;
+
+			return this.req("user").then(function (accountInfo) {
+				_this40.wysie.wrapper._.fire("wysie:login", {
+					backend: _this40,
+					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + accountInfo.name + "\n\t\t\t\t\t\t</a>"
+				});
+			});
+		},
+
+		static: {
+			test: function test(url) {
+				return (/\bgithub.(com|io)|raw.githubusercontent.com/.test(url)
+				);
+			},
+
+			/**
+    * Parse Github URLs, return username, repo, branch, path
+    */
+			parseURL: function parseURL(url) {
+				var ret = {};
+
+				url = new URL(url, location);
+
+				var path = url.pathname.slice(1).split("/");
+
+				if (/github.io$/.test(url.host)) {
+					ret.username = url.host.match(/([\w-]+)\.github\.io$/)[1];
+					ret.branch = "gh-pages";
+				} else {
+					ret.username = path.shift();
+				}
+
+				ret.repo = path.shift();
+
+				if (/raw.githubusercontent.com$/.test(url.host)) {
+					ret.branch = path.shift();
+				} else if (/github.com$/.test(url.host) && path[0] == "blob") {
+					path.shift();
+					ret.branch = path.shift();
+				}
+
+				ret.filename = path[path.length - 1];
+
+				ret.path = path.join("/");
+
+				return ret;
 			}
 		}
 	}), true);

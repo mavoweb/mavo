@@ -45,6 +45,7 @@ var _ = Wysie.Storage = $.Class({
 			var login;
 			(login = () => {
 				if (location.hash === this.loginHash) {
+					// This just does location.hash = "" without getting a pointless # at the end of the URL
 					history.replaceState(null, document.title, new URL("", location) + "");
 					this.login();
 				}
@@ -61,7 +62,7 @@ var _ = Wysie.Storage = $.Class({
 			status.innerHTML = "";
 			status._.contents([
 				"Logged in to " + evt.backend.id + " as ",
-				{tag: "strong", textContent: evt.name},
+				{tag: "strong", innerHTML: evt.name},
 				{
 					tag: "button",
 					textContent: "Logout",
@@ -140,6 +141,7 @@ var _ = Wysie.Storage = $.Class({
 			return backend.login().then(() => {
 				return backend.put({
 					name: backend.filename,
+					path: backend.path,
 					data: data
 				});
 			});

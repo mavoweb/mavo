@@ -266,6 +266,10 @@
     .wysie-bar > button:enabled:hover::before,
     .wysie-bar > .button:enabled:hover::before {
       opacity: .8; }
+  .wysie-bar .avatar {
+    display: inline-block;
+    vertical-align: -.1em;
+    max-height: 1em; }
   .wysie-bar button, .wysie-bar .button {
     background: transparent;
     font: inherit;

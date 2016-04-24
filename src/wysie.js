@@ -11,7 +11,7 @@ var _ = self.Wysie = $.Class({
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance
-		this.id = element.id || "wysie-" + _.all.length;
+		this.id = Wysie.Node.normalizeProperty(element) || "wysie-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -136,6 +136,10 @@ var _ = self.Wysie = $.Class({
 			}
 		}, () => { // cannot
 			$.remove(this.ui.editButtons);
+
+			if (this.editing) {
+				this.done();
+			}
 		});
 
 		this.permissions.can(["delete"], () => {
