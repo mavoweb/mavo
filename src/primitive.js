@@ -64,7 +64,10 @@ var _ = Wysie.Primitive = $.Class({
 				}
 			}
 			else if (!this.wysie.editing || this.computed) {
-				this.update(this.value);
+				if (this.oldValue != this.value) {
+					this.update(this.value);
+				}
+
 			}
 		}, true);
 
@@ -216,6 +219,8 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		if (this.initialized) {
+			this.oldValue = this.value;
+
 			$.fire(this.element, "wysie:datachange", {
 				property: this.property,
 				value: value,

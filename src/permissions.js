@@ -109,6 +109,14 @@ var _ = Wysie.Permissions = $.Class({
 		});
 	},
 
+	or: function(permissions) {
+		_.actions.forEach(action => {
+			this[action] = this[action] || permissions[action];
+		});
+
+		return this;
+	},
+
 	static: {
 		actions: [],
 

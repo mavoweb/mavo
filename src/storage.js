@@ -14,6 +14,8 @@ var _ = Wysie.Storage = $.Class({
 
 		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
 
+		this.backends[0].permissions = this.wysie.permissions.or(this.backends[0].permissions);
+
 		this.ready = Promise.all(this.backends.map(backend => backend.ready));
 
 		this.loaded = new Promise((resolve, reject) => {
@@ -79,10 +81,6 @@ var _ = Wysie.Storage = $.Class({
 		});
 	},
 
-	get permissions () {
-		return this.wysie.permissions;
-	},
-
 	get getBackends () {
 		return this.backends.filter(backend => !!backend.get);
 	},
@@ -93,6 +91,10 @@ var _ = Wysie.Storage = $.Class({
 
 	get authBackends () {
 		return this.backends.filter(backend => !!backend.login);
+	},
+
+	proxy: {
+		permissions: "wysie"
 	},
 
 	/**
@@ -124,7 +126,7 @@ var _ = Wysie.Storage = $.Class({
 				// TODO try more backends if this fails
 				this.inProgress = false;
 
-				if (err && err.xhr.status == 404) {
+				if (err.xhr && err.xhr.status == 404) {
 					this.wysie.render("");
 				}
 				else {
@@ -238,8 +240,7 @@ _.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	proxy: {
-		wysie: "storage",
-		permissions: "storage"
+		wysie: "storage"
 	},
 
 	static: {

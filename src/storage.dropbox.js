@@ -8,8 +8,6 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 
 Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	constructor: function() {
-		this.storage.permissions = this.permissions;
-
 		// Transform the dropbox shared URL into something raw and CORS-enabled
 		if (this.url.protocol != "dropbox:") {
 			this.url.hostname = "dl.dropboxusercontent.com";
@@ -48,7 +46,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	 */
 	put: function(file) {
 		file.data = Wysie.toJSON(file.data);
-		
+
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
 				if (error) {

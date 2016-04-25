@@ -177,7 +177,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			}
 
 			lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
-			expression = template.slice(match.index + 1, lastIndex - 1);
+			var expression = template.slice(match.index + 1, lastIndex - 1);
 
 			ret.push(new Wysie.Expression(expression));
 		}

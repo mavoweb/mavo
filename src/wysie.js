@@ -441,6 +441,9 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 		get: function() {
 			return this[proxy][property];
 		},
+		set: function(value) {
+			this[proxy][property] = value;
+		},
 		configurable: true,
 		enumerable: true
 	});

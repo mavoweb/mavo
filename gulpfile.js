@@ -1,16 +1,17 @@
 /*
 Build file to concat & minify files, compile SCSS and so on.
-npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat-sourcemap gulp-sass --save-dev
+npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps gulp-sass --save-dev
 */
 // grab our gulp packages
 var gulp  = require("gulp");
 var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
-var concat = require("gulp-concat-sourcemap");
+var concat = require("gulp-concat");
 var sass = require("gulp-sass");
 var babel = require("gulp-babel");
 var autoprefixer = require("gulp-autoprefixer");
+var sourcemaps = require("gulp-sourcemaps");
 
 gulp.task("concat", function() {
 	var files = "stretchy wysie permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
@@ -18,23 +19,28 @@ gulp.task("concat", function() {
 	files.unshift("../bliss/bliss.min.js");
 
 	return gulp.src(files)
+		.pipe(sourcemaps.init())
 		.pipe(concat("wysie.js"))
+		.pipe(sourcemaps.write())
 		.pipe(gulp.dest("."));
 });
 
 gulp.task("sass", function() {
 	return gulp.src(["**/*.scss", "!node_modules/**"])
+		.pipe(sourcemaps.init())
 		.pipe(sass().on("error", sass.logError))
 		.pipe(autoprefixer({
 			browsers: ["last 2 versions"],
 			cascade: false
 		}))
 		.pipe(rename({ extname: ".css" }))
+		.pipe(sourcemaps.write())
 		.pipe(gulp.dest("."));
 });
 
 gulp.task("transpile", ["concat"], function() {
 	return gulp.src(["wysie.js"])
+	.pipe(sourcemaps.init())
 	.pipe(babel({
 		"presets": ["ES2015"],
 		compact: false
@@ -44,6 +50,7 @@ gulp.task("transpile", ["concat"], function() {
 		this.emit("end");
 	})
 	.pipe(rename({ suffix: ".es5" }))
+	.pipe(sourcemaps.write())
 	.pipe(gulp.dest("."));
 
 });
@@ -59,8 +66,10 @@ gulp.task("minify", ["concat", "transpile"], function() {
 	});
 
 	return gulp.src(["wysie.es5.js"])
+	.pipe(sourcemaps.init())
 	.pipe(u)
 	.pipe(rename("wysie.min.js"))
+	.pipe(sourcemaps.write())
 	.pipe(gulp.dest("."));
 
 });

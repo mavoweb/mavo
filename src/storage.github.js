@@ -4,9 +4,10 @@ if (!self.Wysie) {
 	return;
 }
 
+var _;
+
 Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend,
 	constructor: function() {
-		this.storage.permissions = this.permissions;
 		this.permissions.on("login");
 
 		this.key = this.storage.param("key") || "7e08e016048000bc594e";
