@@ -14,13 +14,42 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		// Extract info for username, repo, branch, filename, filepath from URL
 		$.extend(this, _.parseURL(this.url));
 		this.repo = this.repo || "wysie-data";
+		this.branch = this.branch || "master";
 		this.path = this.path || `${this.wysie.id}.json`;
+		this.filename = this.filename || this.path.match(/[^/]*$/)[0];
 
 		// Transform the Github URL into something raw and CORS-enabled
 		this.url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch}/${this.path}?ts=${Date.now()}`);
 		this.permissions.on("read"); // TODO check if file actually is publicly readable
 
 		this.login(true);
+	},
+
+	get authenticated () {
+		return !!this.accessToken;
+	},
+
+	req: function(call, data, method = "GET", o = {method: method}) {
+		if (data) {
+			o.data =  JSON.stringify(data);
+		}
+
+		return $.fetch("https://api.github.com/" + call, $.extend(o, {
+			responseType: "json",
+			headers: {
+				"Authorization": `token ${this.accessToken}`
+			}
+		}))
+		.catch(err => {
+			if (err && err.xhr) {
+				return Promise.reject(err.xhr);
+			}
+			else {
+				console.error(err);
+				console.log(err.stack);
+			}
+		})
+		.then(xhr => Promise.resolve(xhr.response));
 	},
 
 	get: Wysie.Storage.Backend.Remote.prototype.get,
@@ -34,39 +63,37 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		file.data = Wysie.toJSON(file.data);
 		file.path = file.path || "";
 
-		var call = `repos/${this.username}/${this.repo}/contents/${file.path}`;
+		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
 
-		return this.req(call, {
-			data: JSON.stringify({
+		return Promise.resolve(this.repoInfo || this.req("user/repos", {
+			name: this.repo
+		}, "POST"))
+		.then(repoInfo => {
+			this.repoInfo = repoInfo;
+
+			return this.req(fileCall, {
 				ref: this.branch
-			})
+			});
 		})
 		.then(fileInfo => {
-			return this.req(call, {
-				method: "PUT",
-				data: JSON.stringify({
-					message: `Updated ${file.name}`,
+			return this.req(fileCall, {
+				message: `Updated ${file.name || "file"}`,
+				content: btoa(file.data),
+				branch: this.branch,
+				sha: fileInfo.sha
+			}, "PUT");
+		}, xhr => {
+			if (xhr.status == 404) {
+				// File does not exist, create it
+				return this.req(fileCall, {
+					message: "Created file",
 					content: btoa(file.data),
-					branch: this.branch,
-					sha: fileInfo.sha
-				})
-			});
-		}).then(xhr => {
+					branch: this.branch
+				}, "PUT");
+			}
+		}).then(data => {
 			console.log("success");
 		});
-	},
-
-	get authenticated () {
-		return !!this.accessToken;
-	},
-
-	req: function(call, o = {}) {
-		return $.fetch("https://api.github.com/" + call, $.extend(o, {
-			responseType: "json",
-			headers: {
-				"Authorization": `token ${this.accessToken}`
-			}
-		})).then(xhr => Promise.resolve(xhr.response));
 	},
 
 	login: function(passive) {
@@ -108,11 +135,21 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 				return this.req(`repos/${this.username}/${this.repo}`);
 			})
 			.then(repoInfo => {
+				this.repoInfo = repoInfo;
+
 				if (repoInfo.permissions.push) {
 					this.permissions.on("edit");
 				}
 			})
-			.catch(err => console.error(err));
+			.catch(xhr => {
+				if (xhr.status == 404) {
+					// Repo does not exist so we can't check permissions
+					// Just check if authenticated user is the same as our URL username
+					if (this.user.login == this.username) {
+						this.permissions.on("edit");
+					}
+				}
+			});
 		});
 	},
 
@@ -131,6 +168,8 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 	getUser: function() {
 		return this.req("user").then(accountInfo => {
+			this.user = accountInfo;
+
 			var name = accountInfo.name || accountInfo.login;
 			this.wysie.wrapper._.fire("wysie:login", {
 				backend: this,

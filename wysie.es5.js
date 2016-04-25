@@ -1267,7 +1267,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// TODO try more backends if this fails
 					_this8.inProgress = false;
 
-					if (err) {
+					if (err && err.xhr.status == 404) {
+						_this8.wysie.render("");
+					} else {
 						console.error(err);
 						console.log(err.stack);
 					}
@@ -4902,13 +4904,44 @@ var prettyPrint = function () {
 			// Extract info for username, repo, branch, filename, filepath from URL
 			$.extend(this, _.parseURL(this.url));
 			this.repo = this.repo || "wysie-data";
+			this.branch = this.branch || "master";
 			this.path = this.path || this.wysie.id + ".json";
+			this.filename = this.filename || this.path.match(/[^/]*$/)[0];
 
 			// Transform the Github URL into something raw and CORS-enabled
 			this.url = new URL("https://raw.githubusercontent.com/" + this.username + "/" + this.repo + "/" + this.branch + "/" + this.path + "?ts=" + Date.now());
 			this.permissions.on("read"); // TODO check if file actually is publicly readable
 
 			this.login(true);
+		},
+
+		get authenticated() {
+			return !!this.accessToken;
+		},
+
+		req: function req(call, data) {
+			var method = arguments.length <= 2 || arguments[2] === undefined ? "GET" : arguments[2];
+			var o = arguments.length <= 3 || arguments[3] === undefined ? { method: method } : arguments[3];
+
+			if (data) {
+				o.data = JSON.stringify(data);
+			}
+
+			return $.fetch("https://api.github.com/" + call, $.extend(o, {
+				responseType: "json",
+				headers: {
+					"Authorization": "token " + this.accessToken
+				}
+			})).catch(function (err) {
+				if (err && err.xhr) {
+					return Promise.reject(err.xhr);
+				} else {
+					console.error(err);
+					console.log(err.stack);
+				}
+			}).then(function (xhr) {
+				return Promise.resolve(xhr.response);
+			});
 		},
 
 		get: Wysie.Storage.Backend.Remote.prototype.get,
@@ -4924,41 +4957,34 @@ var prettyPrint = function () {
 			file.data = Wysie.toJSON(file.data);
 			file.path = file.path || "";
 
-			var call = "repos/" + this.username + "/" + this.repo + "/contents/" + file.path;
+			var fileCall = "repos/" + this.username + "/" + this.repo + "/contents/" + file.path;
 
-			return this.req(call, {
-				data: JSON.stringify({
-					ref: this.branch
-				})
-			}).then(function (fileInfo) {
-				return _this38.req(call, {
-					method: "PUT",
-					data: JSON.stringify({
-						message: "Updated " + file.name,
-						content: btoa(file.data),
-						branch: _this38.branch,
-						sha: fileInfo.sha
-					})
+			return Promise.resolve(this.repoInfo || this.req("user/repos", {
+				name: this.repo
+			}, "POST")).then(function (repoInfo) {
+				_this38.repoInfo = repoInfo;
+
+				return _this38.req(fileCall, {
+					ref: _this38.branch
 				});
-			}).then(function (xhr) {
-				console.log("success");
-			});
-		},
-
-		get authenticated() {
-			return !!this.accessToken;
-		},
-
-		req: function req(call) {
-			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-			return $.fetch("https://api.github.com/" + call, $.extend(o, {
-				responseType: "json",
-				headers: {
-					"Authorization": "token " + this.accessToken
+			}).then(function (fileInfo) {
+				return _this38.req(fileCall, {
+					message: "Updated " + (file.name || "file"),
+					content: btoa(file.data),
+					branch: _this38.branch,
+					sha: fileInfo.sha
+				}, "PUT");
+			}, function (xhr) {
+				if (xhr.status == 404) {
+					// File does not exist, create it
+					return _this38.req(fileCall, {
+						message: "Created file",
+						content: btoa(file.data),
+						branch: _this38.branch
+					}, "PUT");
 				}
-			})).then(function (xhr) {
-				return Promise.resolve(xhr.response);
+			}).then(function (data) {
+				console.log("success");
 			});
 		},
 
@@ -5000,11 +5026,19 @@ var prettyPrint = function () {
 
 					return _this39.req("repos/" + _this39.username + "/" + _this39.repo);
 				}).then(function (repoInfo) {
+					_this39.repoInfo = repoInfo;
+
 					if (repoInfo.permissions.push) {
 						_this39.permissions.on("edit");
 					}
-				}).catch(function (err) {
-					return console.error(err);
+				}).catch(function (xhr) {
+					if (xhr.status == 404) {
+						// Repo does not exist so we can't check permissions
+						// Just check if authenticated user is the same as our URL username
+						if (_this39.user.login == _this39.username) {
+							_this39.permissions.on("edit");
+						}
+					}
 				});
 			});
 		},
@@ -5026,6 +5060,8 @@ var prettyPrint = function () {
 			var _this40 = this;
 
 			return this.req("user").then(function (accountInfo) {
+				_this40.user = accountInfo;
+
 				var name = accountInfo.name || accountInfo.login;
 				_this40.wysie.wrapper._.fire("wysie:login", {
 					backend: _this40,

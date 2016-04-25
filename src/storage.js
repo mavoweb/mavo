@@ -124,7 +124,10 @@ var _ = Wysie.Storage = $.Class({
 				// TODO try more backends if this fails
 				this.inProgress = false;
 
-				if (err) {
+				if (err && err.xhr.status == 404) {
+					this.wysie.render("");
+				}
+				else {
 					console.error(err);
 					console.log(err.stack);
 				}
