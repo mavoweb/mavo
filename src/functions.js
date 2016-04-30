@@ -95,37 +95,35 @@ for (name in aliases) {
 }
 
 // Make function names case insensitive
-if (self.Proxy) {
-	Wysie.Functions._Trap = new Proxy(_, {
-		get: (functions, property) => {
-			if (property in functions) {
-				return functions[property];
-			}
+Wysie.Functions._Trap = self.Proxy? new Proxy(_, {
+	get: (functions, property) => {
+		if (property in functions) {
+			return functions[property];
+		}
 
-			var propertyL = property.toLowerCase && property.toLowerCase();
+		var propertyL = property.toLowerCase && property.toLowerCase();
 
-			if (propertyL && functions.hasOwnProperty(propertyL)) {
-				return functions[propertyL];
-			}
+		if (propertyL && functions.hasOwnProperty(propertyL)) {
+			return functions[propertyL];
+		}
 
-			if (property in Math || propertyL in Math) {
-				return Math[property] || Math[propertyL];
-			}
+		if (property in Math || propertyL in Math) {
+			return Math[property] || Math[propertyL];
+		}
 
-			if (property in self) {
-				return self[property];
-			}
+		if (property in self) {
+			return self[property];
+		}
 
-			// Prevent undefined at all costs
-			return property;
-		},
+		// Prevent undefined at all costs
+		return property;
+	},
 
-		// Super ugly hack, but otherwise data is not
-		// the local variable it should be, but the string "data"
-		// so all property lookups fail.
-		has: (functions, property) => property != "data"
-	});
-}
+	// Super ugly hack, but otherwise data is not
+	// the local variable it should be, but the string "data"
+	// so all property lookups fail.
+	has: (functions, property) => property != "data"
+}) : Wysie.Functions;
 
 /**
  * Private helper methods

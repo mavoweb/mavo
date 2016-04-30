@@ -479,11 +479,18 @@ document.addEventListener("focus", evt => {
 }, true);
 
 // Init wysie
-$.ready().then(evt => {
+Promise.all([
+	$.ready(),
+	$.include(Array.from && window.Intl && document.body.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+])
+.then(() => {
+
 	$$("[data-store]").forEach(function (element) {
+
 		new Wysie(element);
 	});
-});
+})
+.catch(err => console.error(err));
 
 Stretchy.selectors.filter = ".wysie-editor:not([property])";
 

@@ -1,4 +1,4 @@
-(function($){
+(function($) {
 
 var _ = Wysie.Permissions = $.Class({
 	constructor: function(o, wysie) {

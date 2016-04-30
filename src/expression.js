@@ -239,20 +239,20 @@ var _ = Wysie.Expression.Text = $.Class({
 			return i;
 		},
 
-		formatNumber: (() => {
-			var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
-
-			return function(value) {
-				if (value === Infinity || value === -Infinity) {
-					// Pretty print infinity
-					return value < 0? "-∞" : "∞";
-				}
-
-				return numberFormat.format(value);
-			};
-		})(),
-
 		lazy: {
+			formatNumber: () => {
+				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
+
+				return function(value) {
+					if (value === Infinity || value === -Infinity) {
+						// Pretty print infinity
+						return value < 0? "-∞" : "∞";
+					}
+
+					return numberFormat.format(value);
+				};
+			},
+
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
 	}
