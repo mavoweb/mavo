@@ -59,8 +59,6 @@ var _ = Wysie.Collection = $.Class({
 		// Add delete & add buttons
 		if (this.mutable) {
 			$.create({
-				tag: "menu",
-				type: "toolbar",
 				className: "wysie-item-controls wysie-ui",
 				contents: [
 					{

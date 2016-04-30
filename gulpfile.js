@@ -16,12 +16,12 @@ var sourcemaps = require("gulp-sourcemaps");
 gulp.task("concat", function() {
 	var files = "stretchy wysie permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
 	            .split(" ").map(path => "src/" + path + ".js");
-	files.unshift("../bliss/bliss.min.js");
+	files.unshift("../bliss/bliss.js");
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
 		.pipe(concat("wysie.js"))
-		.pipe(sourcemaps.write())
+		.pipe(sourcemaps.write("."))
 		.pipe(gulp.dest("."));
 });
 
@@ -34,7 +34,7 @@ gulp.task("sass", function() {
 			cascade: false
 		}))
 		.pipe(rename({ extname: ".css" }))
-		.pipe(sourcemaps.write())
+		.pipe(sourcemaps.write("."))
 		.pipe(gulp.dest("."));
 });
 
@@ -50,7 +50,7 @@ gulp.task("transpile", ["concat"], function() {
 		this.emit("end");
 	})
 	.pipe(rename({ suffix: ".es5" }))
-	.pipe(sourcemaps.write())
+	.pipe(sourcemaps.write("."))
 	.pipe(gulp.dest("."));
 
 });
@@ -69,7 +69,7 @@ gulp.task("minify", ["concat", "transpile"], function() {
 	.pipe(sourcemaps.init())
 	.pipe(u)
 	.pipe(rename("wysie.min.js"))
-	.pipe(sourcemaps.write())
+	.pipe(sourcemaps.write("."))
 	.pipe(gulp.dest("."));
 
 });
