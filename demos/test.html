@@ -35,8 +35,17 @@ label {
 </style>
 </head>
 <body>
-
-<main data-store="#foo" class="debug">
+<main data-store="#data" class="debug">
+	<span property=foo><select>
+		<option value="us">USA</option>
+		<option value="gb">United Kingdom</option>
+	</select></span>
+	[foo]
+</main>
+<pre id="data">{
+	"foo": "gb"
+}</pre>
+<!-- <main data-store="#foo" class="debug">
 	Hobbies:
 
 	<label>Search names: <input type='search' property="search" class="computed" /></label>
@@ -90,7 +99,7 @@ label {
 		<dt>Number of young people:</dt>
 		<dd>[count(age < 25)]</dd>
 	</dl>
-</main>
+</main> -->
 
 <script type="application/json" id="foo2"></script>
 <script type="application/json" id="foo">{

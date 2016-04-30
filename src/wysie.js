@@ -481,7 +481,8 @@ document.addEventListener("focus", evt => {
 // Init wysie
 Promise.all([
 	$.ready(),
-	$.include(Array.from && window.Intl && document.body.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+	$.include(Array.from && window.Intl && document.body.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en"),
+	$.include(window.acorn, "https://cdnjs.cloudflare.com/ajax/libs/acorn/3.1.0/acorn.min.js")
 ])
 .then(() => {
 

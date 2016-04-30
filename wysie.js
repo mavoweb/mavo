@@ -1467,7 +1467,8 @@ document.addEventListener("focus", evt => {
 // Init wysie
 Promise.all([
 	$.ready(),
-	$.include(Array.from && window.Intl && document.body.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+	$.include(Array.from && window.Intl && document.body.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en"),
+	$.include(window.acorn, "https://cdnjs.cloudflare.com/ajax/libs/acorn/3.1.0/acorn.min.js")
 ])
 .then(() => {
 
@@ -3236,6 +3237,12 @@ var _ = Wysie.Primitive = $.Class({
 				_.setValue(this.element, value, "content", this.datatype);
 				_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
 			}
+			else if (this.editor && this.editor.matches("select")) {
+
+				this.editorValue = value;
+				_.setValue(this.element, value, "content", this.datatype);
+				_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
+			}
 			else {
 				_.setValue(this.element, value, this.attribute, this.datatype);
 			}
@@ -3679,7 +3686,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	live: {
 		empty: function(value) {
-			var hide = (value === "" || value === null) && !(this.attribute && $(Wysie.selectors.property, this.element));
+			var hide = value && !this.exposed && !(this.attribute && $(Wysie.selectors.property, this.element));
 			this.element.classList.toggle("empty", hide);
 		},
 
