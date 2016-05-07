@@ -101,10 +101,49 @@ var _ = Wysie.Debug = {
 		};
 	},
 
+	time: function callee(objName, name) {
+		var obj = eval(objName);
+		var callback = obj[name];
+
+		obj[name] = function callee() {
+			var before = performance.now();
+			var ret = callback.apply(this, arguments);
+			callee.timeTaken += performance.now() - before;
+			obj[name].calls++;
+			return ret;
+		};
+
+		obj[name].timeTaken = obj[name].calls = 0;
+
+		callee.all = callee.all || [];
+		callee.all.push({obj, objName, name});
+
+		return obj[name];
+	},
+
+	times: function() {
+		if (!_.time.all) {
+			return;
+		}
+		
+		console.table(_.time.all.map(o => {
+			return {
+				"Function": `${o.objName}.${o.name}`,
+				"Time (ms)": o.obj[o.name].timeTaken,
+				"Calls": o.obj[o.name].calls
+			};
+		}));
+	},
+
 	reservedWords: "as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield".split("|")
 };
 
 Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
+/*_.time("Wysie.Expressions.prototype", "update");
+// _.time("Wysie.Expression.Text.prototype", "update");
+_.time("Wysie.Expressions.prototype", "traverse");
+_.time("Wysie.Scope.prototype", "getRelativeData");
+_.time("Wysie.Primitive", "getValue");*/
 
 Wysie.selectors.debug = ".debug";
 
@@ -307,8 +346,8 @@ Wysie.hooks.add("scope-init-end", function() {
 			this.debugRow({
 				element,
 				tds: ["Warning", "data-multiple without a property attribute"]
-			})
-		})
+			});
+		});
 
 		this.propagate(obj => {
 			var value = _.printValue(obj);

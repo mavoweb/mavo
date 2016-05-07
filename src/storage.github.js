@@ -183,7 +183,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 	static: {
 		test: function(url) {
-			return /\bgithub.(com|io)|raw.githubusercontent.com/.test(url);
+			return /\bgithub.(com|io)|raw.githubusercontent.com/.test(url.host);
 		},
 
 		/**

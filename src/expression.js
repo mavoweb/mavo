@@ -106,10 +106,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 	set text(value) {
 		this.oldText = this.text;
-		if (this.primitive && this.primitive.property == "marginal_cost") {
 
-
-		}
 		Wysie.Primitive.setValue(this.node, value, this.attribute);
 	},
 
@@ -264,16 +261,23 @@ var _ = Wysie.Expression.Text = $.Class({
 
 var _ = Wysie.Expressions = $.Class({
 	constructor: function(scope) {
-		this.scope = scope;
-		this.scope.expressions = this;
+		if (scope) {
+			this.scope = scope;
+			this.scope.expressions = this;
+		}
+
 		this.all = []; // all Expression.Text objects in this scope
 
 		Wysie.hooks.run("expressions-init-start", this);
 
-		this.traverse();
+		if (this.scope) {
+			this.traverse();
+		}
 
 		// TODO less stupid name?
 		this.updateAlso = new Set();
+
+		this.active = true;
 	},
 
 	init: function() {
@@ -298,7 +302,7 @@ var _ = Wysie.Expressions = $.Class({
 	 * Update all expressions in this scope
 	 */
 	update: function callee() {
-		if (this.scope.isDeleted()) {
+		if (!this.active || this.scope.isDeleted()) {
 			return;
 		}
 

@@ -121,6 +121,7 @@ var _ = Wysie.Storage = $.Class({
 				}
 
 				var data = Wysie.queryJSON(response, this.param("root"));
+
 				this.wysie.render(data);
 			}).catch(err => {
 				// TODO try more backends if this fails

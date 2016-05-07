@@ -140,6 +140,8 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
+		this.expressions.active = false;
+
 		data = data.isArray? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a scope?
@@ -154,6 +156,9 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		this.save();
+
+		this.expressions.active = true;
+		this.expressions.update();
 	},
 
 	// Check if this scope contains a property
