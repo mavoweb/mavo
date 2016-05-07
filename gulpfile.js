@@ -1,6 +1,6 @@
 /*
 Build file to concat & minify files, compile SCSS and so on.
-npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps gulp-sass --save-dev
+npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps gulp-babel gulp-sass gulp-autoprefixer --save-dev
 */
 // grab our gulp packages
 var gulp  = require("gulp");
@@ -14,9 +14,10 @@ var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
 
 gulp.task("concat", function() {
-	var files = "stretchy wysie permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
+	var files = "wysie permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
 	            .split(" ").map(path => "src/" + path + ".js");
 	files.unshift("../bliss/bliss.js");
+	files.unshift("../stretchy/stretchy.js");
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())

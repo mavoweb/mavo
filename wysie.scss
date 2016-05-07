@@ -330,6 +330,12 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
+.wysie-ui {
+	a {
+		color: inherit;
+	}
+}
+
 .wysie-bar {
 	all: initial;
 	position: fixed;

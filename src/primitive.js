@@ -1,7 +1,5 @@
 (function($, $$) {
 
-const DISABLE_CACHE = false;
-
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, collection) {
@@ -37,6 +35,7 @@ var _ = Wysie.Primitive = $.Class({
 		}
 		// Nested widgets
 		else if (!this.editor) {
+
 			this.editor = $$(this.element.children).filter(function (el) {
 			    return el.matches(Wysie.selectors.formControl) && !el.matches(Wysie.selectors.property);
 			})[0];
@@ -55,13 +54,11 @@ var _ = Wysie.Primitive = $.Class({
 		// so we cannot depend on mutation observers for everything :(
 		this.observer = Wysie.observe(this.element, this.attribute, record => {
 			if (this.attribute || !this.wysie.editing || this.computed) {
-				this.updateValue();
+				this.value = this.getValue();
 			}
 		}, true);
 
-		this.updateValue();
-
-		this.templateValue = this.value;
+		this.templateValue = this.getValue();
 
 		if (this.computed || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
@@ -106,7 +103,7 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.initialized = true;
 
-		this.updateValue();
+		this.value = this.getValue();
 	},
 
 	get editorValue() {
@@ -525,8 +522,8 @@ var _ = Wysie.Primitive = $.Class({
 		this.observer.disconnect();
 	},
 
-	updateValue: function() {
-		return this.value = _.getValue(this.element, this.attribute, this.datatype);
+	getValue: function() {
+		return _.getValue(this.element, this.attribute, this.datatype);
 	},
 
 	lazy: {
@@ -645,49 +642,37 @@ var _ = Wysie.Primitive = $.Class({
 			return ret;
 		},
 
-		getValueAttribute: function callee(element) {
-			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
+		getValueAttribute: function (element) {
+			var ret = element.getAttribute("data-attribute") || _.getMatch(element, _.attributes);
 
-			if (ret === undefined || DISABLE_CACHE) {
-				ret = element.getAttribute("data-attribute") || _.getMatch(element, _.attributes);
-
-				// TODO refactor this
-				if (ret) {
-					if (ret.humanReadable && _.all.has(element)) {
-						_.all.get(element).humanReadable = ret.humanReadable;
-					}
-
-					ret = ret.value || ret;
+			// TODO refactor this
+			if (ret) {
+				if (ret.humanReadable && _.all.has(element)) {
+					_.all.get(element).humanReadable = ret.humanReadable;
 				}
 
-				if (!ret || ret === "null") {
-					ret = null;
-				}
+				ret = ret.value || ret;
+			}
 
-				callee.cache.set(element, ret);
+			if (!ret || ret === "null") {
+				ret = null;
 			}
 
 			return ret;
 		},
 
-		getDatatype: function callee (element, attribute) {
-			var ret = (callee.cache = callee.cache || new WeakMap()).get(element);
+		getDatatype: function (element, attribute) {
+			var ret = element.getAttribute("datatype");
 
-			if (ret === undefined || DISABLE_CACHE) {
-				ret = element.getAttribute("datatype");
-
-				if (!ret) {
-					for (var selector in _.datatypes) {
-						if (element.matches(selector)) {
-							ret = _.datatypes[selector][attribute];
-						}
+			if (!ret) {
+				for (var selector in _.datatypes) {
+					if (element.matches(selector)) {
+						ret = _.datatypes[selector][attribute];
 					}
 				}
-
-				ret = ret || "string";
-
-				callee.cache.set(element, ret);
 			}
+
+			ret = ret || "string";
 
 			return ret;
 		},
@@ -704,38 +689,28 @@ var _ = Wysie.Primitive = $.Class({
 			return value;
 		},
 
-		getValue: function callee(element, attribute, datatype) {
-			var getter = (callee.cache = callee.cache || new WeakMap()).get(element);
-
-			if (!getter || DISABLE_CACHE) {
+		getValue: function (element, attribute, datatype) {
 				attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
 				datatype = datatype || _.getDatatype(element, attribute);
 
-				getter = function() {
-					var ret;
+				var ret;
 
-					if (attribute in element && _.useProperty(element, attribute)) {
-						// Returning properties (if they exist) instead of attributes
-						// is needed for dynamic elements such as checkboxes, sliders etc
-						ret = element[attribute];
-					}
-					else if (attribute) {
-						ret = element.getAttribute(attribute);
-					}
-					else {
-						ret = element.getAttribute("content") || element.textContent || null;
-					}
+				if (attribute in element && _.useProperty(element, attribute)) {
+					// Returning properties (if they exist) instead of attributes
+					// is needed for dynamic elements such as checkboxes, sliders etc
+					ret = element[attribute];
+				}
+				else if (attribute) {
+					ret = element.getAttribute(attribute);
+				}
+				else {
+					ret = element.getAttribute("content") || element.textContent || null;
+				}
 
-					return _.cast(ret, datatype);
-				};
-
-				callee.cache.set(element, getter);
-			}
-
-			return getter();
+				return _.cast(ret, datatype);
 		},
 
-		setValue: function callee(element, value, attribute) {
+		setValue: function (element, value, attribute) {
 			if (attribute !== null) {
 				attribute = attribute ||  _.getValueAttribute(element);
 			}

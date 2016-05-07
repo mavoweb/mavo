@@ -214,6 +214,9 @@
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) input.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.wysie-editor {
   max-width: 100%; }
 
+.wysie-ui a {
+  color: inherit; }
+
 .wysie-bar {
   all: initial;
   position: fixed;
