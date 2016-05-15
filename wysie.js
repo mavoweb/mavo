@@ -89,7 +89,7 @@ var _ = self.Stretchy = {
 			var appearance;
 
 			for (var property in cs) {
-				if (!/^(width|webkitLogicalWidth)$/.test(property)) {
+				if (!/^(width|webkitLogicalWidth|length)$/.test(property)) {
 					//console.log(property, option.offsetWidth, cs[property]);
 					option.style[property] = cs[property];
 
@@ -2002,12 +2002,13 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 
 var _ = Wysie.Node = $.Class({
 	abstract: true,
-	constructor: function (element, wysie) {
+	constructor: function (element, wysie, o = {}) {
 		if (!element || !wysie) {
 			throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
 		}
 
 		this.element = element;
+		this.template = o.template;
 
 		this.wysie = wysie;
 		this.property = element.getAttribute("property");
@@ -2142,9 +2143,9 @@ var _ = Wysie.Node = $.Class({
 	toJSON: Wysie.prototype.toJSON,
 
 	static: {
-		create: function(element, wysie, collection) {
-			if (Wysie.is("multiple", element) && !collection) {
-				return new Wysie.Collection(element, wysie);
+		create: function(element, wysie, o = {}) {
+			if (Wysie.is("multiple", element) && !o.collection) {
+				return new Wysie.Collection(element, wysie, o);
 			}
 
 			return Wysie.Unit.create(...arguments);
@@ -2177,32 +2178,20 @@ var _ = Wysie.Node = $.Class({
 var _ = Wysie.Unit = $.Class({
 	abstract: true,
 	extends: Wysie.Node,
-	constructor: function(element, wysie, collection) {
+	constructor: function(element, wysie, o = {}) {
 		this.constructor.all.set(this.element, this);
 
-		this.collection = collection;
+		this.collection = o.collection;
 
 		if (this.collection) {
 			// This is a collection item
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		this.computed = Wysie.is("computed", this.element);
-		this.required = Wysie.is("required", this.element);
+		this.computed = this.template? this.template.computed : Wysie.is("computed", this.element);
+		this.required = this.template? this.template.required : Wysie.is("required", this.element);
 
 		Wysie.hooks.run("unit-init-end", this);
-	},
-
-	get closestCollection() {
-		if (this.collection) {
-			return this.collection;
-		}
-
-		return this.walkUp(scope => {
-			if (scope.collection) {
-				return scope.collection;
-			}
-		}) || null;
 	},
 
 	/**
@@ -2236,6 +2225,20 @@ var _ = Wysie.Unit = $.Class({
 				return null;
 			}
 		});
+	},
+
+	lazy: {
+		closestCollection: function() {
+			if (this.collection) {
+				return this.collection;
+			}
+
+			return this.walkUp(scope => {
+				if (scope.collection) {
+					return scope.collection;
+				}
+			}) || null;
+		}
 	},
 
 	live: {
@@ -2303,12 +2306,12 @@ var _ = Wysie.Unit = $.Class({
 			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
 		},
 
-		create: function(element, wysie, collection) {
+		create: function(element, wysie, o = {}) {
 			if (!element || !wysie) {
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, collection);
+			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, o);
 		}
 	}
 });
@@ -2396,7 +2399,18 @@ var _ = Wysie.Expression = $.Class({
 
 var _ = Wysie.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.node = this.element = o.node;
+		this.all = o.all; // the Wysie.Expressions object that this belongs to
+		this.node = o.node;
+		this.path = o.path;
+
+		if (!this.node) {
+			// No node provided, figure it out from path
+			this.node = this.path.reduce((node, index) => {
+				return node.childNodes[index];
+			}, this.all.scope.element);
+		}
+
+		this.element = this.node;
 
 		if (this.node.nodeType === 3) {
 			this.element = this.node.parentNode;
@@ -2408,7 +2422,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		}
 
 		this.attribute = o.attribute || null;
-		this.all = o.all; // the Wysie.Expressions object that this belongs to
+
 		this.expression = this.text.trim();
 		this.template = this.tokenize(this.expression);
 
@@ -2588,7 +2602,20 @@ var _ = Wysie.Expressions = $.Class({
 		Wysie.hooks.run("expressions-init-start", this);
 
 		if (this.scope) {
-			this.traverse();
+			var template = this.scope.template;
+			if (template && template.expressions) {
+				// We know which expressions we have, don't traverse again
+				template.expressions.all.forEach(et => {
+					this.all.push(new Wysie.Expression.Text({
+						path: et.path,
+						attribute: et.attribute,
+						all: this
+					}));
+				});
+			}
+			else {
+				this.traverse();
+			}
 		}
 
 		// TODO less stupid name?
@@ -2649,12 +2676,13 @@ var _ = Wysie.Expressions = $.Class({
 		this.updateAlso.forEach(exp => exp.update());
 	},
 
-	extract: function(node, attribute) {
+	extract: function(node, attribute, path) {
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
 			this.all.push(new Wysie.Expression.Text({
 				node,
+				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
 				all: this
 			}));
@@ -2662,8 +2690,9 @@ var _ = Wysie.Expressions = $.Class({
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
-	traverse: function(node) {
+	traverse: function(node, path) {
 		node = node || this.scope.element;
+		path = path || "";
 
 		if (node.matches && node.matches(_.escape)) {
 			return;
@@ -2671,14 +2700,14 @@ var _ = Wysie.Expressions = $.Class({
 
 		if (node.nodeType === 3) { // Text node
 			// Leaf node, extract references from content
-			this.extract(node, null);
+			this.extract(node, null, path);
 		}
 
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
 		if (node == this.scope.element || !Wysie.is("scope", node)) {
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
-			$$(node.childNodes).forEach(child => this.traverse(child));
+			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path));
+			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`));
 		}
 	},
 
@@ -2921,7 +2950,7 @@ function operator(name, op, o = {}) {
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element, wysie, collection) {
+	constructor: function (element, wysie, o) {
 		this.properties = {};
 
 		this.scope = this;
@@ -2941,13 +2970,14 @@ var _ = Wysie.Scope = $.Class({
 
 			if (this.contains(element)) {
 				var existing = this.properties[property];
+				var template = this.template? this.template.properties[property] : null;
 
 				if (existing) {
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie);
+						collection = new Wysie.Collection(existing.element, this.wysie, {template});
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
@@ -2961,7 +2991,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie);
+					var obj = Wysie.Node.create(element, this.wysie, {template});
 					obj.scope = obj instanceof _? obj : this;
 
 					obj.parentScope = this;
@@ -3114,7 +3144,7 @@ var _ = Wysie.Scope = $.Class({
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element, wysie, collection) {
+	constructor: function (element, wysie, o) {
 		// Which attribute holds the data, if any?
 		// "null" or null for none (i.e. data is in content).
 		this.attribute = _.getValueAttribute(this.element);
@@ -4063,18 +4093,18 @@ Wysie.Primitive.editors.img = {
 
 var _ = Wysie.Collection = $.Class({
 	extends: Wysie.Node,
-	constructor: function (element, wysie) {
+	constructor: function (element, wysie, o) {
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
-		this.template = element;
+		this.templateElement = element;
 
 		this.items = [];
 
 		// ALL descendant property names as an array
-		this.properties = $$(Wysie.selectors.property, this.template)._.getAttribute("property");
+		this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
 
-		this.mutable = this.template.matches(Wysie.selectors.multiple);
+		this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
 
 		Wysie.hooks.run("collection-init-end", this);
 	},
@@ -4113,9 +4143,12 @@ var _ = Wysie.Collection = $.Class({
 	// Create item but don't insert it anywhere
 	// Mostly used internally
 	createItem: function (element) {
-		var element = element || this.template.cloneNode(true);
+		var element = element || this.templateElement.cloneNode(true);
 
-		var item = Wysie.Unit.create(element, this.wysie, this);
+		var item = Wysie.Unit.create(element, this.wysie, {
+			collection: this,
+			template: this.items[0] || (this.template? this.template.items[0] : null)
+		});
 
 		// Add delete & add buttons
 		if (this.mutable) {
@@ -4359,18 +4392,18 @@ var _ = Wysie.Collection = $.Class({
 			if (value && value !== this.mutable) {
 				this.wysie.needsEdit = true;
 
-				this.required = this.template.matches(Wysie.selectors.required);
+				this.required = this.templateElement.matches(Wysie.selectors.required);
 
 				// Keep position of the template in the DOM, since we’re gonna remove it
 				this.marker = $.create("div", {
 					hidden: true,
 					className: "wysie-marker",
-					after: this.template
+					after: this.templateElement
 				});
 
-				this.template.classList.add("wysie-item");
+				this.templateElement.classList.add("wysie-item");
 
-				this.template.remove();
+				this.templateElement.remove();
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -4389,7 +4422,7 @@ var _ = Wysie.Collection = $.Class({
 					}
 				}
 
-				this.template = this.element.cloneNode(true);
+				this.templateElement = this.element.cloneNode(true);
 			}
 		}
 	},
@@ -4403,7 +4436,7 @@ var _ = Wysie.Collection = $.Class({
 				return false;
 			}
 
-			if (this.template.hasAttribute("data-bottomup")) {
+			if (this.templateElement.hasAttribute("data-bottomup")) {
 				// Attribute data-bottomup has the highest priority and overrides any heuristics
 				// TODO what if we want to override the heuristics and set it to false?
 				return true;
@@ -4415,11 +4448,11 @@ var _ = Wysie.Collection = $.Class({
 			}
 
 			// If add button is already in the DOM and *before* our template, then we default to prepending
-			return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
+			return !!(this.addButton.compareDocumentPosition(this.templateElement) & Node.DOCUMENT_POSITION_FOLLOWING);
 		},
 
 		closestCollection: function() {
-			var parent = this.marker? this.marker.parentNode : this.template.parentNode;
+			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
 			return parent.closest(Wysie.selectors.item);
 		},
@@ -4431,7 +4464,7 @@ var _ = Wysie.Collection = $.Class({
 
 			if (scope) {
 				var button = $$(selector, scope).filter(button => {
-					return !this.template.contains(button);
+					return !this.templateElement.contains(button);
 				})[0];
 			}
 
@@ -4988,10 +5021,6 @@ var _ = Wysie.Debug = {
 };
 
 Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
-_.time("Wysie.Expressions.prototype", "update");
-_.time("Wysie.Expressions.prototype", "traverse");
-_.time("Wysie.Scope.prototype", "getRelativeData");
-_.time("Wysie.Primitive", "getValue");
 
 Wysie.selectors.debug = ".debug";
 

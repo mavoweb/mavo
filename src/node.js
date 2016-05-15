@@ -2,12 +2,13 @@
 
 var _ = Wysie.Node = $.Class({
 	abstract: true,
-	constructor: function (element, wysie) {
+	constructor: function (element, wysie, o = {}) {
 		if (!element || !wysie) {
 			throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
 		}
 
 		this.element = element;
+		this.template = o.template;
 
 		this.wysie = wysie;
 		this.property = element.getAttribute("property");
@@ -142,9 +143,9 @@ var _ = Wysie.Node = $.Class({
 	toJSON: Wysie.prototype.toJSON,
 
 	static: {
-		create: function(element, wysie, collection) {
-			if (Wysie.is("multiple", element) && !collection) {
-				return new Wysie.Collection(element, wysie);
+		create: function(element, wysie, o = {}) {
+			if (Wysie.is("multiple", element) && !o.collection) {
+				return new Wysie.Collection(element, wysie, o);
 			}
 
 			return Wysie.Unit.create(...arguments);

@@ -2,7 +2,7 @@
 
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element, wysie, collection) {
+	constructor: function (element, wysie, o) {
 		// Which attribute holds the data, if any?
 		// "null" or null for none (i.e. data is in content).
 		this.attribute = _.getValueAttribute(this.element);

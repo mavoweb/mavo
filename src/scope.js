@@ -2,7 +2,7 @@
 
 var _ = Wysie.Scope = $.Class({
 	extends: Wysie.Unit,
-	constructor: function (element, wysie, collection) {
+	constructor: function (element, wysie, o) {
 		this.properties = {};
 
 		this.scope = this;
@@ -22,13 +22,14 @@ var _ = Wysie.Scope = $.Class({
 
 			if (this.contains(element)) {
 				var existing = this.properties[property];
+				var template = this.template? this.template.properties[property] : null;
 
 				if (existing) {
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie);
+						collection = new Wysie.Collection(existing.element, this.wysie, {template});
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
@@ -42,7 +43,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie);
+					var obj = Wysie.Node.create(element, this.wysie, {template});
 					obj.scope = obj instanceof _? obj : this;
 
 					obj.parentScope = this;

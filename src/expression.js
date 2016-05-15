@@ -79,7 +79,18 @@ var _ = Wysie.Expression = $.Class({
 
 var _ = Wysie.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.node = this.element = o.node;
+		this.all = o.all; // the Wysie.Expressions object that this belongs to
+		this.node = o.node;
+		this.path = o.path;
+
+		if (!this.node) {
+			// No node provided, figure it out from path
+			this.node = this.path.reduce((node, index) => {
+				return node.childNodes[index];
+			}, this.all.scope.element);
+		}
+
+		this.element = this.node;
 
 		if (this.node.nodeType === 3) {
 			this.element = this.node.parentNode;
@@ -91,7 +102,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		}
 
 		this.attribute = o.attribute || null;
-		this.all = o.all; // the Wysie.Expressions object that this belongs to
+
 		this.expression = this.text.trim();
 		this.template = this.tokenize(this.expression);
 
@@ -271,7 +282,20 @@ var _ = Wysie.Expressions = $.Class({
 		Wysie.hooks.run("expressions-init-start", this);
 
 		if (this.scope) {
-			this.traverse();
+			var template = this.scope.template;
+			if (template && template.expressions) {
+				// We know which expressions we have, don't traverse again
+				template.expressions.all.forEach(et => {
+					this.all.push(new Wysie.Expression.Text({
+						path: et.path,
+						attribute: et.attribute,
+						all: this
+					}));
+				});
+			}
+			else {
+				this.traverse();
+			}
 		}
 
 		// TODO less stupid name?
@@ -332,12 +356,13 @@ var _ = Wysie.Expressions = $.Class({
 		this.updateAlso.forEach(exp => exp.update());
 	},
 
-	extract: function(node, attribute) {
+	extract: function(node, attribute, path) {
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
 			this.all.push(new Wysie.Expression.Text({
 				node,
+				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
 				all: this
 			}));
@@ -345,8 +370,9 @@ var _ = Wysie.Expressions = $.Class({
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
-	traverse: function(node) {
+	traverse: function(node, path) {
 		node = node || this.scope.element;
+		path = path || "";
 
 		if (node.matches && node.matches(_.escape)) {
 			return;
@@ -354,14 +380,14 @@ var _ = Wysie.Expressions = $.Class({
 
 		if (node.nodeType === 3) { // Text node
 			// Leaf node, extract references from content
-			this.extract(node, null);
+			this.extract(node, null, path);
 		}
 
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
 		if (node == this.scope.element || !Wysie.is("scope", node)) {
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute));
-			$$(node.childNodes).forEach(child => this.traverse(child));
+			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path));
+			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`));
 		}
 	},
 

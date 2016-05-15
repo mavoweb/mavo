@@ -2,18 +2,18 @@
 
 var _ = Wysie.Collection = $.Class({
 	extends: Wysie.Node,
-	constructor: function (element, wysie) {
+	constructor: function (element, wysie, o) {
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
-		this.template = element;
+		this.templateElement = element;
 
 		this.items = [];
 
 		// ALL descendant property names as an array
-		this.properties = $$(Wysie.selectors.property, this.template)._.getAttribute("property");
+		this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
 
-		this.mutable = this.template.matches(Wysie.selectors.multiple);
+		this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
 
 		Wysie.hooks.run("collection-init-end", this);
 	},
@@ -52,9 +52,12 @@ var _ = Wysie.Collection = $.Class({
 	// Create item but don't insert it anywhere
 	// Mostly used internally
 	createItem: function (element) {
-		var element = element || this.template.cloneNode(true);
+		var element = element || this.templateElement.cloneNode(true);
 
-		var item = Wysie.Unit.create(element, this.wysie, this);
+		var item = Wysie.Unit.create(element, this.wysie, {
+			collection: this,
+			template: this.items[0] || (this.template? this.template.items[0] : null)
+		});
 
 		// Add delete & add buttons
 		if (this.mutable) {
@@ -298,18 +301,18 @@ var _ = Wysie.Collection = $.Class({
 			if (value && value !== this.mutable) {
 				this.wysie.needsEdit = true;
 
-				this.required = this.template.matches(Wysie.selectors.required);
+				this.required = this.templateElement.matches(Wysie.selectors.required);
 
 				// Keep position of the template in the DOM, since we’re gonna remove it
 				this.marker = $.create("div", {
 					hidden: true,
 					className: "wysie-marker",
-					after: this.template
+					after: this.templateElement
 				});
 
-				this.template.classList.add("wysie-item");
+				this.templateElement.classList.add("wysie-item");
 
-				this.template.remove();
+				this.templateElement.remove();
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -328,7 +331,7 @@ var _ = Wysie.Collection = $.Class({
 					}
 				}
 
-				this.template = this.element.cloneNode(true);
+				this.templateElement = this.element.cloneNode(true);
 			}
 		}
 	},
@@ -342,7 +345,7 @@ var _ = Wysie.Collection = $.Class({
 				return false;
 			}
 
-			if (this.template.hasAttribute("data-bottomup")) {
+			if (this.templateElement.hasAttribute("data-bottomup")) {
 				// Attribute data-bottomup has the highest priority and overrides any heuristics
 				// TODO what if we want to override the heuristics and set it to false?
 				return true;
@@ -354,11 +357,11 @@ var _ = Wysie.Collection = $.Class({
 			}
 
 			// If add button is already in the DOM and *before* our template, then we default to prepending
-			return !!(this.addButton.compareDocumentPosition(this.template) & Node.DOCUMENT_POSITION_FOLLOWING);
+			return !!(this.addButton.compareDocumentPosition(this.templateElement) & Node.DOCUMENT_POSITION_FOLLOWING);
 		},
 
 		closestCollection: function() {
-			var parent = this.marker? this.marker.parentNode : this.template.parentNode;
+			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
 			return parent.closest(Wysie.selectors.item);
 		},
@@ -370,7 +373,7 @@ var _ = Wysie.Collection = $.Class({
 
 			if (scope) {
 				var button = $$(selector, scope).filter(button => {
-					return !this.template.contains(button);
+					return !this.templateElement.contains(button);
 				})[0];
 			}
 

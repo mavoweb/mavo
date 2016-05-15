@@ -6,32 +6,20 @@
 var _ = Wysie.Unit = $.Class({
 	abstract: true,
 	extends: Wysie.Node,
-	constructor: function(element, wysie, collection) {
+	constructor: function(element, wysie, o = {}) {
 		this.constructor.all.set(this.element, this);
 
-		this.collection = collection;
+		this.collection = o.collection;
 
 		if (this.collection) {
 			// This is a collection item
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		this.computed = Wysie.is("computed", this.element);
-		this.required = Wysie.is("required", this.element);
+		this.computed = this.template? this.template.computed : Wysie.is("computed", this.element);
+		this.required = this.template? this.template.required : Wysie.is("required", this.element);
 
 		Wysie.hooks.run("unit-init-end", this);
-	},
-
-	get closestCollection() {
-		if (this.collection) {
-			return this.collection;
-		}
-
-		return this.walkUp(scope => {
-			if (scope.collection) {
-				return scope.collection;
-			}
-		}) || null;
 	},
 
 	/**
@@ -65,6 +53,20 @@ var _ = Wysie.Unit = $.Class({
 				return null;
 			}
 		});
+	},
+
+	lazy: {
+		closestCollection: function() {
+			if (this.collection) {
+				return this.collection;
+			}
+
+			return this.walkUp(scope => {
+				if (scope.collection) {
+					return scope.collection;
+				}
+			}) || null;
+		}
 	},
 
 	live: {
@@ -132,12 +134,12 @@ var _ = Wysie.Unit = $.Class({
 			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
 		},
 
-		create: function(element, wysie, collection) {
+		create: function(element, wysie, o = {}) {
 			if (!element || !wysie) {
 				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
 			}
 
-			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, collection);
+			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, o);
 		}
 	}
 });

@@ -125,7 +125,7 @@ var _ = Wysie.Debug = {
 		if (!_.time.all) {
 			return;
 		}
-		
+
 		console.table(_.time.all.map(o => {
 			return {
 				"Function": `${o.objName}.${o.name}`,
@@ -139,11 +139,6 @@ var _ = Wysie.Debug = {
 };
 
 Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
-/*_.time("Wysie.Expressions.prototype", "update");
-// _.time("Wysie.Expression.Text.prototype", "update");
-_.time("Wysie.Expressions.prototype", "traverse");
-_.time("Wysie.Scope.prototype", "getRelativeData");
-_.time("Wysie.Primitive", "getValue");*/
 
 Wysie.selectors.debug = ".debug";
 
