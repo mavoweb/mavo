@@ -20,7 +20,7 @@ To use:
 - To contribute, you first need to (one time stuff):
 	- Install node
 	- Run `npm install` to install the build tools (gulp & gulp plugins)
-	- Clone [Bliss](https://github.com/leaverou/bliss) in a repo adjacent to the one you cloned wysie in.
+	- Clone [Bliss](https://github.com/leaverou/bliss) and Stretchy (https://github.com/leaverou/stretchy) in a repo adjacent to the one you cloned wysie in.
 - Now, every time you work on wysie:
 	- Run `gulp watch` to automatically build every time you save.
 	- Run `python -m SimpleHTTPServer` to be able to use `http://` locally, since most APIs don't like the `file://` protocol and Chrome doesn't even allow AJAX on it.
