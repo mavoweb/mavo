@@ -4370,7 +4370,11 @@ Wysie.Primitive.editors.img = {
 			}
 
 			if (index in this.items) {
-				item.element._.after(this.items[index].element);
+				item.element._.before(this.items[index].element);
+
+				if (!this.bottomUp) {
+					index = (index || 1) - 1;
+				}
 
 				this.items.splice(index, 0, item);
 			} else {
