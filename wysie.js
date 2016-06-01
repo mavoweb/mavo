@@ -536,11 +536,10 @@ extend($, {
 				}
 				else {
 					reject($.extend(Error(env.xhr.statusText), {
-						get status() { return this.xhr.status; },
-						xhr: env.xhr
+						xhr: env.xhr,
+						get status() { return this.xhr.status; }
 					}));
 				}
-
 			};
 
 			env.xhr.onerror = function() {
@@ -554,9 +553,6 @@ extend($, {
 			};
 
 			env.xhr.send(env.method === 'GET'? null : env.data);
-		})
-		.catch(function(err) {
-			console.error(err);
 		});
 	},
 
@@ -1768,9 +1764,9 @@ var _ = Wysie.Storage = $.Class({
 		var getBackend = this.getBackends[0];
 
 		if (getBackend) {
-			getBackend.ready.then(() => {
-				return getBackend.get();
-			}).then(response => {
+			getBackend.ready
+			.then(() => getBackend.get())
+			.then(response => {
 				this.inProgress = false;
 				this.wysie.wrapper._.fire("wysie:load");
 
@@ -1963,7 +1959,8 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	get: function() {
 		return $.fetch(this.url.href, {
 			responseType: "json"
-		}).then(xhr => Promise.resolve(xhr.response));
+		})
+		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	static: {
@@ -2188,8 +2185,13 @@ var _ = Wysie.Unit = $.Class({
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		this.computed = this.template? this.template.computed : Wysie.is("computed", this.element);
-		this.required = this.template? this.template.required : Wysie.is("required", this.element);
+		if (this.template) {
+			$.extend(this, this.template, ["computed", "required"]);
+		}
+		else {
+			this.computed = Wysie.is("computed", this.element);
+			this.required = Wysie.is("required", this.element);
+		}
 
 		Wysie.hooks.run("unit-init-end", this);
 	},
@@ -3145,16 +3147,20 @@ var _ = Wysie.Scope = $.Class({
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, o) {
-		// Which attribute holds the data, if any?
-		// "null" or null for none (i.e. data is in content).
-		this.attribute = _.getValueAttribute(this.element);
-
-		if (!this.attribute) {
-			this.element.normalize();
+		if (this.template) {
+			$.extend(this, this.template, ["attribute", "datatype"]);
 		}
+		else {
+			// Which attribute holds the data, if any?
+			// "null" or null for none (i.e. data is in content).
+			this.attribute = _.getValueAttribute(this.element);
 
-		// What is the datatype?
-		this.datatype = _.getDatatype(this.element, this.attribute);
+			if (!this.attribute) {
+				this.element.normalize();
+			}
+
+			this.datatype = _.getDatatype(this.element, this.attribute);
+		}
 
 		// Primitives containing an expression as their value are implicitly computed
 		var expressions = Wysie.Expression.Text.elements.get(this.element);

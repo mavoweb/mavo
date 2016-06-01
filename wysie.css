@@ -220,7 +220,7 @@
 .wysie-bar {
   all: initial;
   position: fixed;
-  z-index: 99999;
+  z-index: 10000;
   color: white;
   font-family: inherit;
   font-size: 1rem;
@@ -254,6 +254,15 @@
     .wysie-wrapper.can-login:not([data-editing]) .wysie-bar .status,
     .wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) .wysie-bar .status {
       display: none; }
+  .wysie-bar button, .wysie-bar .button {
+    all: unset;
+    font-weight: bold;
+    cursor: pointer; }
+    .wysie-bar button:enabled:hover, .wysie-bar .button:enabled:hover {
+      background: rgba(255, 255, 255, 0.2); }
+    .wysie-bar button:disabled, .wysie-bar .button:disabled {
+      opacity: .6;
+      cursor: not-allowed; }
   .wysie-bar > button,
   .wysie-bar > .button {
     padding: .3em .6em .4em;
@@ -270,20 +279,10 @@
     .wysie-bar > .button:enabled:hover::before {
       opacity: .8; }
   .wysie-bar .avatar {
+    all: unset;
     display: inline-block;
     vertical-align: -.1em;
     max-height: 1em; }
-  .wysie-bar button, .wysie-bar .button {
-    background: transparent;
-    font: inherit;
-    font-weight: bold;
-    color: inherit;
-    cursor: pointer; }
-    .wysie-bar button:enabled:hover, .wysie-bar .button:enabled:hover {
-      background: rgba(255, 255, 255, 0.2); }
-    .wysie-bar button:disabled, .wysie-bar .button:disabled {
-      opacity: .6;
-      cursor: not-allowed; }
   .wysie-bar a.button {
     text-decoration: none; }
   .wysie-bar .edit::before {

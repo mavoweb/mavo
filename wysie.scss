@@ -339,7 +339,7 @@ $font-mono: Consolas, Monaco, monospace;
 .wysie-bar {
 	all: initial;
 	position: fixed;
-	z-index: 99999; // this is wrong, but must override other wrong things :(
+	z-index: 10000; // this is wrong, but must override other wrong things :(
 	color: white;
 	font-family: inherit;
 	font-size: 1rem;
@@ -380,6 +380,21 @@ $font-mono: Consolas, Monaco, monospace;
 		}
 	}
 
+	button, .button {
+		all: unset;
+		font-weight: bold;
+		cursor: pointer;
+
+		&:enabled:hover {
+			background: hsla(0,0%,100%,.2);
+		}
+
+		&:disabled {
+			opacity: .6;
+			cursor: not-allowed;
+		}
+	}
+
 	& > button,
 	& > .button {
 		padding: .3em .6em .4em;
@@ -400,26 +415,10 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 
 	.avatar {
+		all: unset;
 		display: inline-block;
 		vertical-align: -.1em;
 		max-height: 1em;
-	}
-
-	button, .button {
-		background: transparent;
-		font: inherit;
-		font-weight: bold;
-		color: inherit;
-		cursor: pointer;
-
-		&:enabled:hover {
-			background: hsla(0,0%,100%,.2);
-		}
-
-		&:disabled {
-			opacity: .6;
-			cursor: not-allowed;
-		}
 	}
 
 	a.button {

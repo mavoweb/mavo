@@ -110,9 +110,9 @@ var _ = Wysie.Storage = $.Class({
 		var getBackend = this.getBackends[0];
 
 		if (getBackend) {
-			getBackend.ready.then(() => {
-				return getBackend.get();
-			}).then(response => {
+			getBackend.ready
+			.then(() => getBackend.get())
+			.then(response => {
 				this.inProgress = false;
 				this.wysie.wrapper._.fire("wysie:load");
 
@@ -305,7 +305,8 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	get: function() {
 		return $.fetch(this.url.href, {
 			responseType: "json"
-		}).then(xhr => Promise.resolve(xhr.response));
+		})
+		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	static: {

@@ -528,10 +528,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						resolve(env.xhr);
 					} else {
 						reject($.extend(Error(env.xhr.statusText), {
+							xhr: env.xhr,
 							get status() {
 								return this.xhr.status;
-							},
-							xhr: env.xhr
+							}
 						}));
 					}
 				};
@@ -547,8 +547,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				};
 
 				env.xhr.send(env.method === 'GET' ? null : env.data);
-			}).catch(function (err) {
-				console.error(err);
 			});
 		},
 
@@ -2036,6 +2034,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				responseType: "json"
 			}).then(function (xhr) {
 				return Promise.resolve(xhr.response);
+			}, function () {
+				return Promise.resolve(null);
 			});
 		},
 
@@ -2283,8 +2283,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.scope = this.parentScope = this.collection.parentScope;
 			}
 
-			this.computed = this.template ? this.template.computed : Wysie.is("computed", this.element);
-			this.required = this.template ? this.template.required : Wysie.is("required", this.element);
+			if (this.template) {
+				$.extend(this, this.template, ["computed", "required"]);
+			} else {
+				this.computed = Wysie.is("computed", this.element);
+				this.required = Wysie.is("required", this.element);
+			}
 
 			Wysie.hooks.run("unit-init-end", this);
 		},
@@ -3313,16 +3317,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor(element, wysie, o) {
 			var _this21 = this;
 
-			// Which attribute holds the data, if any?
-			// "null" or null for none (i.e. data is in content).
-			this.attribute = _.getValueAttribute(this.element);
+			if (this.template) {
+				$.extend(this, this.template, ["attribute", "datatype"]);
+			} else {
+				// Which attribute holds the data, if any?
+				// "null" or null for none (i.e. data is in content).
+				this.attribute = _.getValueAttribute(this.element);
 
-			if (!this.attribute) {
-				this.element.normalize();
+				if (!this.attribute) {
+					this.element.normalize();
+				}
+
+				this.datatype = _.getDatatype(this.element, this.attribute);
 			}
-
-			// What is the datatype?
-			this.datatype = _.getDatatype(this.element, this.attribute);
 
 			// Primitives containing an expression as their value are implicitly computed
 			var expressions = Wysie.Expression.Text.elements.get(this.element);
