@@ -2634,13 +2634,6 @@ var _ = Wysie.Expressions = $.Class({
 
 			// Watch changes and update value
 			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
-
-			// Enable throttling only after a while to ensure everything has initially run
-			this.THROTTLE = 0;
-
-			this.scope.wysie.wrapper.addEventListener("wysie:load", evt => {
-				setTimeout(() => this.THROTTLE = 25, 100);
-			});
 		}
 	},
 
@@ -2652,28 +2645,13 @@ var _ = Wysie.Expressions = $.Class({
 			return;
 		}
 
-		if (this.THROTTLE > 0) {
-			var elapsedTime = performance.now() - this.lastUpdated;
-
-			clearTimeout(callee.timeout);
-
-			if (this.lastUpdated && (elapsedTime < this.THROTTLE)) {
-				// Throttle
-				callee.timeout = setTimeout(() => this.update(), this.THROTTLE - elapsedTime);
-
-				return;
-			}
-		}
-
 		var env = { context: this, data: this.scope.getRelativeData() };
 
 		Wysie.hooks.run("expressions-update-start", env);
 
-		$$(this.all).forEach(ref => ref.update(env.data));
-
-		if (this.THROTTLE > 0) {
-			this.lastUpdated = performance.now();
-		}
+		$$(this.all).forEach(ref => {
+			ref.update(env.data);
+		});
 
 		this.updateAlso.forEach(exp => exp.update());
 	},
@@ -2728,8 +2706,6 @@ var _ = Wysie.Expressions = $.Class({
 	},
 
 	static: {
-		THROTTLE: 0,
-
 		escape: ".ignore-expressions",
 
 		lazy: {
@@ -5302,6 +5278,8 @@ Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
 		env.td.textContent = env.td.title = value;
 	}
 });
+
+// Wysie.Debug.time("Wysie.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);
 

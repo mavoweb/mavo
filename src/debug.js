@@ -400,4 +400,6 @@ Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
 	}
 });
 
+// Wysie.Debug.time("Wysie.Expressions.prototype", "update");
+
 })(Bliss, Bliss.$);
