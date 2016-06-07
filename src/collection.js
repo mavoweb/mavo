@@ -11,9 +11,14 @@ var _ = Wysie.Collection = $.Class({
 		this.items = [];
 
 		// ALL descendant property names as an array
-		this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
-
-		this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+		if (this.template) {
+			this.properties = this.template.properties;
+			this.mutable = this.template.mutable;
+		}
+		else {
+			this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
+			this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+		}
 
 		Wysie.hooks.run("collection-init-end", this);
 	},
@@ -303,6 +308,11 @@ var _ = Wysie.Collection = $.Class({
 	live: {
 		mutable: function(value) {
 			if (value && value !== this.mutable) {
+				// Why is all this code here? Because we want it executed
+				// every time mutable changes, not just in the constructor 
+				// (think multiple elements with the same property name, where only one has data-multiple)
+				this._mutable = value;
+
 				this.wysie.needsEdit = true;
 
 				this.required = this.templateElement.matches(Wysie.selectors.required);
@@ -345,14 +355,15 @@ var _ = Wysie.Collection = $.Class({
 			/*
 			 * Add new items at the top or bottom?
 			 */
+
 			if (!this.mutable) {
 				return false;
 			}
 
-			if (this.templateElement.hasAttribute("data-bottomup")) {
+			var order = this.templateElement.getAttribute("data-order");
+			if (order !== null) {
 				// Attribute data-bottomup has the highest priority and overrides any heuristics
-				// TODO what if we want to override the heuristics and set it to false?
-				return true;
+				return /^desc\b/i.test(order);
 			}
 
 			if (!this.addButton.parentNode) {
