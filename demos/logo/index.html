@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>MAVO logo</title>
+<link rel="stylesheet" href="../../wysie.css">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body data-store class="xdebug">
+
+<fieldset>
+	<legend>Geometry</legend>
+	<label>
+		Angle: <input type="range" min="0" max="60" step=".5" property="angle" value="25"> [angle]deg
+	</label>
+
+	<label>
+		Thickness:
+		<input type="range" min="1" max="[height/2]" step=".2" property="thickness" value="12"> [thickness]
+	</label>
+
+	<meta property="height" content="50" class="computed">
+</fieldset>
+
+<fieldset id="colors">
+	<legend>Colors</legend>
+	<label>
+		M color:
+		<input property="mcolor" value="hsl(30, 100%, 50%)">
+	</label>
+
+	<label>
+		A color:
+		<input property="acolor" value="hsl(330, 90%, 45%)">
+	</label>
+
+	<label>
+		V color:
+		<input property="vcolor" value="hsl(85, 80%, 45%)">
+	</label>
+
+	<label>
+		O color:
+		<input property="ocolor" value="hsl(200, 90%, 55%)">
+	</label>
+</fieldset>
+
+<meta property="charwidth" content="[100 * tan(angle * PI/180) + 2 * thickness]">
+
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 [height]" width="1000">
+<style>
+svg {
+	fill: [mcolor];
+}
+
+.bar {
+	transform-origin: 100% 0;
+	transform: translateX([thickness]px) skew(-[angle]deg);
+}
+
+#bar2 {
+	transform: scale(-1, 1) skew(-[angle]deg);
+}
+
+#A {
+	fill: [acolor];
+	transform: translateX([charwidth - 2 * thickness]px);
+}
+
+#V {
+	transform: translate([2*charwidth - thickness]px, [height]px) rotate(180deg);
+	fill: [vcolor];
+}
+
+#O {
+	fill: none;
+	stroke: [ocolor];
+	stroke-width: [thickness];
+}
+
+#A-crossbow {
+	fill: [acolor];
+}
+</style>
+
+<g id="bracket">
+	<rect height="100%" id="bar" class="bar" width="[thickness]" />
+	<rect height="100%" id="bar2" class="bar" width="[thickness]" />
+</g>
+
+<use xlink:href="#bracket" id="A" />
+<circle id="A-crossbow" r="[thickness / 2.5]" cx="[charwidth - thickness/2]" cy="70%"></circle>
+
+<use xlink:href="#bracket" id="V" />
+<circle id="O" r="[height/2 - thickness/2]" cx="[3*charwidth - 4*thickness]" cy="[height/2]"></circle>
+
+
+</svg>
+
+<script src="../../wysie.js"></script>
+
+</body>
+</html>

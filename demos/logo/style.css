@@ -1,0 +1,27 @@
+svg {
+	display: block;
+	overflow: visible;
+	margin: 10em;
+}
+
+label {
+	display: inline-block;
+}
+
+fieldset {
+	border: 1px solid silver;
+	border-radius: .4em;
+}
+
+	fieldset > label {
+		width: 23%;
+	}
+
+input {
+	font: inherit;
+}
+
+svg {
+	/*-webkit-filter: drop-shadow(0 400px gray);
+	filter: drop-shadow(0 400px gray);*/
+}
