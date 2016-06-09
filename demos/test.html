@@ -36,89 +36,15 @@ label {
 </head>
 <body>
 <main data-store="#data" class="debug">
-	<span property=foo><select>
-		<option value="us">USA</option>
-		<option value="gb">United Kingdom</option>
-	</select></span>
-	[foo]
+
+	<div property="foo" data-multiple="">
+		<time datetime="2016-05-27" property="date" data-multiple></time>
+	</div>
+
 </main>
 <pre id="data">{
-	"foo": "gb"
+	"foo": [{"date": "1986-06-13"}, {"date": "1959-12-31"}]
 }</pre>
-<!-- <main data-store="#foo" class="debug">
-	Hobbies:
-
-	<label>Search names: <input type='search' property="search" class="computed" /></label>
-	<input type="range" property="slider" />
-
-	<label>
-		<input type="checkbox" property="banana" />
-		I am a banana!
-	</label>
-
-	<p class="flag-[country]">Country: <span property="country">
-		<select>
-			<option value="us" selected>United States</option>
-			<option value="gb">United Kingdom</option>
-		</select>
-	</span></p>
-
-	<ul>
-		<li property="person" style="display: [iff(search && !name.includes(search), none, block)]">
-			<div property="name">Vector</div>
-			<div property class="age number">10</div>
-			<div>Age in 2 years: [age + 2]</div>
-			<ul>
-				<li property="hobby" data-default required>purring</li>
-			</ul>
-			<span style="display: [if(url.length, inline, none)]">Websites:</span>
-			<a property="url" data-multiple required data-default href="http://google.com">
-				<span property="name" data-default>Google</span>
-			</a>
-		</li>
-	</ul>
-
-	<h2>Aggregates over age:</h2>
-	<dl>
-		<dt>All ages:</dt>
-		<dd>[age]</dd>
-		<dt>Number of people:</dt>
-		<dd>[count(person)]</dd>
-		<dt>Number of people with age:</dt>
-		<dd>[count(age)]</dd>
-		<dt>Number of hobbies total:</dt>
-		<dd>[count(hobby)]</dd>
-		<dt>Average:</dt>
-		<dd>[avg(age)]</dd>
-		<dt>Min:</dt>
-		<dd>[min(age)]</dd>
-		<dt>Max:</dt>
-		<dd>[Max(age)]</dd>
-		<dt>Sum:</dt>
-		<dd>[SUM(age)]</dd>
-		<dt>Number of young people:</dt>
-		<dd>[count(age < 25)]</dd>
-	</dl>
-</main> -->
-
-<script type="application/json" id="foo2"></script>
-<script type="application/json" id="foo">{
-	"slider": 80,
-	"person": [
-		{"name": "Lea", "age": 30, "url": [
-			{"name": "Blog", "url": "http://lea.verou.me"},
-			{"name": "Twitter", "url": "https://twitter.com/leaverou"}
-		]},
-		{"name": "Chris", "hobby": ["wine", "food", "electronics", "SVG"]},
-		{"name": "Eirik", "age": "52abc"},
-		{"name": "Amy", "age": "abc"},
-		{"name": "Thras", "age": "()"},
-		{"name": "Sirma", "age": 24, "hobby": ["painting", "yoga", "exercise", "flying to Turkey"]}
-	]
-}</script>
-<!-- ,
-
--->
 
 <script src="../wysie.js"></script>
 

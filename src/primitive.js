@@ -4,14 +4,17 @@ var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, o) {
 		if (this.template) {
-			$.extend(this, this.template, ["attribute", "datatype"]);
+			$.extend(this, this.template, ["attribute", "datatype", "humanReadable"]);
 		}
 		else {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
 
-			if (!this.attribute) {
+			if (this.attribute) {
+				this.humanReadable = this.attribute.humanReadable;
+			}
+			else {
 				this.element.normalize();
 			}
 
@@ -650,12 +653,8 @@ var _ = Wysie.Primitive = $.Class({
 			var ret = element.getAttribute("data-attribute") || _.getMatch(element, _.attributes);
 
 			// TODO refactor this
-			if (ret) {
-				if (ret.humanReadable && _.all.has(element)) {
-					_.all.get(element).humanReadable = ret.humanReadable;
-				}
-
-				ret = ret.value || ret;
+			if (ret && ret.value) {
+				ret = $.extend(new String(ret.value), ret);
 			}
 
 			if (!ret || ret === "null") {
