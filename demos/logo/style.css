@@ -1,7 +1,11 @@
 svg {
 	display: block;
 	overflow: visible;
-	margin: 10em;
+	margin: 10em auto;
+}
+
+svg * {
+	transform-box: fill-box;
 }
 
 label {
@@ -14,7 +18,7 @@ fieldset {
 }
 
 	fieldset > label {
-		width: 23%;
+		width: 24%;
 	}
 
 input {
@@ -24,4 +28,9 @@ input {
 svg {
 	/*-webkit-filter: drop-shadow(0 400px gray);
 	filter: drop-shadow(0 400px gray);*/
+}
+
+#black-logo {
+	-webkit-filter: brightness(0%);
+	opacity: .5;
 }
