@@ -2047,6 +2047,10 @@ var _ = Wysie.Node = $.Class({
 						return data[property];
 					}
 
+					if (property == "$index") {
+						return this.index + 1;
+					}
+
 					// Look in ancestors
 					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
@@ -2068,6 +2072,9 @@ var _ = Wysie.Node = $.Class({
 					}
 
 					// Property does not exist, look for it elsewhere
+					if (property == "$index") {
+						return true;
+					}
 
 					// First look in ancestors
 					var ret = this.walkUp(scope => {
@@ -2708,18 +2715,18 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
+			var properties = this.scope.wysie.propertyNames.concat(_.special);
+			var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
 
-			return RegExp([
-					"\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]",
-					"{\\s*" + propertyRegex + "\\s*}",
-					"\\${[\\S\\s]+?}"
-				].join("|"), "gi");
+			return RegExp(`\\[[\\S\\s]*?${propertyRegex}[\\S\\s]*?\\]`, "gi");
 		}
 	},
 
 	static: {
 		escape: ".ignore-expressions",
+
+		// Special property names
+		special: ["$index"],
 
 		lazy: {
 			rootFunctions: () => [
@@ -3097,8 +3104,10 @@ var _ = Wysie.Scope = $.Class({
 
 		this.save();
 
-		this.expressions.active = true;
-		this.expressions.update();
+		requestAnimationFrame(() => {
+			this.expressions.active = true;
+			this.expressions.update();
+		});
 	},
 
 	// Check if this scope contains a property
@@ -4183,7 +4192,7 @@ var _ = Wysie.Collection = $.Class({
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
-	add: function(item, index, silent) {
+	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
 			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
@@ -4209,14 +4218,24 @@ var _ = Wysie.Collection = $.Class({
 		// Update internal data model
 		this.items.splice(index, 0, item);
 
-		if (!silent) {
-			item.element._.fire("wysie:datachange", {
-				node: this,
-				wysie: this.wysie,
-				action: "add",
-				item
-			});
+		for (let i = index - 1; i < this.length; i++) {
+			let item = this.items[i];
 
+			if (item) {
+				item.index = i;
+
+				if (!o.silent) {
+					item.element._.fire("wysie:datachange", {
+						node: this,
+						wysie: this.wysie,
+						action: "add",
+						item
+					});
+				}
+			}
+		}
+
+		if (!o.silent) {
 			item.unsavedChanges = this.wysie.unsavedChanges = true;
 		}
 
@@ -4360,12 +4379,13 @@ var _ = Wysie.Collection = $.Class({
 			// Using document fragments improved rendering performance by 60%
 			var fragment = document.createDocumentFragment();
 
-			data.forEach(datum => {
+			data.forEach((datum, i) => {
 				var item = this.createItem();
 
 				item.render(datum);
 
 				this.items.push(item);
+				item.index = i;
 
 				fragment.appendChild(item.element);
 			});
@@ -5092,7 +5112,7 @@ Wysie.hooks.add("scope-init-start", function() {
 		if (scope.debug) {
 			return true;
 		}
-	});
+	}) || /[?&]debug\b/i.test(location.search);
 
 	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
 		this.debug = true;
@@ -5101,7 +5121,6 @@ Wysie.hooks.add("scope-init-start", function() {
 	if (this.debug) {
 		this.debug = $.create("tbody", {
 			inside: $.create("table", {
-				className: "wysie-ui wysie-debuginfo",
 				innerHTML: `<thead><tr>
 					<th></th>
 					<th>Expression</th>
@@ -5111,7 +5130,13 @@ Wysie.hooks.add("scope-init-start", function() {
 				style: {
 					display: "none"
 				},
-				inside: this.element
+				inside: $.create("details", {
+					className: "wysie-ui wysie-debuginfo",
+					inside: this.element,
+					contents: $.create("summary", {
+						textContent: "Debug"
+					})
+				})
 			})
 		});
 	}

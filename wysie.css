@@ -200,11 +200,7 @@
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.wysie-editor,
 .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) select.wysie-editor,
 .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.wysie-editor {
-  all: initial;
-  font: inherit;
-  color: inherit;
-  text-decoration: inherit;
-  text-align: inherit; }
+  all: unset; }
 
 .wysie-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.wysie-editor, .wysie-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.wysie-editor {
   display: block;
@@ -326,111 +322,126 @@
 
 .wysie-debuginfo {
   all: initial;
-  display: table;
-  border: 1em solid transparent;
-  width: 100%;
-  box-sizing: border-box;
-  table-layout: fixed;
-  border-spacing: 0;
-  background: rgba(0, 0, 0, 0.7);
-  background-clip: padding-box;
-  box-shadow: 0 0 .4em black inset;
   font: 80% "Helvetica Neue", sans-serif;
-  color: white; }
-  .wysie-debuginfo thead {
-    background: rgba(0, 0, 0, 0.5); }
-  .wysie-debuginfo tbody tr:nth-child(odd) {
-    background: rgba(0, 0, 0, 0.15); }
-  .wysie-debuginfo th {
-    text-align: left;
-    padding: .5em; }
-    .wysie-debuginfo th:nth-child(1) {
-      width: 1em; }
-    .wysie-debuginfo th:nth-child(2) {
-      width: 40%; }
-    .wysie-debuginfo th:nth-child(3) {
-      width: 30%; }
-    .wysie-debuginfo th:nth-child(4) {
-      width: 30%; }
-  .wysie-debuginfo td {
-    padding: .3em .7em;
-    vertical-align: top;
-    line-height: 1.7;
-    font-family: Consolas, Monaco, monospace;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap; }
-    .wysie-debuginfo td:nth-child(1) {
-      padding: .5em;
-      overflow: visible; }
-      .wysie-debuginfo td:nth-child(1)::before {
-        display: block;
-        border-radius: .3em;
-        background: #538cc6;
-        color: white;
-        text-align: center;
-        font: bold 80%/1.5 "Helvetica Neue", sans-serif; }
-    .wysie-debuginfo td:nth-child(2) {
-      position: relative;
-      padding: 0 .7em;
-      white-space: nowrap;
-      vertical-align: middle;
-      overflow: visible; }
-      .wysie-debuginfo td:nth-child(2) textarea {
-        all: unset;
-        position: absolute;
-        top: 0;
-        left: 0;
-        padding: .3em .7em;
-        width: 100%;
-        box-sizing: border-box; }
-        .wysie-debuginfo td:nth-child(2) textarea:not(:focus) {
-          max-height: 2.2em;
-          max-width: 100% !important;
-          overflow: hidden; }
-          .wysie-debuginfo td:nth-child(2) textarea:not(:focus):hover {
-            background: #333; }
-        .wysie-debuginfo td:nth-child(2) textarea:focus {
-          resize: horizontal;
-          z-index: 10;
-          background: #222;
-          box-shadow: 1px 1px 0.3em rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.5) inset; }
-    .wysie-debuginfo td:nth-child(4) {
-      width: 30%;
-      cursor: help; }
-      .wysie-debuginfo td:nth-child(4):hover {
-        background: rgba(255, 247, 0, 0.3); }
-  .wysie-debuginfo tr.debug-property td:nth-child(1)::before {
-    content: "P"; }
-  .wysie-debuginfo tr.debug-property,
-  .wysie-debuginfo tr.debug-property td:nth-child(2) {
-    overflow: hidden; }
-  .wysie-debuginfo tr.debug-expression td:nth-child(1)::before {
-    content: "=";
-    background: #e6801a; }
-  .wysie-debuginfo tr.debug-warning td:nth-child(1)::before {
-    content: "!";
-    background: #f2330d; }
-  .wysie-debuginfo tr.debug-warning td:nth-child(2) {
-    overflow: hidden;
-    font-family: "Helvetica Neue", sans-serif;
-    color: #f88;
-    font-weight: bold; }
-  .wysie-debuginfo .error {
-    color: #f88;
-    font-weight: normal;
-    font-family: "Helvetica Neue", sans-serif; }
-    .wysie-debuginfo .error .type {
-      display: block;
-      font-size: 80%;
-      font-weight: bold;
-      line-height: inherit; }
-      .wysie-debuginfo .error .type::after {
-        content: "😳";
-        display: inline-block;
+  display: block;
+  border: 1em solid transparent; }
+  .wysie-debuginfo:not([open]) {
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content; }
+    .wysie-debuginfo:not([open]) > summary {
+      background: rgba(128, 128, 128, 0.4);
+      background-clip: padding-box; }
+  .wysie-debuginfo > summary {
+    display: block;
+    cursor: pointer;
+    padding: .3em .4em;
+    transition: .4s background;
+    border-radius: .3em; }
+  .wysie-debuginfo > table {
+    display: table;
+    border: 0;
+    width: 100%;
+    box-sizing: border-box;
+    table-layout: fixed;
+    border-spacing: 0;
+    background: rgba(0, 0, 0, 0.7);
+    box-shadow: 0 0 .4em black inset;
+    color: white; }
+    .wysie-debuginfo > table thead {
+      background: rgba(0, 0, 0, 0.5); }
+    .wysie-debuginfo > table tbody tr:nth-child(odd) {
+      background: rgba(0, 0, 0, 0.15); }
+    .wysie-debuginfo > table th {
+      text-align: left;
+      padding: .5em; }
+      .wysie-debuginfo > table th:nth-child(1) {
+        width: 1em; }
+      .wysie-debuginfo > table th:nth-child(2) {
+        width: 40%; }
+      .wysie-debuginfo > table th:nth-child(3) {
+        width: 30%; }
+      .wysie-debuginfo > table th:nth-child(4) {
+        width: 30%; }
+    .wysie-debuginfo > table td {
+      padding: .3em .7em;
+      vertical-align: top;
+      line-height: 1.7;
+      font-family: Consolas, Monaco, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; }
+      .wysie-debuginfo > table td:nth-child(1) {
+        padding: .5em;
+        overflow: visible; }
+        .wysie-debuginfo > table td:nth-child(1)::before {
+          display: block;
+          border-radius: .3em;
+          background: #538cc6;
+          color: white;
+          text-align: center;
+          font: bold 80%/1.5 "Helvetica Neue", sans-serif; }
+      .wysie-debuginfo > table td:nth-child(2) {
+        position: relative;
+        padding: 0 .7em;
+        white-space: nowrap;
         vertical-align: middle;
-        margin-left: .3em;
-        font: 150%/.8 sans-serif; }
+        overflow: visible; }
+        .wysie-debuginfo > table td:nth-child(2) textarea {
+          all: unset;
+          position: absolute;
+          top: 0;
+          left: 0;
+          padding: .3em .7em;
+          width: 100%;
+          box-sizing: border-box; }
+          .wysie-debuginfo > table td:nth-child(2) textarea:not(:focus) {
+            max-height: 2.2em;
+            max-width: 100% !important;
+            overflow: hidden; }
+            .wysie-debuginfo > table td:nth-child(2) textarea:not(:focus):hover {
+              background: #333; }
+          .wysie-debuginfo > table td:nth-child(2) textarea:focus {
+            resize: horizontal;
+            z-index: 10;
+            background: #222;
+            box-shadow: 1px 1px 0.3em rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.5) inset; }
+      .wysie-debuginfo > table td:nth-child(4) {
+        width: 30%;
+        cursor: help; }
+        .wysie-debuginfo > table td:nth-child(4):hover {
+          background: rgba(255, 247, 0, 0.3); }
+    .wysie-debuginfo > table tr.debug-property td:nth-child(1)::before {
+      content: "P"; }
+    .wysie-debuginfo > table tr.debug-property,
+    .wysie-debuginfo > table tr.debug-property td:nth-child(2) {
+      overflow: hidden; }
+    .wysie-debuginfo > table tr.debug-expression td:nth-child(1)::before {
+      content: "=";
+      background: #e6801a; }
+    .wysie-debuginfo > table tr.debug-warning td:nth-child(1)::before {
+      content: "!";
+      background: #f2330d; }
+    .wysie-debuginfo > table tr.debug-warning td:nth-child(2) {
+      overflow: hidden;
+      font-family: "Helvetica Neue", sans-serif;
+      color: #f88;
+      font-weight: bold; }
+    .wysie-debuginfo > table .error {
+      color: #f88;
+      font-weight: normal;
+      font-family: "Helvetica Neue", sans-serif; }
+      .wysie-debuginfo > table .error .type {
+        display: block;
+        font-size: 80%;
+        font-weight: bold;
+        line-height: inherit; }
+        .wysie-debuginfo > table .error .type::after {
+          content: "😳";
+          display: inline-block;
+          vertical-align: middle;
+          margin-left: .3em;
+          font: 150%/.8 sans-serif; }
 
 .wysie-debug-storage {
   display: block;

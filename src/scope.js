@@ -158,8 +158,10 @@ var _ = Wysie.Scope = $.Class({
 
 		this.save();
 
-		this.expressions.active = true;
-		this.expressions.update();
+		requestAnimationFrame(() => {
+			this.expressions.active = true;
+			this.expressions.update();
+		});
 	},
 
 	// Check if this scope contains a property

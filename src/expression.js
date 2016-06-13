@@ -375,18 +375,18 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
+			var properties = this.scope.wysie.propertyNames.concat(_.special);
+			var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
 
-			return RegExp([
-					"\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]",
-					"{\\s*" + propertyRegex + "\\s*}",
-					"\\${[\\S\\s]+?}"
-				].join("|"), "gi");
+			return RegExp(`\\[[\\S\\s]*?${propertyRegex}[\\S\\s]*?\\]`, "gi");
 		}
 	},
 
 	static: {
 		escape: ".ignore-expressions",
+
+		// Special property names
+		special: ["$index"],
 
 		lazy: {
 			rootFunctions: () => [

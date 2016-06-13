@@ -39,6 +39,10 @@ var _ = Wysie.Node = $.Class({
 						return data[property];
 					}
 
+					if (property == "$index") {
+						return this.index + 1;
+					}
+
 					// Look in ancestors
 					var ret = this.walkUp(scope => {
 						if (property in scope.properties) {
@@ -60,6 +64,9 @@ var _ = Wysie.Node = $.Class({
 					}
 
 					// Property does not exist, look for it elsewhere
+					if (property == "$index") {
+						return true;
+					}
 
 					// First look in ancestors
 					var ret = this.walkUp(scope => {

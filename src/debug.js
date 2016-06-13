@@ -201,7 +201,7 @@ Wysie.hooks.add("scope-init-start", function() {
 		if (scope.debug) {
 			return true;
 		}
-	});
+	}) || /[?&]debug\b/i.test(location.search);
 
 	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
 		this.debug = true;
@@ -210,7 +210,6 @@ Wysie.hooks.add("scope-init-start", function() {
 	if (this.debug) {
 		this.debug = $.create("tbody", {
 			inside: $.create("table", {
-				className: "wysie-ui wysie-debuginfo",
 				innerHTML: `<thead><tr>
 					<th></th>
 					<th>Expression</th>
@@ -220,7 +219,13 @@ Wysie.hooks.add("scope-init-start", function() {
 				style: {
 					display: "none"
 				},
-				inside: this.element
+				inside: $.create("details", {
+					className: "wysie-ui wysie-debuginfo",
+					inside: this.element,
+					contents: $.create("summary", {
+						textContent: "Debug"
+					})
+				})
 			})
 		});
 	}

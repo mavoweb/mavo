@@ -2133,6 +2133,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							return data[property];
 						}
 
+						if (property == "$index") {
+							return _this12.index + 1;
+						}
+
 						// Look in ancestors
 						var ret = _this12.walkUp(function (scope) {
 							if (property in scope.properties) {
@@ -2154,6 +2158,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 
 						// Property does not exist, look for it elsewhere
+						if (property == "$index") {
+							return true;
+						}
 
 						// First look in ancestors
 						var ret = _this12.walkUp(function (scope) {
@@ -2823,14 +2830,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Regex that loosely matches all possible expressions
 				// False positives are ok, but false negatives are not.
 				expressionRegex: function expressionRegex() {
-					var propertyRegex = "(?:" + this.scope.wysie.propertyNames.join("|") + ")";
+					var properties = this.scope.wysie.propertyNames.concat(_.special);
+					var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
 
-					return RegExp(["\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "{\\s*" + propertyRegex + "\\s*}", "\\${[\\S\\s]+?}"].join("|"), "gi");
+					return RegExp("\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "gi");
 				}
 			},
 
 			static: {
 				escape: ".ignore-expressions",
+
+				// Special property names
+				special: ["$index"],
 
 				lazy: {
 					rootFunctions: function rootFunctions() {
@@ -3258,8 +3269,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.save();
 
-			this.expressions.active = true;
-			this.expressions.update();
+			requestAnimationFrame(function () {
+				_this19.expressions.active = true;
+				_this19.expressions.update();
+			});
 		},
 
 		// Check if this scope contains a property
@@ -4351,7 +4364,9 @@ Wysie.Primitive.editors.img = {
    * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
    * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
    */
-		add: function add(item, index, silent) {
+		add: function add(item, index) {
+			var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
 			if (item instanceof Node) {
 				item = Wysie.Unit.get(item) || this.createItem(item);
 			} else {
@@ -4375,14 +4390,24 @@ Wysie.Primitive.editors.img = {
 			// Update internal data model
 			this.items.splice(index, 0, item);
 
-			if (!silent) {
-				item.element._.fire("wysie:datachange", {
-					node: this,
-					wysie: this.wysie,
-					action: "add",
-					item: item
-				});
+			for (var i = index - 1; i < this.length; i++) {
+				var _item = this.items[i];
 
+				if (_item) {
+					_item.index = i;
+
+					if (!o.silent) {
+						_item.element._.fire("wysie:datachange", {
+							node: this,
+							wysie: this.wysie,
+							action: "add",
+							item: _item
+						});
+					}
+				}
+			}
+
+			if (!o.silent) {
 				item.unsavedChanges = this.wysie.unsavedChanges = true;
 			}
 
@@ -4547,12 +4572,13 @@ Wysie.Primitive.editors.img = {
 				// Using document fragments improved rendering performance by 60%
 				var fragment = document.createDocumentFragment();
 
-				data.forEach(function (datum) {
+				data.forEach(function (datum, i) {
 					var item = _this31.createItem();
 
 					item.render(datum);
 
 					_this31.items.push(item);
+					item.index = i;
 
 					fragment.appendChild(item.element);
 				});
@@ -5234,7 +5260,7 @@ var prettyPrint = function () {
 			if (scope.debug) {
 				return true;
 			}
-		});
+		}) || /[?&]debug\b/i.test(location.search);
 
 		if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
 			this.debug = true;
@@ -5243,12 +5269,17 @@ var prettyPrint = function () {
 		if (this.debug) {
 			this.debug = $.create("tbody", {
 				inside: $.create("table", {
-					className: "wysie-ui wysie-debuginfo",
 					innerHTML: "<thead><tr>\n\t\t\t\t\t<th></th>\n\t\t\t\t\t<th>Expression</th>\n\t\t\t\t\t<th>Value</th>\n\t\t\t\t\t<th>Element</th>\n\t\t\t\t</tr></thead>",
 					style: {
 						display: "none"
 					},
-					inside: this.element
+					inside: $.create("details", {
+						className: "wysie-ui wysie-debuginfo",
+						inside: this.element,
+						contents: $.create("summary", {
+							textContent: "Debug"
+						})
+					})
 				})
 			});
 		}

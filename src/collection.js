@@ -98,7 +98,7 @@ var _ = Wysie.Collection = $.Class({
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
-	add: function(item, index, silent) {
+	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
 			item = Wysie.Unit.get(item) || this.createItem(item);
 		}
@@ -124,14 +124,24 @@ var _ = Wysie.Collection = $.Class({
 		// Update internal data model
 		this.items.splice(index, 0, item);
 
-		if (!silent) {
-			item.element._.fire("wysie:datachange", {
-				node: this,
-				wysie: this.wysie,
-				action: "add",
-				item
-			});
+		for (let i = index - 1; i < this.length; i++) {
+			let item = this.items[i];
 
+			if (item) {
+				item.index = i;
+
+				if (!o.silent) {
+					item.element._.fire("wysie:datachange", {
+						node: this,
+						wysie: this.wysie,
+						action: "add",
+						item
+					});
+				}
+			}
+		}
+
+		if (!o.silent) {
 			item.unsavedChanges = this.wysie.unsavedChanges = true;
 		}
 
@@ -275,12 +285,13 @@ var _ = Wysie.Collection = $.Class({
 			// Using document fragments improved rendering performance by 60%
 			var fragment = document.createDocumentFragment();
 
-			data.forEach(datum => {
+			data.forEach((datum, i) => {
 				var item = this.createItem();
 
 				item.render(datum);
 
 				this.items.push(item);
+				item.index = i;
 
 				fragment.appendChild(item.element);
 			});

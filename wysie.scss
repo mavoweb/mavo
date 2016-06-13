@@ -310,11 +310,7 @@ $font-mono: Consolas, Monaco, monospace;
 			& input.wysie-editor,
 			& select.wysie-editor,
 			& textarea.wysie-editor {
-				all: initial;
-				font: inherit;
-				color: inherit;
-				text-decoration: inherit;
-				text-align: inherit;
+				all: unset;
 			}
 
 			& textarea.wysie-editor {
@@ -496,168 +492,194 @@ $font-mono: Consolas, Monaco, monospace;
 
 .wysie-debuginfo {
 	all: initial;
-	display: table;
-	border: 1em solid transparent;
-	width: 100%;
-	box-sizing: border-box;
-	table-layout: fixed;
-	border-spacing: 0;
-	background: rgba(0,0,0,.7);
-	background-clip: padding-box;
-	box-shadow: 0 0 .4em black inset;
 	font: 80% $font-sans;
-	color: white;
+	display: block;
+	border: 1em solid transparent;
 
-	thead {
-		background: rgba(0,0,0,.5);
-	}
+	&:not([open]) {
+		width: fit-content;
 
-	tbody tr:nth-child(odd) {
-		background: rgba(0,0,0,.15);
-	}
-
-	th {
-		text-align: left;
-		padding: .5em;
-
-		&:nth-child(1) {
-			width: 1em;
-		}
-
-		&:nth-child(2) {
-			width: 40%;
-		}
-
-		&:nth-child(3) {
-			width: 30%;
-		}
-
-		&:nth-child(4) {
-			width: 30%;
+		& > summary {
+			background: hsla(0,0%,50%,.4);
+			background-clip: padding-box;
 		}
 	}
 
-	td {
-		padding: .3em .7em;
-		vertical-align: top;
-		line-height: 1.7;
-		font-family: $font-mono;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+	&[open] {
 
-		&:nth-child(1) {
+	}
+
+	& > summary {
+		display: block;
+		cursor: pointer;
+		padding: .3em .4em;
+		transition: .4s background;
+		border-radius: .3em;
+	}
+
+	& > table {
+		display: table;
+		border: 0;
+		width: 100%;
+		box-sizing: border-box;
+		table-layout: fixed;
+		border-spacing: 0;
+		background: rgba(0,0,0,.7);
+		box-shadow: 0 0 .4em black inset;
+
+		color: white;
+
+		thead {
+			background: rgba(0,0,0,.5);
+		}
+
+		tbody tr:nth-child(odd) {
+			background: rgba(0,0,0,.15);
+		}
+
+		th {
+			text-align: left;
 			padding: .5em;
-			overflow: visible;
 
-			&::before {
-				display: block;
-				border-radius: .3em;
-				background: hsl(210, 50%, 55%);
-				color: white;
-				text-align: center;
-				font: bold 80%/1.5 $font-sans;
+			&:nth-child(1) {
+				width: 1em;
+			}
+
+			&:nth-child(2) {
+				width: 40%;
+			}
+
+			&:nth-child(3) {
+				width: 30%;
+			}
+
+			&:nth-child(4) {
+				width: 30%;
 			}
 		}
 
-		&:nth-child(2) {
-			// Expression column
-			position: relative;
-			padding: 0 .7em;
+		td {
+			padding: .3em .7em;
+			vertical-align: top;
+			line-height: 1.7;
+			font-family: $font-mono;
+			overflow: hidden;
+			text-overflow: ellipsis;
 			white-space: nowrap;
-			vertical-align: middle;
-			overflow: visible;
 
-			textarea {
-				all: unset;
-				position: absolute;
-				top: 0;
-				left: 0;
-				padding: .3em .7em;
-				width: 100%;
-				box-sizing: border-box;
+			&:nth-child(1) {
+				padding: .5em;
+				overflow: visible;
 
-				&:not(:focus) {
-					max-height: 2.2em;
-					max-width: 100% !important;
-					overflow: hidden;
+				&::before {
+					display: block;
+					border-radius: .3em;
+					background: hsl(210, 50%, 55%);
+					color: white;
+					text-align: center;
+					font: bold 80%/1.5 $font-sans;
+				}
+			}
 
-					&:hover {
-						background: #333;
+			&:nth-child(2) {
+				// Expression column
+				position: relative;
+				padding: 0 .7em;
+				white-space: nowrap;
+				vertical-align: middle;
+				overflow: visible;
+
+				textarea {
+					all: unset;
+					position: absolute;
+					top: 0;
+					left: 0;
+					padding: .3em .7em;
+					width: 100%;
+					box-sizing: border-box;
+
+					&:not(:focus) {
+						max-height: 2.2em;
+						max-width: 100% !important;
+						overflow: hidden;
+
+						&:hover {
+							background: #333;
+						}
+					}
+
+					&:focus {
+						resize: horizontal;
+						z-index: 10;
+						background: #222;
+						box-shadow: 1px 1px .3em rgba(0,0,0,.5),
+						            0 0 0 1px rgba(0,0,0,.5) inset;
 					}
 				}
+			}
 
-				&:focus {
-					resize: horizontal;
-					z-index: 10;
-					background: #222;
-					box-shadow: 1px 1px .3em rgba(0,0,0,.5),
-					            0 0 0 1px rgba(0,0,0,.5) inset;
+			&:nth-child(4) {
+				// Element column
+				width: 30%;
+				cursor: help;
+
+				&:hover {
+					background: hsla(58, 100%, 50%, .3);
 				}
 			}
 		}
 
-		&:nth-child(4) {
-			// Element column
-			width: 30%;
-			cursor: help;
+		tr {
+			&.debug-property {
+				td:nth-child(1)::before {
+					content: "P";
+				},
 
-			&:hover {
-				background: hsla(58, 100%, 50%, .3);
+				td:nth-child(2) {
+					overflow: hidden;
+				}
+			}
+
+			&.debug-expression {
+				td:nth-child(1)::before {
+					content: "=";
+					background: hsl(30, 80%, 50%);
+				}
+			}
+
+			&.debug-warning {
+				td:nth-child(1)::before {
+					content: "!";
+					background: hsl(10, 90%, 50%);
+				}
+
+				td:nth-child(2) {
+					overflow: hidden;
+					font-family: $font-sans;
+					color: #f88;
+					font-weight: bold;
+				}
 			}
 		}
-	}
 
-	tr {
-		&.debug-property {
-			td:nth-child(1)::before {
-				content: "P";
-			},
+		.error {
+			color: #f88;
+			font-weight: normal;
+			font-family: $font-sans;
 
-			td:nth-child(2) {
-				overflow: hidden;
-			}
-		}
-
-		&.debug-expression {
-			td:nth-child(1)::before {
-				content: "=";
-				background: hsl(30, 80%, 50%);
-			}
-		}
-
-		&.debug-warning {
-			td:nth-child(1)::before {
-				content: "!";
-				background: hsl(10, 90%, 50%);
-			}
-
-			td:nth-child(2) {
-				overflow: hidden;
-				font-family: $font-sans;
-				color: #f88;
+			.type {
+				display: block;
+				font-size: 80%;
 				font-weight: bold;
-			}
-		}
-	}
+				line-height: inherit;
 
-	.error {
-		color: #f88;
-		font-weight: normal;
-		font-family: $font-sans;
-
-		.type {
-			display: block;
-			font-size: 80%;
-			font-weight: bold;
-			line-height: inherit;
-
-			&::after {
-				content: "😳";
-				display: inline-block;
-				vertical-align: middle;
-				margin-left: .3em;
-				font: 150%/.8 sans-serif;
+				&::after {
+					content: "😳";
+					display: inline-block;
+					vertical-align: middle;
+					margin-left: .3em;
+					font: 150%/.8 sans-serif;
+				}
 			}
 		}
 	}
