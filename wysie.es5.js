@@ -2521,16 +2521,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.element = this.node;
 
+				this.attribute = o.attribute || null;
+
 				if (this.node.nodeType === 3) {
 					this.element = this.node.parentNode;
 
-					if (!this.node.previousElementSibling && !this.node.nextElementSibling) {
+					// If no element siblings make this.node the element, which is more robust
+					// Same if attribute, there are no attributes on a text node!
+					if (!this.node.parentNode.children.length || this.attribute) {
 						this.node = this.element;
 						this.element.normalize();
 					}
 				}
-
-				this.attribute = o.attribute || null;
 
 				this.expression = this.text.trim();
 				this.template = this.tokenize(this.expression);
