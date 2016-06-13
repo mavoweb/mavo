@@ -4,12 +4,9 @@ var _ = Wysie.Storage = $.Class({
 	constructor: function(wysie) {
 		this.wysie = wysie;
 
+		var keywords = RegExp(`^(?:${_.Backend.backends.map(a => a.id).join("|")})$`, "i");
 		this.urls = wysie.store.split(/\s+/).map(url => {
-			if (url === "local") {
-				url = `#${this.wysie.id}-store`;
-			}
-
-			return new URL(url, location);
+			return keywords.test(url)? url : new URL(url, location);
 		});
 
 		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
@@ -310,7 +307,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: url => !_.isHash(url)
+		test: url => url instanceof URL && !_.isHash(url)
 	}
 }));
 
@@ -318,7 +315,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 _.Backend.add("Local", $.Class({ extends: _.Backend,
 	constructor: function() {
 		this.permissions.on(["read", "edit", "save"]);
-		this.key = this.url + "";
+		this.key = this.wysie.id;
 	},
 
 	get: function() {
@@ -331,11 +328,7 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: (url) => {
-			if (_.isHash(url)) {
-				return !$(url.hash);
-			}
-		}
+		test: (value) => value == "local"
 	}
 }));
 

@@ -7,11 +7,11 @@ var _ = self.Wysie = $.Class({
 		_.all.push(this);
 
 		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store") || "none";
+		var dataStore = element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance
-		this.id = Wysie.Node.normalizeProperty(element) || "wysie-" + _.all.length;
+		this.id = Wysie.Node.normalizeProperty(element) || element.id || "wysie-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 

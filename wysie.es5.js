@@ -982,11 +982,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.all.push(this);
 
 			// TODO escaping of # and \
-			var dataStore = element.getAttribute("data-store") || "none";
+			var dataStore = element.getAttribute("data-store") || "";
 			this.store = dataStore === "none" ? null : dataStore;
 
 			// Assign a unique (for the page) id to this wysie instance
-			this.id = Wysie.Node.normalizeProperty(element) || "wysie-" + _.all.length;
+			this.id = Wysie.Node.normalizeProperty(element) || element.id || "wysie-" + _.all.length;
 
 			this.autoEdit = _.has("autoedit", element);
 
@@ -1719,12 +1719,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.wysie = wysie;
 
+			var keywords = RegExp("^(?:" + _.Backend.backends.map(function (a) {
+				return a.id;
+			}).join("|") + ")$", "i");
 			this.urls = wysie.store.split(/\s+/).map(function (url) {
-				if (url === "local") {
-					url = "#" + _this8.wysie.id + "-store";
-				}
-
-				return new URL(url, location);
+				return keywords.test(url) ? url : new URL(url, location);
 			});
 
 			this.backends = Wysie.flatten(this.urls.map(function (url) {
@@ -2052,7 +2051,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			test: function test(url) {
-				return !_.isHash(url);
+				return url instanceof URL && !_.isHash(url);
 			}
 		}
 	}));
@@ -2061,7 +2060,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	_.Backend.add("Local", $.Class({ extends: _.Backend,
 		constructor: function constructor() {
 			this.permissions.on(["read", "edit", "save"]);
-			this.key = this.url + "";
+			this.key = this.wysie.id;
 		},
 
 		get: function get() {
@@ -2077,10 +2076,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		static: {
-			test: function test(url) {
-				if (_.isHash(url)) {
-					return !$(url.hash);
-				}
+			test: function test(value) {
+				return value == "local";
 			}
 		}
 	}));

@@ -995,11 +995,11 @@ var _ = self.Wysie = $.Class({
 		_.all.push(this);
 
 		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store") || "none";
+		var dataStore = element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance
-		this.id = Wysie.Node.normalizeProperty(element) || "wysie-" + _.all.length;
+		this.id = Wysie.Node.normalizeProperty(element) || element.id || "wysie-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -1669,12 +1669,9 @@ var _ = Wysie.Storage = $.Class({
 	constructor: function(wysie) {
 		this.wysie = wysie;
 
+		var keywords = RegExp(`^(?:${_.Backend.backends.map(a => a.id).join("|")})$`, "i");
 		this.urls = wysie.store.split(/\s+/).map(url => {
-			if (url === "local") {
-				url = `#${this.wysie.id}-store`;
-			}
-
-			return new URL(url, location);
+			return keywords.test(url)? url : new URL(url, location);
 		});
 
 		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
@@ -1975,7 +1972,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: url => !_.isHash(url)
+		test: url => url instanceof URL && !_.isHash(url)
 	}
 }));
 
@@ -1983,7 +1980,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 _.Backend.add("Local", $.Class({ extends: _.Backend,
 	constructor: function() {
 		this.permissions.on(["read", "edit", "save"]);
-		this.key = this.url + "";
+		this.key = this.wysie.id;
 	},
 
 	get: function() {
@@ -1996,11 +1993,7 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: (url) => {
-			if (_.isHash(url)) {
-				return !$(url.hash);
-			}
-		}
+		test: (value) => value == "local"
 	}
 }));
 
