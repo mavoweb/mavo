@@ -1635,7 +1635,7 @@ var _ = Wysie.Permissions = $.Class({
 	}
 });
 
-_.register("read");
+_.register(["read", "save"]);
 
 _.register("login", function(can) {
 	if (can && this.logout) {

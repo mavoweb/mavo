@@ -1684,7 +1684,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	_.register("read");
+	_.register(["read", "save"]);
 
 	_.register("login", function (can) {
 		if (can && this.logout) {
