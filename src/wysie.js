@@ -34,6 +34,14 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper = element.closest(".wysie-wrapper") || element;
 
+		// Ctrl + S or Cmd + S to save
+		this.wrapper.addEventListener("keydown", evt => {
+			if (evt.keyCode == 83 && evt[_.superKey]) {
+				evt.preventDefault();
+				this.save();
+			}
+		});
+
 		// Apply heuristic for scopes
 		$$(_.selectors.primitive).forEach(element => {
 			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
@@ -309,6 +317,8 @@ var _ = self.Wysie = $.Class({
 
 	static: {
 		all: [],
+
+		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
 		init: (container) => $$("[data-store]", container).map(element => new _(element)),
 

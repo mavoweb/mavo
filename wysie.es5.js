@@ -90,9 +90,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var appearance;
 
 				for (var property in cs) {
-					if (!/^(width|webkitLogicalWidth|length)$/.test(property)) {
+					var value = cs[property];
+					if (!/^(width|webkitLogicalWidth|length)$/.test(property) && typeof value == "string") {
 						//console.log(property, option.offsetWidth, cs[property]);
-						option.style[property] = cs[property];
+						option.style[property] = value;
 
 						if (/appearance$/i.test(property)) {
 							appearance = property;
@@ -1008,6 +1009,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.wrapper = element.closest(".wysie-wrapper") || element;
 
+			// Ctrl + S or Cmd + S to save
+			this.wrapper.addEventListener("keydown", function (evt) {
+				if (evt.keyCode == 83 && evt[_.superKey]) {
+					evt.preventDefault();
+					_this.save();
+				}
+			});
+
 			// Apply heuristic for scopes
 			$$(_.selectors.primitive).forEach(function (element) {
 				var isScope = $(Wysie.selectors.property, element) && ( // Contains other properties and...
@@ -1300,6 +1309,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			all: [],
+
+			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
 
 			init: function init(container) {
 				return $$("[data-store]", container).map(function (element) {
@@ -4332,6 +4343,12 @@ Wysie.Primitive.editors.img = {
 			return item;
 		},
 
+		/**
+   * Add a new item to this collection
+   * @param item {Node|Wysie.Unit} Optional. Element or Wysie object for the new item
+   * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
+   * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
+   */
 		add: function add(item, index, silent) {
 			if (item instanceof Node) {
 				item = Wysie.Unit.get(item) || this.createItem(item);
@@ -4340,26 +4357,21 @@ Wysie.Primitive.editors.img = {
 			}
 
 			if (index in this.items) {
-				item.element._.before(this.items[index].element);
-
-				if (!this.bottomUp) {
-					index = (index || 1) - 1;
+				if (this.bottomUp) {
+					index++;
 				}
-
-				this.items.splice(index, 0, item);
 			} else {
-				if (!item.element.parentNode) {
-					if (this.mutable) {
-						var preceding = this.bottomUp && this.items.length > 0 ? this.items[0].element : this.marker;
-					} else {
-						var preceding = this.items[this.length - 1].element;
-					}
-
-					item.element._.before(preceding);
-				}
-
-				this.items.push(item);
+				index = this.bottomUp ? 0 : this.length;
 			}
+
+			if (!item.element.parentNode) {
+				// Add it to the DOM, if not already in
+				var nextItem = this.items[index];
+				item.element._.before(nextItem && nextItem.element || this.marker);
+			}
+
+			// Update internal data model
+			this.items.splice(index, 0, item);
 
 			if (!silent) {
 				item.element._.fire("wysie:datachange", {
