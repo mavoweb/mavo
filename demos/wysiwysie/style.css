@@ -1,0 +1,33 @@
+body {
+	margin: 0;
+	display: flex;
+	flex-flow: column;
+	height: 100vh;
+}
+
+header {
+	background: hsl(200, 50%, 50%);
+	color: white;
+	padding: 1em;
+	text-align: center;
+}
+
+main {
+	display: flex;
+	flex: 1;
+	padding: 1em;
+}
+
+	.mce-edit-area > iframe {
+		height: calc(100vh - 19em) !important;
+	}
+
+	main > * {
+		flex: 1;
+	}
+
+	main > #result {
+		border: 0;
+		margin-left: 1em;
+		background: hsl(0, 0%, 96%);
+	}
