@@ -20,3 +20,7 @@
 [data-multiple] {
 	--color: hsla(330, 100%, 50%, .5);
 }
+
+	[data-multiple]::before {
+		content: "M";
+	}
