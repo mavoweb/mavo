@@ -1,11 +1,14 @@
-[property], [data-multiple] {
+[data-store],
+[property],
+[data-multiple] {
 	position: relative;
 	--color: hsla(20, 100%, 50%, .4);
 	outline: 2px solid var(--color);
 }
 
 	[property]::before,
-	[data-multiple]::before {
+	[data-multiple]::before,
+	[data-store]::before {
 		content: "P";
 		position: absolute;
 		bottom: 100%;
@@ -23,4 +26,12 @@
 
 	[data-multiple]::before {
 		content: "M";
+	}
+
+[data-store] {
+	--color: hsla(200, 100%, 50%, .5)
+}
+
+	[data-store]::before {
+		content: "APP";
 	}
