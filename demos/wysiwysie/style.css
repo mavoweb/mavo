@@ -6,11 +6,20 @@ body {
 }
 
 header {
-	background: hsl(200, 50%, 50%);
+	background: linear-gradient(hsla(200, 50%, 50%, .8), hsla(200, 50%, 50%, .8)), url(logo.svg) 100% -35% / auto 150% no-repeat;
+	background-color: hsl(200, 50%, 50%);
 	color: white;
-	padding: 1em;
+	padding: 3em 1em .6em;
 	text-align: center;
 }
+
+	header > h1 {
+		margin: 0;
+	}
+
+	header > h1 img {
+		max-height: 2.2em;
+	}
 
 main {
 	display: flex;
@@ -19,7 +28,7 @@ main {
 }
 
 	.mce-edit-area > iframe {
-		height: calc(100vh - 19em) !important;
+		height: calc(100vh - 19.6em) !important;
 	}
 
 	main > * {
