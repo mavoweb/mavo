@@ -198,7 +198,7 @@ function overload(callback, start, end) {
 
 	if (end - start <= 1) {
 		return function() {
-			if (arguments.length <= start || $.type(arguments[start]) === 'string') {
+			if (arguments.length <= start || $.type(arguments[start]) === "string") {
 				return callback.apply(this, arguments);
 			}
 
@@ -259,7 +259,7 @@ extend($, {
 
 	sources: {},
 
-	noop: function(){},
+	noop: function() {},
 
 	$: function(expr, context) {
 		if (expr instanceof Node || expr instanceof Window) {
@@ -273,14 +273,18 @@ extend($, {
 	 * Returns the [[Class]] of an object in lowercase (eg. array, date, regexp, string etc)
 	 */
 	type: function(obj) {
-		if (obj === null) { return 'null'; }
+		if (obj === null) {
+			return "null";
+		}
 
-		if (obj === undefined) { return 'undefined'; }
+		if (obj === undefined) {
+			return "undefined";
+		}
 
 		var ret = (Object.prototype.toString.call(obj).match(/^\[object\s+(.*?)\]$/)[1] || "").toLowerCase();
 
-		if(ret == 'number' && isNaN(obj)) {
-			return 'nan';
+		if (ret == "number" && isNaN(obj)) {
+			return "nan";
 		}
 
 		return ret;
@@ -310,7 +314,9 @@ extend($, {
 			else {
 				o = tag;
 				tag = o.tag;
-				o = $.extend({}, o, function(property) { return property !== "tag"; });
+				o = $.extend({}, o, function(property) {
+					return property !== "tag";
+				});
 			}
 		}
 
@@ -330,12 +336,12 @@ extend($, {
 	ready: function(context) {
 		context = context || document;
 
-		return new Promise(function(resolve, reject){
+		return new Promise(function(resolve, reject) {
 			if (context.readyState !== "loading") {
 				resolve();
 			}
 			else {
-				context.addEventListener("DOMContentLoaded", function(){
+				context.addEventListener("DOMContentLoaded", function() {
 					resolve();
 				});
 			}
@@ -348,7 +354,7 @@ extend($, {
 		var init = o.hasOwnProperty("constructor")? o.constructor : $.noop;
 
 		var Class = function() {
-			if (o.abstract && this.constructor === Class) {
+			if (this.constructor.__abstract && this.constructor === Class) {
 				throw new Error("Abstract classes cannot be directly instantiated.");
 			}
 
@@ -390,6 +396,8 @@ extend($, {
 		// For easier calling of super methods
 		// This doesn't save us from having to use .call(this) though
 		Class.prototype.super = Class.super? Class.super.prototype : null;
+
+		Class.__abstract = !!o.abstract;
 
 		return Class;
 	},
@@ -460,7 +468,7 @@ extend($, {
 
 		var script = document.createElement("script");
 
-		return loaded? Promise.resolve() : new Promise(function(resolve, reject){
+		return loaded? Promise.resolve() : new Promise(function(resolve, reject) {
 			$.set(script, {
 				async: true,
 				onload: function() {
@@ -504,7 +512,7 @@ extend($, {
 			env.url.search += env.data;
 		}
 
-		document.body.setAttribute('data-loading', env.url);
+		document.body.setAttribute("data-loading", env.url);
 
 		env.xhr.open(env.method, env.url.href, env.async !== false, env.user, env.password);
 
@@ -519,7 +527,7 @@ extend($, {
 			}
 		}
 
-		if (env.method !== 'GET' && !env.headers['Content-type'] && !env.headers['Content-Type']) {
+		if (env.method !== "GET" && !env.headers["Content-type"] && !env.headers["Content-Type"]) {
 			env.xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		}
 
@@ -527,9 +535,9 @@ extend($, {
 			env.xhr.setRequestHeader(header, env.headers[header]);
 		}
 
-		return new Promise(function(resolve, reject){
-			env.xhr.onload = function(){
-				document.body.removeAttribute('data-loading');
+		return new Promise(function(resolve, reject) {
+			env.xhr.onload = function() {
+				document.body.removeAttribute("data-loading");
 
 				if (env.xhr.status === 0 || env.xhr.status >= 200 && env.xhr.status < 300 || env.xhr.status === 304) {
 					// Success!
@@ -538,22 +546,24 @@ extend($, {
 				else {
 					reject($.extend(Error(env.xhr.statusText), {
 						xhr: env.xhr,
-						get status() { return this.xhr.status; }
+						get status() {
+							return this.xhr.status;
+						}
 					}));
 				}
 			};
 
 			env.xhr.onerror = function() {
-				document.body.removeAttribute('data-loading');
+				document.body.removeAttribute("data-loading");
 				reject($.extend(Error("Network Error"), {xhr: env.xhr}));
 			};
 
 			env.xhr.ontimeout = function() {
-			    document.body.removeAttribute('data-loading');
+			    document.body.removeAttribute("data-loading");
 			    reject($.extend(Error("Network Timeout"), {xhr: env.xhr}));
 			};
 
-			env.xhr.send(env.method === 'GET'? null : env.data);
+			env.xhr.send(env.method === "GET"? null : env.data);
 		});
 	},
 
@@ -613,7 +623,7 @@ $.Element.prototype = {
 	transition: function(props, duration) {
 		duration = +duration || 400;
 
-		return new Promise(function(resolve, reject){
+		return new Promise(function(resolve, reject) {
 			if ("transition" in this.style) {
 				// Get existing style
 				var previous = $.extend({}, this.style, /^transition(Duration|Property)$/);
@@ -623,7 +633,7 @@ $.Element.prototype = {
 					transitionProperty: Object.keys(props).join(", ")
 				});
 
-				$.once(this, "transitionend", function(){
+				$.once(this, "transitionend", function() {
 					clearTimeout(i);
 					$.style(this, previous);
 					resolve(this);
@@ -669,7 +679,7 @@ $.Element.prototype = {
 						for (var i=0, l; l=listeners[ltype][i]; i++) {
 							if ((!className || className === l.className) &&
 							    (!callback || callback === l.callback )) { // TODO what about capture?
-								this.removeEventListener.call(this, ltype, l.callback, l.capture);
+								this.removeEventListener(ltype, l.callback, l.capture);
 								i--;
 							}
 						}
@@ -718,7 +728,7 @@ $.setProps = {
 				var listeners = val[_].bliss.listeners;
 
 				for (var type in listeners) {
-					listeners[type].forEach(function(l){
+					listeners[type].forEach(function(l) {
 						me.addEventListener(type, l.callback, l.capture);
 					});
 				}
@@ -745,11 +755,11 @@ $.setProps = {
 		}
 	},
 
-	once: overload(function(events, callback){
+	once: overload(function(events, callback) {
 		events = events.split(/\s+/);
 		var me = this;
 		var once = function() {
-			events.forEach(function(event){
+			events.forEach(function(event) {
 				me.removeEventListener(event, once);
 			});
 
@@ -875,7 +885,7 @@ $.add($.classProps, {element: false, array: false});
 
 // Add native methods on $ and _
 var dummy = document.createElement("_");
-$.add($.extend({}, HTMLElement.prototype, function(method){
+$.add($.extend({}, HTMLElement.prototype, function(method) {
 	return $.type(dummy[method]) === "function";
 }), null, true);
 
@@ -942,10 +952,12 @@ Object.defineProperty(Array.prototype, _, {
 if (self.EventTarget && "addEventListener" in EventTarget.prototype) {
 	var addEventListener = EventTarget.prototype.addEventListener,
 	    removeEventListener = EventTarget.prototype.removeEventListener,
-	    equal = function(callback, capture, l){
-	    	return l.callback === callback && l.capture == capture;
+	    equal = function(callback, capture, l) {
+			return l.callback === callback && l.capture == capture;
 	    },
-	    notEqual = function() { return !equal.apply(this, arguments); };
+	    notEqual = function() { 
+			return !equal.apply(this, arguments); 
+		};
 
 	EventTarget.prototype.addEventListener = function(type, callback, capture) {
 		if (this && this[_] && this[_].bliss && callback) {
@@ -5512,7 +5524,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		.then(fileInfo => {
 			return this.req(fileCall, {
 				message: `Updated ${file.name || "file"}`,
-				content: btoa(file.data),
+				content: _.btoa(file.data),
 				branch: this.branch,
 				sha: fileInfo.sha
 			}, "PUT");
@@ -5521,7 +5533,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: btoa(file.data),
+					content: _.btoa(file.data),
 					branch: this.branch
 				}, "PUT");
 			}
@@ -5652,7 +5664,9 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			ret.path = path.join("/");
 
 			return ret;
-		}
+		},
+
+		btoa: str => btoa(unescape(encodeURIComponent(str)))
 	}
 }), true);
 

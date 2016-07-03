@@ -79,7 +79,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		.then(fileInfo => {
 			return this.req(fileCall, {
 				message: `Updated ${file.name || "file"}`,
-				content: btoa(file.data),
+				content: _.btoa(file.data),
 				branch: this.branch,
 				sha: fileInfo.sha
 			}, "PUT");
@@ -88,7 +88,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: btoa(file.data),
+					content: _.btoa(file.data),
 					branch: this.branch
 				}, "PUT");
 			}
@@ -219,7 +219,9 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			ret.path = path.join("/");
 
 			return ret;
-		}
+		},
+
+		btoa: str => btoa(unescape(encodeURIComponent(str)))
 	}
 }), true);
 
