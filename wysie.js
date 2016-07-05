@@ -2504,9 +2504,12 @@ var _ = Wysie.Expression.Text = $.Class({
 			return expr;
 		}).join("");
 
-		if (this.primitive) {
-			if (this.template.length === 1 && typeof this.value[0] === "number") {
+		if (this.primitive && this.template.length === 1) {
+			if (typeof this.value[0] === "number") {
 				this.primitive.datatype = "number";
+			}
+			else if (typeof this.value[0] === "boolean") {
+				this.primitive.datatype = "boolean";
 			}
 		}
 
