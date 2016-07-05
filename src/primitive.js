@@ -595,7 +595,9 @@ var _ = Wysie.Primitive = $.Class({
 
 				this._value = value;
 
-				this.unsavedChanges = this.wysie.unsavedChanges = true;
+				if (!this.computed) {
+					this.unsavedChanges = this.wysie.unsavedChanges = true;
+				}
 
 				$.fire(this.element, "wysie:datachange", {
 					property: this.property,

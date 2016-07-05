@@ -12,9 +12,10 @@
 </head>
 <body>
 
-<h1>Talks <button class="add">Add</button></h1>
 <main class="talks" data-store="https://github.com/leaverou/leaverou.github.io/data.json">
-	<article data-multiple property="event">
+	<h1>[count(talk)] sessions at [count(event)] events</h1>
+	<article data-multiple property="event" data-order="desc">
+		<meta property="upcoming" content="[new Date(date) > Date.now()]" /> <!-- Yes, date stuff needs better syntax :/ -->
 		<h1 data-multiple property="talk">
 			<span property="title" data-default>TBD</span>
 			<span property class="type">
@@ -37,7 +38,8 @@
 		<address class="flag-[country]">
 			<span property="city"></span>,
 			<span property="country"><select>
-					<option value="us" selected>USA</option>
+					<option value="">Online conference</option>
+					<option value="us">USA</option>
 					<option value="gb">UK</option>
 					<option value="scotland">Scotland</option>
 					<option value="au">Australia</option>
@@ -63,6 +65,7 @@
 					<option value="sg">Singapore</option>
 					<option value="se">Sweden</option>
 					<option value="ch">Switzerland</option>
+					<option value="in">India</option>
 				</select></span>
 		</address>
 		<p class="comment" property></p>

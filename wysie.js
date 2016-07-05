@@ -3742,7 +3742,9 @@ var _ = Wysie.Primitive = $.Class({
 
 				this._value = value;
 
-				this.unsavedChanges = this.wysie.unsavedChanges = true;
+				if (!this.computed) {
+					this.unsavedChanges = this.wysie.unsavedChanges = true;
+				}
 
 				$.fire(this.element, "wysie:datachange", {
 					property: this.property,
@@ -4472,7 +4474,7 @@ var _ = Wysie.Collection = $.Class({
 
 			var order = this.templateElement.getAttribute("data-order");
 			if (order !== null) {
-				// Attribute data-bottomup has the highest priority and overrides any heuristics
+				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);
 			}
 

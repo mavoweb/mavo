@@ -373,7 +373,7 @@ var _ = Wysie.Collection = $.Class({
 
 			var order = this.templateElement.getAttribute("data-order");
 			if (order !== null) {
-				// Attribute data-bottomup has the highest priority and overrides any heuristics
+				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);
 			}
 
