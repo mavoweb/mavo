@@ -130,6 +130,8 @@ var _ = Wysie.Scope = $.Class({
 
 	import: function() {
 		this.everSaved = true;
+
+		Wysie.hooks.run("scope-import-end", this);
 	},
 
 	propagated: ["save", "done", "import", "clear"],
@@ -158,10 +160,7 @@ var _ = Wysie.Scope = $.Class({
 
 		this.save();
 
-		requestAnimationFrame(() => {
-			this.expressions.active = true;
-			this.expressions.update();
-		});
+		Wysie.hooks.run("scope-render-end", this);
 	},
 
 	// Check if this scope contains a property

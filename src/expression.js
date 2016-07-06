@@ -120,14 +120,18 @@ var _ = Wysie.Expression.Text = $.Class({
 	set text(value) {
 		this.oldText = this.text;
 
-		Wysie.Primitive.setValue(this.node, value, this.attribute);
+		if (this.primitive) {
+			this.primitive.value = value;
+		}
+		else {
+			Wysie.Primitive.setValue(this.node, value, this.attribute);
+		}
 	},
 
 	update: function(data) {
-		this.value = [];
 		this.data = data;
 
-		this.text = this.template.map(expr => {
+		this.value = this.template.map(expr => {
 			if (expr instanceof Wysie.Expression) {
 				var env = {context: this, expr};
 
@@ -139,38 +143,39 @@ var _ = Wysie.Expression.Text = $.Class({
 
 				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
-					this.value.push("");
 					return "";
 				}
-
-				this.value.push(env.value);
-
-				if (typeof env.value === "number" && !this.attribute) {
-					env.value = _.formatNumber(env.value);
-				}
-				else if (Array.isArray(env.value)) {
-					env.value = env.value.join(", ");
-				};
 
 				return env.value;
 			}
 
-			this.value.push(expr);
 			return expr;
-		}).join("");
+		});
 
-		if (this.primitive && this.template.length === 1) {
-			if (typeof this.value[0] === "number") {
-				this.primitive.datatype = "number";
+		// Presentation text
+		var text = this.value.map(value => {
+			if (typeof value === "number" && !this.attribute) {
+				return _.formatNumber(value);
 			}
-			else if (typeof this.value[0] === "boolean") {
-				this.primitive.datatype = "boolean";
+			else if (Array.isArray(value)) {
+				return value.join(", ");
 			}
-		}
 
-		this.value = this.value.join("");
+			return value;
+		});
+
+		this.text = text.length === 1? text[0] : text.join("");
 
 		if (this.primitive) {
+			if (this.template.length === 1) {
+				if (typeof this.value[0] === "number") {
+					this.primitive.datatype = "number";
+				}
+				else if (typeof this.value[0] === "boolean") {
+					this.primitive.datatype = "boolean";
+				}
+			}
+
 			if (!this.attribute) {
 				Wysie.Primitive.setValue(this.element, this.value, "content");
 			}
@@ -409,6 +414,20 @@ Wysie.hooks.add("scope-init-start", function() {
 
 Wysie.hooks.add("scope-init-end", function() {
 	this.expressions.init();
+});
+
+Wysie.hooks.add("scope-render-end", function() {
+	requestAnimationFrame(() => {
+		this.expressions.active = true;
+		this.expressions.update();
+	});
+});
+
+Wysie.hooks.add("scope-import-end", function() {
+	requestAnimationFrame(() => {
+		this.expressions.active = true;
+		this.expressions.update();
+	});
 });
 
 })(Bliss, Bliss.$);

@@ -59,11 +59,13 @@ var _ = Wysie.Primitive = $.Class({
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
-		this.observer = Wysie.observe(this.element, this.attribute, record => {
-			if (this.attribute || !this.wysie.editing || this.computed) {
-				this.value = this.getValue();
-			}
-		}, true);
+		if (!this.computed) {
+			this.observer = Wysie.observe(this.element, this.attribute, record => {
+				if (this.attribute || !this.wysie.editing || this.computed) {
+					this.value = this.getValue();
+				}
+			}, true);
+		}
 
 		this.templateValue = this.getValue();
 
@@ -522,10 +524,18 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	observe: function() {
+		if (this.computed) {
+			return;
+		}
+
 		Wysie.observe(this.element, this.attribute, this.observer);
 	},
 
 	unobserve: function () {
+		if (this.computed) {
+			return;
+		}
+
 		this.observer.disconnect();
 	},
 
@@ -609,8 +619,6 @@ var _ = Wysie.Primitive = $.Class({
 				});
 
 				this.oldValue = this.value;
-
-				return value;
 			}
 		},
 
@@ -625,13 +633,6 @@ var _ = Wysie.Primitive = $.Class({
 
 		computed: function (value) {
 			this.element.classList.toggle("computed", value);
-		},
-
-		datatype: function (value) {
-			// Purge caches if datatype changes
-			if (_.getValue.cache) {
-				_.getValue.cache.delete(this.element);
-			}
 		}
 	},
 
