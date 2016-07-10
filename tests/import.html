@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Import tests</title>
+	<link rel="stylesheet" href="../wysie.css" />
+</head>
+<body>
+
+<h1>Import from template tests</h1>
+
+<h2>Without render (template data)</h2>
+
+<div data-store>
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>With 404 (template data)</h2>
+
+<div data-store="404/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>With render (country data)</h2>
+
+<div data-store="../demos/talks/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<script src="../wysie.js"></script>
+
+</body>
+</html>
