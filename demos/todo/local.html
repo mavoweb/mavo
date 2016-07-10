@@ -9,17 +9,18 @@
 <link rel="stylesheet" href="style.css" />
 
 </head>
-<body>
+<body data-store="local" property="todo" class="autoedit">
 
 <header>
 	<h1>My tasks</h1>
+	<p>[count(done)] done out of [count(task)] total</p>
 </header>
 
 <ul>
-	<li data-store="#todo" property="Task">
+	<li property="task">
 		<label>
-			<input type="checkbox" property="done" />
-			<span property="task-title"></span>
+			<input property="done" type="checkbox" />
+			<span property="taskTitle"></span>
 		</label>
 	</li>
 </ul>
