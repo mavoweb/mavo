@@ -7,7 +7,8 @@ var _ = self.Wysie = $.Class({
 		_.all.push(this);
 
 		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store") || "";
+		var dataStore = (location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
+		                element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance

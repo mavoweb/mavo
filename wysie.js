@@ -578,8 +578,10 @@ extend($, {
 
 $.Hooks = new $.Class({
 	add: function (name, callback, first) {
-		this[name] = this[name] || [];
-		this[name][first? "unshift" : "push"](callback);
+		(Array.isArray(name)? name : [name]).forEach(function(name) {
+			this[name] = this[name] || [];
+			this[name][first? "unshift" : "push"](callback);
+		}, this);
 	},
 
 	run: function (name, env) {
@@ -1007,7 +1009,8 @@ var _ = self.Wysie = $.Class({
 		_.all.push(this);
 
 		// TODO escaping of # and \
-		var dataStore = element.getAttribute("data-store") || "";
+		var dataStore = (location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
+		                element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this wysie instance

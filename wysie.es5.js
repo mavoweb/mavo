@@ -564,8 +564,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	$.Hooks = new $.Class({
 		add: function add(name, callback, first) {
-			this[name] = this[name] || [];
-			this[name][first ? "unshift" : "push"](callback);
+			(Array.isArray(name) ? name : [name]).forEach(function (name) {
+				this[name] = this[name] || [];
+				this[name][first ? "unshift" : "push"](callback);
+			}, this);
 		},
 
 		run: function run(name, env) {
@@ -984,7 +986,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.all.push(this);
 
 			// TODO escaping of # and \
-			var dataStore = element.getAttribute("data-store") || "";
+			var dataStore = (location.search.match(/[?&]store=([^&]+)/) || [])[1] || element.getAttribute("data-store") || "";
 			this.store = dataStore === "none" ? null : dataStore;
 
 			// Assign a unique (for the page) id to this wysie instance
@@ -2915,14 +2917,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Min of an array of numbers
    */
 		min: function min(array) {
-			return Math.min.apply(Math, _toConsumableArray(numbers(array, arguments)));
+			var _Math;
+
+			return (_Math = Math).min.apply(_Math, _toConsumableArray(numbers(array, arguments)));
 		},
 
 		/**
    * Max of an array of numbers
    */
 		max: function max(array) {
-			return Math.max.apply(Math, _toConsumableArray(numbers(array, arguments)));
+			var _Math2;
+
+			return (_Math2 = Math).max.apply(_Math2, _toConsumableArray(numbers(array, arguments)));
 		},
 
 		count: function count(array) {
