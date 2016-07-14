@@ -1,11 +1,12 @@
 (function($) {
 
 var _ = Wysie.Permissions = $.Class({
-	constructor: function(o, wysie) {
+	constructor: function(o) {
 		this.triggers = [];
-		this.wysie = wysie;
 
 		this.set(o);
+
+		this.hooks = new $.Hooks();
 	},
 
 	// Set multiple permissions at once
@@ -38,8 +39,13 @@ var _ = Wysie.Permissions = $.Class({
 
 		if (cannot) {
 			// Fired once the action cannot be done anymore, even though it could be done before
-			this.observe(actions, false, cannot);
+			this.cannot(actions, cannot);
 		}
+	},
+
+	// Fired once NONE of the actions can be performed
+	cannot: function(actions, callback) {
+		this.observe(actions, false, callback);
 	},
 
 	// Like this.can(), but returns a promise
@@ -52,7 +58,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Schedule a callback for when a set of permissions changes value
 	observe: function(actions, value, callback) {
-		actions = Array.isArray(actions)? actions : [actions];
+		actions = Wysie.toArray(actions);
 
 		if (this.is(actions, value)) {
 			// Should be fired immediately
@@ -73,6 +79,11 @@ var _ = Wysie.Permissions = $.Class({
 		return able? or : !or;
 	},
 
+	// Monitor all changes
+	onchange: function(callback) {
+		this.hooks.add("change", callback);
+	},
+
 	// A single permission changed value
 	changed: function(action, value, from) {
 		from = !!from;
@@ -81,10 +92,6 @@ var _ = Wysie.Permissions = $.Class({
 		if (value == from) {
 			// Nothing changed
 			return;
-		}
-
-		if (this.wysie) {
-			this.wysie.wrapper.classList.toggle(`can-${action}`, value);
 		}
 
 		// $.live() calls the setter before the actual property is set so we
@@ -107,6 +114,8 @@ var _ = Wysie.Permissions = $.Class({
 				trigger.active = true;
 			}
 		});
+
+		this.hooks.run("change", {action, value, permissions: this});
 	},
 
 	or: function(permissions) {

@@ -16,10 +16,7 @@ var _ = Wysie.Unit = $.Class({
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		if (this.template) {
-			$.extend(this, this.template, ["computed", "required"]);
-		}
-		else {
+		if (!this.fromTemplate(["computed", "required"])) {
 			this.computed = Wysie.is("computed", this.element);
 			this.required = Wysie.is("required", this.element);
 		}

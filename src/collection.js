@@ -6,18 +6,37 @@ var _ = Wysie.Collection = $.Class({
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
-		this.templateElement = element;
+		this.templateElement = this.element;
 
 		this.items = [];
 
 		// ALL descendant property names as an array
-		if (this.template) {
-			this.properties = this.template.properties;
-			this.mutable = this.template.mutable;
-		}
-		else {
-			this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
+		if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
+			if (this.templateElement.matches("template")) {
+				var div = document.createElement("mv-group");
+				div.classList.add("document-fragment");
+
+				$$(this.templateElement.attributes).forEach(attr => {
+					div.setAttribute(attr.name, attr.value);
+				});
+
+				div.appendChild(document.importNode(this.templateElement.content, true));
+				this.templateElement.parentNode.replaceChild(div, this.templateElement);
+				this.element = this.templateElement = div;
+			}
+
+			this.properties = $$(Wysie.selectors.property, this.templateElement).map(Wysie.Node.normalizeProperty);
 			this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+
+			// Must clone because otherwise once expressions are parsed on the template element
+			// we will not be able to pick them up from subsequent items
+			this.templateElement = this.templateElement.cloneNode(true);
+		}
+
+		if (this.mutable) {
+			var item = this.createItem(this.element);
+			this.add(item);
+			this.itemTemplate = item;
 		}
 
 		Wysie.hooks.run("collection-init-end", this);
@@ -57,15 +76,23 @@ var _ = Wysie.Collection = $.Class({
 	// Create item but don't insert it anywhere
 	// Mostly used internally
 	createItem: function (element) {
-		var element = element || this.templateElement.cloneNode(true);
+		if (!element) {
+			element = this.templateElement.cloneNode(true);
+		}
 
 		var item = Wysie.Unit.create(element, this.wysie, {
 			collection: this,
-			template: this.items[0] || (this.template? this.template.items[0] : null)
+			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
+			property: this.property,
+			type: this.type
 		});
 
+		// If container is a fake "fragment", strip element naked
+		if (Wysie.is("documentFragment", item.element)) {
+			item.element = new Wysie.Fragment(item.element);
+		}
 		// Add delete & add buttons
-		if (this.mutable) {
+		else if (this.mutable) {
 			$.create({
 				className: "wysie-item-controls wysie-ui",
 				contents: [
@@ -118,6 +145,7 @@ var _ = Wysie.Collection = $.Class({
 		if (!item.element.parentNode) {
 			// Add it to the DOM, if not already in
 			var nextItem = this.items[index];
+
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
@@ -197,7 +225,15 @@ var _ = Wysie.Collection = $.Class({
 	 */
 	clear: function() {
 		if (this.mutable) {
-			this.propagate(item => item.element.remove());
+			this.propagate(item => {
+				if (item.element.remove) {
+					item.element.remove();
+				}
+				else {
+					// Document fragment, remove all children
+					$$(item.element.childNodes).forEach(node => node.remove());
+				}
+			});
 
 			this.items = [];
 
@@ -249,30 +285,14 @@ var _ = Wysie.Collection = $.Class({
 		});
 	},
 
-	import: function() {
-		if (this.mutable) {
-			this.add(this.element);
-		}
-
-		this.items.forEach(item => item.import());
-	},
-
 	render: function(data) {
 		this.unhandled = {before: [], after: []};
 
 		if (!data) {
-			if (data === null || data === undefined) {
-				if (!this.closestCollection || this.closestCollection.containsTemplate) {
-					// This is not contained in any other collection, display template data
-					this.clear();
-					this.import();
-				}
-			}
-
 			return;
 		}
 
-		data = data && Wysie.toArray(data);
+		data = Wysie.toArray(data);
 
 		if (!this.mutable) {
 			this.items.forEach((item, i) => item.render(data && data[i]));
@@ -281,7 +301,9 @@ var _ = Wysie.Collection = $.Class({
 				this.unhandled.after = data.slice(this.items.length);
 			}
 		}
-		else if (data && data.length > 0) {
+		else {
+			this.clear();
+
 			// Using document fragments improved rendering performance by 60%
 			var fragment = document.createDocumentFragment();
 
@@ -328,7 +350,7 @@ var _ = Wysie.Collection = $.Class({
 
 				this.required = this.templateElement.matches(Wysie.selectors.required);
 
-				// Keep position of the template in the DOM, since we’re gonna remove it
+				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
 					className: "wysie-marker",
@@ -336,8 +358,6 @@ var _ = Wysie.Collection = $.Class({
 				});
 
 				this.templateElement.classList.add("wysie-item");
-
-				this.templateElement.remove();
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -355,8 +375,6 @@ var _ = Wysie.Collection = $.Class({
 						this.addButton._.after(after && after.parentNode? after : this.marker);
 					}
 				}
-
-				this.templateElement = this.element.cloneNode(true);
 			}
 		}
 	},
@@ -425,6 +443,21 @@ var _ = Wysie.Collection = $.Class({
 			return button;
 		}
 	}
+});
+
+// TODO
+Wysie.Fragment = $.Class({
+	constructor: function(element) {
+		this.childNodes = [];
+
+		$$(element.childNodes).forEach(node => this.appendChild(node));
+	},
+
+	appendChild: function(node) {
+		this.childNodes.push(node);
+	},
+
+	classList: {toggle: () => {}, add: () => {}, remove: () => {}, contains: () => {}}
 });
 
 })(Bliss, Bliss.$);

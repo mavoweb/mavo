@@ -46,8 +46,8 @@ var _ = self.Wysie = $.Class({
 		$$(_.selectors.primitive).forEach(element => {
 			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
 			                Wysie.is("multiple", element) || // is a collection...
-			                Wysie.Primitive.getValueAttribute(element) === null
-					      ); // ...or its content is not in an attribute
+			                Wysie.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
+						) || element.matches("template");
 
 			if (isScope) {
 				element.setAttribute("typeof", "");
@@ -71,26 +71,29 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper.classList.add("wysie-wrapper");
 
-		element.removeAttribute("data-store");
-
 		// Normalize property names
-		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
-			return Wysie.Node.normalizeProperty(element);
-		}).sort((a, b) => b.length - a.length);
+		this.propertyNames = [];
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
 		// Build wysie objects
 		Wysie.hooks.run("init-tree-before", this);
+
 		this.root = Wysie.Node.create(this.element, this);
+		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
+
 		Wysie.hooks.run("init-tree-after", this);
 
 		this.permissions = new Wysie.Permissions(null, this);
 
+		var inlineBar = this.wrapper.hasAttribute("data-bar")?
+		                  this.wrapper.matches("[data-bar~=inline]") :
+		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
+
 		this.ui = {
 			bar: $(".wysie-bar", this.wrapper) || $.create({
-				className: "wysie-bar wysie-ui",
+				className: "wysie-bar wysie-ui" + (inlineBar? " inline" : ""),
 				start: this.wrapper,
 				contents: {
 					tag: "span",
@@ -99,13 +102,36 @@ var _ = self.Wysie = $.Class({
 			})
 		};
 
+		_.observe(this.wrapper, "class", () => {
+			var p = this.permissions;
+			var floating = !this.editing && (p.login || p.edit && !p.login && !(p.save && this.unsavedChanges));
+			this.ui.bar.classList.toggle("floating", floating);
+		});
+
+		this.permissions.onchange(({action, value}) => {
+			this.wrapper.classList.toggle(`can-${action}`, value);
+		});
+
 		this.permissions.can(["edit", "add", "delete"], () => {
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.editing? this.done() : this.edit()
+				onclick: e => this.editing? this.done() : this.edit(),
+				inside: this.ui.bar
 			});
 
+			if (this.autoEdit) {
+				requestAnimationFrame(() => this.ui.edit.click());
+			}
+		}, () => { // cannot
+			$.remove(this.ui.edit);
+
+			if (this.editing) {
+				this.done();
+			}
+		});
+
+		this.permissions.can("save", () => {
 			this.ui.save = $.create("button", {
 				className: "save",
 				textContent: "Save",
@@ -116,7 +142,8 @@ var _ = self.Wysie = $.Class({
 						this.unsavedChanges = this.calculateUnsavedChanges();
 					},
 					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
-				}
+				},
+				inside: this.ui.bar
 			});
 
 			this.ui.revert = $.create("button", {
@@ -132,35 +159,24 @@ var _ = self.Wysie = $.Class({
 						}
 					},
 					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
-				}
+				},
+				inside: this.ui.bar
 			});
-
-			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
-
-			$.contents(this.ui.bar, this.ui.editButtons);
-
-			if (this.autoEdit) {
-				requestAnimationFrame(() => this.ui.edit.click());
-			}
-		}, () => { // cannot
-			$.remove(this.ui.editButtons);
-
-			if (this.editing) {
-				this.done();
-			}
+		}, () => {
+			$.remove([this.ui.save, this.ui.revert]);
 		});
 
-		this.permissions.can(["delete"], () => {
+		this.permissions.can("delete", () => {
 			this.ui.clear = $.create("button", {
 				className: "clear",
 				textContent: "Clear",
 				onclick: e => this.clear()
 			});
 
-			this.ui.editButtons.push(this.ui.clear);
-
 			this.ui.bar.appendChild(this.ui.clear);
-		}, () => { // cannot
+		});
+
+		this.permissions.cannot(["delete", "edit"], () => {
 			$.remove(this.ui.clear);
 		});
 
@@ -174,8 +190,6 @@ var _ = self.Wysie = $.Class({
 		else {
 			// No storage
 			this.permissions.on(["read", "edit"]);
-
-			this.root.import();
 
 			$.fire(this.wrapper, "wysie:load");
 		}
@@ -202,10 +216,7 @@ var _ = self.Wysie = $.Class({
 	render: function(data) {
 		_.hooks.run("render-start", {context: this, data});
 
-		if (!data) {
-			this.root.import();
-		}
-		else {
+		if (data) {
 			this.everSaved = true;
 			this.root.render(data.data || data);
 		}
@@ -425,7 +436,8 @@ let s = _.selectors = {
 		"option": "select",
 		"dt": "dl",
 		"dd": "dl"
-	}
+	},
+	documentFragment: ".document-fragment"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);

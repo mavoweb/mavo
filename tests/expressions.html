@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Expression tests</title>
+	<link rel="stylesheet" href="../wysie.css" />
+	<style>
+		[data-foo]::before {
+			content: "[data-foo=" attr(data-foo) "]";
+			background: #efc;
+		}
+	</style>
+</head>
+<body>
+
+<h1>Expression tests</h1>
+
+<h2>With render (country data)</h2>
+
+<div data-store="#countries">
+	<ul>
+		<li property="country" data-multiple data-foo="[code]">
+			<span property="code">Code</span>
+			Expr: [code]
+			<br>
+			<span property="name" data-foo="[name]">Name</span>
+			Expr: [name]
+			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
+			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
+		</li>
+	</ul>
+	List: [country]
+	<div>Boolean count (must be 1): [count(isUS)]</div>
+</div>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<h2>Without render</h2>
+
+<div data-store>
+	<ul>
+		<li property="country" data-multiple data-foo="[code]">
+			<span property="code">Code</span>
+			Expr: [code]
+			<br>
+			<span property="name" data-foo="[name]">Name</span>
+			Expr: [name]
+			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
+			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
+		</li>
+	</ul>
+	List: [country]
+</div>
+
+<h2>Nested average, meter, countif</h2>
+
+<div data-store="local" id="nestedAverage">
+	<article property="restaurant" data-multiple>
+		<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
+
+		<section>
+			<article property="visit" data-multiple>
+				<header>
+					<p>
+						Average dish rating
+						<meter property="visitRating" value="[average(dishRating)]" min="0" max="5"></meter>
+					</p>
+				</header>
+
+				<section>
+					<ul>
+						<li property="dish" data-multiple>
+							<p>
+								Rating:
+								<span property="dishRating">4</span>
+							</p>
+						</li>
+					</ul>
+				</section>
+			</article>
+		</section>
+	</article>
+
+	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
+</div>
+
+<script src="../wysie.js"></script>
+
+</body>
+</html>

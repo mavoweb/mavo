@@ -139,7 +139,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 				this.repoInfo = repoInfo;
 
 				if (repoInfo.permissions.push) {
-					this.permissions.on("edit");
+					this.permissions.on(["edit", "save"]);
 				}
 			})
 			.catch(xhr => {
@@ -147,7 +147,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 					// Repo does not exist so we can't check permissions
 					// Just check if authenticated user is the same as our URL username
 					if (this.user.login == this.username) {
-						this.permissions.on("edit");
+						this.permissions.on("edit", "save");
 					}
 				}
 			});
@@ -159,7 +159,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			localStorage.removeItem("wysie:githubtoken");
 			delete this.accessToken;
 
-			this.permissions.off(["edit", "add", "delete"]).on("login");
+			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
 			this.wysie.wrapper._.fire("wysie:logout", {backend: this});
 		}

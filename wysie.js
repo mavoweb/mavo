@@ -578,8 +578,10 @@ extend($, {
 
 $.Hooks = new $.Class({
 	add: function (name, callback, first) {
-		this[name] = this[name] || [];
-		this[name][first? "unshift" : "push"](callback);
+		(Array.isArray(name)? name : [name]).forEach(function(name) {
+			this[name] = this[name] || [];
+			this[name][first? "unshift" : "push"](callback);
+		}, this);
 	},
 
 	run: function (name, env) {
@@ -1046,8 +1048,8 @@ var _ = self.Wysie = $.Class({
 		$$(_.selectors.primitive).forEach(element => {
 			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
 			                Wysie.is("multiple", element) || // is a collection...
-			                Wysie.Primitive.getValueAttribute(element) === null
-					      ); // ...or its content is not in an attribute
+			                Wysie.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
+						) || element.matches("template");
 
 			if (isScope) {
 				element.setAttribute("typeof", "");
@@ -1071,26 +1073,29 @@ var _ = self.Wysie = $.Class({
 
 		this.wrapper.classList.add("wysie-wrapper");
 
-		element.removeAttribute("data-store");
-
 		// Normalize property names
-		this.propertyNames = $$(_.selectors.property, this.wrapper).map(element => {
-			return Wysie.Node.normalizeProperty(element);
-		}).sort((a, b) => b.length - a.length);
+		this.propertyNames = [];
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
 		// Build wysie objects
 		Wysie.hooks.run("init-tree-before", this);
+
 		this.root = Wysie.Node.create(this.element, this);
+		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
+
 		Wysie.hooks.run("init-tree-after", this);
 
 		this.permissions = new Wysie.Permissions(null, this);
 
+		var inlineBar = this.wrapper.hasAttribute("data-bar")?
+		                  this.wrapper.matches("[data-bar~=inline]") :
+		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
+
 		this.ui = {
 			bar: $(".wysie-bar", this.wrapper) || $.create({
-				className: "wysie-bar wysie-ui",
+				className: "wysie-bar wysie-ui" + (inlineBar? " inline" : ""),
 				start: this.wrapper,
 				contents: {
 					tag: "span",
@@ -1099,13 +1104,36 @@ var _ = self.Wysie = $.Class({
 			})
 		};
 
+		_.observe(this.wrapper, "class", () => {
+			var p = this.permissions;
+			var floating = !this.editing && (p.login || p.edit && !p.login && !(p.save && this.unsavedChanges));
+			this.ui.bar.classList.toggle("floating", floating);
+		});
+
+		this.permissions.onchange(({action, value}) => {
+			this.wrapper.classList.toggle(`can-${action}`, value);
+		});
+
 		this.permissions.can(["edit", "add", "delete"], () => {
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.editing? this.done() : this.edit()
+				onclick: e => this.editing? this.done() : this.edit(),
+				inside: this.ui.bar
 			});
 
+			if (this.autoEdit) {
+				requestAnimationFrame(() => this.ui.edit.click());
+			}
+		}, () => { // cannot
+			$.remove(this.ui.edit);
+
+			if (this.editing) {
+				this.done();
+			}
+		});
+
+		this.permissions.can("save", () => {
 			this.ui.save = $.create("button", {
 				className: "save",
 				textContent: "Save",
@@ -1116,7 +1144,8 @@ var _ = self.Wysie = $.Class({
 						this.unsavedChanges = this.calculateUnsavedChanges();
 					},
 					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
-				}
+				},
+				inside: this.ui.bar
 			});
 
 			this.ui.revert = $.create("button", {
@@ -1132,35 +1161,24 @@ var _ = self.Wysie = $.Class({
 						}
 					},
 					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
-				}
+				},
+				inside: this.ui.bar
 			});
-
-			this.ui.editButtons = [this.ui.edit, this.ui.save, this.ui.revert];
-
-			$.contents(this.ui.bar, this.ui.editButtons);
-
-			if (this.autoEdit) {
-				requestAnimationFrame(() => this.ui.edit.click());
-			}
-		}, () => { // cannot
-			$.remove(this.ui.editButtons);
-
-			if (this.editing) {
-				this.done();
-			}
+		}, () => {
+			$.remove([this.ui.save, this.ui.revert]);
 		});
 
-		this.permissions.can(["delete"], () => {
+		this.permissions.can("delete", () => {
 			this.ui.clear = $.create("button", {
 				className: "clear",
 				textContent: "Clear",
 				onclick: e => this.clear()
 			});
 
-			this.ui.editButtons.push(this.ui.clear);
-
 			this.ui.bar.appendChild(this.ui.clear);
-		}, () => { // cannot
+		});
+
+		this.permissions.cannot(["delete", "edit"], () => {
 			$.remove(this.ui.clear);
 		});
 
@@ -1174,8 +1192,6 @@ var _ = self.Wysie = $.Class({
 		else {
 			// No storage
 			this.permissions.on(["read", "edit"]);
-
-			this.root.import();
 
 			$.fire(this.wrapper, "wysie:load");
 		}
@@ -1202,10 +1218,7 @@ var _ = self.Wysie = $.Class({
 	render: function(data) {
 		_.hooks.run("render-start", {context: this, data});
 
-		if (!data) {
-			this.root.import();
-		}
-		else {
+		if (data) {
 			this.everSaved = true;
 			this.root.render(data.data || data);
 		}
@@ -1425,7 +1438,8 @@ let s = _.selectors = {
 		"option": "select",
 		"dt": "dl",
 		"dd": "dl"
-	}
+	},
+	documentFragment: ".document-fragment"
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
@@ -1508,11 +1522,12 @@ Stretchy.selectors.filter = ".wysie-editor:not([property])";
 (function($) {
 
 var _ = Wysie.Permissions = $.Class({
-	constructor: function(o, wysie) {
+	constructor: function(o) {
 		this.triggers = [];
-		this.wysie = wysie;
 
 		this.set(o);
+
+		this.hooks = new $.Hooks();
 	},
 
 	// Set multiple permissions at once
@@ -1545,8 +1560,13 @@ var _ = Wysie.Permissions = $.Class({
 
 		if (cannot) {
 			// Fired once the action cannot be done anymore, even though it could be done before
-			this.observe(actions, false, cannot);
+			this.cannot(actions, cannot);
 		}
+	},
+
+	// Fired once NONE of the actions can be performed
+	cannot: function(actions, callback) {
+		this.observe(actions, false, callback);
 	},
 
 	// Like this.can(), but returns a promise
@@ -1559,7 +1579,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Schedule a callback for when a set of permissions changes value
 	observe: function(actions, value, callback) {
-		actions = Array.isArray(actions)? actions : [actions];
+		actions = Wysie.toArray(actions);
 
 		if (this.is(actions, value)) {
 			// Should be fired immediately
@@ -1580,6 +1600,11 @@ var _ = Wysie.Permissions = $.Class({
 		return able? or : !or;
 	},
 
+	// Monitor all changes
+	onchange: function(callback) {
+		this.hooks.add("change", callback);
+	},
+
 	// A single permission changed value
 	changed: function(action, value, from) {
 		from = !!from;
@@ -1588,10 +1613,6 @@ var _ = Wysie.Permissions = $.Class({
 		if (value == from) {
 			// Nothing changed
 			return;
-		}
-
-		if (this.wysie) {
-			this.wysie.wrapper.classList.toggle(`can-${action}`, value);
 		}
 
 		// $.live() calls the setter before the actual property is set so we
@@ -1614,6 +1635,8 @@ var _ = Wysie.Permissions = $.Class({
 				trigger.active = true;
 			}
 		});
+
+		this.hooks.run("change", {action, value, permissions: this});
 	},
 
 	or: function(permissions) {
@@ -2024,8 +2047,13 @@ var _ = Wysie.Node = $.Class({
 		this.template = o.template;
 
 		this.wysie = wysie;
-		this.property = element.getAttribute("property");
-		this.type = Wysie.Scope.normalize(element);
+
+		if (!this.fromTemplate(["property", "type"])) {
+			this.property = _.normalizeProperty(element);
+			this.type = Wysie.Scope.normalize(element);
+		}
+
+		this.scope = this.parentScope = o.scope;
 
 		Wysie.hooks.run("node-init-end", this);
 	},
@@ -2162,6 +2190,16 @@ var _ = Wysie.Node = $.Class({
 
 	toJSON: Wysie.prototype.toJSON,
 
+	fromTemplate: function(properties) {
+		if (this.template) {
+			properties.forEach(property => {
+				this[property] = this.template[property];
+			});
+		}
+
+		return !!this.template;
+	},
+
 	static: {
 		create: function(element, wysie, o = {}) {
 			if (Wysie.is("multiple", element) && !o.collection) {
@@ -2208,10 +2246,7 @@ var _ = Wysie.Unit = $.Class({
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		if (this.template) {
-			$.extend(this, this.template, ["computed", "required"]);
-		}
-		else {
+		if (!this.fromTemplate(["computed", "required"])) {
 			this.computed = Wysie.is("computed", this.element);
 			this.required = Wysie.is("required", this.element);
 		}
@@ -2374,7 +2409,7 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	toString() {
-		return `=(${this.expression})`;
+		return `[${this.expression}]`;
 	},
 
 	createFunction: function() {
@@ -2451,7 +2486,14 @@ var _ = Wysie.Expression.Text = $.Class({
 		}
 
 		this.expression = this.text.trim();
-		this.template = this.tokenize(this.expression);
+		this.template = o.template? o.template.template : this.tokenize(this.expression);
+
+		// Is this a computed property?
+		var primitive = Wysie.Unit.get(this.element);
+		if (primitive && this.attribute === primitive.attribute) {
+			this.primitive = primitive;
+			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
+		}
 
 		Wysie.hooks.run("expressiontext-init-end", this);
 
@@ -2499,32 +2541,23 @@ var _ = Wysie.Expression.Text = $.Class({
 
 		// Presentation text
 		var text = this.value.map(value => {
-			if (typeof value === "number" && !this.attribute) {
-				return _.formatNumber(value);
-			}
-			else if (Array.isArray(value)) {
+			if (Array.isArray(value)) {
 				return value.join(", ");
 			}
 
 			return value;
 		});
 
-		this.text = text.length === 1? text[0] : text.join("");
-
-		if (this.primitive) {
-			if (this.template.length === 1) {
-				if (typeof this.value[0] === "number") {
-					this.primitive.datatype = "number";
-				}
-				else if (typeof this.value[0] === "boolean") {
-					this.primitive.datatype = "boolean";
-				}
+		if (this.primitive && this.template.length === 1) {
+			if (typeof this.value[0] === "number") {
+				this.primitive.datatype = "number";
 			}
-
-			if (!this.attribute) {
-				Wysie.Primitive.setValue(this.element, this.value, "content");
+			else if (typeof this.value[0] === "boolean") {
+				this.primitive.datatype = "boolean";
 			}
 		}
+
+		this.text = text.length === 1? text[0] : text.join("");
 	},
 
 	tokenize: function(template) {
@@ -2603,19 +2636,6 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		lazy: {
-			formatNumber: () => {
-				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
-
-				return function(value) {
-					if (value === Infinity || value === -Infinity) {
-						// Pretty print infinity
-						return value < 0? "-∞" : "∞";
-					}
-
-					return numberFormat.format(value);
-				};
-			},
-
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
 	}
@@ -2638,13 +2658,15 @@ var _ = Wysie.Expressions = $.Class({
 
 		if (this.scope) {
 			var template = this.scope.template;
+
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
 				template.expressions.all.forEach(et => {
 					this.all.push(new Wysie.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
-						all: this
+						all: this,
+						template: et
 					}));
 				});
 			}
@@ -2661,8 +2683,6 @@ var _ = Wysie.Expressions = $.Class({
 
 	init: function() {
 		if (this.all.length > 0) {
-			this.lastUpdated = 0;
-
 			this.update();
 
 			// Watch changes and update value
@@ -2753,22 +2773,38 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("scope-init-start", function() {
-	new Wysie.Expressions(this);
+Wysie.hooks.add("init-tree-after", function() {
+	this.walk(obj => {
+		if (obj instanceof Wysie.Scope) {
+			new Wysie.Expressions(obj);
+			obj.expressions.init();
+		}
+	});
 });
 
 Wysie.hooks.add("scope-init-end", function() {
-	this.expressions.init();
-});
-
-Wysie.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
-		this.expressions.active = true;
+		// Tree expressions are processed synchronously, so by now if it doesn't have
+		// an expressions object, we need to create it.
+		if (!this.expressions) {
+			new Wysie.Expressions(this);
+		}
+
+		this.expressions.init();
+
 		this.expressions.update();
 	});
 });
 
-Wysie.hooks.add("scope-import-end", function() {
+Wysie.hooks.add("scope-render-start", function() {
+	if (!this.expressions) {
+		new Wysie.Expressions(this);
+	}
+
+	this.expressions.active = false;
+});
+
+Wysie.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
 		this.expressions.active = true;
 		this.expressions.update();
@@ -2984,8 +3020,7 @@ var _ = Wysie.Scope = $.Class({
 
 		// Should this element also create a primitive?
 		if (Wysie.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie);
-			obj.scope = obj.parentScope = this;
+			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie, {scope: this});
 		}
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
@@ -2996,13 +3031,14 @@ var _ = Wysie.Scope = $.Class({
 			if (this.contains(element)) {
 				var existing = this.properties[property];
 				var template = this.template? this.template.properties[property] : null;
+				var constructorOptions = {template, scope: this};
 
 				if (existing) {
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie, {template});
+						collection = new Wysie.Collection(existing.element, this.wysie, constructorOptions);
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
@@ -3016,14 +3052,16 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie, {template});
-					obj.scope = obj instanceof _? obj : this;
+					var obj = Wysie.Node.create(element, this.wysie, constructorOptions);
 
-					obj.parentScope = this;
 					this.properties[property] = obj;
 				}
 			}
 		});
+
+		if (!this.template) {
+			Array.prototype.push.apply(this.wysie.propertyNames, this.propertyNames);
+		}
 
 		Wysie.hooks.run("scope-init-end", this);
 	},
@@ -3101,12 +3139,6 @@ var _ = Wysie.Scope = $.Class({
 		$.unbind(this.element, ".wysie:edit");
 	},
 
-	import: function() {
-		this.everSaved = true;
-
-		Wysie.hooks.run("scope-import-end", this);
-	},
-
 	propagated: ["save", "done", "import", "clear"],
 
 	// Inject data in this element
@@ -3116,8 +3148,9 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		this.expressions.active = false;
+		Wysie.hooks.run("scope-render-start", this);
 
+		// TODO retain dropped elements
 		data = data.isArray? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a scope?
@@ -3171,10 +3204,10 @@ var _ = Wysie.Scope = $.Class({
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, o) {
-		if (this.template) {
-			$.extend(this, this.template, ["attribute", "datatype", "humanReadable"]);
-		}
-		else {
+		if (!this.fromTemplate([
+			"attribute", "datatype", "humanReadable",
+			"computed", "templateValue"
+		])) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -3187,15 +3220,8 @@ var _ = Wysie.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
-		}
 
-		// Primitives containing an expression as their value are implicitly computed
-		var expressions = Wysie.Expression.Text.elements.get(this.element);
-		var expressionText = expressions && expressions.filter(e => e.attribute == this.attribute)[0];
-
-		if (expressionText) {
-			expressionText.primitive = this;
-			this.computed = true;
+			this.templateValue = this.getValue({raw: true});
 		}
 
 		/**
@@ -3210,7 +3236,6 @@ var _ = Wysie.Primitive = $.Class({
 		}
 		// Nested widgets
 		else if (!this.editor) {
-
 			this.editor = $$(this.element.children).filter(function (el) {
 			    return el.matches(Wysie.selectors.formControl) && !el.matches(Wysie.selectors.property);
 			})[0];
@@ -3221,8 +3246,6 @@ var _ = Wysie.Primitive = $.Class({
 		if (!this.exposed && !this.computed) {
 			this.wysie.needsEdit = true;
 		}
-
-		this.default = this.element.getAttribute("data-default");
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -3235,17 +3258,17 @@ var _ = Wysie.Primitive = $.Class({
 			}, true);
 		}
 
-		this.templateValue = this.getValue();
+		this.default = this.element.getAttribute("data-default");
 
 		if (this.computed || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
-		else {
-			if (this.default === null) { // attribute does not exist
-				this.default = this.editor? this.editorValue : this.emptyValue;
-			}
+		else if (this.default === null) { // attribute does not exist
+			this.default = this.editor? this.editorValue : this.emptyValue;
+		}
 
-			this.value = this.default;
+		if (!this.computed) {
+			this.value = this.templateValue; // no need to run setter code
 		}
 
 		if (this.collection) {
@@ -3278,9 +3301,7 @@ var _ = Wysie.Primitive = $.Class({
 			});
 		}
 
-		this.initialized = true;
-
-		this.value = this.getValue();
+		this.value = this.getValue({raw: true}); // no need to run setter code
 	},
 
 	get editorValue() {
@@ -3339,34 +3360,6 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		return ret;
-	},
-
-	update: function () {
-		var value = _.getValue(this.element, this.attribute, this.datatype);
-		value = value || value === 0? value : "";
-
-		if (value == this.oldValue) {
-			return false;
-		}
-
-		this.value = value;
-
-		this.empty = value === "";
-
-		if (this.humanReadable && this.attribute) {
-			this.element.textContent = this.humanReadable(value);
-		}
-
-		if (this.initialized) {
-			$.fire(this.element, "wysie:datachange", {
-				property: this.property,
-				value: value,
-				wysie: this.wysie,
-				node: this,
-				dirty: this.editing,
-				action: "propertychange"
-			});
-		}
 	},
 
 	save: function() {
@@ -3665,12 +3658,6 @@ var _ = Wysie.Primitive = $.Class({
 		this.value = this.emptyValue;
 	},
 
-	import: function() {
-		if (!this.computed) {
-			this.value = this.templateValue;
-		}
-	},
-
 	render: function(data) {
 		if (Array.isArray(data)) {
 			data = data[0]; // TODO what is gonna happen to the rest? Lost?
@@ -3707,8 +3694,8 @@ var _ = Wysie.Primitive = $.Class({
 		this.observer.disconnect();
 	},
 
-	getValue: function() {
-		return _.getValue(this.element, this.attribute, this.datatype);
+	getValue: function(o) {
+		return _.getValue(this.element, this.attribute, this.datatype, o);
 	},
 
 	lazy: {
@@ -3729,65 +3716,57 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	live: {
-		value: {
-			get: function() {
-				// if (this.editing) {
-				// 	var ret = this.editorValue;
-				//
-				// 	return ret === ""? null : ret;
-				// }
-			},
+		value: function (value) {
+			value = value || value === 0? value : "";
+			value = _.safeCast(value, this.datatype);
 
-			set: function (value) {
-				value = value || value === 0? value : "";
-				value = _.cast(value, this.datatype);
-
-				if (value == this._value) {
-					return;
-				}
-
-				if (this.editor) {
-					this.editorValue = value;
-				}
-
-				if (!this.editing || this.attribute) {
-					if (this.datatype == "number" && !this.attribute) {
-						_.setValue(this.element, value, "content", this.datatype);
-						_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
-					}
-					else if (this.editor && this.editor.matches("select")) {
-						this.editorValue = value;
-						_.setValue(this.element, value, "content", this.datatype);
-						_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
-					}
-					else {
-						_.setValue(this.element, value, this.attribute, this.datatype);
-					}
-				}
-
-				this.empty = value === "";
-
-				if (this.humanReadable && this.attribute) {
-					this.element.textContent = this.humanReadable(value);
-				}
-
-				this._value = value;
-
-				if (!this.computed) {
-					this.unsavedChanges = this.wysie.unsavedChanges = true;
-				}
-
-				$.fire(this.element, "wysie:datachange", {
-					property: this.property,
-					value: value,
-					wysie: this.wysie,
-					node: this,
-					dirty: this.editing,
-					action: "propertychange"
-				});
-
-				this.oldValue = this.value;
+			if (value == this._value) {
+				return;
 			}
+
+			if (this.editor) {
+				this.editorValue = value;
+			}
+
+			if (!this.editing || this.attribute) {
+				if (this.datatype == "number" && !this.attribute) {
+					_.setValue(this.element, value, "content", this.datatype);
+					_.setValue(this.element, _.formatNumber(value), null, this.datatype);
+				}
+				else if (this.editor && this.editor.matches("select")) {
+					this.editorValue = value;
+					_.setValue(this.element, value, "content", this.datatype);
+					_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
+				}
+				else {
+					_.setValue(this.element, value, this.attribute, this.datatype);
+				}
+			}
+			if (this.property === "visitRating") {
+				console.log(this._value, value, this.datatype, this.element.outerHTML, this.element.closest("body"))
+			}
+			this.empty = value === "";
+
+			if (this.humanReadable && this.attribute) {
+				this.element.textContent = this.humanReadable(value);
+			}
+
+			this._value = value;
+
+			if (!this.computed) {
+				this.unsavedChanges = this.wysie.unsavedChanges = true;
+			}
+
+			$.fire(this.element, "wysie:datachange", {
+				property: this.property,
+				value: value,
+				wysie: this.wysie,
+				node: this,
+				dirty: this.editing,
+				action: "propertychange"
+			});
+
+			this.oldValue = this.value;
 		},
 
 		empty: function(value) {
@@ -3851,25 +3830,60 @@ var _ = Wysie.Primitive = $.Class({
 			return ret;
 		},
 
-		cast: function(value, datatype) {
-			if (datatype == "number") {
-				return +value;
+		/**
+		 * Only cast if conversion is lossless
+		 */
+		safeCast: function(value, datatype) {
+			var existingType = typeof value;
+			var cast = _.cast(value, datatype);
+
+			if (value === null || value === undefined) {
+				return value;
 			}
 
 			if (datatype == "boolean") {
-				return !!value;
+				if (value === "false" || value === 0 || value === "") {
+					return false;
+				}
+
+				if (value === "true" || value > 0) {
+					return true;
+				}
+
+				return value;
+			}
+
+			if (datatype == "number") {
+				if (/^[-+]?[0-9.e]+$/i.test(value + "")) {
+					return cast;
+				}
+
+				return value;
+			}
+
+			return cast;
+		},
+
+		/**
+		 * Cast to a different primitive datatype
+		 */
+		cast: function(value, datatype) {
+			switch (datatype) {
+				case "number": return +value;
+				case "boolean": return !!value;
+				case "string": return value + "";
 			}
 
 			return value;
 		},
 
-		getValue: function (element, attribute, datatype) {
+		getValue: function (element, attribute, datatype, o = {}) {
 				attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
 				datatype = datatype || _.getDatatype(element, attribute);
 
 				var ret;
 
-				if (attribute in element && _.useProperty(element, attribute)) {
+				if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
 					// Returning properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					ret = element[attribute];
@@ -3881,7 +3895,12 @@ var _ = Wysie.Primitive = $.Class({
 					ret = element.getAttribute("content") || element.textContent || null;
 				}
 
-				return _.cast(ret, datatype);
+				if (_.safeCast(ret, datatype) === "null") {
+					console.log(ret, datatype)
+				}
+
+				return _.safeCast(ret, datatype);
+				return ret;
 		},
 
 		setValue: function (element, value, attribute) {
@@ -3926,6 +3945,21 @@ var _ = Wysie.Primitive = $.Class({
 			}
 
 			return true;
+		},
+
+		lazy: {
+			formatNumber: () => {
+				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
+
+				return function(value) {
+					if (value === Infinity || value === -Infinity) {
+						// Pretty print infinity
+						return value < 0? "-∞" : "∞";
+					}
+
+					return numberFormat.format(value);
+				};
+			}
 		}
 	}
 });
@@ -4011,7 +4045,7 @@ _.editors = {
 		},
 
 		get editorValue () {
-			return this.editor && _.cast(this.editor.value, this.datatype);
+			return this.editor && _.safeCast(this.editor.value, this.datatype);
 		},
 
 		set editorValue (value) {
@@ -4129,18 +4163,37 @@ var _ = Wysie.Collection = $.Class({
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
-		this.templateElement = element;
+		this.templateElement = this.element;
 
 		this.items = [];
 
 		// ALL descendant property names as an array
-		if (this.template) {
-			this.properties = this.template.properties;
-			this.mutable = this.template.mutable;
-		}
-		else {
-			this.properties = $$(Wysie.selectors.property, this.templateElement)._.getAttribute("property");
+		if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
+			if (this.templateElement.matches("template")) {
+				var div = document.createElement("mv-group");
+				div.classList.add("document-fragment");
+
+				$$(this.templateElement.attributes).forEach(attr => {
+					div.setAttribute(attr.name, attr.value);
+				});
+
+				div.appendChild(document.importNode(this.templateElement.content, true));
+				this.templateElement.parentNode.replaceChild(div, this.templateElement);
+				this.element = this.templateElement = div;
+			}
+
+			this.properties = $$(Wysie.selectors.property, this.templateElement).map(Wysie.Node.normalizeProperty);
 			this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+
+			// Must clone because otherwise once expressions are parsed on the template element
+			// we will not be able to pick them up from subsequent items
+			this.templateElement = this.templateElement.cloneNode(true);
+		}
+
+		if (this.mutable) {
+			var item = this.createItem(this.element);
+			this.add(item);
+			this.itemTemplate = item;
 		}
 
 		Wysie.hooks.run("collection-init-end", this);
@@ -4180,15 +4233,23 @@ var _ = Wysie.Collection = $.Class({
 	// Create item but don't insert it anywhere
 	// Mostly used internally
 	createItem: function (element) {
-		var element = element || this.templateElement.cloneNode(true);
+		if (!element) {
+			element = this.templateElement.cloneNode(true);
+		}
 
 		var item = Wysie.Unit.create(element, this.wysie, {
 			collection: this,
-			template: this.items[0] || (this.template? this.template.items[0] : null)
+			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
+			property: this.property,
+			type: this.type
 		});
 
+		// If container is a fake "fragment", strip element naked
+		if (Wysie.is("documentFragment", item.element)) {
+			item.element = new Wysie.Fragment(item.element);
+		}
 		// Add delete & add buttons
-		if (this.mutable) {
+		else if (this.mutable) {
 			$.create({
 				className: "wysie-item-controls wysie-ui",
 				contents: [
@@ -4241,6 +4302,7 @@ var _ = Wysie.Collection = $.Class({
 		if (!item.element.parentNode) {
 			// Add it to the DOM, if not already in
 			var nextItem = this.items[index];
+
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
@@ -4320,7 +4382,15 @@ var _ = Wysie.Collection = $.Class({
 	 */
 	clear: function() {
 		if (this.mutable) {
-			this.propagate(item => item.element.remove());
+			this.propagate(item => {
+				if (item.element.remove) {
+					item.element.remove();
+				}
+				else {
+					// Document fragment, remove all children
+					$$(item.element.childNodes).forEach(node => node.remove());
+				}
+			});
 
 			this.items = [];
 
@@ -4372,30 +4442,14 @@ var _ = Wysie.Collection = $.Class({
 		});
 	},
 
-	import: function() {
-		if (this.mutable) {
-			this.add(this.element);
-		}
-
-		this.items.forEach(item => item.import());
-	},
-
 	render: function(data) {
 		this.unhandled = {before: [], after: []};
 
 		if (!data) {
-			if (data === null || data === undefined) {
-				if (!this.closestCollection || this.closestCollection.containsTemplate) {
-					// This is not contained in any other collection, display template data
-					this.clear();
-					this.import();
-				}
-			}
-
 			return;
 		}
 
-		data = data && Wysie.toArray(data);
+		data = Wysie.toArray(data);
 
 		if (!this.mutable) {
 			this.items.forEach((item, i) => item.render(data && data[i]));
@@ -4404,7 +4458,9 @@ var _ = Wysie.Collection = $.Class({
 				this.unhandled.after = data.slice(this.items.length);
 			}
 		}
-		else if (data && data.length > 0) {
+		else {
+			this.clear();
+
 			// Using document fragments improved rendering performance by 60%
 			var fragment = document.createDocumentFragment();
 
@@ -4451,7 +4507,7 @@ var _ = Wysie.Collection = $.Class({
 
 				this.required = this.templateElement.matches(Wysie.selectors.required);
 
-				// Keep position of the template in the DOM, since we’re gonna remove it
+				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
 					className: "wysie-marker",
@@ -4459,8 +4515,6 @@ var _ = Wysie.Collection = $.Class({
 				});
 
 				this.templateElement.classList.add("wysie-item");
-
-				this.templateElement.remove();
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -4478,8 +4532,6 @@ var _ = Wysie.Collection = $.Class({
 						this.addButton._.after(after && after.parentNode? after : this.marker);
 					}
 				}
-
-				this.templateElement = this.element.cloneNode(true);
 			}
 		}
 	},
@@ -4548,6 +4600,21 @@ var _ = Wysie.Collection = $.Class({
 			return button;
 		}
 	}
+});
+
+// TODO
+Wysie.Fragment = $.Class({
+	constructor: function(element) {
+		this.childNodes = [];
+
+		$$(element.childNodes).forEach(node => this.appendChild(node));
+	},
+
+	appendChild: function(node) {
+		this.childNodes.push(node);
+	},
+
+	classList: {toggle: () => {}, add: () => {}, remove: () => {}, contains: () => {}}
 });
 
 })(Bliss, Bliss.$);
@@ -5608,7 +5675,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 				this.repoInfo = repoInfo;
 
 				if (repoInfo.permissions.push) {
-					this.permissions.on("edit");
+					this.permissions.on(["edit", "save"]);
 				}
 			})
 			.catch(xhr => {
@@ -5616,7 +5683,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 					// Repo does not exist so we can't check permissions
 					// Just check if authenticated user is the same as our URL username
 					if (this.user.login == this.username) {
-						this.permissions.on("edit");
+						this.permissions.on("edit", "save");
 					}
 				}
 			});
@@ -5628,7 +5695,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			localStorage.removeItem("wysie:githubtoken");
 			delete this.accessToken;
 
-			this.permissions.off(["edit", "add", "delete"]).on("login");
+			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
 			this.wysie.wrapper._.fire("wysie:logout", {backend: this});
 		}

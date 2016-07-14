@@ -3,10 +3,10 @@
 var _ = Wysie.Primitive = $.Class({
 	extends: Wysie.Unit,
 	constructor: function (element, wysie, o) {
-		if (this.template) {
-			$.extend(this, this.template, ["attribute", "datatype", "humanReadable"]);
-		}
-		else {
+		if (!this.fromTemplate([
+			"attribute", "datatype", "humanReadable",
+			"computed", "templateValue"
+		])) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -19,15 +19,8 @@ var _ = Wysie.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
-		}
 
-		// Primitives containing an expression as their value are implicitly computed
-		var expressions = Wysie.Expression.Text.elements.get(this.element);
-		var expressionText = expressions && expressions.filter(e => e.attribute == this.attribute)[0];
-
-		if (expressionText) {
-			expressionText.primitive = this;
-			this.computed = true;
+			this.templateValue = this.getValue({raw: true});
 		}
 
 		/**
@@ -42,7 +35,6 @@ var _ = Wysie.Primitive = $.Class({
 		}
 		// Nested widgets
 		else if (!this.editor) {
-
 			this.editor = $$(this.element.children).filter(function (el) {
 			    return el.matches(Wysie.selectors.formControl) && !el.matches(Wysie.selectors.property);
 			})[0];
@@ -53,8 +45,6 @@ var _ = Wysie.Primitive = $.Class({
 		if (!this.exposed && !this.computed) {
 			this.wysie.needsEdit = true;
 		}
-
-		this.default = this.element.getAttribute("data-default");
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -67,17 +57,17 @@ var _ = Wysie.Primitive = $.Class({
 			}, true);
 		}
 
-		this.templateValue = this.getValue();
+		this.default = this.element.getAttribute("data-default");
 
 		if (this.computed || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
-		else {
-			if (this.default === null) { // attribute does not exist
-				this.default = this.editor? this.editorValue : this.emptyValue;
-			}
+		else if (this.default === null) { // attribute does not exist
+			this.default = this.editor? this.editorValue : this.emptyValue;
+		}
 
-			this.value = this.default;
+		if (!this.computed) {
+			this.value = this.templateValue; // no need to run setter code
 		}
 
 		if (this.collection) {
@@ -110,9 +100,7 @@ var _ = Wysie.Primitive = $.Class({
 			});
 		}
 
-		this.initialized = true;
-
-		this.value = this.getValue();
+		this.value = this.getValue({raw: true}); // no need to run setter code
 	},
 
 	get editorValue() {
@@ -171,34 +159,6 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		return ret;
-	},
-
-	update: function () {
-		var value = _.getValue(this.element, this.attribute, this.datatype);
-		value = value || value === 0? value : "";
-
-		if (value == this.oldValue) {
-			return false;
-		}
-
-		this.value = value;
-
-		this.empty = value === "";
-
-		if (this.humanReadable && this.attribute) {
-			this.element.textContent = this.humanReadable(value);
-		}
-
-		if (this.initialized) {
-			$.fire(this.element, "wysie:datachange", {
-				property: this.property,
-				value: value,
-				wysie: this.wysie,
-				node: this,
-				dirty: this.editing,
-				action: "propertychange"
-			});
-		}
 	},
 
 	save: function() {
@@ -497,12 +457,6 @@ var _ = Wysie.Primitive = $.Class({
 		this.value = this.emptyValue;
 	},
 
-	import: function() {
-		if (!this.computed) {
-			this.value = this.templateValue;
-		}
-	},
-
 	render: function(data) {
 		if (Array.isArray(data)) {
 			data = data[0]; // TODO what is gonna happen to the rest? Lost?
@@ -539,8 +493,8 @@ var _ = Wysie.Primitive = $.Class({
 		this.observer.disconnect();
 	},
 
-	getValue: function() {
-		return _.getValue(this.element, this.attribute, this.datatype);
+	getValue: function(o) {
+		return _.getValue(this.element, this.attribute, this.datatype, o);
 	},
 
 	lazy: {
@@ -561,65 +515,57 @@ var _ = Wysie.Primitive = $.Class({
 	},
 
 	live: {
-		value: {
-			get: function() {
-				// if (this.editing) {
-				// 	var ret = this.editorValue;
-				//
-				// 	return ret === ""? null : ret;
-				// }
-			},
+		value: function (value) {
+			value = value || value === 0? value : "";
+			value = _.safeCast(value, this.datatype);
 
-			set: function (value) {
-				value = value || value === 0? value : "";
-				value = _.cast(value, this.datatype);
-
-				if (value == this._value) {
-					return;
-				}
-
-				if (this.editor) {
-					this.editorValue = value;
-				}
-
-				if (!this.editing || this.attribute) {
-					if (this.datatype == "number" && !this.attribute) {
-						_.setValue(this.element, value, "content", this.datatype);
-						_.setValue(this.element, Wysie.Expression.Text.formatNumber(value), null, this.datatype);
-					}
-					else if (this.editor && this.editor.matches("select")) {
-						this.editorValue = value;
-						_.setValue(this.element, value, "content", this.datatype);
-						_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
-					}
-					else {
-						_.setValue(this.element, value, this.attribute, this.datatype);
-					}
-				}
-
-				this.empty = value === "";
-
-				if (this.humanReadable && this.attribute) {
-					this.element.textContent = this.humanReadable(value);
-				}
-
-				this._value = value;
-
-				if (!this.computed) {
-					this.unsavedChanges = this.wysie.unsavedChanges = true;
-				}
-
-				$.fire(this.element, "wysie:datachange", {
-					property: this.property,
-					value: value,
-					wysie: this.wysie,
-					node: this,
-					dirty: this.editing,
-					action: "propertychange"
-				});
-
-				this.oldValue = this.value;
+			if (value == this._value) {
+				return;
 			}
+
+			if (this.editor) {
+				this.editorValue = value;
+			}
+
+			if (!this.editing || this.attribute) {
+				if (this.datatype == "number" && !this.attribute) {
+					_.setValue(this.element, value, "content", this.datatype);
+					_.setValue(this.element, _.formatNumber(value), null, this.datatype);
+				}
+				else if (this.editor && this.editor.matches("select")) {
+					this.editorValue = value;
+					_.setValue(this.element, value, "content", this.datatype);
+					_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
+				}
+				else {
+					_.setValue(this.element, value, this.attribute, this.datatype);
+				}
+			}
+			if (this.property === "visitRating") {
+				console.log(this._value, value, this.datatype, this.element.outerHTML, this.element.closest("body"))
+			}
+			this.empty = value === "";
+
+			if (this.humanReadable && this.attribute) {
+				this.element.textContent = this.humanReadable(value);
+			}
+
+			this._value = value;
+
+			if (!this.computed) {
+				this.unsavedChanges = this.wysie.unsavedChanges = true;
+			}
+
+			$.fire(this.element, "wysie:datachange", {
+				property: this.property,
+				value: value,
+				wysie: this.wysie,
+				node: this,
+				dirty: this.editing,
+				action: "propertychange"
+			});
+
+			this.oldValue = this.value;
 		},
 
 		empty: function(value) {
@@ -683,25 +629,60 @@ var _ = Wysie.Primitive = $.Class({
 			return ret;
 		},
 
-		cast: function(value, datatype) {
-			if (datatype == "number") {
-				return +value;
+		/**
+		 * Only cast if conversion is lossless
+		 */
+		safeCast: function(value, datatype) {
+			var existingType = typeof value;
+			var cast = _.cast(value, datatype);
+
+			if (value === null || value === undefined) {
+				return value;
 			}
 
 			if (datatype == "boolean") {
-				return !!value;
+				if (value === "false" || value === 0 || value === "") {
+					return false;
+				}
+
+				if (value === "true" || value > 0) {
+					return true;
+				}
+
+				return value;
+			}
+
+			if (datatype == "number") {
+				if (/^[-+]?[0-9.e]+$/i.test(value + "")) {
+					return cast;
+				}
+
+				return value;
+			}
+
+			return cast;
+		},
+
+		/**
+		 * Cast to a different primitive datatype
+		 */
+		cast: function(value, datatype) {
+			switch (datatype) {
+				case "number": return +value;
+				case "boolean": return !!value;
+				case "string": return value + "";
 			}
 
 			return value;
 		},
 
-		getValue: function (element, attribute, datatype) {
+		getValue: function (element, attribute, datatype, o = {}) {
 				attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
 				datatype = datatype || _.getDatatype(element, attribute);
 
 				var ret;
 
-				if (attribute in element && _.useProperty(element, attribute)) {
+				if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
 					// Returning properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					ret = element[attribute];
@@ -713,7 +694,12 @@ var _ = Wysie.Primitive = $.Class({
 					ret = element.getAttribute("content") || element.textContent || null;
 				}
 
-				return _.cast(ret, datatype);
+				if (_.safeCast(ret, datatype) === "null") {
+					console.log(ret, datatype)
+				}
+
+				return _.safeCast(ret, datatype);
+				return ret;
 		},
 
 		setValue: function (element, value, attribute) {
@@ -758,6 +744,21 @@ var _ = Wysie.Primitive = $.Class({
 			}
 
 			return true;
+		},
+
+		lazy: {
+			formatNumber: () => {
+				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
+
+				return function(value) {
+					if (value === Infinity || value === -Infinity) {
+						// Pretty print infinity
+						return value < 0? "-∞" : "∞";
+					}
+
+					return numberFormat.format(value);
+				};
+			}
 		}
 	}
 });
@@ -843,7 +844,7 @@ _.editors = {
 		},
 
 		get editorValue () {
-			return this.editor && _.cast(this.editor.value, this.datatype);
+			return this.editor && _.safeCast(this.editor.value, this.datatype);
 		},
 
 		set editorValue (value) {

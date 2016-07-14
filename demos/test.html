@@ -35,19 +35,27 @@ label {
 </style>
 </head>
 <body>
-<main data-store="#data" class="autoedit debug">
+	<!-- <div data-store="talks/countries.json">
+		<select>
+			<template property="country" data-multiple>
+				<option value="[code]">[name]</option>
+				<meta property="name">
+				<meta property="code">
+			</template>
+		</select>
+	</div> -->
 
-	<div property="foo" data-multiple>
-		([$index])
-		<time datetime="2016-05-27" property="date"></time>
-	</div>
+	<dl data-store="talks/countries.json">
+		<template property="country" data-multiple>
+			<dt property="code">Code</dt>
+			<dd property="name">Name</dd>
+		</template>
+	</dl>
 
-</main>
-<pre id="data">{
-	"foo": [{"date": "1986-06-13"}, {"date": "1959-12-31"}]
-}</pre>
+
 
 <script src="../wysie.js"></script>
+
 
 </body>
 </html>

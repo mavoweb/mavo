@@ -11,8 +11,7 @@ var _ = Wysie.Scope = $.Class({
 
 		// Should this element also create a primitive?
 		if (Wysie.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie);
-			obj.scope = obj.parentScope = this;
+			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie, {scope: this});
 		}
 
 		// Create Wysie objects for all properties in this scope (primitives or scopes),
@@ -23,13 +22,14 @@ var _ = Wysie.Scope = $.Class({
 			if (this.contains(element)) {
 				var existing = this.properties[property];
 				var template = this.template? this.template.properties[property] : null;
+				var constructorOptions = {template, scope: this};
 
 				if (existing) {
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie, {template});
+						collection = new Wysie.Collection(existing.element, this.wysie, constructorOptions);
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
@@ -43,14 +43,16 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie, {template});
-					obj.scope = obj instanceof _? obj : this;
+					var obj = Wysie.Node.create(element, this.wysie, constructorOptions);
 
-					obj.parentScope = this;
 					this.properties[property] = obj;
 				}
 			}
 		});
+
+		if (!this.template) {
+			Array.prototype.push.apply(this.wysie.propertyNames, this.propertyNames);
+		}
 
 		Wysie.hooks.run("scope-init-end", this);
 	},
@@ -128,12 +130,6 @@ var _ = Wysie.Scope = $.Class({
 		$.unbind(this.element, ".wysie:edit");
 	},
 
-	import: function() {
-		this.everSaved = true;
-
-		Wysie.hooks.run("scope-import-end", this);
-	},
-
 	propagated: ["save", "done", "import", "clear"],
 
 	// Inject data in this element
@@ -143,8 +139,9 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		this.expressions.active = false;
+		Wysie.hooks.run("scope-render-start", this);
 
+		// TODO retain dropped elements
 		data = data.isArray? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a scope?

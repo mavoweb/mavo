@@ -18,7 +18,7 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-[data-store] {
+[data-store]:not(.wysie-wrapper) {
 	// Unprocessed items
 	opacity: .5;
 }
@@ -334,30 +334,41 @@ $font-mono: Consolas, Monaco, monospace;
 
 .wysie-bar {
 	all: initial;
-	position: fixed;
-	z-index: 10000; // this is wrong, but must override other wrong things :(
 	color: white;
 	font-family: inherit;
 	font-size: 1rem;
 	backdrop-filter: blur(3px);
 
+	&:not(.inline) {
+		position: fixed;
+		z-index: 10000; // this is wrong, but must override other wrong things :(
+	}
+
+	// Inline bar for secondary apps
+	&.inline {
+		border-radius: .3em;
+	}
+
 	// Bar fixed at the top of the screen
-	.wysie-wrapper.can-logout &,
-	.wysie-wrapper[data-editing] &,
-	.wysie-wrapper.unsaved-changes.can-save & {
+	&:not(.floating) {
 		top: 0;
 		left: 0;
 		right: 0;
 		display: flex;
 		padding: 0 .5em 0 6em;
 		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat,
-		            linear-gradient(transparent, hsla(0,0%,15%,.5));
+					linear-gradient(transparent, hsla(0,0%,15%,.5));
 		background-color: hsla(0,0%,25%,.9);
+
+		button, .button {
+			&:enabled:hover {
+				background: hsla(0,0%,100%,.2);
+			}
+		}
 	}
 
 	// Floating bar, intended for when there is only 1 button
-	.wysie-wrapper.can-login:not([data-editing]) &,
-	.wysie-wrapper.can-edit:not(.can-login):not(.can-logout):not([data-editing]):not(.unsaved-changes) & {
+	&.floating {
 		top: 1em;
 		right: 1em;
 
@@ -380,10 +391,6 @@ $font-mono: Consolas, Monaco, monospace;
 		all: unset;
 		font-weight: bold;
 		cursor: pointer;
-
-		&:enabled:hover {
-			background: hsla(0,0%,100%,.2);
-		}
 
 		&:disabled {
 			opacity: .6;
@@ -462,6 +469,10 @@ $font-mono: Consolas, Monaco, monospace;
 
 		&:enabled:hover {
 			background: #b00;
+		}
+
+		.wysie-wrapper:not(.editing) & {
+			display: none;
 		}
 	}
 

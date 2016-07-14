@@ -29,7 +29,7 @@ var _ = Wysie.Expression = $.Class({
 	},
 
 	toString() {
-		return `=(${this.expression})`;
+		return `[${this.expression}]`;
 	},
 
 	createFunction: function() {
@@ -106,7 +106,14 @@ var _ = Wysie.Expression.Text = $.Class({
 		}
 
 		this.expression = this.text.trim();
-		this.template = this.tokenize(this.expression);
+		this.template = o.template? o.template.template : this.tokenize(this.expression);
+
+		// Is this a computed property?
+		var primitive = Wysie.Unit.get(this.element);
+		if (primitive && this.attribute === primitive.attribute) {
+			this.primitive = primitive;
+			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
+		}
 
 		Wysie.hooks.run("expressiontext-init-end", this);
 
@@ -154,32 +161,23 @@ var _ = Wysie.Expression.Text = $.Class({
 
 		// Presentation text
 		var text = this.value.map(value => {
-			if (typeof value === "number" && !this.attribute) {
-				return _.formatNumber(value);
-			}
-			else if (Array.isArray(value)) {
+			if (Array.isArray(value)) {
 				return value.join(", ");
 			}
 
 			return value;
 		});
 
-		this.text = text.length === 1? text[0] : text.join("");
-
-		if (this.primitive) {
-			if (this.template.length === 1) {
-				if (typeof this.value[0] === "number") {
-					this.primitive.datatype = "number";
-				}
-				else if (typeof this.value[0] === "boolean") {
-					this.primitive.datatype = "boolean";
-				}
+		if (this.primitive && this.template.length === 1) {
+			if (typeof this.value[0] === "number") {
+				this.primitive.datatype = "number";
 			}
-
-			if (!this.attribute) {
-				Wysie.Primitive.setValue(this.element, this.value, "content");
+			else if (typeof this.value[0] === "boolean") {
+				this.primitive.datatype = "boolean";
 			}
 		}
+
+		this.text = text.length === 1? text[0] : text.join("");
 	},
 
 	tokenize: function(template) {
@@ -258,19 +256,6 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		lazy: {
-			formatNumber: () => {
-				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
-
-				return function(value) {
-					if (value === Infinity || value === -Infinity) {
-						// Pretty print infinity
-						return value < 0? "-∞" : "∞";
-					}
-
-					return numberFormat.format(value);
-				};
-			},
-
 			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
 	}
@@ -293,13 +278,15 @@ var _ = Wysie.Expressions = $.Class({
 
 		if (this.scope) {
 			var template = this.scope.template;
+
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
 				template.expressions.all.forEach(et => {
 					this.all.push(new Wysie.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
-						all: this
+						all: this,
+						template: et
 					}));
 				});
 			}
@@ -316,8 +303,6 @@ var _ = Wysie.Expressions = $.Class({
 
 	init: function() {
 		if (this.all.length > 0) {
-			this.lastUpdated = 0;
-
 			this.update();
 
 			// Watch changes and update value
@@ -408,22 +393,38 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("scope-init-start", function() {
-	new Wysie.Expressions(this);
+Wysie.hooks.add("init-tree-after", function() {
+	this.walk(obj => {
+		if (obj instanceof Wysie.Scope) {
+			new Wysie.Expressions(obj);
+			obj.expressions.init();
+		}
+	});
 });
 
 Wysie.hooks.add("scope-init-end", function() {
-	this.expressions.init();
-});
-
-Wysie.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
-		this.expressions.active = true;
+		// Tree expressions are processed synchronously, so by now if it doesn't have
+		// an expressions object, we need to create it.
+		if (!this.expressions) {
+			new Wysie.Expressions(this);
+		}
+
+		this.expressions.init();
+
 		this.expressions.update();
 	});
 });
 
-Wysie.hooks.add("scope-import-end", function() {
+Wysie.hooks.add("scope-render-start", function() {
+	if (!this.expressions) {
+		new Wysie.Expressions(this);
+	}
+
+	this.expressions.active = false;
+});
+
+Wysie.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
 		this.expressions.active = true;
 		this.expressions.update();

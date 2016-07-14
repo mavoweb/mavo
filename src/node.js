@@ -11,8 +11,13 @@ var _ = Wysie.Node = $.Class({
 		this.template = o.template;
 
 		this.wysie = wysie;
-		this.property = element.getAttribute("property");
-		this.type = Wysie.Scope.normalize(element);
+
+		if (!this.fromTemplate(["property", "type"])) {
+			this.property = _.normalizeProperty(element);
+			this.type = Wysie.Scope.normalize(element);
+		}
+
+		this.scope = this.parentScope = o.scope;
 
 		Wysie.hooks.run("node-init-end", this);
 	},
@@ -148,6 +153,16 @@ var _ = Wysie.Node = $.Class({
 	propagated: ["save", "revert", "done", "import"],
 
 	toJSON: Wysie.prototype.toJSON,
+
+	fromTemplate: function(properties) {
+		if (this.template) {
+			properties.forEach(property => {
+				this[property] = this.template[property];
+			});
+		}
+
+		return !!this.template;
+	},
 
 	static: {
 		create: function(element, wysie, o = {}) {
