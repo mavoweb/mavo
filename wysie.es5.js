@@ -986,7 +986,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.all.push(this);
 
 			// TODO escaping of # and \
-			var dataStore = element.getAttribute("data-store") || "";
+			var dataStore = (location.search.match(/[?&]store=([^&]+)/) || [])[1] || element.getAttribute("data-store") || "";
 			this.store = dataStore === "none" ? null : dataStore;
 
 			// Assign a unique (for the page) id to this wysie instance
