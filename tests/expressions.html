@@ -14,7 +14,7 @@
 <body>
 
 <h1>Expression tests</h1>
-
+<!--
 <h2>With render (country data)</h2>
 
 <div data-store="#countries">
@@ -66,10 +66,25 @@
 	</ul>
 	List: [country]
 </div>
-
+-->
 <h2>Nested average, meter, countif</h2>
 
-<div data-store="local" id="nestedAverage">
+<script type="application/json" id="restaurants">{
+	"restaurant": [
+		{
+			"visit": [
+				{
+					"dish": [
+						{
+							"dishRating": 4
+						}
+					]
+				}
+			]
+		}
+	]
+}</script>
+<div data-store="#restaurants" id="nestedAverage">
 	<article property="restaurant" data-multiple>
 		<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
 
@@ -78,7 +93,7 @@
 				<header>
 					<p>
 						Average dish rating
-						<meter property="visitRating" value="[average(dishRating)]" min="0" max="5"></meter>
+						<span property="visitRating">[average(dishRating)]</span>
 					</p>
 				</header>
 
@@ -87,7 +102,7 @@
 						<li property="dish" data-multiple>
 							<p>
 								Rating:
-								<span property="dishRating">4</span>
+								<meter property="dishRating" value="4" max="5"></meter>
 							</p>
 						</li>
 					</ul>

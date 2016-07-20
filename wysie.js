@@ -3253,7 +3253,7 @@ var _ = Wysie.Primitive = $.Class({
 		// so we cannot depend on mutation observers for everything :(
 		if (!this.computed) {
 			this.observer = Wysie.observe(this.element, this.attribute, record => {
-				if (this.attribute || !this.wysie.editing || this.computed) {
+				if (this.attribute || !this.wysie.editing) {
 					this.value = this.getValue();
 				}
 			}, true);
@@ -3743,9 +3743,7 @@ var _ = Wysie.Primitive = $.Class({
 					_.setValue(this.element, value, this.attribute, this.datatype);
 				}
 			}
-			if (this.property === "visitRating") {
-				console.log(this._value, value, this.datatype, this.element.outerHTML, this.element.closest("body"))
-			}
+
 			this.empty = value === "";
 
 			if (this.humanReadable && this.attribute) {
@@ -4194,7 +4192,7 @@ var _ = Wysie.Collection = $.Class({
 		if (this.mutable) {
 			var item = this.createItem(this.element);
 			this.add(item);
-			this.itemTemplate = item;
+			this.itemTemplate = item.template || item;
 		}
 
 		Wysie.hooks.run("collection-init-end", this);

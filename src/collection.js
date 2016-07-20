@@ -36,7 +36,7 @@ var _ = Wysie.Collection = $.Class({
 		if (this.mutable) {
 			var item = this.createItem(this.element);
 			this.add(item);
-			this.itemTemplate = item;
+			this.itemTemplate = item.template || item;
 		}
 
 		Wysie.hooks.run("collection-init-end", this);

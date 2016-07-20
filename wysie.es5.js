@@ -3416,7 +3416,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// so we cannot depend on mutation observers for everything :(
 			if (!this.computed) {
 				this.observer = Wysie.observe(this.element, this.attribute, function (record) {
-					if (_this23.attribute || !_this23.wysie.editing || _this23.computed) {
+					if (_this23.attribute || !_this23.wysie.editing) {
 						_this23.value = _this23.getValue();
 					}
 				}, true);
@@ -3916,9 +3916,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						_.setValue(this.element, _value, this.attribute, this.datatype);
 					}
 				}
-				if (this.property === "visitRating") {
-					console.log(this._value, _value, this.datatype, this.element.outerHTML, this.element.closest("body"));
-				}
+
 				this.empty = _value === "";
 
 				if (this.humanReadable && this.attribute) {
@@ -4365,7 +4363,7 @@ Wysie.Primitive.editors.img = {
 			if (this.mutable) {
 				var item = this.createItem(this.element);
 				this.add(item);
-				this.itemTemplate = item;
+				this.itemTemplate = item.template || item;
 			}
 
 			Wysie.hooks.run("collection-init-end", this);
