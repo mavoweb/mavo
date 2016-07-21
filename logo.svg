@@ -1,39 +1,40 @@
 <?xml version="1.0" standalone="no"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 -1 200 52">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 194 50">
 <style>
 svg {
-	fill: hsl(30, 100%, 50%);
+	fill: hsl(35, 100%, 50%);
+	fill: #ff9500;
 }
 
-#A {
-	fill: hsl(330, 90%, 45%);
+#A, #A-crossbow {
+	fill: hsl(330, 100%, 50%);
+	fill: #ff0080;
 }
 
 #V {
 	fill: hsl(85, 80%, 45%);
+	fill: #82cf17;
 }
 
 #O {
 	fill: none;
 	stroke: hsl(200, 90%, 55%);
+	stroke: #25aff4;
 	stroke-width: 10.96254549171121;
 }
-
-#A-crossbow {
-	fill: hsl(330, 90%, 45%);
-}</style>
-
+</style>
+<rect width="100%" height="100%" fill-opacity=".01" />
 <g id="logo">
-	<g id="bracket" transform="translate(22.261434265426804, 0)">
-		<rect height="100%" id="bar" class="bar" width="12" transform="skewX(-24)"></rect>
-		<rect height="100%" id="bar2" class="bar" width="12" transform="skewX(24)"></rect>
+	<g id="bracket" transform="translate(22.261434265426804, 2)">
+		<rect height="46" id="bar" class="bar" width="12" transform="skewX(-24)"></rect>
+		<rect height="46" id="bar2" class="bar" width="12" transform="skewX(24)"></rect>
 	</g>
 
-	<use xlink:href="#bracket" id="A" x="45.52286853085361"></use>
-	<circle id="A-crossbow" r="4.8" cx="72.78430279628041" cy="70%"></circle>
+	<use xlink:href="#bracket" id="A" x="41"></use>
+	<circle id="A-crossbow" r="5" cx="69.35" cy="72%"></circle>
 
-	<use xlink:href="#bracket" id="V" x="90.04573706170721" y="-50" transform="scale(1, -1)"></use>
-	<circle id="O" r="20" cx="170.56860559256083" cy="25"></circle>
+	<use xlink:href="#bracket" id="V" x="86" y="-50" transform="scale(1, -1)"></use>
+	<circle id="O" r="19" cx="166.5" cy="25"></circle>
 </g>
 
 </svg>

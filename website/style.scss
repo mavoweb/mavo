@@ -1,8 +1,8 @@
 // Colors
-$magenta: hsl(330, 90%, 45%);
+$magenta: hsl(330, 100%, 50%);
 $aqua: hsl(200, 90%, 55%);
 $green: hsl(85, 80%, 45%);
-$orange: hsl(30, 100%, 50%);
+$orange: hsl(35, 100%, 50%);
 
 // Fonts
 $body-font: Helvetica Neue, sans-serif;
@@ -24,6 +24,24 @@ $mono-font: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 	&:hover {
 		background: $foreground;
 		color: $background;
+	}
+}
+
+.button {
+	display: inline-block;
+	padding: .2em .8em;
+	border: 2px solid white;
+	border-color: var(--color);
+	border-radius: .3em;
+	color: white;
+	color: var(--color);
+	font-size: 130%;
+	font-weight: 400;
+	text-decoration: none;
+
+	&:hover {
+		background: var(--color);
+		color: var(--background);
 	}
 }
 
@@ -111,11 +129,12 @@ body > header {
 	justify-content: space-between;
 	flex-flow: row;
 	clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
-	background: #333;
+	background: black;
 	color: white;
 
 	.button {
-		@include flat-button(white, #333);
+		--color: white;
+		--background: black;
 	}
 
 	.logo {
@@ -160,7 +179,7 @@ body > section {
 		clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
 
 		.logo {
-			font: 300 180% $heading-font;
+			//font: 300 180% $heading-font;
 
 			img {
 				display: block;
@@ -170,15 +189,24 @@ body > section {
 			}
 		}
 
+		.tagline {
+			font-size: 120%;
+			color: hsla(0,0%,100%,.6);
+			color: $orange;
+			font-weight: 100;
+			margin-bottom: 0;
+		}
+
 		.intro {
+			margin-top: .1em;
 			text-align: justify;
 			hyphens: auto;
-			color: hsla(0,0%,100%,.7);
-			font-weight: 400;
+			font-weight: 500;
 		}
 
 		.button {
 			margin: auto;
+			--color: $green;
 
 			& + p {
 				color: hsla(0,0%,100%,.7);

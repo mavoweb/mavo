@@ -1,4 +1,19 @@
 @import url("https://fontlibrary.org/face/libre-bodoni");
+.button {
+  display: inline-block;
+  padding: .2em .8em;
+  border: 2px solid white;
+  border-color: var(--color);
+  border-radius: .3em;
+  color: white;
+  color: var(--color);
+  font-size: 130%;
+  font-weight: 400;
+  text-decoration: none; }
+  .button:hover {
+    background: var(--color);
+    color: var(--background); }
+
 body {
   margin: 0;
   font: 300 106%/1.5 Helvetica Neue, sans-serif;
@@ -88,20 +103,11 @@ body > header {
   flex-flow: row;
   -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
   clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
-  background: #333;
+  background: black;
   color: white; }
   body > header .button {
-    display: inline-block;
-    padding: .2em .8em;
-    border: 2px solid white;
-    border-radius: .3em;
-    color: white;
-    font-size: 130%;
-    font-weight: 400;
-    text-decoration: none; }
-    body > header .button:hover {
-      background: white;
-      color: #333; }
+    --color: white;
+    --background: black; }
   body > header .logo {
     margin: 0; }
     body > header .logo img {
@@ -111,7 +117,7 @@ body > header {
     margin-top: -1.5em;
     -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% calc(100% - 1em));
     clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% calc(100% - 1em));
-    background: #da0b73;
+    background: #ff0080;
     color: white;
     text-align: right;
     font-size: 250%;
@@ -120,7 +126,7 @@ body > header {
 
 body > section > h1 {
   font: bold 200% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Libre Bodoni", "Hoefler Text", Cambria, Georgia, serif;
-  color: #ff8000; }
+  color: #ff9500; }
 
 body > section > * {
   width: 900px;
@@ -133,22 +139,27 @@ body > section > * {
   padding: 2em calc(50% - 12em) 5em;
   -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
   clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%); }
-  .home body > header .logo {
-    font: 300 180% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Libre Bodoni", "Hoefler Text", Cambria, Georgia, serif; }
-    .home body > header .logo img {
-      display: block;
-      height: 7rem;
-      margin: auto;
-      margin-bottom: .5em; }
+  .home body > header .logo img {
+    display: block;
+    height: 7rem;
+    margin: auto;
+    margin-bottom: .5em; }
+  .home body > header .tagline {
+    font-size: 120%;
+    color: rgba(255, 255, 255, 0.6);
+    color: #ff9500;
+    font-weight: 100;
+    margin-bottom: 0; }
   .home body > header .intro {
+    margin-top: .1em;
     text-align: justify;
     -webkit-hyphens: auto;
     -ms-hyphens: auto;
     hyphens: auto;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 400; }
+    font-weight: 500; }
   .home body > header .button {
-    margin: auto; }
+    margin: auto;
+    --color: #82cf17; }
     .home body > header .button + p {
       color: rgba(255, 255, 255, 0.7);
       font-style: italic;
@@ -311,7 +322,7 @@ body > section > * {
 .token.constant,
 .token.symbol,
 .token.deleted {
-  color: #da0b73; }
+  color: #ff0080; }
 
 .token.selector,
 .token.attr-name,
