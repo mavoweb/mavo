@@ -17,7 +17,7 @@ dd + dt {
   margin-top: 1.5em; }
 
 pre, code {
-  background: #f2f2f2;
+  background: whitesmoke;
   font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
   -moz-tab-size: 4;
   tab-size: 4;
@@ -31,11 +31,14 @@ pre {
   padding: 1em 1.5em;
   margin: .5em -1.5em;
   overflow: auto;
+  background: radial-gradient(white, #ebebeb);
   -webkit-clip-path: polygon(0 0, 100% 0.5em, calc(100% - .5em) calc(100% - 1em), 0 100%);
   clip-path: polygon(0 0, 100% 0.5em, calc(100% - .5em) calc(100% - 1em), 0 100%); }
   @supports not ((-webkit-clip-path: polygon(0 0)) or (clip-path: polygon(0 0))) {
     pre {
       border-radius: .5em; } }
+  pre > code {
+    background: transparent; }
 
 :not(pre) > code {
   padding: .2em .4em;

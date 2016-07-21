@@ -233,7 +233,7 @@
     display: -ms-flexbox;
     display: flex;
     padding: 0 .5em 0 6em;
-    background: url("logo.svg") 0.5em 0.15em/auto 100% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
+    background: url("logo.svg") 0.5em 50%/auto 50% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
     background-color: rgba(64, 64, 64, 0.9); }
     .mv-bar:not(.floating) button:enabled:hover, .mv-bar:not(.floating) .button:enabled:hover {
       background: rgba(255, 255, 255, 0.2); }

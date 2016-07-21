@@ -356,7 +356,7 @@ $font-mono: Consolas, Monaco, monospace;
 		right: 0;
 		display: flex;
 		padding: 0 .5em 0 6em;
-		background: url("logo.svg") .5em .15em / auto 100% no-repeat,
+		background: url("logo.svg") .5em 50% / auto 50% no-repeat,
 					linear-gradient(transparent, hsla(0,0%,15%,.5));
 		background-color: hsla(0,0%,25%,.9);
 

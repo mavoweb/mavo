@@ -47,7 +47,7 @@ dd + dt {
 }
 
 pre, code {
-	background: hsl(0, 0%, 95%);
+	background: hsl(0, 0%, 96%);
 	font-family: $mono-font;
 	tab-size: 4;
 	hyphens: none;
@@ -59,6 +59,7 @@ pre, code {
 		padding: 1em 1.5em;
 		margin: .5em -1.5em;
 		overflow: auto;
+		background: radial-gradient(white, hsl(0, 0%, 92%));
 
 		clip-path: polygon(0 0, 100% .5em, calc(100% - .5em) calc(100% - 1em), 0 100%);
 
@@ -66,6 +67,10 @@ pre, code {
 			& {
 				border-radius: .5em;
 			}
+		}
+
+		& > code {
+			background: transparent;
 		}
 	}
 
