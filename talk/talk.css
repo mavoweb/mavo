@@ -19,12 +19,12 @@
 	justify-content: center;
 }
 
-#intro, #wysie {
+#intro, #mavo {
 	background: hsl(348, 37%, 68%);
 }
 
 	#intro:target,
-	#wysie:target {
+	#mavo:target {
 		display: flex;
 	}
 

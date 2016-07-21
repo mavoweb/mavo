@@ -1,12 +1,12 @@
 /*
- * Wysie Unit: Super class that Scope and Primitive inherit from
+ * Mavo Unit: Super class that Scope and Primitive inherit from
  */
 (function($, $$) {
 
-var _ = Wysie.Unit = $.Class({
+var _ = Mavo.Unit = $.Class({
 	abstract: true,
-	extends: Wysie.Node,
-	constructor: function(element, wysie, o = {}) {
+	extends: Mavo.Node,
+	constructor: function(element, mavo, o = {}) {
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
@@ -17,11 +17,11 @@ var _ = Wysie.Unit = $.Class({
 		}
 
 		if (!this.fromTemplate(["computed", "required"])) {
-			this.computed = Wysie.is("computed", this.element);
-			this.required = Wysie.is("required", this.element);
+			this.computed = Mavo.is("computed", this.element);
+			this.required = Mavo.is("required", this.element);
 		}
 
-		Wysie.hooks.run("unit-init-end", this);
+		Mavo.hooks.run("unit-init-end", this);
 	},
 
 	/**
@@ -105,9 +105,9 @@ var _ = Wysie.Unit = $.Class({
 				// Alternatively, we could fire datachange with a timeout.
 				this._deleted = false;
 
-				$.fire(this.element, "wysie:datachange", {
+				$.fire(this.element, "mavo:datachange", {
 					unit: this.collection,
-					wysie: this.wysie,
+					mavo: this.mavo,
 					action: "undelete",
 					item: this
 				});
@@ -131,17 +131,17 @@ var _ = Wysie.Unit = $.Class({
 
 	static: {
 		get: function(element, prioritizePrimitive) {
-			var scope = Wysie.Scope.all.get(element);
+			var scope = Mavo.Scope.all.get(element);
 
-			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
+			return (prioritizePrimitive || !scope)? Mavo.Primitive.all.get(element) : scope;
 		},
 
-		create: function(element, wysie, o = {}) {
-			if (!element || !wysie) {
-				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
+		create: function(element, mavo, o = {}) {
+			if (!element || !mavo) {
+				throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
 			}
 
-			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, o);
+			return new Mavo[Mavo.is("scope", element)? "Scope" : "Primitive"](element, mavo, o);
 		}
 	}
 });

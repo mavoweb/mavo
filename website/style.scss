@@ -1,6 +1,8 @@
 // Colors
-$accent-color: hsl(348, 37%, 68%);
-$secondary-color: hsl(175, 25%, 60%);
+$magenta: hsl(330, 90%, 45%);
+$aqua: hsl(200, 90%, 55%);
+$green: hsl(85, 80%, 45%);
+$orange: hsl(30, 100%, 50%);
 
 // Fonts
 $body-font: Helvetica Neue, sans-serif;
@@ -8,6 +10,22 @@ $heading-font: Didot, 'Didot LT STD', "Bodoni 72", Bodoni, 'Bodoni MT', 'Libre B
 $mono-font: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 
 @import url("https://fontlibrary.org/face/libre-bodoni");
+
+@mixin flat-button($foreground, $background: white) {
+	display: inline-block;
+	padding: .2em .8em;
+	border: 2px solid $foreground;
+	border-radius: .3em;
+	color: $foreground;
+	font-size: 130%;
+	font-weight: 400;
+	text-decoration: none;
+
+	&:hover {
+		background: $foreground;
+		color: $background;
+	}
+}
 
 body {
 	margin: 0;
@@ -17,7 +35,7 @@ body {
 }
 
 a {
-	color: darken($accent-color, 20%);
+	color: $aqua;
 
 	&:not(:hover) {
 		text-decoration: none;
@@ -29,7 +47,7 @@ dd + dt {
 }
 
 pre, code {
-	background: lighten($accent-color, 28%);
+	background: hsl(0, 0%, 95%);
 	font-family: $mono-font;
 	tab-size: 4;
 	hyphens: none;
@@ -70,20 +88,6 @@ input {
 	border-bottom: .1em solid rgba(0,0,0,.4);
 }
 
-.logo {
-	font: 300 180% Helvetica Neue, sans-serif;
-	letter-spacing: .15em;
-	text-transform: uppercase;
-	color: white;
-	text-align: center;
-	white-space: nowrap;
-
-	img {
-		display: block;
-		margin-bottom: -.6em;
-	}
-}
-
 body > header,
 body > section,
 body > footer {
@@ -95,20 +99,45 @@ body > footer {
 }
 
 body > header {
+	position: relative;
+	z-index: 1;
 	display: flex;
-	min-height: 20vh;
-	padding: 6em;
-	align-items: center;
-	justify-content: center;
-	background: $accent-color;
+	padding: .8em 1em .6em;
+	justify-content: space-between;
+	flex-flow: row;
+	clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
+	background: #333;
+	color: white;
 
-	clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
+	.button {
+		@include flat-button(white, #333);
+	}
+
+	.logo {
+		margin: 0;
+
+		img {
+			height: 2rem;
+		}
+	}
+
+	& + h2 {
+		padding: 1.5em 1em .5em;
+		margin-top: -1.5em;
+		clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% calc(100% - 1em));
+		background: $magenta;
+		color: white;
+		text-align: right;
+		font-size: 250%;
+		font-weight: 200;
+		line-height: 1;
+	}
 }
 
 body > section {
 	& > h1 {
 		font: bold 200% $heading-font;
-		color: darken($accent-color, 10%);
+		color: $orange;
 	}
 
 	& > * {
@@ -118,33 +147,60 @@ body > section {
 }
 
 .home {
-	body {
-		display: flex;
-		height: 100vh;
-		align-items: center;
-		justify-content: center;
-		background: hsl(348, 37%, 68%);
-	}
+	body > header {
+		display: block;
+		text-align: center;
+		padding: 5em;
+		padding: 2em calc(50% - 12em) 5em;
+		clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
 
-	h1 {
-		margin: 0;
-		width: 500px;
+		.logo {
+			font: 300 180% $heading-font;
+
+			img {
+				display: block;
+				height: 7rem;
+				margin: auto;
+				margin-bottom: .5em;
+			}
+		}
+
+		.intro {
+			text-align: justify;
+			hyphens: auto;
+			color: hsla(0,0%,100%,.7);
+			font-weight: 400;
+		}
+
+		.button {
+			margin: auto;
+
+			& + p {
+				color: hsla(0,0%,100%,.7);
+				font-style: italic;
+				font-size: 75%;
+
+				a {
+					color: inherit;
+					text-decoration: underline;
+
+					&:hover {
+						color: white;
+					}
+				}
+			}
+		}
 	}
 }
 
 .docs {
-	.logo {
-		letter-spacing: .1em;
-		font-size: 150%;
-
-		img {
-			margin-bottom: -.8em;
-		}
+	body > header + h2 {
+		background: $green;
 	}
 
 	.example {
 		& > h1 {
-			color: $secondary-color;
+			color: $green;
 		}
 
 		&.color-picker .example-container {
@@ -221,7 +277,7 @@ body > section {
 			}
 		}
 
-		.wysie-debug-storage {
+		.mv-debug-storage {
 			margin: 0;
 			background: rgba(0,0,0,.06);
 			color: black
@@ -319,14 +375,14 @@ body > section {
 }
 
 .note, .tip {
-	border-left: .5em solid mix(white, $secondary-color, 30%);
+	border-left: .5em solid mix(white, $aqua, 30%);
 	padding-left: .5em;
 	margin-left: -1em;
 
 	&::before {
 		content: "Note: ";
 		font-weight: bold;
-		color: $secondary-color;
+		color: $aqua;
 	}
 }
 
@@ -358,7 +414,7 @@ body > section {
 .token.constant,
 .token.symbol,
 .token.deleted {
-	color: #905;
+	color: $magenta;
 }
 
 .token.selector,
@@ -367,7 +423,7 @@ body > section {
 .token.char,
 .token.builtin,
 .token.inserted {
-	color: #690;
+	color: mix($green, black, 90%);
 }
 
 .token.operator,
@@ -382,7 +438,7 @@ body > section {
 .token.atrule,
 .token.attr-value,
 .token.keyword {
-	color: #07a;
+	color: $aqua;
 }
 
 .token.function {

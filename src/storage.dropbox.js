@@ -1,12 +1,12 @@
 (function($) {
 
-if (!self.Wysie) {
+if (!self.Mavo) {
 	return;
 }
 
 var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
+Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
 		if (this.url.protocol != "dropbox:") {
@@ -45,7 +45,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Wysie.toJSON(file.data);
+		file.data = Mavo.toJSON(file.data);
 
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
@@ -89,7 +89,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.wysie.wrapper._.fire("wysie:login", $.extend({backend: this}, accountInfo));
+					this.mavo.wrapper._.fire("mavo:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -100,7 +100,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 			this.client.signOut(null, () => {
 				this.permissions.off(["edit", "add", "delete"]).on("login");
 
-				this.wysie.wrapper._.fire("wysie:logout", {backend: this});
+				this.mavo.wrapper._.fire("mavo:logout", {backend: this});
 				resolve();
 			});
 		});

@@ -182,14 +182,14 @@ main > article {
         main > article > section > article > section meter::-webkit-meter-optimum-value, main > article > section > article > section meter::-webkit-meter-suboptimum-value {
           background: currentColor; }
 
-main > .wysie-add {
+main > .mv-add {
   padding: .4em .6em;
   border: 1px solid rgba(0, 0, 0, 0.05);
   background: #757c8a;
   color: white;
   font-size: 120%;
   border-radius: .2em; }
-  main > .wysie-add:hover {
+  main > .mv-add:hover {
     background: #5e636e; }
 
 footer {

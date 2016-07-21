@@ -1,25 +1,25 @@
 (function($, $$) {
 
-var _ = Wysie.Node = $.Class({
+var _ = Mavo.Node = $.Class({
 	abstract: true,
-	constructor: function (element, wysie, o = {}) {
-		if (!element || !wysie) {
-			throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
+	constructor: function (element, mavo, o = {}) {
+		if (!element || !mavo) {
+			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
 
 		this.element = element;
 		this.template = o.template;
 
-		this.wysie = wysie;
+		this.mavo = mavo;
 
 		if (!this.fromTemplate(["property", "type"])) {
 			this.property = _.normalizeProperty(element);
-			this.type = Wysie.Scope.normalize(element);
+			this.type = Mavo.Scope.normalize(element);
 		}
 
 		this.scope = this.parentScope = o.scope;
 
-		Wysie.hooks.run("node-init-end", this);
+		Mavo.hooks.run("node-init-end", this);
 	},
 
 	get isRoot() {
@@ -27,7 +27,7 @@ var _ = Wysie.Node = $.Class({
 	},
 
 	get name() {
-		return Wysie.readable(this.property || this.type).toLowerCase();
+		return Mavo.readable(this.property || this.type).toLowerCase();
 	},
 
 	get data() {
@@ -152,7 +152,7 @@ var _ = Wysie.Node = $.Class({
 
 	propagated: ["save", "revert", "done", "import"],
 
-	toJSON: Wysie.prototype.toJSON,
+	toJSON: Mavo.prototype.toJSON,
 
 	fromTemplate: function(properties) {
 		if (this.template) {
@@ -165,12 +165,12 @@ var _ = Wysie.Node = $.Class({
 	},
 
 	static: {
-		create: function(element, wysie, o = {}) {
-			if (Wysie.is("multiple", element) && !o.collection) {
-				return new Wysie.Collection(element, wysie, o);
+		create: function(element, mavo, o = {}) {
+			if (Mavo.is("multiple", element) && !o.collection) {
+				return new Mavo.Collection(element, mavo, o);
 			}
 
-			return Wysie.Unit.create(...arguments);
+			return Mavo.Unit.create(...arguments);
 		},
 
 		normalizeProperty: function(element) {

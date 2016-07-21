@@ -18,16 +18,16 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-[data-store]:not(.wysie-wrapper) {
+[data-store]:not(.mv-wrapper) {
 	// Unprocessed items
 	opacity: .5;
 }
 
-.wysie-highlight {
+.mv-highlight {
 	@include highlight(hsla(58, 100%, 50%, .5));
 }
 
-.wysie-item-controls {
+.mv-item-controls {
 	all: initial;
 	position: absolute;
 	bottom: 100%;
@@ -42,12 +42,12 @@ $font-mono: Consolas, Monaco, monospace;
 	border-radius: 1em;
 	white-space: nowrap;
 
-	.wysie-item:hover:not(.has-hovered-item) > &,
-	.wysie-item:not(:hover):not(.has-hovered-item) .wysie-item:focus > &,
-	.wysie-item:not(:hover):not(.has-hovered-item) .wysie-item.focus-within:not(:hover) > &,
+	.mv-item:hover:not(.has-hovered-item) > &,
+	.mv-item:not(:hover):not(.has-hovered-item) .mv-item:focus > &,
+	.mv-item:not(:hover):not(.has-hovered-item) .mv-item.focus-within:not(:hover) > &,
 	&:hover,
-	.wysie-item:not(:hover):not(.has-hovered-item) > &:focus,
-	.wysie-item:not(:hover):not(.has-hovered-item) > &.focus-within {
+	.mv-item:not(:hover):not(.has-hovered-item) > &:focus,
+	.mv-item:not(:hover):not(.has-hovered-item) > &.focus-within {
 		transition: .4s opacity;
 		opacity: 1;
 		pointer-events: auto;
@@ -122,13 +122,13 @@ $font-mono: Consolas, Monaco, monospace;
 		}
 	}
 
-	.wysie-wrapper:not(.can-delete) & .delete,
-	.wysie-wrapper:not(.can-add) & .add {
+	.mv-wrapper:not(.can-delete) & .delete,
+	.mv-wrapper:not(.can-add) & .add {
 		display: none;
 	}
 }
 
-.wysie-item {
+.mv-item {
 	position: relative;
 
 	&.delete-hover, // basically &:has(> .delete:hover)
@@ -141,12 +141,12 @@ $font-mono: Consolas, Monaco, monospace;
 		margin-left: .4em;
 	}
 
-	.wysie-wrapper:not([data-editing]) &.deleted {
+	.mv-wrapper:not([data-editing]) &.deleted {
 		display: none;
 	}
 }
 
-.wysie-wrapper {
+.mv-wrapper {
 	button.add {
 		display: inline-block;
 		vertical-align: middle;
@@ -156,7 +156,7 @@ $font-mono: Consolas, Monaco, monospace;
 		display: none;
 	}
 
-	.wysie-popup {
+	.mv-popup {
 		all: initial;
 		position: absolute;
 		z-index: 2;
@@ -269,7 +269,7 @@ $font-mono: Consolas, Monaco, monospace;
 
 	&:not([data-editing]) {
 		.empty,
-		.wysie-item-controls,
+		.mv-item-controls,
 		button.add,
 		&:not(.unsaved-changes) .save,
 		&:not(.unsaved-changes) .revert,
@@ -286,10 +286,10 @@ $font-mono: Consolas, Monaco, monospace;
 
 		// Temporary, good for debugging keyboard usability
 		[property],
-		.wysie-editor,
-		.wysie-popup,
-		.wysie-item,
-		.wysie-item-controls * {
+		.mv-editor,
+		.mv-popup,
+		.mv-item,
+		.mv-item-controls * {
 			&:focus {
 				outline: 3px solid #f06 !important;
 			}
@@ -302,37 +302,37 @@ $font-mono: Consolas, Monaco, monospace;
 			}
 
 			&:focus,
-			.wysie-editor:focus {
+			.mv-editor:focus {
 				outline: 1px dashed hsla(200,50%,40%,.6);
 				outline-offset: 1px;
 			}
 
-			& input.wysie-editor,
-			& select.wysie-editor,
-			& textarea.wysie-editor {
+			& input.mv-editor,
+			& select.mv-editor,
+			& textarea.mv-editor {
 				all: unset;
 			}
 
-			& textarea.wysie-editor {
+			& textarea.mv-editor {
 				display: block;
 				box-sizing: border-box;
 				width: 100%;
 			}
 
-			input.wysie-editor {
+			input.mv-editor {
 				max-width: 100%;
 			}
 		}
 	}
 }
 
-.wysie-ui {
+.mv-ui {
 	a {
 		color: inherit;
 	}
 }
 
-.wysie-bar {
+.mv-bar {
 	all: initial;
 	color: white;
 	font-family: inherit;
@@ -356,7 +356,7 @@ $font-mono: Consolas, Monaco, monospace;
 		right: 0;
 		display: flex;
 		padding: 0 .5em 0 6em;
-		background: url("logo-small.svg") .5em .15em / auto 100% no-repeat,
+		background: url("logo.svg") .5em .15em / auto 100% no-repeat,
 					linear-gradient(transparent, hsla(0,0%,15%,.5));
 		background-color: hsla(0,0%,25%,.9);
 
@@ -433,7 +433,7 @@ $font-mono: Consolas, Monaco, monospace;
 			content: "✎";
 		}
 
-		.wysie-wrapper[data-editing] & {
+		.mv-wrapper[data-editing] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
 		}
@@ -471,7 +471,7 @@ $font-mono: Consolas, Monaco, monospace;
 			background: #b00;
 		}
 
-		.wysie-wrapper:not(.editing) & {
+		.mv-wrapper:not(.editing) & {
 			display: none;
 		}
 	}
@@ -501,7 +501,7 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-.wysie-debuginfo {
+.mv-debuginfo {
 	all: initial;
 	font: 80% $font-sans;
 	display: block;
@@ -696,7 +696,7 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-.wysie-debug-storage {
+.mv-debug-storage {
 	display: block;
 	background: hsla(0,0,0%,.8);
 	color: white;

@@ -1,8 +1,8 @@
 (function($, $$) {
 
-var _ = Wysie.Collection = $.Class({
-	extends: Wysie.Node,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Collection = $.Class({
+	extends: Mavo.Node,
+	constructor: function (element, mavo, o) {
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
@@ -25,8 +25,8 @@ var _ = Wysie.Collection = $.Class({
 				this.element = this.templateElement = div;
 			}
 
-			this.properties = $$(Wysie.selectors.property, this.templateElement).map(Wysie.Node.normalizeProperty);
-			this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.normalizeProperty);
+			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
@@ -39,7 +39,7 @@ var _ = Wysie.Collection = $.Class({
 			this.itemTemplate = item.template || item;
 		}
 
-		Wysie.hooks.run("collection-init-end", this);
+		Mavo.hooks.run("collection-init-end", this);
 	},
 
 	get length() {
@@ -80,7 +80,7 @@ var _ = Wysie.Collection = $.Class({
 			element = this.templateElement.cloneNode(true);
 		}
 
-		var item = Wysie.Unit.create(element, this.wysie, {
+		var item = Mavo.Unit.create(element, this.mavo, {
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
@@ -88,13 +88,13 @@ var _ = Wysie.Collection = $.Class({
 		});
 
 		// If container is a fake "fragment", strip element naked
-		if (Wysie.is("documentFragment", item.element)) {
-			item.element = new Wysie.Fragment(item.element);
+		if (Mavo.is("documentFragment", item.element)) {
+			item.element = new Mavo.Fragment(item.element);
 		}
 		// Add delete & add buttons
 		else if (this.mutable) {
 			$.create({
-				className: "wysie-item-controls wysie-ui",
+				className: "mv-item-controls mv-ui",
 				contents: [
 					{
 						tag: "button",
@@ -121,13 +121,13 @@ var _ = Wysie.Collection = $.Class({
 
 	/**
 	 * Add a new item to this collection
-	 * @param item {Node|Wysie.Unit} Optional. Element or Wysie object for the new item
+	 * @param item {Node|Mavo.Unit} Optional. Element or Mavo object for the new item
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
 	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
-			item = Wysie.Unit.get(item) || this.createItem(item);
+			item = Mavo.Unit.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();
@@ -159,9 +159,9 @@ var _ = Wysie.Collection = $.Class({
 				item.index = i;
 
 				if (!o.silent) {
-					item.element._.fire("wysie:datachange", {
+					item.element._.fire("mavo:datachange", {
 						node: this,
-						wysie: this.wysie,
+						mavo: this.mavo,
 						action: "add",
 						item
 					});
@@ -170,7 +170,7 @@ var _ = Wysie.Collection = $.Class({
 		}
 
 		if (!o.silent) {
-			item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
 		return item;
@@ -192,14 +192,14 @@ var _ = Wysie.Collection = $.Class({
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
 
-			item.element._.fire("wysie:datachange", {
+			item.element._.fire("mavo:datachange", {
 				node: this,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				action: "delete",
 				item: item
 			});
 
-			item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
 	},
 
@@ -211,7 +211,7 @@ var _ = Wysie.Collection = $.Class({
 			item.placeholder = true;
 			item.walk(obj => obj.unsavedChanges = false);
 
-			$.once(item.element, "wysie:datachange", evt => {
+			$.once(item.element, "mavo:datachange", evt => {
 				item.unsavedChanges = true;
 				item.placeholder = false;
 			});
@@ -237,9 +237,9 @@ var _ = Wysie.Collection = $.Class({
 
 			this.items = [];
 
-			this.marker._.fire("wysie:datachange", {
+			this.marker._.fire("mavo:datachange", {
 				node: this,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				action: "clear"
 			});
 		}
@@ -292,7 +292,7 @@ var _ = Wysie.Collection = $.Class({
 			return;
 		}
 
-		data = Wysie.toArray(data);
+		data = Mavo.toArray(data);
 
 		if (!this.mutable) {
 			this.items.forEach((item, i) => item.render(data && data[i]));
@@ -334,7 +334,7 @@ var _ = Wysie.Collection = $.Class({
 		if (this.properties.indexOf(property) > -1) {
 			var ret = items.map(item => item.find(property));
 
-			return Wysie.flatten(ret);
+			return Mavo.flatten(ret);
 		}
 	},
 
@@ -346,18 +346,18 @@ var _ = Wysie.Collection = $.Class({
 				// (think multiple elements with the same property name, where only one has data-multiple)
 				this._mutable = value;
 
-				this.wysie.needsEdit = true;
+				this.mavo.needsEdit = true;
 
-				this.required = this.templateElement.matches(Wysie.selectors.required);
+				this.required = this.templateElement.matches(Mavo.selectors.required);
 
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
-					className: "wysie-marker",
+					className: "mv-marker",
 					after: this.templateElement
 				});
 
-				this.templateElement.classList.add("wysie-item");
+				this.templateElement.classList.add("mv-item");
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -366,7 +366,7 @@ var _ = Wysie.Collection = $.Class({
 					}
 					else {
 						var tag = this.element.tagName.toLowerCase();
-						var containerSelector = Wysie.selectors.container[tag];
+						var containerSelector = Mavo.selectors.container[tag];
 
 						if (containerSelector) {
 							var after = this.marker.closest(containerSelector);
@@ -407,13 +407,13 @@ var _ = Wysie.Collection = $.Class({
 		closestCollection: function() {
 			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
-			return parent.closest(Wysie.selectors.item);
+			return parent.closest(Mavo.selectors.item);
 		},
 
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.add-${this.property}`;
-			var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
+			var scope = this.closestCollection || this.marker.closest(Mavo.selectors.scope);
 
 			if (scope) {
 				var button = $$(selector, scope).filter(button => {
@@ -428,7 +428,7 @@ var _ = Wysie.Collection = $.Class({
 				});
 			};
 
-			button.classList.add("wysie-ui", "wysie-add");
+			button.classList.add("mv-ui", "mv-add");
 
 			if (this.property) {
 				button.classList.add(`add-${this.property}`);
@@ -446,7 +446,7 @@ var _ = Wysie.Collection = $.Class({
 });
 
 // TODO
-Wysie.Fragment = $.Class({
+Mavo.Fragment = $.Class({
 	constructor: function(element) {
 		this.childNodes = [];
 

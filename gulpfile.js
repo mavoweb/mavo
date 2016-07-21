@@ -14,14 +14,14 @@ var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
 
 gulp.task("concat", function() {
-	var files = "wysie permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
+	var files = "mavo permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
 	            .split(" ").map(path => "src/" + path + ".js");
 	files.unshift("../bliss/bliss.js");
 	files.unshift("../stretchy/stretchy.js");
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
-		.pipe(concat("wysie.js"))
+		.pipe(concat("mavo.js"))
 		.pipe(sourcemaps.write("."))
 		.pipe(gulp.dest("."));
 });
@@ -40,7 +40,7 @@ gulp.task("sass", function() {
 });
 
 gulp.task("transpile", ["concat"], function() {
-	return gulp.src(["wysie.js"])
+	return gulp.src(["mavo.js"])
 	.pipe(sourcemaps.init())
 	.pipe(babel({
 		"presets": ["ES2015"],
@@ -66,10 +66,10 @@ gulp.task("minify", ["concat", "transpile"], function() {
 		u.end();
 	});
 
-	return gulp.src(["wysie.es5.js"])
+	return gulp.src(["mavo.es5.js"])
 	.pipe(sourcemaps.init())
 	.pipe(u)
-	.pipe(rename("wysie.min.js"))
+	.pipe(rename("mavo.min.js"))
 	.pipe(sourcemaps.write("."))
 	.pipe(gulp.dest("."));
 

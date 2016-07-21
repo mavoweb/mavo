@@ -9,7 +9,7 @@ body {
   hyphens: auto; }
 
 a {
-  color: #a84d5f; }
+  color: #25aff4; }
   a:not(:hover) {
     text-decoration: none; }
 
@@ -17,7 +17,7 @@ dd + dt {
   margin-top: 1.5em; }
 
 pre, code {
-  background: #f9f1f3;
+  background: #f2f2f2;
   font-family: Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace;
   -moz-tab-size: 4;
   tab-size: 4;
@@ -53,17 +53,6 @@ input {
   border: none;
   border-bottom: 0.1em solid rgba(0, 0, 0, 0.4); }
 
-.logo {
-  font: 300 180% Helvetica Neue, sans-serif;
-  letter-spacing: .15em;
-  text-transform: uppercase;
-  color: white;
-  text-align: center;
-  white-space: nowrap; }
-  .logo img {
-    display: block;
-    margin-bottom: -.6em; }
-
 body > header,
 body > section,
 body > footer {
@@ -82,54 +71,96 @@ body > footer {
   padding: 1em; }
 
 body > header {
+  position: relative;
+  z-index: 1;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: flex;
-  min-height: 20vh;
-  padding: 6em;
-  -webkit-align-items: center;
-  -ms-flex-align: center;
-  align-items: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-  justify-content: center;
-  background: #cc8f9b;
-  -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
-  clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%); }
+  padding: .8em 1em .6em;
+  -webkit-justify-content: space-between;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  -webkit-flex-flow: row;
+  -ms-flex-flow: row;
+  flex-flow: row;
+  -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
+  background: #333;
+  color: white; }
+  body > header .button {
+    display: inline-block;
+    padding: .2em .8em;
+    border: 2px solid white;
+    border-radius: .3em;
+    color: white;
+    font-size: 130%;
+    font-weight: 400;
+    text-decoration: none; }
+    body > header .button:hover {
+      background: white;
+      color: #333; }
+  body > header .logo {
+    margin: 0; }
+    body > header .logo img {
+      height: 2rem; }
+  body > header + h2 {
+    padding: 1.5em 1em .5em;
+    margin-top: -1.5em;
+    -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% calc(100% - 1em));
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% calc(100% - 1em));
+    background: #da0b73;
+    color: white;
+    text-align: right;
+    font-size: 250%;
+    font-weight: 200;
+    line-height: 1; }
 
 body > section > h1 {
   font: bold 200% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Libre Bodoni", "Hoefler Text", Cambria, Georgia, serif;
-  color: #bc6c7c; }
+  color: #ff8000; }
 
 body > section > * {
   width: 900px;
   max-width: 90vw; }
 
-.home body {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  height: 100vh;
-  -webkit-align-items: center;
-  -ms-flex-align: center;
-  align-items: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
-  justify-content: center;
-  background: #cc8f9b; }
+.home body > header {
+  display: block;
+  text-align: center;
+  padding: 5em;
+  padding: 2em calc(50% - 12em) 5em;
+  -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 5em), 0% 100%); }
+  .home body > header .logo {
+    font: 300 180% Didot, "Didot LT STD", "Bodoni 72", Bodoni, "Bodoni MT", "Libre Bodoni", "Hoefler Text", Cambria, Georgia, serif; }
+    .home body > header .logo img {
+      display: block;
+      height: 7rem;
+      margin: auto;
+      margin-bottom: .5em; }
+  .home body > header .intro {
+    text-align: justify;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400; }
+  .home body > header .button {
+    margin: auto; }
+    .home body > header .button + p {
+      color: rgba(255, 255, 255, 0.7);
+      font-style: italic;
+      font-size: 75%; }
+      .home body > header .button + p a {
+        color: inherit;
+        text-decoration: underline; }
+        .home body > header .button + p a:hover {
+          color: white; }
 
-.home h1 {
-  margin: 0;
-  width: 500px; }
-
-.docs .logo {
-  letter-spacing: .1em;
-  font-size: 150%; }
-  .docs .logo img {
-    margin-bottom: -.8em; }
+.docs body > header + h2 {
+  background: #82cf17; }
 
 .docs .example > h1 {
-  color: #80b3ae; }
+  color: #82cf17; }
 
 .docs .example.color-picker .example-container {
   padding: 0; }
@@ -180,13 +211,13 @@ body > section > * {
     .docs .example .example-container {
       display: none; } }
 
-.docs .example .wysie-debug-storage {
+.docs .example .mv-debug-storage {
   margin: 0;
   background: rgba(0, 0, 0, 0.06);
-  color: black .docs .example .wysie-debug-storage; }
-  .docs .example .wysie-debug-storage :not(:last-child) {
+  color: black .docs .example .mv-debug-storage; }
+  .docs .example .mv-debug-storage :not(:last-child) {
     margin-bottom: 1em; }
-  .docs .example .wysie-debug-storage summary {
+  .docs .example .mv-debug-storage summary {
     display: block;
     padding: .3em .8em;
     background: rgba(0, 0, 0, 0.3);
@@ -195,18 +226,18 @@ body > section > * {
     font-weight: bold;
     cursor: pointer;
     outline: none; }
-    .docs .example .wysie-debug-storage summary:hover, .docs .example .wysie-debug-storage summary:focus {
+    .docs .example .mv-debug-storage summary:hover, .docs .example .mv-debug-storage summary:focus {
       background: rgba(0, 0, 0, 0.6); }
-  .docs .example .wysie-debug-storage pre {
+  .docs .example .mv-debug-storage pre {
     background: none;
     margin: 0;
     color: black; }
-    .docs .example .wysie-debug-storage pre th {
+    .docs .example .mv-debug-storage pre th {
       color: white; }
-    .docs .example .wysie-debug-storage pre th, .docs .example .wysie-debug-storage pre td {
+    .docs .example .mv-debug-storage pre th, .docs .example .mv-debug-storage pre td {
       border-color: rgba(0, 0, 0, 0.1); }
   @media print {
-    .docs .example .wysie-debug-storage {
+    .docs .example .mv-debug-storage {
       display: none; } }
 
 .docs #show-examples, .docs #show-examples + label {
@@ -247,13 +278,13 @@ body > section > * {
     background: transparent; }
 
 .note, .tip {
-  border-left: 0.5em solid #a6c9c6;
+  border-left: 0.5em solid #66c7f7;
   padding-left: .5em;
   margin-left: -1em; }
   .note::before, .tip::before {
     content: "Note: ";
     font-weight: bold;
-    color: #80b3ae; }
+    color: #25aff4; }
 
 .tip::before {
   content: "Tip: "; }
@@ -277,7 +308,7 @@ body > section > * {
 .token.constant,
 .token.symbol,
 .token.deleted {
-  color: #905; }
+  color: #da0b73; }
 
 .token.selector,
 .token.attr-name,
@@ -285,7 +316,7 @@ body > section > * {
 .token.char,
 .token.builtin,
 .token.inserted {
-  color: #690; }
+  color: #75ba15; }
 
 .token.operator,
 .token.entity,
@@ -298,7 +329,7 @@ body > section > * {
 .token.atrule,
 .token.attr-value,
 .token.keyword {
-  color: #07a; }
+  color: #25aff4; }
 
 .token.function {
   color: #DD4A68; }

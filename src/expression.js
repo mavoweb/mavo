@@ -1,6 +1,6 @@
 (function($, $$) {
 
-var _ = Wysie.Expression = $.Class({
+var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
 		this.expression = expression;
 	},
@@ -10,7 +10,7 @@ var _ = Wysie.Expression = $.Class({
 
 		// TODO convert to new Function() which is more optimizable by JS engines.
 		// Also, cache the function, since only data changes across invocations.
-		Wysie.hooks.run("expression-eval-beforeeval", this);
+		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
 			if (!this.function) {
@@ -20,7 +20,7 @@ var _ = Wysie.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
-			Wysie.hooks.run("expression-eval-error", {context: this, exception});
+			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = _.ERROR;
 		}
@@ -41,13 +41,13 @@ var _ = Wysie.Expression = $.Class({
 
 		// Transform simple operators to array-friendly math functions
 		code = code.replace(_.simpleOperation, (expr, operand1, operator, operand2) => {
-			var ret = `(${Wysie.Functions.operators[operator]}(${operand1}, ${operand2}))`;
+			var ret = `(${Mavo.Functions.operators[operator]}(${operand1}, ${operand2}))`;
 			return ret;
 		});
 
 		_.simpleOperation.lastIndex = 0;
 
-		return new Function("data", `with(Wysie.Functions._Trap)
+		return new Function("data", `with(Mavo.Functions._Trap)
 				with(data) {
 					return ${code};
 				}`);
@@ -66,7 +66,7 @@ var _ = Wysie.Expression = $.Class({
 
 		lazy: {
 			simpleOperation: function() {
-				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
+				var operator = Object.keys(Mavo.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
 				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
 
 				return RegExp(`(?:^|\\()${operand}(${operator})${operand}(?:$|\\))`, "g");
@@ -77,9 +77,9 @@ var _ = Wysie.Expression = $.Class({
 
 (function() {
 
-var _ = Wysie.Expression.Text = $.Class({
+var _ = Mavo.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.all = o.all; // the Wysie.Expressions object that this belongs to
+		this.all = o.all; // the Mavo.Expressions object that this belongs to
 		this.node = o.node;
 		this.path = o.path;
 
@@ -109,13 +109,13 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.template = o.template? o.template.template : this.tokenize(this.expression);
 
 		// Is this a computed property?
-		var primitive = Wysie.Unit.get(this.element);
+		var primitive = Mavo.Unit.get(this.element);
 		if (primitive && this.attribute === primitive.attribute) {
 			this.primitive = primitive;
 			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
 		}
 
-		Wysie.hooks.run("expressiontext-init-end", this);
+		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -131,7 +131,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			this.primitive.value = value;
 		}
 		else {
-			Wysie.Primitive.setValue(this.node, value, this.attribute);
+			Mavo.Primitive.setValue(this.node, value, this.attribute);
 		}
 	},
 
@@ -139,14 +139,14 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.data = data;
 
 		this.value = this.template.map(expr => {
-			if (expr instanceof Wysie.Expression) {
+			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
-				Wysie.hooks.run("expressiontext-update-beforeeval", env);
+				Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
 				env.value = env.expr.eval(data);
 
-				Wysie.hooks.run("expressiontext-update-aftereval", env);
+				Mavo.hooks.run("expressiontext-update-aftereval", env);
 
 				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
@@ -195,7 +195,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
 			var expression = template.slice(match.index + 1, lastIndex - 1);
 
-			ret.push(new Wysie.Expression(expression));
+			ret.push(new Mavo.Expression(expression));
 		}
 
 		// Literal at the end
@@ -256,7 +256,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		lazy: {
-			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
+			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Mavo.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
 	}
 });
@@ -265,7 +265,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 (function() {
 
-var _ = Wysie.Expressions = $.Class({
+var _ = Mavo.Expressions = $.Class({
 	constructor: function(scope) {
 		if (scope) {
 			this.scope = scope;
@@ -274,7 +274,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		this.all = []; // all Expression.Text objects in this scope
 
-		Wysie.hooks.run("expressions-init-start", this);
+		Mavo.hooks.run("expressions-init-start", this);
 
 		if (this.scope) {
 			var template = this.scope.template;
@@ -282,7 +282,7 @@ var _ = Wysie.Expressions = $.Class({
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
 				template.expressions.all.forEach(et => {
-					this.all.push(new Wysie.Expression.Text({
+					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
 						all: this,
@@ -306,7 +306,7 @@ var _ = Wysie.Expressions = $.Class({
 			this.update();
 
 			// Watch changes and update value
-			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
+			this.scope.element.addEventListener("mavo:datachange", evt => this.update());
 		}
 	},
 
@@ -320,7 +320,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		var env = { context: this, data: this.scope.getRelativeData() };
 
-		Wysie.hooks.run("expressions-update-start", env);
+		Mavo.hooks.run("expressions-update-start", env);
 
 		$$(this.all).forEach(ref => {
 			ref.update(env.data);
@@ -333,7 +333,7 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
-			this.all.push(new Wysie.Expression.Text({
+			this.all.push(new Mavo.Expression.Text({
 				node,
 				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
@@ -358,7 +358,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
-		if (node == this.scope.element || !Wysie.is("scope", node)) {
+		if (node == this.scope.element || !Mavo.is("scope", node)) {
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path));
 			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`));
 		}
@@ -368,7 +368,7 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			var properties = this.scope.wysie.propertyNames.concat(_.special);
+			var properties = this.scope.mavo.propertyNames.concat(_.special);
 			var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
 
 			return RegExp(`\\[[\\S\\s]*?${propertyRegex}[\\S\\s]*?\\]`, "gi");
@@ -383,7 +383,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		lazy: {
 			rootFunctions: () => [
-				...Object.keys(Wysie.Functions),
+				...Object.keys(Mavo.Functions),
 				...Object.getOwnPropertyNames(Math),
 				"if", ""
 			]
@@ -393,21 +393,21 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("init-tree-after", function() {
+Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {
-		if (obj instanceof Wysie.Scope) {
-			new Wysie.Expressions(obj);
+		if (obj instanceof Mavo.Scope) {
+			new Mavo.Expressions(obj);
 			obj.expressions.init();
 		}
 	});
 });
 
-Wysie.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-end", function() {
 	requestAnimationFrame(() => {
 		// Tree expressions are processed synchronously, so by now if it doesn't have
 		// an expressions object, we need to create it.
 		if (!this.expressions) {
-			new Wysie.Expressions(this);
+			new Mavo.Expressions(this);
 		}
 
 		this.expressions.init();
@@ -416,15 +416,15 @@ Wysie.hooks.add("scope-init-end", function() {
 	});
 });
 
-Wysie.hooks.add("scope-render-start", function() {
+Mavo.hooks.add("scope-render-start", function() {
 	if (!this.expressions) {
-		new Wysie.Expressions(this);
+		new Mavo.Expressions(this);
 	}
 
 	this.expressions.active = false;
 });
 
-Wysie.hooks.add("scope-render-end", function() {
+Mavo.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
 		this.expressions.active = true;
 		this.expressions.update();

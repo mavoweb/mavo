@@ -1,15 +1,15 @@
 tinymce.init({
 	selector: "textarea",
 	toolbar1: "styleselect | bold italic | forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent",
-	toolbar2: "image link | table | visualblocks wysieapp wysieproperty wysiemultiple",
+	toolbar2: "image link | table | visualblocks mavoapp mavoproperty mavomultiple",
 	plugins: "visualblocks image code link table charmap colorpicker lists media tabfocus textcolor",
 	//menubar: "file edit insert view format table tools",
 	//extended_valid_elements: "*[data-store|property|itemprop|data-multiple]",
 	valid_elements: "*[*]",
 	visualblocks_default_state: true,
 	setup: function (editor) {
-		editor.addButton("wysieapp", {
-			text: "Wysie app",
+		editor.addButton("mavoapp", {
+			text: "Mavo app",
 			icon: false,
 			onclick: function () {
 				var node = editor.selection.getNode();
@@ -23,7 +23,7 @@ tinymce.init({
 		});
 
 		var propertyButton;
-		editor.addButton("wysieproperty", {
+		editor.addButton("mavoproperty", {
 			text: "Property",
 			icon: false,
 			disabled: true,
@@ -36,11 +36,11 @@ tinymce.init({
 
 		function nodeChange(element) {
 			requestAnimationFrame(() => {
-				var wysie = element.matches("[data-store], [data-store] *");
+				var mavo = element.matches("[data-store], [data-store] *");
 console.log(element, element.children > 0 ,!element.hasAttribute("data-multiple"));
-				propertyButton && propertyButton.disabled(!wysie || element.children.length > 0);
+				propertyButton && propertyButton.disabled(!mavo || element.children.length > 0);
 
-				multipleButton && multipleButton.disabled(!wysie);
+				multipleButton && multipleButton.disabled(!mavo);
 			})
 
 		}
@@ -50,7 +50,7 @@ console.log(element, element.children > 0 ,!element.hasAttribute("data-multiple"
 		});
 
 		var multipleButton;
-		editor.addButton("wysiemultiple", {
+		editor.addButton("mavomultiple", {
 			text: "Multiple",
 			icon: false,
 			disabled: true,
@@ -72,11 +72,11 @@ console.log(element, element.children > 0 ,!element.hasAttribute("data-multiple"
 			result.setAttribute("srcdoc", `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8" />
-<title>Wysie</title>
-<link rel="stylesheet" href="../../wysie.css" />
+<title>Mavo</title>
+<link rel="stylesheet" href="../../mavo.css" />
 </head>
 <body>${editor.getContent({format: 'raw'})}
-<script src="../../wysie.js"></script>
+<script src="../../mavo.js"></script>
 </body>
 </html>`);
 		}

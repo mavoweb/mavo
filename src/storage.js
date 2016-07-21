@@ -1,30 +1,30 @@
 (function($) {
 
-var _ = Wysie.Storage = $.Class({
-	constructor: function(wysie) {
-		this.wysie = wysie;
+var _ = Mavo.Storage = $.Class({
+	constructor: function(mavo) {
+		this.mavo = mavo;
 
 		var keywords = RegExp(`^(?:${_.Backend.backends.map(a => a.id).join("|")})$`, "i");
-		this.urls = wysie.store.split(/\s+/).map(url => {
+		this.urls = mavo.store.split(/\s+/).map(url => {
 			return keywords.test(url)? url : new URL(url, location);
 		});
 
-		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
+		this.backends = Mavo.flatten(this.urls.map(url => _.Backend.create(url, this)));
 
-		this.backends[0].permissions = this.wysie.permissions.or(this.backends[0].permissions);
+		this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
 
 		this.ready = Promise.all(this.backends.map(backend => backend.ready));
 
 		this.loaded = new Promise((resolve, reject) => {
-			this.wysie.wrapper.addEventListener("wysie:load", resolve);
+			this.mavo.wrapper.addEventListener("mavo:load", resolve);
 		});
 
 		this.authControls = {};
 
 		this.permissions.can("login", () => {
-			// #login authenticates if only 1 wysie on the page, or if the first.
+			// #login authenticates if only 1 mavo on the page, or if the first.
 			// Otherwise, we have to generate a slightly more complex hash
-			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
+			this.loginHash = "#login" + (Mavo.all[0] === this.mavo? "" : "-" + this.mavo.id);
 
 			this.authControls.login = $.create({
 				tag: "a",
@@ -37,7 +37,7 @@ var _ = Wysie.Storage = $.Class({
 						this.login();
 					}
 				},
-				after: $(".status", this.wysie.bar)
+				after: $(".status", this.mavo.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -49,15 +49,15 @@ var _ = Wysie.Storage = $.Class({
 					this.login();
 				}
 			})();
-			window.addEventListener("hashchange.wysie", login);
+			window.addEventListener("hashchange.mavo", login);
 		}, () => {
 			$.remove(this.authControls.login);
-			this.wysie.wrapper._.unbind("hashchange.wysie");
+			this.mavo.wrapper._.unbind("hashchange.mavo");
 		});
 
 		// Update login status
-		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
-			var status = $(".status", this.wysie.bar);
+		this.mavo.wrapper.addEventListener("mavo:login.mavo", evt => {
+			var status = $(".status", this.mavo.bar);
 			status.innerHTML = "";
 			status._.contents([
 				"Logged in to " + evt.backend.id + " as ",
@@ -73,8 +73,8 @@ var _ = Wysie.Storage = $.Class({
 			]);
 		});
 
-		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
-			$(".status", this.wysie.bar).textContent = "";
+		this.mavo.wrapper.addEventListener("mavo:logout.mavo", evt => {
+			$(".status", this.mavo.bar).textContent = "";
 		});
 	},
 
@@ -91,7 +91,7 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	proxy: {
-		permissions: "wysie"
+		permissions: "mavo"
 	},
 
 	/**
@@ -111,33 +111,33 @@ var _ = Wysie.Storage = $.Class({
 			.then(() => getBackend.get())
 			.then(response => {
 				this.inProgress = false;
-				this.wysie.wrapper._.fire("wysie:load");
+				this.mavo.wrapper._.fire("mavo:load");
 
 				if (response && $.type(response) == "string") {
 					response = JSON.parse(response);
 				}
 
-				var data = Wysie.queryJSON(response, this.param("root"));
+				var data = Mavo.queryJSON(response, this.param("root"));
 
-				this.wysie.render(data);
+				this.mavo.render(data);
 			}).catch(err => {
 				// TODO try more backends if this fails
 				this.inProgress = false;
 
 				if (err.xhr && err.xhr.status == 404) {
-					this.wysie.render("");
+					this.mavo.render("");
 				}
 				else {
 					console.error(err);
 					console.log(err.stack);
 				}
 
-				this.wysie.wrapper._.fire("wysie:load");
+				this.mavo.wrapper._.fire("mavo:load");
 			});
 		}
 	},
 
-	save: function(data = this.wysie.data) {
+	save: function(data = this.mavo.data) {
 		this.inProgress = "Saving";
 
 		Promise.all(this.putBackends.map(backend => {
@@ -149,7 +149,7 @@ var _ = Wysie.Storage = $.Class({
 				});
 			});
 		})).then(() => {
-			this.wysie.wrapper._.fire("wysie:save");
+			this.mavo.wrapper._.fire("mavo:save");
 
 			this.inProgress = false;
 		}).catch(err => {
@@ -183,10 +183,10 @@ var _ = Wysie.Storage = $.Class({
 		if (!(id in this.params)) {
 			var attribute = "data-store-" + id;
 
-			this.params[id] = this.wysie.wrapper.getAttribute(attribute) || this.wysie.element.getAttribute(attribute);
+			this.params[id] = this.mavo.wrapper.getAttribute(attribute) || this.mavo.element.getAttribute(attribute);
 
-			this.wysie.wrapper.removeAttribute(attribute);
-			this.wysie.element.removeAttribute(attribute);
+			this.mavo.wrapper.removeAttribute(attribute);
+			this.mavo.element.removeAttribute(attribute);
 		}
 
 		return this.params[id];
@@ -198,11 +198,11 @@ var _ = Wysie.Storage = $.Class({
 				var p = $.create("div", {
 					textContent: value + "…",
 					className: "progress",
-					inside: this.wysie.wrapper
+					inside: this.mavo.wrapper
 				});
 			}
 			else {
-				$.remove($(".progress", this.wysie.wrapper));
+				$.remove($(".progress", this.mavo.wrapper));
 			}
 		}
 	},
@@ -221,9 +221,9 @@ _.Backend = $.Class({
 
 		// Permissions of this particular backend.
 		// Global permissions are OR(all permissions)
-		this.permissions = new Wysie.Permissions();
+		this.permissions = new Mavo.Permissions();
 
-		Wysie.Permissions.actions.forEach(action => {
+		Mavo.Permissions.actions.forEach(action => {
 			this.permissions.can(action, () => {
 				this.storage.permissions.on(action);
 			}, () => {
@@ -238,7 +238,7 @@ _.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	proxy: {
-		wysie: "storage"
+		mavo: "storage"
 	},
 
 	static: {
@@ -280,7 +280,7 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 	},
 
 	put: function({data = ""}) {
-		this.element.textContent = this.wysie.toJSON(data);
+		this.element.textContent = this.mavo.toJSON(data);
 		return Promise.resolve();
 	},
 
@@ -315,7 +315,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 _.Backend.add("Local", $.Class({ extends: _.Backend,
 	constructor: function() {
 		this.permissions.on(["read", "edit", "save"]);
-		this.key = this.wysie.id;
+		this.key = this.mavo.id;
 	},
 
 	get: function() {
@@ -323,7 +323,7 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 	},
 
 	put: function({data = ""}) {
-		localStorage[this.key] = this.wysie.toJSON(data);
+		localStorage[this.key] = this.mavo.toJSON(data);
 		return Promise.resolve();
 	},
 

@@ -1004,7 +1004,7 @@ self.$$ = self.$$ || $.$;
 
 "use strict";
 
-var _ = self.Wysie = $.Class({
+var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		_.all.push(this);
 
@@ -1013,8 +1013,8 @@ var _ = self.Wysie = $.Class({
 		                element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
-		// Assign a unique (for the page) id to this wysie instance
-		this.id = Wysie.Node.normalizeProperty(element) || element.id || "wysie-" + _.all.length;
+		// Assign a unique (for the page) id to this mavo instance
+		this.id = Mavo.Node.normalizeProperty(element) || element.id || "mv-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -1026,7 +1026,7 @@ var _ = self.Wysie = $.Class({
 			this.element = element;
 		}
 
-		this.element.classList.add("wysie-root");
+		this.element.classList.add("mv-root");
 
 		// Apply heuristic for collections
 		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element => {
@@ -1035,7 +1035,7 @@ var _ = self.Wysie = $.Class({
 			}
 		});
 
-		this.wrapper = element.closest(".wysie-wrapper") || element;
+		this.wrapper = element.closest(".mv-wrapper") || element;
 
 		// Ctrl + S or Cmd + S to save
 		this.wrapper.addEventListener("keydown", evt => {
@@ -1047,9 +1047,9 @@ var _ = self.Wysie = $.Class({
 
 		// Apply heuristic for scopes
 		$$(_.selectors.primitive).forEach(element => {
-			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
-			                Wysie.is("multiple", element) || // is a collection...
-			                Wysie.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
+			var isScope = $(Mavo.selectors.property, element) && (// Contains other properties and...
+			                Mavo.is("multiple", element) || // is a collection...
+			                Mavo.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
 						) || element.matches("template");
 
 			if (isScope) {
@@ -1072,7 +1072,7 @@ var _ = self.Wysie = $.Class({
 			this.wrapper = $.create({ around });
 		}
 
-		this.wrapper.classList.add("wysie-wrapper");
+		this.wrapper.classList.add("mv-wrapper");
 
 		// Normalize property names
 		this.propertyNames = [];
@@ -1080,23 +1080,23 @@ var _ = self.Wysie = $.Class({
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
-		// Build wysie objects
-		Wysie.hooks.run("init-tree-before", this);
+		// Build mavo objects
+		Mavo.hooks.run("init-tree-before", this);
 
-		this.root = Wysie.Node.create(this.element, this);
+		this.root = Mavo.Node.create(this.element, this);
 		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
 
-		Wysie.hooks.run("init-tree-after", this);
+		Mavo.hooks.run("init-tree-after", this);
 
-		this.permissions = new Wysie.Permissions(null, this);
+		this.permissions = new Mavo.Permissions(null, this);
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
 		                  this.wrapper.matches("[data-bar~=inline]") :
 		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
 
 		this.ui = {
-			bar: $(".wysie-bar", this.wrapper) || $.create({
-				className: "wysie-bar wysie-ui" + (inlineBar? " inline" : ""),
+			bar: $(".mv-bar", this.wrapper) || $.create({
+				className: "mv-bar mv-ui" + (inlineBar? " inline" : ""),
 				start: this.wrapper,
 				contents: {
 					tag: "span",
@@ -1194,14 +1194,14 @@ var _ = self.Wysie = $.Class({
 			// No storage
 			this.permissions.on(["read", "edit"]);
 
-			$.fire(this.wrapper, "wysie:load");
+			$.fire(this.wrapper, "mavo:load");
 		}
 
 		if (!this.needsEdit) {
 			this.permissions.off(["edit", "add", "delete"]);
 		}
 
-		Wysie.hooks.run("init-end", this);
+		Mavo.hooks.run("init-end", this);
 	},
 
 	get data() {
@@ -1239,8 +1239,8 @@ var _ = self.Wysie = $.Class({
 
 		this.root.edit();
 
-		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
-			if (evt.target.matches(".wysie-item-controls .delete")) {
+		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
+			if (evt.target.matches(".mv-item-controls .delete")) {
 				var item = evt.target.closest(_.selectors.item);
 				item.classList.toggle("delete-hover", evt.type == "mouseenter");
 			}
@@ -1275,7 +1275,7 @@ var _ = self.Wysie = $.Class({
 	// Conclude editing
 	done: function() {
 		this.root.done();
-		$.unbind(this.wrapper, ".wysie:edit");
+		$.unbind(this.wrapper, ".mavo:edit");
 		this.editing = false;
 		this.unsavedChanges = false;
 	},
@@ -1430,9 +1430,9 @@ let s = _.selectors = {
 	required: "[required], [data-required], .required",
 	formControl: "input, select, textarea",
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
-	item: ".wysie-item",
-	ui: ".wysie-ui",
-	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`,
+	item: ".mv-item",
+	ui: ".mv-ui",
+	option: name => `[${name}], [data-${name}], [data-mv-options~='${name}'], .${name}`,
 	container: {
 		"li": "ul, ol",
 		"tr": "table",
@@ -1479,7 +1479,7 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 });
 
 $.classProps.propagated = function(proto, names) {
-	Wysie.toArray(names).forEach(name => {
+	Mavo.toArray(names).forEach(name => {
 		var existing = proto[name];
 
 		proto[name] = function() {
@@ -1505,24 +1505,24 @@ document.addEventListener("focus", evt => {
 	}
 }, true);
 
-// Init wysie
+// Init mavo
 Promise.all([
 	$.ready(),
 	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
 ])
-.then(() => Wysie.init())
+.then(() => Mavo.init())
 .catch(err => {
 	console.error(err);
-	Wysie.init();
+	Mavo.init();
 });
 
-Stretchy.selectors.filter = ".wysie-editor:not([property])";
+Stretchy.selectors.filter = ".mv-editor:not([property])";
 
 })(Bliss, Bliss.$);
 
 (function($) {
 
-var _ = Wysie.Permissions = $.Class({
+var _ = Mavo.Permissions = $.Class({
 	constructor: function(o) {
 		this.triggers = [];
 
@@ -1540,7 +1540,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Set a bunch of permissions to true. Chainable.
 	on: function(actions) {
-		Wysie.toArray(actions).forEach(action => this[action] = true);
+		Mavo.toArray(actions).forEach(action => this[action] = true);
 
 		return this;
 	},
@@ -1580,7 +1580,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Schedule a callback for when a set of permissions changes value
 	observe: function(actions, value, callback) {
-		actions = Wysie.toArray(actions);
+		actions = Mavo.toArray(actions);
 
 		if (this.is(actions, value)) {
 			// Should be fired immediately
@@ -1701,31 +1701,31 @@ _.register(["add", "delete"], function(can) {
 
 (function($) {
 
-var _ = Wysie.Storage = $.Class({
-	constructor: function(wysie) {
-		this.wysie = wysie;
+var _ = Mavo.Storage = $.Class({
+	constructor: function(mavo) {
+		this.mavo = mavo;
 
 		var keywords = RegExp(`^(?:${_.Backend.backends.map(a => a.id).join("|")})$`, "i");
-		this.urls = wysie.store.split(/\s+/).map(url => {
+		this.urls = mavo.store.split(/\s+/).map(url => {
 			return keywords.test(url)? url : new URL(url, location);
 		});
 
-		this.backends = Wysie.flatten(this.urls.map(url => _.Backend.create(url, this)));
+		this.backends = Mavo.flatten(this.urls.map(url => _.Backend.create(url, this)));
 
-		this.backends[0].permissions = this.wysie.permissions.or(this.backends[0].permissions);
+		this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
 
 		this.ready = Promise.all(this.backends.map(backend => backend.ready));
 
 		this.loaded = new Promise((resolve, reject) => {
-			this.wysie.wrapper.addEventListener("wysie:load", resolve);
+			this.mavo.wrapper.addEventListener("mavo:load", resolve);
 		});
 
 		this.authControls = {};
 
 		this.permissions.can("login", () => {
-			// #login authenticates if only 1 wysie on the page, or if the first.
+			// #login authenticates if only 1 mavo on the page, or if the first.
 			// Otherwise, we have to generate a slightly more complex hash
-			this.loginHash = "#login" + (Wysie.all[0] === this.wysie? "" : "-" + this.wysie.id);
+			this.loginHash = "#login" + (Mavo.all[0] === this.mavo? "" : "-" + this.mavo.id);
 
 			this.authControls.login = $.create({
 				tag: "a",
@@ -1738,7 +1738,7 @@ var _ = Wysie.Storage = $.Class({
 						this.login();
 					}
 				},
-				after: $(".status", this.wysie.bar)
+				after: $(".status", this.mavo.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -1750,15 +1750,15 @@ var _ = Wysie.Storage = $.Class({
 					this.login();
 				}
 			})();
-			window.addEventListener("hashchange.wysie", login);
+			window.addEventListener("hashchange.mavo", login);
 		}, () => {
 			$.remove(this.authControls.login);
-			this.wysie.wrapper._.unbind("hashchange.wysie");
+			this.mavo.wrapper._.unbind("hashchange.mavo");
 		});
 
 		// Update login status
-		this.wysie.wrapper.addEventListener("wysie:login.wysie", evt => {
-			var status = $(".status", this.wysie.bar);
+		this.mavo.wrapper.addEventListener("mavo:login.mavo", evt => {
+			var status = $(".status", this.mavo.bar);
 			status.innerHTML = "";
 			status._.contents([
 				"Logged in to " + evt.backend.id + " as ",
@@ -1774,8 +1774,8 @@ var _ = Wysie.Storage = $.Class({
 			]);
 		});
 
-		this.wysie.wrapper.addEventListener("wysie:logout.wysie", evt => {
-			$(".status", this.wysie.bar).textContent = "";
+		this.mavo.wrapper.addEventListener("mavo:logout.mavo", evt => {
+			$(".status", this.mavo.bar).textContent = "";
 		});
 	},
 
@@ -1792,7 +1792,7 @@ var _ = Wysie.Storage = $.Class({
 	},
 
 	proxy: {
-		permissions: "wysie"
+		permissions: "mavo"
 	},
 
 	/**
@@ -1812,33 +1812,33 @@ var _ = Wysie.Storage = $.Class({
 			.then(() => getBackend.get())
 			.then(response => {
 				this.inProgress = false;
-				this.wysie.wrapper._.fire("wysie:load");
+				this.mavo.wrapper._.fire("mavo:load");
 
 				if (response && $.type(response) == "string") {
 					response = JSON.parse(response);
 				}
 
-				var data = Wysie.queryJSON(response, this.param("root"));
+				var data = Mavo.queryJSON(response, this.param("root"));
 
-				this.wysie.render(data);
+				this.mavo.render(data);
 			}).catch(err => {
 				// TODO try more backends if this fails
 				this.inProgress = false;
 
 				if (err.xhr && err.xhr.status == 404) {
-					this.wysie.render("");
+					this.mavo.render("");
 				}
 				else {
 					console.error(err);
 					console.log(err.stack);
 				}
 
-				this.wysie.wrapper._.fire("wysie:load");
+				this.mavo.wrapper._.fire("mavo:load");
 			});
 		}
 	},
 
-	save: function(data = this.wysie.data) {
+	save: function(data = this.mavo.data) {
 		this.inProgress = "Saving";
 
 		Promise.all(this.putBackends.map(backend => {
@@ -1850,7 +1850,7 @@ var _ = Wysie.Storage = $.Class({
 				});
 			});
 		})).then(() => {
-			this.wysie.wrapper._.fire("wysie:save");
+			this.mavo.wrapper._.fire("mavo:save");
 
 			this.inProgress = false;
 		}).catch(err => {
@@ -1884,10 +1884,10 @@ var _ = Wysie.Storage = $.Class({
 		if (!(id in this.params)) {
 			var attribute = "data-store-" + id;
 
-			this.params[id] = this.wysie.wrapper.getAttribute(attribute) || this.wysie.element.getAttribute(attribute);
+			this.params[id] = this.mavo.wrapper.getAttribute(attribute) || this.mavo.element.getAttribute(attribute);
 
-			this.wysie.wrapper.removeAttribute(attribute);
-			this.wysie.element.removeAttribute(attribute);
+			this.mavo.wrapper.removeAttribute(attribute);
+			this.mavo.element.removeAttribute(attribute);
 		}
 
 		return this.params[id];
@@ -1899,11 +1899,11 @@ var _ = Wysie.Storage = $.Class({
 				var p = $.create("div", {
 					textContent: value + "…",
 					className: "progress",
-					inside: this.wysie.wrapper
+					inside: this.mavo.wrapper
 				});
 			}
 			else {
-				$.remove($(".progress", this.wysie.wrapper));
+				$.remove($(".progress", this.mavo.wrapper));
 			}
 		}
 	},
@@ -1922,9 +1922,9 @@ _.Backend = $.Class({
 
 		// Permissions of this particular backend.
 		// Global permissions are OR(all permissions)
-		this.permissions = new Wysie.Permissions();
+		this.permissions = new Mavo.Permissions();
 
-		Wysie.Permissions.actions.forEach(action => {
+		Mavo.Permissions.actions.forEach(action => {
 			this.permissions.can(action, () => {
 				this.storage.permissions.on(action);
 			}, () => {
@@ -1939,7 +1939,7 @@ _.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	proxy: {
-		wysie: "storage"
+		mavo: "storage"
 	},
 
 	static: {
@@ -1981,7 +1981,7 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 	},
 
 	put: function({data = ""}) {
-		this.element.textContent = this.wysie.toJSON(data);
+		this.element.textContent = this.mavo.toJSON(data);
 		return Promise.resolve();
 	},
 
@@ -2016,7 +2016,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 _.Backend.add("Local", $.Class({ extends: _.Backend,
 	constructor: function() {
 		this.permissions.on(["read", "edit", "save"]);
-		this.key = this.wysie.id;
+		this.key = this.mavo.id;
 	},
 
 	get: function() {
@@ -2024,7 +2024,7 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 	},
 
 	put: function({data = ""}) {
-		localStorage[this.key] = this.wysie.toJSON(data);
+		localStorage[this.key] = this.mavo.toJSON(data);
 		return Promise.resolve();
 	},
 
@@ -2037,26 +2037,26 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 
 (function($, $$) {
 
-var _ = Wysie.Node = $.Class({
+var _ = Mavo.Node = $.Class({
 	abstract: true,
-	constructor: function (element, wysie, o = {}) {
-		if (!element || !wysie) {
-			throw new Error("Wysie.Node constructor requires an element argument and a wysie object");
+	constructor: function (element, mavo, o = {}) {
+		if (!element || !mavo) {
+			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
 
 		this.element = element;
 		this.template = o.template;
 
-		this.wysie = wysie;
+		this.mavo = mavo;
 
 		if (!this.fromTemplate(["property", "type"])) {
 			this.property = _.normalizeProperty(element);
-			this.type = Wysie.Scope.normalize(element);
+			this.type = Mavo.Scope.normalize(element);
 		}
 
 		this.scope = this.parentScope = o.scope;
 
-		Wysie.hooks.run("node-init-end", this);
+		Mavo.hooks.run("node-init-end", this);
 	},
 
 	get isRoot() {
@@ -2064,7 +2064,7 @@ var _ = Wysie.Node = $.Class({
 	},
 
 	get name() {
-		return Wysie.readable(this.property || this.type).toLowerCase();
+		return Mavo.readable(this.property || this.type).toLowerCase();
 	},
 
 	get data() {
@@ -2189,7 +2189,7 @@ var _ = Wysie.Node = $.Class({
 
 	propagated: ["save", "revert", "done", "import"],
 
-	toJSON: Wysie.prototype.toJSON,
+	toJSON: Mavo.prototype.toJSON,
 
 	fromTemplate: function(properties) {
 		if (this.template) {
@@ -2202,12 +2202,12 @@ var _ = Wysie.Node = $.Class({
 	},
 
 	static: {
-		create: function(element, wysie, o = {}) {
-			if (Wysie.is("multiple", element) && !o.collection) {
-				return new Wysie.Collection(element, wysie, o);
+		create: function(element, mavo, o = {}) {
+			if (Mavo.is("multiple", element) && !o.collection) {
+				return new Mavo.Collection(element, mavo, o);
 			}
 
-			return Wysie.Unit.create(...arguments);
+			return Mavo.Unit.create(...arguments);
 		},
 
 		normalizeProperty: function(element) {
@@ -2230,14 +2230,14 @@ var _ = Wysie.Node = $.Class({
 })(Bliss, Bliss.$);
 
 /*
- * Wysie Unit: Super class that Scope and Primitive inherit from
+ * Mavo Unit: Super class that Scope and Primitive inherit from
  */
 (function($, $$) {
 
-var _ = Wysie.Unit = $.Class({
+var _ = Mavo.Unit = $.Class({
 	abstract: true,
-	extends: Wysie.Node,
-	constructor: function(element, wysie, o = {}) {
+	extends: Mavo.Node,
+	constructor: function(element, mavo, o = {}) {
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
@@ -2248,11 +2248,11 @@ var _ = Wysie.Unit = $.Class({
 		}
 
 		if (!this.fromTemplate(["computed", "required"])) {
-			this.computed = Wysie.is("computed", this.element);
-			this.required = Wysie.is("required", this.element);
+			this.computed = Mavo.is("computed", this.element);
+			this.required = Mavo.is("required", this.element);
 		}
 
-		Wysie.hooks.run("unit-init-end", this);
+		Mavo.hooks.run("unit-init-end", this);
 	},
 
 	/**
@@ -2336,9 +2336,9 @@ var _ = Wysie.Unit = $.Class({
 				// Alternatively, we could fire datachange with a timeout.
 				this._deleted = false;
 
-				$.fire(this.element, "wysie:datachange", {
+				$.fire(this.element, "mavo:datachange", {
 					unit: this.collection,
-					wysie: this.wysie,
+					mavo: this.mavo,
 					action: "undelete",
 					item: this
 				});
@@ -2362,17 +2362,17 @@ var _ = Wysie.Unit = $.Class({
 
 	static: {
 		get: function(element, prioritizePrimitive) {
-			var scope = Wysie.Scope.all.get(element);
+			var scope = Mavo.Scope.all.get(element);
 
-			return (prioritizePrimitive || !scope)? Wysie.Primitive.all.get(element) : scope;
+			return (prioritizePrimitive || !scope)? Mavo.Primitive.all.get(element) : scope;
 		},
 
-		create: function(element, wysie, o = {}) {
-			if (!element || !wysie) {
-				throw new TypeError("Wysie.Unit.create() requires an element argument and a wysie object");
+		create: function(element, mavo, o = {}) {
+			if (!element || !mavo) {
+				throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
 			}
 
-			return new Wysie[Wysie.is("scope", element)? "Scope" : "Primitive"](element, wysie, o);
+			return new Mavo[Mavo.is("scope", element)? "Scope" : "Primitive"](element, mavo, o);
 		}
 	}
 });
@@ -2381,7 +2381,7 @@ var _ = Wysie.Unit = $.Class({
 
 (function($, $$) {
 
-var _ = Wysie.Expression = $.Class({
+var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
 		this.expression = expression;
 	},
@@ -2391,7 +2391,7 @@ var _ = Wysie.Expression = $.Class({
 
 		// TODO convert to new Function() which is more optimizable by JS engines.
 		// Also, cache the function, since only data changes across invocations.
-		Wysie.hooks.run("expression-eval-beforeeval", this);
+		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
 			if (!this.function) {
@@ -2401,7 +2401,7 @@ var _ = Wysie.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
-			Wysie.hooks.run("expression-eval-error", {context: this, exception});
+			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = _.ERROR;
 		}
@@ -2422,13 +2422,13 @@ var _ = Wysie.Expression = $.Class({
 
 		// Transform simple operators to array-friendly math functions
 		code = code.replace(_.simpleOperation, (expr, operand1, operator, operand2) => {
-			var ret = `(${Wysie.Functions.operators[operator]}(${operand1}, ${operand2}))`;
+			var ret = `(${Mavo.Functions.operators[operator]}(${operand1}, ${operand2}))`;
 			return ret;
 		});
 
 		_.simpleOperation.lastIndex = 0;
 
-		return new Function("data", `with(Wysie.Functions._Trap)
+		return new Function("data", `with(Mavo.Functions._Trap)
 				with(data) {
 					return ${code};
 				}`);
@@ -2447,7 +2447,7 @@ var _ = Wysie.Expression = $.Class({
 
 		lazy: {
 			simpleOperation: function() {
-				var operator = Object.keys(Wysie.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
+				var operator = Object.keys(Mavo.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
 				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
 
 				return RegExp(`(?:^|\\()${operand}(${operator})${operand}(?:$|\\))`, "g");
@@ -2458,9 +2458,9 @@ var _ = Wysie.Expression = $.Class({
 
 (function() {
 
-var _ = Wysie.Expression.Text = $.Class({
+var _ = Mavo.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.all = o.all; // the Wysie.Expressions object that this belongs to
+		this.all = o.all; // the Mavo.Expressions object that this belongs to
 		this.node = o.node;
 		this.path = o.path;
 
@@ -2490,13 +2490,13 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.template = o.template? o.template.template : this.tokenize(this.expression);
 
 		// Is this a computed property?
-		var primitive = Wysie.Unit.get(this.element);
+		var primitive = Mavo.Unit.get(this.element);
 		if (primitive && this.attribute === primitive.attribute) {
 			this.primitive = primitive;
 			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
 		}
 
-		Wysie.hooks.run("expressiontext-init-end", this);
+		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -2512,7 +2512,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			this.primitive.value = value;
 		}
 		else {
-			Wysie.Primitive.setValue(this.node, value, this.attribute);
+			Mavo.Primitive.setValue(this.node, value, this.attribute);
 		}
 	},
 
@@ -2520,14 +2520,14 @@ var _ = Wysie.Expression.Text = $.Class({
 		this.data = data;
 
 		this.value = this.template.map(expr => {
-			if (expr instanceof Wysie.Expression) {
+			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
-				Wysie.hooks.run("expressiontext-update-beforeeval", env);
+				Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
 				env.value = env.expr.eval(data);
 
-				Wysie.hooks.run("expressiontext-update-aftereval", env);
+				Mavo.hooks.run("expressiontext-update-aftereval", env);
 
 				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
@@ -2576,7 +2576,7 @@ var _ = Wysie.Expression.Text = $.Class({
 			lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
 			var expression = template.slice(match.index + 1, lastIndex - 1);
 
-			ret.push(new Wysie.Expression(expression));
+			ret.push(new Mavo.Expression(expression));
 		}
 
 		// Literal at the end
@@ -2637,7 +2637,7 @@ var _ = Wysie.Expression.Text = $.Class({
 		},
 
 		lazy: {
-			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Wysie.Expressions.rootFunctions.join("|") + ")\\($", "i")
+			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Mavo.Expressions.rootFunctions.join("|") + ")\\($", "i")
 		}
 	}
 });
@@ -2646,7 +2646,7 @@ var _ = Wysie.Expression.Text = $.Class({
 
 (function() {
 
-var _ = Wysie.Expressions = $.Class({
+var _ = Mavo.Expressions = $.Class({
 	constructor: function(scope) {
 		if (scope) {
 			this.scope = scope;
@@ -2655,7 +2655,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		this.all = []; // all Expression.Text objects in this scope
 
-		Wysie.hooks.run("expressions-init-start", this);
+		Mavo.hooks.run("expressions-init-start", this);
 
 		if (this.scope) {
 			var template = this.scope.template;
@@ -2663,7 +2663,7 @@ var _ = Wysie.Expressions = $.Class({
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
 				template.expressions.all.forEach(et => {
-					this.all.push(new Wysie.Expression.Text({
+					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
 						all: this,
@@ -2687,7 +2687,7 @@ var _ = Wysie.Expressions = $.Class({
 			this.update();
 
 			// Watch changes and update value
-			this.scope.element.addEventListener("wysie:datachange", evt => this.update());
+			this.scope.element.addEventListener("mavo:datachange", evt => this.update());
 		}
 	},
 
@@ -2701,7 +2701,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		var env = { context: this, data: this.scope.getRelativeData() };
 
-		Wysie.hooks.run("expressions-update-start", env);
+		Mavo.hooks.run("expressions-update-start", env);
 
 		$$(this.all).forEach(ref => {
 			ref.update(env.data);
@@ -2714,7 +2714,7 @@ var _ = Wysie.Expressions = $.Class({
 		this.expressionRegex.lastIndex = 0;
 
 		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
-			this.all.push(new Wysie.Expression.Text({
+			this.all.push(new Mavo.Expression.Text({
 				node,
 				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
@@ -2739,7 +2739,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
-		if (node == this.scope.element || !Wysie.is("scope", node)) {
+		if (node == this.scope.element || !Mavo.is("scope", node)) {
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path));
 			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`));
 		}
@@ -2749,7 +2749,7 @@ var _ = Wysie.Expressions = $.Class({
 		// Regex that loosely matches all possible expressions
 		// False positives are ok, but false negatives are not.
 		expressionRegex: function() {
-			var properties = this.scope.wysie.propertyNames.concat(_.special);
+			var properties = this.scope.mavo.propertyNames.concat(_.special);
 			var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
 
 			return RegExp(`\\[[\\S\\s]*?${propertyRegex}[\\S\\s]*?\\]`, "gi");
@@ -2764,7 +2764,7 @@ var _ = Wysie.Expressions = $.Class({
 
 		lazy: {
 			rootFunctions: () => [
-				...Object.keys(Wysie.Functions),
+				...Object.keys(Mavo.Functions),
 				...Object.getOwnPropertyNames(Math),
 				"if", ""
 			]
@@ -2774,21 +2774,21 @@ var _ = Wysie.Expressions = $.Class({
 
 })();
 
-Wysie.hooks.add("init-tree-after", function() {
+Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {
-		if (obj instanceof Wysie.Scope) {
-			new Wysie.Expressions(obj);
+		if (obj instanceof Mavo.Scope) {
+			new Mavo.Expressions(obj);
 			obj.expressions.init();
 		}
 	});
 });
 
-Wysie.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-end", function() {
 	requestAnimationFrame(() => {
 		// Tree expressions are processed synchronously, so by now if it doesn't have
 		// an expressions object, we need to create it.
 		if (!this.expressions) {
-			new Wysie.Expressions(this);
+			new Mavo.Expressions(this);
 		}
 
 		this.expressions.init();
@@ -2797,15 +2797,15 @@ Wysie.hooks.add("scope-init-end", function() {
 	});
 });
 
-Wysie.hooks.add("scope-render-start", function() {
+Mavo.hooks.add("scope-render-start", function() {
 	if (!this.expressions) {
-		new Wysie.Expressions(this);
+		new Mavo.Expressions(this);
 	}
 
 	this.expressions.active = false;
 });
 
-Wysie.hooks.add("scope-render-end", function() {
+Mavo.hooks.add("scope-render-end", function() {
 	requestAnimationFrame(() => {
 		this.expressions.active = true;
 		this.expressions.update();
@@ -2815,12 +2815,12 @@ Wysie.hooks.add("scope-render-end", function() {
 })(Bliss, Bliss.$);
 
 /**
- * Functions available inside Wysie expressions
+ * Functions available inside Mavo expressions
  */
 
 (function() {
 
-var _ = Wysie.Functions = {
+var _ = Mavo.Functions = {
 	operators: {},
 
 	/**
@@ -2856,7 +2856,7 @@ var _ = Wysie.Functions = {
 	},
 
 	count: function(array) {
-		return Wysie.toArray(array).filter(a => a !== null && a !== false).length;
+		return Mavo.toArray(array).filter(a => a !== null && a !== false).length;
 	},
 
 	round: function(num, decimals) {
@@ -2911,7 +2911,7 @@ for (name in aliases) {
 }
 
 // Make function names case insensitive
-Wysie.Functions._Trap = self.Proxy? new Proxy(_, {
+Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
 		if (property in functions) {
 			return functions[property];
@@ -2939,7 +2939,7 @@ Wysie.Functions._Trap = self.Proxy? new Proxy(_, {
 	// the local variable it should be, but the string "data"
 	// so all property lookups fail.
 	has: (functions, property) => property != "data"
-}) : Wysie.Functions;
+}) : Mavo.Functions;
 
 /**
  * Private helper methods
@@ -3010,23 +3010,23 @@ function operator(name, op, o = {}) {
 
 (function($, $$) {
 
-var _ = Wysie.Scope = $.Class({
-	extends: Wysie.Unit,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Scope = $.Class({
+	extends: Mavo.Unit,
+	constructor: function (element, mavo, o) {
 		this.properties = {};
 
 		this.scope = this;
 
-		Wysie.hooks.run("scope-init-start", this);
+		Mavo.hooks.run("scope-init-start", this);
 
 		// Should this element also create a primitive?
-		if (Wysie.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie, {scope: this});
+		if (Mavo.Primitive.getValueAttribute(this.element)) {
+			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {scope: this});
 		}
 
-		// Create Wysie objects for all properties in this scope (primitives or scopes),
+		// Create Mavo objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
-		$$(Wysie.selectors.property, this.element).forEach(element => {
+		$$(Mavo.selectors.property, this.element).forEach(element => {
 			var property = element.getAttribute("property");
 
 			if (this.contains(element)) {
@@ -3038,14 +3038,14 @@ var _ = Wysie.Scope = $.Class({
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
-					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie, constructorOptions);
+					if (!(existing instanceof Mavo.Collection)) {
+						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
 					}
 
-					if (!collection.mutable && Wysie.is("multiple", element)) {
+					if (!collection.mutable && Mavo.is("multiple", element)) {
 						collection.mutable = true;
 					}
 
@@ -3053,7 +3053,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie, constructorOptions);
+					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
 
 					this.properties[property] = obj;
 				}
@@ -3061,10 +3061,10 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		if (!this.template) {
-			Array.prototype.push.apply(this.wysie.propertyNames, this.propertyNames);
+			Array.prototype.push.apply(this.mavo.propertyNames, this.propertyNames);
 		}
 
-		Wysie.hooks.run("scope-init-end", this);
+		Mavo.hooks.run("scope-init-end", this);
 	},
 
 	get propertyNames () {
@@ -3101,7 +3101,7 @@ var _ = Wysie.Scope = $.Class({
 
 	/**
 	 * Search entire subtree for property, return relative value
-	 * @return {Wysie.Unit}
+	 * @return {Mavo.Unit}
 	 */
 	find: function(property) {
 		if (this.property == property) {
@@ -3137,7 +3137,7 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	done: function() {
-		$.unbind(this.element, ".wysie:edit");
+		$.unbind(this.element, ".mavo:edit");
 	},
 
 	propagated: ["save", "done", "import", "clear"],
@@ -3149,7 +3149,7 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		Wysie.hooks.run("scope-render-start", this);
+		Mavo.hooks.run("scope-render-start", this);
 
 		// TODO retain dropped elements
 		data = data.isArray? data[0] : data;
@@ -3167,17 +3167,17 @@ var _ = Wysie.Scope = $.Class({
 
 		this.save();
 
-		Wysie.hooks.run("scope-render-end", this);
+		Mavo.hooks.run("scope-render-end", this);
 	},
 
 	// Check if this scope contains a property
-	// property can be either a Wysie.Unit or a Node
+	// property can be either a Mavo.Unit or a Node
 	contains: function(property) {
-		if (property instanceof Wysie.Unit) {
+		if (property instanceof Mavo.Unit) {
 			return property.parentScope === this;
 		}
 
-		return property.parentNode && (this.element === property.parentNode.closest(Wysie.selectors.scope));
+		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.scope));
 	},
 
 	static: {
@@ -3185,7 +3185,7 @@ var _ = Wysie.Scope = $.Class({
 
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
-			if (Wysie.is("scope", element)) {
+			if (Mavo.is("scope", element)) {
 				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
 
 				element.setAttribute("typeof", type);
@@ -3202,9 +3202,9 @@ var _ = Wysie.Scope = $.Class({
 
 (function($, $$) {
 
-var _ = Wysie.Primitive = $.Class({
-	extends: Wysie.Unit,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Primitive = $.Class({
+	extends: Mavo.Unit,
+	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate([
 			"attribute", "datatype", "humanReadable",
 			"computed", "templateValue"
@@ -3230,7 +3230,7 @@ var _ = Wysie.Primitive = $.Class({
 		 */
 
 		// Exposed widgets (visible always)
-		if (Wysie.is("formControl", this.element)) {
+		if (Mavo.is("formControl", this.element)) {
 			this.editor = this.element;
 
 			this.edit();
@@ -3238,22 +3238,22 @@ var _ = Wysie.Primitive = $.Class({
 		// Nested widgets
 		else if (!this.editor) {
 			this.editor = $$(this.element.children).filter(function (el) {
-			    return el.matches(Wysie.selectors.formControl) && !el.matches(Wysie.selectors.property);
+			    return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
 			})[0];
 
 			$.remove(this.editor);
 		}
 
 		if (!this.exposed && !this.computed) {
-			this.wysie.needsEdit = true;
+			this.mavo.needsEdit = true;
 		}
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		if (!this.computed) {
-			this.observer = Wysie.observe(this.element, this.attribute, record => {
-				if (this.attribute || !this.wysie.editing) {
+			this.observer = Mavo.observe(this.element, this.attribute, record => {
+				if (this.attribute || !this.mavo.editing) {
 					this.value = this.getValue();
 				}
 			}, true);
@@ -3276,7 +3276,7 @@ var _ = Wysie.Primitive = $.Class({
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.unobserve();
-				var ui = $.remove($(Wysie.selectors.ui, this.element));
+				var ui = $.remove($(Mavo.selectors.ui, this.element));
 
 				var ret = callback();
 
@@ -3286,7 +3286,7 @@ var _ = Wysie.Primitive = $.Class({
 				return ret;
 			};
 
-			// Intercept certain properties so that any Wysie UI inside this primitive will not be destroyed
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
 			["textContent", "innerHTML"].forEach(property => {
 				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
@@ -3307,12 +3307,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	get editorValue() {
 		if (this.editor) {
-			if (this.editor.matches(Wysie.selectors.formControl)) {
+			if (this.editor.matches(Mavo.selectors.formControl)) {
 				return _.getValue(this.editor, undefined, this.datatype);
 			}
 
 			// if we're here, this.editor is an entire HTML structure
-			var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
+			var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 			if (output) {
 				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
@@ -3322,12 +3322,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	set editorValue(value) {
 		if (this.editor) {
-			if (this.editor.matches(Wysie.selectors.formControl)) {
+			if (this.editor.matches(Mavo.selectors.formControl)) {
 				_.setValue(this.editor, value);
 			}
 			else {
 				// if we're here, this.editor is an entire HTML structure
-				var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
+				var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 				if (output) {
 					if (_.all.has(output)) {
@@ -3396,7 +3396,7 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.removeAttribute("tabindex");
 		}
 
-		this.element._.unbind(".wysie:edit .wysie:preedit .wysie:showpopup");
+		this.element._.unbind(".mavo:edit .mavo:preedit .mavo:showpopup");
 
 		this.observe();
 	},
@@ -3429,15 +3429,15 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.element._.events({
 			// click is needed too because it works with the keyboard as well
-			"click.wysie:preedit": e => this.edit(),
-			"focus.wysie:preedit": e => {
+			"click.mavo:preedit": e => this.edit(),
+			"focus.mavo:preedit": e => {
 				this.edit();
 
 				if (!this.popup) {
 					this.editor.focus();
 				}
 			},
-			"click.wysie:edit": evt => {
+			"click.mavo:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
 				if (!this.exposed) {
@@ -3448,11 +3448,11 @@ var _ = Wysie.Primitive = $.Class({
 
 		if (!this.attribute) {
 			this.element._.events({
-				"mouseenter.wysie:preedit": e => {
+				"mouseenter.mavo:preedit": e => {
 					clearTimeout(timer);
 					timer = setTimeout(() => this.edit(), 150);
 				},
-				"mouseleave.wysie:preedit": e => {
+				"mouseleave.mavo:preedit": e => {
 					clearTimeout(timer);
 				}
 			});
@@ -3472,11 +3472,11 @@ var _ = Wysie.Primitive = $.Class({
 			if (selector) {
 				this.editor = $.clone($(selector));
 
-				if (!Wysie.is("formControl", this.editor)) {
-					if ($(Wysie.selectors.output, this.editor)) { // has output element?
-						// Process it as a wysie instance, so people can use references
+				if (!Mavo.is("formControl", this.editor)) {
+					if ($(Mavo.selectors.output, this.editor)) { // has output element?
+						// Process it as a mavo instance, so people can use references
 						this.editor.setAttribute("data-store", "none");
-						new Wysie(this.editor);
+						new Mavo(this.editor);
 					}
 					else {
 						this.editor = null; // Cannot use this, sorry bro
@@ -3501,31 +3501,31 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input change": evt => {
-				var unsavedChanges = this.wysie.unsavedChanges;
+				var unsavedChanges = this.mavo.unsavedChanges;
 
 				this.value = this.editorValue;
 
 				// Editing exposed elements outside edit mode is instantly saved
 				if (
 					this.exposed &&
-					!this.wysie.editing && // must not be in edit mode
-				    this.wysie.permissions.save && // must be able to save
+					!this.mavo.editing && // must not be in edit mode
+				    this.mavo.permissions.save && // must be able to save
 				    this.scope.everSaved // must not cause unsaved items to be saved
 				) {
 					// TODO what if change event never fires? What if user
 					this.unsavedChanges = false;
-					this.wysie.unsavedChanges = unsavedChanges;
+					this.mavo.unsavedChanges = unsavedChanges;
 
 					// Must not save too many times (e.g. not while dragging a slider)
 					if (evt.type == "change") {
 						this.save(); // Save current element
 
-						// Don’t call this.wysie.save() as it will save other fields too
+						// Don’t call this.mavo.save() as it will save other fields too
 						// We only want to save exposed controls, so save current status
-						this.wysie.storage.save();
+						this.mavo.storage.save();
 
 						// Are there any unsaved changes from other properties?
-						this.wysie.unsavedChanges = this.wysie.calculateUnsavedChanges();
+						this.mavo.unsavedChanges = this.mavo.calculateUnsavedChanges();
 					}
 				}
 			},
@@ -3542,7 +3542,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.hidePopup();
 				}
 			},
-			"wysie:datachange": evt => {
+			"mavo:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
@@ -3568,7 +3568,7 @@ var _ = Wysie.Primitive = $.Class({
 				this.element.classList.add("using-popup");
 
 				this.popup = this.popup || $.create("div", {
-					className: "wysie-popup",
+					className: "mv-popup",
 					hidden: true,
 					contents: [
 						this.label + ":",
@@ -3589,7 +3589,7 @@ var _ = Wysie.Primitive = $.Class({
 				};
 
 				this.showPopup = function() {
-					$.unbind([this.element, this.popup], ".wysie:showpopup");
+					$.unbind([this.element, this.popup], ".mavo:showpopup");
 					this.popup._.after(this.element);
 
 					var x = this.element.offsetLeft;
@@ -3612,7 +3612,7 @@ var _ = Wysie.Primitive = $.Class({
 						$.remove(this.popup);
 					}, 400); // TODO transition-duration could override this
 
-					$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", evt => {
+					$.events(this.element, "focus.mavo:showpopup click.mavo:showpopup", evt => {
 						this.showPopup();
 					}, true);
 				};
@@ -3620,7 +3620,7 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		if (!this.popup) {
-			this.editor.classList.add("wysie-editor");
+			this.editor.classList.add("mv-editor");
 		}
 
 		this.initEdit = null;
@@ -3631,7 +3631,7 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
-		this.element._.unbind(".wysie:preedit");
+		this.element._.unbind(".mavo:preedit");
 
 		if (this.initEdit) {
 			this.initEdit();
@@ -3684,7 +3684,7 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
-		Wysie.observe(this.element, this.attribute, this.observer);
+		Mavo.observe(this.element, this.attribute, this.observer);
 	},
 
 	unobserve: function () {
@@ -3701,7 +3701,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	lazy: {
 		label: function() {
-			return Wysie.readable(this.property);
+			return Mavo.readable(this.property);
 		},
 
 		emptyValue: function() {
@@ -3753,13 +3753,13 @@ var _ = Wysie.Primitive = $.Class({
 			this._value = value;
 
 			if (!this.computed) {
-				this.unsavedChanges = this.wysie.unsavedChanges = true;
+				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
-			$.fire(this.element, "wysie:datachange", {
+			$.fire(this.element, "mavo:datachange", {
 				property: this.property,
 				value: value,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				node: this,
 				dirty: this.editing,
 				action: "propertychange"
@@ -3769,7 +3769,7 @@ var _ = Wysie.Primitive = $.Class({
 		},
 
 		empty: function(value) {
-			var hide = value && !this.exposed && !(this.attribute && $(Wysie.selectors.property, this.element));
+			var hide = value && !this.exposed && !(this.attribute && $(Mavo.selectors.property, this.element));
 			this.element.classList.toggle("empty", hide);
 		},
 
@@ -4087,7 +4087,7 @@ _.editors = {
 })(Bliss, Bliss.$);
 
 // Image upload widget via imgur
-Wysie.Primitive.editors.img = {
+Mavo.Primitive.editors.img = {
 	create: function() {
 		var root = $.create("div", {
 			className: "image-popup",
@@ -4156,9 +4156,9 @@ Wysie.Primitive.editors.img = {
 
 (function($, $$) {
 
-var _ = Wysie.Collection = $.Class({
-	extends: Wysie.Node,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Collection = $.Class({
+	extends: Mavo.Node,
+	constructor: function (element, mavo, o) {
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
@@ -4181,8 +4181,8 @@ var _ = Wysie.Collection = $.Class({
 				this.element = this.templateElement = div;
 			}
 
-			this.properties = $$(Wysie.selectors.property, this.templateElement).map(Wysie.Node.normalizeProperty);
-			this.mutable = this.templateElement.matches(Wysie.selectors.multiple);
+			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.normalizeProperty);
+			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
@@ -4195,7 +4195,7 @@ var _ = Wysie.Collection = $.Class({
 			this.itemTemplate = item.template || item;
 		}
 
-		Wysie.hooks.run("collection-init-end", this);
+		Mavo.hooks.run("collection-init-end", this);
 	},
 
 	get length() {
@@ -4236,7 +4236,7 @@ var _ = Wysie.Collection = $.Class({
 			element = this.templateElement.cloneNode(true);
 		}
 
-		var item = Wysie.Unit.create(element, this.wysie, {
+		var item = Mavo.Unit.create(element, this.mavo, {
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
@@ -4244,13 +4244,13 @@ var _ = Wysie.Collection = $.Class({
 		});
 
 		// If container is a fake "fragment", strip element naked
-		if (Wysie.is("documentFragment", item.element)) {
-			item.element = new Wysie.Fragment(item.element);
+		if (Mavo.is("documentFragment", item.element)) {
+			item.element = new Mavo.Fragment(item.element);
 		}
 		// Add delete & add buttons
 		else if (this.mutable) {
 			$.create({
-				className: "wysie-item-controls wysie-ui",
+				className: "mv-item-controls mv-ui",
 				contents: [
 					{
 						tag: "button",
@@ -4277,13 +4277,13 @@ var _ = Wysie.Collection = $.Class({
 
 	/**
 	 * Add a new item to this collection
-	 * @param item {Node|Wysie.Unit} Optional. Element or Wysie object for the new item
+	 * @param item {Node|Mavo.Unit} Optional. Element or Mavo object for the new item
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
 	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
-			item = Wysie.Unit.get(item) || this.createItem(item);
+			item = Mavo.Unit.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();
@@ -4315,9 +4315,9 @@ var _ = Wysie.Collection = $.Class({
 				item.index = i;
 
 				if (!o.silent) {
-					item.element._.fire("wysie:datachange", {
+					item.element._.fire("mavo:datachange", {
 						node: this,
-						wysie: this.wysie,
+						mavo: this.mavo,
 						action: "add",
 						item
 					});
@@ -4326,7 +4326,7 @@ var _ = Wysie.Collection = $.Class({
 		}
 
 		if (!o.silent) {
-			item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
 		return item;
@@ -4348,14 +4348,14 @@ var _ = Wysie.Collection = $.Class({
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
 
-			item.element._.fire("wysie:datachange", {
+			item.element._.fire("mavo:datachange", {
 				node: this,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				action: "delete",
 				item: item
 			});
 
-			item.unsavedChanges = this.wysie.unsavedChanges = true;
+			item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
 	},
 
@@ -4367,7 +4367,7 @@ var _ = Wysie.Collection = $.Class({
 			item.placeholder = true;
 			item.walk(obj => obj.unsavedChanges = false);
 
-			$.once(item.element, "wysie:datachange", evt => {
+			$.once(item.element, "mavo:datachange", evt => {
 				item.unsavedChanges = true;
 				item.placeholder = false;
 			});
@@ -4393,9 +4393,9 @@ var _ = Wysie.Collection = $.Class({
 
 			this.items = [];
 
-			this.marker._.fire("wysie:datachange", {
+			this.marker._.fire("mavo:datachange", {
 				node: this,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				action: "clear"
 			});
 		}
@@ -4448,7 +4448,7 @@ var _ = Wysie.Collection = $.Class({
 			return;
 		}
 
-		data = Wysie.toArray(data);
+		data = Mavo.toArray(data);
 
 		if (!this.mutable) {
 			this.items.forEach((item, i) => item.render(data && data[i]));
@@ -4490,7 +4490,7 @@ var _ = Wysie.Collection = $.Class({
 		if (this.properties.indexOf(property) > -1) {
 			var ret = items.map(item => item.find(property));
 
-			return Wysie.flatten(ret);
+			return Mavo.flatten(ret);
 		}
 	},
 
@@ -4502,18 +4502,18 @@ var _ = Wysie.Collection = $.Class({
 				// (think multiple elements with the same property name, where only one has data-multiple)
 				this._mutable = value;
 
-				this.wysie.needsEdit = true;
+				this.mavo.needsEdit = true;
 
-				this.required = this.templateElement.matches(Wysie.selectors.required);
+				this.required = this.templateElement.matches(Mavo.selectors.required);
 
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
-					className: "wysie-marker",
+					className: "mv-marker",
 					after: this.templateElement
 				});
 
-				this.templateElement.classList.add("wysie-item");
+				this.templateElement.classList.add("mv-item");
 
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
@@ -4522,7 +4522,7 @@ var _ = Wysie.Collection = $.Class({
 					}
 					else {
 						var tag = this.element.tagName.toLowerCase();
-						var containerSelector = Wysie.selectors.container[tag];
+						var containerSelector = Mavo.selectors.container[tag];
 
 						if (containerSelector) {
 							var after = this.marker.closest(containerSelector);
@@ -4563,13 +4563,13 @@ var _ = Wysie.Collection = $.Class({
 		closestCollection: function() {
 			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
-			return parent.closest(Wysie.selectors.item);
+			return parent.closest(Mavo.selectors.item);
 		},
 
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.add-${this.property}`;
-			var scope = this.closestCollection || this.marker.closest(Wysie.selectors.scope);
+			var scope = this.closestCollection || this.marker.closest(Mavo.selectors.scope);
 
 			if (scope) {
 				var button = $$(selector, scope).filter(button => {
@@ -4584,7 +4584,7 @@ var _ = Wysie.Collection = $.Class({
 				});
 			};
 
-			button.classList.add("wysie-ui", "wysie-add");
+			button.classList.add("mv-ui", "mv-add");
 
 			if (this.property) {
 				button.classList.add(`add-${this.property}`);
@@ -4602,7 +4602,7 @@ var _ = Wysie.Collection = $.Class({
 });
 
 // TODO
-Wysie.Fragment = $.Class({
+Mavo.Fragment = $.Class({
 	constructor: function(element) {
 		this.childNodes = [];
 
@@ -5006,7 +5006,7 @@ var prettyPrint = (function() {
 
 (function($, $$) {
 
-var _ = Wysie.Debug = {
+var _ = Mavo.Debug = {
 	friendlyError: (e, expr) => {
 		var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
 		var message = e.message;
@@ -5077,12 +5077,12 @@ var _ = Wysie.Debug = {
 			return `Group with ${Object.keys(obj).length} properties`;
 		}
 
-		if (obj instanceof Wysie.Primitive) {
+		if (obj instanceof Mavo.Primitive) {
 			return _.printValue(obj.value);
 		}
-		else if (obj instanceof Wysie.Collection) {
+		else if (obj instanceof Mavo.Collection) {
 			if (obj.items.length > 0) {
-				if (obj.items[0] instanceof Wysie.Scope) {
+				if (obj.items[0] instanceof Mavo.Scope) {
 					return `List: ${obj.items.length} group(s)`;
 				}
 				else {
@@ -5093,7 +5093,7 @@ var _ = Wysie.Debug = {
 				return _.printValue([]);
 			}
 		}
-		else if (obj instanceof Wysie.Scope) {
+		else if (obj instanceof Mavo.Scope) {
 			// Group
 			return `Group with ${obj.propertyNames.length} properties`;
 		}
@@ -5144,16 +5144,16 @@ var _ = Wysie.Debug = {
 	reservedWords: "as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield".split("|")
 };
 
-Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
+Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 
-Wysie.selectors.debug = ".debug";
+Mavo.selectors.debug = ".debug";
 
-var selector = ", .wysie-debuginfo";
-Wysie.Expressions.escape += selector;
+var selector = ", .mv-debuginfo";
+Mavo.Expressions.escape += selector;
 Stretchy.selectors.filter += selector;
 
 // Add element to show saved data
-Wysie.hooks.add("init-tree-after", function() {
+Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
 		this.wrapper.classList.add("debug-saving");
 	}
@@ -5162,7 +5162,7 @@ Wysie.hooks.add("init-tree-after", function() {
 		var element;
 
 		var details = $.create("details", {
-			className: "wysie-debug-storage",
+			className: "mv-debug-storage",
 			contents: [
 				{tag: "Summary", textContent: "Saved data"},
 				element = $.create("pre", {id: this.id + "-debug-storage"})
@@ -5192,7 +5192,7 @@ Wysie.hooks.add("init-tree-after", function() {
 	}
 });
 
-Wysie.hooks.add("render-start", function({data}) {
+Mavo.hooks.add("render-start", function({data}) {
 	if (this.storage && this.wrapper.classList.contains("debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
@@ -5202,14 +5202,14 @@ Wysie.hooks.add("render-start", function({data}) {
 	}
 });
 
-Wysie.hooks.add("scope-init-start", function() {
+Mavo.hooks.add("scope-init-start", function() {
 	this.debug = this.debug || this.walkUp(scope => {
 		if (scope.debug) {
 			return true;
 		}
 	}) || /[?&]debug\b/i.test(location.search);
 
-	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
+	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;
 	}
 
@@ -5226,7 +5226,7 @@ Wysie.hooks.add("scope-init-start", function() {
 					display: "none"
 				},
 				inside: $.create("details", {
-					className: "wysie-ui wysie-debuginfo",
+					className: "mv-ui mv-debuginfo",
 					inside: this.element,
 					contents: $.create("summary", {
 						textContent: "Debug"
@@ -5237,30 +5237,30 @@ Wysie.hooks.add("scope-init-start", function() {
 	}
 }, true);
 
-Wysie.hooks.add("unit-init-end", function() {
+Mavo.hooks.add("unit-init-end", function() {
 	if (this.collection) {
 		this.debug = this.collection.debug;
 	}
 });
 
-Wysie.hooks.add("expressions-init-start", function() {
+Mavo.hooks.add("expressions-init-start", function() {
 	this.debug = this.scope.debug;
 });
 
-Wysie.hooks.add("expression-eval-beforeeval", function() {
+Mavo.hooks.add("expression-eval-beforeeval", function() {
 	if (this.debug) {
 		this.debug.classList.remove("error");
 	}
 });
 
-Wysie.hooks.add("expression-eval-error", function(env) {
+Mavo.hooks.add("expression-eval-error", function(env) {
 	if (this.debug) {
 		this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
 		this.debug.classList.add("error");
 	}
 });
 
-Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
+Mavo.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
 	if (!this.debug) {
 		return;
 	}
@@ -5281,7 +5281,7 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 			title: elementLabel,
 			events: {
 				"mouseenter mouseleave": evt => {
-					element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
+					element.classList.toggle("mv-highlight", evt.type === "mouseenter");
 				},
 				"click": evt => {
 					element.scrollIntoView({behavior: "smooth"});
@@ -5309,12 +5309,12 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 	});
 };
 
-Wysie.hooks.add("expressiontext-init-end", function() {
+Mavo.hooks.add("expressiontext-init-end", function() {
 	if (this.scope.debug) {
 		this.debug = {};
 
 		this.template.forEach(expr => {
-			if (expr instanceof Wysie.Expression) {
+			if (expr instanceof Mavo.Expression) {
 				this.scope.debugRow({
 					element: this.element,
 					attribute: this.attribute,
@@ -5342,12 +5342,12 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 	}
 });
 
-Wysie.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-end", function() {
 	// TODO make properties update, collapse duplicate expressions
 	if (this.debug instanceof Node) {
 		// We have a debug table, add stuff to it
 
-		var selector = Wysie.selectors.andNot(Wysie.selectors.multiple, Wysie.selectors.property);
+		var selector = Mavo.selectors.andNot(Mavo.selectors.multiple, Mavo.selectors.property);
 		$$(selector, this.element).forEach(element => {
 			this.debugRow({
 				element,
@@ -5380,7 +5380,7 @@ Wysie.hooks.add("scope-init-end", function() {
 			}
 		});
 
-		this.scope.element.addEventListener("wysie:datachange", evt => {
+		this.scope.element.addEventListener("mavo:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
 				var value = _.printValue(this.properties[property]);
@@ -5394,7 +5394,7 @@ Wysie.hooks.add("scope-init-end", function() {
 	}
 });
 
-Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
+Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 	if (this.debug) {
 		env.td = env.expr.debug;
 
@@ -5404,26 +5404,26 @@ Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
 	}
 });
 
-Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
+Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
 	if (env.td && !env.td.classList.contains("error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;
 	}
 });
 
-// Wysie.Debug.time("Wysie.Expressions.prototype", "update");
+// Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);
 
 (function($) {
 
-if (!self.Wysie) {
+if (!self.Mavo) {
 	return;
 }
 
 var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
+Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
 		if (this.url.protocol != "dropbox:") {
@@ -5462,7 +5462,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Wysie.toJSON(file.data);
+		file.data = Mavo.toJSON(file.data);
 
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
@@ -5506,7 +5506,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.wysie.wrapper._.fire("wysie:login", $.extend({backend: this}, accountInfo));
+					this.mavo.wrapper._.fire("mavo:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -5517,7 +5517,7 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 			this.client.signOut(null, () => {
 				this.permissions.off(["edit", "add", "delete"]).on("login");
 
-				this.wysie.wrapper._.fire("wysie:logout", {backend: this});
+				this.mavo.wrapper._.fire("mavo:logout", {backend: this});
 				resolve();
 			});
 		});
@@ -5535,13 +5535,13 @@ Wysie.Storage.Backend.add("Dropbox", $.Class({ extends: Wysie.Storage.Backend,
 
 (function($) {
 
-if (!self.Wysie) {
+if (!self.Mavo) {
 	return;
 }
 
 var _;
 
-Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend,
+Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		this.permissions.on("login");
 
@@ -5549,9 +5549,9 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 		// Extract info for username, repo, branch, filename, filepath from URL
 		$.extend(this, _.parseURL(this.url));
-		this.repo = this.repo || "wysie-data";
+		this.repo = this.repo || "mv-data";
 		this.branch = this.branch || "master";
-		this.path = this.path || `${this.wysie.id}.json`;
+		this.path = this.path || `${this.mavo.id}.json`;
 		this.filename = this.filename || this.path.match(/[^/]*$/)[0];
 
 		// Transform the Github URL into something raw and CORS-enabled
@@ -5588,7 +5588,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		.then(xhr => Promise.resolve(xhr.response));
 	},
 
-	get: Wysie.Storage.Backend.Remote.prototype.get,
+	get: Mavo.Storage.Backend.Remote.prototype.get,
 
 	/**
 	 * Saves a file to the backend.
@@ -5596,7 +5596,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Wysie.toJSON(file.data);
+		file.data = Mavo.toJSON(file.data);
 		file.path = file.path || "";
 
 		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
@@ -5640,7 +5640,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 			return (new Promise((resolve, reject) => {
 				if (passive) {
-					this.accessToken = localStorage["wysie:githubtoken"];
+					this.accessToken = localStorage["mavo:githubtoken"];
 
 					if (this.accessToken) {
 						resolve(this.accessToken);
@@ -5653,7 +5653,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 					addEventListener("message", evt => {
 						if (evt.source === this.authPopup) {
-							this.accessToken = localStorage["wysie:githubtoken"] = evt.data;
+							this.accessToken = localStorage["mavo:githubtoken"] = evt.data;
 
 							if (!this.accessToken) {
 								reject(Error("Authentication error"));
@@ -5691,12 +5691,12 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 	logout: function() {
 		if (this.authenticated) {
-			localStorage.removeItem("wysie:githubtoken");
+			localStorage.removeItem("mavo:githubtoken");
 			delete this.accessToken;
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.wysie.wrapper._.fire("wysie:logout", {backend: this});
+			this.mavo.wrapper._.fire("mavo:logout", {backend: this});
 		}
 
 		return Promise.resolve();
@@ -5707,7 +5707,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			this.user = accountInfo;
 
 			var name = accountInfo.name || accountInfo.login;
-			this.wysie.wrapper._.fire("wysie:login", {
+			this.mavo.wrapper._.fire("mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
 							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}
@@ -5762,4 +5762,4 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 })(Bliss);
 
-//# sourceMappingURL=wysie.js.map
+//# sourceMappingURL=mavo.js.map

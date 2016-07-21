@@ -2,27 +2,29 @@
 <html lang="en" class="docs">
 <head>
 	<meta charset="UTF-8">
-	<title>Wysie: Documentation for HTML authors</title>
-	<link rel="stylesheet" href="../wysie.css" />
+	<title>Mavo: Documentation for HTML authors</title>
+	<link rel="stylesheet" href="../mavo.css" />
 	<link rel="stylesheet" href="../website/style.css">
 </head>
 <body class="language-markup">
 
 <header>
 	<h1 class="logo">
-		<img src="../logo.svg" alt="Wysie: What you see is editable">
-		Introduction and first steps
+		<img src="../logo.svg" alt="Mavo: What you see is editable">
 	</h1>
+	<nav></nav>
 </header>
+
+<h2>Primer</h2>
 
 <input type="checkbox" id="show-examples" checked />
 <label for="show-examples">Show examples?</label>
 
 <section id="data-store">
-	<h1>Defining a wysie app</h1>
+	<h1>Defining a mavo app</h1>
 
-	<p>The <code>data-store</code> attribute has two purposes: its presence tells wysie that it should pay attention to what is inside that element
-		and its value tells wysie where to store any data.
+	<p>The <code>data-store</code> attribute has two purposes: its presence tells mavo that it should pay attention to what is inside that element
+		and its value tells mavo where to store any data.
 		The value of the <code>data-store</code> attribute is a valid URL or a keyword and has the following meaning:</p>
 
 	<dl>
@@ -43,7 +45,7 @@
 		<dt><code>https://www.dropbox.com/s/[lettersandnumbers]/[filename]?dl=0</code></dt>
 		<dd>
 			This is the URL that Dropbox gives you if you click “Share” on a file.
-			In that case, the data will be saved back to Dropbox, and wysie will ask you to log in to edit or save.
+			In that case, the data will be saved back to Dropbox, and mavo will ask you to log in to edit or save.
 		</dd>
 	</dl>
 </section>
@@ -51,7 +53,7 @@
 <section id="property">
 	<h1>The property attribute</h1>
 
-	<p>The <code>property</code> attribute tells wysie which elements should be editable. Its value should describe the element, similarly to a <code>id</code> or <code>class</code> attribute.
+	<p>The <code>property</code> attribute tells mavo which elements should be editable. Its value should describe the element, similarly to a <code>id</code> or <code>class</code> attribute.
 		It can contain <strong>only</strong> letters, numbers and underscores (_).</p>
 
 	<section class="example">
@@ -73,7 +75,7 @@
 -->
 	<hr />
 
-	<p>You can put the <code>property</code> attribute on <strong>any</strong> HTML5 element, and wysie knows how to make it editable:</p>
+	<p>You can put the <code>property</code> attribute on <strong>any</strong> HTML5 element, and mavo knows how to make it editable:</p>
 
 	<section class="example">
 		<script type="text/plain">
@@ -120,7 +122,7 @@
 	</section>
 
 	<p>This works, but we cannot add new hobbies or delete existing ones.
-		To do that, we need the <code>data-multiple</code> attribute, which tells wysie that <strong>this element can be multiplied</strong>:</p>
+		To do that, we need the <code>data-multiple</code> attribute, which tells mavo that <strong>this element can be multiplied</strong>:</p>
 
 	<section class="example">
 		<h1>Example: Simple list</h1>
@@ -181,7 +183,7 @@
 	<p>If you set a <code>property</code> attribute on an element with an expression, then you can use that property in other attributes too.</p>
 
 	<section class="example color-picker">
-		<p>Making a bare-bones HSL color picker with Wysie expressions:</p>
+		<p>Making a bare-bones HSL color picker with Mavo expressions:</p>
 		<script type="text/plain">
 			<div style="background-color: [color];">
 				<input type="range" property="hue" max="360" />
@@ -235,7 +237,7 @@
 	<h1>Expression functions</h1>
 
 	<!-- <p>References and simple arithmetic are useful, but not always enough.
-		For this purpose, wysie defines a number of common math functions you can use inside expressions, such as:
+		For this purpose, mavo defines a number of common math functions you can use inside expressions, such as:
 		<code>pow(base, exponent)</code>, <code>round(number, decimals)</code>, <code>sqrt(number)</code> and many more.</p>
 
 	<section class="example pow">
@@ -504,7 +506,7 @@
 	</dl>
 </section>
 
-<script src="../wysie.js"></script>
+<script src="../mavo.js"></script>
 <script src="docs.js"></script>
 <script src="../website/prism.js"></script>
 

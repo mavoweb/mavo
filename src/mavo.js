@@ -2,7 +2,7 @@
 
 "use strict";
 
-var _ = self.Wysie = $.Class({
+var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		_.all.push(this);
 
@@ -11,8 +11,8 @@ var _ = self.Wysie = $.Class({
 		                element.getAttribute("data-store") || "";
 		this.store = dataStore === "none"? null : dataStore;
 
-		// Assign a unique (for the page) id to this wysie instance
-		this.id = Wysie.Node.normalizeProperty(element) || element.id || "wysie-" + _.all.length;
+		// Assign a unique (for the page) id to this mavo instance
+		this.id = Mavo.Node.normalizeProperty(element) || element.id || "mv-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -24,7 +24,7 @@ var _ = self.Wysie = $.Class({
 			this.element = element;
 		}
 
-		this.element.classList.add("wysie-root");
+		this.element.classList.add("mv-root");
 
 		// Apply heuristic for collections
 		$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(element => {
@@ -33,7 +33,7 @@ var _ = self.Wysie = $.Class({
 			}
 		});
 
-		this.wrapper = element.closest(".wysie-wrapper") || element;
+		this.wrapper = element.closest(".mv-wrapper") || element;
 
 		// Ctrl + S or Cmd + S to save
 		this.wrapper.addEventListener("keydown", evt => {
@@ -45,9 +45,9 @@ var _ = self.Wysie = $.Class({
 
 		// Apply heuristic for scopes
 		$$(_.selectors.primitive).forEach(element => {
-			var isScope = $(Wysie.selectors.property, element) && (// Contains other properties and...
-			                Wysie.is("multiple", element) || // is a collection...
-			                Wysie.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
+			var isScope = $(Mavo.selectors.property, element) && (// Contains other properties and...
+			                Mavo.is("multiple", element) || // is a collection...
+			                Mavo.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
 						) || element.matches("template");
 
 			if (isScope) {
@@ -70,7 +70,7 @@ var _ = self.Wysie = $.Class({
 			this.wrapper = $.create({ around });
 		}
 
-		this.wrapper.classList.add("wysie-wrapper");
+		this.wrapper.classList.add("mv-wrapper");
 
 		// Normalize property names
 		this.propertyNames = [];
@@ -78,23 +78,23 @@ var _ = self.Wysie = $.Class({
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
-		// Build wysie objects
-		Wysie.hooks.run("init-tree-before", this);
+		// Build mavo objects
+		Mavo.hooks.run("init-tree-before", this);
 
-		this.root = Wysie.Node.create(this.element, this);
+		this.root = Mavo.Node.create(this.element, this);
 		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
 
-		Wysie.hooks.run("init-tree-after", this);
+		Mavo.hooks.run("init-tree-after", this);
 
-		this.permissions = new Wysie.Permissions(null, this);
+		this.permissions = new Mavo.Permissions(null, this);
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
 		                  this.wrapper.matches("[data-bar~=inline]") :
 		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
 
 		this.ui = {
-			bar: $(".wysie-bar", this.wrapper) || $.create({
-				className: "wysie-bar wysie-ui" + (inlineBar? " inline" : ""),
+			bar: $(".mv-bar", this.wrapper) || $.create({
+				className: "mv-bar mv-ui" + (inlineBar? " inline" : ""),
 				start: this.wrapper,
 				contents: {
 					tag: "span",
@@ -192,14 +192,14 @@ var _ = self.Wysie = $.Class({
 			// No storage
 			this.permissions.on(["read", "edit"]);
 
-			$.fire(this.wrapper, "wysie:load");
+			$.fire(this.wrapper, "mavo:load");
 		}
 
 		if (!this.needsEdit) {
 			this.permissions.off(["edit", "add", "delete"]);
 		}
 
-		Wysie.hooks.run("init-end", this);
+		Mavo.hooks.run("init-end", this);
 	},
 
 	get data() {
@@ -237,8 +237,8 @@ var _ = self.Wysie = $.Class({
 
 		this.root.edit();
 
-		$.events(this.wrapper, "mouseenter.wysie:edit mouseleave.wysie:edit", evt => {
-			if (evt.target.matches(".wysie-item-controls .delete")) {
+		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
+			if (evt.target.matches(".mv-item-controls .delete")) {
 				var item = evt.target.closest(_.selectors.item);
 				item.classList.toggle("delete-hover", evt.type == "mouseenter");
 			}
@@ -273,7 +273,7 @@ var _ = self.Wysie = $.Class({
 	// Conclude editing
 	done: function() {
 		this.root.done();
-		$.unbind(this.wrapper, ".wysie:edit");
+		$.unbind(this.wrapper, ".mavo:edit");
 		this.editing = false;
 		this.unsavedChanges = false;
 	},
@@ -428,9 +428,9 @@ let s = _.selectors = {
 	required: "[required], [data-required], .required",
 	formControl: "input, select, textarea",
 	computed: ".computed", // Properties or scopes with computed properties, will not be saved
-	item: ".wysie-item",
-	ui: ".wysie-ui",
-	option: name => `[${name}], [data-${name}], [data-wysie-options~='${name}'], .${name}`,
+	item: ".mv-item",
+	ui: ".mv-ui",
+	option: name => `[${name}], [data-${name}], [data-mv-options~='${name}'], .${name}`,
 	container: {
 		"li": "ul, ol",
 		"tr": "table",
@@ -477,7 +477,7 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 });
 
 $.classProps.propagated = function(proto, names) {
-	Wysie.toArray(names).forEach(name => {
+	Mavo.toArray(names).forEach(name => {
 		var existing = proto[name];
 
 		proto[name] = function() {
@@ -503,17 +503,17 @@ document.addEventListener("focus", evt => {
 	}
 }, true);
 
-// Init wysie
+// Init mavo
 Promise.all([
 	$.ready(),
 	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
 ])
-.then(() => Wysie.init())
+.then(() => Mavo.init())
 .catch(err => {
 	console.error(err);
-	Wysie.init();
+	Mavo.init();
 });
 
-Stretchy.selectors.filter = ".wysie-editor:not([property])";
+Stretchy.selectors.filter = ".mv-editor:not([property])";
 
 })(Bliss, Bliss.$);

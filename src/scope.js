@@ -1,22 +1,22 @@
 (function($, $$) {
 
-var _ = Wysie.Scope = $.Class({
-	extends: Wysie.Unit,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Scope = $.Class({
+	extends: Mavo.Unit,
+	constructor: function (element, mavo, o) {
 		this.properties = {};
 
 		this.scope = this;
 
-		Wysie.hooks.run("scope-init-start", this);
+		Mavo.hooks.run("scope-init-start", this);
 
 		// Should this element also create a primitive?
-		if (Wysie.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Wysie.Primitive(this.element, this.wysie, {scope: this});
+		if (Mavo.Primitive.getValueAttribute(this.element)) {
+			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {scope: this});
 		}
 
-		// Create Wysie objects for all properties in this scope (primitives or scopes),
+		// Create Mavo objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
-		$$(Wysie.selectors.property, this.element).forEach(element => {
+		$$(Mavo.selectors.property, this.element).forEach(element => {
 			var property = element.getAttribute("property");
 
 			if (this.contains(element)) {
@@ -28,14 +28,14 @@ var _ = Wysie.Scope = $.Class({
 					// Two scopes with the same property, convert to static collection
 					var collection = existing;
 
-					if (!(existing instanceof Wysie.Collection)) {
-						collection = new Wysie.Collection(existing.element, this.wysie, constructorOptions);
+					if (!(existing instanceof Mavo.Collection)) {
+						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
 						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
 					}
 
-					if (!collection.mutable && Wysie.is("multiple", element)) {
+					if (!collection.mutable && Mavo.is("multiple", element)) {
 						collection.mutable = true;
 					}
 
@@ -43,7 +43,7 @@ var _ = Wysie.Scope = $.Class({
 				}
 				else {
 					// No existing properties with this id, normal case
-					var obj = Wysie.Node.create(element, this.wysie, constructorOptions);
+					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
 
 					this.properties[property] = obj;
 				}
@@ -51,10 +51,10 @@ var _ = Wysie.Scope = $.Class({
 		});
 
 		if (!this.template) {
-			Array.prototype.push.apply(this.wysie.propertyNames, this.propertyNames);
+			Array.prototype.push.apply(this.mavo.propertyNames, this.propertyNames);
 		}
 
-		Wysie.hooks.run("scope-init-end", this);
+		Mavo.hooks.run("scope-init-end", this);
 	},
 
 	get propertyNames () {
@@ -91,7 +91,7 @@ var _ = Wysie.Scope = $.Class({
 
 	/**
 	 * Search entire subtree for property, return relative value
-	 * @return {Wysie.Unit}
+	 * @return {Mavo.Unit}
 	 */
 	find: function(property) {
 		if (this.property == property) {
@@ -127,7 +127,7 @@ var _ = Wysie.Scope = $.Class({
 	},
 
 	done: function() {
-		$.unbind(this.element, ".wysie:edit");
+		$.unbind(this.element, ".mavo:edit");
 	},
 
 	propagated: ["save", "done", "import", "clear"],
@@ -139,7 +139,7 @@ var _ = Wysie.Scope = $.Class({
 			return;
 		}
 
-		Wysie.hooks.run("scope-render-start", this);
+		Mavo.hooks.run("scope-render-start", this);
 
 		// TODO retain dropped elements
 		data = data.isArray? data[0] : data;
@@ -157,17 +157,17 @@ var _ = Wysie.Scope = $.Class({
 
 		this.save();
 
-		Wysie.hooks.run("scope-render-end", this);
+		Mavo.hooks.run("scope-render-end", this);
 	},
 
 	// Check if this scope contains a property
-	// property can be either a Wysie.Unit or a Node
+	// property can be either a Mavo.Unit or a Node
 	contains: function(property) {
-		if (property instanceof Wysie.Unit) {
+		if (property instanceof Mavo.Unit) {
 			return property.parentScope === this;
 		}
 
-		return property.parentNode && (this.element === property.parentNode.closest(Wysie.selectors.scope));
+		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.scope));
 	},
 
 	static: {
@@ -175,7 +175,7 @@ var _ = Wysie.Scope = $.Class({
 
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
-			if (Wysie.is("scope", element)) {
+			if (Mavo.is("scope", element)) {
 				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
 
 				element.setAttribute("typeof", type);

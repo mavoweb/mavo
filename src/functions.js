@@ -1,10 +1,10 @@
 /**
- * Functions available inside Wysie expressions
+ * Functions available inside Mavo expressions
  */
 
 (function() {
 
-var _ = Wysie.Functions = {
+var _ = Mavo.Functions = {
 	operators: {},
 
 	/**
@@ -40,7 +40,7 @@ var _ = Wysie.Functions = {
 	},
 
 	count: function(array) {
-		return Wysie.toArray(array).filter(a => a !== null && a !== false).length;
+		return Mavo.toArray(array).filter(a => a !== null && a !== false).length;
 	},
 
 	round: function(num, decimals) {
@@ -95,7 +95,7 @@ for (name in aliases) {
 }
 
 // Make function names case insensitive
-Wysie.Functions._Trap = self.Proxy? new Proxy(_, {
+Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
 		if (property in functions) {
 			return functions[property];
@@ -123,7 +123,7 @@ Wysie.Functions._Trap = self.Proxy? new Proxy(_, {
 	// the local variable it should be, but the string "data"
 	// so all property lookups fail.
 	has: (functions, property) => property != "data"
-}) : Wysie.Functions;
+}) : Mavo.Functions;
 
 /**
  * Private helper methods

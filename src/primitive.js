@@ -1,8 +1,8 @@
 (function($, $$) {
 
-var _ = Wysie.Primitive = $.Class({
-	extends: Wysie.Unit,
-	constructor: function (element, wysie, o) {
+var _ = Mavo.Primitive = $.Class({
+	extends: Mavo.Unit,
+	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate([
 			"attribute", "datatype", "humanReadable",
 			"computed", "templateValue"
@@ -28,7 +28,7 @@ var _ = Wysie.Primitive = $.Class({
 		 */
 
 		// Exposed widgets (visible always)
-		if (Wysie.is("formControl", this.element)) {
+		if (Mavo.is("formControl", this.element)) {
 			this.editor = this.element;
 
 			this.edit();
@@ -36,22 +36,22 @@ var _ = Wysie.Primitive = $.Class({
 		// Nested widgets
 		else if (!this.editor) {
 			this.editor = $$(this.element.children).filter(function (el) {
-			    return el.matches(Wysie.selectors.formControl) && !el.matches(Wysie.selectors.property);
+			    return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
 			})[0];
 
 			$.remove(this.editor);
 		}
 
 		if (!this.exposed && !this.computed) {
-			this.wysie.needsEdit = true;
+			this.mavo.needsEdit = true;
 		}
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		if (!this.computed) {
-			this.observer = Wysie.observe(this.element, this.attribute, record => {
-				if (this.attribute || !this.wysie.editing) {
+			this.observer = Mavo.observe(this.element, this.attribute, record => {
+				if (this.attribute || !this.mavo.editing) {
 					this.value = this.getValue();
 				}
 			}, true);
@@ -74,7 +74,7 @@ var _ = Wysie.Primitive = $.Class({
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.unobserve();
-				var ui = $.remove($(Wysie.selectors.ui, this.element));
+				var ui = $.remove($(Mavo.selectors.ui, this.element));
 
 				var ret = callback();
 
@@ -84,7 +84,7 @@ var _ = Wysie.Primitive = $.Class({
 				return ret;
 			};
 
-			// Intercept certain properties so that any Wysie UI inside this primitive will not be destroyed
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
 			["textContent", "innerHTML"].forEach(property => {
 				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
@@ -105,12 +105,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	get editorValue() {
 		if (this.editor) {
-			if (this.editor.matches(Wysie.selectors.formControl)) {
+			if (this.editor.matches(Mavo.selectors.formControl)) {
 				return _.getValue(this.editor, undefined, this.datatype);
 			}
 
 			// if we're here, this.editor is an entire HTML structure
-			var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
+			var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 			if (output) {
 				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
@@ -120,12 +120,12 @@ var _ = Wysie.Primitive = $.Class({
 
 	set editorValue(value) {
 		if (this.editor) {
-			if (this.editor.matches(Wysie.selectors.formControl)) {
+			if (this.editor.matches(Mavo.selectors.formControl)) {
 				_.setValue(this.editor, value);
 			}
 			else {
 				// if we're here, this.editor is an entire HTML structure
-				var output = $(Wysie.selectors.output + ", " + Wysie.selectors.formControl, this.editor);
+				var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 				if (output) {
 					if (_.all.has(output)) {
@@ -194,7 +194,7 @@ var _ = Wysie.Primitive = $.Class({
 			this.element.removeAttribute("tabindex");
 		}
 
-		this.element._.unbind(".wysie:edit .wysie:preedit .wysie:showpopup");
+		this.element._.unbind(".mavo:edit .mavo:preedit .mavo:showpopup");
 
 		this.observe();
 	},
@@ -227,15 +227,15 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.element._.events({
 			// click is needed too because it works with the keyboard as well
-			"click.wysie:preedit": e => this.edit(),
-			"focus.wysie:preedit": e => {
+			"click.mavo:preedit": e => this.edit(),
+			"focus.mavo:preedit": e => {
 				this.edit();
 
 				if (!this.popup) {
 					this.editor.focus();
 				}
 			},
-			"click.wysie:edit": evt => {
+			"click.mavo:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
 				if (!this.exposed) {
@@ -246,11 +246,11 @@ var _ = Wysie.Primitive = $.Class({
 
 		if (!this.attribute) {
 			this.element._.events({
-				"mouseenter.wysie:preedit": e => {
+				"mouseenter.mavo:preedit": e => {
 					clearTimeout(timer);
 					timer = setTimeout(() => this.edit(), 150);
 				},
-				"mouseleave.wysie:preedit": e => {
+				"mouseleave.mavo:preedit": e => {
 					clearTimeout(timer);
 				}
 			});
@@ -270,11 +270,11 @@ var _ = Wysie.Primitive = $.Class({
 			if (selector) {
 				this.editor = $.clone($(selector));
 
-				if (!Wysie.is("formControl", this.editor)) {
-					if ($(Wysie.selectors.output, this.editor)) { // has output element?
-						// Process it as a wysie instance, so people can use references
+				if (!Mavo.is("formControl", this.editor)) {
+					if ($(Mavo.selectors.output, this.editor)) { // has output element?
+						// Process it as a mavo instance, so people can use references
 						this.editor.setAttribute("data-store", "none");
-						new Wysie(this.editor);
+						new Mavo(this.editor);
 					}
 					else {
 						this.editor = null; // Cannot use this, sorry bro
@@ -299,31 +299,31 @@ var _ = Wysie.Primitive = $.Class({
 
 		this.editor._.events({
 			"input change": evt => {
-				var unsavedChanges = this.wysie.unsavedChanges;
+				var unsavedChanges = this.mavo.unsavedChanges;
 
 				this.value = this.editorValue;
 
 				// Editing exposed elements outside edit mode is instantly saved
 				if (
 					this.exposed &&
-					!this.wysie.editing && // must not be in edit mode
-				    this.wysie.permissions.save && // must be able to save
+					!this.mavo.editing && // must not be in edit mode
+				    this.mavo.permissions.save && // must be able to save
 				    this.scope.everSaved // must not cause unsaved items to be saved
 				) {
 					// TODO what if change event never fires? What if user
 					this.unsavedChanges = false;
-					this.wysie.unsavedChanges = unsavedChanges;
+					this.mavo.unsavedChanges = unsavedChanges;
 
 					// Must not save too many times (e.g. not while dragging a slider)
 					if (evt.type == "change") {
 						this.save(); // Save current element
 
-						// Don’t call this.wysie.save() as it will save other fields too
+						// Don’t call this.mavo.save() as it will save other fields too
 						// We only want to save exposed controls, so save current status
-						this.wysie.storage.save();
+						this.mavo.storage.save();
 
 						// Are there any unsaved changes from other properties?
-						this.wysie.unsavedChanges = this.wysie.calculateUnsavedChanges();
+						this.mavo.unsavedChanges = this.mavo.calculateUnsavedChanges();
 					}
 				}
 			},
@@ -340,7 +340,7 @@ var _ = Wysie.Primitive = $.Class({
 					this.hidePopup();
 				}
 			},
-			"wysie:datachange": evt => {
+			"mavo:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
@@ -366,7 +366,7 @@ var _ = Wysie.Primitive = $.Class({
 				this.element.classList.add("using-popup");
 
 				this.popup = this.popup || $.create("div", {
-					className: "wysie-popup",
+					className: "mv-popup",
 					hidden: true,
 					contents: [
 						this.label + ":",
@@ -387,7 +387,7 @@ var _ = Wysie.Primitive = $.Class({
 				};
 
 				this.showPopup = function() {
-					$.unbind([this.element, this.popup], ".wysie:showpopup");
+					$.unbind([this.element, this.popup], ".mavo:showpopup");
 					this.popup._.after(this.element);
 
 					var x = this.element.offsetLeft;
@@ -410,7 +410,7 @@ var _ = Wysie.Primitive = $.Class({
 						$.remove(this.popup);
 					}, 400); // TODO transition-duration could override this
 
-					$.events(this.element, "focus.wysie:showpopup click.wysie:showpopup", evt => {
+					$.events(this.element, "focus.mavo:showpopup click.mavo:showpopup", evt => {
 						this.showPopup();
 					}, true);
 				};
@@ -418,7 +418,7 @@ var _ = Wysie.Primitive = $.Class({
 		}
 
 		if (!this.popup) {
-			this.editor.classList.add("wysie-editor");
+			this.editor.classList.add("mv-editor");
 		}
 
 		this.initEdit = null;
@@ -429,7 +429,7 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
-		this.element._.unbind(".wysie:preedit");
+		this.element._.unbind(".mavo:preedit");
 
 		if (this.initEdit) {
 			this.initEdit();
@@ -482,7 +482,7 @@ var _ = Wysie.Primitive = $.Class({
 			return;
 		}
 
-		Wysie.observe(this.element, this.attribute, this.observer);
+		Mavo.observe(this.element, this.attribute, this.observer);
 	},
 
 	unobserve: function () {
@@ -499,7 +499,7 @@ var _ = Wysie.Primitive = $.Class({
 
 	lazy: {
 		label: function() {
-			return Wysie.readable(this.property);
+			return Mavo.readable(this.property);
 		},
 
 		emptyValue: function() {
@@ -551,13 +551,13 @@ var _ = Wysie.Primitive = $.Class({
 			this._value = value;
 
 			if (!this.computed) {
-				this.unsavedChanges = this.wysie.unsavedChanges = true;
+				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
-			$.fire(this.element, "wysie:datachange", {
+			$.fire(this.element, "mavo:datachange", {
 				property: this.property,
 				value: value,
-				wysie: this.wysie,
+				mavo: this.mavo,
 				node: this,
 				dirty: this.editing,
 				action: "propertychange"
@@ -567,7 +567,7 @@ var _ = Wysie.Primitive = $.Class({
 		},
 
 		empty: function(value) {
-			var hide = value && !this.exposed && !(this.attribute && $(Wysie.selectors.property, this.element));
+			var hide = value && !this.exposed && !(this.attribute && $(Mavo.selectors.property, this.element));
 			this.element.classList.toggle("empty", hide);
 		},
 

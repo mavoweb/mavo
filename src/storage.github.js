@@ -1,12 +1,12 @@
 (function($) {
 
-if (!self.Wysie) {
+if (!self.Mavo) {
 	return;
 }
 
 var _;
 
-Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend,
+Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		this.permissions.on("login");
 
@@ -14,9 +14,9 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 		// Extract info for username, repo, branch, filename, filepath from URL
 		$.extend(this, _.parseURL(this.url));
-		this.repo = this.repo || "wysie-data";
+		this.repo = this.repo || "mv-data";
 		this.branch = this.branch || "master";
-		this.path = this.path || `${this.wysie.id}.json`;
+		this.path = this.path || `${this.mavo.id}.json`;
 		this.filename = this.filename || this.path.match(/[^/]*$/)[0];
 
 		// Transform the Github URL into something raw and CORS-enabled
@@ -53,7 +53,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 		.then(xhr => Promise.resolve(xhr.response));
 	},
 
-	get: Wysie.Storage.Backend.Remote.prototype.get,
+	get: Mavo.Storage.Backend.Remote.prototype.get,
 
 	/**
 	 * Saves a file to the backend.
@@ -61,7 +61,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Wysie.toJSON(file.data);
+		file.data = Mavo.toJSON(file.data);
 		file.path = file.path || "";
 
 		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
@@ -105,7 +105,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 			return (new Promise((resolve, reject) => {
 				if (passive) {
-					this.accessToken = localStorage["wysie:githubtoken"];
+					this.accessToken = localStorage["mavo:githubtoken"];
 
 					if (this.accessToken) {
 						resolve(this.accessToken);
@@ -118,7 +118,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 					addEventListener("message", evt => {
 						if (evt.source === this.authPopup) {
-							this.accessToken = localStorage["wysie:githubtoken"] = evt.data;
+							this.accessToken = localStorage["mavo:githubtoken"] = evt.data;
 
 							if (!this.accessToken) {
 								reject(Error("Authentication error"));
@@ -156,12 +156,12 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 
 	logout: function() {
 		if (this.authenticated) {
-			localStorage.removeItem("wysie:githubtoken");
+			localStorage.removeItem("mavo:githubtoken");
 			delete this.accessToken;
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.wysie.wrapper._.fire("wysie:logout", {backend: this});
+			this.mavo.wrapper._.fire("mavo:logout", {backend: this});
 		}
 
 		return Promise.resolve();
@@ -172,7 +172,7 @@ Wysie.Storage.Backend.add("Github", _ = $.Class({ extends: Wysie.Storage.Backend
 			this.user = accountInfo;
 
 			var name = accountInfo.name || accountInfo.login;
-			this.wysie.wrapper._.fire("wysie:login", {
+			this.mavo.wrapper._.fire("mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
 							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}

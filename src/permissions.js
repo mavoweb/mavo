@@ -1,6 +1,6 @@
 (function($) {
 
-var _ = Wysie.Permissions = $.Class({
+var _ = Mavo.Permissions = $.Class({
 	constructor: function(o) {
 		this.triggers = [];
 
@@ -18,7 +18,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Set a bunch of permissions to true. Chainable.
 	on: function(actions) {
-		Wysie.toArray(actions).forEach(action => this[action] = true);
+		Mavo.toArray(actions).forEach(action => this[action] = true);
 
 		return this;
 	},
@@ -58,7 +58,7 @@ var _ = Wysie.Permissions = $.Class({
 
 	// Schedule a callback for when a set of permissions changes value
 	observe: function(actions, value, callback) {
-		actions = Wysie.toArray(actions);
+		actions = Mavo.toArray(actions);
 
 		if (this.is(actions, value)) {
 			// Should be fired immediately

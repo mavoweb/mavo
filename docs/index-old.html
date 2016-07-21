@@ -2,15 +2,15 @@
 <html lang="en" class="docs">
 <head>
 	<meta charset="UTF-8">
-	<title>Wysie: Documentation for HTML authors</title>
-	<link rel="stylesheet" href="../wysie.css" />
+	<title>Mavo: Documentation for HTML authors</title>
+	<link rel="stylesheet" href="../mavo.css" />
 	<link rel="stylesheet" href="../website/style.css">
 </head>
 <body class="language-markup">
 
 <header>
 	<h1 class="logo">
-		<img src="../logo.svg" alt="Wysie: What you see is editable">
+		<img src="../logo.svg" alt="Mavo: What you see is editable">
 		Documentation for HTML authors
 	</h1>
 </header>
@@ -18,19 +18,19 @@
 <section>
 	<h1>Quick start</h1>
 
-	<p>To use wysie to make a page editable, you need to take the following easy steps:</p>
+	<p>To use mavo to make a page editable, you need to take the following easy steps:</p>
 
 	<ol>
-		<li>Include Wysie on your page, by including its CSS and JS files:
+		<li>Include Mavo on your page, by including its CSS and JS files:
 			<script type="text/plain">
-			<link rel="stylesheet" href="wysie.css" />
-			<script src="wysie.js">&lt;/script></script>
+			<link rel="stylesheet" href="mavo.css" />
+			<script src="mavo.js">&lt;/script></script>
 		</li>
 		<li>
 			Add <code>property</code> attributes on any element you want to make editable.
 		</li>
 		<li>Find an element that encloses all your editable attributes, and add a <code>data-store</code> attribute to it.
-			The <code>data-store</code> attribute usually takes URI that tells wysie <strong>where</strong> to store the data.
+			The <code>data-store</code> attribute usually takes URI that tells mavo <strong>where</strong> to store the data.
 			However to start experimenting as soon as possible, you can use it without a value, in which case it does not store the data anywhere.
 		</li>
 	</ol>
@@ -44,19 +44,19 @@
 	<article>
 		<h1><code>data-store</code></h1>
 
-		<p>A URL that tells wysie <strong>where</strong> to find the data. It’s exact format depends on the backend used.
+		<p>A URL that tells mavo <strong>where</strong> to find the data. It’s exact format depends on the backend used.
 		Each backend might also require more <code>data-store-*</code> properties.</p>
 
 		<p>You can use any URL you want, but if there is no supported backend associated with such URLs, the data will not be editable.</p>
 
-		<p>If the value is a hash (e.g. <code>data-store="#todo"</code>), wysie only stores the data locally.
+		<p>If the value is a hash (e.g. <code>data-store="#todo"</code>), mavo only stores the data locally.
 			If the value is <code>none</code>, the data is not stored anywhere.
 			This can be useful for experimenting, or for applications that don't require storage (e.g. a colour picker).</p>
 	</article>
 	<article>
 		<h1><code>property</code> or <code>itemprop</code></h1>
 
-		<p>The presence of any of these attributes on an element tells wysie that the element contains data and should be editable.
+		<p>The presence of any of these attributes on an element tells mavo that the element contains data and should be editable.
 			The attribute value can be anything you want, as long as it’s different from other unrelated elements.
 			It should describe the type of data the element will hold, because it will be used in various places in the editing interface.
 			The rules for a good property name are the same as those for a good CSS class name.</p>
@@ -71,7 +71,7 @@
 			</article>
 		</script>
 
-		<p>Note that if the <code>property</code> attribute is specified but without a value, wysie will try to find an identifier
+		<p>Note that if the <code>property</code> attribute is specified but without a value, mavo will try to find an identifier
 			in the following attributes, in this order:</p>
 
 		<ul>
@@ -100,8 +100,8 @@
 	<article>
 		<h1><code>data-multiple</code></h1>
 
-		<p>Tells wysie that this element can be multiplied (i.e. is a collection).
-			This way wysie knows to add controls for adding new elements, deleting existing ones<span class="unimplemented"> and dragging to rearrange</span>.</p>
+		<p>Tells mavo that this element can be multiplied (i.e. is a collection).
+			This way mavo knows to add controls for adding new elements, deleting existing ones<span class="unimplemented"> and dragging to rearrange</span>.</p>
 
 		<p>Some elements get this attribute automatically<span class="unimplemented">, which can be disabled with <code>data-multiple="false"</code></span>.
 			These elements are:</p>
@@ -131,7 +131,7 @@
 		<h1><code>typeof</code> or <code>itemscope</code> or <code>itemtype</code></h1>
 
 		<p>Makes the element a scope.
-			Rarely needed explicitly, it can usually be inferred from the rest of the markup and the Wysie attributes.
+			Rarely needed explicitly, it can usually be inferred from the rest of the markup and the Mavo attributes.
 			If provided without a value or inferred, its value will be “Item”.
 		</p>
 
@@ -254,7 +254,7 @@
 
 <script src="../bliss/bliss.js"></script>
 <script src="docs.js"></script>
-<script src="../wysie.js"></script>
+<script src="../mavo.js"></script>
 <script src="../website/prism.js"></script>
 
 </body>

@@ -1,6 +1,6 @@
 (function($, $$) {
 
-var _ = Wysie.Debug = {
+var _ = Mavo.Debug = {
 	friendlyError: (e, expr) => {
 		var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
 		var message = e.message;
@@ -71,12 +71,12 @@ var _ = Wysie.Debug = {
 			return `Group with ${Object.keys(obj).length} properties`;
 		}
 
-		if (obj instanceof Wysie.Primitive) {
+		if (obj instanceof Mavo.Primitive) {
 			return _.printValue(obj.value);
 		}
-		else if (obj instanceof Wysie.Collection) {
+		else if (obj instanceof Mavo.Collection) {
 			if (obj.items.length > 0) {
-				if (obj.items[0] instanceof Wysie.Scope) {
+				if (obj.items[0] instanceof Mavo.Scope) {
 					return `List: ${obj.items.length} group(s)`;
 				}
 				else {
@@ -87,7 +87,7 @@ var _ = Wysie.Debug = {
 				return _.printValue([]);
 			}
 		}
-		else if (obj instanceof Wysie.Scope) {
+		else if (obj instanceof Mavo.Scope) {
 			// Group
 			return `Group with ${obj.propertyNames.length} properties`;
 		}
@@ -138,16 +138,16 @@ var _ = Wysie.Debug = {
 	reservedWords: "as|async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|finally|for|from|function|get|if|implements|import|in|instanceof|interface|let|new|null|of|package|private|protected|public|return|set|static|super|switch|this|throw|try|typeof|var|void|while|with|yield".split("|")
 };
 
-Wysie.prototype.render = _.timed("render", Wysie.prototype.render);
+Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 
-Wysie.selectors.debug = ".debug";
+Mavo.selectors.debug = ".debug";
 
-var selector = ", .wysie-debuginfo";
-Wysie.Expressions.escape += selector;
+var selector = ", .mv-debuginfo";
+Mavo.Expressions.escape += selector;
 Stretchy.selectors.filter += selector;
 
 // Add element to show saved data
-Wysie.hooks.add("init-tree-after", function() {
+Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
 		this.wrapper.classList.add("debug-saving");
 	}
@@ -156,7 +156,7 @@ Wysie.hooks.add("init-tree-after", function() {
 		var element;
 
 		var details = $.create("details", {
-			className: "wysie-debug-storage",
+			className: "mv-debug-storage",
 			contents: [
 				{tag: "Summary", textContent: "Saved data"},
 				element = $.create("pre", {id: this.id + "-debug-storage"})
@@ -186,7 +186,7 @@ Wysie.hooks.add("init-tree-after", function() {
 	}
 });
 
-Wysie.hooks.add("render-start", function({data}) {
+Mavo.hooks.add("render-start", function({data}) {
 	if (this.storage && this.wrapper.classList.contains("debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
@@ -196,14 +196,14 @@ Wysie.hooks.add("render-start", function({data}) {
 	}
 });
 
-Wysie.hooks.add("scope-init-start", function() {
+Mavo.hooks.add("scope-init-start", function() {
 	this.debug = this.debug || this.walkUp(scope => {
 		if (scope.debug) {
 			return true;
 		}
 	}) || /[?&]debug\b/i.test(location.search);
 
-	if (!this.debug && this.element.closest(Wysie.selectors.debug)) {
+	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;
 	}
 
@@ -220,7 +220,7 @@ Wysie.hooks.add("scope-init-start", function() {
 					display: "none"
 				},
 				inside: $.create("details", {
-					className: "wysie-ui wysie-debuginfo",
+					className: "mv-ui mv-debuginfo",
 					inside: this.element,
 					contents: $.create("summary", {
 						textContent: "Debug"
@@ -231,30 +231,30 @@ Wysie.hooks.add("scope-init-start", function() {
 	}
 }, true);
 
-Wysie.hooks.add("unit-init-end", function() {
+Mavo.hooks.add("unit-init-end", function() {
 	if (this.collection) {
 		this.debug = this.collection.debug;
 	}
 });
 
-Wysie.hooks.add("expressions-init-start", function() {
+Mavo.hooks.add("expressions-init-start", function() {
 	this.debug = this.scope.debug;
 });
 
-Wysie.hooks.add("expression-eval-beforeeval", function() {
+Mavo.hooks.add("expression-eval-beforeeval", function() {
 	if (this.debug) {
 		this.debug.classList.remove("error");
 	}
 });
 
-Wysie.hooks.add("expression-eval-error", function(env) {
+Mavo.hooks.add("expression-eval-error", function(env) {
 	if (this.debug) {
 		this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
 		this.debug.classList.add("error");
 	}
 });
 
-Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
+Mavo.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
 	if (!this.debug) {
 		return;
 	}
@@ -275,7 +275,7 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 			title: elementLabel,
 			events: {
 				"mouseenter mouseleave": evt => {
-					element.classList.toggle("wysie-highlight", evt.type === "mouseenter");
+					element.classList.toggle("mv-highlight", evt.type === "mouseenter");
 				},
 				"click": evt => {
 					element.scrollIntoView({behavior: "smooth"});
@@ -303,12 +303,12 @@ Wysie.Scope.prototype.debugRow = function({element, attribute = null, tds = []})
 	});
 };
 
-Wysie.hooks.add("expressiontext-init-end", function() {
+Mavo.hooks.add("expressiontext-init-end", function() {
 	if (this.scope.debug) {
 		this.debug = {};
 
 		this.template.forEach(expr => {
-			if (expr instanceof Wysie.Expression) {
+			if (expr instanceof Mavo.Expression) {
 				this.scope.debugRow({
 					element: this.element,
 					attribute: this.attribute,
@@ -336,12 +336,12 @@ Wysie.hooks.add("expressiontext-init-end", function() {
 	}
 });
 
-Wysie.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-end", function() {
 	// TODO make properties update, collapse duplicate expressions
 	if (this.debug instanceof Node) {
 		// We have a debug table, add stuff to it
 
-		var selector = Wysie.selectors.andNot(Wysie.selectors.multiple, Wysie.selectors.property);
+		var selector = Mavo.selectors.andNot(Mavo.selectors.multiple, Mavo.selectors.property);
 		$$(selector, this.element).forEach(element => {
 			this.debugRow({
 				element,
@@ -374,7 +374,7 @@ Wysie.hooks.add("scope-init-end", function() {
 			}
 		});
 
-		this.scope.element.addEventListener("wysie:datachange", evt => {
+		this.scope.element.addEventListener("mavo:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
 				var value = _.printValue(this.properties[property]);
@@ -388,7 +388,7 @@ Wysie.hooks.add("scope-init-end", function() {
 	}
 });
 
-Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
+Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 	if (this.debug) {
 		env.td = env.expr.debug;
 
@@ -398,13 +398,13 @@ Wysie.hooks.add("expressiontext-update-beforeeval", function(env) {
 	}
 });
 
-Wysie.hooks.add("expressiontext-update-aftereval", function(env) {
+Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
 	if (env.td && !env.td.classList.contains("error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;
 	}
 });
 
-// Wysie.Debug.time("Wysie.Expressions.prototype", "update");
+// Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);

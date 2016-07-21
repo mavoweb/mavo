@@ -1,5 +1,5 @@
 // Image upload widget via imgur
-Wysie.Primitive.editors.img = {
+Mavo.Primitive.editors.img = {
 	create: function() {
 		var root = $.create("div", {
 			className: "image-popup",
