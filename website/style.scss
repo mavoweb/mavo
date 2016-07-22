@@ -129,12 +129,12 @@ body > header {
 	justify-content: space-between;
 	flex-flow: row;
 	clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
-	background: black;
+	background: #222;
 	color: white;
 
 	.button {
 		--color: white;
-		--background: black;
+		--background: #222;
 	}
 
 	.logo {

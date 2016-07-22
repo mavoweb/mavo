@@ -103,11 +103,11 @@ body > header {
   flex-flow: row;
   -webkit-clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
   clip-path: polygon(0% 0%, 100% 0%, 100% calc(100% - 1.5em), 0% 100%);
-  background: black;
+  background: #222;
   color: white; }
   body > header .button {
     --color: white;
-    --background: black; }
+    --background: #222; }
   body > header .logo {
     margin: 0; }
     body > header .logo img {
