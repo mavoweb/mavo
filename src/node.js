@@ -13,7 +13,7 @@ var _ = Mavo.Node = $.Class({
 		this.mavo = mavo;
 
 		if (!this.fromTemplate(["property", "type"])) {
-			this.property = _.normalizeProperty(element);
+			this.property = _.getProperty(element);
 			this.type = Mavo.Scope.normalize(element);
 		}
 
@@ -173,8 +173,10 @@ var _ = Mavo.Node = $.Class({
 			return Mavo.Unit.create(...arguments);
 		},
 
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
+		/**
+		 * Get & normalize property name, if exists
+		 */
+		getProperty: function(element) {
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 			if (!property && element.hasAttribute("property")) {

@@ -105,7 +105,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 		}
 
-		this.expression = this.text.trim();
+		this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
 		this.template = o.template? o.template.template : this.tokenize(this.expression);
 
 		// Is this a computed property?
@@ -120,25 +120,12 @@ var _ = Mavo.Expression.Text = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	get text() {
-		return this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent;
-	},
-
-	set text(value) {
-		this.oldText = this.text;
-
-		if (this.primitive) {
-			this.primitive.value = value;
-		}
-		else {
-			Mavo.Primitive.setValue(this.node, value, this.attribute);
-		}
-	},
-
 	update: function(data) {
 		this.data = data;
 
-		this.value = this.template.map(expr => {
+		var ret = {};
+
+		ret.value = this.value = this.template.map(expr => {
 			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
@@ -159,25 +146,44 @@ var _ = Mavo.Expression.Text = $.Class({
 			return expr;
 		});
 
-		// Presentation text
-		var text = this.value.map(value => {
-			if (Array.isArray(value)) {
-				return value.join(", ");
-			}
+		if (!this.attribute) {
+			// Separate presentational & actual values only apply when content is variable
+			ret.presentational = this.value.map(value => {
+				if (Array.isArray(value)) {
+					return value.join(", ");
+				}
 
-			return value;
-		});
+				if (typeof value == "number") {
+					return Mavo.Primitive.formatNumber(value);
+				}
+
+				return value;
+			});
+
+			ret.presentational = ret.presentational.length === 1? ret.presentational[0] : ret.presentational.join("");
+		}
+
+		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
 
 		if (this.primitive && this.template.length === 1) {
-			if (typeof this.value[0] === "number") {
+			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
 			}
-			else if (typeof this.value[0] === "boolean") {
+			else if (typeof ret.value === "boolean") {
 				this.primitive.datatype = "boolean";
 			}
 		}
 
-		this.text = text.length === 1? text[0] : text.join("");
+		if (ret.presentational === ret.value) {
+			ret = ret.value;
+		}
+
+		if (this.primitive) {
+			this.primitive.value = ret;
+		}
+		else {
+			Mavo.Primitive.setValue(this.node, ret, this.attribute, {presentational: ret.presentational});
+		}
 	},
 
 	tokenize: function(template) {
@@ -205,8 +211,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		return ret;
 	},
-
-	lazy: {},
 
 	proxy: {
 		scope: "all",
@@ -299,9 +303,7 @@ var _ = Mavo.Expressions = $.Class({
 		this.updateAlso = new Set();
 
 		this.active = true;
-	},
 
-	init: function() {
 		if (this.all.length > 0) {
 			this.update();
 
@@ -397,7 +399,6 @@ Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {
 		if (obj instanceof Mavo.Scope) {
 			new Mavo.Expressions(obj);
-			obj.expressions.init();
 		}
 	});
 });
@@ -410,14 +411,13 @@ Mavo.hooks.add("scope-init-end", function() {
 			new Mavo.Expressions(this);
 		}
 
-		this.expressions.init();
-
 		this.expressions.update();
 	});
 });
 
 Mavo.hooks.add("scope-render-start", function() {
 	if (!this.expressions) {
+		// ??? How can it not have expressions by now?!
 		new Mavo.Expressions(this);
 	}
 

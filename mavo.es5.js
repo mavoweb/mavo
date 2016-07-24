@@ -990,7 +990,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.store = dataStore === "none" ? null : dataStore;
 
 			// Assign a unique (for the page) id to this mavo instance
-			this.id = Mavo.Node.normalizeProperty(element) || element.id || "mv-" + _.all.length;
+			this.id = Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
 
 			this.autoEdit = _.has("autoedit", element);
 
@@ -1065,6 +1065,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			Mavo.hooks.run("init-tree-after", this);
 
+			this.walk(function (obj) {
+				if (obj.unsavedChanges) {
+					obj.unsavedChanges = false;
+				}
+			});
+
 			this.permissions = new Mavo.Permissions(null, this);
 
 			var inlineBar = this.wrapper.hasAttribute("data-bar") ? this.wrapper.matches("[data-bar~=inline]") : _.all.length > 1 && getComputedStyle(this.wrapper).transform == "none";
@@ -1117,48 +1123,51 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			this.permissions.can("save", function () {
-				_this.ui.save = $.create("button", {
-					className: "save",
-					textContent: "Save",
-					events: {
-						click: function click(e) {
-							return _this.save();
-						},
-						"mouseenter focus": function mouseenterFocus(e) {
-							_this.wrapper.classList.add("save-hovered");
-							_this.unsavedChanges = _this.calculateUnsavedChanges();
-						},
-						"mouseleave blur": function mouseleaveBlur(e) {
-							return _this.wrapper.classList.remove("save-hovered");
-						}
-					},
-					inside: _this.ui.bar
-				});
-
-				_this.ui.revert = $.create("button", {
-					className: "revert",
-					textContent: "Revert",
-					disabled: true,
-					events: {
-						click: function click(e) {
-							return _this.revert();
-						},
-						"mouseenter focus": function mouseenterFocus(e) {
-							if (_this.everSaved) {
-								_this.wrapper.classList.add("revert-hovered");
+			if (this.needsEdit) {
+				this.permissions.can("save", function () {
+					_this.ui.save = $.create("button", {
+						className: "save",
+						textContent: "Save",
+						events: {
+							click: function click(e) {
+								return _this.save();
+							},
+							"mouseenter focus": function mouseenterFocus(e) {
+								_this.wrapper.classList.add("save-hovered");
 								_this.unsavedChanges = _this.calculateUnsavedChanges();
+							},
+							"mouseleave blur": function mouseleaveBlur(e) {
+								return _this.wrapper.classList.remove("save-hovered");
 							}
 						},
-						"mouseleave blur": function mouseleaveBlur(e) {
-							return _this.wrapper.classList.remove("revert-hovered");
-						}
-					},
-					inside: _this.ui.bar
+						inside: _this.ui.bar
+					});
+
+					_this.ui.revert = $.create("button", {
+						className: "revert",
+						textContent: "Revert",
+						disabled: true,
+						events: {
+							click: function click(e) {
+								return _this.revert();
+							},
+							"mouseenter focus": function mouseenterFocus(e) {
+								if (!_this.unsavedChanges) {
+									_this.wrapper.classList.add("revert-hovered");
+									_this.unsavedChanges = _this.calculateUnsavedChanges();
+								}
+							},
+							"mouseleave blur": function mouseleaveBlur(e) {
+								return _this.wrapper.classList.remove("revert-hovered");
+							}
+						},
+						inside: _this.ui.bar
+					});
+				}, function () {
+					$.remove([_this.ui.save, _this.ui.revert]);
+					_this.ui.save = _this.ui.revert = null;
 				});
-			}, function () {
-				$.remove([_this.ui.save, _this.ui.revert]);
-			});
+			}
 
 			this.permissions.can("delete", function () {
 				_this.ui.clear = $.create("button", {
@@ -1216,8 +1225,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.hooks.run("render-start", { context: this, data: data });
 
 			if (data) {
-				this.everSaved = true;
-				this.root.render(data.data || data);
+				this.root.render(data);
 			}
 
 			this.unsavedChanges = false;
@@ -1283,7 +1291,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.storage.save();
 			}
 
-			this.everSaved = true;
 			this.unsavedChanges = false;
 		},
 
@@ -1313,12 +1320,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (this.ui && this.ui.save) {
 					this.ui.save.disabled = !value;
-					this.ui.revert.disabled = !this.everSaved || !value;
-				}
-			},
-
-			everSaved: function everSaved(value) {
-				if (this.ui && this.ui.revert) {
 					this.ui.revert.disabled = !value;
 				}
 			}
@@ -2127,7 +2128,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mavo = mavo;
 
 			if (!this.fromTemplate(["property", "type"])) {
-				this.property = _.normalizeProperty(element);
+				this.property = _.getProperty(element);
 				this.type = Mavo.Scope.normalize(element);
 			}
 
@@ -2304,8 +2305,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return (_Mavo$Unit = Mavo.Unit).create.apply(_Mavo$Unit, arguments);
 			},
 
-			normalizeProperty: function normalizeProperty(element) {
-				// Get & normalize property name, if exists
+			/**
+    * Get & normalize property name, if exists
+    */
+			getProperty: function getProperty(element) {
 				var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 				if (!property && element.hasAttribute("property")) {
@@ -2336,6 +2339,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.constructor.all.set(this.element, this);
 
 			this.collection = o.collection;
+			this.dirty = o.dirty;
 
 			if (this.collection) {
 				// This is a collection item
@@ -2367,7 +2371,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			o = o || {};
 
 			var isNull = function isNull(unit) {
-				return !unit.everSaved && !o.dirty || unit.deleted && o.dirty || unit.computed && !o.computed || unit.placeholder;
+				return unit.dirty && !o.dirty || unit.deleted && o.dirty || unit.computed && !o.computed || unit.placeholder;
 			};
 
 			if (isNull(this)) {
@@ -2440,7 +2444,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
-				if (this.placeholder) {
+				if (value && (this.placeholder || this.computed || !this.editing)) {
 					value = false;
 				}
 
@@ -2580,7 +2584,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 
-				this.expression = this.text.trim();
+				this.expression = (this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
 				this.template = o.template ? o.template.template : this.tokenize(this.expression);
 
 				// Is this a computed property?
@@ -2595,26 +2599,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 			},
 
-			get text() {
-				return this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent;
-			},
-
-			set text(value) {
-				this.oldText = this.text;
-
-				if (this.primitive) {
-					this.primitive.value = value;
-				} else {
-					Mavo.Primitive.setValue(this.node, value, this.attribute);
-				}
-			},
-
 			update: function update(data) {
 				var _this15 = this;
 
 				this.data = data;
 
-				this.value = this.template.map(function (expr) {
+				var ret = {};
+
+				ret.value = this.value = this.template.map(function (expr) {
 					if (expr instanceof Mavo.Expression) {
 						var env = { context: _this15, expr: expr };
 
@@ -2635,24 +2627,42 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return expr;
 				});
 
-				// Presentation text
-				var text = this.value.map(function (value) {
-					if (Array.isArray(value)) {
-						return value.join(", ");
-					}
+				if (!this.attribute) {
+					// Separate presentational & actual values only apply when content is variable
+					ret.presentational = this.value.map(function (value) {
+						if (Array.isArray(value)) {
+							return value.join(", ");
+						}
 
-					return value;
-				});
+						if (typeof value == "number") {
+							return Mavo.Primitive.formatNumber(value);
+						}
+
+						return value;
+					});
+
+					ret.presentational = ret.presentational.length === 1 ? ret.presentational[0] : ret.presentational.join("");
+				}
+
+				ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
 
 				if (this.primitive && this.template.length === 1) {
-					if (typeof this.value[0] === "number") {
+					if (typeof ret.value === "number") {
 						this.primitive.datatype = "number";
-					} else if (typeof this.value[0] === "boolean") {
+					} else if (typeof ret.value === "boolean") {
 						this.primitive.datatype = "boolean";
 					}
 				}
 
-				this.text = text.length === 1 ? text[0] : text.join("");
+				if (ret.presentational === ret.value) {
+					ret = ret.value;
+				}
+
+				if (this.primitive) {
+					this.primitive.value = ret;
+				} else {
+					Mavo.Primitive.setValue(this.node, ret, this.attribute, { presentational: ret.presentational });
+				}
 			},
 
 			tokenize: function tokenize(template) {
@@ -2682,8 +2692,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				return ret;
 			},
-
-			lazy: {},
 
 			proxy: {
 				scope: "all",
@@ -2777,17 +2785,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.updateAlso = new Set();
 
 				this.active = true;
-			},
-
-			init: function init() {
-				var _this17 = this;
 
 				if (this.all.length > 0) {
 					this.update();
 
 					// Watch changes and update value
 					this.scope.element.addEventListener("mavo:datachange", function (evt) {
-						return _this17.update();
+						return _this16.update();
 					});
 				}
 			},
@@ -2830,7 +2834,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
 			traverse: function traverse(node, path) {
-				var _this18 = this;
+				var _this17 = this;
 
 				node = node || this.scope.element;
 				path = path || "";
@@ -2849,10 +2853,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// (otherwise, it will be taken care of its own Expressions object)
 				if (node == this.scope.element || !Mavo.is("scope", node)) {
 					$$(node.attributes).forEach(function (attribute) {
-						return _this18.extract(node, attribute, path);
+						return _this17.extract(node, attribute, path);
 					});
 					$$(node.childNodes).forEach(function (child, i) {
-						return _this18.traverse(child, path + "/" + i);
+						return _this17.traverse(child, path + "/" + i);
 					});
 				}
 			},
@@ -2887,29 +2891,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		this.walk(function (obj) {
 			if (obj instanceof Mavo.Scope) {
 				new Mavo.Expressions(obj);
-				obj.expressions.init();
 			}
 		});
 	});
 
 	Mavo.hooks.add("scope-init-end", function () {
-		var _this19 = this;
+		var _this18 = this;
 
 		requestAnimationFrame(function () {
 			// Tree expressions are processed synchronously, so by now if it doesn't have
 			// an expressions object, we need to create it.
-			if (!_this19.expressions) {
-				new Mavo.Expressions(_this19);
+			if (!_this18.expressions) {
+				new Mavo.Expressions(_this18);
 			}
 
-			_this19.expressions.init();
-
-			_this19.expressions.update();
+			_this18.expressions.update();
 		});
 	});
 
 	Mavo.hooks.add("scope-render-start", function () {
 		if (!this.expressions) {
+			// ??? How can it not have expressions by now?!
 			new Mavo.Expressions(this);
 		}
 
@@ -2917,11 +2919,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	Mavo.hooks.add("scope-render-end", function () {
-		var _this20 = this;
+		var _this19 = this;
 
 		requestAnimationFrame(function () {
-			_this20.expressions.active = true;
-			_this20.expressions.update();
+			_this19.expressions.active = true;
+			_this19.expressions.update();
 		});
 	});
 })(Bliss, Bliss.$);
@@ -3174,7 +3176,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var _ = Mavo.Scope = $.Class({
 		extends: Mavo.Unit,
 		constructor: function constructor(element, mavo, o) {
-			var _this21 = this;
+			var _this20 = this;
 
 			this.properties = {};
 
@@ -3190,21 +3192,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Create Mavo objects for all properties in this scope (primitives or scopes),
 			// but not properties in descendant scopes (they will be handled by their scope)
 			$$(Mavo.selectors.property, this.element).forEach(function (element) {
-				var property = element.getAttribute("property");
+				var property = Mavo.Node.getProperty(element);
 
-				if (_this21.contains(element)) {
-					var existing = _this21.properties[property];
-					var template = _this21.template ? _this21.template.properties[property] : null;
-					var constructorOptions = { template: template, scope: _this21 };
+				if (_this20.contains(element)) {
+					var existing = _this20.properties[property];
+					var template = _this20.template ? _this20.template.properties[property] : null;
+					var constructorOptions = { template: template, scope: _this20 };
 
 					if (existing) {
 						// Two scopes with the same property, convert to static collection
 						var collection = existing;
 
 						if (!(existing instanceof Mavo.Collection)) {
-							collection = new Mavo.Collection(existing.element, _this21.mavo, constructorOptions);
-							collection.parentScope = _this21;
-							_this21.properties[property] = existing.collection = collection;
+							collection = new Mavo.Collection(existing.element, _this20.mavo, constructorOptions);
+							_this20.properties[property] = existing.collection = collection;
 							collection.add(existing);
 						}
 
@@ -3215,9 +3216,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						collection.add(element);
 					} else {
 						// No existing properties with this id, normal case
-						var obj = Mavo.Node.create(element, _this21.mavo, constructorOptions);
+						var obj = Mavo.Node.create(element, _this20.mavo, constructorOptions);
 
-						_this21.properties[property] = obj;
+						_this20.properties[property] = obj;
 					}
 				}
 			});
@@ -3245,6 +3246,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			ret = {};
 
 			this.propagate(function (obj) {
+
 				if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 					var data = obj.getData(o);
 
@@ -3296,7 +3298,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return false;
 			}
 
-			this.everSaved = true;
 			this.unsavedChanges = false;
 		},
 
@@ -3308,7 +3309,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Inject data in this element
 		render: function render(data) {
-			var _this22 = this;
+			var _this21 = this;
 
 			if (!data) {
 				this.clear();
@@ -3324,7 +3325,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// In that case, render the this.properties[this.property] with it
 
 			this.unhandled = $.extend({}, data, function (property) {
-				return !(property in _this22.properties);
+				return !(property in _this21.properties);
 			});
 
 			this.propagate(function (obj) {
@@ -3370,7 +3371,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var _ = Mavo.Primitive = $.Class({
 		extends: Mavo.Unit,
 		constructor: function constructor(element, mavo, o) {
-			var _this23 = this;
+			var _this22 = this;
 
 			if (!this.fromTemplate(["attribute", "datatype", "humanReadable", "computed", "templateValue"])) {
 				// Which attribute holds the data, if any?
@@ -3407,20 +3408,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					$.remove(this.editor);
 				}
 
-			if (!this.exposed && !this.computed) {
-				this.mavo.needsEdit = true;
-			}
-
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
 			// so we cannot depend on mutation observers for everything :(
 			if (!this.computed) {
 				this.observer = Mavo.observe(this.element, this.attribute, function (record) {
-					if (_this23.attribute || !_this23.mavo.editing) {
-						_this23.value = _this23.getValue();
+					if (_this22.attribute || !_this22.mavo.editing) {
+						_this22.value = _this22.getValue();
 					}
 				}, true);
 			}
+
+			requestAnimationFrame(function () {
+				if (!_this22.exposed && !_this22.computed) {
+					_this22.mavo.needsEdit = true;
+				}
+			});
 
 			this.default = this.element.getAttribute("data-default");
 
@@ -3439,13 +3442,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.collection) {
 				// Collection of primitives, deal with setting textContent etc without the UI interfering.
 				var swapUI = function swapUI(callback) {
-					_this23.unobserve();
-					var ui = $.remove($(Mavo.selectors.ui, _this23.element));
+					_this22.unobserve();
+					var ui = $.remove($(Mavo.selectors.ui, _this22.element));
 
 					var ret = callback();
 
-					$.inside(ui, _this23.element);
-					_this23.observe();
+					$.inside(ui, _this22.element);
+					_this22.observe();
 
 					return ret;
 				};
@@ -3454,27 +3457,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				["textContent", "innerHTML"].forEach(function (property) {
 					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-					Object.defineProperty(_this23.element, property, {
+					Object.defineProperty(_this22.element, property, {
 						get: function get() {
-							var _this24 = this;
+							var _this23 = this;
 
 							return swapUI(function () {
-								return descriptor.get.call(_this24);
+								return descriptor.get.call(_this23);
 							});
 						},
 
 						set: function set(value) {
-							var _this25 = this;
+							var _this24 = this;
 
 							swapUI(function () {
-								return descriptor.set.call(_this25, value);
+								return descriptor.set.call(_this24, value);
 							});
 						}
 					});
 				});
 			}
 
-			this.value = this.getValue({ raw: true }); // no need to run setter code
+			this.value = this.getValue({ raw: true });
 		},
 
 		get editorValue() {
@@ -3539,7 +3542,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.savedValue = this.value;
-			this.everSaved = true;
 			this.unsavedChanges = false;
 		},
 
@@ -3582,7 +3584,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		// Prepare to be edited
 		// Called when root edit button is pressed
 		preEdit: function preEdit() {
-			var _this26 = this;
+			var _this25 = this;
 
 			if (this.computed) {
 				return;
@@ -3600,19 +3602,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.element._.events({
 				// click is needed too because it works with the keyboard as well
 				"click.mavo:preedit": function clickMavoPreedit(e) {
-					return _this26.edit();
+					return _this25.edit();
 				},
 				"focus.mavo:preedit": function focusMavoPreedit(e) {
-					_this26.edit();
+					_this25.edit();
 
-					if (!_this26.popup) {
-						_this26.editor.focus();
+					if (!_this25.popup) {
+						_this25.editor.focus();
 					}
 				},
 				"click.mavo:edit": function clickMavoEdit(evt) {
 					// Prevent default actions while editing
 					// e.g. following links etc
-					if (!_this26.exposed) {
+					if (!_this25.exposed) {
 						evt.preventDefault();
 					}
 				}
@@ -3623,7 +3625,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					"mouseenter.mavo:preedit": function mouseenterMavoPreedit(e) {
 						clearTimeout(timer);
 						timer = setTimeout(function () {
-							return _this26.edit();
+							return _this25.edit();
 						}, 150);
 					},
 					"mouseleave.mavo:preedit": function mouseleaveMavoPreedit(e) {
@@ -3639,7 +3641,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Called only the first time this primitive is edited
 		initEdit: function initEdit() {
-			var _this27 = this;
+			var _this26 = this;
 
 			// Linked widgets
 			if (this.element.hasAttribute("data-input")) {
@@ -3679,49 +3681,48 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.editor._.events({
 				"input change": function inputChange(evt) {
-					var unsavedChanges = _this27.mavo.unsavedChanges;
+					var unsavedChanges = _this26.mavo.unsavedChanges;
 
-					_this27.value = _this27.editorValue;
+					_this26.value = _this26.editorValue;
 
 					// Editing exposed elements outside edit mode is instantly saved
-					if (_this27.exposed && !_this27.mavo.editing && // must not be in edit mode
-					_this27.mavo.permissions.save && // must be able to save
-					_this27.scope.everSaved // must not cause unsaved items to be saved
+					if (_this26.exposed && !_this26.mavo.editing && // must not be in edit mode
+					_this26.mavo.permissions.save // must be able to save
 					) {
 							// TODO what if change event never fires? What if user
-							_this27.unsavedChanges = false;
-							_this27.mavo.unsavedChanges = unsavedChanges;
+							_this26.unsavedChanges = false;
+							_this26.mavo.unsavedChanges = unsavedChanges;
 
 							// Must not save too many times (e.g. not while dragging a slider)
 							if (evt.type == "change") {
-								_this27.save(); // Save current element
+								_this26.save(); // Save current element
 
 								// Don’t call this.mavo.save() as it will save other fields too
 								// We only want to save exposed controls, so save current status
-								_this27.mavo.storage.save();
+								_this26.mavo.storage.save();
 
 								// Are there any unsaved changes from other properties?
-								_this27.mavo.unsavedChanges = _this27.mavo.calculateUnsavedChanges();
+								_this26.mavo.unsavedChanges = _this26.mavo.calculateUnsavedChanges();
 							}
 						}
 				},
 				"focus": function focus(evt) {
-					_this27.editor.select && _this27.editor.select();
+					_this26.editor.select && _this26.editor.select();
 				},
 				"keyup": function keyup(evt) {
-					if (_this27.popup && evt.keyCode == 13 || evt.keyCode == 27) {
-						if (_this27.popup.contains(document.activeElement)) {
-							_this27.element.focus();
+					if (_this26.popup && evt.keyCode == 13 || evt.keyCode == 27) {
+						if (_this26.popup.contains(document.activeElement)) {
+							_this26.element.focus();
 						}
 
 						evt.stopPropagation();
-						_this27.hidePopup();
+						_this26.hidePopup();
 					}
 				},
 				"mavo:datachange": function mavoDatachange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
-						$.fire(_this27.editor, "input");
+						$.fire(_this26.editor, "input");
 					}
 				}
 			});
@@ -3756,8 +3757,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					// Toggle popup events & methods
 					var hideCallback = function hideCallback(evt) {
-						if (!_this27.popup.contains(evt.target) && !_this27.element.contains(evt.target)) {
-							_this27.hidePopup();
+						if (!_this26.popup.contains(evt.target) && !_this26.element.contains(evt.target)) {
+							_this26.hidePopup();
 						}
 					};
 
@@ -3777,18 +3778,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					};
 
 					this.hidePopup = function () {
-						var _this28 = this;
+						var _this27 = this;
 
 						$.unbind(document, "focus click", hideCallback, true);
 
 						this.popup.setAttribute("hidden", ""); // trigger transition
 
 						setTimeout(function () {
-							$.remove(_this28.popup);
+							$.remove(_this27.popup);
 						}, 400); // TODO transition-duration could override this
 
 						$.events(this.element, "focus.mavo:showpopup click.mavo:showpopup", function (evt) {
-							_this28.showPopup();
+							_this27.showPopup();
 						}, true);
 					};
 				}
@@ -3870,6 +3871,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.observer.disconnect();
 		},
 
+		/**
+   * Get value from the DOM
+   */
 		getValue: function getValue(o) {
 			return _.getValue(this.element, this.attribute, this.datatype, o);
 		},
@@ -3893,35 +3897,37 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		live: {
 			value: function value(_value) {
+				var _this28 = this;
+
+				if ($.type(_value) == "object" && "value" in _value) {
+					var presentational = _value.presentational;
+					_value = _value.value;
+				}
+
 				_value = _value || _value === 0 ? _value : "";
 				_value = _.safeCast(_value, this.datatype);
 
 				if (_value == this._value) {
-					return;
+					return _value;
 				}
 
 				if (this.editor) {
 					this.editorValue = _value;
 				}
 
+				if (this.humanReadable && this.attribute) {
+					presentational = this.humanReadable(_value);
+				}
+
 				if (!this.editing || this.attribute) {
-					if (this.datatype == "number" && !this.attribute) {
-						_.setValue(this.element, _value, "content", this.datatype);
-						_.setValue(this.element, _.formatNumber(_value), null, this.datatype);
-					} else if (this.editor && this.editor.matches("select")) {
-						this.editorValue = _value;
-						_.setValue(this.element, _value, "content", this.datatype);
-						_.setValue(this.element, this.editor.selectedOptions[0] ? this.editor.selectedOptions[0].textContent : _value, this.attribute, this.datatype);
-					} else {
-						_.setValue(this.element, _value, this.attribute, this.datatype);
+					if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+						presentational = this.editor.selectedOptions[0].textContent;
 					}
+
+					_.setValue(this.element, { value: _value, presentational: presentational }, this.attribute, this.datatype);
 				}
 
 				this.empty = _value === "";
-
-				if (this.humanReadable && this.attribute) {
-					this.element.textContent = this.humanReadable(_value);
-				}
 
 				this._value = _value;
 
@@ -3929,16 +3935,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				$.fire(this.element, "mavo:datachange", {
-					property: this.property,
-					value: _value,
-					mavo: this.mavo,
-					node: this,
-					dirty: this.editing,
-					action: "propertychange"
+				requestAnimationFrame(function () {
+					$.fire(_this28.element, "mavo:datachange", {
+						property: _this28.property,
+						value: _value,
+						mavo: _this28.mavo,
+						node: _this28,
+						dirty: _this28.editing,
+						action: "propertychange"
+					});
 				});
 
-				this.oldValue = this.value;
+				return _value;
 			},
 
 			empty: function empty(value) {
@@ -4070,15 +4078,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					ret = element.getAttribute("content") || element.textContent || null;
 				}
 
-				if (_.safeCast(ret, datatype) === "null") {
-					console.log(ret, datatype);
-				}
-
 				return _.safeCast(ret, datatype);
-				return ret;
 			},
 
-			setValue: function setValue(element, value, attribute) {
+			setValue: function setValue(element, value, attribute, datatype) {
+				if ($.type(value) == "object" && "value" in value) {
+					var presentational = value.presentational;
+					value = value.value;
+				}
+
 				if (attribute !== null) {
 					attribute = attribute || _.getValueAttribute(element);
 				}
@@ -4097,9 +4105,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (element.getAttribute(attribute) != value) {
 						// intentionally non-strict, e.g. "3." !== 3
 						element.setAttribute(attribute, value);
+
+						if (presentational) {
+							element.textContent = presentational;
+						}
 					}
 				} else {
-					element.textContent = value;
+					if (datatype === "number" && !presentational) {
+						presentational = _.formatNumber(value);
+					}
+
+					element.textContent = presentational || value;
+
+					if (presentational) {
+						element.setAttribute("content", value);
+					}
 				}
 			},
 
@@ -4352,7 +4372,7 @@ Mavo.Primitive.editors.img = {
 					this.element = this.templateElement = div;
 				}
 
-				this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.normalizeProperty);
+				this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 				this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
 				// Must clone because otherwise once expressions are parsed on the template element
@@ -4413,7 +4433,8 @@ Mavo.Primitive.editors.img = {
 				collection: this,
 				template: this.itemTemplate || (this.template ? this.template.itemTemplate : null),
 				property: this.property,
-				type: this.type
+				type: this.type,
+				dirty: true
 			});
 
 			// If container is a fake "fragment", strip element naked
@@ -4594,7 +4615,7 @@ Mavo.Primitive.editors.img = {
 				if (item.deleted) {
 					_this31.delete(item, true);
 				} else {
-					item.unsavedChanges = false;
+					item.unsavedChanges = item.dirty = false;
 				}
 			});
 		},
@@ -4617,7 +4638,7 @@ Mavo.Primitive.editors.img = {
 
 			this.items.forEach(function (item, i) {
 				// Delete added items
-				if (!item.everSaved && !item.placeholder) {
+				if (item.unsavedChanges && !item.placeholder) {
 					_this33.delete(item, true);
 				} else {
 					// Bring back deleted items

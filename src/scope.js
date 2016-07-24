@@ -17,7 +17,7 @@ var _ = Mavo.Scope = $.Class({
 		// Create Mavo objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
 		$$(Mavo.selectors.property, this.element).forEach(element => {
-			var property = element.getAttribute("property");
+			var property = Mavo.Node.getProperty(element);
 
 			if (this.contains(element)) {
 				var existing = this.properties[property];
@@ -30,7 +30,6 @@ var _ = Mavo.Scope = $.Class({
 
 					if (!(existing instanceof Mavo.Collection)) {
 						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
 					}
@@ -73,6 +72,7 @@ var _ = Mavo.Scope = $.Class({
 		ret = {};
 
 		this.propagate(obj => {
+
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
@@ -122,7 +122,6 @@ var _ = Mavo.Scope = $.Class({
 			return false;
 		}
 
-		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 

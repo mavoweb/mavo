@@ -12,7 +12,7 @@ var _ = self.Mavo = $.Class({
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = Mavo.Node.normalizeProperty(element) || element.id || "mv-" + _.all.length;
+		this.id = Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -86,6 +86,12 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
+		this.walk(obj => {
+			if (obj.unsavedChanges) {
+				obj.unsavedChanges = false;
+			}
+		});
+
 		this.permissions = new Mavo.Permissions(null, this);
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
@@ -132,40 +138,43 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
-		this.permissions.can("save", () => {
-			this.ui.save = $.create("button", {
-				className: "save",
-				textContent: "Save",
-				events: {
-					click: e => this.save(),
-					"mouseenter focus": e => {
-						this.wrapper.classList.add("save-hovered");
-						this.unsavedChanges = this.calculateUnsavedChanges();
-					},
-					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
-				},
-				inside: this.ui.bar
-			});
-
-			this.ui.revert = $.create("button", {
-				className: "revert",
-				textContent: "Revert",
-				disabled: true,
-				events: {
-					click: e => this.revert(),
-					"mouseenter focus": e => {
-						if (this.everSaved) {
-							this.wrapper.classList.add("revert-hovered");
+		if (this.needsEdit) {
+			this.permissions.can("save", () => {
+				this.ui.save = $.create("button", {
+					className: "save",
+					textContent: "Save",
+					events: {
+						click: e => this.save(),
+						"mouseenter focus": e => {
+							this.wrapper.classList.add("save-hovered");
 							this.unsavedChanges = this.calculateUnsavedChanges();
-						}
+						},
+						"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
 					},
-					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
-				},
-				inside: this.ui.bar
+					inside: this.ui.bar
+				});
+
+				this.ui.revert = $.create("button", {
+					className: "revert",
+					textContent: "Revert",
+					disabled: true,
+					events: {
+						click: e => this.revert(),
+						"mouseenter focus": e => {
+							if (!this.unsavedChanges) {
+								this.wrapper.classList.add("revert-hovered");
+								this.unsavedChanges = this.calculateUnsavedChanges();
+							}
+						},
+						"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
+					},
+					inside: this.ui.bar
+				});
+			}, () => {
+				$.remove([this.ui.save, this.ui.revert]);
+				this.ui.save = this.ui.revert = null;
 			});
-		}, () => {
-			$.remove([this.ui.save, this.ui.revert]);
-		});
+		}
 
 		this.permissions.can("delete", () => {
 			this.ui.clear = $.create("button", {
@@ -218,8 +227,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			this.everSaved = true;
-			this.root.render(data.data || data);
+			this.root.render(data);
 		}
 
 		this.unsavedChanges = false;
@@ -285,7 +293,6 @@ var _ = self.Mavo = $.Class({
 			this.storage.save();
 		}
 
-		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 
@@ -316,12 +323,6 @@ var _ = self.Mavo = $.Class({
 
 			if (this.ui && this.ui.save) {
 				this.ui.save.disabled = !value;
-				this.ui.revert.disabled = !this.everSaved || !value;
-			}
-		},
-
-		everSaved: function(value) {
-			if (this.ui && this.ui.revert) {
 				this.ui.revert.disabled = !value;
 			}
 		}

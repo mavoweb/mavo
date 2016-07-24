@@ -10,6 +10,7 @@ var _ = Mavo.Unit = $.Class({
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
+		this.dirty = o.dirty;
 
 		if (this.collection) {
 			// This is a collection item
@@ -40,10 +41,10 @@ var _ = Mavo.Unit = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		var isNull = unit => !unit.everSaved && !o.dirty ||
-		                      unit.deleted && o.dirty ||
-		                      unit.computed && !o.computed ||
-		                      unit.placeholder;
+		var isNull = unit => unit.dirty && !o.dirty ||
+		                     unit.deleted && o.dirty ||
+		                     unit.computed && !o.computed ||
+		                     unit.placeholder;
 
 		if (isNull(this)) {
 			return null;
@@ -115,7 +116,7 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			if (this.placeholder) {
+			if (value && (this.placeholder || this.computed || !this.editing)) {
 				value = false;
 			}
 

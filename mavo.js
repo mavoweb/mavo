@@ -1014,7 +1014,7 @@ var _ = self.Mavo = $.Class({
 		this.store = dataStore === "none"? null : dataStore;
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = Mavo.Node.normalizeProperty(element) || element.id || "mv-" + _.all.length;
+		this.id = Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -1088,6 +1088,12 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
+		this.walk(obj => {
+			if (obj.unsavedChanges) {
+				obj.unsavedChanges = false;
+			}
+		});
+
 		this.permissions = new Mavo.Permissions(null, this);
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
@@ -1134,40 +1140,43 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
-		this.permissions.can("save", () => {
-			this.ui.save = $.create("button", {
-				className: "save",
-				textContent: "Save",
-				events: {
-					click: e => this.save(),
-					"mouseenter focus": e => {
-						this.wrapper.classList.add("save-hovered");
-						this.unsavedChanges = this.calculateUnsavedChanges();
-					},
-					"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
-				},
-				inside: this.ui.bar
-			});
-
-			this.ui.revert = $.create("button", {
-				className: "revert",
-				textContent: "Revert",
-				disabled: true,
-				events: {
-					click: e => this.revert(),
-					"mouseenter focus": e => {
-						if (this.everSaved) {
-							this.wrapper.classList.add("revert-hovered");
+		if (this.needsEdit) {
+			this.permissions.can("save", () => {
+				this.ui.save = $.create("button", {
+					className: "save",
+					textContent: "Save",
+					events: {
+						click: e => this.save(),
+						"mouseenter focus": e => {
+							this.wrapper.classList.add("save-hovered");
 							this.unsavedChanges = this.calculateUnsavedChanges();
-						}
+						},
+						"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
 					},
-					"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
-				},
-				inside: this.ui.bar
+					inside: this.ui.bar
+				});
+
+				this.ui.revert = $.create("button", {
+					className: "revert",
+					textContent: "Revert",
+					disabled: true,
+					events: {
+						click: e => this.revert(),
+						"mouseenter focus": e => {
+							if (!this.unsavedChanges) {
+								this.wrapper.classList.add("revert-hovered");
+								this.unsavedChanges = this.calculateUnsavedChanges();
+							}
+						},
+						"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
+					},
+					inside: this.ui.bar
+				});
+			}, () => {
+				$.remove([this.ui.save, this.ui.revert]);
+				this.ui.save = this.ui.revert = null;
 			});
-		}, () => {
-			$.remove([this.ui.save, this.ui.revert]);
-		});
+		}
 
 		this.permissions.can("delete", () => {
 			this.ui.clear = $.create("button", {
@@ -1220,8 +1229,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			this.everSaved = true;
-			this.root.render(data.data || data);
+			this.root.render(data);
 		}
 
 		this.unsavedChanges = false;
@@ -1287,7 +1295,6 @@ var _ = self.Mavo = $.Class({
 			this.storage.save();
 		}
 
-		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 
@@ -1318,12 +1325,6 @@ var _ = self.Mavo = $.Class({
 
 			if (this.ui && this.ui.save) {
 				this.ui.save.disabled = !value;
-				this.ui.revert.disabled = !this.everSaved || !value;
-			}
-		},
-
-		everSaved: function(value) {
-			if (this.ui && this.ui.revert) {
 				this.ui.revert.disabled = !value;
 			}
 		}
@@ -2050,7 +2051,7 @@ var _ = Mavo.Node = $.Class({
 		this.mavo = mavo;
 
 		if (!this.fromTemplate(["property", "type"])) {
-			this.property = _.normalizeProperty(element);
+			this.property = _.getProperty(element);
 			this.type = Mavo.Scope.normalize(element);
 		}
 
@@ -2210,8 +2211,10 @@ var _ = Mavo.Node = $.Class({
 			return Mavo.Unit.create(...arguments);
 		},
 
-		normalizeProperty: function(element) {
-			// Get & normalize property name, if exists
+		/**
+		 * Get & normalize property name, if exists
+		 */
+		getProperty: function(element) {
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 			if (!property && element.hasAttribute("property")) {
@@ -2241,6 +2244,7 @@ var _ = Mavo.Unit = $.Class({
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
+		this.dirty = o.dirty;
 
 		if (this.collection) {
 			// This is a collection item
@@ -2271,10 +2275,10 @@ var _ = Mavo.Unit = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		var isNull = unit => !unit.everSaved && !o.dirty ||
-		                      unit.deleted && o.dirty ||
-		                      unit.computed && !o.computed ||
-		                      unit.placeholder;
+		var isNull = unit => unit.dirty && !o.dirty ||
+		                     unit.deleted && o.dirty ||
+		                     unit.computed && !o.computed ||
+		                     unit.placeholder;
 
 		if (isNull(this)) {
 			return null;
@@ -2346,7 +2350,7 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			if (this.placeholder) {
+			if (value && (this.placeholder || this.computed || !this.editing)) {
 				value = false;
 			}
 
@@ -2486,7 +2490,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 		}
 
-		this.expression = this.text.trim();
+		this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
 		this.template = o.template? o.template.template : this.tokenize(this.expression);
 
 		// Is this a computed property?
@@ -2501,25 +2505,12 @@ var _ = Mavo.Expression.Text = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	get text() {
-		return this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent;
-	},
-
-	set text(value) {
-		this.oldText = this.text;
-
-		if (this.primitive) {
-			this.primitive.value = value;
-		}
-		else {
-			Mavo.Primitive.setValue(this.node, value, this.attribute);
-		}
-	},
-
 	update: function(data) {
 		this.data = data;
 
-		this.value = this.template.map(expr => {
+		var ret = {};
+
+		ret.value = this.value = this.template.map(expr => {
 			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
@@ -2540,25 +2531,44 @@ var _ = Mavo.Expression.Text = $.Class({
 			return expr;
 		});
 
-		// Presentation text
-		var text = this.value.map(value => {
-			if (Array.isArray(value)) {
-				return value.join(", ");
-			}
+		if (!this.attribute) {
+			// Separate presentational & actual values only apply when content is variable
+			ret.presentational = this.value.map(value => {
+				if (Array.isArray(value)) {
+					return value.join(", ");
+				}
 
-			return value;
-		});
+				if (typeof value == "number") {
+					return Mavo.Primitive.formatNumber(value);
+				}
+
+				return value;
+			});
+
+			ret.presentational = ret.presentational.length === 1? ret.presentational[0] : ret.presentational.join("");
+		}
+
+		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
 
 		if (this.primitive && this.template.length === 1) {
-			if (typeof this.value[0] === "number") {
+			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
 			}
-			else if (typeof this.value[0] === "boolean") {
+			else if (typeof ret.value === "boolean") {
 				this.primitive.datatype = "boolean";
 			}
 		}
 
-		this.text = text.length === 1? text[0] : text.join("");
+		if (ret.presentational === ret.value) {
+			ret = ret.value;
+		}
+
+		if (this.primitive) {
+			this.primitive.value = ret;
+		}
+		else {
+			Mavo.Primitive.setValue(this.node, ret, this.attribute, {presentational: ret.presentational});
+		}
 	},
 
 	tokenize: function(template) {
@@ -2586,8 +2596,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		return ret;
 	},
-
-	lazy: {},
 
 	proxy: {
 		scope: "all",
@@ -2680,9 +2688,7 @@ var _ = Mavo.Expressions = $.Class({
 		this.updateAlso = new Set();
 
 		this.active = true;
-	},
 
-	init: function() {
 		if (this.all.length > 0) {
 			this.update();
 
@@ -2778,7 +2784,6 @@ Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {
 		if (obj instanceof Mavo.Scope) {
 			new Mavo.Expressions(obj);
-			obj.expressions.init();
 		}
 	});
 });
@@ -2791,14 +2796,13 @@ Mavo.hooks.add("scope-init-end", function() {
 			new Mavo.Expressions(this);
 		}
 
-		this.expressions.init();
-
 		this.expressions.update();
 	});
 });
 
 Mavo.hooks.add("scope-render-start", function() {
 	if (!this.expressions) {
+		// ??? How can it not have expressions by now?!
 		new Mavo.Expressions(this);
 	}
 
@@ -3027,7 +3031,7 @@ var _ = Mavo.Scope = $.Class({
 		// Create Mavo objects for all properties in this scope (primitives or scopes),
 		// but not properties in descendant scopes (they will be handled by their scope)
 		$$(Mavo.selectors.property, this.element).forEach(element => {
-			var property = element.getAttribute("property");
+			var property = Mavo.Node.getProperty(element);
 
 			if (this.contains(element)) {
 				var existing = this.properties[property];
@@ -3040,7 +3044,6 @@ var _ = Mavo.Scope = $.Class({
 
 					if (!(existing instanceof Mavo.Collection)) {
 						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-						collection.parentScope = this;
 						this.properties[property] = existing.collection = collection;
 						collection.add(existing);
 					}
@@ -3083,6 +3086,7 @@ var _ = Mavo.Scope = $.Class({
 		ret = {};
 
 		this.propagate(obj => {
+
 			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
@@ -3132,7 +3136,6 @@ var _ = Mavo.Scope = $.Class({
 			return false;
 		}
 
-		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 
@@ -3244,10 +3247,6 @@ var _ = Mavo.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
-		if (!this.exposed && !this.computed) {
-			this.mavo.needsEdit = true;
-		}
-
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
@@ -3258,6 +3257,12 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}, true);
 		}
+
+		requestAnimationFrame(() => {
+			if (!this.exposed && !this.computed) {
+				this.mavo.needsEdit = true;
+			}
+		});
 
 		this.default = this.element.getAttribute("data-default");
 
@@ -3302,7 +3307,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.value = this.getValue({raw: true}); // no need to run setter code
+		this.value = this.getValue({raw: true});
 	},
 
 	get editorValue() {
@@ -3369,7 +3374,6 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.savedValue = this.value;
-		this.everSaved = true;
 		this.unsavedChanges = false;
 	},
 
@@ -3509,8 +3513,7 @@ var _ = Mavo.Primitive = $.Class({
 				if (
 					this.exposed &&
 					!this.mavo.editing && // must not be in edit mode
-				    this.mavo.permissions.save && // must be able to save
-				    this.scope.everSaved // must not cause unsaved items to be saved
+				    this.mavo.permissions.save // must be able to save
 				) {
 					// TODO what if change event never fires? What if user
 					this.unsavedChanges = false;
@@ -3695,6 +3698,9 @@ var _ = Mavo.Primitive = $.Class({
 		this.observer.disconnect();
 	},
 
+	/**
+	 * Get value from the DOM
+	 */
 	getValue: function(o) {
 		return _.getValue(this.element, this.attribute, this.datatype, o);
 	},
@@ -3718,37 +3724,35 @@ var _ = Mavo.Primitive = $.Class({
 
 	live: {
 		value: function (value) {
+			if ($.type(value) == "object" && "value" in value) {
+				var presentational = value.presentational;
+				value = value.value;
+			}
+
 			value = value || value === 0? value : "";
 			value = _.safeCast(value, this.datatype);
 
 			if (value == this._value) {
-				return;
+				return value;
 			}
 
 			if (this.editor) {
 				this.editorValue = value;
 			}
 
+			if (this.humanReadable && this.attribute) {
+				presentational = this.humanReadable(value);
+			}
+
 			if (!this.editing || this.attribute) {
-				if (this.datatype == "number" && !this.attribute) {
-					_.setValue(this.element, value, "content", this.datatype);
-					_.setValue(this.element, _.formatNumber(value), null, this.datatype);
+				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+					presentational = this.editor.selectedOptions[0].textContent;
 				}
-				else if (this.editor && this.editor.matches("select")) {
-					this.editorValue = value;
-					_.setValue(this.element, value, "content", this.datatype);
-					_.setValue(this.element, this.editor.selectedOptions[0]? this.editor.selectedOptions[0].textContent : value, this.attribute, this.datatype);
-				}
-				else {
-					_.setValue(this.element, value, this.attribute, this.datatype);
-				}
+
+				_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
 			}
 
 			this.empty = value === "";
-
-			if (this.humanReadable && this.attribute) {
-				this.element.textContent = this.humanReadable(value);
-			}
 
 			this._value = value;
 
@@ -3756,16 +3760,18 @@ var _ = Mavo.Primitive = $.Class({
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
-			$.fire(this.element, "mavo:datachange", {
-				property: this.property,
-				value: value,
-				mavo: this.mavo,
-				node: this,
-				dirty: this.editing,
-				action: "propertychange"
-			});
+			requestAnimationFrame(() => {
+				$.fire(this.element, "mavo:datachange", {
+					property: this.property,
+					value: value,
+					mavo: this.mavo,
+					node: this,
+					dirty: this.editing,
+					action: "propertychange"
+				});
+			})
 
-			this.oldValue = this.value;
+			return value;
 		},
 
 		empty: function(value) {
@@ -3894,15 +3900,15 @@ var _ = Mavo.Primitive = $.Class({
 					ret = element.getAttribute("content") || element.textContent || null;
 				}
 
-				if (_.safeCast(ret, datatype) === "null") {
-					console.log(ret, datatype)
-				}
-
 				return _.safeCast(ret, datatype);
-				return ret;
 		},
 
-		setValue: function (element, value, attribute) {
+		setValue: function (element, value, attribute, datatype) {
+			if ($.type(value) == "object" && "value" in value) {
+				var presentational = value.presentational;
+				value = value.value;
+			}
+
 			if (attribute !== null) {
 				attribute = attribute ||  _.getValueAttribute(element);
 			}
@@ -3921,10 +3927,22 @@ var _ = Mavo.Primitive = $.Class({
 			if (attribute) {
 				if (element.getAttribute(attribute) != value) { // intentionally non-strict, e.g. "3." !== 3
 					element.setAttribute(attribute, value);
+
+					if (presentational) {
+						element.textContent = presentational;
+					}
 				}
 			}
 			else {
-				element.textContent = value;
+				if (datatype === "number" && !presentational) {
+					presentational = _.formatNumber(value);
+				}
+
+				element.textContent = presentational || value;
+
+				if (presentational) {
+					element.setAttribute("content", value);
+				}
 			}
 		},
 
@@ -4181,7 +4199,7 @@ var _ = Mavo.Collection = $.Class({
 				this.element = this.templateElement = div;
 			}
 
-			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.normalizeProperty);
+			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
 			// Must clone because otherwise once expressions are parsed on the template element
@@ -4240,7 +4258,8 @@ var _ = Mavo.Collection = $.Class({
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
-			type: this.type
+			type: this.type,
+			dirty: true
 		});
 
 		// If container is a fake "fragment", strip element naked
@@ -4407,7 +4426,7 @@ var _ = Mavo.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.unsavedChanges = false;
+				item.unsavedChanges = item.dirty = false;
 			}
 		});
 	},
@@ -4426,7 +4445,7 @@ var _ = Mavo.Collection = $.Class({
 	revert: function() {
 		this.items.forEach((item, i) => {
 			// Delete added items
-			if (!item.everSaved && !item.placeholder) {
+			if (item.unsavedChanges && !item.placeholder) {
 				this.delete(item, true);
 			}
 			else {

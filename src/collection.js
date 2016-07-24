@@ -25,7 +25,7 @@ var _ = Mavo.Collection = $.Class({
 				this.element = this.templateElement = div;
 			}
 
-			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.normalizeProperty);
+			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
 			// Must clone because otherwise once expressions are parsed on the template element
@@ -84,7 +84,8 @@ var _ = Mavo.Collection = $.Class({
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
-			type: this.type
+			type: this.type,
+			dirty: true
 		});
 
 		// If container is a fake "fragment", strip element naked
@@ -251,7 +252,7 @@ var _ = Mavo.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.unsavedChanges = false;
+				item.unsavedChanges = item.dirty = false;
 			}
 		});
 	},
@@ -270,7 +271,7 @@ var _ = Mavo.Collection = $.Class({
 	revert: function() {
 		this.items.forEach((item, i) => {
 			// Delete added items
-			if (!item.everSaved && !item.placeholder) {
+			if (item.unsavedChanges && !item.placeholder) {
 				this.delete(item, true);
 			}
 			else {
