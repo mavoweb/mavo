@@ -4117,7 +4117,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					element.textContent = presentational || value;
 
-					if (presentational) {
+					if (presentational && element.setAttribute) {
 						element.setAttribute("content", value);
 					}
 				}

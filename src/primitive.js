@@ -735,7 +735,7 @@ var _ = Mavo.Primitive = $.Class({
 
 				element.textContent = presentational || value;
 
-				if (presentational) {
+				if (presentational && element.setAttribute) {
 					element.setAttribute("content", value);
 				}
 			}
