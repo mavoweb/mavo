@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>Mavo demos</title>
+<title>Mavo User Study</title>
 <link rel="stylesheet" href="../website/style.css">
 
 </head>
@@ -20,21 +20,69 @@
 <section>
 	<p>We conducted a user study to verify that Mavo can be used by HTML & CSS authors with little or no programming experience.
 		You can read about the results in our paper [TBD] and you can find the study materials below.</p>
+</section>
 
-	<ul>
-		<li><a href="../docs">Tutorial notes</a></li>
-		<li>Practice app: <a href="../demos/training/index-start.html">Start</a> | <a href="../demos/training">End</a>
-			<ol>
-				<li><em>(After learning about properties)</em> Make the item name, item picture, unit cost, quantity, number of people and room name editable.</li>
-				<li><em>(After learning about <code>data-multiple</code>)</em> Make it possible to add new types of equipment and rooms</li>
-				<li><em>(After learning basic expressions)</em> Make the equipment cost dynamic (unit cost &times; quantity)</li>
-				<li><em>(After the entire tutorial)</em> Make the number of people, number of types of equipment, and average office cost dynamic</li>
-				<li>Make the "Expensive!" element only display when the cost is over 10,000.</li>
-			</ol>
-		</li>
-		<li>Decisions app: <a href="../demos/decisions/index-start.html">Start</a> | <a href="../demos/decisions">End</a></li>
-		<li>Foodie app: <a href="../demos/foodie/index-start.html">Start</a> | <a href="../demos/foodie">End</a></li>
-	</ul>
+<section>
+	<h1>User study materials</h1>
+
+	<section>
+		<h1>Tutorial</h1>
+
+		<ul>
+			<li><a href="../docs">Tutorial notes</a></li>
+			<li>Practice app: <a href="../demos/training/index-start.html">Starting point</a> | <a href="../demos/training">Finished app</a> | Tasks:
+				<ol>
+					<li><em>(After learning about properties)</em> Make the item name, item picture, unit cost, quantity, number of people and room name editable.</li>
+					<li><em>(After learning about <code>data-multiple</code>)</em> Make it possible to add new types of equipment and rooms</li>
+					<li><em>(After learning basic expressions)</em> Make the equipment cost dynamic (unit cost &times; quantity)</li>
+					<li><em>(After the entire tutorial)</em> Make the number of people, number of types of equipment, and average office cost dynamic</li>
+					<li>Make the "Expensive!" element only display when the cost is over 10,000.</li>
+				</ol>
+			</li>
+		</ul>
+	</section>
+
+	<section>
+		<h1>Predefined app 1: Decisions</h1>
+
+		<p><a href="../demos/decisions/index-start.html">Starting point</a> | <a href="../demos/decisions">Finished app</a></p>
+
+		<p>Tasks:</p>
+		<ol>
+			<li>Make it possible to edit the reason for and against listed, their weights, and the question</li>
+			<li>Make it possible to add more reasons for and against going to this party.</li>
+			<li>Make the number next to the weight dynamically update as I edit the weight</li>
+			<li>Add a class on the &lt;li> depending on the weight inside it (weight-1, weight-2, ..., weight-5) to highlight important items</li>
+			<li>Make the count of pros & cons dynamically update. Just how many pros and how many cons, the weights don't matter for this.</li>
+			<li>Make the score dynamically update (sum of weights of pros - sum of weights of cons)</li>
+			<li>Make the answer dynamic: Show "Yes" if the score is positive, "No" if it's negative and "Maybe" if it's 0.</li>
+			<li>Make the header class dynamic, depending on the answer (currently "answer-Maybe").</li>
+			<li>Make it possible to make decisions about multiple things.</li>
+			<li>Make the count of good and bad decisions dynamic</li>
+		</ol>
+	</section>
+
+	<section>
+		<h1>Predefined app 2: Foodie log</h1>
+
+		<p><a href="../demos/foodie/index-start.html">Starting point</a> | <a href="../demos/foodie">Finished app</a></p>
+
+		<p>Tasks:</p>
+		<ol>
+			<li>Make it possible to edit the information of the restaurant listed (name, picture, url, date of visit, reason of visit, notable dish, rating)</li>
+			<li>Make the header background image dynamic (should be the same as the restaurant's picture)</li>
+			<li>Make it possible to add more dishes eaten.</li>
+			<li>Make the number next to the rating dynamically update as I edit the rating.</li>
+			<li>Make the count of dishes update dynamically (currently 1)</li>
+			<li>Make the visit rating dynamic (average of dish ratings)</li>
+			<li>Make it possible to add more visits.</li>
+			<li>Make the count of visits update dynamically (currently 1)</li>
+			<li>Make the restaurant rating dynamic (take an average of the average ratings of each visit that was computed in Step 6)</li>
+			<li>Make the tooltip of the restaurant rating dynamic (currently "Overall rating: 4")</li>
+			<li>Make it possible to add more restaurants.</li>
+			<li>Make the count of good restaurants (rating > 3) and all restaurants dynamic</li>
+		</ol>
+	</section>
 </section>
 
 </body>
