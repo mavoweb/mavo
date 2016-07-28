@@ -80,10 +80,7 @@ main > article {
     main > article > header meter {
       width: 8em;
       height: 1.6em;
-      margin-right: 0;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none; }
+      margin-right: 0; }
       main > article > header meter::-webkit-meter-bar {
         background: radial-gradient(closest-side circle at 60% 50%, rgba(255, 255, 255, 0.2) 90%, transparent) 0 0;
         background-size: 1.6em 100%; }
@@ -170,15 +167,13 @@ main > article {
         width: 8em;
         height: .8em;
         margin-right: .3em;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
         background: transparent;
         border: 1px solid; }
         main > article > section > article > section meter[min="1"] {
           border-left: 1.6em solid; }
         main > article > section > article > section meter::-webkit-meter-bar {
-          background: transparent; }
+          background: transparent;
+          border: 1px solid; }
         main > article > section > article > section meter::-webkit-meter-optimum-value, main > article > section > article > section meter::-webkit-meter-suboptimum-value {
           background: currentColor; }
 

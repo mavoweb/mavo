@@ -109,7 +109,6 @@ main > article {
 			width: $width;
 			height: 1.6em;
 			margin-right: 0;
-			appearance: none;
 
 			@mixin stars($color: white) {
 				background: radial-gradient(closest-side circle at 60% 50%, $color 90%, transparent) 0 0;
@@ -230,7 +229,6 @@ main > article {
 					width: $width;
 					height: .8em;
 					margin-right: .3em;
-					appearance: none;
 					background: transparent;
 					border: 1px solid;
 
@@ -240,6 +238,7 @@ main > article {
 
 					&::-webkit-meter-bar {
 						background: transparent;
+						border: 1px solid;
 					}
 
 					&::-webkit-meter-optimum-value,
