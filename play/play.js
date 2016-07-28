@@ -73,10 +73,10 @@ console.log(element, element.children > 0 ,!element.hasAttribute("data-multiple"
 <html lang="en">
 <head><meta charset="UTF-8" />
 <title>Mavo</title>
-<link rel="stylesheet" href="../../mavo.css" />
+<link rel="stylesheet" href="../mavo.css" />
 </head>
 <body>${editor.getContent({format: 'raw'})}
-<script src="../../mavo.js"></script>
+<script src="../mavo.js"></script>
 </body>
 </html>`);
 		}
