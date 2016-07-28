@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>data-store tests</title>
+	<link rel="stylesheet" href="../mavo.css" />
+</head>
+<body>
+
+<h1>data-store tests</h1>
+
+<h2>None</h2>
+
+<div data-store>
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>Local</h2>
+
+<div data-store="local" id="localstoretest">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>Remote</h2>
+
+<div data-store="../demos/talks/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>Local + Remote</h2>
+
+<div data-store="local ../demos/talks/countries.json" id="dualstoretest">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+
+<script src="../mavo.js"></script>
+
+</body>
+</html>
