@@ -1747,17 +1747,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mavo = mavo;
 
-			var keywords = RegExp("^(?:" + _.Backend.backends.map(function (a) {
-				return a.id;
-			}).join("|") + ")$", "i");
-			this.urls = mavo.store.split(/\s+/).map(function (url) {
-				return keywords.test(url) ? url : new URL(url, location);
+			this.backends = this.mavo.store.split(/\s+/).map(function (url) {
+				var backends = _.Backend.create(url, _this8);
+
+				if (!backends.length) {
+					console.info("No storage backends matched for \"" + url + "\", defaulting to Remote (read-only).");
+					return new _.Backend.Remote(url, _this8);
+				}
+
+				return backends;
 			});
 
-			this.backends = Mavo.flatten(this.urls.map(function (url) {
-				return _.Backend.create(url, _this8);
-			}));
+			this.backends = Mavo.flatten(this.backends);
 
+			// Permissions of first backend become the permissions of the app
 			this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
 
 			this.ready = Promise.all(this.backends.map(function (backend) {
@@ -2009,17 +2012,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			// Return the appropriate backend(s) for this url
 			create: function create(url, storage) {
-				var ret = [];
-
-				_.Backend.backends.forEach(function (Backend) {
-					if (Backend && Backend.test(url)) {
-						var backend = new Backend(url, storage);
-						backend.id = Backend.id;
-						ret.push(backend);
-					}
+				return _.Backend.backends.filter(function (Backend) {
+					return Backend.test(url);
+				}).map(function (Backend) {
+					return new Backend(url, storage);
 				});
-
-				return ret;
 			},
 
 			backends: [],
@@ -2037,7 +2034,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor() {
 			this.permissions.on(["read", "edit", "save"]);
 
-			this.element = $(this.url.hash);
+			this.element = $(this.url) || $.create("script", {
+				type: "application/json",
+				id: this.url.slice(1),
+				inside: document.body
+			});
 		},
 
 		get: function get() {
@@ -2054,9 +2055,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			test: function test(url) {
-				if (_.isHash(url)) {
-					return !!$(url.hash);
-				}
+				return url.indexOf("#") === 0;
 			}
 		}
 	}));
@@ -2064,7 +2063,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	// Load from a remote URL, no save
 	_.Backend.add("Remote", $.Class({ extends: _.Backend,
 		constructor: function constructor() {
-			this.permissions.on(["read"]);
+			this.permissions.on("read");
+			this.url = new URL(this.url, location);
 		},
 
 		get: function get() {
@@ -2079,7 +2079,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			test: function test(url) {
-				return url instanceof URL && !_.isHash(url);
+				return false;
 			}
 		}
 	}));
@@ -5604,6 +5604,8 @@ var prettyPrint = function () {
 			var _this39 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
+			this.url = new URL(this.url, location);
+
 			if (this.url.protocol != "dropbox:") {
 				this.url.hostname = "dl.dropboxusercontent.com";
 				this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
@@ -5708,6 +5710,7 @@ var prettyPrint = function () {
 
 		static: {
 			test: function test(url) {
+				url = new URL(url, location);
 				return (/dropbox.com/.test(url.host) || url.protocol === "dropbox:"
 				);
 			}
@@ -5730,6 +5733,7 @@ var prettyPrint = function () {
 			this.key = this.storage.param("key") || "7e08e016048000bc594e";
 
 			// Extract info for username, repo, branch, filename, filepath from URL
+			this.url = new URL(this.url, location);
 			$.extend(this, _.parseURL(this.url));
 			this.repo = this.repo || "mv-data";
 			this.branch = this.branch || "master";
@@ -5900,6 +5904,7 @@ var prettyPrint = function () {
 
 		static: {
 			test: function test(url) {
+				url = new URL(url, location);
 				return (/\bgithub.(com|io)|raw.githubusercontent.com/.test(url.host)
 				);
 			},

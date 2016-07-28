@@ -1706,13 +1706,20 @@ var _ = Mavo.Storage = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
 
-		var keywords = RegExp(`^(?:${_.Backend.backends.map(a => a.id).join("|")})$`, "i");
-		this.urls = mavo.store.split(/\s+/).map(url => {
-			return keywords.test(url)? url : new URL(url, location);
+		this.backends = this.mavo.store.split(/\s+/).map(url => {
+			var backends = _.Backend.create(url, this);
+
+			if (!backends.length) {
+				console.info(`No storage backends matched for "${url}", defaulting to Remote (read-only).`);
+				return new _.Backend.Remote(url, this);
+			}
+
+			return backends;
 		});
 
-		this.backends = Mavo.flatten(this.urls.map(url => _.Backend.create(url, this)));
+		this.backends = Mavo.flatten(this.backends);
 
+		// Permissions of first backend become the permissions of the app
 		this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
 
 		this.ready = Promise.all(this.backends.map(backend => backend.ready));
@@ -1946,17 +1953,9 @@ _.Backend = $.Class({
 	static: {
 		// Return the appropriate backend(s) for this url
 		create: function(url, storage) {
-			var ret = [];
-
-			_.Backend.backends.forEach(Backend => {
-				if (Backend && Backend.test(url)) {
-					var backend = new Backend(url, storage);
-					backend.id = Backend.id;
-					ret.push(backend);
-				}
-			});
-
-			return ret;
+			return _.Backend.backends
+						.filter(Backend => Backend.test(url))
+						.map(Backend => new Backend(url, storage));
 		},
 
 		backends: [],
@@ -1974,7 +1973,11 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
 
-		this.element = $(this.url.hash);
+		this.element = $(this.url) || $.create("script", {
+			type: "application/json",
+			id: this.url.slice(1),
+			inside: document.body
+		});
 	},
 
 	get: function() {
@@ -1987,18 +1990,15 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: (url) => {
-			if (_.isHash(url)) {
-				return !!$(url.hash);
-			}
-		}
+		test: url => url.indexOf("#") === 0
 	}
 }));
 
 // Load from a remote URL, no save
 _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	constructor: function() {
-		this.permissions.on(["read"]);
+		this.permissions.on("read");
+		this.url = new URL(this.url, location);
 	},
 
 	get: function() {
@@ -2009,7 +2009,7 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 	},
 
 	static: {
-		test: url => url instanceof URL && !_.isHash(url)
+		test: url => false
 	}
 }));
 
@@ -5445,6 +5445,8 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
+		this.url = new URL(this.url, location);
+
 		if (this.url.protocol != "dropbox:") {
 			this.url.hostname = "dl.dropboxusercontent.com";
 			this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
@@ -5545,6 +5547,7 @@ Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 
 	static: {
 		test: function(url) {
+			url = new URL(url, location);
 			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
 		}
 	}
@@ -5567,6 +5570,7 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 		this.key = this.storage.param("key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filename, filepath from URL
+		this.url = new URL(this.url, location);
 		$.extend(this, _.parseURL(this.url));
 		this.repo = this.repo || "mv-data";
 		this.branch = this.branch || "master";
@@ -5737,6 +5741,7 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 
 	static: {
 		test: function(url) {
+			url = new URL(url, location);
 			return /\bgithub.(com|io)|raw.githubusercontent.com/.test(url.host);
 		},
 

@@ -9,6 +9,8 @@ var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min
 Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
+		this.url = new URL(this.url, location);
+
 		if (this.url.protocol != "dropbox:") {
 			this.url.hostname = "dl.dropboxusercontent.com";
 			this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
@@ -109,6 +111,7 @@ Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 
 	static: {
 		test: function(url) {
+			url = new URL(url, location);
 			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
 		}
 	}

@@ -13,6 +13,7 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 		this.key = this.storage.param("key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filename, filepath from URL
+		this.url = new URL(this.url, location);
 		$.extend(this, _.parseURL(this.url));
 		this.repo = this.repo || "mv-data";
 		this.branch = this.branch || "master";
@@ -183,6 +184,7 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 
 	static: {
 		test: function(url) {
+			url = new URL(url, location);
 			return /\bgithub.(com|io)|raw.githubusercontent.com/.test(url.host);
 		},
 
