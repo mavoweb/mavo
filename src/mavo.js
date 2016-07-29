@@ -86,11 +86,7 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
-		this.walk(obj => {
-			if (obj.unsavedChanges) {
-				obj.unsavedChanges = false;
-			}
-		});
+		this.setUnsavedChanges(false);
 
 		this.permissions = new Mavo.Permissions(null, this);
 
@@ -147,7 +143,7 @@ var _ = self.Mavo = $.Class({
 						click: e => this.save(),
 						"mouseenter focus": e => {
 							this.wrapper.classList.add("save-hovered");
-							this.unsavedChanges = this.calculateUnsavedChanges();
+							this.setUnsavedChanges();
 						},
 						"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
 					},
@@ -163,7 +159,7 @@ var _ = self.Mavo = $.Class({
 						"mouseenter focus": e => {
 							if (!this.unsavedChanges) {
 								this.wrapper.classList.add("revert-hovered");
-								this.unsavedChanges = this.calculateUnsavedChanges();
+								this.setUnsavedChanges();
 							}
 						},
 						"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
@@ -262,20 +258,27 @@ var _ = self.Mavo = $.Class({
 			}
 		}, true);
 
-		this.unsavedChanges = this.calculateUnsavedChanges();
+		this.setUnsavedChanges();
 	},
 
-	calculateUnsavedChanges: function() {
-		var unsavedChanges = false;
+	setUnsavedChanges: function(value) {
+		var unsavedChanges = !!value;
 
-		this.walk(obj => {
-			if (obj.unsavedChanges) {
-				unsavedChanges = true;
-				return false;
-			}
-		});
+		if (!value) {
+			this.walk(obj => {
+				if (obj.unsavedChanges) {
+					unsavedChanges = true;
 
-		return unsavedChanges;
+					if (value === false) {
+						obj.unsavedChanges = false;
+					}
+
+					return false;
+				}
+			});
+		}
+
+		return this.unsavedChanges = unsavedChanges;
 	},
 
 	// Conclude editing

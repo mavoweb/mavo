@@ -4,18 +4,8 @@ var _ = Mavo.Storage = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
 
-		this.backends = this.mavo.store.split(/\s+/).map(url => {
-			var backends = _.Backend.create(url, this);
-
-			if (!backends.length) {
-				console.info(`No storage backends matched for "${url}", defaulting to Remote (read-only).`);
-				return new _.Backend.Remote(url, this);
-			}
-
-			return backends;
-		});
-
-		this.backends = Mavo.flatten(this.backends);
+		var stores = this.mavo.store.split(/\s+/);
+		this.backends = stores.map(url => _.Backend.create(url, this) || new _.Backend.Remote(url, this));
 
 		// Permissions of first backend become the permissions of the app
 		this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
@@ -106,12 +96,12 @@ var _ = Mavo.Storage = $.Class({
 	 *
 	 * @return {Promise}  A promise that resolves when the data is loaded.
 	 */
-	load: function() {
+	load: function(o = {backend: 0}) {
 		var ret = this.ready;
 
 		this.inProgress = "Loading";
 
-		var getBackend = this.getBackends[0];
+		var getBackend = this.getBackends[o.backend];
 
 		if (getBackend) {
 			getBackend.ready
@@ -128,15 +118,22 @@ var _ = Mavo.Storage = $.Class({
 
 				this.mavo.render(data);
 			}).catch(err => {
-				// TODO try more backends if this fails
 				this.inProgress = false;
 
-				if (err.xhr && err.xhr.status == 404) {
-					this.mavo.render("");
+				// Failed, try next backend if available
+				if (o.backend < this.getBackends.length - 1) {
+					o.backend++;
+					return this.load(o);
 				}
-				else {
-					console.error(err);
-					console.log(err.stack);
+
+				if (err) {
+					if (err.xhr && err.xhr.status == 404) {
+						this.mavo.render("");
+					}
+					else {
+						console.error(err);
+						console.log(err.stack);
+					}
 				}
 
 				this.mavo.wrapper._.fire("mavo:load");
@@ -244,6 +241,10 @@ _.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
+	toString: function() {
+		return `${this.id} (${this.url})`;
+	},
+
 	proxy: {
 		mavo: "storage"
 	},
@@ -251,9 +252,9 @@ _.Backend = $.Class({
 	static: {
 		// Return the appropriate backend(s) for this url
 		create: function(url, storage) {
-			return _.Backend.backends
-						.filter(Backend => Backend.test(url))
-						.map(Backend => new Backend(url, storage));
+			var Backend = _.Backend.backends.filter(Backend => Backend.test(url))[0];
+
+			return Backend && new Backend(url, storage);
 		},
 
 		backends: [],
@@ -319,11 +320,17 @@ _.Backend.add("Local", $.Class({ extends: _.Backend,
 	},
 
 	get: function() {
-		return Promise.resolve(localStorage[this.key]);
+		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
 	put: function({data = ""}) {
-		localStorage[this.key] = this.mavo.toJSON(data);
+		if (data === null) {
+			delete localStorage[this.key];
+		}
+		else {
+			localStorage[this.key] = this.mavo.toJSON(data);
+		}
+
 		return Promise.resolve();
 	},
 

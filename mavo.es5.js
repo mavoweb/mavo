@@ -1065,11 +1065,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			Mavo.hooks.run("init-tree-after", this);
 
-			this.walk(function (obj) {
-				if (obj.unsavedChanges) {
-					obj.unsavedChanges = false;
-				}
-			});
+			this.setUnsavedChanges(false);
 
 			this.permissions = new Mavo.Permissions(null, this);
 
@@ -1134,7 +1130,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							},
 							"mouseenter focus": function mouseenterFocus(e) {
 								_this.wrapper.classList.add("save-hovered");
-								_this.unsavedChanges = _this.calculateUnsavedChanges();
+								_this.setUnsavedChanges();
 							},
 							"mouseleave blur": function mouseleaveBlur(e) {
 								return _this.wrapper.classList.remove("save-hovered");
@@ -1154,7 +1150,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							"mouseenter focus": function mouseenterFocus(e) {
 								if (!_this.unsavedChanges) {
 									_this.wrapper.classList.add("revert-hovered");
-									_this.unsavedChanges = _this.calculateUnsavedChanges();
+									_this.setUnsavedChanges();
 								}
 							},
 							"mouseleave blur": function mouseleaveBlur(e) {
@@ -1260,20 +1256,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}, true);
 
-			this.unsavedChanges = this.calculateUnsavedChanges();
+			this.setUnsavedChanges();
 		},
 
-		calculateUnsavedChanges: function calculateUnsavedChanges() {
-			var unsavedChanges = false;
+		setUnsavedChanges: function setUnsavedChanges(value) {
+			var unsavedChanges = !!value;
 
-			this.walk(function (obj) {
-				if (obj.unsavedChanges) {
-					unsavedChanges = true;
-					return false;
-				}
-			});
+			if (!value) {
+				this.walk(function (obj) {
+					if (obj.unsavedChanges) {
+						unsavedChanges = true;
 
-			return unsavedChanges;
+						if (value === false) {
+							obj.unsavedChanges = false;
+						}
+
+						return false;
+					}
+				});
+			}
+
+			return this.unsavedChanges = unsavedChanges;
 		},
 
 		// Conclude editing
@@ -1747,18 +1750,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mavo = mavo;
 
-			this.backends = this.mavo.store.split(/\s+/).map(function (url) {
-				var backends = _.Backend.create(url, _this8);
-
-				if (!backends.length) {
-					console.info("No storage backends matched for \"" + url + "\", defaulting to Remote (read-only).");
-					return new _.Backend.Remote(url, _this8);
-				}
-
-				return backends;
+			var stores = this.mavo.store.split(/\s+/);
+			this.backends = stores.map(function (url) {
+				return _.Backend.create(url, _this8) || new _.Backend.Remote(url, _this8);
 			});
-
-			this.backends = Mavo.flatten(this.backends);
 
 			// Permissions of first backend become the permissions of the app
 			this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
@@ -1858,11 +1853,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		load: function load() {
 			var _this9 = this;
 
+			var o = arguments.length <= 0 || arguments[0] === undefined ? { backend: 0 } : arguments[0];
+
 			var ret = this.ready;
 
 			this.inProgress = "Loading";
 
-			var getBackend = this.getBackends[0];
+			var getBackend = this.getBackends[o.backend];
 
 			if (getBackend) {
 				getBackend.ready.then(function () {
@@ -1879,14 +1876,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					_this9.mavo.render(data);
 				}).catch(function (err) {
-					// TODO try more backends if this fails
 					_this9.inProgress = false;
 
-					if (err.xhr && err.xhr.status == 404) {
-						_this9.mavo.render("");
-					} else {
-						console.error(err);
-						console.log(err.stack);
+					// Failed, try next backend if available
+					if (o.backend < _this9.getBackends.length - 1) {
+						o.backend++;
+						return _this9.load(o);
+					}
+
+					if (err) {
+						if (err.xhr && err.xhr.status == 404) {
+							_this9.mavo.render("");
+						} else {
+							console.error(err);
+							console.log(err.stack);
+						}
 					}
 
 					_this9.mavo.wrapper._.fire("mavo:load");
@@ -2005,6 +2009,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return Promise.resolve();
 		},
 
+		toString: function toString() {
+			return this.id + " (" + this.url + ")";
+		},
+
 		proxy: {
 			mavo: "storage"
 		},
@@ -2012,11 +2020,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			// Return the appropriate backend(s) for this url
 			create: function create(url, storage) {
-				return _.Backend.backends.filter(function (Backend) {
+				var Backend = _.Backend.backends.filter(function (Backend) {
 					return Backend.test(url);
-				}).map(function (Backend) {
-					return new Backend(url, storage);
-				});
+				})[0];
+
+				return Backend && new Backend(url, storage);
 			},
 
 			backends: [],
@@ -2092,14 +2100,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		get: function get() {
-			return Promise.resolve(localStorage[this.key]);
+			return Promise[this.key in localStorage ? "resolve" : "reject"](localStorage[this.key]);
 		},
 
 		put: function put(_ref3) {
 			var _ref3$data = _ref3.data;
 			var data = _ref3$data === undefined ? "" : _ref3$data;
 
-			localStorage[this.key] = this.mavo.toJSON(data);
+			if (data === null) {
+				delete localStorage[this.key];
+			} else {
+				localStorage[this.key] = this.mavo.toJSON(data);
+			}
+
 			return Promise.resolve();
 		},
 
@@ -5943,7 +5956,7 @@ var prettyPrint = function () {
 			},
 
 			btoa: function (_btoa) {
-				function btoa(_x14) {
+				function btoa(_x15) {
 					return _btoa.apply(this, arguments);
 				}
 
