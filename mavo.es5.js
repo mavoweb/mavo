@@ -3490,7 +3490,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			this.value = this.getValue({ raw: true });
+			this.value = this.template ? this.default : this.getValue({ raw: true });
 		},
 
 		get editorValue() {
@@ -4081,6 +4081,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				var ret;
 
+				// TODO Get rid of this horrible raw hack
 				if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
 					// Returning properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
@@ -4373,7 +4374,7 @@ Mavo.Primitive.editors.img = {
 			// ALL descendant property names as an array
 			if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
 				if (this.templateElement.matches("template")) {
-					var div = document.createElement("mv-group");
+					var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
 					div.classList.add("document-fragment");
 
 					$$(this.templateElement.attributes).forEach(function (attr) {

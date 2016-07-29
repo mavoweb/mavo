@@ -3317,7 +3317,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.value = this.getValue({raw: true});
+		this.value = this.template? this.default : this.getValue({raw: true});
 	},
 
 	get editorValue() {
@@ -3893,24 +3893,25 @@ var _ = Mavo.Primitive = $.Class({
 		},
 
 		getValue: function (element, attribute, datatype, o = {}) {
-				attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
-				datatype = datatype || _.getDatatype(element, attribute);
+			attribute = attribute || attribute === null? attribute : _.getValueAttribute(element);
+			datatype = datatype || _.getDatatype(element, attribute);
 
-				var ret;
+			var ret;
 
-				if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
-					// Returning properties (if they exist) instead of attributes
-					// is needed for dynamic elements such as checkboxes, sliders etc
-					ret = element[attribute];
-				}
-				else if (attribute) {
-					ret = element.getAttribute(attribute);
-				}
-				else {
-					ret = element.getAttribute("content") || element.textContent || null;
-				}
+			// TODO Get rid of this horrible raw hack
+			if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
+				// Returning properties (if they exist) instead of attributes
+				// is needed for dynamic elements such as checkboxes, sliders etc
+				ret = element[attribute];
+			}
+			else if (attribute) {
+				ret = element.getAttribute(attribute);
+			}
+			else {
+				ret = element.getAttribute("content") || element.textContent || null;
+			}
 
-				return _.safeCast(ret, datatype);
+			return _.safeCast(ret, datatype);
 		},
 
 		setValue: function (element, value, attribute, datatype) {
@@ -4197,7 +4198,7 @@ var _ = Mavo.Collection = $.Class({
 		// ALL descendant property names as an array
 		if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
 			if (this.templateElement.matches("template")) {
-				var div = document.createElement("mv-group");
+				var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
 				div.classList.add("document-fragment");
 
 				$$(this.templateElement.attributes).forEach(attr => {
