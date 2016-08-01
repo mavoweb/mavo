@@ -1,4 +1,3 @@
-console.log("util is here");
 (function ($, $$) {
 
 var _ = $.extend(Mavo, {

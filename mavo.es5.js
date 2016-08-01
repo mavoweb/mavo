@@ -1408,7 +1408,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// Init mavo
 	Promise.all([$.ready(), $.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")]).catch(function (err) {
-		console.error(err);
+		return console.error(err);
 	}).then(function () {
 		return Mavo.init();
 	});
@@ -1416,7 +1416,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	Stretchy.selectors.filter = ".mv-editor:not([property])";
 })(Bliss, Bliss.$);
 
-console.log("util is here");
 (function ($, $$) {
 
 	var _ = $.extend(Mavo, {
@@ -1891,8 +1890,11 @@ console.log("util is here");
 
 			this.backend.login().then(function () {
 				return _this10.backend.put();
-			}).then(function () {
-				$.fire(_this10.mavo.wrapper, "mavo:save");
+			}).then(function (file) {
+				$.fire(_this10.mavo.wrapper, "mavo:save", {
+					data: file.data,
+					dataString: file.dataString
+				});
 			}).catch(function (err) {
 				if (err) {
 					console.error(err);
@@ -1973,6 +1975,17 @@ console.log("util is here");
 			return Promise.resolve();
 		},
 
+		getFile: function getFile() {
+			var data = this.mavo.data;
+
+			return {
+				data: data,
+				dataString: Mavo.toJSON(data),
+				filename: this.filename,
+				path: this.path || ""
+			};
+		},
+
 		toString: function toString() {
 			return this.id + " (" + this.url + ")";
 		},
@@ -2023,12 +2036,11 @@ console.log("util is here");
 			return Promise.resolve(this.element.textContent);
 		},
 
-		put: function put(_ref2) {
-			var _ref2$data = _ref2.data;
-			var data = _ref2$data === undefined ? "" : _ref2$data;
+		put: function put() {
+			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
-			this.element.textContent = this.mavo.toJSON(data);
-			return Promise.resolve();
+			this.element.textContent = file.dataString;
+			return Promise.resolve(file);
 		},
 
 		static: {
@@ -2077,17 +2089,16 @@ console.log("util is here");
 			return Promise[this.key in localStorage ? "resolve" : "reject"](localStorage[this.key]);
 		},
 
-		put: function put(_ref3) {
-			var _ref3$data = _ref3.data;
-			var data = _ref3$data === undefined ? "" : _ref3$data;
+		put: function put() {
+			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
-			if (data === null) {
+			if (file.data === null) {
 				delete localStorage[this.key];
 			} else {
-				localStorage[this.key] = this.mavo.toJSON(data);
+				localStorage[this.key] = file.dataString;
 			}
 
-			return Promise.resolve();
+			return Promise.resolve(file);
 		},
 
 		static: {
@@ -5327,36 +5338,26 @@ var prettyPrint = function () {
 				after: this.wrapper
 			});
 
-			// Intercept textContent
+			this.wrapper.addEventListener("mavo:save", function (evt) {
+				element.innerHTML = "";
 
-			var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
-
-			Object.defineProperty(element, "textContent", {
-				get: function get() {
-					return descriptor.get.call(this);
-				},
-
-				set: function set(value) {
-					this.innerHTML = "";
-
-					if (value) {
-						this.appendChild(prettyPrint(JSON.parse(value)));
-					}
-				}
+				element.appendChild(prettyPrint(evt.data));
 			});
-
-			this.store += " #" + element.id;
 		}
 	});
 
-	Mavo.hooks.add("render-start", function (_ref4) {
-		var data = _ref4.data;
+	Mavo.hooks.add("render-start", function (_ref2) {
+		var data = _ref2.data;
 
 		if (this.storage && this.wrapper.classList.contains("debug-saving")) {
 			var element = $("#" + this.id + "-debug-storage");
 
 			if (element) {
-				element.textContent = data ? this.toJSON(data) : "";
+				element.innerHTML = "";
+
+				if (data) {
+					element.appendChild(prettyPrint(data));
+				}
 			}
 		}
 	});
@@ -5414,12 +5415,12 @@ var prettyPrint = function () {
 		}
 	});
 
-	Mavo.Scope.prototype.debugRow = function (_ref5) {
-		var element = _ref5.element;
-		var _ref5$attribute = _ref5.attribute;
-		var attribute = _ref5$attribute === undefined ? null : _ref5$attribute;
-		var _ref5$tds = _ref5.tds;
-		var tds = _ref5$tds === undefined ? [] : _ref5$tds;
+	Mavo.Scope.prototype.debugRow = function (_ref3) {
+		var element = _ref3.element;
+		var _ref3$attribute = _ref3.attribute;
+		var attribute = _ref3$attribute === undefined ? null : _ref3$attribute;
+		var _ref3$tds = _ref3.tds;
+		var tds = _ref3$tds === undefined ? [] : _ref3$tds;
 
 		if (!this.debug) {
 			return;
@@ -5629,25 +5630,19 @@ var prettyPrint = function () {
    * @param {Object} file - An object with name & data keys
    * @return {Promise} A promise that resolves when the file is saved.
    */
-		put: function put(file) {
+		put: function put() {
 			var _this40 = this;
 
-			if (!file) {
-				file = {
-					data: this.mavo.toJSON(),
-					filename: this.filename,
-					path: this.path || ""
-				};
-			}
+			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
 			return new Promise(function (resolve, reject) {
-				_this40.client.writeFile(file.name, file.data, function (error, stat) {
+				_this40.client.writeFile(file.name, file.dataString, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
 
 					console.log("File saved as revision " + stat.versionTag);
-					resolve(stat);
+					resolve(file);
 				});
 			});
 		},
@@ -5777,16 +5772,10 @@ var prettyPrint = function () {
    * @param {Object} file - An object with name & data keys
    * @return {Promise} A promise that resolves when the file is saved.
    */
-		put: function put(file) {
+		put: function put() {
 			var _this43 = this;
 
-			if (!file) {
-				file = {
-					data: this.mavo.toJSON(),
-					filename: this.filename,
-					path: this.path || ""
-				};
-			}
+			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
 			var fileCall = "repos/" + this.username + "/" + this.repo + "/contents/" + file.path;
 
@@ -5801,7 +5790,7 @@ var prettyPrint = function () {
 			}).then(function (fileInfo) {
 				return _this43.req(fileCall, {
 					message: "Updated " + (file.name || "file"),
-					content: _.btoa(file.data),
+					content: _.btoa(file.dataString),
 					branch: _this43.branch,
 					sha: fileInfo.sha
 				}, "PUT");
@@ -5810,12 +5799,13 @@ var prettyPrint = function () {
 					// File does not exist, create it
 					return _this43.req(fileCall, {
 						message: "Created file",
-						content: _.btoa(file.data),
+						content: _.btoa(file.dataString),
 						branch: _this43.branch
 					}, "PUT");
 				}
 			}).then(function (data) {
 				console.log("success");
+				return file;
 			});
 		},
 
@@ -5942,7 +5932,7 @@ var prettyPrint = function () {
 			},
 
 			btoa: function (_btoa) {
-				function btoa(_x13) {
+				function btoa(_x17) {
 					return _btoa.apply(this, arguments);
 				}
 

@@ -134,8 +134,11 @@ var _ = Mavo.Storage = $.Class({
 
 		this.backend.login()
 		.then(() => this.backend.put())
-		.then(() => {
-			$.fire(this.mavo.wrapper, "mavo:save");
+		.then(file => {
+			$.fire(this.mavo.wrapper, "mavo:save", {
+				data: file.data,
+				dataString: file.dataString
+			});
 		})
 		.catch(err => {
 			if (err) {
@@ -213,6 +216,17 @@ _.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
+	getFile: function() {
+		var data = this.mavo.data;
+
+		return {
+			data,
+			dataString: Mavo.toJSON(data),
+			filename: this.filename,
+			path: this.path || ""
+		};
+	},
+
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
@@ -261,9 +275,9 @@ _.Backend.register($.Class({
 		return Promise.resolve(this.element.textContent);
 	},
 
-	put: function({data = ""}) {
-		this.element.textContent = this.mavo.toJSON(data);
-		return Promise.resolve();
+	put: function(file = this.getFile()) {
+		this.element.textContent = file.dataString;
+		return Promise.resolve(file);
 	},
 
 	static: {
@@ -305,19 +319,19 @@ _.Backend.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: function({data = ""}) {
-		if (data === null) {
+	put: function(file = this.getFile()) {
+		if (file.data === null) {
 			delete localStorage[this.key];
 		}
 		else {
-			localStorage[this.key] = this.mavo.toJSON(data);
+			localStorage[this.key] = file.dataString;
 		}
 
-		return Promise.resolve();
+		return Promise.resolve(file);
 	},
 
 	static: {
-		test: (value) => value == "local"
+		test: value => value == "local"
 	}
 }));
 

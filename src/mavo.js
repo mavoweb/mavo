@@ -391,9 +391,7 @@ Promise.all([
 	$.ready(),
 	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
 ])
-.catch(err => {
-	console.error(err);
-})
+.catch(err => console.error(err))
 .then(() => Mavo.init());
 
 Stretchy.selectors.filter = ".mv-editor:not([property])";

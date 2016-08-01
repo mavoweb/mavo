@@ -164,25 +164,11 @@ Mavo.hooks.add("init-tree-after", function() {
 			after: this.wrapper
 		});
 
-		// Intercept textContent
+		this.wrapper.addEventListener("mavo:save", evt => {
+			element.innerHTML = "";
 
-		var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
-
-		Object.defineProperty(element, "textContent", {
-			get: function() {
-				return descriptor.get.call(this);
-			},
-
-			set: function(value) {
-				this.innerHTML = "";
-
-				if (value) {
-					this.appendChild(prettyPrint(JSON.parse(value)));
-				}
-			}
+			element.appendChild(prettyPrint(evt.data));
 		});
-
-		this.store += " #" + element.id;
 	}
 });
 
@@ -191,7 +177,11 @@ Mavo.hooks.add("render-start", function({data}) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
-			element.textContent = data? this.toJSON(data) : "";
+			element.innerHTML = "";
+
+			if (data) {
+				element.appendChild(prettyPrint(data));
+			}
 		}
 	}
 });

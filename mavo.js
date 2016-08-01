@@ -1393,16 +1393,13 @@ Promise.all([
 	$.ready(),
 	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
 ])
-.catch(err => {
-	console.error(err);
-})
+.catch(err => console.error(err))
 .then(() => Mavo.init());
 
 Stretchy.selectors.filter = ".mv-editor:not([property])";
 
 })(Bliss, Bliss.$);
 
-console.log("util is here");
 (function ($, $$) {
 
 var _ = $.extend(Mavo, {
@@ -1851,8 +1848,11 @@ var _ = Mavo.Storage = $.Class({
 
 		this.backend.login()
 		.then(() => this.backend.put())
-		.then(() => {
-			$.fire(this.mavo.wrapper, "mavo:save");
+		.then(file => {
+			$.fire(this.mavo.wrapper, "mavo:save", {
+				data: file.data,
+				dataString: file.dataString
+			});
 		})
 		.catch(err => {
 			if (err) {
@@ -1930,6 +1930,17 @@ _.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
+	getFile: function() {
+		var data = this.mavo.data;
+
+		return {
+			data,
+			dataString: Mavo.toJSON(data),
+			filename: this.filename,
+			path: this.path || ""
+		};
+	},
+
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
@@ -1978,9 +1989,9 @@ _.Backend.register($.Class({
 		return Promise.resolve(this.element.textContent);
 	},
 
-	put: function({data = ""}) {
-		this.element.textContent = this.mavo.toJSON(data);
-		return Promise.resolve();
+	put: function(file = this.getFile()) {
+		this.element.textContent = file.dataString;
+		return Promise.resolve(file);
 	},
 
 	static: {
@@ -2022,19 +2033,19 @@ _.Backend.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: function({data = ""}) {
-		if (data === null) {
+	put: function(file = this.getFile()) {
+		if (file.data === null) {
 			delete localStorage[this.key];
 		}
 		else {
-			localStorage[this.key] = this.mavo.toJSON(data);
+			localStorage[this.key] = file.dataString;
 		}
 
-		return Promise.resolve();
+		return Promise.resolve(file);
 	},
 
 	static: {
-		test: (value) => value == "local"
+		test: value => value == "local"
 	}
 }));
 
@@ -5190,25 +5201,11 @@ Mavo.hooks.add("init-tree-after", function() {
 			after: this.wrapper
 		});
 
-		// Intercept textContent
+		this.wrapper.addEventListener("mavo:save", evt => {
+			element.innerHTML = "";
 
-		var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
-
-		Object.defineProperty(element, "textContent", {
-			get: function() {
-				return descriptor.get.call(this);
-			},
-
-			set: function(value) {
-				this.innerHTML = "";
-
-				if (value) {
-					this.appendChild(prettyPrint(JSON.parse(value)));
-				}
-			}
+			element.appendChild(prettyPrint(evt.data));
 		});
-
-		this.store += " #" + element.id;
 	}
 });
 
@@ -5217,7 +5214,11 @@ Mavo.hooks.add("render-start", function({data}) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
-			element.textContent = data? this.toJSON(data) : "";
+			element.innerHTML = "";
+
+			if (data) {
+				element.appendChild(prettyPrint(data));
+			}
 		}
 	}
 });
@@ -5485,23 +5486,15 @@ Mavo.Storage.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file) {
-		if (!file) {
-			file = {
-				data: this.mavo.toJSON(),
-				filename: this.filename,
-				path: this.path || ""
-			};
-		}
-
+	put: function(file = this.getFile()) {
 		return new Promise((resolve, reject) => {
-			this.client.writeFile(file.name, file.data, function(error, stat) {
+			this.client.writeFile(file.name, file.dataString, function(error, stat) {
 				if (error) {
 					return reject(Error(error));
 				}
 
 				console.log("File saved as revision " + stat.versionTag);
-				resolve(stat);
+				resolve(file);
 			});
 		});
 	},
@@ -5627,15 +5620,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file) {
-		if (!file) {
-			file = {
-				data: this.mavo.toJSON(),
-				filename: this.filename,
-				path: this.path || ""
-			};
-		}
-
+	put: function(file = this.getFile()) {
 		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
 
 		return Promise.resolve(this.repoInfo || this.req("user/repos", {
@@ -5651,7 +5636,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		.then(fileInfo => {
 			return this.req(fileCall, {
 				message: `Updated ${file.name || "file"}`,
-				content: _.btoa(file.data),
+				content: _.btoa(file.dataString),
 				branch: this.branch,
 				sha: fileInfo.sha
 			}, "PUT");
@@ -5660,12 +5645,13 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: _.btoa(file.data),
+					content: _.btoa(file.dataString),
 					branch: this.branch
 				}, "PUT");
 			}
 		}).then(data => {
 			console.log("success");
+			return file;
 		});
 	},
 

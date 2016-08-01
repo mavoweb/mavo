@@ -48,23 +48,15 @@ Mavo.Storage.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file) {
-		if (!file) {
-			file = {
-				data: this.mavo.toJSON(),
-				filename: this.filename,
-				path: this.path || ""
-			};
-		}
-
+	put: function(file = this.getFile()) {
 		return new Promise((resolve, reject) => {
-			this.client.writeFile(file.name, file.data, function(error, stat) {
+			this.client.writeFile(file.name, file.dataString, function(error, stat) {
 				if (error) {
 					return reject(Error(error));
 				}
 
 				console.log("File saved as revision " + stat.versionTag);
-				resolve(stat);
+				resolve(file);
 			});
 		});
 	},

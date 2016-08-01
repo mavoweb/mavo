@@ -61,15 +61,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file) {
-		if (!file) {
-			file = {
-				data: this.mavo.toJSON(),
-				filename: this.filename,
-				path: this.path || ""
-			};
-		}
-
+	put: function(file = this.getFile()) {
 		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
 
 		return Promise.resolve(this.repoInfo || this.req("user/repos", {
@@ -85,7 +77,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		.then(fileInfo => {
 			return this.req(fileCall, {
 				message: `Updated ${file.name || "file"}`,
-				content: _.btoa(file.data),
+				content: _.btoa(file.dataString),
 				branch: this.branch,
 				sha: fileInfo.sha
 			}, "PUT");
@@ -94,12 +86,13 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: _.btoa(file.data),
+					content: _.btoa(file.dataString),
 					branch: this.branch
 				}, "PUT");
 			}
 		}).then(data => {
 			console.log("success");
+			return file;
 		});
 	},
 
