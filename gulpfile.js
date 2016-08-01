@@ -14,8 +14,8 @@ var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
 
 gulp.task("concat", function() {
-	var files = "mavo permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
-	            .split(" ").map(path => "src/" + path + ".js");
+	var files = "mavo util permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
+	            .split(" ").map(path => `src/${path}.js`);
 	files.unshift("../bliss/bliss.js");
 	files.unshift("../stretchy/stretchy.js");
 

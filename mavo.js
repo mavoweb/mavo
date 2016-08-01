@@ -1337,89 +1337,7 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: container => $$(".mavo, [data-store]", container).map(element => new _(element)),
-
-		toJSON: data => {
-			if (data === null) {
-				return "";
-			}
-
-			if (typeof data === "string") {
-				// Do not stringify twice!
-				return data;
-			}
-
-			return JSON.stringify(data, null, "\t");
-		},
-
-		// Convert an identifier to readable text that can be used as a label
-		readable: function (identifier) {
-			// Is it camelCase?
-			return identifier && identifier
-			         .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
-			         .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-			         .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
-		},
-
-		// Inverse of _.readable(): Take a readable string and turn it into an identifier
-		identifier: function (readable) {
-			readable = readable + "";
-			return readable && readable
-			         .replace(/\s+/g, "-") // Convert whitespace to hyphens
-			         .replace(/[^\w-]/g, "") // Remove weird characters
-			         .toLowerCase();
-		},
-
-		queryJSON: function(data, path) {
-			if (!path || !data) {
-				return data;
-			}
-
-			return $.value.apply($, [data].concat(path.split("/")));
-		},
-
-		observe: function(element, attribute, observer, oldValue) {
-			if (!(observer instanceof MutationObserver)) {
-				observer = new MutationObserver(observer);
-			}
-
-			var options = attribute? {
-					attributes: true,
-					attributeFilter: [attribute],
-					attributeOldValue: !!oldValue
-				} : {
-					characterData: true,
-					childList: true,
-					subtree: true,
-					characterDataOldValue: !!oldValue
-				};
-
-			observer.observe(element, options);
-
-			return observer;
-		},
-
-		// If the passed value is not an array, convert to an array
-		toArray: arr => {
-			return Array.isArray(arr)? arr : [arr];
-		},
-
-		// Recursively flatten a multi-dimensional array
-		flatten: arr => {
-			if (!Array.isArray(arr)) {
-				return [arr];
-			}
-
-			return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
-		},
-
-		is: function(thing, element) {
-			return element.matches && element.matches(_.selectors[thing]);
-		},
-
-		has: function(option, element) {
-			return element.matches && element.matches(_.selectors.option(option));
-		},
+		init: container => $$(_.selectors.init, container).map(element => new _(element)),
 
 		hooks: new $.Hooks()
 	}
@@ -1428,9 +1346,10 @@ var _ = self.Mavo = $.Class({
 {
 
 let s = _.selectors = {
+	init: ".mavo, [mavo], [data-mavo], [data-store]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-	scope: "[typeof], [itemscope], [itemtype], .scope",
+	scope: "[typeof], [itemscope], [itemtype], .mv-group",
 	multiple: "[multiple], [data-multiple], .multiple",
 	required: "[required], [data-required], .required",
 	formControl: "input, select, textarea",
@@ -1451,9 +1370,13 @@ let s = _.selectors = {
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);
 let not = s.not = selector => arr(selector).map(s => `:not(${s})`).join("");
 let or = s.or = (selector1, selector2) => selector1 + ", " + selector2;
-let and = s.and = (selector1, selector2) => _.flatten(
-		arr(selector1).map(s1 => arr(selector2).map(s2 => s1 + s2))
-	).join(", ");
+let and = s.and = (selector1, selector2) => {
+	var ret = [], arr2 = arr(selector2);
+
+	arr(selector1).forEach(s1 => ret.push(...arr2.map(s2 => s1 + s2)));
+
+	return ret.join(", ");
+};
 let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2));
 
 $.extend(_.selectors, {
@@ -1464,6 +1387,107 @@ $.extend(_.selectors, {
 });
 
 }
+
+// Init mavo
+Promise.all([
+	$.ready(),
+	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+])
+.catch(err => {
+	console.error(err);
+})
+.then(() => Mavo.init());
+
+Stretchy.selectors.filter = ".mv-editor:not([property])";
+
+})(Bliss, Bliss.$);
+
+console.log("util is here");
+(function ($, $$) {
+
+var _ = $.extend(Mavo, {
+	toJSON: data => {
+		if (data === null) {
+			return "";
+		}
+
+		if (typeof data === "string") {
+			// Do not stringify twice!
+			return data;
+		}
+
+		return JSON.stringify(data, null, "\t");
+	},
+
+	// Convert an identifier to readable text that can be used as a label
+	readable: function (identifier) {
+		// Is it camelCase?
+		return identifier && identifier
+				 .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
+				 .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
+				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
+	},
+
+	// Inverse of _.readable(): Take a readable string and turn it into an identifier
+	identifier: function (readable) {
+		readable = readable + "";
+		return readable && readable
+				 .replace(/\s+/g, "-") // Convert whitespace to hyphens
+				 .replace(/[^\w-]/g, "") // Remove weird characters
+				 .toLowerCase();
+	},
+
+	queryJSON: function(data, path) {
+		if (!path || !data) {
+			return data;
+		}
+
+		return $.value.apply($, [data].concat(path.split("/")));
+	},
+
+	observe: function(element, attribute, observer, oldValue) {
+		if (!(observer instanceof MutationObserver)) {
+			observer = new MutationObserver(observer);
+		}
+
+		var options = attribute? {
+				attributes: true,
+				attributeFilter: [attribute],
+				attributeOldValue: !!oldValue
+			} : {
+				characterData: true,
+				childList: true,
+				subtree: true,
+				characterDataOldValue: !!oldValue
+			};
+
+		observer.observe(element, options);
+
+		return observer;
+	},
+
+	// If the passed value is not an array, convert to an array
+	toArray: arr => {
+		return Array.isArray(arr)? arr : [arr];
+	},
+
+	// Recursively flatten a multi-dimensional array
+	flatten: arr => {
+		if (!Array.isArray(arr)) {
+			return [arr];
+		}
+
+		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
+	},
+
+	is: function(thing, element) {
+		return element.matches && element.matches(_.selectors[thing]);
+	},
+
+	has: function(option, element) {
+		return element.matches && element.matches(_.selectors.option(option));
+	}
+});
 
 // Bliss plugins
 
@@ -1509,19 +1533,6 @@ document.addEventListener("focus", evt => {
 		}
 	}
 }, true);
-
-// Init mavo
-Promise.all([
-	$.ready(),
-	$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
-])
-.then(() => Mavo.init())
-.catch(err => {
-	console.error(err);
-	Mavo.init();
-});
-
-Stretchy.selectors.filter = ".mv-editor:not([property])";
 
 })(Bliss, Bliss.$);
 

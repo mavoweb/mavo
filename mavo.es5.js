@@ -1332,95 +1332,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
 
 			init: function init(container) {
-				return $$(".mavo, [data-store]", container).map(function (element) {
+				return $$(_.selectors.init, container).map(function (element) {
 					return new _(element);
 				});
-			},
-
-			toJSON: function toJSON(data) {
-				if (data === null) {
-					return "";
-				}
-
-				if (typeof data === "string") {
-					// Do not stringify twice!
-					return data;
-				}
-
-				return JSON.stringify(data, null, "\t");
-			},
-
-			// Convert an identifier to readable text that can be used as a label
-			readable: function readable(identifier) {
-				// Is it camelCase?
-				return identifier && identifier.replace(/([a-z])([A-Z])(?=[a-z])/g, function ($0, $1, $2) {
-					return $1 + " " + $2.toLowerCase();
-				}) // camelCase?
-				.replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-				.replace(/^[a-z]/, function ($0) {
-					return $0.toUpperCase();
-				}); // Capitalize
-			},
-
-			// Inverse of _.readable(): Take a readable string and turn it into an identifier
-			identifier: function identifier(readable) {
-				readable = readable + "";
-				return readable && readable.replace(/\s+/g, "-") // Convert whitespace to hyphens
-				.replace(/[^\w-]/g, "") // Remove weird characters
-				.toLowerCase();
-			},
-
-			queryJSON: function queryJSON(data, path) {
-				if (!path || !data) {
-					return data;
-				}
-
-				return $.value.apply($, [data].concat(path.split("/")));
-			},
-
-			observe: function observe(element, attribute, observer, oldValue) {
-				if (!(observer instanceof MutationObserver)) {
-					observer = new MutationObserver(observer);
-				}
-
-				var options = attribute ? {
-					attributes: true,
-					attributeFilter: [attribute],
-					attributeOldValue: !!oldValue
-				} : {
-					characterData: true,
-					childList: true,
-					subtree: true,
-					characterDataOldValue: !!oldValue
-				};
-
-				observer.observe(element, options);
-
-				return observer;
-			},
-
-			// If the passed value is not an array, convert to an array
-			toArray: function toArray(arr) {
-				return Array.isArray(arr) ? arr : [arr];
-			},
-
-			// Recursively flatten a multi-dimensional array
-			flatten: function flatten(arr) {
-				if (!Array.isArray(arr)) {
-					return [arr];
-				}
-
-				return arr.reduce(function (prev, c) {
-					return _.toArray(prev).concat(_.flatten(c));
-				}, []);
-			},
-
-			is: function is(thing, element) {
-				return element.matches && element.matches(_.selectors[thing]);
-			},
-
-			has: function has(option, element) {
-				return element.matches && element.matches(_.selectors.option(option));
 			},
 
 			hooks: new $.Hooks()
@@ -1431,11 +1345,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		(function () {
 
 			var s = _.selectors = {
+				init: ".mavo, [mavo], [data-mavo], [data-store]",
 				property: "[property], [itemprop]",
 				specificProperty: function specificProperty(name) {
 					return "[property=" + name + "], [itemprop=" + name + "]";
 				},
-				scope: "[typeof], [itemscope], [itemtype], .scope",
+				scope: "[typeof], [itemscope], [itemtype], .mv-group",
 				multiple: "[multiple], [data-multiple], .multiple",
 				required: "[required], [data-required], .required",
 				formControl: "input, select, textarea",
@@ -1467,11 +1382,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return selector1 + ", " + selector2;
 			};
 			var and = s.and = function (selector1, selector2) {
-				return _.flatten(arr(selector1).map(function (s1) {
-					return arr(selector2).map(function (s2) {
+				var ret = [],
+				    arr2 = arr(selector2);
+
+				arr(selector1).forEach(function (s1) {
+					return ret.push.apply(ret, _toConsumableArray(arr2.map(function (s2) {
 						return s1 + s2;
-					});
-				})).join(", ");
+					})));
+				});
+
+				return ret.join(", ");
 			};
 			var andNot = s.andNot = function (selector1, selector2) {
 				return and(selector1, not(selector2));
@@ -1485,6 +1405,107 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		})();
 	}
+
+	// Init mavo
+	Promise.all([$.ready(), $.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")]).catch(function (err) {
+		console.error(err);
+	}).then(function () {
+		return Mavo.init();
+	});
+
+	Stretchy.selectors.filter = ".mv-editor:not([property])";
+})(Bliss, Bliss.$);
+
+console.log("util is here");
+(function ($, $$) {
+
+	var _ = $.extend(Mavo, {
+		toJSON: function toJSON(data) {
+			if (data === null) {
+				return "";
+			}
+
+			if (typeof data === "string") {
+				// Do not stringify twice!
+				return data;
+			}
+
+			return JSON.stringify(data, null, "\t");
+		},
+
+		// Convert an identifier to readable text that can be used as a label
+		readable: function readable(identifier) {
+			// Is it camelCase?
+			return identifier && identifier.replace(/([a-z])([A-Z])(?=[a-z])/g, function ($0, $1, $2) {
+				return $1 + " " + $2.toLowerCase();
+			}) // camelCase?
+			.replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
+			.replace(/^[a-z]/, function ($0) {
+				return $0.toUpperCase();
+			}); // Capitalize
+		},
+
+		// Inverse of _.readable(): Take a readable string and turn it into an identifier
+		identifier: function identifier(readable) {
+			readable = readable + "";
+			return readable && readable.replace(/\s+/g, "-") // Convert whitespace to hyphens
+			.replace(/[^\w-]/g, "") // Remove weird characters
+			.toLowerCase();
+		},
+
+		queryJSON: function queryJSON(data, path) {
+			if (!path || !data) {
+				return data;
+			}
+
+			return $.value.apply($, [data].concat(path.split("/")));
+		},
+
+		observe: function observe(element, attribute, observer, oldValue) {
+			if (!(observer instanceof MutationObserver)) {
+				observer = new MutationObserver(observer);
+			}
+
+			var options = attribute ? {
+				attributes: true,
+				attributeFilter: [attribute],
+				attributeOldValue: !!oldValue
+			} : {
+				characterData: true,
+				childList: true,
+				subtree: true,
+				characterDataOldValue: !!oldValue
+			};
+
+			observer.observe(element, options);
+
+			return observer;
+		},
+
+		// If the passed value is not an array, convert to an array
+		toArray: function toArray(arr) {
+			return Array.isArray(arr) ? arr : [arr];
+		},
+
+		// Recursively flatten a multi-dimensional array
+		flatten: function flatten(arr) {
+			if (!Array.isArray(arr)) {
+				return [arr];
+			}
+
+			return arr.reduce(function (prev, c) {
+				return _.toArray(prev).concat(_.flatten(c));
+			}, []);
+		},
+
+		is: function is(thing, element) {
+			return element.matches && element.matches(_.selectors[thing]);
+		},
+
+		has: function has(option, element) {
+			return element.matches && element.matches(_.selectors.option(option));
+		}
+	});
 
 	// Bliss plugins
 
@@ -1532,16 +1553,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		}
 	}, true);
-
-	// Init mavo
-	Promise.all([$.ready(), $.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")]).then(function () {
-		return Mavo.init();
-	}).catch(function (err) {
-		console.error(err);
-		Mavo.init();
-	});
-
-	Stretchy.selectors.filter = ".mv-editor:not([property])";
 })(Bliss, Bliss.$);
 
 (function ($) {
