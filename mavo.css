@@ -220,6 +220,8 @@
   font-size: 1rem;
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px); }
+  .mv-bar a {
+    text-decoration: none; }
   .mv-bar:not(.inline) {
     position: fixed;
     z-index: 10000; }
@@ -275,8 +277,6 @@
     display: inline-block;
     vertical-align: -.1em;
     max-height: 1em; }
-  .mv-bar a.button {
-    text-decoration: none; }
   .mv-bar .edit::before {
     content: "✎"; }
   .mv-wrapper[data-editing] .mv-bar .edit {

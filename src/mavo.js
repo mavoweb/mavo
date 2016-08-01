@@ -6,13 +6,13 @@ var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		_.all.push(this);
 
-		// TODO escaping of # and \
-		var dataStore = (location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
-		                element.getAttribute("data-store") || "";
-		this.store = dataStore === "none"? null : dataStore;
-
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
+		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
+
+		this.store = ((_.all.length == 1) && location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
+		                element.getAttribute("data-store") || null;
+		this.source = ((_.all.length == 1) && location.search.match(/[?&]source=([^&]+)/) || [])[1] ||
+		                element.getAttribute("data-source") || null;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -186,9 +186,8 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.clear);
 		});
 
-		// Fetch existing data
-
-		if (this.store) {
+		if (this.store || this.source) {
+			// Fetch existing data
 			this.storage = new _.Storage(this);
 
 			this.permissions.can("read", () => this.storage.load());
@@ -336,7 +335,7 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: (container) => $$("[data-store]", container).map(element => new _(element)),
+		init: container => $$(".mavo, [data-store]", container).map(element => new _(element)),
 
 		toJSON: data => {
 			if (data === null) {
@@ -377,8 +376,10 @@ var _ = self.Mavo = $.Class({
 			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
-		observe: function(element, attribute, callback, oldValue) {
-			var observer = $.type(callback) == "function"? new MutationObserver(callback) : callback;
+		observe: function(element, attribute, observer, oldValue) {
+			if (!(observer instanceof MutationObserver)) {
+				observer = new MutationObserver(observer);
+			}
 
 			var options = attribute? {
 					attributes: true,

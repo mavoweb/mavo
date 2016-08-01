@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>data-store tests</title>
+	<title>data-store and data-source tests</title>
 	<link rel="stylesheet" href="../mavo.css" />
 </head>
 <body>
 
-<h1>data-store tests</h1>
+<h1>data-store and data-source tests</h1>
 
 <h2>None</h2>
 
-<div data-store>
+<div class="mavo">
 <ul>
 	<li property="country" data-multiple>
 		<span property="code">Code</span>
@@ -42,9 +42,9 @@
 </ul>
 </div>
 
-<h2>Local + Remote</h2>
+<h2>Local store, remote source</h2>
 
-<div data-store="local ../demos/talks/countries.json" id="dualstoretest">
+<div data-store="local" data-source="../demos/talks/countries.json" id="dualstoretest">
 <ul>
 	<li property="country" data-multiple>
 		<span property="code">Code</span>
@@ -53,6 +53,67 @@
 </ul>
 </div>
 
+<h2>Github</h2>
+
+<div data-store="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>Local store, Github source</h2>
+
+<div data-store="local" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>No store, Github source</h2>
+
+<p>Should display data but no editing controls</p>
+
+<div class="mavo" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
+
+<h2>Local store, Element source</h2>
+
+<p>Should display Greece and Poland if no data</p>
+
+<script type="application/json" id="country-data">
+	{
+		"country": [
+			{
+				"code": "gr",
+				"name": "Greece"
+			},
+			{
+				"code": "pl",
+				"name": "Poland"
+			}
+		]
+	}
+</script>
+<div data-store="local" data-source="#country-data">
+<ul>
+	<li property="country" data-multiple>
+		<span property="code">Code</span>
+		<span property="name">Name</span>
+	</li>
+</ul>
+</div>
 
 <script src="../mavo.js"></script>
 

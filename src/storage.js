@@ -4,13 +4,17 @@ var _ = Mavo.Storage = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
 
-		var stores = this.mavo.store.split(/\s+/);
-		this.backends = stores.map(url => _.Backend.create(url, this) || new _.Backend.Remote(url, this));
+		this.backend = _.Backend.create(this.mavo.store, this);
+		this.sourceBackend = _.Backend.create(this.mavo.source, this);
 
-		// Permissions of first backend become the permissions of the app
-		this.backends[0].permissions = this.mavo.permissions.or(this.backends[0].permissions);
-
-		this.ready = Promise.all(this.backends.map(backend => backend.ready));
+		if (this.backend) {
+			// Permissions of first backend become the permissions of the app
+			// TODO just use global permissions
+			this.backend.permissions = this.permissions.or(this.backend.permissions);
+		}
+		else {
+			this.permissions.on("read");
+		}
 
 		this.loaded = new Promise((resolve, reject) => {
 			this.mavo.wrapper.addEventListener("mavo:load", resolve);
@@ -54,37 +58,27 @@ var _ = Mavo.Storage = $.Class({
 
 		// Update login status
 		this.mavo.wrapper.addEventListener("mavo:login.mavo", evt => {
-			var status = $(".status", this.mavo.bar);
-			status.innerHTML = "";
-			status._.contents([
-				"Logged in to " + evt.backend.id + " as ",
-				{tag: "strong", innerHTML: evt.name},
-				{
-					tag: "button",
-					textContent: "Logout",
-					className: "logout",
-					events: {
-						click: e => evt.backend.logout()
-					},
-				}
-			]);
+			if (evt.backend == this.backend) {
+				var status = $(".status", this.mavo.bar);
+				status.innerHTML = "";
+				status._.contents([
+					"Logged in to " + evt.backend.id + " as ",
+					{tag: "strong", innerHTML: evt.name},
+					{
+						tag: "button",
+						textContent: "Logout",
+						className: "logout",
+						events: {
+							click: e => evt.backend.logout()
+						},
+					}
+				]);
+			}
 		});
 
 		this.mavo.wrapper.addEventListener("mavo:logout.mavo", evt => {
 			$(".status", this.mavo.bar).textContent = "";
 		});
-	},
-
-	get getBackends () {
-		return this.backends.filter(backend => !!backend.get);
-	},
-
-	get putBackends () {
-		return this.backends.filter(backend => !!backend.put);
-	},
-
-	get authBackends () {
-		return this.backends.filter(backend => !!backend.login);
 	},
 
 	proxy: {
@@ -96,82 +90,70 @@ var _ = Mavo.Storage = $.Class({
 	 *
 	 * @return {Promise}  A promise that resolves when the data is loaded.
 	 */
-	load: function(o = {backend: 0}) {
-		var ret = this.ready;
-
+	load: function() {
 		this.inProgress = "Loading";
 
-		var getBackend = this.getBackends[o.backend];
+		var backend = this.backend || this.sourceBackend;
 
-		if (getBackend) {
-			getBackend.ready
-			.then(() => getBackend.get())
-			.then(response => {
-				this.inProgress = false;
-				this.mavo.wrapper._.fire("mavo:load");
+		return backend.ready.then(() => backend.get())
+		.catch(err => {
+			// Try again with source
+			if (this.sourceBackend && backend !== this.sourceBackend) {
+				return this.sourceBackend.ready.then(() => this.sourceBackend.get());
+			}
 
-				if (response && $.type(response) == "string") {
-					response = JSON.parse(response);
+			return Promise.reject(err);
+		})
+		.then(response => {
+			if (response && $.type(response) == "string") {
+				response = JSON.parse(response);
+			}
+
+			this.mavo.render(response);
+		})
+		.catch(err => {
+			if (err) {
+				if (err.xhr && err.xhr.status == 404) {
+					this.mavo.render("");
 				}
-
-				var data = Mavo.queryJSON(response, this.param("root"));
-
-				this.mavo.render(data);
-			}).catch(err => {
-				this.inProgress = false;
-
-				// Failed, try next backend if available
-				if (o.backend < this.getBackends.length - 1) {
-					o.backend++;
-					return this.load(o);
+				else {
+					// TODO display error to user
+					console.error(err);
+					console.log(err.stack);
 				}
-
-				if (err) {
-					if (err.xhr && err.xhr.status == 404) {
-						this.mavo.render("");
-					}
-					else {
-						console.error(err);
-						console.log(err.stack);
-					}
-				}
-
-				this.mavo.wrapper._.fire("mavo:load");
-			});
-		}
+			}
+		})
+		.then(() => {
+			this.inProgress = false;
+			$.fire(this.mavo.wrapper, "mavo:load");
+		});
 	},
 
-	save: function(data = this.mavo.data) {
+	save: function() {
 		this.inProgress = "Saving";
 
-		Promise.all(this.putBackends.map(backend => {
-			return backend.login().then(() => {
-				return backend.put({
-					name: backend.filename,
-					path: backend.path,
-					data: data
-				});
-			});
-		})).then(() => {
-			this.mavo.wrapper._.fire("mavo:save");
-
-			this.inProgress = false;
-		}).catch(err => {
-			this.inProgress = false;
-
+		this.backend.login()
+		.then(() => this.backend.put())
+		.then(() => {
+			$.fire(this.mavo.wrapper, "mavo:save");
+		})
+		.catch(err => {
 			if (err) {
 				console.error(err);
 				console.log(err.stack);
 			}
+		})
+		.then(() => {
+			this.inProgress = false;
 		});
 	},
 
 	login: function() {
-		return this.authBackends[0] && this.authBackends[0].login();
+		return this.backend.login();
 	},
 
 	logout: function() {
-		return this.authBackends[0] && this.authBackends[0].logout();
+		return this.backend.logout();
 	},
 
 	clear: function() {
@@ -221,19 +203,9 @@ _.Backend = $.Class({
 	constructor: function(url, storage) {
 		this.url = url;
 		this.storage = storage;
-		this.id = this.constructor.id;
 
 		// Permissions of this particular backend.
-		// Global permissions are OR(all permissions)
 		this.permissions = new Mavo.Permissions();
-
-		Mavo.Permissions.actions.forEach(action => {
-			this.permissions.can(action, () => {
-				this.storage.permissions.on(action);
-			}, () => {
-				// TODO off
-			});
-		});
 	},
 
 	// To be be overriden by subclasses
@@ -252,23 +224,29 @@ _.Backend = $.Class({
 	static: {
 		// Return the appropriate backend(s) for this url
 		create: function(url, storage) {
-			var Backend = _.Backend.backends.filter(Backend => Backend.test(url))[0];
+			if (url) {
+				var Backend = _.Backend.types.filter(Backend => Backend.test(url))[0] || _.Backend.Remote;
 
-			return Backend && new Backend(url, storage);
+				return new Backend(url, storage);
+			}
+
+			return null;
 		},
 
-		backends: [],
+		types: [],
 
-		add: function(name, Class, first) {
-			_.Backend[name] = Class;
-			_.Backend.backends[first? "unshift" : "push"](Class);
-			Class.id = name;
+		register: function(Class) {
+			_.Backend[Class.prototype.id] = Class;
+			_.Backend.types.push(Class);
+			return Class;
 		}
 	}
 });
 
 // Save in an element
-_.Backend.add("Element", $.Class({ extends: _.Backend,
+_.Backend.register($.Class({
+	id: "Element",
+	extends: _.Backend,
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
 
@@ -294,7 +272,9 @@ _.Backend.add("Element", $.Class({ extends: _.Backend,
 }));
 
 // Load from a remote URL, no save
-_.Backend.add("Remote", $.Class({ extends: _.Backend,
+_.Backend.register($.Class({
+	id: "Remote",
+	extends: _.Backend,
 	constructor: function() {
 		this.permissions.on("read");
 		this.url = new URL(this.url, location);
@@ -313,7 +293,9 @@ _.Backend.add("Remote", $.Class({ extends: _.Backend,
 }));
 
 // Save in localStorage
-_.Backend.add("Local", $.Class({ extends: _.Backend,
+_.Backend.register($.Class({
+	extends: _.Backend,
+	id: "Local",
 	constructor: function() {
 		this.permissions.on(["read", "edit", "save"]);
 		this.key = this.mavo.id;

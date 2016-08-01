@@ -42,17 +42,6 @@ var _ = Mavo.Primitive = $.Class({
 			$.remove(this.editor);
 		}
 
-		// Observe future mutations to this property, if possible
-		// Properties like input.checked or input.value cannot be observed that way
-		// so we cannot depend on mutation observers for everything :(
-		if (!this.computed) {
-			this.observer = Mavo.observe(this.element, this.attribute, record => {
-				if (this.attribute || !this.mavo.editing) {
-					this.value = this.getValue();
-				}
-			}, true);
-		}
-
 		requestAnimationFrame(() => {
 			if (!this.exposed && !this.computed) {
 				this.mavo.needsEdit = true;
@@ -103,6 +92,11 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.value = this.template? this.default : this.getValue({raw: true});
+
+		// Observe future mutations to this property, if possible
+		// Properties like input.checked or input.value cannot be observed that way
+		// so we cannot depend on mutation observers for everything :(
+		this.observe();
 	},
 
 	get editorValue() {
@@ -478,19 +472,17 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	observe: function() {
-		if (this.computed) {
-			return;
+		if (!this.computed) {
+			this.observer = Mavo.observe(this.element, this.attribute, this.observer || (record => {
+				if (this.attribute || !this.mavo.editing) {
+					this.value = this.getValue();
+				}
+			}));
 		}
-
-		Mavo.observe(this.element, this.attribute, this.observer);
 	},
 
 	unobserve: function () {
-		if (this.computed) {
-			return;
-		}
-
-		this.observer.disconnect();
+		this.observer && this.observer.disconnect();
 	},
 
 	/**
@@ -519,6 +511,8 @@ var _ = Mavo.Primitive = $.Class({
 
 	live: {
 		value: function (value) {
+			this.unobserve();
+
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;
@@ -564,7 +558,9 @@ var _ = Mavo.Primitive = $.Class({
 					dirty: this.editing,
 					action: "propertychange"
 				});
-			})
+			});
+
+			this.observe();
 
 			return value;
 		},

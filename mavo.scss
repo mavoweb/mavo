@@ -339,6 +339,10 @@ $font-mono: Consolas, Monaco, monospace;
 	font-size: 1rem;
 	backdrop-filter: blur(3px);
 
+	a {
+		text-decoration: none;
+	}
+
 	&:not(.inline) {
 		position: fixed;
 		z-index: 10000; // this is wrong, but must override other wrong things :(
@@ -422,10 +426,6 @@ $font-mono: Consolas, Monaco, monospace;
 		display: inline-block;
 		vertical-align: -.1em;
 		max-height: 1em;
-	}
-
-	a.button {
-		text-decoration: none;
 	}
 
 	.edit {

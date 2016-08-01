@@ -4,9 +4,9 @@ if (!self.Mavo) {
 	return;
 }
 
-var _;
-
-Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
+var _ = Mavo.Storage.Backend.register($.Class({
+	extends: Mavo.Storage.Backend,
+	id: "Github",
 	constructor: function() {
 		this.permissions.on("login");
 
@@ -62,8 +62,13 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Mavo.toJSON(file.data);
-		file.path = file.path || "";
+		if (!file) {
+			file = {
+				data: this.mavo.toJSON(),
+				filename: this.filename,
+				path: this.path || ""
+			};
+		}
 
 		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
 
@@ -173,7 +178,7 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 			this.user = accountInfo;
 
 			var name = accountInfo.name || accountInfo.login;
-			this.mavo.wrapper._.fire("mavo:login", {
+			$.fire(this.mavo.wrapper, "mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
 							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}
@@ -225,6 +230,6 @@ Mavo.Storage.Backend.add("Github", _ = $.Class({ extends: Mavo.Storage.Backend,
 
 		btoa: str => btoa(unescape(encodeURIComponent(str)))
 	}
-}), true);
+}));
 
 })(Bliss);

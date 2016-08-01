@@ -6,7 +6,9 @@ if (!self.Mavo) {
 
 var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
+Mavo.Storage.Backend.register($.Class({
+	extends: Mavo.Storage.Backend,
+	id: "Dropbox",
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
 		this.url = new URL(this.url, location);
@@ -47,7 +49,13 @@ Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file) {
-		file.data = Mavo.toJSON(file.data);
+		if (!file) {
+			file = {
+				data: this.mavo.toJSON(),
+				filename: this.filename,
+				path: this.path || ""
+			};
+		}
 
 		return new Promise((resolve, reject) => {
 			this.client.writeFile(file.name, file.data, function(error, stat) {
@@ -91,7 +99,7 @@ Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					this.mavo.wrapper._.fire("mavo:login", $.extend({backend: this}, accountInfo));
+					$.fire(this.mavo.wrapper, "mavo:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -115,6 +123,6 @@ Mavo.Storage.Backend.add("Dropbox", $.Class({ extends: Mavo.Storage.Backend,
 			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
 		}
 	}
-}), true);
+}));
 
 })(Bliss);
