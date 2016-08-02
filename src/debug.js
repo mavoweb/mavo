@@ -89,7 +89,7 @@ var _ = Mavo.Debug = {
 		}
 		else if (obj instanceof Mavo.Scope) {
 			// Group
-			return `Group with ${obj.propertyNames.length} properties`;
+			return `Group with ${Object.keys(obj).length} properties`;
 		}
 	},
 

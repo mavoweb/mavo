@@ -90,7 +90,7 @@ var aliases = {
 	eq: "equal equality"
 };
 
-for (name in aliases) {
+for (let name in aliases) {
 	aliases[name].split(/\s+/g).forEach(alias => _[alias] = _[name]);
 }
 

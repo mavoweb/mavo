@@ -102,7 +102,9 @@ var _ = $.extend(Mavo, {
 		}
 
 		return null;
-	}
+	},
+
+	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
 });
 
 // Bliss plugins

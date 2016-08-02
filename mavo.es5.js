@@ -1068,9 +1068,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				inside: this.ui.bar
 			});
 
-			// Normalize property names
-			this.propertyNames = [];
-
 			// Is there any control that requires an edit button?
 			this.needsEdit = false;
 
@@ -1078,9 +1075,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Mavo.hooks.run("init-tree-before", this);
 
 			this.root = Mavo.Node.create(this.element, this);
-			this.propertyNames = this.propertyNames.sort(function (a, b) {
-				return b.length - a.length;
-			});
 
 			Mavo.hooks.run("init-tree-after", this);
 
@@ -1530,12 +1524,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator = names[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var _name = _step.value;
+					var name = _step.value;
 
 					if (searchParams) {
-						value = searchParams.get(_name);
+						value = searchParams.get(name);
 					} else {
-						var match = location.search.match(RegExp("[?&]" + _name + "(?:=([^&]+))?(?=&|$)", "i"));
+						var match = location.search.match(RegExp("[?&]" + name + "(?:=([^&]+))?(?=&|$)", "i"));
 						value = match && (match[1] || "");
 					}
 
@@ -1559,6 +1553,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return null;
+		},
+
+		escapeRegExp: function escapeRegExp(s) {
+			return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
 		}
 	});
 
@@ -2503,7 +2501,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		toString: function toString() {
-			return "[" + this.expression + "]";
+			return this.expression;
 		},
 
 
@@ -2556,6 +2554,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.all = o.all; // the Mavo.Expressions object that this belongs to
 				this.node = o.node;
 				this.path = o.path;
+				this.syntax = o.syntax;
 
 				if (!this.node) {
 					// No node provided, figure it out from path
@@ -2661,23 +2660,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			tokenize: function tokenize(template) {
-				var regex = this.expressionRegex;
+				var regex = this.syntax;
 				var match,
 				    ret = [],
 				    lastIndex = 0;
 
-				regex.lastIndex = 0;
+				this.syntax.lastIndex = 0;
 
-				while ((match = regex.exec(template)) !== null) {
+				while ((match = this.syntax.exec(template)) !== null) {
 					// Literal before the expression
 					if (match.index > lastIndex) {
 						ret.push(template.substring(lastIndex, match.index));
 					}
 
-					lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
-					var expression = template.slice(match.index + 1, lastIndex - 1);
+					lastIndex = this.syntax.lastIndex;
 
-					ret.push(new Mavo.Expression(expression));
+					ret.push(new Mavo.Expression(match[1]));
 				}
 
 				// Literal at the end
@@ -2694,51 +2692,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			static: {
-				elements: new WeakMap(),
-
-				// Find where a ( or [ or { ends.
-				findEnd: function findEnd(expr) {
-					var stack = [];
-					var inside,
-					    insides = "\"'`";
-					var open = "([{",
-					    close = ")]}";
-					var isEscape;
-
-					for (var i = 0; expr[i]; i++) {
-						var char = expr[i];
-
-						if (inside) {
-							if (char === inside && !isEscape) {
-								inside = "";
-							}
-						} else if (!isEscape && insides.indexOf(char) > -1) {
-							inside = char;
-						} else if (open.indexOf(char) > -1) {
-							stack.push(char);
-						} else {
-							var peek = stack[stack.length - 1];
-
-							if (char === close[open.indexOf(peek)]) {
-								stack.pop();
-							}
-
-							if (stack.length === 0) {
-								break;
-							}
-						}
-
-						isEscape = char == "\\";
-					}
-
-					return i;
-				},
-
-				lazy: {
-					rootFunctionRegExp: function rootFunctionRegExp() {
-						return RegExp("^=\\s*(?:" + Mavo.Expressions.rootFunctions.join("|") + ")\\($", "i");
-					}
-				}
+				elements: new WeakMap()
 			}
 		});
 	})();
@@ -2773,6 +2727,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 								this.all.push(new Mavo.Expression.Text({
 									path: et.path,
+									syntax: et.syntax,
 									attribute: et.attribute,
 									all: this,
 									template: et
@@ -2793,7 +2748,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					} else {
-						this.traverse();
+						var syntax = _.getSyntax(this.scope.element.closest("[data-expression-syntax]")) || _.defaultSyntax;
+						this.traverse(this.scope.element, undefined, syntax);
 					}
 				}
 
@@ -2854,12 +2810,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			},
 
-			extract: function extract(node, attribute, path) {
-				this.expressionRegex.lastIndex = 0;
+			extract: function extract(node, attribute, path, syntax) {
+				syntax.lastIndex = 0;
 
-				if (this.expressionRegex.test(attribute ? attribute.value : node.textContent)) {
+				if (syntax.test(attribute ? attribute.value : node.textContent)) {
 					this.all.push(new Mavo.Expression.Text({
-						node: node,
+						node: node, syntax: syntax,
 						path: (path || "").slice(1).split("/").map(function (i) {
 							return +i;
 						}),
@@ -2870,54 +2826,48 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
-			traverse: function traverse(node, path) {
+			traverse: function traverse(node) {
 				var _this14 = this;
 
-				node = node || this.scope.element;
-				path = path || "";
+				var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
+				var syntax = arguments[2];
 
 				if (node.matches && node.matches(_.escape)) {
 					return;
 				}
 
-				if (node.nodeType === 3) {
+				if (node.nodeType === 3 || node.nodeType === 8) {
 					// Text node
 					// Leaf node, extract references from content
-					this.extract(node, null, path);
+					this.extract(node, null, path, syntax);
 				}
-
 				// Traverse children and attributes as long as this is NOT the root of a child scope
 				// (otherwise, it will be taken care of its own Expressions object)
-				if (node == this.scope.element || !Mavo.is("scope", node)) {
-					$$(node.attributes).forEach(function (attribute) {
-						return _this14.extract(node, attribute, path);
-					});
-					$$(node.childNodes).forEach(function (child, i) {
-						return _this14.traverse(child, path + "/" + i);
-					});
-				}
-			},
-
-			lazy: {
-				// Regex that loosely matches all possible expressions
-				// False positives are ok, but false negatives are not.
-				expressionRegex: function expressionRegex() {
-					var properties = this.scope.mavo.propertyNames.concat(_.special);
-					var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
-
-					return RegExp("\\[[\\S\\s]*?" + propertyRegex + "[\\S\\s]*?\\]", "gi");
-				}
+				else if (node == this.scope.element || !Mavo.is("scope", node)) {
+						syntax = _.getSyntax(node) || syntax;
+						$$(node.attributes).forEach(function (attribute) {
+							return _this14.extract(node, attribute, path, syntax);
+						});
+						$$(node.childNodes).forEach(function (child, i) {
+							return _this14.traverse(child, path + "/" + i, syntax);
+						});
+					}
 			},
 
 			static: {
 				escape: ".ignore-expressions",
+				defaultSyntax: /\[([\S\s]+?)\]/gi,
 
-				// Special property names
-				special: ["$index"],
+				getSyntax: function getSyntax(element) {
+					if (element) {
+						var syntax = element.getAttribute("data-expression-syntax");
 
-				lazy: {
-					rootFunctions: function rootFunctions() {
-						return [].concat(_toConsumableArray(Object.keys(Mavo.Functions)), _toConsumableArray(Object.getOwnPropertyNames(Math)), ["if", ""]);
+						if (syntax && /^\S+expression\S+$/.test(syntax)) {
+							syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
+							syntax = RegExp(syntax, "gi");
+						}
+
+						return syntax;
 					}
 				}
 			}
@@ -3175,10 +3125,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		eq: "equal equality"
 	};
 
-	for (name in aliases) {
+	var _loop = function _loop(name) {
 		aliases[name].split(/\s+/g).forEach(function (alias) {
 			return _[alias] = _[name];
 		});
+	};
+
+	for (var name in aliases) {
+		_loop(name);
 	}
 
 	// Make function names case insensitive
@@ -3344,15 +3298,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			if (!this.template) {
-				Array.prototype.push.apply(this.mavo.propertyNames, this.propertyNames);
-			}
-
 			Mavo.hooks.run("scope-init-end", this);
-		},
-
-		get propertyNames() {
-			return Object.keys(this.properties);
 		},
 
 		getData: function getData(o) {
@@ -5503,7 +5449,7 @@ var prettyPrint = function () {
 				}
 			} else if (obj instanceof Mavo.Scope) {
 				// Group
-				return "Group with " + obj.propertyNames.length + " properties";
+				return "Group with " + Object.keys(obj).length + " properties";
 			}
 		},
 
@@ -6169,7 +6115,7 @@ var prettyPrint = function () {
 			},
 
 			btoa: function (_btoa) {
-				function btoa(_x17) {
+				function btoa(_x18) {
 					return _btoa.apply(this, arguments);
 				}
 

@@ -1092,9 +1092,6 @@ var _ = self.Mavo = $.Class({
 			inside: this.ui.bar
 		});
 
-		// Normalize property names
-		this.propertyNames = [];
-
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
@@ -1102,7 +1099,6 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-before", this);
 
 		this.root = Mavo.Node.create(this.element, this);
-		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
 
 		Mavo.hooks.run("init-tree-after", this);
 
@@ -1511,7 +1507,9 @@ var _ = $.extend(Mavo, {
 		}
 
 		return null;
-	}
+	},
+
+	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
 });
 
 // Bliss plugins
@@ -2380,7 +2378,7 @@ var _ = Mavo.Expression = $.Class({
 	},
 
 	toString() {
-		return `[${this.expression}]`;
+		return this.expression;
 	},
 
 	createFunction: function() {
@@ -2433,6 +2431,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		this.all = o.all; // the Mavo.Expressions object that this belongs to
 		this.node = o.node;
 		this.path = o.path;
+		this.syntax = o.syntax;
 
 		if (!this.node) {
 			// No node provided, figure it out from path
@@ -2538,21 +2537,20 @@ var _ = Mavo.Expression.Text = $.Class({
 	},
 
 	tokenize: function(template) {
-		var regex = this.expressionRegex;
+		var regex = this.syntax;
 		var match, ret = [], lastIndex = 0;
 
-		regex.lastIndex = 0;
+		this.syntax.lastIndex = 0;
 
-		while ((match = regex.exec(template)) !== null) {
+		while ((match = this.syntax.exec(template)) !== null) {
 			// Literal before the expression
 			if (match.index > lastIndex) {
 				ret.push(template.substring(lastIndex, match.index));
 			}
 
-			lastIndex = regex.lastIndex = _.findEnd(template.slice(match.index)) + match.index + 1;
-			var expression = template.slice(match.index + 1, lastIndex - 1);
+			lastIndex = this.syntax.lastIndex;
 
-			ret.push(new Mavo.Expression(expression));
+			ret.push(new Mavo.Expression(match[1]));
 		}
 
 		// Literal at the end
@@ -2569,50 +2567,7 @@ var _ = Mavo.Expression.Text = $.Class({
 	},
 
 	static: {
-		elements: new WeakMap(),
-
-		// Find where a ( or [ or { ends.
-		findEnd: function(expr) {
-			var stack = [];
-			var inside, insides = "\"'`";
-			var open = "([{", close = ")]}";
-			var isEscape;
-
-			for (var i=0; expr[i]; i++) {
-				var char = expr[i];
-
-				if (inside) {
-					if (char === inside && !isEscape) {
-						inside = "";
-					}
-				}
-				else if (!isEscape && insides.indexOf(char) > -1) {
-					inside = char;
-				}
-				else if (open.indexOf(char) > -1) {
-					stack.push(char);
-				}
-				else {
-					var peek = stack[stack.length - 1];
-
-					if (char === close[open.indexOf(peek)]) {
-						stack.pop();
-					}
-
-					if (stack.length === 0) {
-						break;
-					}
-				}
-
-				isEscape = char == "\\";
-			}
-
-			return i;
-		},
-
-		lazy: {
-			rootFunctionRegExp: () => RegExp("^=\\s*(?:" + Mavo.Expressions.rootFunctions.join("|") + ")\\($", "i")
-		}
+		elements: new WeakMap()
 	}
 });
 
@@ -2639,6 +2594,7 @@ var _ = Mavo.Expressions = $.Class({
 				for (et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
+						syntax: et.syntax,
 						attribute: et.attribute,
 						all: this,
 						template: et
@@ -2646,7 +2602,8 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				this.traverse();
+				var syntax = _.getSyntax(this.scope.element.closest("[data-expression-syntax]")) || _.defaultSyntax;
+				this.traverse(this.scope.element, undefined, syntax);
 			}
 		}
 
@@ -2684,12 +2641,12 @@ var _ = Mavo.Expressions = $.Class({
 		}
 	},
 
-	extract: function(node, attribute, path) {
-		this.expressionRegex.lastIndex = 0;
+	extract: function(node, attribute, path, syntax) {
+		syntax.lastIndex = 0;
 
-		if (this.expressionRegex.test(attribute? attribute.value : node.textContent)) {
+		if (syntax.test(attribute? attribute.value : node.textContent)) {
 			this.all.push(new Mavo.Expression.Text({
-				node,
+				node, syntax,
 				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
 				all: this
@@ -2698,50 +2655,39 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
-	traverse: function(node, path) {
-		node = node || this.scope.element;
-		path = path || "";
-
+	traverse: function(node, path = "", syntax) {
 		if (node.matches && node.matches(_.escape)) {
 			return;
 		}
 
-		if (node.nodeType === 3) { // Text node
+		if (node.nodeType === 3 || node.nodeType === 8) { // Text node
 			// Leaf node, extract references from content
-			this.extract(node, null, path);
+			this.extract(node, null, path, syntax);
 		}
-
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
-		if (node == this.scope.element || !Mavo.is("scope", node)) {
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path));
-			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`));
-		}
-	},
-
-	lazy: {
-		// Regex that loosely matches all possible expressions
-		// False positives are ok, but false negatives are not.
-		expressionRegex: function() {
-			var properties = this.scope.mavo.propertyNames.concat(_.special);
-			var propertyRegex = "(?:" + properties.join("|").replace(/\$/g, "\\$") + ")";
-
-			return RegExp(`\\[[\\S\\s]*?${propertyRegex}[\\S\\s]*?\\]`, "gi");
+		else if (node == this.scope.element || !Mavo.is("scope", node)) {
+			syntax = _.getSyntax(node) || syntax;
+			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
+			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`, syntax));
 		}
 	},
 
 	static: {
 		escape: ".ignore-expressions",
+		defaultSyntax: /\[([\S\s]+?)\]/gi,
 
-		// Special property names
-		special: ["$index"],
+		getSyntax: function(element) {
+			if (element) {
+				var syntax = element.getAttribute("data-expression-syntax");
 
-		lazy: {
-			rootFunctions: () => [
-				...Object.keys(Mavo.Functions),
-				...Object.getOwnPropertyNames(Math),
-				"if", ""
-			]
+				if (syntax && /^\S+expression\S+$/.test(syntax)) {
+					syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
+					syntax = RegExp(syntax, "gi");
+				}
+
+				return syntax;
+			}
 		}
 	}
 });
@@ -2956,7 +2902,7 @@ var aliases = {
 	eq: "equal equality"
 };
 
-for (name in aliases) {
+for (let name in aliases) {
 	aliases[name].split(/\s+/g).forEach(alias => _[alias] = _[name]);
 }
 
@@ -3109,15 +3055,7 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
-		if (!this.template) {
-			Array.prototype.push.apply(this.mavo.propertyNames, this.propertyNames);
-		}
-
 		Mavo.hooks.run("scope-init-end", this);
-	},
-
-	get propertyNames () {
-		return Object.keys(this.properties);
 	},
 
 	getData: function(o) {
@@ -5173,7 +5111,7 @@ var _ = Mavo.Debug = {
 		}
 		else if (obj instanceof Mavo.Scope) {
 			// Group
-			return `Group with ${obj.propertyNames.length} properties`;
+			return `Group with ${Object.keys(obj).length} properties`;
 		}
 	},
 

@@ -90,9 +90,6 @@ var _ = self.Mavo = $.Class({
 			inside: this.ui.bar
 		});
 
-		// Normalize property names
-		this.propertyNames = [];
-
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
@@ -100,7 +97,6 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-before", this);
 
 		this.root = Mavo.Node.create(this.element, this);
-		this.propertyNames = this.propertyNames.sort((a, b) => b.length - a.length);
 
 		Mavo.hooks.run("init-tree-after", this);
 

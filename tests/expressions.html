@@ -33,9 +33,9 @@
 	]
 }</script>
 
-<!-- <h2>With render (country data)</h2>
+<section data-store="#countries">
+	<h2>With render (country data)</h2>
 
-<div data-store="#countries">
 	<ul>
 		<li property="country" data-multiple data-foo="[code]">
 			<span property="code">Code</span>
@@ -49,11 +49,11 @@
 	</ul>
 	List: [country]
 	<div>Boolean count (must be 1): [count(isUS)]</div>
-</div>
+</section>
 
 <h2>Without render</h2>
 
-<div data-store>
+<div class="mavo">
 	<ul>
 		<li property="country" data-multiple data-foo="[code]">
 			<span property="code">Code</span>
@@ -113,12 +113,32 @@
 	</article>
 
 	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
-</div> -->
+</div>
 
-<section class="mavo" data-source="#countries">
+<section class="mavo mv-keep-unhandled" data-source="#countries">
+	<h1>Broad references</h1>
+
 	<select>
 		<option value="[code]" property="country" data-multiple typeof>[name]</option>
 	</select>
+</section>
+
+<section class="mavo" data-source="#countries">
+	<h1>Custom expression syntax</h1>
+
+	<p>All of the following should be green. There should be no red.</p>
+
+	<ul>
+		<li style="background: hsl([40 + 40], 100%, 50%)">Normal
+			<div style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with the same syntax</div>
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expression-syntax="[[expression]]">Inner with different syntax</div>
+		</li>
+		<li data-expression-syntax="{{expression}}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
+		<li data-expression-syntax="[[expression]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)">Inner with the same syntax</div>
+			<div data-expression-syntax="[expression]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
+		</li>
+	</ul>
 </section>
 
 <script src="../mavo.js"></script>

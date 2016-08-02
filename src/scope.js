@@ -49,15 +49,7 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
-		if (!this.template) {
-			Array.prototype.push.apply(this.mavo.propertyNames, this.propertyNames);
-		}
-
 		Mavo.hooks.run("scope-init-end", this);
-	},
-
-	get propertyNames () {
-		return Object.keys(this.properties);
 	},
 
 	getData: function(o) {
