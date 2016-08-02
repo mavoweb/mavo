@@ -18,6 +18,11 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
+// Polyfill
+[hidden] {
+	display: none;
+}
+
 [data-store]:not(.mv-wrapper) {
 	// Unprocessed items
 	opacity: .5;
@@ -334,23 +339,33 @@ $font-mono: Consolas, Monaco, monospace;
 
 .mv-bar {
 	all: initial;
+	display: flex;
 	color: white;
 	font-family: inherit;
 	font-size: 1rem;
+	line-height: 1.5;
 	backdrop-filter: blur(3px);
+
+	&[hidden] {
+		display: none;
+	}
 
 	a {
 		text-decoration: none;
 	}
 
-	&:not(.inline) {
+	&.fixed {
 		position: fixed;
 		z-index: 10000; // this is wrong, but must override other wrong things :(
 	}
 
-	// Inline bar for secondary apps
-	&.inline {
+	&:not(.fixed) {
 		border-radius: .3em;
+		margin-bottom: 1em;
+	}
+
+	&:not(.fixed):not(.floating) {
+		box-shadow: 0 0 0 1px rgba(0,0,0,.3) inset, 0 .1em .4em rgba(0, 0, 0, .3);
 	}
 
 	// Bar fixed at the top of the screen
@@ -358,7 +373,6 @@ $font-mono: Consolas, Monaco, monospace;
 		top: 0;
 		left: 0;
 		right: 0;
-		display: flex;
 		padding: 0 .5em 0 6em;
 		background: url("logo.svg") .5em 50% / auto 50% no-repeat,
 					linear-gradient(transparent, hsla(0,0%,15%,.5));
@@ -381,7 +395,7 @@ $font-mono: Consolas, Monaco, monospace;
 		}
 
 		button, .button {
-			border-radius: .3em;
+			border-radius: .4em;
 			border: 1px solid black;
 			background: rgba(0,0,0,.8);
 		}
@@ -478,7 +492,8 @@ $font-mono: Consolas, Monaco, monospace;
 
 	.status {
 		flex: 1;
-		line-height: 1.8;
+		margin-top: auto;
+		margin-bottom: auto;
 
 		.logout {
 			border: 1px solid rgba(0,0,0,.4);

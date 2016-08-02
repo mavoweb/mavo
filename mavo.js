@@ -1078,6 +1078,18 @@ var _ = self.Mavo = $.Class({
 
 		this.wrapper.classList.add("mv-wrapper");
 
+		this.ui = {
+			bar: $(".mv-bar", this.wrapper) || $.create({
+				className: "mv-bar mv-ui",
+				start: this.wrapper
+			})
+		};
+
+		this.ui.status = $(".status", this.ui.bar) || $.create("span", {
+			className: "status",
+			inside: this.ui.bar
+		});
+
 		// Normalize property names
 		this.propertyNames = [];
 
@@ -1095,21 +1107,6 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges(false);
 
 		this.permissions = new Mavo.Permissions(null, this);
-
-		var inlineBar = this.wrapper.hasAttribute("data-bar")?
-		                  this.wrapper.matches("[data-bar~=inline]") :
-		                  (this.index > 1 && getComputedStyle(this.wrapper).transform == "none");
-
-		this.ui = {
-			bar: $(".mv-bar", this.wrapper) || $.create({
-				className: "mv-bar mv-ui" + (inlineBar? " inline" : ""),
-				start: this.wrapper,
-				contents: {
-					tag: "span",
-					className: "status",
-				}
-			})
-		};
 
 		_.observe(this.wrapper, "class", () => {
 			var p = this.permissions;
@@ -1333,6 +1330,10 @@ var _ = self.Mavo = $.Class({
 				this.ui.save.disabled = !value;
 				this.ui.revert.disabled = !value;
 			}
+		},
+
+		needsEdit: function(value) {
+			this.ui.bar[`${value? "remove" : "set"}Attribute`]("hidden", "");
 		}
 	},
 
