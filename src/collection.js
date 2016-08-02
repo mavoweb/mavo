@@ -11,7 +11,7 @@ var _ = Mavo.Collection = $.Class({
 		this.items = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
+		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
 			if (this.templateElement.matches("template")) {
 				var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
 				div.classList.add("document-fragment");

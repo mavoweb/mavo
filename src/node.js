@@ -12,7 +12,7 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 
-		if (!this.fromTemplate(["property", "type"])) {
+		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Scope.normalize(element);
 		}
@@ -154,11 +154,11 @@ var _ = Mavo.Node = $.Class({
 
 	toJSON: Mavo.prototype.toJSON,
 
-	fromTemplate: function(properties) {
+	fromTemplate: function(...properties) {
 		if (this.template) {
-			properties.forEach(property => {
+			for (property of properties) {
 				this[property] = this.template[property];
-			});
+			}
 		}
 
 		return !!this.template;

@@ -17,7 +17,7 @@ var _ = Mavo.Unit = $.Class({
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		if (!this.fromTemplate(["computed", "required"])) {
+		if (!this.fromTemplate("computed", "required")) {
 			this.computed = Mavo.is("computed", this.element);
 			this.required = Mavo.is("required", this.element);
 		}

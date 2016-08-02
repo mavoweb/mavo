@@ -2091,7 +2091,7 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 
-		if (!this.fromTemplate(["property", "type"])) {
+		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Scope.normalize(element);
 		}
@@ -2233,11 +2233,11 @@ var _ = Mavo.Node = $.Class({
 
 	toJSON: Mavo.prototype.toJSON,
 
-	fromTemplate: function(properties) {
+	fromTemplate: function(...properties) {
 		if (this.template) {
-			properties.forEach(property => {
+			for (property of properties) {
 				this[property] = this.template[property];
-			});
+			}
 		}
 
 		return !!this.template;
@@ -2292,7 +2292,7 @@ var _ = Mavo.Unit = $.Class({
 			this.scope = this.parentScope = this.collection.parentScope;
 		}
 
-		if (!this.fromTemplate(["computed", "required"])) {
+		if (!this.fromTemplate("computed", "required")) {
 			this.computed = Mavo.is("computed", this.element);
 			this.required = Mavo.is("required", this.element);
 		}
@@ -3249,10 +3249,7 @@ var _ = Mavo.Scope = $.Class({
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate([
-			"attribute", "datatype", "humanReadable",
-			"computed", "templateValue"
-		])) {
+		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "computed", "templateValue")) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -3276,16 +3273,30 @@ var _ = Mavo.Primitive = $.Class({
 		// Exposed widgets (visible always)
 		if (Mavo.is("formControl", this.element)) {
 			this.editor = this.element;
+			this.editorType = "exposed";
 
 			this.edit();
 		}
+
 		// Nested widgets
-		else if (!this.editor) {
+		if (!this.editor && !this.attribute) {
 			this.editor = $$(this.element.children).filter(function (el) {
 			    return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
 			})[0];
 
-			$.remove(this.editor);
+			if (this.editor) {
+				this.editorType = "nested";
+				this.element.textContent = this.editorValue;
+				$.remove(this.editor);
+			}
+		}
+
+		if (!this.editor && this.element.hasAttribute("data-edit")) {
+			this.editorType = "linked";
+		}
+
+		if (!this.fromTemplate("templateValue")) {
+			this.templateValue = this.getValue({raw: true});
 		}
 
 		requestAnimationFrame(() => {
@@ -3505,8 +3516,8 @@ var _ = Mavo.Primitive = $.Class({
 	// Called only the first time this primitive is edited
 	initEdit: function () {
 		// Linked widgets
-		if (this.element.hasAttribute("data-input")) {
-			var selector = this.element.getAttribute("data-input");
+		if (this.editorType == "linked") {
+			var selector = this.element.getAttribute("data-edit");
 
 			if (selector) {
 				this.editor = $.clone($(selector));
@@ -3536,6 +3547,7 @@ var _ = Mavo.Primitive = $.Class({
 			var create = editor.create || editor;
 			this.editor = $.create($.type(create) === "function"? create.call(this) : create);
 			this.editorValue = this.value;
+			this.editorType = "created";
 		}
 
 		this.editor._.events({
@@ -4223,7 +4235,7 @@ var _ = Mavo.Collection = $.Class({
 		this.items = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate(["properties", "mutable", "templateElement"])) {
+		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
 			if (this.templateElement.matches("template")) {
 				var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
 				div.classList.add("document-fragment");
