@@ -1,0 +1,33 @@
+:root {
+  --ciel: #cceeff; }
+
+body {
+  max-width: 50em;
+  margin: auto; }
+
+body > section {
+  border: 0.2em solid var(--ciel);
+  margin: .5em 0;
+  padding: .5em;
+  border-radius: .3em; }
+  body > section h1 {
+    margin: 0; }
+
+body > p,
+body > section > p {
+  width: -webkit-max-content;
+  width: -moz-max-content;
+  width: max-content;
+  padding: .4em 1em;
+  background: var(--ciel);
+  font-style: italic;
+  border-radius: .2em; }
+  body > p::before,
+  body > section > p::before {
+    content: "Instructions: ";
+    font-size: 80%;
+    font-weight: bold;
+    font-style: normal;
+    text-transform: uppercase; }
+
+/*# sourceMappingURL=style.css.map */

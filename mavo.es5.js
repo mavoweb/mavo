@@ -983,13 +983,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor(element) {
 			var _this = this;
 
-			_.all.push(this);
+			// Index among other mavos in the page, 1 is first
+			this.index = _.all.push(this);
 
 			// Assign a unique (for the page) id to this mavo instance
-			this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
+			this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mavo" + this.index;
 
-			this.store = (_.all.length == 1 && location.search.match(/[?&]store=([^&]+)/) || [])[1] || element.getAttribute("data-store") || null;
-			this.source = (_.all.length == 1 && location.search.match(/[?&]source=([^&]+)/) || [])[1] || element.getAttribute("data-source") || null;
+			if (this.index == 1) {
+				this.store = _.urlParam("store");
+				this.source = _.urlParam("source");
+			}
+
+			this.store = this.store || _.urlParam(this.id + "_store") || element.getAttribute("data-store") || null;
+			this.source = this.source || _.urlParam(this.id + "_source") || element.getAttribute("data-source") || null;
 
 			this.autoEdit = _.has("autoedit", element);
 
@@ -1068,7 +1074,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions = new Mavo.Permissions(null, this);
 
-			var inlineBar = this.wrapper.hasAttribute("data-bar") ? this.wrapper.matches("[data-bar~=inline]") : _.all.length > 1 && getComputedStyle(this.wrapper).transform == "none";
+			var inlineBar = this.wrapper.hasAttribute("data-bar") ? this.wrapper.matches("[data-bar~=inline]") : this.index > 1 && getComputedStyle(this.wrapper).transform == "none";
 
 			this.ui = {
 				bar: $(".mv-bar", this.wrapper) || $.create({
@@ -1503,6 +1509,51 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		has: function has(option, element) {
 			return element.matches && element.matches(_.selectors.option(option));
+		},
+
+		urlParam: function urlParam() {
+			var searchParams = "searchParams" in URL.prototype ? new URL(location).searchParams : null;
+			var value = null;
+
+			for (var _len = arguments.length, names = Array(_len), _key = 0; _key < _len; _key++) {
+				names[_key] = arguments[_key];
+			}
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = names[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var _name = _step.value;
+
+					if (searchParams) {
+						value = searchParams.get(_name);
+					} else {
+						var match = location.search.match(RegExp("[?&]" + _name + "(?:=([^&]+))?(?=&|$)", "i"));
+						value = match && (match[1] || "");
+					}
+
+					if (value !== null) {
+						return value;
+					}
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			return null;
 		}
 	});
 
@@ -1793,7 +1844,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							_this8.login();
 						}
 					},
-					after: $(".status", _this8.mavo.bar)
+					after: $(".status", _this8.mavo.ui.bar)
 				});
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -1814,7 +1865,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Update login status
 			this.mavo.wrapper.addEventListener("mavo:login.mavo", function (evt) {
 				if (evt.backend == _this8.backend) {
-					var status = $(".status", _this8.mavo.bar);
+					// ignore logins from source backend
+					var status = $(".status", _this8.mavo.ui.bar);
 					status.innerHTML = "";
 					status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", innerHTML: evt.name }, {
 						tag: "button",
@@ -1830,7 +1882,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 
 			this.mavo.wrapper.addEventListener("mavo:logout.mavo", function (evt) {
-				$(".status", _this8.mavo.bar).textContent = "";
+				$(".status", _this8.mavo.ui.bar).textContent = "";
 			});
 		},
 
@@ -2255,8 +2307,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		call: function call(callback) {
-			for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-				args[_key - 1] = arguments[_key];
+			for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+				args[_key2 - 1] = arguments[_key2];
 			}
 
 			args = args || [];
@@ -3127,8 +3179,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 
 		return _[name] = function () {
-			for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-				operands[_key2] = arguments[_key2];
+			for (var _len3 = arguments.length, operands = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+				operands[_key3] = arguments[_key3];
 			}
 
 			if (operands.length === 1) {
@@ -5367,7 +5419,7 @@ var prettyPrint = function () {
 			if (scope.debug) {
 				return true;
 			}
-		}) || /[?&]debug\b/i.test(location.search);
+		}) || Mavo.urlParam("debug") !== null;
 
 		if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 			this.debug = true;

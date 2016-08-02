@@ -4,15 +4,19 @@
 
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
-		_.all.push(this);
+		// Index among other mavos in the page, 1 is first
+		this.index = _.all.push(this);
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
+		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
 
-		this.store = ((_.all.length == 1) && location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
-		                element.getAttribute("data-store") || null;
-		this.source = ((_.all.length == 1) && location.search.match(/[?&]source=([^&]+)/) || [])[1] ||
-		                element.getAttribute("data-source") || null;
+		if (this.index == 1) {
+			this.store = _.urlParam("store");
+			this.source = _.urlParam("source");
+		}
+
+		this.store = this.store || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
+		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -92,7 +96,7 @@ var _ = self.Mavo = $.Class({
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
 		                  this.wrapper.matches("[data-bar~=inline]") :
-		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
+		                  (this.index > 1 && getComputedStyle(this.wrapper).transform == "none");
 
 		this.ui = {
 			bar: $(".mv-bar", this.wrapper) || $.create({

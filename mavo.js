@@ -1006,15 +1006,19 @@ self.$$ = self.$$ || $.$;
 
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
-		_.all.push(this);
+		// Index among other mavos in the page, 1 is first
+		this.index = _.all.push(this);
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mv-" + _.all.length;
+		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
 
-		this.store = ((_.all.length == 1) && location.search.match(/[?&]store=([^&]+)/) || [])[1] ||
-		                element.getAttribute("data-store") || null;
-		this.source = ((_.all.length == 1) && location.search.match(/[?&]source=([^&]+)/) || [])[1] ||
-		                element.getAttribute("data-source") || null;
+		if (this.index == 1) {
+			this.store = _.urlParam("store");
+			this.source = _.urlParam("source");
+		}
+
+		this.store = this.store || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
+		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
 
 		this.autoEdit = _.has("autoedit", element);
 
@@ -1094,7 +1098,7 @@ var _ = self.Mavo = $.Class({
 
 		var inlineBar = this.wrapper.hasAttribute("data-bar")?
 		                  this.wrapper.matches("[data-bar~=inline]") :
-		                  (_.all.length > 1 && getComputedStyle(this.wrapper).transform == "none");
+		                  (this.index > 1 && getComputedStyle(this.wrapper).transform == "none");
 
 		this.ui = {
 			bar: $(".mv-bar", this.wrapper) || $.create({
@@ -1483,6 +1487,27 @@ var _ = $.extend(Mavo, {
 
 	has: function(option, element) {
 		return element.matches && element.matches(_.selectors.option(option));
+	},
+
+	urlParam: function(...names) {
+		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
+		var value = null;
+
+		for (let name of names) {
+			if (searchParams) {
+				value = searchParams.get(name);
+			}
+			else {
+				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
+				value = match && (match[1] || "");
+			}
+
+			if (value !== null) {
+				return value;
+			}
+		}
+
+		return null;
 	}
 });
 
@@ -1752,7 +1777,7 @@ var _ = Mavo.Storage = $.Class({
 						this.login();
 					}
 				},
-				after: $(".status", this.mavo.bar)
+				after: $(".status", this.mavo.ui.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -1772,8 +1797,8 @@ var _ = Mavo.Storage = $.Class({
 
 		// Update login status
 		this.mavo.wrapper.addEventListener("mavo:login.mavo", evt => {
-			if (evt.backend == this.backend) {
-				var status = $(".status", this.mavo.bar);
+			if (evt.backend == this.backend) { // ignore logins from source backend
+				var status = $(".status", this.mavo.ui.bar);
 				status.innerHTML = "";
 				status._.contents([
 					"Logged in to " + evt.backend.id + " as ",
@@ -1791,7 +1816,7 @@ var _ = Mavo.Storage = $.Class({
 		});
 
 		this.mavo.wrapper.addEventListener("mavo:logout.mavo", evt => {
-			$(".status", this.mavo.bar).textContent = "";
+			$(".status", this.mavo.ui.bar).textContent = "";
 		});
 	},
 
@@ -5228,7 +5253,7 @@ Mavo.hooks.add("scope-init-start", function() {
 		if (scope.debug) {
 			return true;
 		}
-	}) || /[?&]debug\b/i.test(location.search);
+	}) || Mavo.urlParam("debug") !== null;
 
 	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;

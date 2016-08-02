@@ -38,7 +38,7 @@ var _ = Mavo.Storage = $.Class({
 						this.login();
 					}
 				},
-				after: $(".status", this.mavo.bar)
+				after: $(".status", this.mavo.ui.bar)
 			});
 
 			// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -58,8 +58,8 @@ var _ = Mavo.Storage = $.Class({
 
 		// Update login status
 		this.mavo.wrapper.addEventListener("mavo:login.mavo", evt => {
-			if (evt.backend == this.backend) {
-				var status = $(".status", this.mavo.bar);
+			if (evt.backend == this.backend) { // ignore logins from source backend
+				var status = $(".status", this.mavo.ui.bar);
 				status.innerHTML = "";
 				status._.contents([
 					"Logged in to " + evt.backend.id + " as ",
@@ -77,7 +77,7 @@ var _ = Mavo.Storage = $.Class({
 		});
 
 		this.mavo.wrapper.addEventListener("mavo:logout.mavo", evt => {
-			$(".status", this.mavo.bar).textContent = "";
+			$(".status", this.mavo.ui.bar).textContent = "";
 		});
 	},
 

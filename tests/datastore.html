@@ -4,93 +4,91 @@
 	<meta charset="UTF-8">
 	<title>data-store and data-source tests</title>
 	<link rel="stylesheet" href="../mavo.css" />
+	<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <h1>data-store and data-source tests</h1>
 
-<h2>None</h2>
+<section class="mavo">
+	<h1>None</h1>
 
-<div class="mavo">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+	<a href="?store=local&amp;source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
 
-<h2>Local</h2>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<div data-store="local" id="localstoretest">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+<section data-store="local" id="localstoretest">
+	<h2>Local</h2>
 
-<h2>Remote</h2>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<div data-store="../demos/talks/countries.json">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+<section data-store="../demos/talks/countries.json">
+	<h2>Remote</h2>
 
-<h2>Local store, remote source</h2>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<div data-store="local" data-source="../demos/talks/countries.json" id="dualstoretest">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+<section data-store="local" data-source="../demos/talks/countries.json" id="dualstoretest">
+	<h2>Local store, remote source</h2>
 
-<h2>Github</h2>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<div data-store="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+<section data-mavo="githubtest" data-store="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+	<h2>Github</h2>
+	<a href="?githubtest_store=local&amp;githubtest_source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<h2>Local store, Github source</h2>
+<section data-store="local" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+	<h2>Local store, Github source</h2>
 
-<div data-store="local" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
-<h2>No store, Github source</h2>
+<section class="mavo" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+	<h2>No store, Github source</h2>
+	<p>Should display data but no editing controls</p>
 
-<p>Should display data but no editing controls</p>
-
-<div class="mavo" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
-
-<h2>Local store, Element source</h2>
-
-<p>Should display Greece and Poland if no data</p>
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+</section>
 
 <script type="application/json" id="country-data">
 	{
@@ -106,14 +104,20 @@
 		]
 	}
 </script>
-<div data-store="local" data-source="#country-data">
-<ul>
-	<li property="country" data-multiple>
-		<span property="code">Code</span>
-		<span property="name">Name</span>
-	</li>
-</ul>
-</div>
+<section data-store="local" data-source="#country-data">
+	<h2>Local store, Element source</h2>
+
+	<p>Should display Greece and Poland if no data</p>
+
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code">Code</span>
+			<span property="name">Name</span>
+		</li>
+	</ul>
+
+</section>
+
 
 <script src="../mavo.js"></script>
 

@@ -191,7 +191,7 @@ Mavo.hooks.add("scope-init-start", function() {
 		if (scope.debug) {
 			return true;
 		}
-	}) || /[?&]debug\b/i.test(location.search);
+	}) || Mavo.urlParam("debug") !== null;
 
 	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;
