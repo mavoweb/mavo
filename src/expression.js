@@ -285,14 +285,14 @@ var _ = Mavo.Expressions = $.Class({
 
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
-				template.expressions.all.forEach(et => {
+				for (et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
 						all: this,
 						template: et
 					}));
-				});
+				}
 			}
 			else {
 				this.traverse();
@@ -328,7 +328,9 @@ var _ = Mavo.Expressions = $.Class({
 			ref.update(env.data);
 		});
 
-		this.updateAlso.forEach(exp => exp.update());
+		for (exp of this.updateAlso) {
+			exp.update();
+		}
 	},
 
 	extract: function(node, attribute, path) {
@@ -394,6 +396,84 @@ var _ = Mavo.Expressions = $.Class({
 });
 
 })();
+
+Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true, null: true }) {
+	o.unhandled = this.mavo.unhandled;
+	var ret = this.getData(o);
+
+	if (self.Proxy && ret && typeof ret === "object") {
+		ret = new Proxy(ret, {
+			get: (data, property) => {
+				if (property in data) {
+					return data[property];
+				}
+
+				if (property == "$index") {
+					return this.index + 1;
+				}
+
+				// Look in ancestors
+				var ret = this.walkUp(scope => {
+					if (property in scope.properties) {
+						// TODO decouple
+						scope.expressions.updateAlso.add(this.expressions);
+
+						return scope.properties[property].getRelativeData(o);
+					};
+				});
+
+				if (ret !== undefined) {
+					return ret;
+				}
+			},
+
+			has: (data, property) => {
+				if (property in data) {
+					return true;
+				}
+
+				// Property does not exist, look for it elsewhere
+				if (property == "$index") {
+					return true;
+				}
+
+				// First look in ancestors
+				var ret = this.walkUp(scope => {
+					if (property in scope.properties) {
+						return true;
+					};
+				});
+
+				if (ret !== undefined) {
+					return ret;
+				}
+
+				// Still not found, look in descendants
+				ret = this.find(property);
+
+				if (ret !== undefined) {
+					if (Array.isArray(ret)) {
+						ret = ret.map(item => item.getData(o))
+								 .filter(item => item !== null);
+					}
+					else {
+						ret = ret.getData(o);
+					}
+
+					data[property] = ret;
+
+					return true;
+				}
+			},
+
+			set: function(data, property, value) {
+				throw Error("You can’t set data via expressions.");
+			}
+		});
+	}
+
+	return ret;
+};
 
 Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {

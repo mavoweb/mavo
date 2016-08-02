@@ -10,6 +10,8 @@ var _ = self.Mavo = $.Class({
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
 
+		this.unhandled = element.classList.contains("mv-keep-unhandled");
+
 		if (this.index == 1) {
 			this.store = _.urlParam("store");
 			this.source = _.urlParam("source");

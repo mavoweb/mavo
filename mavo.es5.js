@@ -989,6 +989,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// Assign a unique (for the page) id to this mavo instance
 			this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mavo" + this.index;
 
+			this.unhandled = element.classList.contains("mv-keep-unhandled");
+
 			if (this.index == 1) {
 				this.store = _.urlParam("store");
 				this.source = _.urlParam("source");
@@ -2202,89 +2204,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.getData();
 		},
 
-		getRelativeData: function getRelativeData() {
-			var _this11 = this;
-
-			var o = arguments.length <= 0 || arguments[0] === undefined ? { dirty: true, computed: true, null: true } : arguments[0];
-
-			var ret = this.getData(o);
-
-			if (self.Proxy && ret && (typeof ret === "undefined" ? "undefined" : _typeof(ret)) === "object") {
-				ret = new Proxy(ret, {
-					get: function get(data, property) {
-						if (property in data) {
-							return data[property];
-						}
-
-						if (property == "$index") {
-							return _this11.index + 1;
-						}
-
-						// Look in ancestors
-						var ret = _this11.walkUp(function (scope) {
-							if (property in scope.properties) {
-								// TODO decouple
-								scope.expressions.updateAlso.add(_this11.expressions);
-
-								return scope.properties[property].getRelativeData(o);
-							};
-						});
-
-						if (ret !== undefined) {
-							return ret;
-						}
-					},
-
-					has: function has(data, property) {
-						if (property in data) {
-							return true;
-						}
-
-						// Property does not exist, look for it elsewhere
-						if (property == "$index") {
-							return true;
-						}
-
-						// First look in ancestors
-						var ret = _this11.walkUp(function (scope) {
-							if (property in scope.properties) {
-								return true;
-							};
-						});
-
-						if (ret !== undefined) {
-							return ret;
-						}
-
-						// Still not found, look in descendants
-						ret = _this11.find(property);
-
-						if (ret !== undefined) {
-							if (Array.isArray(ret)) {
-								ret = ret.map(function (item) {
-									return item.getData(o);
-								}).filter(function (item) {
-									return item !== null;
-								});
-							} else {
-								ret = ret.getData(o);
-							}
-
-							data[property] = ret;
-
-							return true;
-						}
-					},
-
-					set: function set(data, property, value) {
-						throw Error("You can’t set data via expressions.");
-					}
-				});
-			}
-
-			return ret;
-		},
-
 		walk: function walk(callback) {
 			var walker = function walker(obj) {
 				var ret = callback(obj);
@@ -2478,7 +2397,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		live: {
 			deleted: function deleted(value) {
-				var _this12 = this;
+				var _this11 = this;
 
 				this.element.classList.toggle("deleted", value);
 
@@ -2487,7 +2406,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// and replace them with an undo prompt.
 					this.elementContents = document.createDocumentFragment();
 					$$(this.element.childNodes).forEach(function (node) {
-						_this12.elementContents.appendChild(node);
+						_this11.elementContents.appendChild(node);
 					});
 
 					$.contents(this.element, ["Deleted " + this.name, {
@@ -2495,7 +2414,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						textContent: "Undo",
 						events: {
 							"click": function click(evt) {
-								return _this12.deleted = false;
+								return _this11.deleted = false;
 							}
 						}
 					}]);
@@ -2676,7 +2595,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			update: function update(data) {
-				var _this13 = this;
+				var _this12 = this;
 
 				this.data = data;
 
@@ -2684,7 +2603,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				ret.value = this.value = this.template.map(function (expr) {
 					if (expr instanceof Mavo.Expression) {
-						var env = { context: _this13, expr: expr };
+						var env = { context: _this12, expr: expr };
 
 						Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
@@ -2828,7 +2747,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		var _ = Mavo.Expressions = $.Class({
 			constructor: function constructor(scope) {
-				var _this14 = this;
+				var _this13 = this;
 
 				if (scope) {
 					this.scope = scope;
@@ -2844,14 +2763,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					if (template && template.expressions) {
 						// We know which expressions we have, don't traverse again
-						template.expressions.all.forEach(function (et) {
-							_this14.all.push(new Mavo.Expression.Text({
-								path: et.path,
-								attribute: et.attribute,
-								all: _this14,
-								template: et
-							}));
-						});
+						var _iteratorNormalCompletion3 = true;
+						var _didIteratorError3 = false;
+						var _iteratorError3 = undefined;
+
+						try {
+							for (var _iterator3 = template.expressions.all[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+								et = _step3.value;
+
+								this.all.push(new Mavo.Expression.Text({
+									path: et.path,
+									attribute: et.attribute,
+									all: this,
+									template: et
+								}));
+							}
+						} catch (err) {
+							_didIteratorError3 = true;
+							_iteratorError3 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion3 && _iterator3.return) {
+									_iterator3.return();
+								}
+							} finally {
+								if (_didIteratorError3) {
+									throw _iteratorError3;
+								}
+							}
+						}
 					} else {
 						this.traverse();
 					}
@@ -2867,7 +2807,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					// Watch changes and update value
 					this.scope.element.addEventListener("mavo:datachange", function (evt) {
-						return _this14.update();
+						return _this13.update();
 					});
 				}
 			},
@@ -2888,9 +2828,30 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					ref.update(env.data);
 				});
 
-				this.updateAlso.forEach(function (exp) {
-					return exp.update();
-				});
+				var _iteratorNormalCompletion4 = true;
+				var _didIteratorError4 = false;
+				var _iteratorError4 = undefined;
+
+				try {
+					for (var _iterator4 = this.updateAlso[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+						exp = _step4.value;
+
+						exp.update();
+					}
+				} catch (err) {
+					_didIteratorError4 = true;
+					_iteratorError4 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion4 && _iterator4.return) {
+							_iterator4.return();
+						}
+					} finally {
+						if (_didIteratorError4) {
+							throw _iteratorError4;
+						}
+					}
+				}
 			},
 
 			extract: function extract(node, attribute, path) {
@@ -2910,7 +2871,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Traverse an element, including attribute nodes, text nodes and all descendants
 			traverse: function traverse(node, path) {
-				var _this15 = this;
+				var _this14 = this;
 
 				node = node || this.scope.element;
 				path = path || "";
@@ -2929,10 +2890,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// (otherwise, it will be taken care of its own Expressions object)
 				if (node == this.scope.element || !Mavo.is("scope", node)) {
 					$$(node.attributes).forEach(function (attribute) {
-						return _this15.extract(node, attribute, path);
+						return _this14.extract(node, attribute, path);
 					});
 					$$(node.childNodes).forEach(function (child, i) {
-						return _this15.traverse(child, path + "/" + i);
+						return _this14.traverse(child, path + "/" + i);
 					});
 				}
 			},
@@ -2962,6 +2923,90 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		});
 	})();
+
+	Mavo.Node.prototype.getRelativeData = function () {
+		var _this15 = this;
+
+		var o = arguments.length <= 0 || arguments[0] === undefined ? { dirty: true, computed: true, null: true } : arguments[0];
+
+		o.unhandled = this.mavo.unhandled;
+		var ret = this.getData(o);
+
+		if (self.Proxy && ret && (typeof ret === "undefined" ? "undefined" : _typeof(ret)) === "object") {
+			ret = new Proxy(ret, {
+				get: function get(data, property) {
+					if (property in data) {
+						return data[property];
+					}
+
+					if (property == "$index") {
+						return _this15.index + 1;
+					}
+
+					// Look in ancestors
+					var ret = _this15.walkUp(function (scope) {
+						if (property in scope.properties) {
+							// TODO decouple
+							scope.expressions.updateAlso.add(_this15.expressions);
+
+							return scope.properties[property].getRelativeData(o);
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+				},
+
+				has: function has(data, property) {
+					if (property in data) {
+						return true;
+					}
+
+					// Property does not exist, look for it elsewhere
+					if (property == "$index") {
+						return true;
+					}
+
+					// First look in ancestors
+					var ret = _this15.walkUp(function (scope) {
+						if (property in scope.properties) {
+							return true;
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+
+					// Still not found, look in descendants
+					ret = _this15.find(property);
+
+					if (ret !== undefined) {
+						if (Array.isArray(ret)) {
+							ret = ret.map(function (item) {
+								return item.getData(o);
+							}).filter(function (item) {
+								return item !== null;
+							});
+						} else {
+							ret = ret.getData(o);
+						}
+
+						data[property] = ret;
+
+						return true;
+					}
+				},
+
+				set: function set(data, property, value) {
+					throw Error("You can’t set data via expressions.");
+				}
+			});
+		}
+
+		return ret;
+	};
 
 	Mavo.hooks.add("init-tree-after", function () {
 		this.walk(function (obj) {
@@ -3332,7 +3377,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			if (!o.dirty) {
+			if (!o.dirty || o.unhandled) {
 				$.extend(ret, this.unhandled);
 			}
 
@@ -4682,9 +4727,32 @@ Mavo.Primitive.editors.img = {
 						item.element.remove();
 					} else {
 						// Document fragment, remove all children
-						$$(item.element.childNodes).forEach(function (node) {
-							return node.remove();
-						});
+						var _iteratorNormalCompletion5 = true;
+						var _didIteratorError5 = false;
+						var _iteratorError5 = undefined;
+
+						try {
+							for (var _iterator5 = item.element.childNodes[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+								node = _step5.value;
+
+								(function (node) {
+									return node.remove();
+								});
+							}
+						} catch (err) {
+							_didIteratorError5 = true;
+							_iteratorError5 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion5 && _iterator5.return) {
+									_iterator5.return();
+								}
+							} finally {
+								if (_didIteratorError5) {
+									throw _iteratorError5;
+								}
+							}
+						}
 					}
 				});
 
@@ -4699,51 +4767,108 @@ Mavo.Primitive.editors.img = {
 		},
 
 		save: function save() {
-			var _this30 = this;
+			var _iteratorNormalCompletion6 = true;
+			var _didIteratorError6 = false;
+			var _iteratorError6 = undefined;
 
-			this.items.forEach(function (item) {
-				if (item.deleted) {
-					_this30.delete(item, true);
-				} else {
-					item.unsavedChanges = item.dirty = false;
+			try {
+				for (var _iterator6 = this.items[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+					item = _step6.value;
+
+					if (item.deleted) {
+						this.delete(item, true);
+					} else {
+						item.unsavedChanges = item.dirty = false;
+					}
 				}
-			});
+			} catch (err) {
+				_didIteratorError6 = true;
+				_iteratorError6 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion6 && _iterator6.return) {
+						_iterator6.return();
+					}
+				} finally {
+					if (_didIteratorError6) {
+						throw _iteratorError6;
+					}
+				}
+			}
 		},
 
 		done: function done() {
-			var _this31 = this;
+			var _iteratorNormalCompletion7 = true;
+			var _didIteratorError7 = false;
+			var _iteratorError7 = undefined;
 
-			this.items.forEach(function (item) {
-				if (item.placeholder) {
-					_this31.delete(item, true);
-					return;
+			try {
+				for (var _iterator7 = this.items[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+					item = _step7.value;
+
+					if (item.placeholder) {
+						this.delete(item, true);
+						return;
+					}
 				}
-			});
+			} catch (err) {
+				_didIteratorError7 = true;
+				_iteratorError7 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion7 && _iterator7.return) {
+						_iterator7.return();
+					}
+				} finally {
+					if (_didIteratorError7) {
+						throw _iteratorError7;
+					}
+				}
+			}
 		},
 
 		propagated: ["save", "done"],
 
 		revert: function revert() {
-			var _this32 = this;
+			var _iteratorNormalCompletion8 = true;
+			var _didIteratorError8 = false;
+			var _iteratorError8 = undefined;
 
-			this.items.forEach(function (item, i) {
-				// Delete added items
-				if (item.unsavedChanges && !item.placeholder) {
-					_this32.delete(item, true);
-				} else {
-					// Bring back deleted items
-					if (item.deleted) {
-						item.deleted = false;
+			try {
+				for (var _iterator8 = this.items[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+					item = _step8.value;
+
+					// Delete added items
+					if (item.unsavedChanges && !item.placeholder) {
+						this.delete(item, true);
+					} else {
+						// Bring back deleted items
+						if (item.deleted) {
+							item.deleted = false;
+						}
+
+						// Revert all properties
+						item.revert();
 					}
-
-					// Revert all properties
-					item.revert();
 				}
-			});
+			} catch (err) {
+				_didIteratorError8 = true;
+				_iteratorError8 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion8 && _iterator8.return) {
+						_iterator8.return();
+					}
+				} finally {
+					if (_didIteratorError8) {
+						throw _iteratorError8;
+					}
+				}
+			}
 		},
 
 		render: function render(data) {
-			var _this33 = this;
+			var _this30 = this;
 
 			this.unhandled = { before: [], after: [] };
 
@@ -4768,11 +4893,11 @@ Mavo.Primitive.editors.img = {
 				var fragment = document.createDocumentFragment();
 
 				data.forEach(function (datum, i) {
-					var item = _this33.createItem();
+					var item = _this30.createItem();
 
 					item.render(datum);
 
-					_this33.items.push(item);
+					_this30.items.push(item);
 					item.index = i;
 
 					fragment.appendChild(item.element);
@@ -4875,7 +5000,7 @@ Mavo.Primitive.editors.img = {
 			},
 
 			addButton: function addButton() {
-				var _this34 = this;
+				var _this31 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.add-" + this.property;
@@ -4883,7 +5008,7 @@ Mavo.Primitive.editors.img = {
 
 				if (scope) {
 					var button = $$(selector, scope).filter(function (button) {
-						return !_this34.templateElement.contains(button);
+						return !_this31.templateElement.contains(button);
 					})[0];
 				}
 
@@ -4903,7 +5028,7 @@ Mavo.Primitive.editors.img = {
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this34.add().edit();
+					_this31.add().edit();
 				});
 
 				return button;
@@ -4914,13 +5039,32 @@ Mavo.Primitive.editors.img = {
 	// TODO
 	Mavo.Fragment = $.Class({
 		constructor: function constructor(element) {
-			var _this35 = this;
-
 			this.childNodes = [];
 
-			$$(element.childNodes).forEach(function (node) {
-				return _this35.appendChild(node);
-			});
+			var _iteratorNormalCompletion9 = true;
+			var _didIteratorError9 = false;
+			var _iteratorError9 = undefined;
+
+			try {
+				for (var _iterator9 = element.childNodes[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+					node = _step9.value;
+
+					this.appendChild(node);
+				}
+			} catch (err) {
+				_didIteratorError9 = true;
+				_iteratorError9 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion9 && _iterator9.return) {
+						_iterator9.return();
+					}
+				} finally {
+					if (_didIteratorError9) {
+						throw _iteratorError9;
+					}
+				}
+			}
 		},
 
 		appendChild: function appendChild(node) {
@@ -5564,16 +5708,16 @@ var prettyPrint = function () {
 	};
 
 	Mavo.hooks.add("expressiontext-init-end", function () {
-		var _this36 = this;
+		var _this32 = this;
 
 		if (this.scope.debug) {
 			this.debug = {};
 
 			this.template.forEach(function (expr) {
 				if (expr instanceof Mavo.Expression) {
-					_this36.scope.debugRow({
-						element: _this36.element,
-						attribute: _this36.attribute,
+					_this32.scope.debugRow({
+						element: _this32.element,
+						attribute: _this32.attribute,
 						tds: ["Expression", {
 							tag: "td",
 							contents: {
@@ -5582,7 +5726,7 @@ var prettyPrint = function () {
 								events: {
 									input: function input(evt) {
 										expr.expression = evt.target.value;
-										_this36.update(_this36.data);
+										_this32.update(_this32.data);
 									}
 								},
 								once: {
@@ -5599,7 +5743,7 @@ var prettyPrint = function () {
 	});
 
 	Mavo.hooks.add("scope-init-end", function () {
-		var _this37 = this;
+		var _this33 = this;
 
 		// TODO make properties update, collapse duplicate expressions
 		if (this.debug instanceof Node) {
@@ -5607,7 +5751,7 @@ var prettyPrint = function () {
 
 			var selector = Mavo.selectors.andNot(Mavo.selectors.multiple, Mavo.selectors.property);
 			$$(selector, this.element).forEach(function (element) {
-				_this37.debugRow({
+				_this33.debugRow({
 					element: element,
 					tds: ["Warning", "data-multiple without a property attribute"]
 				});
@@ -5616,18 +5760,18 @@ var prettyPrint = function () {
 			this.propagate(function (obj) {
 				var value = _.printValue(obj);
 
-				_this37.debugRow({
+				_this33.debugRow({
 					element: obj.element,
 					tds: ["Property", obj.property, obj.value]
 				});
 
 				if (_.reservedWords.indexOf(obj.property) > -1) {
-					_this37.debugRow({
+					_this33.debugRow({
 						element: obj.element,
 						tds: ["Warning", "You can’t use \"" + obj.property + "\" as a property name, it’s a reserved word."]
 					});
 				} else if (/^\d|[\W$]/.test(obj.property)) {
-					_this37.debugRow({
+					_this33.debugRow({
 						element: obj.element,
 						tds: ["Warning", {
 							textContent: "You can’t use \"" + obj.property + "\" as a property name.",
@@ -5638,9 +5782,9 @@ var prettyPrint = function () {
 			});
 
 			this.scope.element.addEventListener("mavo:datachange", function (evt) {
-				$$("tr.debug-property", _this37.debug).forEach(function (tr) {
+				$$("tr.debug-property", _this33.debug).forEach(function (tr) {
 					var property = tr.cells[1].textContent;
-					var value = _.printValue(_this37.properties[property]);
+					var value = _.printValue(_this33.properties[property]);
 
 					if (tr.cells[2]) {
 						var td = tr.cells[2];
@@ -5683,7 +5827,7 @@ var prettyPrint = function () {
 		extends: Mavo.Storage.Backend,
 		id: "Dropbox",
 		constructor: function constructor() {
-			var _this38 = this;
+			var _this34 = this;
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
 			this.url = new URL(this.url, location);
@@ -5708,13 +5852,13 @@ var prettyPrint = function () {
 				}
 
 				// Internal filename (to be used for saving)
-				_this38.filename = (_this38.storage.param("path") || "") + new URL(_this38.url).pathname.match(/[^/]*$/)[0];
+				_this34.filename = (_this34.storage.param("path") || "") + new URL(_this34.url).pathname.match(/[^/]*$/)[0];
 
-				_this38.key = _this38.storage.param("key") || "fle6gsc61w5v79j";
+				_this34.key = _this34.storage.param("key") || "fle6gsc61w5v79j";
 
-				_this38.client = new Dropbox.Client({ key: _this38.key });
+				_this34.client = new Dropbox.Client({ key: _this34.key });
 			}).then(function () {
-				_this38.login(true);
+				_this34.login(true);
 			});
 		},
 
@@ -5724,12 +5868,12 @@ var prettyPrint = function () {
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put() {
-			var _this39 = this;
+			var _this35 = this;
 
 			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
 			return new Promise(function (resolve, reject) {
-				_this39.client.writeFile(file.name, file.dataString, function (error, stat) {
+				_this35.client.writeFile(file.name, file.dataString, function (error, stat) {
 					if (error) {
 						return reject(Error(error));
 					}
@@ -5741,27 +5885,27 @@ var prettyPrint = function () {
 		},
 
 		login: function login(passive) {
-			var _this40 = this;
+			var _this36 = this;
 
 			return this.ready.then(function () {
-				return _this40.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-					_this40.client.authDriver(new Dropbox.AuthDriver.Popup({
+				return _this36.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
+					_this36.client.authDriver(new Dropbox.AuthDriver.Popup({
 						receiverUrl: new URL(location) + ""
 					}));
 
-					_this40.client.authenticate({ interactive: !passive }, function (error, client) {
+					_this36.client.authenticate({ interactive: !passive }, function (error, client) {
 
 						if (error) {
 							reject(Error(error));
 						}
 
-						if (_this40.client.isAuthenticated()) {
+						if (_this36.client.isAuthenticated()) {
 							// TODO check if can actually edit the file
-							_this40.permissions.on(["logout", "edit"]);
+							_this36.permissions.on(["logout", "edit"]);
 
 							resolve();
 						} else {
-							_this40.permissions.off(["logout", "edit", "add", "delete"]);
+							_this36.permissions.off(["logout", "edit", "add", "delete"]);
 
 							reject();
 						}
@@ -5769,22 +5913,22 @@ var prettyPrint = function () {
 				});
 			}).then(function () {
 				// Not returning a promise here, since processes depending on login don't need to wait for this
-				_this40.client.getAccountInfo(function (error, accountInfo) {
+				_this36.client.getAccountInfo(function (error, accountInfo) {
 					if (!error) {
-						$.fire(_this40.mavo.wrapper, "mavo:login", $.extend({ backend: _this40 }, accountInfo));
+						$.fire(_this36.mavo.wrapper, "mavo:login", $.extend({ backend: _this36 }, accountInfo));
 					}
 				});
 			}).catch(function () {});
 		},
 
 		logout: function logout() {
-			var _this41 = this;
+			var _this37 = this;
 
 			return !this.client.isAuthenticated() ? Promise.resolve() : new Promise(function (resolve, reject) {
-				_this41.client.signOut(null, function () {
-					_this41.permissions.off(["edit", "add", "delete"]).on("login");
+				_this37.client.signOut(null, function () {
+					_this37.permissions.off(["edit", "add", "delete"]).on("login");
 
-					_this41.mavo.wrapper._.fire("mavo:logout", { backend: _this41 });
+					_this37.mavo.wrapper._.fire("mavo:logout", { backend: _this37 });
 					resolve();
 				});
 			});
@@ -5866,7 +6010,7 @@ var prettyPrint = function () {
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put() {
-			var _this42 = this;
+			var _this38 = this;
 
 			var file = arguments.length <= 0 || arguments[0] === undefined ? this.getFile() : arguments[0];
 
@@ -5875,25 +6019,25 @@ var prettyPrint = function () {
 			return Promise.resolve(this.repoInfo || this.req("user/repos", {
 				name: this.repo
 			}, "POST")).then(function (repoInfo) {
-				_this42.repoInfo = repoInfo;
+				_this38.repoInfo = repoInfo;
 
-				return _this42.req(fileCall, {
-					ref: _this42.branch
+				return _this38.req(fileCall, {
+					ref: _this38.branch
 				});
 			}).then(function (fileInfo) {
-				return _this42.req(fileCall, {
+				return _this38.req(fileCall, {
 					message: "Updated " + (file.name || "file"),
 					content: _.btoa(file.dataString),
-					branch: _this42.branch,
+					branch: _this38.branch,
 					sha: fileInfo.sha
 				}, "PUT");
 			}, function (xhr) {
 				if (xhr.status == 404) {
 					// File does not exist, create it
-					return _this42.req(fileCall, {
+					return _this38.req(fileCall, {
 						message: "Created file",
 						content: _.btoa(file.dataString),
-						branch: _this42.branch
+						branch: _this38.branch
 					}, "PUT");
 				}
 			}).then(function (data) {
@@ -5903,54 +6047,54 @@ var prettyPrint = function () {
 		},
 
 		login: function login(passive) {
-			var _this43 = this;
+			var _this39 = this;
 
 			return this.ready.then(function () {
-				if (_this43.authenticated) {
+				if (_this39.authenticated) {
 					return Promise.resolve();
 				}
 
 				return new Promise(function (resolve, reject) {
 					if (passive) {
-						_this43.accessToken = localStorage["mavo:githubtoken"];
+						_this39.accessToken = localStorage["mavo:githubtoken"];
 
-						if (_this43.accessToken) {
-							resolve(_this43.accessToken);
+						if (_this39.accessToken) {
+							resolve(_this39.accessToken);
 						}
 					} else {
 						// Show window
-						_this43.authPopup = open("https://github.com/login/oauth/authorize?client_id=" + _this43.key + "&scope=repo,gist&state=" + location.href, "popup", "width=900,height=500");
+						_this39.authPopup = open("https://github.com/login/oauth/authorize?client_id=" + _this39.key + "&scope=repo,gist&state=" + location.href, "popup", "width=900,height=500");
 
 						addEventListener("message", function (evt) {
-							if (evt.source === _this43.authPopup) {
-								_this43.accessToken = localStorage["mavo:githubtoken"] = evt.data;
+							if (evt.source === _this39.authPopup) {
+								_this39.accessToken = localStorage["mavo:githubtoken"] = evt.data;
 
-								if (!_this43.accessToken) {
+								if (!_this39.accessToken) {
 									reject(Error("Authentication error"));
 								}
 
-								resolve(_this43.accessToken);
+								resolve(_this39.accessToken);
 							}
 						});
 					}
 				}).then(function () {
-					return _this43.getUser();
+					return _this39.getUser();
 				}).then(function (u) {
-					_this43.permissions.on("logout");
+					_this39.permissions.on("logout");
 
-					return _this43.req("repos/" + _this43.username + "/" + _this43.repo);
+					return _this39.req("repos/" + _this39.username + "/" + _this39.repo);
 				}).then(function (repoInfo) {
-					_this43.repoInfo = repoInfo;
+					_this39.repoInfo = repoInfo;
 
 					if (repoInfo.permissions.push) {
-						_this43.permissions.on(["edit", "save"]);
+						_this39.permissions.on(["edit", "save"]);
 					}
 				}).catch(function (xhr) {
 					if (xhr.status == 404) {
 						// Repo does not exist so we can't check permissions
 						// Just check if authenticated user is the same as our URL username
-						if (_this43.user.login == _this43.username) {
-							_this43.permissions.on("edit", "save");
+						if (_this39.user.login == _this39.username) {
+							_this39.permissions.on("edit", "save");
 						}
 					}
 				});
@@ -5971,14 +6115,14 @@ var prettyPrint = function () {
 		},
 
 		getUser: function getUser() {
-			var _this44 = this;
+			var _this40 = this;
 
 			return this.req("user").then(function (accountInfo) {
-				_this44.user = accountInfo;
+				_this40.user = accountInfo;
 
 				var name = accountInfo.name || accountInfo.login;
-				$.fire(_this44.mavo.wrapper, "mavo:login", {
-					backend: _this44,
+				$.fire(_this40.mavo.wrapper, "mavo:login", {
+					backend: _this40,
 					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + name + "\n\t\t\t\t\t\t</a>"
 				});
 			});

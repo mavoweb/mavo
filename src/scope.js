@@ -82,7 +82,7 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
-		if (!o.dirty) {
+		if (!o.dirty || o.unhandled) {
 			$.extend(ret, this.unhandled);
 		}
 

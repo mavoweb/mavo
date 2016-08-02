@@ -1012,6 +1012,8 @@ var _ = self.Mavo = $.Class({
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
 
+		this.unhandled = element.classList.contains("mv-keep-unhandled");
+
 		if (this.index == 1) {
 			this.store = _.urlParam("store");
 			this.source = _.urlParam("source");
@@ -2113,83 +2115,6 @@ var _ = Mavo.Node = $.Class({
 		return this.getData();
 	},
 
-	getRelativeData: function(o = { dirty: true, computed: true, null: true }) {
-		var ret = this.getData(o);
-
-		if (self.Proxy && ret && typeof ret === "object") {
-			ret = new Proxy(ret, {
-				get: (data, property) => {
-					if (property in data) {
-						return data[property];
-					}
-
-					if (property == "$index") {
-						return this.index + 1;
-					}
-
-					// Look in ancestors
-					var ret = this.walkUp(scope => {
-						if (property in scope.properties) {
-							// TODO decouple
-							scope.expressions.updateAlso.add(this.expressions);
-
-							return scope.properties[property].getRelativeData(o);
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-				},
-
-				has: (data, property) => {
-					if (property in data) {
-						return true;
-					}
-
-					// Property does not exist, look for it elsewhere
-					if (property == "$index") {
-						return true;
-					}
-
-					// First look in ancestors
-					var ret = this.walkUp(scope => {
-						if (property in scope.properties) {
-							return true;
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-
-					// Still not found, look in descendants
-					ret = this.find(property);
-
-					if (ret !== undefined) {
-						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getData(o))
-							         .filter(item => item !== null);
-						}
-						else {
-							ret = ret.getData(o);
-						}
-
-						data[property] = ret;
-
-						return true;
-					}
-				},
-
-				set: function(data, property, value) {
-					throw Error("You can’t set data via expressions.");
-				}
-			});
-		}
-
-		return ret;
-	},
-
 	walk: function(callback) {
 		var walker = obj => {
 			var ret = callback(obj);
@@ -2711,14 +2636,14 @@ var _ = Mavo.Expressions = $.Class({
 
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
-				template.expressions.all.forEach(et => {
+				for (et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
 						attribute: et.attribute,
 						all: this,
 						template: et
 					}));
-				});
+				}
 			}
 			else {
 				this.traverse();
@@ -2754,7 +2679,9 @@ var _ = Mavo.Expressions = $.Class({
 			ref.update(env.data);
 		});
 
-		this.updateAlso.forEach(exp => exp.update());
+		for (exp of this.updateAlso) {
+			exp.update();
+		}
 	},
 
 	extract: function(node, attribute, path) {
@@ -2820,6 +2747,84 @@ var _ = Mavo.Expressions = $.Class({
 });
 
 })();
+
+Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true, null: true }) {
+	o.unhandled = this.mavo.unhandled;
+	var ret = this.getData(o);
+
+	if (self.Proxy && ret && typeof ret === "object") {
+		ret = new Proxy(ret, {
+			get: (data, property) => {
+				if (property in data) {
+					return data[property];
+				}
+
+				if (property == "$index") {
+					return this.index + 1;
+				}
+
+				// Look in ancestors
+				var ret = this.walkUp(scope => {
+					if (property in scope.properties) {
+						// TODO decouple
+						scope.expressions.updateAlso.add(this.expressions);
+
+						return scope.properties[property].getRelativeData(o);
+					};
+				});
+
+				if (ret !== undefined) {
+					return ret;
+				}
+			},
+
+			has: (data, property) => {
+				if (property in data) {
+					return true;
+				}
+
+				// Property does not exist, look for it elsewhere
+				if (property == "$index") {
+					return true;
+				}
+
+				// First look in ancestors
+				var ret = this.walkUp(scope => {
+					if (property in scope.properties) {
+						return true;
+					};
+				});
+
+				if (ret !== undefined) {
+					return ret;
+				}
+
+				// Still not found, look in descendants
+				ret = this.find(property);
+
+				if (ret !== undefined) {
+					if (Array.isArray(ret)) {
+						ret = ret.map(item => item.getData(o))
+								 .filter(item => item !== null);
+					}
+					else {
+						ret = ret.getData(o);
+					}
+
+					data[property] = ret;
+
+					return true;
+				}
+			},
+
+			set: function(data, property, value) {
+				throw Error("You can’t set data via expressions.");
+			}
+		});
+	}
+
+	return ret;
+};
 
 Mavo.hooks.add("init-tree-after", function() {
 	this.walk(obj => {
@@ -3137,7 +3142,7 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
-		if (!o.dirty) {
+		if (!o.dirty || o.unhandled) {
 			$.extend(ret, this.unhandled);
 		}
 
@@ -4456,7 +4461,9 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					// Document fragment, remove all children
-					$$(item.element.childNodes).forEach(node => node.remove());
+					for (node of item.element.childNodes) {
+						node => node.remove();
+					}
 				}
 			});
 
@@ -4471,29 +4478,29 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
 			else {
 				item.unsavedChanges = item.dirty = false;
 			}
-		});
+		}
 	},
 
 	done: function() {
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (item.placeholder) {
 				this.delete(item, true);
 				return;
 			}
-		});
+		}
 	},
 
 	propagated: ["save", "done"],
 
 	revert: function() {
-		this.items.forEach((item, i) => {
+		for (item of this.items) {
 			// Delete added items
 			if (item.unsavedChanges && !item.placeholder) {
 				this.delete(item, true);
@@ -4507,7 +4514,7 @@ var _ = Mavo.Collection = $.Class({
 				// Revert all properties
 				item.revert();
 			}
-		});
+		}
 	},
 
 	render: function(data) {
@@ -4675,7 +4682,9 @@ Mavo.Fragment = $.Class({
 	constructor: function(element) {
 		this.childNodes = [];
 
-		$$(element.childNodes).forEach(node => this.appendChild(node));
+		for (node of element.childNodes) {
+			this.appendChild(node);
+		}
 	},
 
 	appendChild: function(node) {

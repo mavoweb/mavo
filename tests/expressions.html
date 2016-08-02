@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<title>Expression tests</title>
 	<link rel="stylesheet" href="../mavo.css" />
+	<link rel="stylesheet" href="style.css" />
 	<style>
 		[data-foo]::before {
 			content: "[data-foo=" attr(data-foo) "]";
@@ -14,24 +15,6 @@
 <body>
 
 <h1>Expression tests</h1>
-
-<h2>With render (country data)</h2>
-
-<div data-store="#countries">
-	<ul>
-		<li property="country" data-multiple data-foo="[code]">
-			<span property="code">Code</span>
-			Expr: [code]
-			<br>
-			<span property="name" data-foo="[name]">Name</span>
-			Expr: [name]
-			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
-			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
-		</li>
-	</ul>
-	List: [country]
-	<div>Boolean count (must be 1): [count(isUS)]</div>
-</div>
 
 <script type="application/json" id="countries">{
 	"country": [
@@ -49,6 +32,24 @@
 		}
 	]
 }</script>
+
+<!-- <h2>With render (country data)</h2>
+
+<div data-store="#countries">
+	<ul>
+		<li property="country" data-multiple data-foo="[code]">
+			<span property="code">Code</span>
+			Expr: [code]
+			<br>
+			<span property="name" data-foo="[name]">Name</span>
+			Expr: [name]
+			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
+			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
+		</li>
+	</ul>
+	List: [country]
+	<div>Boolean count (must be 1): [count(isUS)]</div>
+</div>
 
 <h2>Without render</h2>
 
@@ -112,7 +113,13 @@
 	</article>
 
 	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
-</div>
+</div> -->
+
+<section class="mavo" data-source="#countries">
+	<select>
+		<option value="[code]" property="country" data-multiple typeof>[name]</option>
+	</select>
+</section>
 
 <script src="../mavo.js"></script>
 

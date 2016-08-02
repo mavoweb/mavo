@@ -232,7 +232,9 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					// Document fragment, remove all children
-					$$(item.element.childNodes).forEach(node => node.remove());
+					for (node of item.element.childNodes) {
+						node => node.remove();
+					}
 				}
 			});
 
@@ -247,29 +249,29 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
 			else {
 				item.unsavedChanges = item.dirty = false;
 			}
-		});
+		}
 	},
 
 	done: function() {
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (item.placeholder) {
 				this.delete(item, true);
 				return;
 			}
-		});
+		}
 	},
 
 	propagated: ["save", "done"],
 
 	revert: function() {
-		this.items.forEach((item, i) => {
+		for (item of this.items) {
 			// Delete added items
 			if (item.unsavedChanges && !item.placeholder) {
 				this.delete(item, true);
@@ -283,7 +285,7 @@ var _ = Mavo.Collection = $.Class({
 				// Revert all properties
 				item.revert();
 			}
-		});
+		}
 	},
 
 	render: function(data) {
@@ -451,7 +453,9 @@ Mavo.Fragment = $.Class({
 	constructor: function(element) {
 		this.childNodes = [];
 
-		$$(element.childNodes).forEach(node => this.appendChild(node));
+		for (node of element.childNodes) {
+			this.appendChild(node);
+		}
 	},
 
 	appendChild: function(node) {
