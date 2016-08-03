@@ -51,9 +51,8 @@
 	<div>Boolean count (must be 1): [count(isUS)]</div>
 </section>
 
-<h2>Without render</h2>
-
-<div class="mavo">
+<section class="mavo">
+	<h2>Without render</h2>
 	<ul>
 		<li property="country" data-multiple data-foo="[code]">
 			<span property="code">Code</span>
@@ -66,9 +65,7 @@
 		</li>
 	</ul>
 	List: [country]
-</div>
-
-<h2>Nested average, meter, countif</h2>
+</section>
 
 <script type="application/json" id="restaurants">{
 	"restaurant": [
@@ -85,7 +82,9 @@
 		}
 	]
 }</script>
-<div data-store="#restaurants" id="nestedAverage">
+<section data-store="#restaurants" id="nestedAverage">
+	<h2>Nested average, meter, countif</h2>
+
 	<article property="restaurant" data-multiple>
 		<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
 
@@ -113,7 +112,7 @@
 	</article>
 
 	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
-</div>
+</section>
 
 <section class="mavo mv-keep-unhandled" data-source="#countries">
 	<h1>Broad references</h1>
@@ -131,12 +130,16 @@
 	<ul>
 		<li style="background: hsl([40 + 40], 100%, 50%)">Normal
 			<div style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with the same syntax</div>
-			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expression-syntax="[[expression]]">Inner with different syntax</div>
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expressions="[[expression]]">Inner with different syntax</div>
 		</li>
-		<li data-expression-syntax="{{expression}}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
-		<li data-expression-syntax="[[expression]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
+		<li data-expressions="{{expression}}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
+		<li data-expressions="[[expression]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
 			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)">Inner with the same syntax</div>
-			<div data-expression-syntax="[expression]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
+			<div data-expressions="[expression]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
+		</li>
+		<li data-expressions="none" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Escape expressions (data-expressions="none")</li>
+		<li data-expressions="expression" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">No delimiter (data-expressions="expression"), should escape
+			<div style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Inner with the same syntax</div>
 		</li>
 	</ul>
 </section>

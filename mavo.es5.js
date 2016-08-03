@@ -2761,7 +2761,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					} else {
-						var syntax = _.getSyntax(this.scope.element.closest("[data-expression-syntax]")) || _.defaultSyntax;
+						var syntax = _.getSyntax(this.scope.element.closest("[data-expressions]")) || _.defaultSyntax;
 						this.traverse(this.scope.element, undefined, syntax);
 					}
 				}
@@ -2845,10 +2845,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
 				var syntax = arguments[2];
 
-				if (node.matches && node.matches(_.escape)) {
-					return;
-				}
-
 				if (node.nodeType === 3 || node.nodeType === 8) {
 					// Text node
 					// Leaf node, extract references from content
@@ -2868,16 +2864,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			static: {
-				escape: ".ignore-expressions",
 				defaultSyntax: /\[([\S\s]+?)\]/gi,
+				emptySyntax: /(?!)/,
 
 				getSyntax: function getSyntax(element) {
 					if (element) {
-						var syntax = element.getAttribute("data-expression-syntax");
+						var syntax = element.getAttribute("data-expressions");
 
-						if (syntax && /^\S+expression\S+$/.test(syntax)) {
-							syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
-							syntax = RegExp(syntax, "gi");
+						if (syntax) {
+							if (/^\S+expression\S+$/i.test(syntax)) {
+								syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
+								syntax = RegExp(syntax, "gi");
+							} else {
+								return _.emptySyntax; // empty set regex
+							}
 						}
 
 						return syntax;

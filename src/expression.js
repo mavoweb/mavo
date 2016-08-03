@@ -253,7 +253,7 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				var syntax = _.getSyntax(this.scope.element.closest("[data-expression-syntax]")) || _.defaultSyntax;
+				var syntax = _.getSyntax(this.scope.element.closest("[data-expressions]")) || _.defaultSyntax;
 				this.traverse(this.scope.element, undefined, syntax);
 			}
 		}
@@ -307,10 +307,6 @@ var _ = Mavo.Expressions = $.Class({
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
 	traverse: function(node, path = "", syntax) {
-		if (node.matches && node.matches(_.escape)) {
-			return;
-		}
-
 		if (node.nodeType === 3 || node.nodeType === 8) { // Text node
 			// Leaf node, extract references from content
 			this.extract(node, null, path, syntax);
@@ -325,16 +321,21 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	static: {
-		escape: ".ignore-expressions",
 		defaultSyntax: /\[([\S\s]+?)\]/gi,
+		emptySyntax: /(?!)/,
 
 		getSyntax: function(element) {
 			if (element) {
-				var syntax = element.getAttribute("data-expression-syntax");
+				var syntax = element.getAttribute("data-expressions");
 
-				if (syntax && /^\S+expression\S+$/.test(syntax)) {
-					syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
-					syntax = RegExp(syntax, "gi");
+				if (syntax) {
+					if (/^\S+expression\S+$/i.test(syntax)) {
+						syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
+						syntax = RegExp(syntax, "gi");
+					}
+					else {
+						return _.emptySyntax; // empty set regex
+					}
 				}
 
 				return syntax;
