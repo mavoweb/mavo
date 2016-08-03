@@ -222,7 +222,6 @@ _.Backend = $.Class({
 		return {
 			data,
 			dataString: Mavo.toJSON(data),
-			filename: this.filename,
 			path: this.path || ""
 		};
 	},

@@ -242,7 +242,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
-				for (et of template.expressions.all) {
+				for (let et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
 						path: et.path,
 						syntax: et.syntax,
@@ -287,7 +287,7 @@ var _ = Mavo.Expressions = $.Class({
 			ref.update(env.data);
 		});
 
-		for (exp of this.updateAlso) {
+		for (let exp of this.updateAlso) {
 			exp.update();
 		}
 	},
@@ -423,32 +423,12 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 	return ret;
 };
 
-Mavo.hooks.add("init-tree-after", function() {
-	this.walk(obj => {
-		if (obj instanceof Mavo.Scope) {
-			new Mavo.Expressions(obj);
-		}
-	});
-});
-
 Mavo.hooks.add("scope-init-end", function() {
-	requestAnimationFrame(() => {
-		// Tree expressions are processed synchronously, so by now if it doesn't have
-		// an expressions object, we need to create it.
-		if (!this.expressions) {
-			new Mavo.Expressions(this);
-		}
-
-		this.expressions.update();
-	});
+	new Mavo.Expressions(this);
+	this.expressions.update();
 });
 
 Mavo.hooks.add("scope-render-start", function() {
-	if (!this.expressions) {
-		// ??? How can it not have expressions by now?!
-		new Mavo.Expressions(this);
-	}
-
 	this.expressions.active = false;
 });
 

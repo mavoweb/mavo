@@ -32,8 +32,7 @@ Mavo.Storage.Backend.register($.Class({
 				return;
 			}
 
-			// Internal filename (to be used for saving)
-			this.filename = (this.storage.param("path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.storage.param("path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
 			this.key = this.storage.param("key") || "fle6gsc61w5v79j";
 

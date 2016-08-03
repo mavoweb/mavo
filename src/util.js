@@ -45,16 +45,24 @@ var _ = $.extend(Mavo, {
 			observer = new MutationObserver(observer);
 		}
 
-		var options = attribute? {
+		var options = {};
+
+		if (attribute) {
+			$.extend(options, {
 				attributes: true,
-				attributeFilter: [attribute],
+				attributeFilter: attribute == "all"? undefined : [attribute],
 				attributeOldValue: !!oldValue
-			} : {
+			});
+		}
+
+		if (!attribute || attribute == "all") {
+			$.extend(options, {
 				characterData: true,
 				childList: true,
 				subtree: true,
 				characterDataOldValue: !!oldValue
-			};
+			});
+		}
 
 		observer.observe(element, options);
 

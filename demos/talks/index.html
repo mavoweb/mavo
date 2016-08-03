@@ -37,36 +37,7 @@
 		<p class="date"><time property="date"></time></p>
 		<address class="flag-[country]">
 			<span property="city"></span>,
-			<span property="country"><select>
-					<option value="">Online conference</option>
-					<option value="us">USA</option>
-					<option value="gb">UK</option>
-					<option value="scotland">Scotland</option>
-					<option value="au">Australia</option>
-					<option value="at">Austria</option>
-					<option value="be">Belgium</option>
-					<option value="br">Brazil</option>
-					<option value="it">Italy</option>
-					<option value="es">Spain</option>
-					<option value="el">Greece</option>
-					<option value="de">Germany</option>
-					<option value="fr">France</option>
-					<option value="il">Israel</option>
-					<option value="nz">New Zealand</option>
-					<option value="pl">Poland</option>
-					<option value="ca">Canada</option>
-					<option value="cl">Chile</option>
-					<option value="cz">Czech Republic</option>
-					<option value="nl">The Netherlands</option>
-					<option value="no">Norway</option>
-					<option value="ph">Philippines</option>
-					<option value="fi">Finland</option>
-					<option value="ru">Russia</option>
-					<option value="sg">Singapore</option>
-					<option value="se">Sweden</option>
-					<option value="ch">Switzerland</option>
-					<option value="in">India</option>
-				</select></span>
+			<span property="country" data-edit="#countries"></span>
 		</address>
 		<p class="comment" property></p>
 		<p class="comment" style="display: [iff(feedback, block, none)]">
@@ -75,11 +46,11 @@
 	</article>
 </main>
 
-<!-- <div style="display: none"> -->
-<select data-source="countries.json">
-	<option value="[code]" property="country" data-multiple typeof>[name]</option>
-</select>
-<!-- </div> -->
+<div hidden data-source="http://leaverou.github.io/countries.json" class="mavo mv-keep-unhandled">
+	<select id="countries">
+		<option value="[code]" property="country" data-multiple typeof>[name]</option>
+	</select>
+</div>
 
 <footer>By <a href="http://lea.verou.me">Lea Verou</a>. Flag icons made by <a href="http://www.famfamfam.com/lab/icons/flags/">Mark James</a> and are in the public domain.</footer>
 

@@ -94,26 +94,28 @@ var _ = Mavo.Collection = $.Class({
 		}
 		// Add delete & add buttons
 		else if (this.mutable) {
-			$.create({
-				className: "mv-item-controls mv-ui",
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "delete",
-						events: {
-							"click": evt => this.delete(item)
+			this.mavo.permissions.can("edit", () => {
+				$.create({
+					className: "mv-item-controls mv-ui",
+					contents: [
+						{
+							tag: "button",
+							title: "Delete this " + this.name,
+							className: "delete",
+							events: {
+								"click": evt => this.delete(item)
+							}
+						}, {
+							tag: "button",
+							title: "Add new " + this.name.replace(/s$/i, ""),
+							className: "add",
+							events: {
+								"click": evt => this.add(null, this.items.indexOf(item)).edit()
+							}
 						}
-					}, {
-						tag: "button",
-						title: "Add new " + this.name.replace(/s$/i, ""),
-						className: "add",
-						events: {
-							"click": evt => this.add(null, this.items.indexOf(item)).edit()
-						}
-					}
-				],
-				inside: element
+					],
+					inside: element
+				});
 			});
 		}
 
@@ -232,7 +234,7 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					// Document fragment, remove all children
-					for (node of item.element.childNodes) {
+					for (let node of item.element.childNodes) {
 						node => node.remove();
 					}
 				}
@@ -249,7 +251,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		for (item of this.items) {
+		for (let item of this.items) {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
@@ -260,7 +262,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
-		for (item of this.items) {
+		for (let item of this.items) {
 			if (item.placeholder) {
 				this.delete(item, true);
 				return;
@@ -271,7 +273,7 @@ var _ = Mavo.Collection = $.Class({
 	propagated: ["save", "done"],
 
 	revert: function() {
-		for (item of this.items) {
+		for (let item of this.items) {
 			// Delete added items
 			if (item.unsavedChanges && !item.placeholder) {
 				this.delete(item, true);
@@ -453,7 +455,7 @@ Mavo.Fragment = $.Class({
 	constructor: function(element) {
 		this.childNodes = [];
 
-		for (node of element.childNodes) {
+		for (let node of element.childNodes) {
 			this.appendChild(node);
 		}
 	},

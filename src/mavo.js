@@ -93,6 +93,8 @@ var _ = self.Mavo = $.Class({
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
 
+		this.permissions = new Mavo.Permissions(null, this);
+
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
 
@@ -101,8 +103,6 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-after", this);
 
 		this.setUnsavedChanges(false);
-
-		this.permissions = new Mavo.Permissions(null, this);
 
 		_.observe(this.wrapper, "class", () => {
 			var p = this.permissions;

@@ -45,8 +45,25 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		}
 
+		// Linked widgets
 		if (!this.editor && this.element.hasAttribute("data-edit")) {
 			this.editorType = "linked";
+
+			var original = $(this.element.getAttribute("data-edit"));
+
+			if (original && Mavo.is("formControl", original)) {
+				this.editor = original.cloneNode(true);
+
+				// Update editor if original mutates
+				if (!this.template) {
+					Mavo.observe(original, "all", records => {
+						for (let primitive of this.copies) {
+							primitive.editor = original.cloneNode(true);
+							primitive.setValue(primitive.value, {force: true, silent: true});
+						}
+					});
+				}
+			}
 		}
 
 		if (!this.fromTemplate("templateValue")) {
@@ -69,7 +86,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (!this.computed) {
-			this.value = this.templateValue; // no need to run setter code
+			this.setValue(this.templateValue, {silent: true});
 		}
 
 		if (this.collection) {
@@ -102,7 +119,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.value = this.template? this.default : this.getValue({raw: true});
+		this.setValue(this.template? this.default : this.getValue({raw: true}), {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -269,26 +286,6 @@ var _ = Mavo.Primitive = $.Class({
 
 	// Called only the first time this primitive is edited
 	initEdit: function () {
-		// Linked widgets
-		if (this.editorType == "linked") {
-			var selector = this.element.getAttribute("data-edit");
-
-			if (selector) {
-				this.editor = $.clone($(selector));
-
-				if (!Mavo.is("formControl", this.editor)) {
-					if ($(Mavo.selectors.output, this.editor)) { // has output element?
-						// Process it as a mavo instance, so people can use references
-						this.editor.setAttribute("data-store", "none");
-						new Mavo(this.editor);
-					}
-					else {
-						this.editor = null; // Cannot use this, sorry bro
-					}
-				}
-			}
-		}
-
 		if (!this.editor) {
 			// No editor provided, use default for element type
 			// Find default editor for datatype
@@ -521,42 +518,42 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	live: {
-		value: function (value) {
-			this.unobserve();
+	setValue: function (value, o = {}) {
+		this.unobserve();
 
-			if ($.type(value) == "object" && "value" in value) {
-				var presentational = value.presentational;
-				value = value.value;
+		if ($.type(value) == "object" && "value" in value) {
+			var presentational = value.presentational;
+			value = value.value;
+		}
+
+		value = value || value === 0? value : "";
+		value = _.safeCast(value, this.datatype);
+
+		if (value == this._value && !o.force) {
+			return value;
+		}
+
+		if (this.editor) {
+			this.editorValue = value;
+		}
+
+		if (this.humanReadable && this.attribute) {
+			presentational = this.humanReadable(value);
+		}
+
+		if (!this.editing || this.attribute) {
+			if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+				presentational = this.editor.selectedOptions[0].textContent;
 			}
 
-			value = value || value === 0? value : "";
-			value = _.safeCast(value, this.datatype);
+			_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
+		}
 
-			if (value == this._value) {
-				return value;
-			}
+		this.empty = value === "";
 
-			if (this.editor) {
-				this.editorValue = value;
-			}
+		this._value = value;
 
-			if (this.humanReadable && this.attribute) {
-				presentational = this.humanReadable(value);
-			}
-
-			if (!this.editing || this.attribute) {
-				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-					presentational = this.editor.selectedOptions[0].textContent;
-				}
-
-				_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
-			}
-
-			this.empty = value === "";
-
-			this._value = value;
-
+		if (!o.silent) {
 			if (!this.computed) {
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
@@ -571,10 +568,16 @@ var _ = Mavo.Primitive = $.Class({
 					action: "propertychange"
 				});
 			});
+		}
 
-			this.observe();
+		this.observe();
 
-			return value;
+		return value;
+	},
+
+	live: {
+		value: function (value) {
+			return this.setValue(value);
 		},
 
 		empty: function(value) {

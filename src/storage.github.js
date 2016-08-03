@@ -12,13 +12,12 @@ var _ = Mavo.Storage.Backend.register($.Class({
 
 		this.key = this.storage.param("key") || "7e08e016048000bc594e";
 
-		// Extract info for username, repo, branch, filename, filepath from URL
+		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);
 		$.extend(this, _.parseURL(this.url));
 		this.repo = this.repo || "mv-data";
 		this.branch = this.branch || "master";
 		this.path = this.path || `${this.mavo.id}.json`;
-		this.filename = this.filename || this.path.match(/[^/]*$/)[0];
 
 		// Transform the Github URL into something raw and CORS-enabled
 		this.url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch}/${this.path}?ts=${Date.now()}`);
@@ -198,7 +197,20 @@ var _ = Mavo.Storage.Backend.register($.Class({
 
 			if (/github.io$/.test(url.host)) {
 				ret.username = url.host.match(/([\w-]+)\.github\.io$/)[1];
-				ret.branch = "gh-pages";
+
+				if (path.length == 1) {
+					// Heuristic to tell apart username.github.io repos from
+					// other gh-pages repos. This is impossible to figure out without a request.
+					// E.g. username.github.io/foo/bar.json could be either repo = username.github.io, path = foo/bar.json
+					// or repo = foo, path = bar.json
+					ret.repo = url.host;
+					ret.path = path[0];
+					ret.branch = "master";
+					return ret;
+				}
+				else {
+					ret.branch = "gh-pages";
+				}
 			}
 			else {
 				ret.username = path.shift();
@@ -213,8 +225,6 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				path.shift();
 				ret.branch = path.shift();
 			}
-
-			ret.filename = path[path.length - 1];
 
 			ret.path = path.join("/");
 

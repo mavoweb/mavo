@@ -10,6 +10,13 @@ var _ = Mavo.Node = $.Class({
 		this.element = element;
 		this.template = o.template;
 
+		if (this.template) {
+			this.template.copies.push(this);
+		}
+		else {
+			this.copies = [];
+		}
+
 		this.mavo = mavo;
 
 		if (!this.fromTemplate("property", "type")) {
@@ -79,7 +86,7 @@ var _ = Mavo.Node = $.Class({
 
 	fromTemplate: function(...properties) {
 		if (this.template) {
-			for (property of properties) {
+			for (let property of properties) {
 				this[property] = this.template[property];
 			}
 		}
