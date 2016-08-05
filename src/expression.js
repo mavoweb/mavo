@@ -258,24 +258,21 @@ var _ = Mavo.Expressions = $.Class({
 			}
 		}
 
-		// TODO less stupid name?
-		this.updateAlso = new Set();
+		this.dependents = new Set();
 
 		this.active = true;
 
-		if (this.all.length > 0) {
-			this.update();
+		// Watch changes and update value
+		this.scope.element.addEventListener("mavo:datachange", evt => this.update());
 
-			// Watch changes and update value
-			this.scope.element.addEventListener("mavo:datachange", evt => this.update());
-		}
+		this.update();
 	},
 
 	/**
 	 * Update all expressions in this scope
 	 */
 	update: function callee() {
-		if (!this.active || this.scope.isDeleted()) {
+		if (!this.active || this.scope.isDeleted() || this.all.length + this.dependents.size === 0) {
 			return;
 		}
 
@@ -283,11 +280,11 @@ var _ = Mavo.Expressions = $.Class({
 
 		Mavo.hooks.run("expressions-update-start", env);
 
-		$$(this.all).forEach(ref => {
+		for (let ref of this.all) {
 			ref.update(env.data);
-		});
+		}
 
-		for (let exp of this.updateAlso) {
+		for (let exp of this.dependents) {
 			exp.update();
 		}
 	},
@@ -365,7 +362,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 				var ret = this.walkUp(scope => {
 					if (property in scope.properties) {
 						// TODO decouple
-						scope.expressions.updateAlso.add(this.expressions);
+						scope.expressions.dependents.add(this.expressions);
 
 						return scope.properties[property].getRelativeData(o);
 					};

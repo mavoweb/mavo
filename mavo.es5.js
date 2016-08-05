@@ -2766,26 +2766,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 
-				// TODO less stupid name?
-				this.updateAlso = new Set();
+				this.dependents = new Set();
 
 				this.active = true;
 
-				if (this.all.length > 0) {
-					this.update();
+				// Watch changes and update value
+				this.scope.element.addEventListener("mavo:datachange", function (evt) {
+					return _this13.update();
+				});
 
-					// Watch changes and update value
-					this.scope.element.addEventListener("mavo:datachange", function (evt) {
-						return _this13.update();
-					});
-				}
+				this.update();
 			},
 
 			/**
     * Update all expressions in this scope
     */
 			update: function callee() {
-				if (!this.active || this.scope.isDeleted()) {
+				if (!this.active || this.scope.isDeleted() || this.all.length + this.dependents.size === 0) {
 					return;
 				}
 
@@ -2793,19 +2790,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				Mavo.hooks.run("expressions-update-start", env);
 
-				$$(this.all).forEach(function (ref) {
-					ref.update(env.data);
-				});
-
 				var _iteratorNormalCompletion4 = true;
 				var _didIteratorError4 = false;
 				var _iteratorError4 = undefined;
 
 				try {
-					for (var _iterator4 = this.updateAlso[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-						var exp = _step4.value;
+					for (var _iterator4 = this.all[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+						var ref = _step4.value;
 
-						exp.update();
+						ref.update(env.data);
 					}
 				} catch (err) {
 					_didIteratorError4 = true;
@@ -2818,6 +2811,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					} finally {
 						if (_didIteratorError4) {
 							throw _iteratorError4;
+						}
+					}
+				}
+
+				var _iteratorNormalCompletion5 = true;
+				var _didIteratorError5 = false;
+				var _iteratorError5 = undefined;
+
+				try {
+					for (var _iterator5 = this.dependents[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+						var exp = _step5.value;
+
+						exp.update();
+					}
+				} catch (err) {
+					_didIteratorError5 = true;
+					_iteratorError5 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion5 && _iterator5.return) {
+							_iterator5.return();
+						}
+					} finally {
+						if (_didIteratorError5) {
+							throw _iteratorError5;
 						}
 					}
 				}
@@ -2910,7 +2928,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var ret = _this15.walkUp(function (scope) {
 						if (property in scope.properties) {
 							// TODO decouple
-							scope.expressions.updateAlso.add(_this15.expressions);
+							scope.expressions.dependents.add(_this15.expressions);
 
 							return scope.properties[property].getRelativeData(o);
 						};
@@ -3484,28 +3502,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// Update editor if original mutates
 					if (!this.template) {
 						Mavo.observe(original, "all", function (records) {
-							var _iteratorNormalCompletion5 = true;
-							var _didIteratorError5 = false;
-							var _iteratorError5 = undefined;
+							var _iteratorNormalCompletion6 = true;
+							var _didIteratorError6 = false;
+							var _iteratorError6 = undefined;
 
 							try {
-								for (var _iterator5 = _this19.copies[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-									var primitive = _step5.value;
+								for (var _iterator6 = _this19.copies[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+									var primitive = _step6.value;
 
 									primitive.editor = original.cloneNode(true);
 									primitive.setValue(primitive.value, { force: true, silent: true });
 								}
 							} catch (err) {
-								_didIteratorError5 = true;
-								_iteratorError5 = err;
+								_didIteratorError6 = true;
+								_iteratorError6 = err;
 							} finally {
 								try {
-									if (!_iteratorNormalCompletion5 && _iterator5.return) {
-										_iterator5.return();
+									if (!_iteratorNormalCompletion6 && _iterator6.return) {
+										_iterator6.return();
 									}
 								} finally {
-									if (_didIteratorError5) {
-										throw _iteratorError5;
+									if (_didIteratorError6) {
+										throw _iteratorError6;
 									}
 								}
 							}
@@ -4692,29 +4710,29 @@ Mavo.Primitive.editors.img = {
 						item.element.remove();
 					} else {
 						// Document fragment, remove all children
-						var _iteratorNormalCompletion6 = true;
-						var _didIteratorError6 = false;
-						var _iteratorError6 = undefined;
+						var _iteratorNormalCompletion7 = true;
+						var _didIteratorError7 = false;
+						var _iteratorError7 = undefined;
 
 						try {
-							for (var _iterator6 = item.element.childNodes[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-								var node = _step6.value;
+							for (var _iterator7 = item.element.childNodes[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+								var node = _step7.value;
 
 								(function (node) {
 									return node.remove();
 								});
 							}
 						} catch (err) {
-							_didIteratorError6 = true;
-							_iteratorError6 = err;
+							_didIteratorError7 = true;
+							_iteratorError7 = err;
 						} finally {
 							try {
-								if (!_iteratorNormalCompletion6 && _iterator6.return) {
-									_iterator6.return();
+								if (!_iteratorNormalCompletion7 && _iterator7.return) {
+									_iterator7.return();
 								}
 							} finally {
-								if (_didIteratorError6) {
-									throw _iteratorError6;
+								if (_didIteratorError7) {
+									throw _iteratorError7;
 								}
 							}
 						}
@@ -4732,37 +4750,6 @@ Mavo.Primitive.editors.img = {
 		},
 
 		save: function save() {
-			var _iteratorNormalCompletion7 = true;
-			var _didIteratorError7 = false;
-			var _iteratorError7 = undefined;
-
-			try {
-				for (var _iterator7 = this.items[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-					var item = _step7.value;
-
-					if (item.deleted) {
-						this.delete(item, true);
-					} else {
-						item.unsavedChanges = item.dirty = false;
-					}
-				}
-			} catch (err) {
-				_didIteratorError7 = true;
-				_iteratorError7 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion7 && _iterator7.return) {
-						_iterator7.return();
-					}
-				} finally {
-					if (_didIteratorError7) {
-						throw _iteratorError7;
-					}
-				}
-			}
-		},
-
-		done: function done() {
 			var _iteratorNormalCompletion8 = true;
 			var _didIteratorError8 = false;
 			var _iteratorError8 = undefined;
@@ -4771,9 +4758,10 @@ Mavo.Primitive.editors.img = {
 				for (var _iterator8 = this.items[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
 					var item = _step8.value;
 
-					if (item.placeholder) {
+					if (item.deleted) {
 						this.delete(item, true);
-						return;
+					} else {
+						item.unsavedChanges = item.dirty = false;
 					}
 				}
 			} catch (err) {
@@ -4792,9 +4780,7 @@ Mavo.Primitive.editors.img = {
 			}
 		},
 
-		propagated: ["save", "done"],
-
-		revert: function revert() {
+		done: function done() {
 			var _iteratorNormalCompletion9 = true;
 			var _didIteratorError9 = false;
 			var _iteratorError9 = undefined;
@@ -4802,6 +4788,38 @@ Mavo.Primitive.editors.img = {
 			try {
 				for (var _iterator9 = this.items[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
 					var item = _step9.value;
+
+					if (item.placeholder) {
+						this.delete(item, true);
+						return;
+					}
+				}
+			} catch (err) {
+				_didIteratorError9 = true;
+				_iteratorError9 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion9 && _iterator9.return) {
+						_iterator9.return();
+					}
+				} finally {
+					if (_didIteratorError9) {
+						throw _iteratorError9;
+					}
+				}
+			}
+		},
+
+		propagated: ["save", "done"],
+
+		revert: function revert() {
+			var _iteratorNormalCompletion10 = true;
+			var _didIteratorError10 = false;
+			var _iteratorError10 = undefined;
+
+			try {
+				for (var _iterator10 = this.items[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+					var item = _step10.value;
 
 					// Delete added items
 					if (item.unsavedChanges && !item.placeholder) {
@@ -4817,16 +4835,16 @@ Mavo.Primitive.editors.img = {
 					}
 				}
 			} catch (err) {
-				_didIteratorError9 = true;
-				_iteratorError9 = err;
+				_didIteratorError10 = true;
+				_iteratorError10 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion9 && _iterator9.return) {
-						_iterator9.return();
+					if (!_iteratorNormalCompletion10 && _iterator10.return) {
+						_iterator10.return();
 					}
 				} finally {
-					if (_didIteratorError9) {
-						throw _iteratorError9;
+					if (_didIteratorError10) {
+						throw _iteratorError10;
 					}
 				}
 			}
@@ -5006,27 +5024,27 @@ Mavo.Primitive.editors.img = {
 		constructor: function constructor(element) {
 			this.childNodes = [];
 
-			var _iteratorNormalCompletion10 = true;
-			var _didIteratorError10 = false;
-			var _iteratorError10 = undefined;
+			var _iteratorNormalCompletion11 = true;
+			var _didIteratorError11 = false;
+			var _iteratorError11 = undefined;
 
 			try {
-				for (var _iterator10 = element.childNodes[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-					var node = _step10.value;
+				for (var _iterator11 = element.childNodes[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+					var node = _step11.value;
 
 					this.appendChild(node);
 				}
 			} catch (err) {
-				_didIteratorError10 = true;
-				_iteratorError10 = err;
+				_didIteratorError11 = true;
+				_iteratorError11 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion10 && _iterator10.return) {
-						_iterator10.return();
+					if (!_iteratorNormalCompletion11 && _iterator11.return) {
+						_iterator11.return();
 					}
 				} finally {
-					if (_didIteratorError10) {
-						throw _iteratorError10;
+					if (_didIteratorError11) {
+						throw _iteratorError11;
 					}
 				}
 			}
