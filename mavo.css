@@ -315,13 +315,13 @@
     margin-top: auto;
     margin-bottom: auto; }
     .mv-bar .status .logout {
+      vertical-align: .2em;
       border: 1px solid rgba(0, 0, 0, 0.4);
       border-radius: .3em;
       box-shadow: 0 1px rgba(255, 255, 255, 0.4) inset, 0 0.1em 0.1em rgba(0, 0, 0, 0.3);
-      padding: 0 .4em;
-      margin: -.1em 0 -.1em .6em;
-      font-size: 75%;
-      line-height: 1.6; }
+      padding: .1em .4em;
+      margin: 0 0 0 .6em;
+      font-size: 80%; }
       .mv-bar .status .logout:active {
         background: transparent;
         box-shadow: 0 1px .1em black inset; }

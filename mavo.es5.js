@@ -5679,7 +5679,7 @@ var prettyPrint = function () {
 			this.debug = {};
 
 			this.template.forEach(function (expr) {
-				if (expr instanceof Mavo.Expression) {
+				if (expr instanceof Mavo.Expression && !_this31.element.matches(".mv-debuginfo *")) {
 					_this31.scope.debugRow({
 						element: _this31.element,
 						attribute: _this31.attribute,
