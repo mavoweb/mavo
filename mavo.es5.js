@@ -4573,7 +4573,7 @@ Mavo.Primitive.editors.img = {
 								}
 							}, {
 								tag: "button",
-								title: "Add new " + _this27.name.replace(/s$/i, ""),
+								title: "Add new " + _this27.name.replace(/s$/i, "") + " " + (_this27.bottomUp ? "after" : "before"),
 								className: "add",
 								events: {
 									"click": function click(evt) {

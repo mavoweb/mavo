@@ -107,7 +107,7 @@ var _ = Mavo.Collection = $.Class({
 							}
 						}, {
 							tag: "button",
-							title: "Add new " + this.name.replace(/s$/i, ""),
+							title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 							className: "add",
 							events: {
 								"click": evt => this.add(null, this.items.indexOf(item)).edit()
