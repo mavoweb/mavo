@@ -3251,7 +3251,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (!this.fromTemplate("templateValue")) {
-			this.templateValue = this.getValue({raw: true});
+			this.templateValue = this.getValue();
 		}
 
 		requestAnimationFrame(() => {
@@ -3267,10 +3267,6 @@ var _ = Mavo.Primitive = $.Class({
 		}
 		else if (this.default === null) { // attribute does not exist
 			this.default = this.editor? this.editorValue : this.emptyValue;
-		}
-
-		if (!this.computed) {
-			this.setValue(this.templateValue, {silent: true});
 		}
 
 		if (this.collection) {
@@ -3303,7 +3299,11 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.setValue(this.template? this.default : this.getValue({raw: true}), {silent: true});
+		if (!this.computed) {
+			this.setValue(this.templateValue, {silent: true});
+		}
+
+		this.setValue(this.template? this.default : this.templateValue, {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -3510,7 +3510,7 @@ var _ = Mavo.Primitive = $.Class({
 						this.mavo.storage.save();
 
 						// Are there any unsaved changes from other properties?
-						this.mavo.unsavedChanges = this.mavo.calculateUnsavedChanges();
+						this.mavo.setUnsavedChanges();
 					}
 				}
 			},

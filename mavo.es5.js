@@ -3515,7 +3515,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!this.fromTemplate("templateValue")) {
-				this.templateValue = this.getValue({ raw: true });
+				this.templateValue = this.getValue();
 			}
 
 			requestAnimationFrame(function () {
@@ -3532,10 +3532,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			} else if (this.default === null) {
 				// attribute does not exist
 				this.default = this.editor ? this.editorValue : this.emptyValue;
-			}
-
-			if (!this.computed) {
-				this.setValue(this.templateValue, { silent: true });
 			}
 
 			if (this.collection) {
@@ -3576,7 +3572,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			this.setValue(this.template ? this.default : this.getValue({ raw: true }), { silent: true });
+			if (!this.computed) {
+				this.setValue(this.templateValue, { silent: true });
+			}
+
+			this.setValue(this.template ? this.default : this.templateValue, { silent: true });
 
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
@@ -3787,7 +3787,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								_this23.mavo.storage.save();
 
 								// Are there any unsaved changes from other properties?
-								_this23.mavo.unsavedChanges = _this23.mavo.calculateUnsavedChanges();
+								_this23.mavo.setUnsavedChanges();
 							}
 						}
 				},
