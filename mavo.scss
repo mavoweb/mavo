@@ -289,33 +289,30 @@ $font-mono: Consolas, Monaco, monospace;
 			opacity: .5;
 		}
 
-		// Temporary, good for debugging keyboard usability
-		[property],
-		.mv-editor,
-		.mv-popup,
 		.mv-item,
-		.mv-item-controls * {
+		.mv-editor {
 			&:focus {
-				outline: 3px solid #f06 !important;
+				outline: none;
 			}
+		}
+
+		// Temporary, good for debugging keyboard usability
+		.mv-editor:focus {
+			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
 
 		// Primitives
 		#{$primitive}:not(.computed) {
-			&:hover {
-				@include highlight(hsla(58, 100%, 50%, .2));
-			}
-
-			&:focus,
-			.mv-editor:focus {
-				outline: 1px dashed hsla(200,50%,40%,.6);
-				outline-offset: 1px;
-			}
-
 			& input.mv-editor,
 			& select.mv-editor,
 			& textarea.mv-editor {
 				all: unset;
+				cursor: auto;
+			}
+
+			&:hover:not(.editing),
+			.mv-editor:hover {
+				@include highlight(hsla(58, 100%, 50%, .2));
 			}
 
 			& textarea.mv-editor {

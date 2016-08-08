@@ -182,28 +182,25 @@
 .mv-wrapper[data-editing] .placeholder {
   opacity: .5; }
 
-.mv-wrapper[data-editing] [property]:focus,
-.mv-wrapper[data-editing] .mv-editor:focus,
-.mv-wrapper[data-editing] .mv-popup:focus,
 .mv-wrapper[data-editing] .mv-item:focus,
-.mv-wrapper[data-editing] .mv-item-controls *:focus {
-  outline: 3px solid #f06 !important; }
+.mv-wrapper[data-editing] .mv-editor:focus {
+  outline: none; }
 
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]):hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed):hover {
-  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
-
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]):focus,
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:focus, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed):focus,
-.mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) .mv-editor:focus {
-  outline: 1px dashed rgba(51, 119, 153, 0.6);
-  outline-offset: 1px; }
+.mv-wrapper[data-editing] .mv-editor:focus {
+  box-shadow: 0 0 0 1px rgba(133, 160, 173, 0.5), 1px 1px 0.5em 1px rgba(0, 0, 0, 0.3) !important; }
 
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) input.mv-editor,
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) select.mv-editor,
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.mv-editor,
 .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) select.mv-editor,
 .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.mv-editor {
-  all: unset; }
+  all: unset;
+  cursor: auto; }
+
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]):hover:not(.editing),
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed):hover:not(.editing),
+.mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) .mv-editor:hover {
+  box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.mv-editor {
   display: block;
