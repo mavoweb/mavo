@@ -1,0 +1,166 @@
+$sans: Helvetica Neue, sans-serif;
+$serif: Baskerville, Palatino Linotype, Palatino, serif;
+
+$background: url(img/rolodex.jpg) hsl(40,8%,75%) top / cover fixed;
+
+body {
+	min-height: 100vh;
+	box-sizing: border-box;
+	padding: 1em;
+	background: $background;
+	font: 120%/1.5 $sans;
+}
+
+button {
+	cursor: pointer;
+}
+
+a {
+	color: inherit;
+
+	&:not(:hover):not(:focus) {
+		text-decoration: none;
+	}
+}
+
+body > h1 {
+	position: relative;
+	width: fit-content;
+	margin: 0 auto .5em;
+	color: white;
+	font: italic 400% $serif;
+	text-transform: lowercase;
+
+	span {
+		display: inline-block;
+		margin-left: .1em;
+		color: rgba(0,0,0,.6);
+		font: bold 75% $sans;
+		letter-spacing: -.05em;
+	}
+}
+
+// Person
+details {
+	max-width: 35em;
+	margin: 2em auto;
+	background: hsla(0,0%,100%,.5);
+	color: black;
+	box-shadow: 1px 1px 2px rgba(0,0,0,.6);
+	overflow: hidden;
+
+	& > summary {
+		position: relative;
+		cursor: pointer;
+		padding: 1em;
+		outline: none;
+
+		&:hover {
+			background: hsla(0,0%,100%,.2);
+		}
+
+		&::-webkit-details-marker {
+		  display: none
+		}
+
+		&::before {
+			content: "";
+			position: absolute;
+			top: -1em; right: -1em; bottom: -1em; left: -1em;
+			z-index: -1;
+			background: $background;
+			filter: blur(6px);
+		}
+
+		img {
+			float: left;
+			width: 3em;
+			height: 3em;
+			margin-right: 1em;
+			border-radius: 5em;
+			object-fit: cover;
+			box-shadow: 0 0 0 .2em hsla(0,0%,100%,.3);
+		}
+
+		img[src=""],
+		img:not([src]) {
+			// Default image
+			background: white;
+			content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 100 100" fill="%23666">\
+						<circle cx="50" cy="40" r="22" />\
+						<circle cx="50" cy="110" r="50" />\
+					</svg>');
+		}
+
+		h1 {
+			margin: 0;
+			font-size: 150%;
+			font-weight: bold;
+			letter-spacing: -.05em;
+
+			.affiliation {
+				display: block;
+				color: rgba(0,0,0,.5);
+				font-size: 65%;
+				font-weight: normal;
+				letter-spacing: -.01em;
+			}
+		}
+	}
+
+	&[open] > summary {
+		border-bottom: 1px solid hsla(0,0%,50%,.5);
+	}
+
+	& > section {
+		background: white;
+		padding: .5em;
+		margin: 0;
+
+		& > section:not(:last-child) {
+			border-bottom: 1px solid rgba(0,0,0,.15);
+		}
+
+		article {
+			display: flex;
+			padding: .8em 1em;
+
+			span:first-of-type {
+				min-width: 7em;
+				color: rgba(0,0,0,.5);
+				text-transform: uppercase;
+				font-size: 80%;
+				line-height: 1.875;
+			}
+
+			span:nth-of-type(2) {
+				flex: 1;
+			}
+		}
+
+		button.mv-add {
+			margin: 0 0 1em 1.5em;
+		}
+	}
+}
+
+button.mv-add.add-contact {
+	position: relative;
+	display: block;
+	padding: .4em .6em;
+	border: 1px solid hsla(0,0%,100%,.3);
+	margin: auto;
+	background: hsla(0,0%,100%,.2);
+	color: black;
+	font-size: 120%;
+	border-radius: .3em;
+	backdrop-filter: blur(6px);
+
+	&:hover {
+		background: hsla(0,0%,100%,.5);
+	}
+}
+
+::placeholder {
+	color: hsla(0,0%,0%,.6);
+}

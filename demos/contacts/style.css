@@ -1,0 +1,135 @@
+body {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 1em;
+  background: url(img/rolodex.jpg) #c4c1ba top/cover fixed;
+  font: 120%/1.5 Helvetica Neue, sans-serif; }
+
+button {
+  cursor: pointer; }
+
+a {
+  color: inherit; }
+  a:not(:hover):not(:focus) {
+    text-decoration: none; }
+
+body > h1 {
+  position: relative;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  margin: 0 auto .5em;
+  color: white;
+  font: italic 400% Baskerville, Palatino Linotype, Palatino, serif;
+  text-transform: lowercase; }
+  body > h1 span {
+    display: inline-block;
+    margin-left: .1em;
+    color: rgba(0, 0, 0, 0.6);
+    font: bold 75% Helvetica Neue, sans-serif;
+    letter-spacing: -.05em; }
+
+details {
+  max-width: 35em;
+  margin: 2em auto;
+  background: rgba(255, 255, 255, 0.5);
+  color: black;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
+  overflow: hidden; }
+  details > summary {
+    position: relative;
+    cursor: pointer;
+    padding: 1em;
+    outline: none; }
+    details > summary:hover {
+      background: rgba(255, 255, 255, 0.2); }
+    details > summary::-webkit-details-marker {
+      display: none; }
+    details > summary::before {
+      content: "";
+      position: absolute;
+      top: -1em;
+      right: -1em;
+      bottom: -1em;
+      left: -1em;
+      z-index: -1;
+      background: url(img/rolodex.jpg) #c4c1ba top/cover fixed;
+      -webkit-filter: blur(6px);
+      filter: blur(6px); }
+    details > summary img {
+      float: left;
+      width: 3em;
+      height: 3em;
+      margin-right: 1em;
+      border-radius: 5em;
+      object-fit: cover;
+      box-shadow: 0 0 0 0.2em rgba(255, 255, 255, 0.3); }
+    details > summary img[src=""],
+    details > summary img:not([src]) {
+      background: white;
+      content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 100 100" fill="%23666">						<circle cx="50" cy="40" r="22" />						<circle cx="50" cy="110" r="50" />					</svg>'); }
+    details > summary h1 {
+      margin: 0;
+      font-size: 150%;
+      font-weight: bold;
+      letter-spacing: -.05em; }
+      details > summary h1 .affiliation {
+        display: block;
+        color: rgba(0, 0, 0, 0.5);
+        font-size: 65%;
+        font-weight: normal;
+        letter-spacing: -.01em; }
+  details[open] > summary {
+    border-bottom: 1px solid rgba(128, 128, 128, 0.5); }
+  details > section {
+    background: white;
+    padding: .5em;
+    margin: 0; }
+    details > section > section:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
+    details > section article {
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      padding: .8em 1em; }
+      details > section article span:first-of-type {
+        min-width: 7em;
+        color: rgba(0, 0, 0, 0.5);
+        text-transform: uppercase;
+        font-size: 80%;
+        line-height: 1.875; }
+      details > section article span:nth-of-type(2) {
+        -webkit-flex: 1;
+        -ms-flex: 1;
+        flex: 1; }
+    details > section button.mv-add {
+      margin: 0 0 1em 1.5em; }
+
+button.mv-add.add-contact {
+  position: relative;
+  display: block;
+  padding: .4em .6em;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin: auto;
+  background: rgba(255, 255, 255, 0.2);
+  color: black;
+  font-size: 120%;
+  border-radius: .3em;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px); }
+  button.mv-add.add-contact:hover {
+    background: rgba(255, 255, 255, 0.5); }
+
+::-webkit-input-placeholder {
+  color: rgba(0, 0, 0, 0.6); }
+
+::-moz-placeholder {
+  color: rgba(0, 0, 0, 0.6); }
+
+:-ms-input-placeholder {
+  color: rgba(0, 0, 0, 0.6); }
+
+::placeholder {
+  color: rgba(0, 0, 0, 0.6); }
+
+/*# sourceMappingURL=style.css.map */

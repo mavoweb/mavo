@@ -25,24 +25,19 @@ a {
 	from { transform: rotate(5deg) }
 }
 
-ul {
+main {
 	position: relative;
-	display: block;
 	max-width: 20em;
 	padding: 2em;
-	padding-right: 1em;
+	margin: 1em auto;
 	border-top-right-radius: 100% 2%;
 	border-bottom-left-radius: 1% 100%;
-	margin: 1em auto;
-	background: hsl(55, 100%, 97%);
 	box-shadow: 2px 3px 20px black, 0 0 60px hsl(30, 80%, 30%) inset;
-	text-align: left;
-	color: #013;
-	list-style: none;
+	background: hsl(55, 100%, 97%);
 }
 
-	ul::before,
-	ul::after {
+	main::before,
+	main::after {
 		content: '';
 		position: absolute;
 		top: 0; right: 0; bottom: 0; left: 0;
@@ -53,9 +48,20 @@ ul {
 		animation: transform .4s cubic-bezier(.25,.1,.4,1.5);
 	}
 
-	ul::after {
+	main::after {
 		transform: rotate(3deg);
 	}
+
+ul {
+	position: relative;
+	display: block;
+	margin: 0;
+	padding: 0;
+	text-align: left;
+	color: #013;
+	list-style: none;
+	font-size: 120%;
+}
 
 	label {
 		display: block;
@@ -65,10 +71,11 @@ ul {
 		font-family: Marker Felt, Helvetica Neue, sans-serif;
 	}
 
-:checked + [property=task] {
+:checked + [property=taskTitle] {
 	font-style: italic;
 	text-decoration: line-through;
-	color: rgba(0,0,0,.5);
+	color: gray;
+	mix-blend-mode: multiply;
 }
 
 input {
@@ -77,12 +84,14 @@ input {
 
 input::-webkit-input-placeholder {
 	font-style: italic;
-			color: rgba(0,0,0,.3);
+	color: #999;
+	mix-blend-mode: multiply;
 }
 
 input::-moz-placeholder {
 	font-style: italic;
-	color: rgba(0,0,0,.3);
+	color: #999;
+	mix-blend-mode: multiply;
 }
 
 
@@ -131,17 +140,31 @@ body > footer {
 	font-size: small;
 }
 
-/* We submit via enter only */
-.mv-buttons {
+.auth-controls, .progress {
+	mix-blend-mode: multiply;
+}
+
+/* For paper figure */
+h1 {
 	display: none;
 }
 
-input[type="checkbox"]:checked + [property="task-title"] {
-	text-decoration: line-through;
-	font-style: italic;
-	color: rgba(0,0,0,.6);
+body > header {
+	margin: 1.5em 0;
 }
 
-.auth-controls, .progress {
-	mix-blend-mode: multiply;
+header > p {
+	font-size: 1.5em;
+	font-weight: bold;
+	letter-spacing: -.02em;
+}
+
+header > p::before {
+	content: "My Tasks: ";
+	font-weight: 100;
+	letter-spacing: normal;
+}
+
+li[property=task].deleted {
+	padding: .3em;
 }

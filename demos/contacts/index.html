@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="utf-8" />
+<title>My Contacts</title>
+<link rel="stylesheet" href="../../mavo.css" />
+<link rel="stylesheet" href="style.css" />
+
+</head>
+<body data-mavo class="autoedit">
+
+<h1>
+	my<span>contacts</span>
+</h1>
+
+<details property="contact" data-multiple>
+	<summary>
+		<img property="picture" src="https://pbs.twimg.com/profile_images/584963092120899586/TxkxQ7Y5_400x400.png">
+		<h1>
+			<span property="name">Lea Verou</span>
+			<span property class="affiliation">MIT CSAIL</span>
+		</h1>
+	</summary>
+	<section>
+		<section class="phones">
+			<article property="phone" data-multiple>
+				<span property="label" data-default>Mobile</span>
+				<span property="phoneNumber">555-123-4567</span>
+			</article>
+		</section>
+
+		<section class="emails">
+			<article property="email" data-multiple>
+				<span property="label" data-default>Email</span>
+				<span property="emailAddress">leaverou@mit.edu</span>
+			</article>
+		</section>
+	</section>
+</details>
+
+<script src="../../mavo.js"></script>
+
+</body>
+</html>

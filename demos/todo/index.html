@@ -13,17 +13,19 @@
 
 <header>
 	<h1>My tasks</h1>
-	<p>[count(done)] done out of [count(task)] total</p>
+	<p>[count(done)] done, [count(task)] total</p>
 </header>
 
-<ul>
-	<li property="task">
-		<label>
-			<input property="done" type="checkbox" />
-			<span property="taskTitle">Do stuff</span>
-		</label>
-	</li>
-</ul>
+<main>
+	<ul>
+		<li property="task">
+			<label>
+				<input property="done" type="checkbox" />
+				<span property="taskTitle">Do stuff</span>
+			</label>
+		</li>
+	</ul>
+</main>
 
 <script src="../../mavo.es5.js"></script>
 
