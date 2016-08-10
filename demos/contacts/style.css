@@ -1,8 +1,12 @@
+@font-face {
+  font-family: IcoMoon;
+  src: url("img/icomoon.woff") format("woff"); }
+
 body {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 1em;
-  background: url(img/rolodex.jpg) #c4c1ba top/cover fixed;
+  background: url(img/rolodex.jpg) #c4c1ba top fixed;
   font: 120%/1.5 Helvetica Neue, sans-serif; }
 
 button {
@@ -14,14 +18,13 @@ a {
     text-decoration: none; }
 
 body > h1 {
-  position: relative;
-  width: -webkit-fit-content;
-  width: -moz-fit-content;
-  width: fit-content;
-  margin: 0 auto .5em;
+  position: fixed;
+  top: .2em;
+  right: .4em;
   color: white;
-  font: italic 400% Baskerville, Palatino Linotype, Palatino, serif;
-  text-transform: lowercase; }
+  font: italic 400%/1 Baskerville, Palatino Linotype, Palatino, serif;
+  text-transform: lowercase;
+  font-variant-numeric: oldstyle-nums; }
   body > h1 span {
     display: inline-block;
     margin-left: .1em;
@@ -30,12 +33,11 @@ body > h1 {
     letter-spacing: -.05em; }
 
 details {
-  max-width: 35em;
+  max-width: 35rem;
   margin: 2em auto;
   background: rgba(255, 255, 255, 0.5);
   color: black;
-  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6);
-  overflow: hidden; }
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6); }
   details > summary {
     position: relative;
     cursor: pointer;
@@ -48,14 +50,15 @@ details {
     details > summary::before {
       content: "";
       position: absolute;
-      top: -1em;
-      right: -1em;
-      bottom: -1em;
-      left: -1em;
+      top: -2px;
+      right: -2px;
+      bottom: -3px;
+      left: -1px;
       z-index: -1;
-      background: url(img/rolodex.jpg) #c4c1ba top/cover fixed;
+      background: url(img/rolodex.jpg) #c4c1ba top fixed;
       -webkit-filter: blur(6px);
-      filter: blur(6px); }
+      filter: blur(6px);
+      overflow: hidden; }
     details > summary img {
       float: left;
       width: 3em;
@@ -72,7 +75,8 @@ details {
       margin: 0;
       font-size: 150%;
       font-weight: bold;
-      letter-spacing: -.05em; }
+      letter-spacing: -.05em;
+      line-height: 1.3; }
       details > summary h1 .affiliation {
         display: block;
         color: rgba(0, 0, 0, 0.5);
@@ -103,15 +107,47 @@ details {
         -ms-flex: 1;
         flex: 1; }
     details > section button.mv-add {
-      margin: 0 0 1em 1.5em; }
+      margin: 0 0 1em 1.6em;
+      border: none;
+      border-radius: .3em;
+      background: #70c2ad;
+      color: white;
+      font: inherit;
+      font-size: 62%;
+      text-transform: uppercase;
+      font-weight: bold; }
+      details > section button.mv-add:hover {
+        background: #3d8f7a; }
+      details > section button.mv-add:focus {
+        background: orange;
+        outline: none; }
+    details > section a {
+      display: block;
+      width: 1.6rem;
+      padding: .1rem;
+      border-radius: 50%;
+      margin-top: -.1rem;
+      text-align: center;
+      font: 110%/1.6rem IcoMoon;
+      color: orange;
+      background: white;
+      text-decoration: none; }
+      details > section a:hover {
+        background: orange;
+        box-shadow: 0 0 0 0.3rem orange;
+        color: white; }
+      details > section a[title="Call"] {
+        font-size: 130%; }
+        details > section a[title="Call"]:hover {
+          box-shadow: 0 -0.1rem 0 0.3rem orange; }
 
 button.mv-add.add-contact {
   position: relative;
   display: block;
   padding: .4em .6em;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   margin: auto;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.3);
   color: black;
   font-size: 120%;
   border-radius: .3em;
@@ -131,5 +167,13 @@ button.mv-add.add-contact {
 
 ::placeholder {
   color: rgba(0, 0, 0, 0.6); }
+
+body > footer {
+  max-width: 35rem;
+  margin: 3em auto;
+  text-align: center;
+  font-size: 70%;
+  color: white;
+  text-shadow: 0 0 2px black; }
 
 /*# sourceMappingURL=style.css.map */

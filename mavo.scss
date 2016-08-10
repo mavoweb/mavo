@@ -310,7 +310,6 @@ $font-mono: Consolas, Monaco, monospace;
 				cursor: auto;
 			}
 
-			&:hover:not(.editing),
 			.mv-editor:hover {
 				@include highlight(hsla(58, 100%, 50%, .2));
 			}

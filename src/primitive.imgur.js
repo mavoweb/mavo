@@ -35,8 +35,7 @@ Mavo.Primitive.editors.img = {
 								return;
 							}
 
-							// Show image locally
-							$("img", root).file = file;
+							// Show image locally via blob URL
 
 							// Upload
 
@@ -46,16 +45,6 @@ Mavo.Primitive.editors.img = {
 						}
 					}
 				}]
-			}, {
-				className: "image-preview",
-				contents: [{
-						tag: "progress",
-						value: "0",
-						max: "100"
-					}, {
-						tag: "img"
-					}
-				]
 			}, {
 				className: "tip",
 				innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste the image to be uploaded!"

@@ -1,7 +1,15 @@
 $sans: Helvetica Neue, sans-serif;
 $serif: Baskerville, Palatino Linotype, Palatino, serif;
 
-$background: url(img/rolodex.jpg) hsl(40,8%,75%) top / cover fixed;
+$background: url(img/rolodex.jpg) hsl(40,8%,75%) top  fixed;
+
+$green: hsl(165, 40%, 60%);
+$orange: orange;
+
+@font-face {
+	font-family: IcoMoon;
+	src: url("img/icomoon.woff") format('woff');
+}
 
 body {
 	min-height: 100vh;
@@ -24,12 +32,13 @@ a {
 }
 
 body > h1 {
-	position: relative;
-	width: fit-content;
-	margin: 0 auto .5em;
+	position: fixed;
+	top: .2em;
+	right: .4em;
 	color: white;
-	font: italic 400% $serif;
+	font: italic 400%/1 $serif;
 	text-transform: lowercase;
+	font-variant-numeric: oldstyle-nums;
 
 	span {
 		display: inline-block;
@@ -42,12 +51,11 @@ body > h1 {
 
 // Person
 details {
-	max-width: 35em;
+	max-width: 35rem;
 	margin: 2em auto;
 	background: hsla(0,0%,100%,.5);
 	color: black;
 	box-shadow: 1px 1px 2px rgba(0,0,0,.6);
-	overflow: hidden;
 
 	& > summary {
 		position: relative;
@@ -66,10 +74,11 @@ details {
 		&::before {
 			content: "";
 			position: absolute;
-			top: -1em; right: -1em; bottom: -1em; left: -1em;
+			top: -2px; right: -2px; bottom: -3px; left: -1px;
 			z-index: -1;
 			background: $background;
 			filter: blur(6px);
+			overflow: hidden;
 		}
 
 		img {
@@ -97,6 +106,7 @@ details {
 			font-size: 150%;
 			font-weight: bold;
 			letter-spacing: -.05em;
+			line-height: 1.3;
 
 			.affiliation {
 				display: block;
@@ -139,7 +149,52 @@ details {
 		}
 
 		button.mv-add {
-			margin: 0 0 1em 1.5em;
+			margin: 0 0 1em 1.6em;
+			border: none;
+			border-radius: .3em;
+
+			background: $green;
+			color: white;
+			font: inherit;
+			font-size: 62%;
+			text-transform: uppercase;
+			font-weight: bold;
+
+			&:hover {
+				background: darken($green, 20%);
+			}
+
+			&:focus {
+				background: $orange;
+				outline: none;
+			}
+		}
+
+		a {
+			display: block;
+			width: 1.6rem;
+			padding: .1rem;
+			border-radius: 50%;
+			margin-top: -.1rem;
+			text-align: center;
+			font: 110%/1.6rem IcoMoon;
+			color: $orange;
+			background: white;
+			text-decoration: none;
+
+			&:hover {
+				background: $orange;
+				box-shadow: 0 0 0 .3rem $orange;
+				color: white;
+			}
+
+			&[title="Call"] {
+				font-size: 130%;
+
+				&:hover {
+					box-shadow: 0 -.1rem 0 .3rem $orange;
+				}
+			}
 		}
 	}
 }
@@ -148,9 +203,9 @@ button.mv-add.add-contact {
 	position: relative;
 	display: block;
 	padding: .4em .6em;
-	border: 1px solid hsla(0,0%,100%,.3);
+	border: 2px solid hsla(0,0%,100%,.3);
 	margin: auto;
-	background: hsla(0,0%,100%,.2);
+	background: hsla(0,0%,100%,.3);
 	color: black;
 	font-size: 120%;
 	border-radius: .3em;
@@ -163,4 +218,13 @@ button.mv-add.add-contact {
 
 ::placeholder {
 	color: hsla(0,0%,0%,.6);
+}
+
+body > footer {
+	max-width: 35rem;
+	margin: 3em auto;
+	text-align: center;
+	font-size: 70%;
+	color: white;
+	text-shadow: 0 0 2px black;
 }

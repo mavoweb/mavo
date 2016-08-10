@@ -11,10 +11,10 @@
 <body data-mavo class="autoedit">
 
 <h1>
-	my<span>contacts</span>
+	[count(contact)]<span>contacts</span>
 </h1>
 
-<details property="contact" data-multiple>
+<details property="contact" data-multiple open>
 	<summary>
 		<img property="picture" src="https://pbs.twimg.com/profile_images/584963092120899586/TxkxQ7Y5_400x400.png">
 		<h1>
@@ -27,6 +27,7 @@
 			<article property="phone" data-multiple>
 				<span property="label" data-default>Mobile</span>
 				<span property="phoneNumber">555-123-4567</span>
+				<a href="tel:[phoneNumber]" title="Call">📞</a>
 			</article>
 		</section>
 
@@ -34,10 +35,15 @@
 			<article property="email" data-multiple>
 				<span property="label" data-default>Email</span>
 				<span property="emailAddress">leaverou@mit.edu</span>
+				<a href="mailto:[emailAddress]" title="Send email">✉</a>
 			</article>
 		</section>
 	</section>
 </details>
+
+<footer>
+	Rolodex photo used with permission from <a href="https://www.flickr.com/photos/jamamakitty/14815114243">flickr.com/photos/jamamakitty/14815114243</a>
+</footer>
 
 <script src="../../mavo.js"></script>
 

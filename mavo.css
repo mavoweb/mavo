@@ -197,9 +197,7 @@
   all: unset;
   cursor: auto; }
 
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]):hover:not(.editing),
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed):hover:not(.editing),
-.mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) .mv-editor:hover {
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) .mv-editor:hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.mv-editor {

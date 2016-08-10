@@ -2186,6 +2186,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.template = o.template;
 
 			if (this.template) {
+				// TODO remove if this is deleted
 				this.template.copies.push(this);
 			} else {
 				this.copies = [];
@@ -4432,8 +4433,7 @@ Mavo.Primitive.editors.img = {
 								return;
 							}
 
-							// Show image locally
-							$("img", root).file = file;
+							// Show image locally via blob URL
 
 							// Upload
 
@@ -4442,15 +4442,6 @@ Mavo.Primitive.editors.img = {
 							// Set public URL as the value of the URL input
 						}
 					}
-				}]
-			}, {
-				className: "image-preview",
-				contents: [{
-					tag: "progress",
-					value: "0",
-					max: "100"
-				}, {
-					tag: "img"
 				}]
 			}, {
 				className: "tip",

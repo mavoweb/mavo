@@ -11,6 +11,7 @@ var _ = Mavo.Node = $.Class({
 		this.template = o.template;
 
 		if (this.template) {
+			// TODO remove if this is deleted
 			this.template.copies.push(this);
 		}
 		else {
