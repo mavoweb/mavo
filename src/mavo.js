@@ -51,7 +51,7 @@ var _ = self.Mavo = $.Class({
 
 		// Apply heuristic for scopes
 		$$(_.selectors.primitive).forEach(element => {
-			var isScope = element.children.length > 0 && (// Contains other elements and...
+			var isScope = $$(_.selectors.not(_.selectors.formControl), element).length > 0 && (// Contains other elements and...
 			                Mavo.is("multiple", element) || // is a collection...
 			                Mavo.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
 						) || element.matches("template");
@@ -338,7 +338,7 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: container => $$(_.selectors.init, container).map(element => new _(element)),
+		init: container => $$(_.selectors.init, container || document).map(element => new _(element)),
 
 		hooks: new $.Hooks()
 	}

@@ -141,13 +141,14 @@ article {
 					width: $width;
 					height: .8em;
 					margin-right: .3em;
-					appearance: none;
 					background: transparent;
 					border: 1px solid;
-					border-left: $width/5 solid;
+					border-left-width: $width/5;
 
 					&::-webkit-meter-bar {
 						background: transparent;
+						border: 1px solid;
+						border-left-width: $width/5;
 					}
 
 					&::-webkit-meter-optimum-value,

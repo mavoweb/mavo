@@ -108,14 +108,13 @@ article {
           width: 8em;
           height: .8em;
           margin-right: .3em;
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          appearance: none;
           background: transparent;
           border: 1px solid;
-          border-left: 1.6em solid; }
+          border-left-width: 1.6em; }
           article > section ul li meter::-webkit-meter-bar {
-            background: transparent; }
+            background: transparent;
+            border: 1px solid;
+            border-left-width: 1.6em; }
           article > section ul li meter::-webkit-meter-optimum-value, article > section ul li meter::-webkit-meter-suboptimum-value {
             background: currentColor; }
     article > section li {

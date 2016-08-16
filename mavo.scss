@@ -488,6 +488,7 @@ $font-mono: Consolas, Monaco, monospace;
 
 	.status {
 		flex: 1;
+		line-height: 2.4;
 		margin-top: auto;
 		margin-bottom: auto;
 
@@ -499,6 +500,7 @@ $font-mono: Consolas, Monaco, monospace;
 			padding: .1em .4em;
 			margin: 0 0 0 .6em;
 			font-size: 80%;
+			line-height: 1.5;
 
 			&:active {
 				background: transparent;

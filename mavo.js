@@ -218,42 +218,78 @@ function overload(callback, start, end) {
 }
 
 // Copy properties from one object to another. Overwrites allowed.
+// Subtle difference of array vs string whitelist: If property doesn't exist in from, array will not define it.
 function extend(to, from, whitelist) {
-	for (var property in from) {
-		if (whitelist) {
-			var type = $.type(whitelist);
+	var whitelistType = type(whitelist);
 
-			if (whitelist === "own" && !from.hasOwnProperty(property) ||
-				type === "array" && whitelist.indexOf(property) === -1 ||
-				type === "regexp" && !whitelist.test(property) ||
-				type === "function" && !whitelist.call(from, property)) {
-				continue;
-			}
-		}
-
+	if (whitelistType === "string") {
 		// To copy gettters/setters, preserve flags etc
-		var descriptor = Object.getOwnPropertyDescriptor(from, property);
+		var descriptor = Object.getOwnPropertyDescriptor(from, whitelist);
 
 		if (descriptor && (!descriptor.writable || !descriptor.configurable || !descriptor.enumerable || descriptor.get || descriptor.set)) {
-			delete to[property];
-			Object.defineProperty(to, property, descriptor);
+			delete to[whitelist];
+			Object.defineProperty(to, whitelist, descriptor);
 		}
 		else {
-			to[property] = from[property];
+			to[whitelist] = from[whitelist];
+		}
+	}
+	else if (whitelistType === "array") {
+		whitelist.forEach(function(property) {
+			if (property in from) {
+				extend(to, from, property);
+			}
+		});
+	}
+	else {
+		for (var property in from) {
+			if (whitelist) {
+				if (whitelistType === "regexp" && !whitelist.test(property) ||
+					whitelistType === "function" && !whitelist.call(from, property)) {
+					continue;
+				}
+			}
+
+			extend(to, from, property);
 		}
 	}
 
 	return to;
 }
 
+/**
+ * Returns the [[Class]] of an object in lowercase (eg. array, date, regexp, string etc)
+ */
+function type(obj) {
+	if (obj === null) {
+		return "null";
+	}
+
+	if (obj === undefined) {
+		return "undefined";
+	}
+
+	var ret = (Object.prototype.toString.call(obj).match(/^\[object\s+(.*?)\]$/)[1] || "").toLowerCase();
+
+	if (ret == "number" && isNaN(obj)) {
+		return "nan";
+	}
+
+	return ret;
+}
+
 var $ = self.Bliss = extend(function(expr, context) {
+	if (arguments.length == 2 && !context) {
+		return null;
+	}
+
 	return $.type(expr) === "string"? (context || document).querySelector(expr) : expr || null;
 }, self.Bliss);
 
 extend($, {
 	extend: extend,
-
 	overload: overload,
+	type: type,
 
 	property: $.property || "_",
 
@@ -266,28 +302,11 @@ extend($, {
 			return [expr];
 		}
 
+		if (arguments.length == 2 && !context) {
+			return [];
+		}
+
 		return Array.from(typeof expr == "string"? (context || document).querySelectorAll(expr) : expr || []);
-	},
-
-	/**
-	 * Returns the [[Class]] of an object in lowercase (eg. array, date, regexp, string etc)
-	 */
-	type: function(obj) {
-		if (obj === null) {
-			return "null";
-		}
-
-		if (obj === undefined) {
-			return "undefined";
-		}
-
-		var ret = (Object.prototype.toString.call(obj).match(/^\[object\s+(.*?)\]$/)[1] || "").toLowerCase();
-
-		if (ret == "number" && isNaN(obj)) {
-			return "nan";
-		}
-
-		return ret;
 	},
 
 	/*
@@ -1053,7 +1072,7 @@ var _ = self.Mavo = $.Class({
 
 		// Apply heuristic for scopes
 		$$(_.selectors.primitive).forEach(element => {
-			var isScope = element.children.length > 0 && (// Contains other elements and...
+			var isScope = $$(_.selectors.not(_.selectors.formControl), element).length > 0 && (// Contains other elements and...
 			                Mavo.is("multiple", element) || // is a collection...
 			                Mavo.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
 						) || element.matches("template");
@@ -1340,7 +1359,7 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: container => $$(_.selectors.init, container).map(element => new _(element)),
+		init: container => $$(_.selectors.init, container || document).map(element => new _(element)),
 
 		hooks: new $.Hooks()
 	}
@@ -5641,8 +5660,16 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				}
 				else {
 					// Show window
+					var popup = {
+						width: Math.min(1000, innerWidth - 100),
+						height: Math.min(600, innerHeight - 100)
+					};
+
+					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
+					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
+
 					this.authPopup = open(`https://github.com/login/oauth/authorize?client_id=${this.key}&scope=repo,gist&state=${location.href}`,
-						"popup", "width=900,height=500");
+						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
 
 					addEventListener("message", evt => {
 						if (evt.source === this.authPopup) {
@@ -5674,8 +5701,8 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				if (xhr.status == 404) {
 					// Repo does not exist so we can't check permissions
 					// Just check if authenticated user is the same as our URL username
-					if (this.user.login == this.username) {
-						this.permissions.on("edit", "save");
+					if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+						this.permissions.on(["edit", "save"]);
 					}
 				}
 			});

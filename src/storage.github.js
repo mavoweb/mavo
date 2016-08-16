@@ -111,8 +111,16 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				}
 				else {
 					// Show window
+					var popup = {
+						width: Math.min(1000, innerWidth - 100),
+						height: Math.min(600, innerHeight - 100)
+					};
+
+					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
+					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
+
 					this.authPopup = open(`https://github.com/login/oauth/authorize?client_id=${this.key}&scope=repo,gist&state=${location.href}`,
-						"popup", "width=900,height=500");
+						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
 
 					addEventListener("message", evt => {
 						if (evt.source === this.authPopup) {
@@ -144,8 +152,8 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				if (xhr.status == 404) {
 					// Repo does not exist so we can't check permissions
 					// Just check if authenticated user is the same as our URL username
-					if (this.user.login == this.username) {
-						this.permissions.on("edit", "save");
+					if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+						this.permissions.on(["edit", "save"]);
 					}
 				}
 			});
