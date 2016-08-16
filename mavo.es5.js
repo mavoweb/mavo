@@ -1031,7 +1031,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.element.classList.add("mv-root");
 
 			// Apply heuristic for collections
-			$$(_.selectors.property + ", " + _.selectors.scope).concat([this.element]).forEach(function (element) {
+			$$(_.selectors.property + ", " + _.selectors.scope, element).concat([this.element]).forEach(function (element) {
 				if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 					element.setAttribute("data-multiple", "");
 				}
@@ -1048,8 +1048,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 
 			// Apply heuristic for scopes
-			$$(_.selectors.primitive).forEach(function (element) {
-				var isScope = $$(_.selectors.not(_.selectors.formControl), element).length > 0 && ( // Contains other elements and...
+			$$(_.selectors.primitive, element).forEach(function (element) {
+				var isScope = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element) && ( // Contains other properties or non-form elements and...
 				Mavo.is("multiple", element) || // is a collection...
 				Mavo.Primitive.getValueAttribute(element) === null // ...or its content is not in an attribute
 				) || element.matches("template");
@@ -1377,7 +1377,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				scope: "[typeof], [itemscope], [itemtype], .mv-group",
 				multiple: "[multiple], [data-multiple], .multiple",
 				required: "[required], [data-required], .required",
-				formControl: "input, select, textarea",
+				formControl: "input, select, option, textarea",
 				computed: ".computed", // Properties or scopes with computed properties, will not be saved
 				item: ".mv-item",
 				ui: ".mv-ui",
