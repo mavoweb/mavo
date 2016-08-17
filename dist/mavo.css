@@ -244,8 +244,9 @@
     .mv-bar:not(.floating) button:enabled:hover, .mv-bar:not(.floating) .button:enabled:hover {
       background: rgba(255, 255, 255, 0.2); }
   .mv-bar.floating {
-    top: 1em;
-    right: 1em; }
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content; }
     .mv-bar.floating:not(:hover):not(:focus) {
       opacity: .6; }
     .mv-bar.floating button, .mv-bar.floating .button {

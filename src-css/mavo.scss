@@ -383,9 +383,8 @@ $font-mono: Consolas, Monaco, monospace;
 
 	// Floating bar, intended for when there is only 1 button
 	&.floating {
-		top: 1em;
-		right: 1em;
-
+		width: fit-content;
+		
 		&:not(:hover):not(:focus) {
 			opacity: .6;
 		}
