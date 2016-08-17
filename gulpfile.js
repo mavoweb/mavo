@@ -17,8 +17,7 @@ var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js"];
 gulp.task("concat", function() {
 	var files = "mavo util permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
 	            .split(" ").map(path => `src/${path}.js`);
-	files.unshift("lib/bliss.js");
-	files.unshift("lib/stretchy.js");
+	files.unshift("lib/*.js");
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
@@ -41,7 +40,7 @@ gulp.task("sass", function() {
 });
 
 gulp.task("transpile", ["concat"], function() {
-	return gulp.src(["mavo.js"])
+	return gulp.src(["dist/mavo.js"])
 	.pipe(sourcemaps.init())
 	.pipe(babel({
 		"presets": ["ES2015"],
@@ -67,7 +66,7 @@ gulp.task("minify", ["concat", "transpile"], function() {
 		u.end();
 	});
 
-	return gulp.src(["mavo.es5.js"])
+	return gulp.src(["dist/mavo.es5.js"])
 	.pipe(sourcemaps.init())
 	.pipe(u)
 	.pipe(rename("mavo.min.js"))
