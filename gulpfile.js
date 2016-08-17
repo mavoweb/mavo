@@ -12,22 +12,23 @@ var sass = require("gulp-sass");
 var babel = require("gulp-babel");
 var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
+var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js"];
 
 gulp.task("concat", function() {
 	var files = "mavo util permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
 	            .split(" ").map(path => `src/${path}.js`);
-	files.unshift("../bliss/bliss.js");
-	files.unshift("../stretchy/stretchy.js");
+	files.unshift("lib/bliss.js");
+	files.unshift("lib/stretchy.js");
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.js"))
-		.pipe(sourcemaps.write("."))
-		.pipe(gulp.dest("."));
+		.pipe(sourcemaps.write("maps"))
+		.pipe(gulp.dest("dist"));
 });
 
 gulp.task("sass", function() {
-	return gulp.src(["**/*.scss", "!node_modules/**"])
+	return gulp.src(["src-css/*.scss"])
 		.pipe(sourcemaps.init())
 		.pipe(sass().on("error", sass.logError))
 		.pipe(autoprefixer({
@@ -35,8 +36,8 @@ gulp.task("sass", function() {
 			cascade: false
 		}))
 		.pipe(rename({ extname: ".css" }))
-		.pipe(sourcemaps.write("."))
-		.pipe(gulp.dest("."));
+		.pipe(sourcemaps.write("maps"))
+		.pipe(gulp.dest("dist"));
 });
 
 gulp.task("transpile", ["concat"], function() {
@@ -51,8 +52,8 @@ gulp.task("transpile", ["concat"], function() {
 		this.emit("end");
 	})
 	.pipe(rename({ suffix: ".es5" }))
-	.pipe(sourcemaps.write("."))
-	.pipe(gulp.dest("."));
+	.pipe(sourcemaps.write("maps"))
+	.pipe(gulp.dest("dist"));
 
 });
 
@@ -70,14 +71,19 @@ gulp.task("minify", ["concat", "transpile"], function() {
 	.pipe(sourcemaps.init())
 	.pipe(u)
 	.pipe(rename("mavo.min.js"))
-	.pipe(sourcemaps.write("."))
-	.pipe(gulp.dest("."));
+	.pipe(sourcemaps.write("maps"))
+	.pipe(gulp.dest("dist"));
 
+});
+
+gulp.task("lib", function() {
+	gulp.src(dependencies).pipe(gulp.dest("lib"));
 });
 
 gulp.task("watch", function() {
-	gulp.watch(["src/*.js", "../bliss/bliss.min.js", "../stretchy/stretchy.js"], ["concat", "transpile", "minify"]);
+	gulp.watch(dependencies, ["lib"]);
+	gulp.watch(["src/*.js", "lib/*.js"], ["concat", "transpile", "minify"]);
 	gulp.watch(["**/*.scss"], ["sass"]);
 });
 
-gulp.task("default", ["concat", "sass", "transpile", "minify"]);
+gulp.task("default", ["lib", "concat", "sass", "transpile", "minify"]);
