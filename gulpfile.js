@@ -27,7 +27,7 @@ gulp.task("concat", function() {
 });
 
 gulp.task("sass", function() {
-	return gulp.src(["src-css/*.scss"])
+	return gulp.src(["src-css/*.scss", "!**/_*.scss"])
 		.pipe(sourcemaps.init())
 		.pipe(sass().on("error", sass.logError))
 		.pipe(autoprefixer({

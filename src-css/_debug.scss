@@ -1,0 +1,256 @@
+.mv-debuginfo {
+	all: initial;
+	font: 80% $font-sans;
+	display: block;
+	border: 1em solid transparent;
+
+	&:not([open]) {
+		width: fit-content;
+
+		& > summary {
+			background: hsla(0,0%,50%,.4);
+			background-clip: padding-box;
+		}
+	}
+
+	&[open] {
+
+	}
+
+	& > summary {
+		display: block;
+		cursor: pointer;
+		padding: .3em .4em;
+		transition: .4s background;
+		border-radius: .3em;
+	}
+
+	& > table {
+		display: table;
+		border: 0;
+		width: 100%;
+		box-sizing: border-box;
+		table-layout: fixed;
+		border-spacing: 0;
+		background: rgba(0,0,0,.7);
+		box-shadow: 0 0 .4em black inset;
+
+		color: white;
+
+		thead {
+			background: rgba(0,0,0,.5);
+		}
+
+		tbody tr:nth-child(odd) {
+			background: rgba(0,0,0,.15);
+		}
+
+		th {
+			text-align: left;
+			padding: .5em;
+
+			&:nth-child(1) {
+				width: 1em;
+			}
+
+			&:nth-child(2) {
+				width: 40%;
+			}
+
+			&:nth-child(3) {
+				width: 30%;
+			}
+
+			&:nth-child(4) {
+				width: 30%;
+			}
+		}
+
+		td {
+			padding: .3em .7em;
+			vertical-align: top;
+			line-height: 1.7;
+			font-family: $font-mono;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+
+			&:nth-child(1) {
+				padding: .5em;
+				overflow: visible;
+
+				&::before {
+					display: block;
+					border-radius: .3em;
+					background: hsl(210, 50%, 55%);
+					color: white;
+					text-align: center;
+					font: bold 80%/1.5 $font-sans;
+				}
+			}
+
+			&:nth-child(2) {
+				// Expression column
+				position: relative;
+				padding: 0 .7em;
+				white-space: nowrap;
+				vertical-align: middle;
+				overflow: visible;
+
+				textarea {
+					all: unset;
+					position: absolute;
+					top: 0;
+					left: 0;
+					padding: .3em .7em;
+					width: 100%;
+					box-sizing: border-box;
+
+					&:not(:focus) {
+						max-height: 2.2em;
+						max-width: 100% !important;
+						overflow: hidden;
+
+						&:hover {
+							background: #333;
+						}
+					}
+
+					&:focus {
+						resize: horizontal;
+						z-index: 10;
+						background: #222;
+						box-shadow: 1px 1px .3em rgba(0,0,0,.5),
+						            0 0 0 1px rgba(0,0,0,.5) inset;
+					}
+				}
+			}
+
+			&:nth-child(4) {
+				// Element column
+				width: 30%;
+				cursor: help;
+
+				&:hover {
+					background: hsla(58, 100%, 50%, .3);
+				}
+			}
+		}
+
+		tr {
+			&.debug-property {
+				td:nth-child(1)::before {
+					content: "P";
+				},
+
+				td:nth-child(2) {
+					overflow: hidden;
+				}
+			}
+
+			&.debug-expression {
+				td:nth-child(1)::before {
+					content: "=";
+					background: hsl(30, 80%, 50%);
+				}
+			}
+
+			&.debug-warning {
+				td:nth-child(1)::before {
+					content: "!";
+					background: hsl(10, 90%, 50%);
+				}
+
+				td:nth-child(2) {
+					overflow: hidden;
+					font-family: $font-sans;
+					color: #f88;
+					font-weight: bold;
+				}
+			}
+		}
+
+		.error {
+			color: #f88;
+			font-weight: normal;
+			font-family: $font-sans;
+
+			.type {
+				display: block;
+				font-size: 80%;
+				font-weight: bold;
+				line-height: inherit;
+
+				&::after {
+					content: "😳";
+					display: inline-block;
+					vertical-align: middle;
+					margin-left: .3em;
+					font: 150%/.8 sans-serif;
+				}
+			}
+		}
+	}
+}
+
+.mv-debug-storage {
+	display: block;
+	background: hsla(0,0,0%,.8);
+	color: white;
+	margin: 1em 0;
+	text-align: left;
+	font-size: 80%;
+
+	summary {
+		cursor: pointer;
+		padding: .4em .5em;
+	}
+
+	pre {
+		padding: .6em;
+		font: 100%/1.5 $font-mono;
+		tab-size: 4;
+		overflow: auto;
+
+		&:empty::before {
+			content: "(Empty)";
+			font-style: italic;
+			opacity: .5;
+		}
+	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+
+		th, td {
+			padding: .4em;
+			border: 1px solid hsla(0,0%,100%,.2);
+			vertical-align: top;
+		}
+
+		td {
+			white-space: nowrap;
+		},
+
+		th {
+			text-align: left;
+		}
+
+		thead th {
+			font-family: $font-sans;
+		}
+
+		&.list > thead th {
+			background: #6DBD2A;
+		}
+
+		&.object > thead th {
+			background: #1F96CF;
+		}
+
+		&.date > thead th {
+			background: #A725D8;
+		}
+	}
+}
