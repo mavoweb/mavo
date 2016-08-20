@@ -1450,15 +1450,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		live: {
 			inProgress: function inProgress(value) {
-				if (value) {
-					var p = $.create("div", {
-						textContent: value + "…",
-						className: "progress",
-						inside: this.mavo.wrapper
-					});
-				} else {
-					$.remove($(".progress", this.mavo.wrapper));
-				}
+				this.mavo.wrapper[(value ? "set" : "remove") + "Attribute"]("data-mv-progress", value);
 			}
 		},
 

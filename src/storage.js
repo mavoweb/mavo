@@ -183,16 +183,7 @@ var _ = Mavo.Storage = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			if (value) {
-				var p = $.create("div", {
-					textContent: value + "…",
-					className: "progress",
-					inside: this.mavo.wrapper
-				});
-			}
-			else {
-				$.remove($(".progress", this.mavo.wrapper));
-			}
+			this.mavo.wrapper[`${value? "set" : "remove"}Attribute`]("data-mv-progress", value);
 		}
 	},
 

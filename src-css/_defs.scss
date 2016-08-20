@@ -17,3 +17,25 @@ $font-mono: Consolas, Monaco, monospace;
 		height: 1em;
 	}
 }
+
+@keyframes loader {
+	33% {
+		background-size: .5em .5em, 1em 1em, .5em .5em;
+		background-position: .25em 50%, 1em 50%, 2.25em 50%;
+	}
+
+	66% {
+		background-size: .5em .5em, .5em .5em, 1em 1em;
+		background-position: .25em 50%, 1.25em 50%, 2em 50%;
+	}
+}
+
+%progress {
+	width: 3em; height: 1em;
+	background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 0 50%,
+				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 1.25em 50%,
+				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 2.25em 50%;
+	background-size: 1em 1em, .5em .5em, .5em .5em;
+	background-repeat: no-repeat;
+	animation: loader .6s infinite;
+}

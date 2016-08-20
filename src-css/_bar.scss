@@ -118,6 +118,11 @@
 			content: "✓";
 		}
 
+		.mv-wrapper[data-mv-progress="Saving"] &::before {
+			content: "";
+			@extend %progress;
+		}
+
 		&:enabled:hover {
 			background: hsl(180, 50%, 50%);
 		}
