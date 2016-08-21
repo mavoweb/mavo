@@ -4824,7 +4824,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 					// Show window
 					var popup = {
 						width: Math.min(1000, innerWidth - 100),
-						height: Math.min(600, innerHeight - 100)
+						height: Math.min(800, innerHeight - 100)
 					};
 
 					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
@@ -4847,25 +4847,33 @@ var _ = Mavo.Storage.Backend.register($.Class({
 				}
 			}))
 			.then(() => this.getUser())
-			.then(u => {
-				this.permissions.on("logout");
-
-				return this.req(`repos/${this.username}/${this.repo}`);
-			})
-			.then(repoInfo => {
-				this.repoInfo = repoInfo;
-
-				if (repoInfo.permissions.push) {
-					this.permissions.on(["edit", "save"]);
+			.catch(xhr => {
+				if (xhr.status == 401) {
+					// Unauthorized. Access token we have is invalid, discard it
+					this.logout();
 				}
 			})
-			.catch(xhr => {
-				if (xhr.status == 404) {
-					// Repo does not exist so we can't check permissions
-					// Just check if authenticated user is the same as our URL username
-					if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
-						this.permissions.on(["edit", "save"]);
-					}
+			.then(u => {
+				if (this.user) {
+					this.permissions.on("logout");
+
+					return this.req(`repos/${this.username}/${this.repo}`)
+						.then(repoInfo => {
+							this.repoInfo = repoInfo;
+
+							if (repoInfo.permissions.push) {
+								this.permissions.on(["edit", "save"]);
+							}
+						})
+						.catch(xhr => {
+							if (xhr.status == 404) {
+								// Repo does not exist so we can't check permissions
+								// Just check if authenticated user is the same as our URL username
+								if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+									this.permissions.on(["edit", "save"]);
+								}
+							}
+						});
 				}
 			});
 		});

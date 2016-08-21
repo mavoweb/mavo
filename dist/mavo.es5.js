@@ -5479,7 +5479,7 @@ var prettyPrint = function () {
 						// Show window
 						var popup = {
 							width: Math.min(1000, innerWidth - 100),
-							height: Math.min(600, innerHeight - 100)
+							height: Math.min(800, innerHeight - 100)
 						};
 
 						popup.top = (innerHeight - popup.height) / 2 + (screen.top || screenTop);
@@ -5501,23 +5501,30 @@ var prettyPrint = function () {
 					}
 				}).then(function () {
 					return _this38.getUser();
-				}).then(function (u) {
-					_this38.permissions.on("logout");
-
-					return _this38.req("repos/" + _this38.username + "/" + _this38.repo);
-				}).then(function (repoInfo) {
-					_this38.repoInfo = repoInfo;
-
-					if (repoInfo.permissions.push) {
-						_this38.permissions.on(["edit", "save"]);
-					}
 				}).catch(function (xhr) {
-					if (xhr.status == 404) {
-						// Repo does not exist so we can't check permissions
-						// Just check if authenticated user is the same as our URL username
-						if (_this38.user.login.toLowerCase() == _this38.username.toLowerCase()) {
-							_this38.permissions.on(["edit", "save"]);
-						}
+					if (xhr.status == 401) {
+						// Unauthorized. Access token we have is invalid, discard it
+						_this38.logout();
+					}
+				}).then(function (u) {
+					if (_this38.user) {
+						_this38.permissions.on("logout");
+
+						return _this38.req("repos/" + _this38.username + "/" + _this38.repo).then(function (repoInfo) {
+							_this38.repoInfo = repoInfo;
+
+							if (repoInfo.permissions.push) {
+								_this38.permissions.on(["edit", "save"]);
+							}
+						}).catch(function (xhr) {
+							if (xhr.status == 404) {
+								// Repo does not exist so we can't check permissions
+								// Just check if authenticated user is the same as our URL username
+								if (_this38.user.login.toLowerCase() == _this38.username.toLowerCase()) {
+									_this38.permissions.on(["edit", "save"]);
+								}
+							}
+						});
 					}
 				});
 			});
