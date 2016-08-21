@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Expression tests</title>
+	<link rel="stylesheet" href="../mavo.css" />
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		[data-foo]::before {
+			content: "[data-foo=" attr(data-foo) "]";
+			background: #efc;
+		}
+	</style>
+</head>
+<body>
+
+<h1>Expression tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<section data-store="#countries">
+	<h2>With render (country data)</h2>
+
+	<ul>
+		<li property="country" data-multiple data-foo="[code]">
+			<span property="code">Code</span>
+			Expr: [code]
+			<br>
+			<span property="name" data-foo="[name]">Name</span>
+			Expr: [name]
+			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
+			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
+		</li>
+	</ul>
+	List: [country]
+	<div>Boolean count (must be 1): [count(isUS)]</div>
+</section>
+
+<section class="mavo">
+	<h2>Without render</h2>
+	<ul>
+		<li property="country" data-multiple data-foo="[code]">
+			<span property="code">Code</span>
+			Expr: [code]
+			<br>
+			<span property="name" data-foo="[name]">Name</span>
+			Expr: [name]
+			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
+			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
+		</li>
+	</ul>
+	List: [country]
+</section>
+
+<script type="application/json" id="restaurants">{
+	"restaurant": [
+		{
+			"visit": [
+				{
+					"dish": [
+						{
+							"dishRating": 4
+						}
+					]
+				}
+			]
+		}
+	]
+}</script>
+<section data-store="#restaurants" id="nestedAverage">
+	<h2>Nested average, meter, countif</h2>
+
+	<article property="restaurant" data-multiple>
+		<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
+
+		<section>
+			<article property="visit" data-multiple>
+				<header>
+					<p>
+						Average dish rating
+						<span property="visitRating">[average(dishRating)]</span>
+					</p>
+				</header>
+
+				<section>
+					<ul>
+						<li property="dish" data-multiple>
+							<p>
+								Rating:
+								<meter property="dishRating" value="4" max="5"></meter>
+							</p>
+						</li>
+					</ul>
+				</section>
+			</article>
+		</section>
+	</article>
+
+	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
+</section>
+
+<section class="mavo mv-keep-unhandled" data-source="#countries">
+	<h1>Broad references</h1>
+
+	<select>
+		<option value="[code]" property="country" data-multiple typeof>[name]</option>
+	</select>
+</section>
+
+<section class="mavo" data-source="#countries">
+	<h1>Custom expression syntax</h1>
+
+	<p>All of the following should be green. There should be no red.</p>
+
+	<ul>
+		<li style="background: hsl([40 + 40], 100%, 50%)">Normal
+			<div style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with the same syntax</div>
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expressions="[[expression]]">Inner with different syntax</div>
+		</li>
+		<li data-expressions="{{expression}}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
+		<li data-expressions="[[expression]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)">Inner with the same syntax</div>
+			<div data-expressions="[expression]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
+		</li>
+		<li data-expressions="none" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Escape expressions (data-expressions="none")</li>
+		<li data-expressions="expression" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">No delimiter (data-expressions="expression"), should escape
+			<div style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Inner with the same syntax</div>
+		</li>
+	</ul>
+</section>
+
+<script src="../mavo.js"></script>
+
+</body>
+</html>

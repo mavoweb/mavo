@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Editor</title>
+	<link rel="stylesheet" href="../mavo.css" />
+</head>
+<body>
+
+<h1>Editor tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<div data-store>
+	<span property="country">
+		<select>
+			<option value="us">United States</option>
+			<option value="gb">United Kingdom</option>
+		</select>
+	</span>
+</div>
+
+
+
+<script src="../mavo.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Property</title>
+	<link rel="stylesheet" href="../mavo.css" />
+</head>
+<body>
+
+<h1>Property tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<div data-store="#countries">
+	<ul>
+		<li property="country" data-multiple>
+			Itemprop: <strong itemprop="code"></strong>
+			Property name from class: <strong property class="name"></strong>
+		</li>
+	</li>
+</div>
+
+
+
+<script src="../mavo.js"></script>
+
+</body>
+</html>

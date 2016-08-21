@@ -1,0 +1,36 @@
+:root {
+	--ciel: hsl(200, 100%, 90%);
+}
+
+body {
+	max-width: 50em;
+	margin: auto;
+}
+
+body > section {
+	border: .2em solid var(--ciel);
+	margin: .5em 0;
+	padding: .5em;
+	border-radius: .3em;
+
+	h1 {
+		margin: 0;
+	}
+}
+
+body > p,
+body > section > p {
+	width: max-content;
+	padding: .4em 1em;
+	background: var(--ciel);
+	font-style: italic;
+	border-radius: .2em;
+
+	&::before {
+		content: "Instructions: ";
+		font-size: 80%;
+		font-weight: bold;
+		font-style: normal;
+		text-transform: uppercase;
+	}
+}
