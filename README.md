@@ -7,10 +7,11 @@ To use:
 
 # Info for contributors
 
-- The actual files to edit are in `src`. The `.js` files in the main directory are generated, as follows:
+- The actual files to edit are in `src` and `src-css`. The files in `build` are generated, as follows:
 	- `mavo.js` is a concatenation of the files in `src`.
 	- `mavo.es5.js` is `mavo.js` above, but transpiled using Babel
 	- `mavo.min.js` is `mavo.es5.js` above, but minified (currently transpiling is a necessary step to minify ES6)
+	- `mavo.css` is generated from `mavo.scss` and all its includes.
 - The naming convention in `src` is:
 	- The entry point is `mavo.js`
 	- Main components have a simple filename, without periods, e.g. `collection.js`.
