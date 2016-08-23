@@ -5,7 +5,9 @@
 (function() {
 
 var _ = Mavo.Functions = {
-	operators: {},
+	operators: {
+		"=": "eq"
+	},
 
 	/**
 	 * Aggregate sum

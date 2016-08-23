@@ -1630,6 +1630,7 @@ var _ = Mavo.Expression = $.Class({
 				return _.serialize(_.parse(code));
 			}
 			catch (e) {
+				// Parsing as MavoScript failed, falling back to plain JS
 				return code;
 			}
 		},
@@ -1659,6 +1660,7 @@ var _ = Mavo.Expression = $.Class({
 if (self.jsep) {
 	jsep.addBinaryOp("and", 2);
 	jsep.addBinaryOp("or", 2);
+	jsep.addBinaryOp("=", 6);
 }
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
@@ -2035,7 +2037,9 @@ Mavo.hooks.add("scope-render-end", function() {
 (function() {
 
 var _ = Mavo.Functions = {
-	operators: {},
+	operators: {
+		"=": "eq"
+	},
 
 	/**
 	 * Aggregate sum
