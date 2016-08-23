@@ -14,7 +14,7 @@ var _ = Mavo.Expression = $.Class({
 
 		try {
 			if (!this.function) {
-				this.function = this.createFunction();
+				this.function = _.compile(this.expression);
 			}
 
 			this.value = this.function(data);
@@ -32,27 +32,6 @@ var _ = Mavo.Expression = $.Class({
 		return this.expression;
 	},
 
-	createFunction: function() {
-		var code = this.expression;
-
-		if (/^if\([\S\s]+\)$/i.test(code)) {
-			code = code.replace(/^if\(/, "iff(");
-		}
-
-		// Transform simple operators to array-friendly math functions
-		code = code.replace(_.simpleOperation, (expr, operand1, operator, operand2) => {
-			var ret = `(${Mavo.Functions.operators[operator]}(${operand1}, ${operand2}))`;
-			return ret;
-		});
-
-		_.simpleOperation.lastIndex = 0;
-
-		return new Function("data", `with(Mavo.Functions._Trap)
-				with(data) {
-					return ${code};
-				}`);
-	},
-
 	live: {
 		expression: function(value) {
 			var code = value = value.trim();
@@ -64,6 +43,60 @@ var _ = Mavo.Expression = $.Class({
 	static: {
 		ERROR: "N/A",
 
+		serializers: {
+			"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
+			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
+			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
+			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
+			"MemberExpression": node => `${_.serialize(node.object)}[${_.serialize(node.property)}]`,
+			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
+			"Literal": node => node.raw,
+			"Identifier": node => node.name,
+			"ThisExpression": node => "this",
+			"Compound": node => node.body.map(_.serialize).join(" ")
+		},
+
+		transformations: {
+			"BinaryExpression": node => `${Mavo.Functions.operators[node.operator] || node.operator}(${_.serialize(node.left)}, ${_.serialize(node.right)})`,
+			"CallExpression": node => {
+				if (node.callee.type == "Identifier" && node.callee.name == "if") {
+					node.callee.name = "iff";
+				}
+			}
+		},
+
+		serialize: node => {
+			if (_.transformations[node.type]) {
+				var ret = _.transformations[node.type](node);
+
+				if (ret !== undefined) {
+					return ret;
+				}
+			}
+
+			return _.serializers[node.type](node);
+		},
+
+		rewrite: function(code) {
+			try {
+				return _.serialize(_.parse(code));
+			}
+			catch (e) {
+				return code;
+			}
+		},
+
+		compile: function(code) {
+			code = _.rewrite(code);
+
+			return new Function("data", `with(Mavo.Functions._Trap)
+					with(data) {
+						return ${code};
+					}`);
+		},
+
+		parse: self.jsep,
+
 		lazy: {
 			simpleOperation: function() {
 				var operator = Object.keys(Mavo.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
@@ -74,6 +107,14 @@ var _ = Mavo.Expression = $.Class({
 		}
 	}
 });
+
+if (self.jsep) {
+	jsep.addBinaryOp("and", 2);
+	jsep.addBinaryOp("or", 2);
+}
+
+_.serializers.LogicalExpression = _.serializers.BinaryExpression;
+_.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
 (function() {
 

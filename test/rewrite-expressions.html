@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Expression Rewrite tests</title>
+	<link rel="stylesheet" href="../dist/mavo.css" />
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		.pass, .pass + dd { background: hsl(80, 70%, 70%) }
+		.fail, .fail + dd, .fail + dd + dd { background: #fcc; }
+		dl { display: flex; flex-wrap: wrap }
+		dt, dd {
+			padding: .5em;
+			margin: .1em 0;
+			box-sizing: border-box;
+			font: bold 100%/1.5 Consolas, Monaco, monospace;
+		}
+		dt { width: 40% }
+		dd { width: 30%; }
+	</style>
+</head>
+<body>
+
+<h1>Expression Rewrite tests</h1>
+
+<dl id="tests">
+	<dt>1 + 1</dt>
+	<dd>add(1, 1)</dd>
+
+	<dt>if(2, 3, 4)</dt>
+	<dd>iff(2, 3, 4)</dd>
+
+	<dt>foo and 5 or baz</dt>
+	<dd>or(and(foo, 5), baz)</dd>
+
+	<dt>"foo"</dt>
+
+	<dt>if(foo >= 5, 1, 2)</dt>
+	<dd>iff(gte(foo, 5), 1, 2)</dd>
+
+	<dt>foo == "bar"</dt>
+	<dd>eq(foo, "bar")</dd>
+
+	<dt>foo.filter(a => a + 5)</dt>
+</dl>
+
+<script src="../dist/mavo.js"></script>
+<script>
+$$("#tests dt").forEach(dt => {
+	var dd = dt.nextElementSibling;
+
+	if (!dd || !dd.matches("dd")) {
+		dd = $.create("dd", {
+			textContent: dt.textContent,
+			after: dt
+		});
+	}
+
+	var compiled = Mavo.Expression.rewrite(dt.textContent);
+	var pass = compiled == dd.textContent;
+
+	dt.classList.toggle("pass", pass);
+	dt.classList.toggle("fail", !pass);
+
+	if (!pass) {
+		$.create("dd", {
+			textContent: compiled,
+			after: dd
+		});
+	}
+});
+</script>
+
+</body>
+</html>
