@@ -2089,6 +2089,18 @@ var _ = Mavo.Functions = {
 	},
 
 	iff: function(condition, iftrue, iffalse="") {
+		if (Array.isArray(condition)) {
+			return condition.map((c, i) => {
+				var ret = c? iftrue : iffalse;
+
+				if (Array.isArray(ret)) {
+					return ret[Math.min(i, ret.length - 1)];
+				}
+
+				return ret;
+			});
+		}
+
 		return condition? iftrue : iffalse;
 	}
 };

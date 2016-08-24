@@ -3010,6 +3010,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		iff: function iff(condition, iftrue) {
 			var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
 
+			if (Array.isArray(condition)) {
+				return condition.map(function (c, i) {
+					var ret = c ? iftrue : iffalse;
+
+					if (Array.isArray(ret)) {
+						return ret[Math.min(i, ret.length - 1)];
+					}
+
+					return ret;
+				});
+			}
+
 			return condition ? iftrue : iffalse;
 		}
 	};
@@ -6129,3 +6141,4 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	}));
 })(Bliss);
+//# sourceMappingURL=maps/mavo.es5.js.map

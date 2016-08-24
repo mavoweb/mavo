@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>MavoScript tests</title>
+<link rel="stylesheet" href="../dist/mavo.css" />
+<link rel="stylesheet" href="style.css" />
+<style>
+	body { max-width: 60em; }
+</style>
+
+</head>
+<body>
+
+<section>
+	<h1>Expression Rewrite tests</h1>
+
+	<dl id="rewrite" class="tests">
+		<dt>1 + 1</dt>
+		<dd>add(1, 1)</dd>
+
+		<dt>1 + 2 + 3</dt>
+		<dd>add(add(1, 2), 3)</dd>
+
+		<dt>if(2, 3, 4)</dt>
+		<dd>iff(2, 3, 4)</dd>
+
+		<dt>foo and 5 or baz</dt>
+		<dd>or(and(foo, 5), baz)</dd>
+
+		<dt>"foo"</dt>
+
+		<dt>if(foo >= 5, 1, 2)</dt>
+		<dd>iff(gte(foo, 5), 1, 2)</dd>
+
+		<dt>foo == "bar"</dt>
+		<dd>eq(foo, "bar")</dd>
+
+		<dt title="Single character equals">foo = 5</dt>
+		<dd>eq(foo, 5)</dd>
+
+		<dt title="3 operand comparison">foo > bar > baz</dt>
+		<dd>gt(foo, bar, baz)</dd>
+
+		<dt title="Pass-through to JS">foo.filter(a => a + 5)</dt>
+	</dl>
+</section>
+
+<section>
+	<h1>Function tests</h1>
+
+	<dl id="function" class="tests">
+		<dt>add("1", 1)</dt>
+		<dd>2</dd>
+
+		<dt>add("3", "5")</dt>
+		<dd>8</dd>
+
+		<dt>add([1, 2, 3], [4, 5])</dt>
+		<dd>[5, 7, 3]</dd>
+
+		<dt>and(0, true)</dt>
+		<dd>false</dd>
+
+		<dt>and([0, 1, 2, 3], [true, false])</dt>
+		<dd>[false, false, 2, 3]</dd>
+
+		<dt>and([true, false], [0, 1, 2, 3])</dt>
+		<dd>[false, false, true, true]</dd>
+
+		<dt>iff(4, 1, 2)</dt>
+		<dd>1</dd>
+
+		<dt>iff([1, 0], 1, 2)</dt>
+		<dd>[1, 2]</dd>
+
+		<dt>iff([1, 0], [1, 2], [3, 4])</dt>
+		<dd>[1, 4]</dd>
+
+		<dt>iff([true, false, 0, 1], 1, [2, 3])</dt>
+		<dd>[1, 3, 3, 1]</dd>
+	</dl>
+</section>
+
+<script src="../dist/mavo.js"></script>
+<script>
+Mavo.hooks.add("expression-eval-error", env => console.log(env.exception));
+function equals(a, b) {
+	if (a === b) {
+		return true;
+	}
+
+	if (typeof a == "number" && typeof b == "number" && isNaN(a) && isNaN(b)) {
+		return true;
+	}
+
+	if (Array.isArray(a) && Array.isArray(b)) {
+		return a.length === b.length && a.reduce((prev, current, i) => prev && equals(current, b[i]), true);
+	}
+
+	return false;
+}
+
+var tests = {
+	"rewrite": {
+		result: test => Mavo.Expression.rewrite(test)
+	},
+	"function": {
+		result: test => (new Mavo.Expression(test)).eval({}),
+		expected: expected => eval(expected)
+	}
+}
+$$(".tests dt").forEach(dt => {
+	var dd = dt.nextElementSibling;
+
+	if (!dd || !dd.matches("dd")) {
+		dd = $.create("dd", {
+			textContent: dt.textContent,
+			after: dt
+		});
+	}
+
+	dt.classList.remove("error");
+
+	var categoryTests = tests[dt.parentNode.id];
+
+	try {
+		var result = categoryTests.result(dt.textContent);
+		var expected = categoryTests.expected? categoryTests.expected(dd.textContent) : dd.textContent;
+		var pass = equals(result, expected);
+
+		dt.classList.toggle("pass", pass);
+		dt.classList.toggle("fail", !pass);
+
+		if (!pass) {
+			$.create("dd", {
+				textContent: result,
+				after: dd
+			});
+		}
+	}
+	catch(e) {
+		dt.classList.add("error");
+
+		$.create("dd", {
+			textContent: e,
+			after: dd
+		});
+	}
+});
+
+</script>
+
+</body>
+</html>

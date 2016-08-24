@@ -34,3 +34,77 @@ body > section > p {
 		text-transform: uppercase;
 	}
 }
+
+dl.tests {
+	display: flex;
+	flex-wrap: wrap;
+	margin-top: 2em;
+
+	dt:first-of-type {
+		&, & + dd, & + dd + dd {
+			position: relative;
+			&::before {
+				position: absolute;
+				bottom: 100%;
+				left: .5em;
+				color: rgba(0,0,0,.5);
+				font: bold 80% sans-serif;
+			}
+		}
+
+		&::before {
+			content: "Test";
+		}
+
+		& + dd::before {
+			content: "Expected";
+		}
+
+		& + dd + dd::before {
+			content: "Actual";
+		}
+	}
+
+	dt[title]::after {
+		content: attr(title);
+		display: block;
+		color: rgba(0,0,0,.5);
+		mix-blend-mode: multiply;
+		font: italic 70% sans-serif;
+	}
+
+	.pass {
+		&, & + dd {
+			background: hsl(80, 70%, 70%);
+		}
+
+		& + dd { width: 60%; }
+	}
+
+	.fail {
+		&, & + dd, & + dd + dd {
+			background: hsl(0, 70%, 90%);
+		}
+	}
+
+	.error {
+		&, & + dd, & + dd + dd {
+			background: hsl(0, 70%, 70%);
+		}
+	}
+
+	dt, dd {
+		padding: .5em;
+		margin: .1em 0;
+		box-sizing: border-box;
+		font: bold 100%/1.5 Consolas, Monaco, monospace;
+	}
+
+	dt {
+		width: 40%;
+	}
+
+	dd {
+		width: 30%;
+	}
+}

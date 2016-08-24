@@ -30,4 +30,48 @@ body > section > p {
     font-style: normal;
     text-transform: uppercase; }
 
+dl.tests {
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  margin-top: 2em; }
+  dl.tests dt:first-of-type, dl.tests dt:first-of-type + dd, dl.tests dt:first-of-type + dd + dd {
+    position: relative; }
+    dl.tests dt:first-of-type::before, dl.tests dt:first-of-type + dd::before, dl.tests dt:first-of-type + dd + dd::before {
+      position: absolute;
+      bottom: 100%;
+      left: .5em;
+      color: rgba(0, 0, 0, 0.5);
+      font: bold 80% sans-serif; }
+  dl.tests dt:first-of-type::before {
+    content: "Test"; }
+  dl.tests dt:first-of-type + dd::before {
+    content: "Expected"; }
+  dl.tests dt:first-of-type + dd + dd::before {
+    content: "Actual"; }
+  dl.tests dt[title]::after {
+    content: attr(title);
+    display: block;
+    color: rgba(0, 0, 0, 0.5);
+    mix-blend-mode: multiply;
+    font: italic 70% sans-serif; }
+  dl.tests .pass, dl.tests .pass + dd {
+    background: #c4e87d; }
+  dl.tests .pass + dd {
+    width: 60%; }
+  dl.tests .fail, dl.tests .fail + dd, dl.tests .fail + dd + dd {
+    background: #f7d4d4; }
+  dl.tests .error, dl.tests .error + dd, dl.tests .error + dd + dd {
+    background: #e87d7d; }
+  dl.tests dt, dl.tests dd {
+    padding: .5em;
+    margin: .1em 0;
+    box-sizing: border-box;
+    font: bold 100%/1.5 Consolas, Monaco, monospace; }
+  dl.tests dt {
+    width: 40%; }
+  dl.tests dd {
+    width: 30%; }
+
 /*# sourceMappingURL=style.css.map */
