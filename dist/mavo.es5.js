@@ -190,7 +190,7 @@ if (self.MutationObserver) {
 
 })();
 
-//     JavaScript Expression Parser (JSEP) 0.3.1-beta
+//     JavaScript Expression Parser (JSEP) 0.3.1
 //     JSEP may be freely distributed under the MIT License
 //     http://jsep.from.so/
 
@@ -544,7 +544,7 @@ if (self.MutationObserver) {
 								case 'b': str += '\b'; break;
 								case 'f': str += '\f'; break;
 								case 'v': str += '\x0B'; break;
-								case '\\': str += '\\'; break;
+								default : str += '\\' + ch;
 							}
 						} else {
 							str += ch;
@@ -607,11 +607,12 @@ if (self.MutationObserver) {
 				// until the terminator character `)` or `]` is encountered.
 				// e.g. `foo(bar, baz)`, `my_func()`, or `[bar, baz]`
 				gobbleArguments = function(termination) {
-					var ch_i, args = [], node;
+					var ch_i, args = [], node, closed = false;
 					while(index < length) {
 						gobbleSpaces();
 						ch_i = exprICode(index);
 						if(ch_i === termination) { // done parsing
+							closed = true;
 							index++;
 							break;
 						} else if (ch_i === COMMA_CODE) { // between expressions
@@ -623,6 +624,9 @@ if (self.MutationObserver) {
 							}
 							args.push(node);
 						}
+					}
+					if (!closed) {
+						throwError('Expected ' + String.fromCharCode(termination), index);
 					}
 					return args;
 				},
@@ -740,7 +744,7 @@ if (self.MutationObserver) {
 		};
 
 	// To be filled in by the template
-	jsep.version = '0.3.1-beta';
+	jsep.version = '0.3.1';
 	jsep.toString = function() { return 'JavaScript Expression Parser (JSEP) v' + jsep.version; };
 
 	/**
@@ -749,6 +753,7 @@ if (self.MutationObserver) {
 	 * @return jsep
 	 */
 	jsep.addUnaryOp = function(op_name) {
+		max_unop_len = Math.max(op_name.length, max_unop_len);
 		unary_ops[op_name] = t; return this;
 	};
 
@@ -761,6 +766,17 @@ if (self.MutationObserver) {
 	jsep.addBinaryOp = function(op_name, precedence) {
 		max_binop_len = Math.max(op_name.length, max_binop_len);
 		binary_ops[op_name] = precedence;
+		return this;
+	};
+
+	/**
+	 * @method jsep.addLiteral
+	 * @param {string} literal_name The name of the literal to add
+	 * @param {*} literal_value The value of the literal
+	 * @return jsep
+	 */
+	jsep.addLiteral = function(literal_name, literal_value) {
+		literals[literal_name] = literal_value;
 		return this;
 	};
 
@@ -787,6 +803,16 @@ if (self.MutationObserver) {
 		if(op_name.length === max_binop_len) {
 			max_binop_len = getMaxKeyLen(binary_ops);
 		}
+		return this;
+	};
+
+	/**
+	 * @method jsep.removeLiteral
+	 * @param {string} literal_name The name of the literal to remove
+	 * @return jsep
+	 */
+	jsep.removeLiteral = function(literal_name) {
+		delete literals[literal_name];
 		return this;
 	};
 
@@ -6103,4 +6129,3 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	}));
 })(Bliss);
-//# sourceMappingURL=maps/mavo.es5.js.map
