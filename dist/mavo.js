@@ -2489,10 +2489,6 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		}
 
-		if (!this.fromTemplate("templateValue")) {
-			this.templateValue = this.getValue();
-		}
-
 		requestAnimationFrame(() => {
 			if (!this.exposed && !this.computed) {
 				this.mavo.needsEdit = true;

@@ -32,7 +32,7 @@
 		}
 	]
 }</script>
-
+<!--
 <section data-store="#countries">
 	<h2>With render (country data)</h2>
 
@@ -66,7 +66,7 @@
 	</ul>
 	List: [country]
 </section>
-
+-->
 <script type="application/json" id="restaurants">{
 	"restaurant": [
 		{
@@ -82,7 +82,7 @@
 		}
 	]
 }</script>
-<section data-store="#restaurants" id="nestedAverage">
+<section data-store="#restaurants" id="nestedAverage" class="autoedit">
 	<h2>Nested average, meter, countif</h2>
 
 	<article property="restaurant" data-multiple>
@@ -113,7 +113,7 @@
 
 	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
 </section>
-
+<!--
 <section class="mavo mv-keep-unhandled" data-source="#countries">
 	<h1>Broad references</h1>
 
@@ -142,7 +142,7 @@
 			<div style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Inner with the same syntax</div>
 		</li>
 	</ul>
-</section>
+</section> -->
 
 <script src="../dist/mavo.js"></script>
 
