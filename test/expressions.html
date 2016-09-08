@@ -32,7 +32,7 @@
 		}
 	]
 }</script>
-<!--
+
 <section data-store="#countries">
 	<h2>With render (country data)</h2>
 
@@ -66,7 +66,7 @@
 	</ul>
 	List: [country]
 </section>
--->
+
 <script type="application/json" id="restaurants">{
 	"restaurant": [
 		{
@@ -113,7 +113,7 @@
 
 	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
 </section>
-<!--
+
 <section class="mavo mv-keep-unhandled" data-source="#countries">
 	<h1>Broad references</h1>
 
@@ -130,19 +130,29 @@
 	<ul>
 		<li style="background: hsl([40 + 40], 100%, 50%)">Normal
 			<div style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with the same syntax</div>
-			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expressions="[[expression]]">Inner with different syntax</div>
+			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expressions="[[ ]]">Inner with different syntax</div>
 		</li>
-		<li data-expressions="{{expression}}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
-		<li data-expressions="[[expression]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
+		<li data-expressions="{{ }}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
+		<li data-expressions="[[ ]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
 			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)">Inner with the same syntax</div>
-			<div data-expressions="[expression]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
+			<div data-expressions="[ ]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
 		</li>
 		<li data-expressions="none" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Escape expressions (data-expressions="none")</li>
-		<li data-expressions="expression" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">No delimiter (data-expressions="expression"), should escape
+		<li data-expressions=" " style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">No delimiter (data-expressions=" "), should escape
 			<div style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Inner with the same syntax</div>
 		</li>
 	</ul>
-</section> -->
+</section>
+
+<section class="mavo">
+	<h1>data-content</h1>
+
+	<p>Everything should be either green or the number 42 or "With bug".</p>
+	<div data-content="39 + 3">Without expression syntax</div>
+	<div data-content="[44 - 2]">With expression syntax</div>
+	<div data-content="(39 + 3">With bug</div>
+	<div style="background: red" data-content="background: hsl([40 + 40], 100%, 50%)" data-attribute="style">With concatenation</div>
+</section>
 
 <script src="../dist/mavo.js"></script>
 

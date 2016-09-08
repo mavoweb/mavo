@@ -143,7 +143,7 @@ Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 Mavo.selectors.debug = ".debug";
 
 var selector = ", .mv-debuginfo";
-Mavo.Expressions.escape += selector;
+
 Stretchy.selectors.filter += selector;
 
 // Add element to show saved data
@@ -214,7 +214,8 @@ Mavo.hooks.add("scope-init-start", function() {
 					inside: this.element,
 					contents: $.create("summary", {
 						textContent: "Debug"
-					})
+					}),
+					"data-expressions": "none"
 				})
 			})
 		});

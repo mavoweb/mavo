@@ -113,10 +113,70 @@ if (self.jsep) {
 	jsep.addBinaryOp("and", 2);
 	jsep.addBinaryOp("or", 2);
 	jsep.addBinaryOp("=", 6);
+	jsep.removeBinaryOp("===");
+	jsep.removeBinaryOp("=="); 
 }
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
+
+(function() {
+var _ = Mavo.Expression.Syntax = $.Class({
+	constructor: function(start, end) {
+		this.start = start;
+		this.end = end;
+		this.regex = RegExp(`${Mavo.escapeRegExp(start)}([\\S\\s]+?)${Mavo.escapeRegExp(end)}`, "gi");
+	},
+
+	test: function(str) {
+		this.regex.lastIndex = 0;
+
+		return this.regex.test(str);
+	},
+
+	tokenize: function(str) {
+		var match, ret = [], lastIndex = 0;
+
+		this.regex.lastIndex = 0;
+
+		while ((match = this.regex.exec(str)) !== null) {
+			// Literal before the expression
+			if (match.index > lastIndex) {
+				ret.push(str.substring(lastIndex, match.index));
+			}
+
+			lastIndex = this.regex.lastIndex;
+
+			ret.push(new Mavo.Expression(match[1]));
+		}
+
+		// Literal at the end
+		if (lastIndex < str.length) {
+			ret.push(str.substring(lastIndex));
+		}
+
+		return ret;
+	},
+
+	static: {
+		create: function(element) {
+			if (element) {
+				var syntax = element.getAttribute("data-expressions");
+
+				if (syntax) {
+					syntax = syntax.trim();
+					return /\s/.test(syntax)? new _(...syntax.split(/\s+/)) : _.ESCAPE;
+				}
+			}
+		},
+
+		ESCAPE: -1
+	}
+});
+
+_.default = new _("[", "]");
+
+})();
 
 (function() {
 
@@ -135,22 +195,33 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		this.element = this.node;
-
 		this.attribute = o.attribute || null;
 
-		if (this.node.nodeType === 3) {
-			this.element = this.node.parentNode;
+		if (this.attribute == "data-content") {
+			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+			this.expression = Mavo.Primitive.getValue(this.element, "data-content", null, {raw: true});
 
-			// If no element siblings make this.node the element, which is more robust
-			// Same if attribute, there are no attributes on a text node!
-			if (!this.node.parentNode.children.length || this.attribute) {
-				this.node = this.element;
-				this.element.normalize();
+			if (!this.syntax.test(this.expression)) {
+				// If no delimiters, assume entire thing is an expression
+				this.expression = this.syntax.start + this.expression + this.syntax.end;
 			}
 		}
+		else {
+			if (this.node.nodeType === 3) {
+				this.element = this.node.parentNode;
 
-		this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
-		this.template = o.template? o.template.template : this.tokenize(this.expression);
+				// If no element siblings make this.node the element, which is more robust
+				// Same if attribute, there are no attributes on a text node!
+				if (!this.node.parentNode.children.length || this.attribute) {
+					this.node = this.element;
+					this.element.normalize();
+				}
+			}
+
+			this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
+		}
+
+		this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
 
 		// Is this a computed property?
 		var primitive = Mavo.Unit.get(this.element);
@@ -230,34 +301,8 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 	},
 
-	tokenize: function(template) {
-		var regex = this.syntax;
-		var match, ret = [], lastIndex = 0;
-
-		this.syntax.lastIndex = 0;
-
-		while ((match = this.syntax.exec(template)) !== null) {
-			// Literal before the expression
-			if (match.index > lastIndex) {
-				ret.push(template.substring(lastIndex, match.index));
-			}
-
-			lastIndex = this.syntax.lastIndex;
-
-			ret.push(new Mavo.Expression(match[1]));
-		}
-
-		// Literal at the end
-		if (lastIndex < template.length) {
-			ret.push(template.substring(lastIndex));
-		}
-
-		return ret;
-	},
-
 	proxy: {
-		scope: "all",
-		expressionRegex: "all"
+		scope: "all"
 	},
 
 	static: {
@@ -296,7 +341,7 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				var syntax = _.getSyntax(this.scope.element.closest("[data-expressions]")) || _.defaultSyntax;
+				var syntax = Mavo.Expression.Syntax.create(this.scope.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
 				this.traverse(this.scope.element, undefined, syntax);
 			}
 		}
@@ -333,9 +378,9 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax) {
-		syntax.lastIndex = 0;
-
-		if (syntax.test(attribute? attribute.value : node.textContent)) {
+		if ((attribute && attribute.name == "data-content") ||
+		    syntax.test(attribute? attribute.value : node.textContent)
+		) {
 			this.all.push(new Mavo.Expression.Text({
 				node, syntax,
 				path: (path || "").slice(1).split("/").map(i => +i),
@@ -354,34 +399,18 @@ var _ = Mavo.Expressions = $.Class({
 		// Traverse children and attributes as long as this is NOT the root of a child scope
 		// (otherwise, it will be taken care of its own Expressions object)
 		else if (node == this.scope.element || !Mavo.is("scope", node)) {
-			syntax = _.getSyntax(node) || syntax;
+			syntax = Mavo.Expression.Syntax.create(node) || syntax;
+
+			if (syntax === Mavo.Expression.Syntax.ESCAPE) {
+				return;
+			}
+
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
 			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`, syntax));
 		}
 	},
 
-	static: {
-		defaultSyntax: /\[([\S\s]+?)\]/gi,
-		emptySyntax: /(?!)/,
-
-		getSyntax: function(element) {
-			if (element) {
-				var syntax = element.getAttribute("data-expressions");
-
-				if (syntax) {
-					if (/^\S+expression\S+$/i.test(syntax)) {
-						syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
-						syntax = RegExp(syntax, "gi");
-					}
-					else {
-						return _.emptySyntax; // empty set regex
-					}
-				}
-
-				return syntax;
-			}
-		}
-	}
+	static: {}
 });
 
 })();

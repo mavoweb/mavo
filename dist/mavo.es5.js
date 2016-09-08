@@ -1846,10 +1846,72 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		jsep.addBinaryOp("and", 2);
 		jsep.addBinaryOp("or", 2);
 		jsep.addBinaryOp("=", 6);
+		jsep.removeBinaryOp("===");
+		jsep.removeBinaryOp("==");
 	}
 
 	_.serializers.LogicalExpression = _.serializers.BinaryExpression;
 	_.transformations.LogicalExpression = _.transformations.BinaryExpression;
+
+	(function () {
+		var _ = Mavo.Expression.Syntax = $.Class({
+			constructor: function constructor(start, end) {
+				this.start = start;
+				this.end = end;
+				this.regex = RegExp(Mavo.escapeRegExp(start) + "([\\S\\s]+?)" + Mavo.escapeRegExp(end), "gi");
+			},
+
+			test: function test(str) {
+				this.regex.lastIndex = 0;
+
+				return this.regex.test(str);
+			},
+
+			tokenize: function tokenize(str) {
+				var match,
+				    ret = [],
+				    lastIndex = 0;
+
+				this.regex.lastIndex = 0;
+
+				while ((match = this.regex.exec(str)) !== null) {
+					// Literal before the expression
+					if (match.index > lastIndex) {
+						ret.push(str.substring(lastIndex, match.index));
+					}
+
+					lastIndex = this.regex.lastIndex;
+
+					ret.push(new Mavo.Expression(match[1]));
+				}
+
+				// Literal at the end
+				if (lastIndex < str.length) {
+					ret.push(str.substring(lastIndex));
+				}
+
+				return ret;
+			},
+
+			static: {
+				create: function create(element) {
+					if (element) {
+						var syntax = element.getAttribute("data-expressions");
+
+						if (syntax) {
+							syntax = syntax.trim();
+							return (/\s/.test(syntax) ? new (Function.prototype.bind.apply(_, [null].concat(_toConsumableArray(syntax.split(/\s+/)))))() : _.ESCAPE
+							);
+						}
+					}
+				},
+
+				ESCAPE: -1
+			}
+		});
+
+		_.default = new _("[", "]");
+	})();
 
 	(function () {
 
@@ -1868,22 +1930,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				this.element = this.node;
-
 				this.attribute = o.attribute || null;
 
-				if (this.node.nodeType === 3) {
-					this.element = this.node.parentNode;
+				if (this.attribute == "data-content") {
+					this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+					this.expression = Mavo.Primitive.getValue(this.element, "data-content", null, { raw: true });
 
-					// If no element siblings make this.node the element, which is more robust
-					// Same if attribute, there are no attributes on a text node!
-					if (!this.node.parentNode.children.length || this.attribute) {
-						this.node = this.element;
-						this.element.normalize();
+					if (!this.syntax.test(this.expression)) {
+						// If no delimiters, assume entire thing is an expression
+						this.expression = this.syntax.start + this.expression + this.syntax.end;
 					}
+				} else {
+					if (this.node.nodeType === 3) {
+						this.element = this.node.parentNode;
+
+						// If no element siblings make this.node the element, which is more robust
+						// Same if attribute, there are no attributes on a text node!
+						if (!this.node.parentNode.children.length || this.attribute) {
+							this.node = this.element;
+							this.element.normalize();
+						}
+					}
+
+					this.expression = (this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
 				}
 
-				this.expression = (this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
-				this.template = o.template ? o.template.template : this.tokenize(this.expression);
+				this.template = o.template ? o.template.template : this.syntax.tokenize(this.expression);
 
 				// Is this a computed property?
 				var primitive = Mavo.Unit.get(this.element);
@@ -1963,36 +2035,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			},
 
-			tokenize: function tokenize(template) {
-				var regex = this.syntax;
-				var match,
-				    ret = [],
-				    lastIndex = 0;
-
-				this.syntax.lastIndex = 0;
-
-				while ((match = this.syntax.exec(template)) !== null) {
-					// Literal before the expression
-					if (match.index > lastIndex) {
-						ret.push(template.substring(lastIndex, match.index));
-					}
-
-					lastIndex = this.syntax.lastIndex;
-
-					ret.push(new Mavo.Expression(match[1]));
-				}
-
-				// Literal at the end
-				if (lastIndex < template.length) {
-					ret.push(template.substring(lastIndex));
-				}
-
-				return ret;
-			},
-
 			proxy: {
-				scope: "all",
-				expressionRegex: "all"
+				scope: "all"
 			},
 
 			static: {
@@ -2052,7 +2096,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					} else {
-						var syntax = _.getSyntax(this.scope.element.closest("[data-expressions]")) || _.defaultSyntax;
+						var syntax = Mavo.Expression.Syntax.create(this.scope.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
 						this.traverse(this.scope.element, undefined, syntax);
 					}
 				}
@@ -2133,9 +2177,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			extract: function extract(node, attribute, path, syntax) {
-				syntax.lastIndex = 0;
-
-				if (syntax.test(attribute ? attribute.value : node.textContent)) {
+				if (attribute && attribute.name == "data-content" || syntax.test(attribute ? attribute.value : node.textContent)) {
 					this.all.push(new Mavo.Expression.Text({
 						node: node, syntax: syntax,
 						path: (path || "").slice(1).split("/").map(function (i) {
@@ -2162,7 +2204,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Traverse children and attributes as long as this is NOT the root of a child scope
 				// (otherwise, it will be taken care of its own Expressions object)
 				else if (node == this.scope.element || !Mavo.is("scope", node)) {
-						syntax = _.getSyntax(node) || syntax;
+						syntax = Mavo.Expression.Syntax.create(node) || syntax;
+
+						if (syntax === Mavo.Expression.Syntax.ESCAPE) {
+							return;
+						}
+
 						$$(node.attributes).forEach(function (attribute) {
 							return _this3.extract(node, attribute, path, syntax);
 						});
@@ -2172,27 +2219,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 			},
 
-			static: {
-				defaultSyntax: /\[([\S\s]+?)\]/gi,
-				emptySyntax: /(?!)/,
-
-				getSyntax: function getSyntax(element) {
-					if (element) {
-						var syntax = element.getAttribute("data-expressions");
-
-						if (syntax) {
-							if (/^\S+expression\S+$/i.test(syntax)) {
-								syntax = Mavo.escapeRegExp(syntax).replace("expression", "([\\S\\s]+?)");
-								syntax = RegExp(syntax, "gi");
-							} else {
-								return _.emptySyntax; // empty set regex
-							}
-						}
-
-						return syntax;
-					}
-				}
-			}
+			static: {}
 		});
 	})();
 
@@ -4840,7 +4867,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.selectors.debug = ".debug";
 
 	var selector = ", .mv-debuginfo";
-	Mavo.Expressions.escape += selector;
+
 	Stretchy.selectors.filter += selector;
 
 	// Add element to show saved data
@@ -4905,7 +4932,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						inside: this.element,
 						contents: $.create("summary", {
 							textContent: "Debug"
-						})
+						}),
+						"data-expressions": "none"
 					})
 				})
 			});
