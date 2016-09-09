@@ -134,6 +134,10 @@
 }
 
 .mv-wrapper {
+	[property].multiline {
+		white-space: pre-line;
+	}
+
 	button.add {
 		display: inline-block;
 		vertical-align: middle;

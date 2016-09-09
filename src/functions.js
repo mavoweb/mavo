@@ -70,7 +70,12 @@ var _ = Mavo.Functions = {
 		}
 
 		return condition? iftrue : iffalse;
-	}
+	},
+
+	idify: readable => ((text || "") + "")
+		.replace(/\s+/g, "-") // Convert whitespace to hyphens
+		.replace(/[^\w-]/g, "") // Remove weird characters
+		.toLowerCase()
 };
 
 /**

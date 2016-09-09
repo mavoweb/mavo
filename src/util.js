@@ -23,15 +23,6 @@ var _ = $.extend(Mavo, {
 				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 	},
 
-	// Inverse of _.readable(): Take a readable string and turn it into an identifier
-	identifier: function (readable) {
-		readable = readable + "";
-		return readable && readable
-				 .replace(/\s+/g, "-") // Convert whitespace to hyphens
-				 .replace(/[^\w-]/g, "") // Remove weird characters
-				 .toLowerCase();
-	},
-
 	queryJSON: function(data, path) {
 		if (!path || !data) {
 			return data;

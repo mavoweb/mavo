@@ -26,13 +26,40 @@
 	]
 }</script>
 
-<div data-store>
+<div data-store autoedit>
 	<span property="country">
 		<select>
 			<option value="us">United States</option>
 			<option value="gb">United Kingdom</option>
 		</select>
 	</span>
+
+	<h2>white-space: normal block element</h2>
+	<div property="address">John Doe,
+	Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens
+	New York City, NY 10001</div>
+
+	<h2>white-space: pre-line block element</h2>
+	<div property="preline" style="white-space: pre-line">John Doe
+	Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens
+	New York City, NY 10001</div>
+
+	<h2>white-space: pre block element</h2>
+	<div property="preline" style="white-space: pre">John Doe
+	Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens
+	New York City, NY 10001</div>
+
+	<h2>white-space: pre-wrap block element</h2>
+	<div property="preline" style="white-space: pre-wrap">John Doe
+		Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens
+	New York City, NY 10001</div>
+
+	<h2>white-space: nowrap block element</h2>
+	<div property="preline" style="white-space: nowrap">John Doe
+		Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens Super long line which should wrap in most screens
+	New York City, NY 10001</div>
+</div>
+
 </div>
 
 

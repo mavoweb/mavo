@@ -114,7 +114,6 @@ if (self.jsep) {
 	jsep.addBinaryOp("or", 2);
 	jsep.addBinaryOp("=", 6);
 	jsep.removeBinaryOp("===");
-	jsep.removeBinaryOp("=="); 
 }
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
@@ -223,13 +222,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
 
-		// Is this a computed property?
-		var primitive = Mavo.Unit.get(this.element);
-		if (primitive && this.attribute === primitive.attribute) {
-			this.primitive = primitive;
-			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
-		}
-
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -279,7 +271,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
-
+//console.log(this.primitive, this.element.getAttribute("property"));
 		if (this.primitive && this.template.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
@@ -306,7 +298,28 @@ var _ = Mavo.Expression.Text = $.Class({
 	},
 
 	static: {
-		elements: new WeakMap()
+		elements: new WeakMap(),
+
+		/**
+		 * Search for Mavo.Expression.Text object(s) associated with a given element
+		 * and optionally an attribute.
+		 *
+		 * @return If one argument, array of matching Expression.Text objects.
+		 *         If two arguments, the matching Expression.Text object or null
+		 */
+		search: function(element, attribute) {
+			var all = _.elements.get(element) || [];
+
+			if (arguments.length > 1) {
+				if (!all.length) {
+					return null;
+				}
+
+				return all.filter(et => et.attribute === attribute)[0] || null;
+			}
+
+			return all;
+		}
 	}
 });
 
@@ -493,8 +506,19 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 	return ret;
 };
 
-Mavo.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-start", function() {
 	new Mavo.Expressions(this);
+});
+Mavo.hooks.add("primitive-init-start", function() {
+	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+	this.computed = !!this.expressionText;
+
+	if (this.expressionText) {
+		this.expressionText.primitive = this;
+	}
+});
+
+Mavo.hooks.add("scope-init-end", function() {
 	this.expressions.update();
 });
 

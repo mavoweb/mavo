@@ -621,15 +621,6 @@ var _ = $.extend(Mavo, {
 				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 	},
 
-	// Inverse of _.readable(): Take a readable string and turn it into an identifier
-	identifier: function (readable) {
-		readable = readable + "";
-		return readable && readable
-				 .replace(/\s+/g, "-") // Convert whitespace to hyphens
-				 .replace(/[^\w-]/g, "") // Remove weird characters
-				 .toLowerCase();
-	},
-
 	queryJSON: function(data, path) {
 		if (!path || !data) {
 			return data;
@@ -1662,7 +1653,6 @@ if (self.jsep) {
 	jsep.addBinaryOp("or", 2);
 	jsep.addBinaryOp("=", 6);
 	jsep.removeBinaryOp("===");
-	jsep.removeBinaryOp("=="); 
 }
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
@@ -1771,13 +1761,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
 
-		// Is this a computed property?
-		var primitive = Mavo.Unit.get(this.element);
-		if (primitive && this.attribute === primitive.attribute) {
-			this.primitive = primitive;
-			primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
-		}
-
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -1827,7 +1810,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
-
+//console.log(this.primitive, this.element.getAttribute("property"));
 		if (this.primitive && this.template.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
@@ -1854,7 +1837,28 @@ var _ = Mavo.Expression.Text = $.Class({
 	},
 
 	static: {
-		elements: new WeakMap()
+		elements: new WeakMap(),
+
+		/**
+		 * Search for Mavo.Expression.Text object(s) associated with a given element
+		 * and optionally an attribute.
+		 *
+		 * @return If one argument, array of matching Expression.Text objects.
+		 *         If two arguments, the matching Expression.Text object or null
+		 */
+		search: function(element, attribute) {
+			var all = _.elements.get(element) || [];
+
+			if (arguments.length > 1) {
+				if (!all.length) {
+					return null;
+				}
+
+				return all.filter(et => et.attribute === attribute)[0] || null;
+			}
+
+			return all;
+		}
 	}
 });
 
@@ -2041,8 +2045,19 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 	return ret;
 };
 
-Mavo.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("scope-init-start", function() {
 	new Mavo.Expressions(this);
+});
+Mavo.hooks.add("primitive-init-start", function() {
+	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+	this.computed = !!this.expressionText;
+
+	if (this.expressionText) {
+		this.expressionText.primitive = this;
+	}
+});
+
+Mavo.hooks.add("scope-init-end", function() {
 	this.expressions.update();
 });
 
@@ -2131,7 +2146,12 @@ var _ = Mavo.Functions = {
 		}
 
 		return condition? iftrue : iffalse;
-	}
+	},
+
+	idify: readable => ((text || "") + "")
+		.replace(/\s+/g, "-") // Convert whitespace to hyphens
+		.replace(/[^\w-]/g, "") // Remove weird characters
+		.toLowerCase()
 };
 
 /**
@@ -2455,7 +2475,7 @@ var _ = Mavo.Scope = $.Class({
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "computed", "templateValue")) {
+		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -2463,14 +2483,15 @@ var _ = Mavo.Primitive = $.Class({
 			if (this.attribute) {
 				this.humanReadable = this.attribute.humanReadable;
 			}
-			else {
-				this.element.normalize();
-			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
 
-			this.templateValue = this.getValue({raw: true});
+			this.templateValue = this.getValue();
 		}
+
+		this.computed = false;
+
+		Mavo.hooks.run("primitive-init-start", this);
 
 		/**
 		 * Set up input widget
@@ -2482,6 +2503,10 @@ var _ = Mavo.Primitive = $.Class({
 			this.editorType = "exposed";
 
 			this.edit();
+		}
+		else if (!this.computed) {
+			// If this is NOT exposed and NOT computed, we need an edit button
+			this.mavo.needsEdit = true;
 		}
 
 		// Nested widgets
@@ -2517,12 +2542,6 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
-
-		requestAnimationFrame(() => {
-			if (!this.exposed && !this.computed) {
-				this.mavo.needsEdit = true;
-			}
-		});
 
 		this.default = this.element.getAttribute("data-default");
 
@@ -2576,6 +2595,14 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	get editorValue() {
+		if (this.getEditorValue) {
+			var value = this.getEditorValue();
+
+			if (value !== undefined) {
+				return value;
+			}
+		}
+
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
 				return _.getValue(this.editor, undefined, this.datatype);
@@ -2591,6 +2618,10 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	set editorValue(value) {
+		if (this.setEditorValue && this.setEditorValue(value) !== undefined) {
+			return;
+		}
+
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
 				_.setValue(this.editor, value);
@@ -3142,8 +3173,7 @@ var _ = Mavo.Primitive = $.Class({
 
 			var ret;
 
-			// TODO Get rid of this horrible raw hack
-			if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
+			if (attribute in element && _.useProperty(element, attribute)) {
 				// Returning properties (if they exist) instead of attributes
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				ret = element[attribute];
@@ -3306,6 +3336,7 @@ _.editors = {
 			var editor = $.create(tag);
 
 			if (tag == "textarea") {
+				// Actually multiline
 				var width = this.element.offsetWidth;
 
 				if (width) {
@@ -3316,14 +3347,26 @@ _.editors = {
 			return editor;
 		},
 
-		get editorValue () {
-			return this.editor && _.safeCast(this.editor.value, this.datatype);
-		},
-
-		set editorValue (value) {
-			if (this.editor) {
-				this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
+		setEditorValue: function(value) {
+			if (this.datatype != "string") {
+				return;
 			}
+
+			var cs = getComputedStyle(this.element);
+			value = value || "";
+
+			if (["normal", "nowrap"].indexOf(cs.whiteSpace) > -1) {
+				// Collapse lines
+				value = value.replace(/\r?\n/g, " ");
+			}
+
+			if (["normal", "nowrap", "pre-line"].indexOf(cs.whiteSpace) > -1) {
+				// Collapse whitespace
+				value = value.replace(/^[ \t]+|[ \t]+$/gm, "").replace(/[ \t]+/g, " ");
+			}
+
+			this.editor.value = value;
+			return true;
 		}
 	},
 

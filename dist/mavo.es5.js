@@ -672,14 +672,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}); // Capitalize
 		},
 
-		// Inverse of _.readable(): Take a readable string and turn it into an identifier
-		identifier: function identifier(readable) {
-			readable = readable + "";
-			return readable && readable.replace(/\s+/g, "-") // Convert whitespace to hyphens
-			.replace(/[^\w-]/g, "") // Remove weird characters
-			.toLowerCase();
-		},
-
 		queryJSON: function queryJSON(data, path) {
 			if (!path || !data) {
 				return data;
@@ -1847,7 +1839,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		jsep.addBinaryOp("or", 2);
 		jsep.addBinaryOp("=", 6);
 		jsep.removeBinaryOp("===");
-		jsep.removeBinaryOp("==");
 	}
 
 	_.serializers.LogicalExpression = _.serializers.BinaryExpression;
@@ -1957,13 +1948,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.template = o.template ? o.template.template : this.syntax.tokenize(this.expression);
 
-				// Is this a computed property?
-				var primitive = Mavo.Unit.get(this.element);
-				if (primitive && this.attribute === primitive.attribute) {
-					this.primitive = primitive;
-					primitive.computed = true; // Primitives containing an expression as their value are implicitly computed
-				}
-
 				Mavo.hooks.run("expressiontext-init-end", this);
 
 				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
@@ -2015,7 +1999,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
-
+				//console.log(this.primitive, this.element.getAttribute("property"));
 				if (this.primitive && this.template.length === 1) {
 					if (typeof ret.value === "number") {
 						this.primitive.datatype = "number";
@@ -2040,7 +2024,30 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			static: {
-				elements: new WeakMap()
+				elements: new WeakMap(),
+
+				/**
+     * Search for Mavo.Expression.Text object(s) associated with a given element
+     * and optionally an attribute.
+     *
+     * @return If one argument, array of matching Expression.Text objects.
+     *         If two arguments, the matching Expression.Text object or null
+     */
+				search: function search(element, attribute) {
+					var all = _.elements.get(element) || [];
+
+					if (arguments.length > 1) {
+						if (!all.length) {
+							return null;
+						}
+
+						return all.filter(function (et) {
+							return et.attribute === attribute;
+						})[0] || null;
+					}
+
+					return all;
+				}
 			}
 		});
 	})();
@@ -2307,8 +2314,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		return ret;
 	};
 
-	Mavo.hooks.add("scope-init-end", function () {
+	Mavo.hooks.add("scope-init-start", function () {
 		new Mavo.Expressions(this);
+	});
+	Mavo.hooks.add("primitive-init-start", function () {
+		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+		this.computed = !!this.expressionText;
+
+		if (this.expressionText) {
+			this.expressionText.primitive = this;
+		}
+	});
+
+	Mavo.hooks.add("scope-init-end", function () {
 		this.expressions.update();
 	});
 
@@ -2405,6 +2423,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return condition ? iftrue : iffalse;
+		},
+
+		idify: function idify(readable) {
+			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
+			.replace(/[^\w-]/g, "") // Remove weird characters
+			.toLowerCase();
 		}
 	};
 
@@ -2784,21 +2808,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
-			if (!this.fromTemplate("attribute", "datatype", "humanReadable", "computed", "templateValue")) {
+			if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
 				// Which attribute holds the data, if any?
 				// "null" or null for none (i.e. data is in content).
 				this.attribute = _.getValueAttribute(this.element);
 
 				if (this.attribute) {
 					this.humanReadable = this.attribute.humanReadable;
-				} else {
-					this.element.normalize();
 				}
 
 				this.datatype = _.getDatatype(this.element, this.attribute);
 
-				this.templateValue = this.getValue({ raw: true });
+				this.templateValue = this.getValue();
 			}
+
+			this.computed = false;
+
+			Mavo.hooks.run("primitive-init-start", this);
 
 			/**
     * Set up input widget
@@ -2810,6 +2836,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.editorType = "exposed";
 
 				this.edit();
+			} else if (!this.computed) {
+				// If this is NOT exposed and NOT computed, we need an edit button
+				this.mavo.needsEdit = true;
 			}
 
 			// Nested widgets
@@ -2866,12 +2895,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 			}
-
-			requestAnimationFrame(function () {
-				if (!_this.exposed && !_this.computed) {
-					_this.mavo.needsEdit = true;
-				}
-			});
 
 			this.default = this.element.getAttribute("data-default");
 
@@ -2934,6 +2957,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		get editorValue() {
+			if (this.getEditorValue) {
+				var value = this.getEditorValue();
+
+				if (value !== undefined) {
+					return value;
+				}
+			}
+
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
 					return _.getValue(this.editor, undefined, this.datatype);
@@ -2949,6 +2980,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		set editorValue(value) {
+			if (this.setEditorValue && this.setEditorValue(value) !== undefined) {
+				return;
+			}
+
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
 					_.setValue(this.editor, value);
@@ -3514,8 +3549,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				var ret;
 
-				// TODO Get rid of this horrible raw hack
-				if (attribute in element && !o.raw && _.useProperty(element, attribute)) {
+				if (attribute in element && _.useProperty(element, attribute)) {
 					// Returning properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					ret = element[attribute];
@@ -3675,6 +3709,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var editor = $.create(tag);
 
 				if (tag == "textarea") {
+					// Actually multiline
 					var width = this.element.offsetWidth;
 
 					if (width) {
@@ -3685,14 +3720,26 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return editor;
 			},
 
-			get editorValue() {
-				return this.editor && _.safeCast(this.editor.value, this.datatype);
-			},
-
-			set editorValue(value) {
-				if (this.editor) {
-					this.editor.value = value ? value.replace(/\r?\n/g, "") : "";
+			setEditorValue: function setEditorValue(value) {
+				if (this.datatype != "string") {
+					return;
 				}
+
+				var cs = getComputedStyle(this.element);
+				value = value || "";
+
+				if (["normal", "nowrap"].indexOf(cs.whiteSpace) > -1) {
+					// Collapse lines
+					value = value.replace(/\r?\n/g, " ");
+				}
+
+				if (["normal", "nowrap", "pre-line"].indexOf(cs.whiteSpace) > -1) {
+					// Collapse whitespace
+					value = value.replace(/^[ \t]+|[ \t]+$/gm, "").replace(/[ \t]+/g, " ");
+				}
+
+				this.editor.value = value;
+				return true;
 			}
 		},
 
