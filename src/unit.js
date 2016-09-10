@@ -60,15 +60,9 @@ var _ = Mavo.Unit = $.Class({
 
 	lazy: {
 		closestCollection: function() {
-			if (this.collection) {
-				return this.collection;
-			}
-
-			return this.walkUp(scope => {
-				if (scope.collection) {
-					return scope.collection;
-				}
-			}) || null;
+			return this.collection ||
+			       this.scope.collection ||
+			       (this.parentScope? this.parentScope.closestCollection : null);
 		}
 	},
 

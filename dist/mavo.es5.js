@@ -1608,15 +1608,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		lazy: {
 			closestCollection: function closestCollection() {
-				if (this.collection) {
-					return this.collection;
-				}
-
-				return this.walkUp(function (scope) {
-					if (scope.collection) {
-						return scope.collection;
-					}
-				}) || null;
+				return this.collection || this.scope.collection || (this.parentScope ? this.parentScope.closestCollection : null);
 			}
 		},
 
@@ -2744,14 +2736,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var _this2 = this;
 
 			if (!data) {
-				this.clear();
 				return;
 			}
 
 			Mavo.hooks.run("scope-render-start", this);
 
 			// TODO retain dropped elements
-			data = data.isArray ? data[0] : data;
+			data = Array.isArray(data) ? data[0] : data;
 
 			// TODO what if it was a primitive and now it's a scope?
 			// In that case, render the this.properties[this.property] with it
@@ -2821,6 +2812,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				this.templateValue = this.getValue();
 			}
+
+			this.view = "read";
 
 			this.computed = false;
 
@@ -2956,6 +2949,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.observe();
 		},
 
+		get editing() {
+			return this.view == "edit";
+		},
+
 		get editorValue() {
 			if (this.getEditorValue) {
 				var value = this.getEditorValue();
@@ -3044,7 +3041,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if (!this.exposed) {
-				this.editing = false;
+				this.view = "read";
 			}
 
 			// Revert tabIndex
@@ -3084,6 +3081,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.edit();
 				return;
 			}
+
+			if (this.view == "preEdit") {
+				return;
+			}
+
+			this.view = "preEdit";
 
 			var timer;
 
@@ -3297,7 +3300,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			}
 
-			this.editing = true;
+			this.view = "edit";
 		}, // edit
 
 		clear: function clear() {
@@ -3313,7 +3316,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				data = data[this.property];
 			}
 
-			this.value = data === undefined ? this.default : data;
+			if (data === undefined) {
+				// New property has been added to the schema and nobody has saved since
+				this.value = this.closestCollection ? this.default : this.templateValue;
+			} else {
+				this.value = data;
+			}
 
 			this.save();
 		},
@@ -3420,6 +3428,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}
 
+			if (this.view == "preEdit") {
+				this.preEdit();
+			}
+
 			this.observe();
 
 			return value;
@@ -3435,8 +3447,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.element.classList.toggle("empty", hide);
 			},
 
-			editing: function editing(value) {
-				this.element.classList.toggle("editing", value);
+			view: function view(value) {
+				this.element.classList.toggle("editing", value == "edit");
 			},
 
 			computed: function computed(value) {

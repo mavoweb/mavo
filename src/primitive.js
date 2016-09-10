@@ -17,6 +17,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.templateValue = this.getValue();
 		}
 
+		this.view = "read";
+
 		this.computed = false;
 
 		Mavo.hooks.run("primitive-init-start", this);
@@ -122,6 +124,10 @@ var _ = Mavo.Primitive = $.Class({
 		this.observe();
 	},
 
+	get editing() {
+		return this.view == "edit";
+	},
+
 	get editorValue() {
 		if (this.getEditorValue) {
 			var value = this.getEditorValue();
@@ -213,7 +219,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (!this.exposed) {
-			this.editing = false;
+			this.view = "read";
 		}
 
 		// Revert tabIndex
@@ -252,6 +258,12 @@ var _ = Mavo.Primitive = $.Class({
 			this.edit();
 			return;
 		}
+
+		if (this.view == "preEdit") {
+			return;
+		}
+
+		this.view = "preEdit";
 
 		var timer;
 
@@ -460,7 +472,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		}
 
-		this.editing = true;
+		this.view = "edit";
 	}, // edit
 
 	clear: function() {
@@ -476,7 +488,13 @@ var _ = Mavo.Primitive = $.Class({
 			data = data[this.property];
 		}
 
-		this.value = data === undefined? this.default : data;
+		if (data === undefined) {
+			// New property has been added to the schema and nobody has saved since
+			this.value = this.closestCollection? this.default : this.templateValue;
+		}
+		else {
+			this.value = data;
+		}
 
 		this.save();
 	},
@@ -577,6 +595,10 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
+		if (this.view == "preEdit") {
+			this.preEdit();
+		}
+
 		this.observe();
 
 		return value;
@@ -592,8 +614,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.element.classList.toggle("empty", hide);
 		},
 
-		editing: function (value) {
-			this.element.classList.toggle("editing", value);
+		view: function (value) {
+			this.element.classList.toggle("editing", value == "edit");
 		},
 
 		computed: function (value) {

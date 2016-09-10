@@ -126,14 +126,13 @@ var _ = Mavo.Scope = $.Class({
 	// Inject data in this element
 	render: function(data) {
 		if (!data) {
-			this.clear();
 			return;
 		}
 
 		Mavo.hooks.run("scope-render-start", this);
 
 		// TODO retain dropped elements
-		data = data.isArray? data[0] : data;
+		data = Array.isArray(data)? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a scope?
 		// In that case, render the this.properties[this.property] with it
