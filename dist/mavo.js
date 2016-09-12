@@ -2684,7 +2684,7 @@ var _ = Mavo.Primitive = $.Class({
 		this.unobserve();
 
 		if (this.popup) {
-			this.hidePopup();
+			this.popup.close();
 		}
 		else if (!this.attribute && !this.exposed && this.editing) {
 			$.remove(this.editor);
@@ -2702,8 +2702,6 @@ var _ = Mavo.Primitive = $.Class({
 		else {
 			this.element.removeAttribute("tabindex");
 		}
-
-		this.element._.unbind(".mavo:edit .mavo:preedit .mavo:showpopup");
 
 		this.observe();
 	},
@@ -2825,16 +2823,6 @@ var _ = Mavo.Primitive = $.Class({
 			"focus": evt => {
 				this.editor.select && this.editor.select();
 			},
-			"keyup": evt => {
-				if (this.popup && evt.keyCode == 13 || evt.keyCode == 27) {
-					if (this.popup.contains(document.activeElement)) {
-						this.element.focus();
-					}
-
-					evt.stopPropagation();
-					this.hidePopup();
-				}
-			},
 			"mavo:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
@@ -2857,58 +2845,7 @@ var _ = Mavo.Primitive = $.Class({
 			}, this);
 
 			if (this.attribute) {
-				// Set up popup
-				this.element.classList.add("using-popup");
-
-				this.popup = this.popup || $.create("div", {
-					className: "mv-popup",
-					hidden: true,
-					contents: [
-						this.label + ":",
-						this.editor
-					]
-				});
-
-				// No point in having a dropdown in a popup
-				if (this.editor.matches("select")) {
-					this.editor.size = Math.min(10, this.editor.children.length);
-				}
-
-				// Toggle popup events & methods
-				var hideCallback = evt => {
-					if (!this.popup.contains(evt.target) && !this.element.contains(evt.target)) {
-						this.hidePopup();
-					}
-				};
-
-				this.showPopup = function() {
-					$.unbind([this.element, this.popup], ".mavo:showpopup");
-					this.popup._.after(this.element);
-
-					var x = this.element.offsetLeft;
-					var y = this.element.offsetTop + this.element.offsetHeight;
-
-					 // TODO what if it doesn’t fit?
-					this.popup._.style({ top:  `${y}px`, left: `${x}px` });
-
-					this.popup._.removeAttribute("hidden"); // trigger transition
-
-					$.events(document, "focus click", hideCallback, true);
-				};
-
-				this.hidePopup = function() {
-					$.unbind(document, "focus click", hideCallback, true);
-
-					this.popup.setAttribute("hidden", ""); // trigger transition
-
-					setTimeout(() => {
-						$.remove(this.popup);
-					}, 400); // TODO transition-duration could override this
-
-					$.events(this.element, "focus.mavo:showpopup click.mavo:showpopup", evt => {
-						this.showPopup();
-					}, true);
-				};
+				this.popup = new _.Popup(this);
 			}
 		}
 
@@ -2931,7 +2868,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (this.popup) {
-			this.showPopup();
+			this.popup.show();
 		}
 
 		if (!this.attribute) {
@@ -3422,6 +3359,101 @@ _.editors = {
 		return $.create("input", {type: type});
 	}
 };
+
+_.Popup = $.Class({
+	constructor: function(primitive) {
+		this.primitive = primitive;
+
+		this.popup = $.create("div", {
+			className: "mv-popup",
+			hidden: true,
+			contents: [
+				this.primitive.label + ":",
+				this.editor
+			],
+			events: {
+				keyup: evt => {
+					if (evt.keyCode == 13 || evt.keyCode == 27) {
+						if (this.popup.contains(document.activeElement)) {
+							this.element.focus();
+						}
+
+						evt.stopPropagation();
+						this.hide();
+					}
+				}
+			}
+		});
+
+		// No point in having a dropdown in a popup
+		if (this.editor.matches("select")) {
+			this.editor.size = Math.min(10, this.editor.children.length);
+		}
+	},
+
+	show: function() {
+		$.unbind([this.element, this.popup], ".mavo:showpopup");
+
+		this.shown = true;
+
+		this.hideCallback = evt => {
+			if (!this.popup.contains(evt.target) && !this.element.contains(evt.target)) {
+				this.hide();
+			}
+		};
+
+		this.position = evt => {
+			var bounds = this.element.getBoundingClientRect();
+			var x = bounds.left;
+			var y = bounds.bottom;
+
+			 // TODO what if it doesn’t fit?
+			$.style(this.popup, { top:  `${y}px`, left: `${x}px` });
+		};
+
+		this.position();
+
+		document.body.appendChild(this.popup);
+
+		requestAnimationFrame(e => this.popup.removeAttribute("hidden")); // trigger transition
+
+		$.events(document, "focus click", this.hideCallback, true);
+		window.addEventListener("scroll", this.position);
+	},
+
+	hide: function() {
+		$.unbind(document, "focus click", this.hideCallback, true);
+		window.removeEventListener("scroll", this.position);
+		this.popup.setAttribute("hidden", ""); // trigger transition
+		this.shown = false;
+
+		setTimeout(() => {
+			$.remove(this.popup);
+		}, parseFloat(getComputedStyle(this.popup).transitionDuration) * 1000 || 400); // TODO transition-duration could override this
+
+		$.events(this.element, {
+			"click.mavo:showpopup": evt => {
+				this.show();
+			},
+			"keyup.mavo:showpopup": evt => {
+				if ([13, 113].indexOf(evt.keyCode) > -1) { // Enter or F2
+					this.show();
+					this.editor.focus();
+				}
+			}
+		});
+	},
+
+	close: function() {
+		this.hide();
+		$.unbind(this.element, ".mavo:edit .mavo:preedit .mavo:showpopup");
+	},
+
+	proxy: {
+		"editor": "primitive",
+		"element": "primitive"
+	}
+});
 
 })(Bliss, Bliss.$);
 

@@ -105,65 +105,15 @@
   .mv-wrapper:not([data-editing]) .mv-item.deleted {
     display: none; }
 
+.mv-wrapper [property].multiline {
+  white-space: pre-line; }
+
 .mv-wrapper button.add {
   display: inline-block;
   vertical-align: middle; }
 
 .mv-wrapper:not(.can-add) button.add {
   display: none; }
-
-.mv-wrapper .mv-popup {
-  all: initial;
-  position: absolute;
-  z-index: 2;
-  padding: 1em;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  border-radius: .4em;
-  margin: .3em 0 0 -.5em;
-  box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
-  background: white;
-  transform-origin: -1.4em -0.45em;
-  transition: .3s transform; }
-  .mv-wrapper .mv-popup::before {
-    content: "";
-    position: absolute;
-    top: -.36em;
-    left: 1em;
-    padding: .3em;
-    border: inherit;
-    border-right-width: 0;
-    border-bottom-width: 0;
-    background: inherit;
-    transform: rotate(45deg); }
-  .mv-wrapper .mv-popup[hidden] {
-    display: block;
-    transform: scale(0); }
-  .mv-wrapper .mv-popup input, .mv-wrapper .mv-popup select {
-    display: block;
-    font: inherit;
-    min-width: 100%; }
-  .mv-wrapper .mv-popup select[size] {
-    border: 1px solid rgba(0, 0, 0, 0.2); }
-  .mv-wrapper .mv-popup .image-popup .image-preview {
-    position: relative;
-    display: inline-block; }
-    .mv-wrapper .mv-popup .image-popup .image-preview progress {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 1em;
-      width: 100%; }
-      .mv-wrapper .mv-popup .image-popup .image-preview progress[value="0"], .mv-wrapper .mv-popup .image-popup .image-preview progress[value="100"] {
-        display: none; }
-    .mv-wrapper .mv-popup .image-popup .image-preview img {
-      display: block;
-      max-width: 100%; }
-  .mv-wrapper .mv-popup .image-popup .upload {
-    display: block;
-    margin: .8em 0; }
-  .mv-wrapper .mv-popup .image-popup .tip {
-    font-size: 70%;
-    color: gray; }
 
 .mv-wrapper:not(.can-edit) .edit, .mv-wrapper:not(.can-edit) [data-editing], .mv-wrapper:not(.can-edit) .add {
   display: none; }
@@ -218,6 +168,59 @@
 
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) input.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.mv-editor {
   max-width: 100%; }
+
+.mv-popup {
+  all: initial;
+  position: fixed;
+  z-index: 2;
+  padding: 1em;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: .4em;
+  margin: .3em 0 0 -.5em;
+  box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
+  background: white;
+  transform-origin: 1.4em -0.45em;
+  transition: .3s transform; }
+  .mv-popup::before {
+    content: "";
+    position: absolute;
+    top: -.36em;
+    left: 1em;
+    padding: .3em;
+    border: inherit;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    background: inherit;
+    transform: rotate(45deg); }
+  .mv-popup[hidden] {
+    display: block;
+    transform: scale(0); }
+  .mv-popup input, .mv-popup select {
+    display: block;
+    font: inherit;
+    min-width: 100%; }
+  .mv-popup select[size] {
+    border: 1px solid rgba(0, 0, 0, 0.2); }
+  .mv-popup .image-popup .image-preview {
+    position: relative;
+    display: inline-block; }
+    .mv-popup .image-popup .image-preview progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 1em;
+      width: 100%; }
+      .mv-popup .image-popup .image-preview progress[value="0"], .mv-popup .image-popup .image-preview progress[value="100"] {
+        display: none; }
+    .mv-popup .image-popup .image-preview img {
+      display: block;
+      max-width: 100%; }
+  .mv-popup .image-popup .upload {
+    display: block;
+    margin: .8em 0; }
+  .mv-popup .image-popup .tip {
+    font-size: 70%;
+    color: gray; }
 
 .mv-ui a {
   color: inherit; }
