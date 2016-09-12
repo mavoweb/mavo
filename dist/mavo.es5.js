@@ -2815,8 +2815,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				this.datatype = _.getDatatype(this.element, this.attribute);
-
-				this.templateValue = this.getValue();
 			}
 
 			this.view = "read";
@@ -2894,6 +2892,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 			}
+
+			this.templateValue = this.getValue();
 
 			this.default = this.element.getAttribute("data-default");
 

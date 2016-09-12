@@ -2486,8 +2486,6 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
-
-			this.templateValue = this.getValue();
 		}
 
 		this.view = "read";
@@ -2545,6 +2543,8 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
+
+		this.templateValue = this.getValue();
 
 		this.default = this.element.getAttribute("data-default");
 
