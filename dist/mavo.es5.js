@@ -328,7 +328,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 
 				if (_this.autoEdit) {
-					requestAnimationFrame(function () {
+					_this.wrapper.addEventListener("mavo:load", function (evt) {
 						return _this.ui.edit.click();
 					});
 				}
@@ -442,7 +442,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.hooks.run("render-start", { context: this, data: data });
 
 			if (data) {
-				this.root.render(data);
+				if (this.editing) {
+					this.done();
+					this.root.render(data);
+					this.edit();
+				} else {
+					this.root.render(data);
+				}
 			}
 
 			this.unsavedChanges = false;

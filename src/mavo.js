@@ -123,7 +123,7 @@ var _ = self.Mavo = $.Class({
 			});
 
 			if (this.autoEdit) {
-				requestAnimationFrame(() => this.ui.edit.click());
+				this.wrapper.addEventListener("mavo:load", evt => this.ui.edit.click());
 			}
 		}, () => { // cannot
 			$.remove(this.ui.edit);
@@ -221,7 +221,15 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			this.root.render(data);
+			if (this.editing) {
+				this.done();
+				this.root.render(data);
+				this.edit();
+			}
+			else {
+				this.root.render(data);
+			}
+
 		}
 
 		this.unsavedChanges = false;
