@@ -110,6 +110,10 @@
 		.mv-wrapper[data-editing] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
+
+			&::after {
+				content: "ing";
+			}
 		}
 	}
 

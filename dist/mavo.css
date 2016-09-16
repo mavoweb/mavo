@@ -300,6 +300,8 @@
   .mv-wrapper[data-editing] .mv-bar .edit {
     background: rgba(0, 0, 0, 0.6);
     box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset; }
+    .mv-wrapper[data-editing] .mv-bar .edit::after {
+      content: "ing"; }
   .mv-bar .save::before {
     content: "✓"; }
   .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::before {
