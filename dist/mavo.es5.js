@@ -1234,7 +1234,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	// Base class for all backends
+	/**
+  * Base class for all backends
+  */
 	_.Backend = $.Class({
 		constructor: function constructor(url, storage) {
 			this.url = url;
@@ -1242,6 +1244,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Permissions of this particular backend.
 			this.permissions = new Mavo.Permissions();
+		},
+
+		get: function get() {
+			return $.fetch(this.url.href, {
+				responseType: "json"
+			}).then(function (xhr) {
+				return Promise.resolve(xhr.response);
+			}, function () {
+				return Promise.resolve(null);
+			});
 		},
 
 		// To be be overriden by subclasses
@@ -1295,7 +1307,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	// Save in an element
+	/**
+  * Save in an HTML element
+  */
 	_.Backend.register($.Class({
 		id: "Element",
 		extends: _.Backend,
@@ -1334,16 +1348,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor() {
 			this.permissions.on("read");
 			this.url = new URL(this.url, location);
-		},
-
-		get: function get() {
-			return $.fetch(this.url.href, {
-				responseType: "json"
-			}).then(function (xhr) {
-				return Promise.resolve(xhr.response);
-			}, function () {
-				return Promise.resolve(null);
-			});
 		},
 
 		static: {
@@ -1746,6 +1750,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			ERROR: "N/A",
 
+			/**
+    * These serializers transform the AST into JS
+    */
 			serializers: {
 				"BinaryExpression": function BinaryExpression(node) {
 					return _.serialize(node.left) + " " + node.operator + " " + _.serialize(node.right);
@@ -1779,9 +1786,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			},
 
+			/**
+    * These are run before the serializers and transform the expression to support MavoScript
+    */
 			transformations: {
 				"BinaryExpression": function BinaryExpression(node) {
-					return (Mavo.Functions.operators[node.operator] || node.operator) + "(" + _.serialize(node.left) + ", " + _.serialize(node.right) + ")";
+					var name = Mavo.Script.getOperatorName(node.operator);
+					var details = Mavo.Script.operators[name];
+
+					// Flatten same operator calls
+					var nodeLeft = node;
+					var args = [];
+
+					do {
+						args.unshift(nodeLeft.right);
+						nodeLeft = nodeLeft.left;
+					} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
+
+					args.unshift(nodeLeft);
+
+					if (args.length > 1) {
+						return name + "(" + args.map(_.serialize).join(", ") + ")";
+					}
 				},
 				"CallExpression": function CallExpression(node) {
 					if (node.callee.type == "Identifier" && node.callee.name == "if") {
@@ -1817,18 +1843,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return new Function("data", "with(Mavo.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\treturn " + code + ";\n\t\t\t\t\t}");
 			},
 
-			parse: self.jsep,
-
-			lazy: {
-				simpleOperation: function simpleOperation() {
-					var operator = Object.keys(Mavo.Functions.operators).map(function (o) {
-						return o.replace(/[|*+]/g, "\\$&");
-					}).join("|");
-					var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
-
-					return RegExp("(?:^|\\()" + operand + "(" + operator + ")" + operand + "(?:$|\\))", "g");
-				}
-			}
+			parse: self.jsep
 		}
 	});
 
@@ -1997,7 +2012,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
-				//console.log(this.primitive, this.element.getAttribute("property"));
+
 				if (this.primitive && this.template.length === 1) {
 					if (typeof ret.value === "number") {
 						this.primitive.datatype = "number";
@@ -2343,6 +2358,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 /**
@@ -2354,6 +2371,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var _ = Mavo.Functions = {
 		operators: {
 			"=": "eq"
+		},
+
+		get now() {
+			return new Date();
 		},
 
 		/**
@@ -2430,51 +2451,273 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	};
 
-	/**
-  * Addition for elements and scalars.
-  * Addition between arrays happens element-wise.
-  * Addition between scalars returns their scalar sum (same as +)
-  * Addition between a scalar and an array will result in the scalar being added to every array element.
-  * Ordered by precedence (higher to lower)
-  */
-	operator("not", function (a) {
-		return function (a) {
-			return !a;
-		};
-	});
-	operator("multiply", function (a, b) {
-		return a * b;
-	}, { identity: 1, symbol: "*" });
-	operator("divide", function (a, b) {
-		return a / b;
-	}, { identity: 1, symbol: "/" });
-	operator("add", function (a, b) {
-		return +a + +b;
-	}, { symbol: "+" });
-	operator("subtract", function (a, b) {
-		return a - b;
-	}, { symbol: "-" });
-	operator("lte", function (a, b) {
-		return a <= b;
-	}, { symbol: "<=" });
-	operator("lt", function (a, b) {
-		return a < b;
-	}, { symbol: "<" });
-	operator("gte", function (a, b) {
-		return a >= b;
-	}, { symbol: ">=" });
-	operator("gt", function (a, b) {
-		return a > b;
-	}, { symbol: ">" });
-	operator("eq", function (a, b) {
-		return a == b;
-	}, { symbol: "==" });
-	operator("and", function (a, b) {
-		return !!a && !!b;
-	}, { identity: true, symbol: "&&" });
-	operator("or", function (a, b) {
-		return !!a || !!b;
-	}, { identity: false, symbol: "||" });
+	Mavo.Script = {
+		addUnaryOperator: function addUnaryOperator(name, o) {
+			return function (operand) {
+				return Array.isArray(operand) ? operand.map(o.scalar) : o.scalar(operand);
+			};
+		},
+
+		/**
+   * Extend a scalar operator to arrays, or arrays and scalars
+   * The operation between arrays is applied element-wise.
+   * The operation operation between a scalar and an array will result in
+   * the operation being applied between the scalar and every array element.
+   */
+		addBinaryOperator: function addBinaryOperator(name, o) {
+			if (o.symbol) {
+				// Build map of symbols to function names for easy rewriting
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var symbol = _step.value;
+
+
+						Mavo.Script.symbols[symbol] = name;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			}
+
+			o.identity = o.identity || 0;
+
+			return _[name] = function () {
+				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
+					operands[_key] = arguments[_key];
+				}
+
+				if (operands.length === 1) {
+					if (Array.isArray(operands[0])) {
+						// Operand is an array of operands, expand it out
+						operands = [].concat(_toConsumableArray(operands[0]));
+					}
+				}
+
+				var prev = o.logical ? true : operands[0],
+				    result;
+
+				var _loop = function _loop(i) {
+					var a = o.logical ? operands[i - 1] : prev;
+					var b = operands[i];
+
+					if (Array.isArray(b)) {
+						if (typeof o.identity == "number") {
+							b = numbers(b);
+						}
+
+						if (Array.isArray(a)) {
+							result = [].concat(_toConsumableArray(b.map(function (n, i) {
+								return o.scalar(a[i] === undefined ? o.identity : a[i], n);
+							})), _toConsumableArray(a.slice(b.length)));
+						} else {
+							result = b.map(function (n) {
+								return o.scalar(a, n);
+							});
+						}
+					} else {
+						// Operand is scalar
+						if (typeof o.identity == "number") {
+							b = +b;
+						}
+
+						if (Array.isArray(a)) {
+							result = a.map(function (n) {
+								return o.scalar(n, b);
+							});
+						} else {
+							result = o.scalar(a, b);
+						}
+					}
+
+					if (o.logical) {
+						prev = prev && result;
+					} else {
+						prev = result;
+					}
+				};
+
+				for (var i = 1; i < operands.length; i++) {
+					_loop(i);
+				}
+
+				return prev;
+			};
+		},
+
+		/**
+   * Mapping of operator symbols to function name.
+   * Populated via addOperator() and addLogicalOperator()
+   */
+		symbols: {},
+
+		getOperatorName: function getOperatorName(op) {
+			return Mavo.Script.symbols[op] || op;
+		},
+
+		/**
+   * Operations for elements and scalars.
+   * Operations between arrays happen element-wise.
+   * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
+   * Ordered by precedence (higher to lower)
+   * @param scalar {Function} The operation between two scalars
+   * @param identity The operation’s identity element. Defaults to 0.
+   */
+		operators: {
+			"not": {
+				scalar: function scalar(a) {
+					return function (a) {
+						return !a;
+					};
+				}
+			},
+			"multiply": {
+				scalar: function scalar(a, b) {
+					return a * b;
+				},
+				identity: 1,
+				symbol: "*"
+			},
+			"divide": {
+				scalar: function scalar(a, b) {
+					return a / b;
+				},
+				identity: 1,
+				symbol: "/"
+			},
+			"add": {
+				scalar: function scalar(a, b) {
+					return +a + +b;
+				},
+				symbol: "+"
+			},
+			"subtract": {
+				scalar: function scalar(a, b) {
+					return a - b;
+				},
+				symbol: "-"
+			},
+
+			"lte": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer2 = _slicedToArray(_Mavo$Script$getNumer, 2);
+
+					a = _Mavo$Script$getNumer2[0];
+					b = _Mavo$Script$getNumer2[1];
+
+					return a <= b;
+				},
+				symbol: "<="
+			},
+			"lt": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer3 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer4 = _slicedToArray(_Mavo$Script$getNumer3, 2);
+
+					a = _Mavo$Script$getNumer4[0];
+					b = _Mavo$Script$getNumer4[1];
+
+					return a < b;
+				},
+				symbol: "<"
+			},
+			"gte": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer5 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer6 = _slicedToArray(_Mavo$Script$getNumer5, 2);
+
+					a = _Mavo$Script$getNumer6[0];
+					b = _Mavo$Script$getNumer6[1];
+
+					return a >= b;
+				},
+				symbol: ">="
+			},
+			"gt": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer7 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer8 = _slicedToArray(_Mavo$Script$getNumer7, 2);
+
+					a = _Mavo$Script$getNumer8[0];
+					b = _Mavo$Script$getNumer8[1];
+
+					return a > b;
+				},
+				symbol: ">"
+			},
+			"eq": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return a == b;
+				},
+				symbol: ["=", "=="]
+			},
+			"and": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return !!a && !!b;
+				},
+				identity: true,
+				symbol: "&&"
+			},
+			"or": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return !!a || !!b;
+				},
+				identity: false,
+				symbol: "||"
+			}
+		},
+
+		getNumericalOperands: function getNumericalOperands(a, b) {
+			if (isNaN(a) || isNaN(b)) {
+				// Try comparing as dates
+				var da = new Date(a),
+				    db = new Date(b);
+
+				if (!isNaN(da) && !isNaN(db)) {
+					// Both valid dates
+					return [da, db];
+				}
+			}
+
+			return [a, b];
+		}
+	};
+
+	for (var name in Mavo.Script.operators) {
+		var details = Mavo.Script.operators[name];
+
+		if (details.scalar.length < 2) {
+			Mavo.Script.addUnaryOperator(name, details);
+		} else {
+			Mavo.Script.addBinaryOperator(name, details);
+		}
+	}
 
 	var aliases = {
 		average: "avg",
@@ -2487,14 +2730,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		eq: "equal equality"
 	};
 
-	var _loop = function _loop(name) {
-		aliases[name].split(/\s+/g).forEach(function (alias) {
-			return _[alias] = _[name];
+	var _loop2 = function _loop2(_name) {
+		aliases[_name].split(/\s+/g).forEach(function (alias) {
+			return _[alias] = _[_name];
 		});
 	};
 
-	for (var name in aliases) {
-		_loop(name);
+	for (var _name in aliases) {
+		_loop2(_name);
 	}
 
 	// Make function names case insensitive
@@ -2541,70 +2784,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}).map(function (n) {
 			return +n;
 		});
-	}
-
-	/**
-  * Extend a scalar operator to arrays, or arrays and scalars
-  * The operation between arrays is applied element-wise.
-  * The operation operation between a scalar and an array will result in
-  * the operation being applied between the scalar and every array element.
-  * @param op {Function} The operation between two scalars
-  * @param identity The operation’s identity element. Defaults to 0.
-  */
-	function operator(name, op) {
-		var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-		if (op.length < 2) {
-			// Unary operator
-			return function (operand) {
-				return Array.isArray(operand) ? operand.map(op) : op(operand);
-			};
-		}
-
-		if (o.symbol) {
-			_.operators[o.symbol] = name;
-		}
-
-		return _[name] = function () {
-			for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
-				operands[_key] = arguments[_key];
-			}
-
-			if (operands.length === 1) {
-				operands = [].concat(_toConsumableArray(operands), [o.identity]);
-			}
-
-			return operands.reduce(function (a, b) {
-				if (Array.isArray(b)) {
-					if (typeof o.identity == "number") {
-						b = numbers(b);
-					}
-
-					if (Array.isArray(a)) {
-						return [].concat(_toConsumableArray(b.map(function (n, i) {
-							return op(a[i] === undefined ? o.identity : a[i], n);
-						})), _toConsumableArray(a.slice(b.length)));
-					} else {
-						return b.map(function (n) {
-							return op(a, n);
-						});
-					}
-				} else {
-					// Operand is scalar
-					if (typeof o.identity == "number") {
-						b = +b;
-					}
-
-					if (Array.isArray(a)) {
-						return a.map(function (n) {
-							return op(n, b);
-						});
-					} else {
-						return op(a, b);
-					}
-				}
-			});
-		};
 	}
 })();
 "use strict";
@@ -5392,6 +5571,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return !!this.accessToken;
 		},
 
+		/**
+   * Helper method to make a request with the Github API
+   */
 		req: function req(call, data) {
 			var method = arguments.length <= 2 || arguments[2] === undefined ? "GET" : arguments[2];
 			var o = arguments.length <= 3 || arguments[3] === undefined ? { method: method } : arguments[3];
@@ -5416,8 +5598,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return Promise.resolve(xhr.response);
 			});
 		},
-
-		get: Mavo.Storage.Backend.Remote.prototype.get,
 
 		/**
    * Saves a file to the backend.

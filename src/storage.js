@@ -192,7 +192,9 @@ var _ = Mavo.Storage = $.Class({
 	}
 });
 
-// Base class for all backends
+/**
+ * Base class for all backends
+ */
 _.Backend = $.Class({
 	constructor: function(url, storage) {
 		this.url = url;
@@ -200,6 +202,13 @@ _.Backend = $.Class({
 
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
+	},
+
+	get: function() {
+		return $.fetch(this.url.href, {
+			responseType: "json"
+		})
+		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	// To be be overriden by subclasses
@@ -247,7 +256,9 @@ _.Backend = $.Class({
 	}
 });
 
-// Save in an element
+/**
+ * Save in an HTML element
+ */
 _.Backend.register($.Class({
 	id: "Element",
 	extends: _.Backend,
@@ -282,13 +293,6 @@ _.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("read");
 		this.url = new URL(this.url, location);
-	},
-
-	get: function() {
-		return $.fetch(this.url.href, {
-			responseType: "json"
-		})
-		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	static: {

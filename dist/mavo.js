@@ -1132,7 +1132,9 @@ var _ = Mavo.Storage = $.Class({
 	}
 });
 
-// Base class for all backends
+/**
+ * Base class for all backends
+ */
 _.Backend = $.Class({
 	constructor: function(url, storage) {
 		this.url = url;
@@ -1140,6 +1142,13 @@ _.Backend = $.Class({
 
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
+	},
+
+	get: function() {
+		return $.fetch(this.url.href, {
+			responseType: "json"
+		})
+		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	// To be be overriden by subclasses
@@ -1187,7 +1196,9 @@ _.Backend = $.Class({
 	}
 });
 
-// Save in an element
+/**
+ * Save in an HTML element
+ */
 _.Backend.register($.Class({
 	id: "Element",
 	extends: _.Backend,
@@ -1222,13 +1233,6 @@ _.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("read");
 		this.url = new URL(this.url, location);
-	},
-
-	get: function() {
-		return $.fetch(this.url.href, {
-			responseType: "json"
-		})
-		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
 	},
 
 	static: {
@@ -1584,6 +1588,9 @@ var _ = Mavo.Expression = $.Class({
 	static: {
 		ERROR: "N/A",
 
+		/**
+		 * These serializers transform the AST into JS
+		 */
 		serializers: {
 			"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
@@ -1597,8 +1604,29 @@ var _ = Mavo.Expression = $.Class({
 			"Compound": node => node.body.map(_.serialize).join(" ")
 		},
 
+		/**
+		 * These are run before the serializers and transform the expression to support MavoScript
+		 */
 		transformations: {
-			"BinaryExpression": node => `${Mavo.Functions.operators[node.operator] || node.operator}(${_.serialize(node.left)}, ${_.serialize(node.right)})`,
+			"BinaryExpression": node => {
+				let name = Mavo.Script.getOperatorName(node.operator);
+				let details = Mavo.Script.operators[name];
+
+				// Flatten same operator calls
+				var nodeLeft = node;
+				var args = [];
+
+				do {
+					args.unshift(nodeLeft.right);
+					nodeLeft = nodeLeft.left;
+				} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
+
+				args.unshift(nodeLeft);
+
+				if (args.length > 1) {
+					return `${name}(${args.map(_.serialize).join(", ")})`;
+				}
+			},
 			"CallExpression": node => {
 				if (node.callee.type == "Identifier" && node.callee.name == "if") {
 					node.callee.name = "iff";
@@ -1638,15 +1666,6 @@ var _ = Mavo.Expression = $.Class({
 		},
 
 		parse: self.jsep,
-
-		lazy: {
-			simpleOperation: function() {
-				var operator = Object.keys(Mavo.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
-				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
-
-				return RegExp(`(?:^|\\()${operand}(${operator})${operand}(?:$|\\))`, "g");
-			}
-		}
 	}
 });
 
@@ -1812,7 +1831,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
-//console.log(this.primitive, this.element.getAttribute("property"));
+
 		if (this.primitive && this.template.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
@@ -2087,6 +2106,10 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
+	get now() {
+		return new Date();
+	},
+
 	/**
 	 * Aggregate sum
 	 */
@@ -2156,25 +2179,198 @@ var _ = Mavo.Functions = {
 		.toLowerCase()
 };
 
-/**
- * Addition for elements and scalars.
- * Addition between arrays happens element-wise.
- * Addition between scalars returns their scalar sum (same as +)
- * Addition between a scalar and an array will result in the scalar being added to every array element.
- * Ordered by precedence (higher to lower)
- */
-operator("not", a => a => !a);
-operator("multiply", (a, b) => a * b, {identity: 1, symbol: "*"});
-operator("divide", (a, b) => a / b, {identity: 1, symbol: "/"});
-operator("add", (a, b) => +a + +b, {symbol: "+"});
-operator("subtract", (a, b) => a - b, {symbol: "-"});
-operator("lte", (a, b) => a <= b, {symbol: "<="});
-operator("lt", (a, b) => a < b, {symbol: "<"});
-operator("gte", (a, b) => a >= b, {symbol: ">="});
-operator("gt", (a, b) => a > b, {symbol: ">"});
-operator("eq", (a, b) => a == b, {symbol: "=="});
-operator("and", (a, b) => !!a && !!b, { identity: true, symbol: "&&" });
-operator("or", (a, b) => !!a || !!b, { identity: false, symbol: "||" } );
+Mavo.Script = {
+	addUnaryOperator: function(name, o) {
+		return operand => Array.isArray(operand)? operand.map(o.scalar) : o.scalar(operand);
+	},
+
+	/**
+	 * Extend a scalar operator to arrays, or arrays and scalars
+	 * The operation between arrays is applied element-wise.
+	 * The operation operation between a scalar and an array will result in
+	 * the operation being applied between the scalar and every array element.
+	 */
+	addBinaryOperator: function(name, o) {
+		if (o.symbol) {
+			// Build map of symbols to function names for easy rewriting
+			for (let symbol of Mavo.toArray(o.symbol)) {
+
+				Mavo.Script.symbols[symbol] = name;
+			}
+		}
+
+		o.identity = o.identity || 0;
+
+		return _[name] = function(...operands) {
+			if (operands.length === 1) {
+				if (Array.isArray(operands[0])) {
+					// Operand is an array of operands, expand it out
+					operands = [...operands[0]];
+				}
+			}
+
+			var prev = o.logical? true : operands[0], result;
+
+			for (let i = 1; i < operands.length; i++) {
+				let a = o.logical? operands[i - 1] : prev;
+				let b = operands[i];
+
+				if (Array.isArray(b)) {
+					if (typeof o.identity == "number") {
+						b = numbers(b);
+					}
+
+					if (Array.isArray(a)) {
+						result = [
+							...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
+							...a.slice(b.length)
+						];
+					}
+					else {
+						result = b.map(n => o.scalar(a, n));
+					}
+				}
+				else {
+					// Operand is scalar
+					if (typeof o.identity == "number") {
+						b = +b;
+					}
+
+					if (Array.isArray(a)) {
+						result = a.map(n => o.scalar(n, b));
+					}
+					else {
+						result = o.scalar(a, b);
+					}
+				}
+
+				if (o.logical) {
+					prev = prev && result;
+				}
+				else {
+					prev = result;
+				}
+			}
+
+			return prev;
+		};
+	},
+
+	/**
+	 * Mapping of operator symbols to function name.
+	 * Populated via addOperator() and addLogicalOperator()
+	 */
+	symbols: {},
+
+	getOperatorName: op => Mavo.Script.symbols[op] || op,
+
+	/**
+	 * Operations for elements and scalars.
+	 * Operations between arrays happen element-wise.
+	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
+	 * Ordered by precedence (higher to lower)
+	 * @param scalar {Function} The operation between two scalars
+	 * @param identity The operation’s identity element. Defaults to 0.
+	 */
+	operators: {
+		"not": {
+			scalar: a => a => !a
+		},
+		"multiply": {
+			scalar: (a, b) => a * b,
+			identity: 1,
+			symbol: "*"
+		},
+		"divide": {
+			scalar: (a, b) => a / b,
+			identity: 1,
+			symbol: "/"
+		},
+		"add": {
+			scalar: (a, b) => +a + +b,
+			symbol: "+"
+		},
+		"subtract": {
+			scalar: (a, b) => a - b,
+			symbol: "-"
+		},
+
+		"lte": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a <= b;
+			},
+			symbol: "<="
+		},
+		"lt": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a < b;
+			},
+			symbol: "<"
+		},
+		"gte": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a >= b;
+			},
+			symbol: ">="
+		},
+		"gt": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a > b;
+			},
+			symbol: ">"
+		},
+		"eq": {
+			logical: true,
+			scalar: (a, b) => a == b,
+			symbol: ["=", "=="]
+		},
+		"and": {
+			logical: true,
+			scalar: (a, b) => !!a && !!b,
+			identity: true,
+			symbol: "&&"
+		},
+		"or": {
+			logical: true,
+			scalar: (a, b) => !!a || !!b,
+			identity: false,
+			symbol: "||"
+		}
+	},
+
+	getNumericalOperands: function(a, b) {
+		if (isNaN(a) || isNaN(b)) {
+			// Try comparing as dates
+			var da = new Date(a), db = new Date(b);
+
+			if (!isNaN(da) && !isNaN(db)) {
+				// Both valid dates
+				return [da, db];
+			}
+		}
+
+		return [a, b];
+	}
+};
+
+for (let name in Mavo.Script.operators) {
+	let details = Mavo.Script.operators[name];
+
+	if (details.scalar.length < 2) {
+		Mavo.Script.addUnaryOperator(name, details);
+	}
+	else {
+		Mavo.Script.addBinaryOperator(name, details);
+	}
+}
 
 var aliases = {
 	average: "avg",
@@ -2229,62 +2425,6 @@ function numbers(array, args) {
 	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 	return array.filter(number => !isNaN(number)).map(n => +n);
-}
-
-/**
- * Extend a scalar operator to arrays, or arrays and scalars
- * The operation between arrays is applied element-wise.
- * The operation operation between a scalar and an array will result in
- * the operation being applied between the scalar and every array element.
- * @param op {Function} The operation between two scalars
- * @param identity The operation’s identity element. Defaults to 0.
- */
-function operator(name, op, o = {}) {
-	if (op.length < 2) {
-		// Unary operator
-		return operand => Array.isArray(operand)? operand.map(op) : op(operand);
-	}
-
-	if (o.symbol) {
-		_.operators[o.symbol] = name;
-	}
-
-	return _[name] = function(...operands) {
-		if (operands.length === 1) {
-			operands = [...operands, o.identity];
-		}
-
-		return operands.reduce((a, b) => {
-			if (Array.isArray(b)) {
-				if (typeof o.identity == "number") {
-					b = numbers(b);
-				}
-
-				if (Array.isArray(a)) {
-					return [
-						...b.map((n, i) => op(a[i] === undefined? o.identity : a[i], n)),
-						...a.slice(b.length)
-					];
-				}
-				else {
-					return b.map(n => op(a, n));
-				}
-			}
-			else {
-				// Operand is scalar
-				if (typeof o.identity == "number") {
-					b = +b;
-				}
-
-				if (Array.isArray(a)) {
-					return a.map(n => op(n, b));
-				}
-				else {
-					return op(a, b);
-				}
-			}
-		});
-	};
 }
 
 })();
@@ -4925,6 +5065,9 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		return !!this.accessToken;
 	},
 
+	/**
+	 * Helper method to make a request with the Github API
+	 */
 	req: function(call, data, method = "GET", o = {method: method}) {
 		if (data) {
 			o.data =  JSON.stringify(data);
@@ -4947,8 +5090,6 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		})
 		.then(xhr => Promise.resolve(xhr.response));
 	},
-
-	get: Mavo.Storage.Backend.Remote.prototype.get,
 
 	/**
 	 * Saves a file to the backend.

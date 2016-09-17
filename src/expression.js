@@ -43,6 +43,9 @@ var _ = Mavo.Expression = $.Class({
 	static: {
 		ERROR: "N/A",
 
+		/**
+		 * These serializers transform the AST into JS
+		 */
 		serializers: {
 			"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
@@ -56,8 +59,29 @@ var _ = Mavo.Expression = $.Class({
 			"Compound": node => node.body.map(_.serialize).join(" ")
 		},
 
+		/**
+		 * These are run before the serializers and transform the expression to support MavoScript
+		 */
 		transformations: {
-			"BinaryExpression": node => `${Mavo.Functions.operators[node.operator] || node.operator}(${_.serialize(node.left)}, ${_.serialize(node.right)})`,
+			"BinaryExpression": node => {
+				let name = Mavo.Script.getOperatorName(node.operator);
+				let details = Mavo.Script.operators[name];
+
+				// Flatten same operator calls
+				var nodeLeft = node;
+				var args = [];
+
+				do {
+					args.unshift(nodeLeft.right);
+					nodeLeft = nodeLeft.left;
+				} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
+
+				args.unshift(nodeLeft);
+
+				if (args.length > 1) {
+					return `${name}(${args.map(_.serialize).join(", ")})`;
+				}
+			},
 			"CallExpression": node => {
 				if (node.callee.type == "Identifier" && node.callee.name == "if") {
 					node.callee.name = "iff";
@@ -97,15 +121,6 @@ var _ = Mavo.Expression = $.Class({
 		},
 
 		parse: self.jsep,
-
-		lazy: {
-			simpleOperation: function() {
-				var operator = Object.keys(Mavo.Functions.operators).map(o => o.replace(/[|*+]/g, "\\$&")).join("|");
-				var operand = "\\s*(\\b[\\w.]+\\b)\\s*";
-
-				return RegExp(`(?:^|\\()${operand}(${operator})${operand}(?:$|\\))`, "g");
-			}
-		}
 	}
 });
 
@@ -271,7 +286,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
-//console.log(this.primitive, this.element.getAttribute("property"));
+
 		if (this.primitive && this.template.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";

@@ -30,6 +30,9 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		return !!this.accessToken;
 	},
 
+	/**
+	 * Helper method to make a request with the Github API
+	 */
 	req: function(call, data, method = "GET", o = {method: method}) {
 		if (data) {
 			o.data =  JSON.stringify(data);
@@ -52,8 +55,6 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		})
 		.then(xhr => Promise.resolve(xhr.response));
 	},
-
-	get: Mavo.Storage.Backend.Remote.prototype.get,
 
 	/**
 	 * Saves a file to the backend.

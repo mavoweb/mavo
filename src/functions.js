@@ -9,6 +9,10 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
+	get now() {
+		return new Date();
+	},
+
 	/**
 	 * Aggregate sum
 	 */
@@ -78,25 +82,198 @@ var _ = Mavo.Functions = {
 		.toLowerCase()
 };
 
-/**
- * Addition for elements and scalars.
- * Addition between arrays happens element-wise.
- * Addition between scalars returns their scalar sum (same as +)
- * Addition between a scalar and an array will result in the scalar being added to every array element.
- * Ordered by precedence (higher to lower)
- */
-operator("not", a => a => !a);
-operator("multiply", (a, b) => a * b, {identity: 1, symbol: "*"});
-operator("divide", (a, b) => a / b, {identity: 1, symbol: "/"});
-operator("add", (a, b) => +a + +b, {symbol: "+"});
-operator("subtract", (a, b) => a - b, {symbol: "-"});
-operator("lte", (a, b) => a <= b, {symbol: "<="});
-operator("lt", (a, b) => a < b, {symbol: "<"});
-operator("gte", (a, b) => a >= b, {symbol: ">="});
-operator("gt", (a, b) => a > b, {symbol: ">"});
-operator("eq", (a, b) => a == b, {symbol: "=="});
-operator("and", (a, b) => !!a && !!b, { identity: true, symbol: "&&" });
-operator("or", (a, b) => !!a || !!b, { identity: false, symbol: "||" } );
+Mavo.Script = {
+	addUnaryOperator: function(name, o) {
+		return operand => Array.isArray(operand)? operand.map(o.scalar) : o.scalar(operand);
+	},
+
+	/**
+	 * Extend a scalar operator to arrays, or arrays and scalars
+	 * The operation between arrays is applied element-wise.
+	 * The operation operation between a scalar and an array will result in
+	 * the operation being applied between the scalar and every array element.
+	 */
+	addBinaryOperator: function(name, o) {
+		if (o.symbol) {
+			// Build map of symbols to function names for easy rewriting
+			for (let symbol of Mavo.toArray(o.symbol)) {
+
+				Mavo.Script.symbols[symbol] = name;
+			}
+		}
+
+		o.identity = o.identity || 0;
+
+		return _[name] = function(...operands) {
+			if (operands.length === 1) {
+				if (Array.isArray(operands[0])) {
+					// Operand is an array of operands, expand it out
+					operands = [...operands[0]];
+				}
+			}
+
+			var prev = o.logical? true : operands[0], result;
+
+			for (let i = 1; i < operands.length; i++) {
+				let a = o.logical? operands[i - 1] : prev;
+				let b = operands[i];
+
+				if (Array.isArray(b)) {
+					if (typeof o.identity == "number") {
+						b = numbers(b);
+					}
+
+					if (Array.isArray(a)) {
+						result = [
+							...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
+							...a.slice(b.length)
+						];
+					}
+					else {
+						result = b.map(n => o.scalar(a, n));
+					}
+				}
+				else {
+					// Operand is scalar
+					if (typeof o.identity == "number") {
+						b = +b;
+					}
+
+					if (Array.isArray(a)) {
+						result = a.map(n => o.scalar(n, b));
+					}
+					else {
+						result = o.scalar(a, b);
+					}
+				}
+
+				if (o.logical) {
+					prev = prev && result;
+				}
+				else {
+					prev = result;
+				}
+			}
+
+			return prev;
+		};
+	},
+
+	/**
+	 * Mapping of operator symbols to function name.
+	 * Populated via addOperator() and addLogicalOperator()
+	 */
+	symbols: {},
+
+	getOperatorName: op => Mavo.Script.symbols[op] || op,
+
+	/**
+	 * Operations for elements and scalars.
+	 * Operations between arrays happen element-wise.
+	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
+	 * Ordered by precedence (higher to lower)
+	 * @param scalar {Function} The operation between two scalars
+	 * @param identity The operation’s identity element. Defaults to 0.
+	 */
+	operators: {
+		"not": {
+			scalar: a => a => !a
+		},
+		"multiply": {
+			scalar: (a, b) => a * b,
+			identity: 1,
+			symbol: "*"
+		},
+		"divide": {
+			scalar: (a, b) => a / b,
+			identity: 1,
+			symbol: "/"
+		},
+		"add": {
+			scalar: (a, b) => +a + +b,
+			symbol: "+"
+		},
+		"subtract": {
+			scalar: (a, b) => a - b,
+			symbol: "-"
+		},
+
+		"lte": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a <= b;
+			},
+			symbol: "<="
+		},
+		"lt": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a < b;
+			},
+			symbol: "<"
+		},
+		"gte": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a >= b;
+			},
+			symbol: ">="
+		},
+		"gt": {
+			logical: true,
+			scalar: (a, b) => {
+				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				return a > b;
+			},
+			symbol: ">"
+		},
+		"eq": {
+			logical: true,
+			scalar: (a, b) => a == b,
+			symbol: ["=", "=="]
+		},
+		"and": {
+			logical: true,
+			scalar: (a, b) => !!a && !!b,
+			identity: true,
+			symbol: "&&"
+		},
+		"or": {
+			logical: true,
+			scalar: (a, b) => !!a || !!b,
+			identity: false,
+			symbol: "||"
+		}
+	},
+
+	getNumericalOperands: function(a, b) {
+		if (isNaN(a) || isNaN(b)) {
+			// Try comparing as dates
+			var da = new Date(a), db = new Date(b);
+
+			if (!isNaN(da) && !isNaN(db)) {
+				// Both valid dates
+				return [da, db];
+			}
+		}
+
+		return [a, b];
+	}
+};
+
+for (let name in Mavo.Script.operators) {
+	let details = Mavo.Script.operators[name];
+
+	if (details.scalar.length < 2) {
+		Mavo.Script.addUnaryOperator(name, details);
+	}
+	else {
+		Mavo.Script.addBinaryOperator(name, details);
+	}
+}
 
 var aliases = {
 	average: "avg",
@@ -151,62 +328,6 @@ function numbers(array, args) {
 	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 	return array.filter(number => !isNaN(number)).map(n => +n);
-}
-
-/**
- * Extend a scalar operator to arrays, or arrays and scalars
- * The operation between arrays is applied element-wise.
- * The operation operation between a scalar and an array will result in
- * the operation being applied between the scalar and every array element.
- * @param op {Function} The operation between two scalars
- * @param identity The operation’s identity element. Defaults to 0.
- */
-function operator(name, op, o = {}) {
-	if (op.length < 2) {
-		// Unary operator
-		return operand => Array.isArray(operand)? operand.map(op) : op(operand);
-	}
-
-	if (o.symbol) {
-		_.operators[o.symbol] = name;
-	}
-
-	return _[name] = function(...operands) {
-		if (operands.length === 1) {
-			operands = [...operands, o.identity];
-		}
-
-		return operands.reduce((a, b) => {
-			if (Array.isArray(b)) {
-				if (typeof o.identity == "number") {
-					b = numbers(b);
-				}
-
-				if (Array.isArray(a)) {
-					return [
-						...b.map((n, i) => op(a[i] === undefined? o.identity : a[i], n)),
-						...a.slice(b.length)
-					];
-				}
-				else {
-					return b.map(n => op(a, n));
-				}
-			}
-			else {
-				// Operand is scalar
-				if (typeof o.identity == "number") {
-					b = +b;
-				}
-
-				if (Array.isArray(a)) {
-					return a.map(n => op(n, b));
-				}
-				else {
-					return op(a, b);
-				}
-			}
-		});
-	};
 }
 
 })();
