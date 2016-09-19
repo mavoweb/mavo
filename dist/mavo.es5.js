@@ -1636,7 +1636,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						_this.elementContents.appendChild(node);
 					});
 
-					$.contents(this.element, ["Deleted " + this.name, {
+					$.contents(this.element, [{
+						tag: "button",
+						class: "close",
+						textContent: "×",
+						events: {
+							"click": function click(evt) {
+								$.remove(this.parentNode);
+							}
+						}
+					}, "Deleted " + this.name, {
 						tag: "button",
 						textContent: "Undo",
 						events: {
@@ -5635,6 +5644,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						branch: _this.branch
 					}, "PUT");
 				}
+				// TODO include time out
 			}).then(function (data) {
 				console.log("success");
 				return file;

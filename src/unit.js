@@ -79,6 +79,16 @@ var _ = Mavo.Unit = $.Class({
 				});
 
 				$.contents(this.element, [
+					{
+						tag: "button",
+						class: "close",
+						textContent: "×",
+						events: {
+							"click": function(evt) {
+								$.remove(this.parentNode);
+							}
+						}
+					},
 					"Deleted " + this.name,
 					{
 						tag: "button",

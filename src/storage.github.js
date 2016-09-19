@@ -90,6 +90,7 @@ var _ = Mavo.Storage.Backend.register($.Class({
 					branch: this.branch
 				}, "PUT");
 			}
+			// TODO include time out
 		}).then(data => {
 			console.log("success");
 			return file;

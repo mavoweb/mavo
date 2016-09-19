@@ -123,9 +123,28 @@
 		@include highlight(hsla(0,100%,50%,.2), "!important");
 	}
 
-	&.deleted button {
-		display: inline-block;
-		margin-left: .4em;
+	&.deleted {
+		button {
+			display: inline-block;
+			margin-left: .4em;
+
+			&.close {
+				float: right;
+				width: 1.1em;
+				line-height: 1;
+				padding-bottom: .1em;
+				border: none;
+				border-radius: 50%;
+				background: rgba(180, 0, 0, .6);
+				color: white;
+				font-weight: bold;
+				cursor: pointer;
+
+				&:hover {
+					background: rgba(180, 0, 0, 1);
+				}
+			}
+		}
 	}
 
 	.mv-wrapper:not([data-editing]) &.deleted {
