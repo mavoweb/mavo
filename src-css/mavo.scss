@@ -124,21 +124,26 @@
 	}
 
 	&.deleted {
+		display: block;
+
 		button {
 			display: inline-block;
 			margin-left: .4em;
 
 			&.close {
+				all: unset;
 				float: right;
 				width: 1.1em;
-				line-height: 1;
 				padding-bottom: .1em;
 				border: none;
 				border-radius: 50%;
+				margin: 0 0 0 1em;
 				background: rgba(180, 0, 0, .6);
 				color: white;
 				font-weight: bold;
+				line-height: 1;
 				cursor: pointer;
+				text-align: center;
 
 				&:hover {
 					background: rgba(180, 0, 0, 1);

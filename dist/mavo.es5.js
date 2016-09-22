@@ -3523,7 +3523,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return value;
 			}
 
-			if (this.editor) {
+			if (this.editor && document.activeElement != this.editor) {
 				this.editorValue = value;
 			}
 

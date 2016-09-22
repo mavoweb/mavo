@@ -3118,7 +3118,7 @@ var _ = Mavo.Primitive = $.Class({
 			return value;
 		}
 
-		if (this.editor) {
+		if (this.editor && document.activeElement != this.editor) {
 			this.editorValue = value;
 		}
 
