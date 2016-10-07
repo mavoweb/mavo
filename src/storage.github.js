@@ -19,8 +19,6 @@ var _ = Mavo.Storage.Backend.register($.Class({
 		this.branch = this.branch || "master";
 		this.path = this.path || `${this.mavo.id}.json`;
 
-		// Transform the Github URL into something raw and CORS-enabled
-		this.url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch}/${this.path}?ts=${Date.now()}`);
 		this.permissions.on("read"); // TODO check if file actually is publicly readable
 
 		this.login(true);
@@ -38,12 +36,17 @@ var _ = Mavo.Storage.Backend.register($.Class({
 			o.data =  JSON.stringify(data);
 		}
 
-		return $.fetch("https://api.github.com/" + call, $.extend(o, {
-			responseType: "json",
-			headers: {
+		var request = $.extend(o, {
+			responseType: "json"
+		});
+
+		if (this.authenticated) {
+			request.headers = {
 				"Authorization": `token ${this.accessToken}`
-			}
-		}))
+			};
+		}
+
+		return $.fetch("https://api.github.com/" + call, request)
 		.catch(err => {
 			if (err && err.xhr) {
 				return Promise.reject(err.xhr);
@@ -54,6 +57,11 @@ var _ = Mavo.Storage.Backend.register($.Class({
 			}
 		})
 		.then(xhr => Promise.resolve(xhr.response));
+	},
+
+	get: function() {
+		return this.req(`repos/${this.username}/${this.repo}/contents/${this.path}`)
+		       .then(response => Promise.resolve(_.atob(response.content)));
 	},
 
 	/**
@@ -249,7 +257,9 @@ var _ = Mavo.Storage.Backend.register($.Class({
 			return ret;
 		},
 
-		btoa: str => btoa(unescape(encodeURIComponent(str)))
+		// Fix atob() and btoa() so they can handle Unicode
+		btoa: str => btoa(unescape(encodeURIComponent(str))),
+		atob: str => decodeURIComponent(escape(window.atob(str)))
 	}
 }));
 

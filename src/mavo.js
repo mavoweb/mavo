@@ -104,12 +104,6 @@ var _ = self.Mavo = $.Class({
 
 		this.setUnsavedChanges(false);
 
-		_.observe(this.wrapper, "class", () => {
-			var p = this.permissions;
-			var floating = !this.editing && (p.login || p.edit && !p.login && !(p.save && this.unsavedChanges));
-			this.ui.bar.classList.toggle("floating", floating);
-		});
-
 		this.permissions.onchange(({action, value}) => {
 			this.wrapper.classList.toggle(`can-${action}`, value);
 		});

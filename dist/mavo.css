@@ -248,48 +248,34 @@
   display: -ms-flexbox;
   display: flex;
   color: white;
+  padding: 0 .5em 0 6em;
+  background: url("http://mavo.io/logo.svg") 0.5em 50%/auto 50% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
+  background-color: rgba(64, 64, 64, 0.9);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
   font-family: inherit;
   font-size: 1rem;
-  line-height: 1.5;
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px); }
+  line-height: 1.5; }
   .mv-bar[hidden] {
     display: none; }
   .mv-bar a {
     text-decoration: none; }
   .mv-bar.fixed {
     position: fixed;
-    z-index: 10000; }
-  .mv-bar:not(.fixed) {
-    border-radius: .3em;
-    margin-bottom: 1em; }
-  .mv-bar:not(.fixed):not(.floating) {
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0.1em 0.4em rgba(0, 0, 0, 0.3); }
-  .mv-bar:not(.floating) {
     top: 0;
     left: 0;
     right: 0;
-    padding: 0 .5em 0 6em;
-    background: url("http://mavo.io/logo.svg") 0.5em 50%/auto 50% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
-    background-color: rgba(64, 64, 64, 0.9); }
-    .mv-bar:not(.floating) button:enabled:hover, .mv-bar:not(.floating) .button:enabled:hover {
-      background: rgba(255, 255, 255, 0.2); }
-  .mv-bar.floating {
-    width: -webkit-fit-content;
-    width: -moz-fit-content;
-    width: fit-content; }
-    .mv-bar.floating:not(:hover):not(:focus) {
-      opacity: .6; }
-    .mv-bar.floating button, .mv-bar.floating .button {
-      border-radius: .4em;
-      border: 1px solid black;
-      background: rgba(0, 0, 0, 0.8); }
-    .mv-bar.floating .status {
-      display: none; }
+    z-index: 10000; }
+  .mv-bar:not(.fixed) {
+    border-radius: .3em;
+    margin-bottom: 1em;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0.1em 0.4em rgba(0, 0, 0, 0.3); }
   .mv-bar button, .mv-bar .button {
     all: unset;
     font-weight: bold;
     cursor: pointer; }
+    .mv-bar button:enabled:hover, .mv-bar .button:enabled:hover {
+      background: rgba(255, 255, 255, 0.2); }
     .mv-bar button:disabled, .mv-bar .button:disabled {
       opacity: .6;
       cursor: not-allowed; }
