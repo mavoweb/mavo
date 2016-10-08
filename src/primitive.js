@@ -81,6 +81,11 @@ var _ = Mavo.Primitive = $.Class({
 		else if (this.default === null) { // attribute does not exist
 			this.default = this.editor? this.editorValue : this.emptyValue;
 		}
+		else {
+			Mavo.observe(this.element, "data-default", record => {
+				this.default = this.element.getAttribute("data-default");
+			});
+		}
 
 		if (this.collection) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.

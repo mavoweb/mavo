@@ -3085,6 +3085,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			} else if (this.default === null) {
 				// attribute does not exist
 				this.default = this.editor ? this.editorValue : this.emptyValue;
+			} else {
+				Mavo.observe(this.element, "data-default", function (record) {
+					_this.default = _this.element.getAttribute("data-default");
+				});
 			}
 
 			if (this.collection) {
