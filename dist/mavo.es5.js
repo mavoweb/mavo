@@ -711,7 +711,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// If the passed value is not an array, convert to an array
 		toArray: function toArray(arr) {
-			return Array.isArray(arr) ? arr : [arr];
+			return arr === undefined ? [] : Array.isArray(arr) ? arr : [arr];
 		},
 
 		// Recursively flatten a multi-dimensional array
@@ -3764,6 +3764,55 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return true;
 			},
 
+			register: function register(selector) {
+				var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+				if (o.attribute) {
+					Mavo.Primitive.attributes[selector] = o.attribute;
+				}
+
+				if (o.datatype) {
+					Mavo.Primitive.datatypes[selector] = o.datatype;
+				}
+
+				if (o.editor) {
+					Mavo.Primitive.editors[selector] = o.editor;
+				}
+
+				if (o.init) {
+					Mavo.hooks.add("primitive-init-start", function () {
+						if (this.element.matches(selector)) {
+							o.init.call(this, this.element);
+						}
+					});
+				}
+
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
+
+				try {
+					for (var _iterator2 = Mavo.toArray(o.is)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var id = _step2.value;
+
+						Mavo.selectors[id] += ", " + selector;
+					}
+				} catch (err) {
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
+						}
+					} finally {
+						if (_didIteratorError2) {
+							throw _iteratorError2;
+						}
+					}
+				}
+			},
+
 			lazy: {
 				formatNumber: function formatNumber() {
 					var numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
@@ -4016,6 +4065,21 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 })(Bliss, Bliss.$);
+
+// Example plugin: button
+Mavo.Primitive.register("button, .counter", {
+	attribute: "data-clicked",
+	datatype: "number",
+	is: "formControl",
+	init: function init(element) {
+		element.setAttribute("data-clicked", "0");
+
+		element.addEventListener("click", function (evt) {
+			var clicked = +element.getAttribute("data-clicked") || 0;
+			element.setAttribute("data-clicked", clicked + 1);
+		});
+	}
+});
 "use strict";
 
 // Image upload widget via imgur

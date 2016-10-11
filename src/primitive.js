@@ -741,6 +741,32 @@ var _ = Mavo.Primitive = $.Class({
 			return true;
 		},
 
+		register: function(selector, o = {}) {
+			if (o.attribute) {
+				Mavo.Primitive.attributes[selector] = o.attribute;
+			}
+
+			if (o.datatype) {
+				Mavo.Primitive.datatypes[selector] = o.datatype;
+			}
+
+			if (o.editor) {
+				Mavo.Primitive.editors[selector] = o.editor;
+			}
+
+			if (o.init) {
+				Mavo.hooks.add("primitive-init-start", function() {
+					if (this.element.matches(selector)) {
+						o.init.call(this, this.element);
+					}
+				});
+			}
+
+			for (let id of Mavo.toArray(o.is)) {
+				Mavo.selectors[id] += ", " + selector;
+			}
+		},
+
 		lazy: {
 			formatNumber: () => {
 				var numberFormat = new Intl.NumberFormat("en-US", {maximumFractionDigits:2});
@@ -988,3 +1014,18 @@ _.Popup = $.Class({
 });
 
 })(Bliss, Bliss.$);
+
+// Example plugin: button
+Mavo.Primitive.register("button, .counter", {
+	attribute: "data-clicked",
+	datatype: "number",
+	is: "formControl",
+	init: function(element) {
+		element.setAttribute("data-clicked", "0");
+
+		element.addEventListener("click", evt => {
+			let clicked = +element.getAttribute("data-clicked") || 0;
+			element.setAttribute("data-clicked", clicked + 1);
+		});
+	}
+});

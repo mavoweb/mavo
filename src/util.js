@@ -62,7 +62,7 @@ var _ = $.extend(Mavo, {
 
 	// If the passed value is not an array, convert to an array
 	toArray: arr => {
-		return Array.isArray(arr)? arr : [arr];
+		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
 	// Recursively flatten a multi-dimensional array

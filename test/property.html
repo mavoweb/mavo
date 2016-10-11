@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<title>Property</title>
 	<link rel="stylesheet" href="../dist/mavo.css" />
+	<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -26,15 +27,29 @@
 	]
 }</script>
 
-<div data-store="#countries">
+
+
+<section data-store="#countries">
+	<h1>Different ways to specify property name</h1>
 	<ul>
 		<li property="country" data-multiple>
 			Itemprop: <strong itemprop="code"></strong>
 			Property name from class: <strong property class="name"></strong>
 		</li>
 	</li>
-</div>
+</section>
 
+<section data-mavo="buttons">
+	<div>
+		<button property="myButton">Click me</button>
+		Value: [myButton]
+	</div>
+	<div>
+		<a href="#somehash" class="counter" property="myCounter">I change the URL <strong>and</strong> increment</a>
+		Value: [myCounter]
+	</div>
+
+</section>
 
 
 <script src="../dist/mavo.js"></script>
