@@ -1632,7 +1632,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					$.contents(this.element, [{
 						tag: "button",
-						class: "close",
+						className: "close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function click(evt) {
@@ -1641,6 +1641,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 					}, "Deleted " + this.name, {
 						tag: "button",
+						className: "undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": function click(evt) {
@@ -3095,7 +3096,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				// Collection of primitives, deal with setting textContent etc without the UI interfering.
 				var swapUI = function swapUI(callback) {
 					_this.unobserve();
-					var ui = $.remove($(Mavo.selectors.ui, _this.element));
+					var ui = $.remove($(".mv-item-controls", _this.element));
 
 					var ret = callback();
 

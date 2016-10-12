@@ -81,7 +81,7 @@ var _ = Mavo.Unit = $.Class({
 				$.contents(this.element, [
 					{
 						tag: "button",
-						class: "close",
+						className: "close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function(evt) {
@@ -92,6 +92,7 @@ var _ = Mavo.Unit = $.Class({
 					"Deleted " + this.name,
 					{
 						tag: "button",
+						className: "undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": evt => this.deleted = false

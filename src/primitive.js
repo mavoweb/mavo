@@ -91,7 +91,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.unobserve();
-				var ui = $.remove($(Mavo.selectors.ui, this.element));
+				var ui = $.remove($(".mv-item-controls", this.element));
 
 				var ret = callback();
 

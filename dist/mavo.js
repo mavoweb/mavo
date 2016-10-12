@@ -1475,7 +1475,7 @@ var _ = Mavo.Unit = $.Class({
 				$.contents(this.element, [
 					{
 						tag: "button",
-						class: "close",
+						className: "close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function(evt) {
@@ -1486,6 +1486,7 @@ var _ = Mavo.Unit = $.Class({
 					"Deleted " + this.name,
 					{
 						tag: "button",
+						className: "undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": evt => this.deleted = false
@@ -2708,7 +2709,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
 				this.unobserve();
-				var ui = $.remove($(Mavo.selectors.ui, this.element));
+				var ui = $.remove($(".mv-item-controls", this.element));
 
 				var ret = callback();
 
