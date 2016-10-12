@@ -3530,7 +3530,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if (!this.editing || this.attribute) {
-				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+				if (this.editor && this.editor.matches("select") && !this.exposed && this.editor.selectedOptions[0]) {
 					presentational = this.editor.selectedOptions[0].textContent;
 				}
 
@@ -4072,12 +4072,14 @@ Mavo.Primitive.register("button, .counter", {
 	datatype: "number",
 	is: "formControl",
 	init: function init(element) {
-		element.setAttribute("data-clicked", "0");
+		if (this.attribute === "data-clicked") {
+			element.setAttribute("data-clicked", "0");
 
-		element.addEventListener("click", function (evt) {
-			var clicked = +element.getAttribute("data-clicked") || 0;
-			element.setAttribute("data-clicked", clicked + 1);
-		});
+			element.addEventListener("click", function (evt) {
+				var clicked = +element.getAttribute("data-clicked") || 0;
+				element.setAttribute("data-clicked", clicked + 1);
+			});
+		}
 	}
 });
 "use strict";
