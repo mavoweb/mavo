@@ -173,7 +173,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		if (!o.silent) {
-			item.unsavedChanges = this.mavo.unsavedChanges = true;
+			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
 		return item;
@@ -202,7 +202,7 @@ var _ = Mavo.Collection = $.Class({
 				item: item
 			});
 
-			item.unsavedChanges = this.mavo.unsavedChanges = true;
+			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
 	},
 

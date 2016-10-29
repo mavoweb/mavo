@@ -456,6 +456,13 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges();
 	},
 
+	/**
+	 * Set this mavo instance’s unsavedChanges flag.
+	 * @param {Boolean} [value]
+	 *        If true, just sets the flag to true, no traversal.
+	 *        If false, sets the flag of the Mavo instance and every tree node to false
+	 *        If not provided, traverses the tree and recalculates the flag value.
+	 */
 	setUnsavedChanges: function(value) {
 		var unsavedChanges = !!value;
 
@@ -2148,7 +2155,7 @@ var _ = Mavo.Functions = {
 	},
 
 	count: function(array) {
-		return Mavo.toArray(array).filter(a => a !== null && a !== false).length;
+		return Mavo.toArray(array).filter(a => a !== null && a !== false && a !== "").length;
 	},
 
 	round: function(num, decimals) {
@@ -2429,7 +2436,7 @@ Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 function numbers(array, args) {
 	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
-	return array.filter(number => !isNaN(number)).map(n => +n);
+	return array.filter(number => !isNaN(number) && number !== "").map(n => +n);
 }
 
 })();
@@ -3882,7 +3889,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		if (!o.silent) {
-			item.unsavedChanges = this.mavo.unsavedChanges = true;
+			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
 		return item;
@@ -3911,7 +3918,7 @@ var _ = Mavo.Collection = $.Class({
 				item: item
 			});
 
-			item.unsavedChanges = this.mavo.unsavedChanges = true;
+			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
 	},
 

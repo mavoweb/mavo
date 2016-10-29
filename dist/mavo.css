@@ -245,6 +245,7 @@
 
 .mv-bar {
   all: initial;
+  visibility: inherit;
   display: -ms-flexbox;
   display: flex;
   color: white;

@@ -261,6 +261,13 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges();
 	},
 
+	/**
+	 * Set this mavo instance’s unsavedChanges flag.
+	 * @param {Boolean} [value]
+	 *        If true, just sets the flag to true, no traversal.
+	 *        If false, sets the flag of the Mavo instance and every tree node to false
+	 *        If not provided, traverses the tree and recalculates the flag value.
+	 */
 	setUnsavedChanges: function(value) {
 		var unsavedChanges = !!value;
 
