@@ -4,7 +4,6 @@ npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps g
 */
 // grab our gulp packages
 var gulp  = require("gulp");
-var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
 var concat = require("gulp-concat");
@@ -15,7 +14,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var merge = require("merge2");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
-var mavo = "mavo util permissions storage node unit expression functions scope primitive primitive.imgur collection prettyprint debug storage.dropbox storage.github"
+var mavo = "mavo util permissions storage node unit expression functions scope primitive collection prettyprint debug storage.dropbox storage.github"
 			.split(" ").map(path => `src/${path}.js`);
 
 gulp.task("concat", function() {
