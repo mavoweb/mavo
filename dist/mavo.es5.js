@@ -2851,7 +2851,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
+			var vocabElement = this.isRoot ? this.element.closest("[vocab]") : null || this.element;
+			this.vocab = vocabElement.getAttribute("vocab");
+
 			Mavo.hooks.run("scope-init-end", this);
+		},
+
+		get isRoot() {
+			return !this.property;
 		},
 
 		getData: function getData(o) {
@@ -2878,6 +2885,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (!o.dirty || o.unhandled) {
 				$.extend(ret, this.unhandled);
+			}
+
+			if (this.type && this.type != _.DEFAULT_TYPE) {
+				ret["@type"] = this.type;
+			}
+
+			if (this.vocab) {
+				ret["@context"] = this.vocab;
 			}
 
 			return ret;
@@ -2969,10 +2984,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			all: new WeakMap(),
 
+			DEFAULT_TYPE: "Item",
+
 			normalize: function normalize(element) {
 				// Get & normalize typeof name, if exists
 				if (Mavo.is("scope", element)) {
-					var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
+					var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
 
 					element.setAttribute("typeof", type);
 

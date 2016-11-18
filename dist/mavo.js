@@ -2492,7 +2492,14 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
+		var vocabElement = this.isRoot? this.element.closest("[vocab]") : null || this.element;
+		this.vocab = vocabElement.getAttribute("vocab");
+
 		Mavo.hooks.run("scope-init-end", this);
+	},
+
+	get isRoot() {
+		return !this.property;
 	},
 
 	getData: function(o) {
@@ -2519,6 +2526,14 @@ var _ = Mavo.Scope = $.Class({
 
 		if (!o.dirty || o.unhandled) {
 			$.extend(ret, this.unhandled);
+		}
+
+		if (this.type && this.type != _.DEFAULT_TYPE) {
+			ret["@type"] = this.type;
+		}
+
+		if (this.vocab) {
+			ret["@context"] = this.vocab;
 		}
 
 		return ret;
@@ -2606,10 +2621,12 @@ var _ = Mavo.Scope = $.Class({
 	static: {
 		all: new WeakMap(),
 
+		DEFAULT_TYPE: "Item",
+
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
 			if (Mavo.is("scope", element)) {
-				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || "Item";
+				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
 
 				element.setAttribute("typeof", type);
 
