@@ -43,8 +43,7 @@ var _ = Mavo.Unit = $.Class({
 
 		var isNull = unit => unit.dirty && !o.dirty ||
 		                     unit.deleted && o.dirty ||
-		                     unit.computed && !o.computed ||
-		                     unit.placeholder;
+		                     unit.computed && !o.computed;
 
 		if (isNull(this)) {
 			return null;
@@ -121,17 +120,13 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			if (value && (this.placeholder || this.computed || !this.editing)) {
+			if (value && (this.computed || !this.editing)) {
 				value = false;
 			}
 
 			this.element.classList.toggle("unsaved-changes", value);
 
 			return value;
-		},
-
-		placeholder: function(value) {
-			this.element.classList.toggle("placeholder", value);
 		}
 	},
 

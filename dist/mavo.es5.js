@@ -1594,7 +1594,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			o = o || {};
 
 			var isNull = function isNull(unit) {
-				return unit.dirty && !o.dirty || unit.deleted && o.dirty || unit.computed && !o.computed || unit.placeholder;
+				return unit.dirty && !o.dirty || unit.deleted && o.dirty || unit.computed && !o.computed;
 			};
 
 			if (isNull(this)) {
@@ -1669,17 +1669,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
-				if (value && (this.placeholder || this.computed || !this.editing)) {
+				if (value && (this.computed || !this.editing)) {
 					value = false;
 				}
 
 				this.element.classList.toggle("unsaved-changes", value);
 
 				return value;
-			},
-
-			placeholder: function placeholder(value) {
-				this.element.classList.toggle("placeholder", value);
 			}
 		},
 
@@ -2921,10 +2917,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		save: function save() {
-			if (this.placeholder) {
-				return false;
-			}
-
 			this.unsavedChanges = false;
 		},
 
@@ -3231,10 +3223,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		save: function save() {
-			if (this.placeholder) {
-				return false;
-			}
-
 			this.savedValue = this.value;
 			this.unsavedChanges = false;
 		},
@@ -4303,21 +4291,6 @@ Mavo.Primitive.register("button, .counter", {
 		},
 
 		edit: function edit() {
-			if (this.length === 0 && this.required) {
-				// Nested collection with no items, add one
-				var item = this.add(null, null, true);
-
-				item.placeholder = true;
-				item.walk(function (obj) {
-					return obj.unsavedChanges = false;
-				});
-
-				$.once(item.element, "mavo:datachange", function (evt) {
-					item.unsavedChanges = true;
-					item.placeholder = false;
-				});
-			}
-
 			this.propagate(function (obj) {
 				return obj[obj.preEdit ? "preEdit" : "edit"]();
 			});
@@ -4403,7 +4376,11 @@ Mavo.Primitive.register("button, .counter", {
 			}
 		},
 
-		done: function done() {
+		done: function done() {},
+
+		propagated: ["save", "done"],
+
+		revert: function revert() {
 			var _iteratorNormalCompletion3 = true;
 			var _didIteratorError3 = false;
 			var _iteratorError3 = undefined;
@@ -4412,9 +4389,17 @@ Mavo.Primitive.register("button, .counter", {
 				for (var _iterator3 = this.items[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 					var item = _step3.value;
 
-					if (item.placeholder) {
+					// Delete added items
+					if (item.unsavedChanges) {
 						this.delete(item, true);
-						return;
+					} else {
+						// Bring back deleted items
+						if (item.deleted) {
+							item.deleted = false;
+						}
+
+						// Revert all properties
+						item.revert();
 					}
 				}
 			} catch (err) {
@@ -4428,46 +4413,6 @@ Mavo.Primitive.register("button, .counter", {
 				} finally {
 					if (_didIteratorError3) {
 						throw _iteratorError3;
-					}
-				}
-			}
-		},
-
-		propagated: ["save", "done"],
-
-		revert: function revert() {
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
-
-			try {
-				for (var _iterator4 = this.items[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var item = _step4.value;
-
-					// Delete added items
-					if (item.unsavedChanges && !item.placeholder) {
-						this.delete(item, true);
-					} else {
-						// Bring back deleted items
-						if (item.deleted) {
-							item.deleted = false;
-						}
-
-						// Revert all properties
-						item.revert();
-					}
-				}
-			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
-					}
-				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
 					}
 				}
 			}

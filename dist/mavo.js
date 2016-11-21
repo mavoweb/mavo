@@ -1399,8 +1399,7 @@ var _ = Mavo.Unit = $.Class({
 
 		var isNull = unit => unit.dirty && !o.dirty ||
 		                     unit.deleted && o.dirty ||
-		                     unit.computed && !o.computed ||
-		                     unit.placeholder;
+		                     unit.computed && !o.computed;
 
 		if (isNull(this)) {
 			return null;
@@ -1477,17 +1476,13 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			if (value && (this.placeholder || this.computed || !this.editing)) {
+			if (value && (this.computed || !this.editing)) {
 				value = false;
 			}
 
 			this.element.classList.toggle("unsaved-changes", value);
 
 			return value;
-		},
-
-		placeholder: function(value) {
-			this.element.classList.toggle("placeholder", value);
 		}
 	},
 
@@ -2523,10 +2518,6 @@ var _ = Mavo.Scope = $.Class({
 	},
 
 	save: function() {
-		if (this.placeholder) {
-			return false;
-		}
-
 		this.unsavedChanges = false;
 	},
 
@@ -2801,10 +2792,6 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	save: function() {
-		if (this.placeholder) {
-			return false;
-		}
-
 		this.savedValue = this.value;
 		this.unsavedChanges = false;
 	},
@@ -3821,19 +3808,6 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
-		if (this.length === 0 && this.required) {
-			// Nested collection with no items, add one
-			var item = this.add(null, null, true);
-
-			item.placeholder = true;
-			item.walk(obj => obj.unsavedChanges = false);
-
-			$.once(item.element, "mavo:datachange", evt => {
-				item.unsavedChanges = true;
-				item.placeholder = false;
-			});
-		}
-
 		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
 	},
 
@@ -3876,12 +3850,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
-		for (let item of this.items) {
-			if (item.placeholder) {
-				this.delete(item, true);
-				return;
-			}
-		}
+
 	},
 
 	propagated: ["save", "done"],
@@ -3889,7 +3858,7 @@ var _ = Mavo.Collection = $.Class({
 	revert: function() {
 		for (let item of this.items) {
 			// Delete added items
-			if (item.unsavedChanges && !item.placeholder) {
+			if (item.unsavedChanges) {
 				this.delete(item, true);
 			}
 			else {

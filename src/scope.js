@@ -125,10 +125,6 @@ var _ = Mavo.Scope = $.Class({
 	},
 
 	save: function() {
-		if (this.placeholder) {
-			return false;
-		}
-
 		this.unsavedChanges = false;
 	},
 

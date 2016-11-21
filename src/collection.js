@@ -190,19 +190,6 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
-		if (this.length === 0 && this.required) {
-			// Nested collection with no items, add one
-			var item = this.add(null, null, true);
-
-			item.placeholder = true;
-			item.walk(obj => obj.unsavedChanges = false);
-
-			$.once(item.element, "mavo:datachange", evt => {
-				item.unsavedChanges = true;
-				item.placeholder = false;
-			});
-		}
-
 		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
 	},
 
@@ -245,12 +232,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
-		for (let item of this.items) {
-			if (item.placeholder) {
-				this.delete(item, true);
-				return;
-			}
-		}
+
 	},
 
 	propagated: ["save", "done"],
@@ -258,7 +240,7 @@ var _ = Mavo.Collection = $.Class({
 	revert: function() {
 		for (let item of this.items) {
 			// Delete added items
-			if (item.unsavedChanges && !item.placeholder) {
+			if (item.unsavedChanges) {
 				this.delete(item, true);
 			}
 			else {

@@ -204,10 +204,6 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	save: function() {
-		if (this.placeholder) {
-			return false;
-		}
-
 		this.savedValue = this.value;
 		this.unsavedChanges = false;
 	},
