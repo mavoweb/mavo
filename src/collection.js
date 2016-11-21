@@ -12,19 +12,6 @@ var _ = Mavo.Collection = $.Class({
 
 		// ALL descendant property names as an array
 		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
-			if (this.templateElement.matches("template")) {
-				var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
-				div.classList.add("document-fragment");
-
-				$$(this.templateElement.attributes).forEach(attr => {
-					div.setAttribute(attr.name, attr.value);
-				});
-
-				div.appendChild(document.importNode(this.templateElement.content, true));
-				this.templateElement.parentNode.replaceChild(div, this.templateElement);
-				this.element = this.templateElement = div;
-			}
-
 			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
@@ -88,12 +75,8 @@ var _ = Mavo.Collection = $.Class({
 			dirty: true
 		});
 
-		// If container is a fake "fragment", strip element naked
-		if (Mavo.is("documentFragment", item.element)) {
-			item.element = new Mavo.Fragment(item.element);
-		}
 		// Add delete & add buttons
-		else if (this.mutable) {
+		if (this.mutable) {
 			this.mavo.permissions.can("edit", () => {
 				$.create({
 					className: "mv-item-controls mv-ui",
@@ -448,23 +431,6 @@ var _ = Mavo.Collection = $.Class({
 			return button;
 		}
 	}
-});
-
-// TODO
-Mavo.Fragment = $.Class({
-	constructor: function(element) {
-		this.childNodes = [];
-
-		for (let node of element.childNodes) {
-			this.appendChild(node);
-		}
-	},
-
-	appendChild: function(node) {
-		this.childNodes.push(node);
-	},
-
-	classList: {toggle: () => {}, add: () => {}, remove: () => {}, contains: () => {}}
 });
 
 })(Bliss, Bliss.$);

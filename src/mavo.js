@@ -514,8 +514,7 @@ let s = _.selectors = {
 		"option": "select",
 		"dt": "dl",
 		"dd": "dl"
-	},
-	documentFragment: ".document-fragment"
+	}
 };
 
 let arr = s.arr = selector => selector.split(/\s*,\s*/g);

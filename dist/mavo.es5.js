@@ -741,8 +741,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					"option": "select",
 					"dt": "dl",
 					"dd": "dl"
-				},
-				documentFragment: ".document-fragment"
+				}
 			};
 
 			var arr = s.arr = function (selector) {
@@ -4116,19 +4115,6 @@ Mavo.Primitive.register("button, .counter", {
 
 			// ALL descendant property names as an array
 			if (!this.fromTemplate("properties", "mutable", "templateElement")) {
-				if (this.templateElement.matches("template")) {
-					var div = document.createElement(this.templateElement.getAttribute("data-tag") || "mv-group");
-					div.classList.add("document-fragment");
-
-					$$(this.templateElement.attributes).forEach(function (attr) {
-						div.setAttribute(attr.name, attr.value);
-					});
-
-					div.appendChild(document.importNode(this.templateElement.content, true));
-					this.templateElement.parentNode.replaceChild(div, this.templateElement);
-					this.element = this.templateElement = div;
-				}
-
 				this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 				this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 
@@ -4194,38 +4180,34 @@ Mavo.Primitive.register("button, .counter", {
 				dirty: true
 			});
 
-			// If container is a fake "fragment", strip element naked
-			if (Mavo.is("documentFragment", item.element)) {
-				item.element = new Mavo.Fragment(item.element);
-			}
 			// Add delete & add buttons
-			else if (this.mutable) {
-					this.mavo.permissions.can("edit", function () {
-						$.create({
-							className: "mv-item-controls mv-ui",
-							contents: [{
-								tag: "button",
-								title: "Delete this " + _this.name,
-								className: "delete",
-								events: {
-									"click": function click(evt) {
-										return _this.delete(item);
-									}
+			if (this.mutable) {
+				this.mavo.permissions.can("edit", function () {
+					$.create({
+						className: "mv-item-controls mv-ui",
+						contents: [{
+							tag: "button",
+							title: "Delete this " + _this.name,
+							className: "delete",
+							events: {
+								"click": function click(evt) {
+									return _this.delete(item);
 								}
-							}, {
-								tag: "button",
-								title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
-								className: "add",
-								events: {
-									"click": function click(evt) {
-										return _this.add(null, _this.items.indexOf(item)).edit();
-									}
+							}
+						}, {
+							tag: "button",
+							title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
+							className: "add",
+							events: {
+								"click": function click(evt) {
+									return _this.add(null, _this.items.indexOf(item)).edit();
 								}
-							}],
-							inside: element
-						});
+							}
+						}],
+						inside: element
 					});
-				}
+				});
+			}
 
 			return item;
 		},
@@ -4658,44 +4640,6 @@ Mavo.Primitive.register("button, .counter", {
 				return button;
 			}
 		}
-	});
-
-	// TODO
-	Mavo.Fragment = $.Class({
-		constructor: function constructor(element) {
-			this.childNodes = [];
-
-			var _iteratorNormalCompletion5 = true;
-			var _didIteratorError5 = false;
-			var _iteratorError5 = undefined;
-
-			try {
-				for (var _iterator5 = element.childNodes[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-					var node = _step5.value;
-
-					this.appendChild(node);
-				}
-			} catch (err) {
-				_didIteratorError5 = true;
-				_iteratorError5 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion5 && _iterator5.return) {
-						_iterator5.return();
-					}
-				} finally {
-					if (_didIteratorError5) {
-						throw _iteratorError5;
-					}
-				}
-			}
-		},
-
-		appendChild: function appendChild(node) {
-			this.childNodes.push(node);
-		},
-
-		classList: { toggle: function toggle() {}, add: function add() {}, remove: function remove() {}, contains: function contains() {} }
 	});
 })(Bliss, Bliss.$);
 "use strict";
