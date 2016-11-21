@@ -12,14 +12,6 @@ var _ = self.Mavo = $.Class({
 
 		this.unhandled = element.classList.contains("mv-keep-unhandled");
 
-		if (this.index == 1) {
-			this.store = _.urlParam("store");
-			this.source = _.urlParam("source");
-		}
-
-		this.store = this.store || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
-		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
-
 		this.autoEdit = _.has("autoedit", element);
 
 		this.element = _.is("scope", element)? element : $(_.selectors.rootScope, element);
@@ -32,14 +24,32 @@ var _ = self.Mavo = $.Class({
 
 		this.element.classList.add("mv-root");
 
+		if (this.index == 1) {
+			this.storage = _.urlParam("store");
+			this.source = _.urlParam("source");
+		}
+
+		this.wrapper = element.closest(".mv-wrapper") || element;
+
+		this.storage = this.storage || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
+		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
+
+		if (this.storage && !/^\s*none\s*$/i.test(this.storage)) {
+			this.storage = _.Backend.create(this.storage, this);
+		}
+
+		if (this.source) {
+			this.source = _.Backend.create(this.source, this);
+		}
+
+		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
+
 		// Apply heuristic for collections
 		$$(_.selectors.property + ", " + _.selectors.scope, element).concat([this.element]).forEach(element => {
 			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 				element.setAttribute("data-multiple", "");
 			}
 		});
-
-		this.wrapper = element.closest(".mv-wrapper") || element;
 
 		// Ctrl + S or Cmd + S to save
 		this.wrapper.addEventListener("keydown", evt => {
@@ -90,10 +100,71 @@ var _ = self.Mavo = $.Class({
 			inside: this.ui.bar
 		});
 
+		if (this.storage) {
+			// Reflect backend permissions in global permissions
+			this.authControls = {};
+
+			this.permissions.can("login", () => {
+				// #login authenticates if only 1 mavo on the page, or if the first.
+				// Otherwise, we have to generate a slightly more complex hash
+				this.loginHash = "#login" + (Mavo.all[0] === this? "" : "-" + this.id);
+
+				this.authControls.login = $.create({
+					tag: "a",
+					href: this.loginHash,
+					textContent: "Login",
+					className: "login button",
+					events: {
+						click: evt => {
+							evt.preventDefault();
+							this.login();
+						}
+					},
+					after: $(".status", this.ui.bar)
+				});
+
+				// We also support a hash to trigger login, in case the user doesn't want visible login UI
+				var login;
+				(login = () => {
+					if (location.hash === this.loginHash) {
+						// This just does location.hash = "" without getting a pointless # at the end of the URL
+						history.replaceState(null, document.title, new URL("", location) + "");
+						this.login();
+					}
+				})();
+				window.addEventListener("hashchange.mavo", login);
+			}, () => {
+				$.remove(this.authControls.login);
+				this.wrapper._.unbind("hashchange.mavo");
+			});
+
+			// Update login status
+			this.wrapper.addEventListener("mavo:login.mavo", evt => {
+				if (evt.backend == this.storage) { // ignore logins from source backend
+					var status = $(".status", this.ui.bar);
+					status.innerHTML = "";
+					status._.contents([
+						"Logged in to " + evt.backend.id + " as ",
+						{tag: "strong", innerHTML: evt.name},
+						{
+							tag: "button",
+							textContent: "Logout",
+							className: "logout",
+							events: {
+								click: e => evt.backend.logout()
+							},
+						}
+					]);
+				}
+			});
+
+			this.wrapper.addEventListener("mavo:logout.mavo", evt => {
+				$(".status", this.ui.bar).textContent = "";
+			});
+		}
+
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;
-
-		this.permissions = new Mavo.Permissions(null, this);
 
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
@@ -179,11 +250,9 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.clear);
 		});
 
-		if (this.store || this.source) {
+		if (this.storage || this.source) {
 			// Fetch existing data
-			this.storage = new _.Storage(this);
-
-			this.permissions.can("read", () => this.storage.load());
+			this.permissions.can("read", () => this.load());
 		}
 		else {
 			// No storage
@@ -231,7 +300,7 @@ var _ = self.Mavo = $.Class({
 
 	clear: function() {
 		if (confirm("This will delete all your data. Are you sure?")) {
-			this.storage && this.storage.clear();
+			this.store(null);
 			this.root.clear();
 		}
 	},
@@ -296,12 +365,80 @@ var _ = self.Mavo = $.Class({
 		this.unsavedChanges = false;
 	},
 
+	/**
+	 * load - Fetch data from source and render it.
+	 *
+	 * @return {Promise}  A promise that resolves when the data is loaded.
+	 */
+	load: function() {
+		this.inProgress = "Loading";
+
+		var backend = this.storage || this.source;
+
+		return backend.ready.then(() => backend.get())
+		.catch(err => {
+			// Try again with source
+			if (this.source && backend !== this.source) {
+				return this.source.ready.then(() => this.source.get());
+			}
+
+			return Promise.reject(err);
+		})
+		.then(response => {
+			if (response && $.type(response) == "string") {
+				response = JSON.parse(response);
+			}
+
+			this.render(response);
+		})
+		.catch(err => {
+			if (err) {
+				if (err.xhr && err.xhr.status == 404) {
+					this.render("");
+				}
+				else {
+					// TODO display error to user
+					console.error(err);
+					console.log(err.stack);
+				}
+			}
+		})
+		.then(() => {
+			this.inProgress = false;
+			$.fire(this.wrapper, "mavo:load");
+		});
+	},
+
+	store: function() {
+		if (!this.storage) {
+			return;
+		}
+
+		this.inProgress = "Saving";
+
+		this.storage.login()
+		.then(() => this.storage.put())
+		.then(file => {
+			$.fire(this.wrapper, "mavo:save", {
+				data: file.data,
+				dataString: file.dataString
+			});
+		})
+		.catch(err => {
+			if (err) {
+				console.error(err);
+				console.log(err.stack);
+			}
+		})
+		.then(() => {
+			this.inProgress = false;
+		});
+	},
+
 	save: function() {
 		this.root.save();
 
-		if (this.storage) {
-			this.storage.save();
-		}
+		this.store();
 
 		this.unsavedChanges = false;
 	},
@@ -315,6 +452,10 @@ var _ = self.Mavo = $.Class({
 	},
 
 	live: {
+		inProgress: function(value) {
+			this.wrapper[`${value? "set" : "remove"}Attribute`]("data-mv-progress", value);
+		},
+
 		editing: {
 			set: function(value) {
 				this.wrapper.classList.toggle("editing", value);

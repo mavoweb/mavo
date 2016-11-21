@@ -49,7 +49,7 @@ var _ = Mavo.Scope = $.Class({
 			}
 		});
 
-		var vocabElement = this.isRoot? this.element.closest("[vocab]") : null || this.element;
+		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
 		this.vocab = vocabElement.getAttribute("vocab");
 
 		Mavo.hooks.run("scope-init-end", this);

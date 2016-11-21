@@ -82,6 +82,14 @@ var _ = Mavo.Permissions = $.Class({
 	// Monitor all changes
 	onchange: function(callback) {
 		this.hooks.add("change", callback);
+
+		for (let action of _.actions) {
+			callback.call(this, {
+				action,
+				value: this[action],
+				permissions: this
+			});
+		}
 	},
 
 	// A single permission changed value
@@ -119,9 +127,9 @@ var _ = Mavo.Permissions = $.Class({
 	},
 
 	or: function(permissions) {
-		_.actions.forEach(action => {
+		for (let action of _.actions) {
 			this[action] = this[action] || permissions[action];
-		});
+		}
 
 		return this;
 	},

@@ -345,7 +345,7 @@ var _ = Mavo.Primitive = $.Class({
 
 						// Don’t call this.mavo.save() as it will save other fields too
 						// We only want to save exposed controls, so save current status
-						this.mavo.storage.save();
+						this.mavo.store();
 
 						// Are there any unsaved changes from other properties?
 						this.mavo.setUnsavedChanges();

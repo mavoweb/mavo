@@ -173,7 +173,7 @@ Mavo.hooks.add("init-tree-after", function() {
 });
 
 Mavo.hooks.add("render-start", function({data}) {
-	if (this.storage && this.wrapper.classList.contains("debug-saving")) {
+	if (this.backend && this.wrapper.classList.contains("debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {

@@ -4,13 +4,13 @@ if (!self.Mavo) {
 	return;
 }
 
-var _ = Mavo.Storage.Backend.register($.Class({
-	extends: Mavo.Storage.Backend,
+var _ = Mavo.Backend.register($.Class({
+	extends: Mavo.Backend,
 	id: "Github",
 	constructor: function() {
 		this.permissions.on("login");
 
-		this.key = this.storage.param("key") || "7e08e016048000bc594e";
+		this.key = this.mavo.wrapper.getAttribute("data-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);

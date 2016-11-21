@@ -6,8 +6,8 @@ if (!self.Mavo) {
 
 var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-Mavo.Storage.Backend.register($.Class({
-	extends: Mavo.Storage.Backend,
+Mavo.Backend.register($.Class({
+	extends: Mavo.Backend,
 	id: "Dropbox",
 	constructor: function() {
 		// Transform the dropbox shared URL into something raw and CORS-enabled
@@ -32,9 +32,9 @@ Mavo.Storage.Backend.register($.Class({
 				return;
 			}
 
-			this.path = (this.storage.param("path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.mavo.wrapper.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.key = this.storage.param("key") || "fle6gsc61w5v79j";
+			this.key = this.mavo.wrapper.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
 
 			this.client = new Dropbox.Client({ key: this.key });
 		})).then(() => {

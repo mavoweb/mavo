@@ -213,14 +213,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.unhandled = element.classList.contains("mv-keep-unhandled");
 
-			if (this.index == 1) {
-				this.store = _.urlParam("store");
-				this.source = _.urlParam("source");
-			}
-
-			this.store = this.store || _.urlParam(this.id + "_store") || element.getAttribute("data-store") || null;
-			this.source = this.source || _.urlParam(this.id + "_source") || element.getAttribute("data-source") || null;
-
 			this.autoEdit = _.has("autoedit", element);
 
 			this.element = _.is("scope", element) ? element : $(_.selectors.rootScope, element);
@@ -233,14 +225,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.element.classList.add("mv-root");
 
+			if (this.index == 1) {
+				this.storage = _.urlParam("store");
+				this.source = _.urlParam("source");
+			}
+
+			this.wrapper = element.closest(".mv-wrapper") || element;
+
+			this.storage = this.storage || _.urlParam(this.id + "_store") || element.getAttribute("data-store") || null;
+			this.source = this.source || _.urlParam(this.id + "_source") || element.getAttribute("data-source") || null;
+
+			if (this.storage && !/^\s*none\s*$/i.test(this.storage)) {
+				this.storage = _.Backend.create(this.storage, this);
+			}
+
+			if (this.source) {
+				this.source = _.Backend.create(this.source, this);
+			}
+
+			this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
+
 			// Apply heuristic for collections
 			$$(_.selectors.property + ", " + _.selectors.scope, element).concat([this.element]).forEach(function (element) {
 				if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 					element.setAttribute("data-multiple", "");
 				}
 			});
-
-			this.wrapper = element.closest(".mv-wrapper") || element;
 
 			// Ctrl + S or Cmd + S to save
 			this.wrapper.addEventListener("keydown", function (evt) {
@@ -290,10 +300,70 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				inside: this.ui.bar
 			});
 
+			if (this.storage) {
+				// Reflect backend permissions in global permissions
+				this.authControls = {};
+
+				this.permissions.can("login", function () {
+					// #login authenticates if only 1 mavo on the page, or if the first.
+					// Otherwise, we have to generate a slightly more complex hash
+					_this.loginHash = "#login" + (Mavo.all[0] === _this ? "" : "-" + _this.id);
+
+					_this.authControls.login = $.create({
+						tag: "a",
+						href: _this.loginHash,
+						textContent: "Login",
+						className: "login button",
+						events: {
+							click: function click(evt) {
+								evt.preventDefault();
+								_this.login();
+							}
+						},
+						after: $(".status", _this.ui.bar)
+					});
+
+					// We also support a hash to trigger login, in case the user doesn't want visible login UI
+					var login;
+					(login = function login() {
+						if (location.hash === _this.loginHash) {
+							// This just does location.hash = "" without getting a pointless # at the end of the URL
+							history.replaceState(null, document.title, new URL("", location) + "");
+							_this.login();
+						}
+					})();
+					window.addEventListener("hashchange.mavo", login);
+				}, function () {
+					$.remove(_this.authControls.login);
+					_this.wrapper._.unbind("hashchange.mavo");
+				});
+
+				// Update login status
+				this.wrapper.addEventListener("mavo:login.mavo", function (evt) {
+					if (evt.backend == _this.storage) {
+						// ignore logins from source backend
+						var status = $(".status", _this.ui.bar);
+						status.innerHTML = "";
+						status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", innerHTML: evt.name }, {
+							tag: "button",
+							textContent: "Logout",
+							className: "logout",
+							events: {
+								click: function click(e) {
+									return evt.backend.logout();
+								}
+							}
+						}]);
+					}
+				});
+
+				this.wrapper.addEventListener("mavo:logout.mavo", function (evt) {
+					$(".status", _this.ui.bar).textContent = "";
+				});
+			}
+
 			// Is there any control that requires an edit button?
 			this.needsEdit = false;
-
-			this.permissions = new Mavo.Permissions(null, this);
 
 			// Build mavo objects
 			Mavo.hooks.run("init-tree-before", this);
@@ -397,12 +467,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				$.remove(_this.ui.clear);
 			});
 
-			if (this.store || this.source) {
+			if (this.storage || this.source) {
 				// Fetch existing data
-				this.storage = new _.Storage(this);
-
 				this.permissions.can("read", function () {
-					return _this.storage.load();
+					return _this.load();
 				});
 			} else {
 				// No storage
@@ -450,7 +518,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		clear: function clear() {
 			if (confirm("This will delete all your data. Are you sure?")) {
-				this.storage && this.storage.clear();
+				this.store(null);
 				this.root.clear();
 			}
 		},
@@ -515,12 +583,81 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.unsavedChanges = false;
 		},
 
+		/**
+   * load - Fetch data from source and render it.
+   *
+   * @return {Promise}  A promise that resolves when the data is loaded.
+   */
+		load: function load() {
+			var _this2 = this;
+
+			this.inProgress = "Loading";
+
+			var backend = this.storage || this.source;
+
+			return backend.ready.then(function () {
+				return backend.get();
+			}).catch(function (err) {
+				// Try again with source
+				if (_this2.source && backend !== _this2.source) {
+					return _this2.source.ready.then(function () {
+						return _this2.source.get();
+					});
+				}
+
+				return Promise.reject(err);
+			}).then(function (response) {
+				if (response && $.type(response) == "string") {
+					response = JSON.parse(response);
+				}
+
+				_this2.render(response);
+			}).catch(function (err) {
+				if (err) {
+					if (err.xhr && err.xhr.status == 404) {
+						_this2.render("");
+					} else {
+						// TODO display error to user
+						console.error(err);
+						console.log(err.stack);
+					}
+				}
+			}).then(function () {
+				_this2.inProgress = false;
+				$.fire(_this2.wrapper, "mavo:load");
+			});
+		},
+
+		store: function store() {
+			var _this3 = this;
+
+			if (!this.storage) {
+				return;
+			}
+
+			this.inProgress = "Saving";
+
+			this.storage.login().then(function () {
+				return _this3.storage.put();
+			}).then(function (file) {
+				$.fire(_this3.wrapper, "mavo:save", {
+					data: file.data,
+					dataString: file.dataString
+				});
+			}).catch(function (err) {
+				if (err) {
+					console.error(err);
+					console.log(err.stack);
+				}
+			}).then(function () {
+				_this3.inProgress = false;
+			});
+		},
+
 		save: function save() {
 			this.root.save();
 
-			if (this.storage) {
-				this.storage.save();
-			}
+			this.store();
 
 			this.unsavedChanges = false;
 		},
@@ -534,6 +671,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		live: {
+			inProgress: function inProgress(value) {
+				this.wrapper[(value ? "set" : "remove") + "Attribute"]("data-mv-progress", value);
+			},
+
 			editing: {
 				set: function set(value) {
 					this.wrapper.classList.toggle("editing", value);
@@ -938,6 +1079,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		// Monitor all changes
 		onchange: function onchange(callback) {
 			this.hooks.add("change", callback);
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = _.actions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var action = _step.value;
+
+					callback.call(this, {
+						action: action,
+						value: this[action],
+						permissions: this
+					});
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
 		},
 
 		// A single permission changed value
@@ -976,11 +1146,30 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		or: function or(permissions) {
-			var _this6 = this;
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
 
-			_.actions.forEach(function (action) {
-				_this6[action] = _this6[action] || permissions[action];
-			});
+			try {
+				for (var _iterator2 = _.actions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var action = _step2.value;
+
+					this[action] = this[action] || permissions[action];
+				}
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
 
 			return this;
 		},
@@ -1040,208 +1229,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 (function ($) {
 
-	var _ = Mavo.Storage = $.Class({
-		constructor: function constructor(mavo) {
-			var _this = this;
-
-			this.mavo = mavo;
-
-			this.backend = _.Backend.create(this.mavo.store, this);
-			this.sourceBackend = _.Backend.create(this.mavo.source, this);
-
-			if (this.backend) {
-				// Permissions of first backend become the permissions of the app
-				// TODO just use global permissions
-				this.backend.permissions = this.permissions.or(this.backend.permissions);
-			} else {
-				this.permissions.on("read");
-			}
-
-			this.loaded = new Promise(function (resolve, reject) {
-				_this.mavo.wrapper.addEventListener("mavo:load", resolve);
-			});
-
-			this.authControls = {};
-
-			this.permissions.can("login", function () {
-				// #login authenticates if only 1 mavo on the page, or if the first.
-				// Otherwise, we have to generate a slightly more complex hash
-				_this.loginHash = "#login" + (Mavo.all[0] === _this.mavo ? "" : "-" + _this.mavo.id);
-
-				_this.authControls.login = $.create({
-					tag: "a",
-					href: _this.loginHash,
-					textContent: "Login",
-					className: "login button",
-					events: {
-						click: function click(evt) {
-							evt.preventDefault();
-							_this.login();
-						}
-					},
-					after: $(".status", _this.mavo.ui.bar)
-				});
-
-				// We also support a hash to trigger login, in case the user doesn't want visible login UI
-				var login;
-				(login = function login() {
-					if (location.hash === _this.loginHash) {
-						// This just does location.hash = "" without getting a pointless # at the end of the URL
-						history.replaceState(null, document.title, new URL("", location) + "");
-						_this.login();
-					}
-				})();
-				window.addEventListener("hashchange.mavo", login);
-			}, function () {
-				$.remove(_this.authControls.login);
-				_this.mavo.wrapper._.unbind("hashchange.mavo");
-			});
-
-			// Update login status
-			this.mavo.wrapper.addEventListener("mavo:login.mavo", function (evt) {
-				if (evt.backend == _this.backend) {
-					// ignore logins from source backend
-					var status = $(".status", _this.mavo.ui.bar);
-					status.innerHTML = "";
-					status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", innerHTML: evt.name }, {
-						tag: "button",
-						textContent: "Logout",
-						className: "logout",
-						events: {
-							click: function click(e) {
-								return evt.backend.logout();
-							}
-						}
-					}]);
-				}
-			});
-
-			this.mavo.wrapper.addEventListener("mavo:logout.mavo", function (evt) {
-				$(".status", _this.mavo.ui.bar).textContent = "";
-			});
-		},
-
-		proxy: {
-			permissions: "mavo"
-		},
-
-		/**
-   * load - Fetch data from source and render it.
-   *
-   * @return {Promise}  A promise that resolves when the data is loaded.
-   */
-		load: function load() {
-			var _this2 = this;
-
-			this.inProgress = "Loading";
-
-			var backend = this.backend || this.sourceBackend;
-
-			return backend.ready.then(function () {
-				return backend.get();
-			}).catch(function (err) {
-				// Try again with source
-				if (_this2.sourceBackend && backend !== _this2.sourceBackend) {
-					return _this2.sourceBackend.ready.then(function () {
-						return _this2.sourceBackend.get();
-					});
-				}
-
-				return Promise.reject(err);
-			}).then(function (response) {
-				if (response && $.type(response) == "string") {
-					response = JSON.parse(response);
-				}
-
-				_this2.mavo.render(response);
-			}).catch(function (err) {
-				if (err) {
-					if (err.xhr && err.xhr.status == 404) {
-						_this2.mavo.render("");
-					} else {
-						// TODO display error to user
-						console.error(err);
-						console.log(err.stack);
-					}
-				}
-			}).then(function () {
-				_this2.inProgress = false;
-				$.fire(_this2.mavo.wrapper, "mavo:load");
-			});
-		},
-
-		save: function save() {
-			var _this3 = this;
-
-			this.inProgress = "Saving";
-
-			this.backend.login().then(function () {
-				return _this3.backend.put();
-			}).then(function (file) {
-				$.fire(_this3.mavo.wrapper, "mavo:save", {
-					data: file.data,
-					dataString: file.dataString
-				});
-			}).catch(function (err) {
-				if (err) {
-					console.error(err);
-					console.log(err.stack);
-				}
-			}).then(function () {
-				_this3.inProgress = false;
-			});
-		},
-
-		login: function login() {
-			return this.backend.login();
-		},
-
-		logout: function logout() {
-			return this.backend.logout();
-		},
-
-		clear: function clear() {
-			this.save(null);
-		},
-
-		// Get storage parameters from the main element and cache them. Used for API keys and the like.
-		param: function param(id) {
-			// TODO traverse all properties and cache params in constructor, to avoid
-			// collection items carrying all of these
-			this.params = this.params || {};
-
-			if (!(id in this.params)) {
-				var attribute = "data-store-" + id;
-
-				this.params[id] = this.mavo.wrapper.getAttribute(attribute) || this.mavo.element.getAttribute(attribute);
-
-				this.mavo.wrapper.removeAttribute(attribute);
-				this.mavo.element.removeAttribute(attribute);
-			}
-
-			return this.params[id];
-		},
-
-		live: {
-			inProgress: function inProgress(value) {
-				this.mavo.wrapper[(value ? "set" : "remove") + "Attribute"]("data-mv-progress", value);
-			}
-		},
-
-		static: {
-			isHash: function isHash(url) {
-				return url.origin === location.origin && url.pathname === location.pathname && !!url.hash;
-			}
-		}
-	});
-
 	/**
   * Base class for all backends
   */
-	_.Backend = $.Class({
-		constructor: function constructor(url, storage) {
+	var _ = Mavo.Backend = $.Class({
+		constructor: function constructor(url, mavo) {
 			this.url = url;
-			this.storage = storage;
+			this.mavo = mavo;
 
 			// Permissions of this particular backend.
 			this.permissions = new Mavo.Permissions();
@@ -1280,19 +1274,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.id + " (" + this.url + ")";
 		},
 
-		proxy: {
-			mavo: "storage"
-		},
-
 		static: {
 			// Return the appropriate backend(s) for this url
-			create: function create(url, storage) {
+			create: function create(url, mavo) {
+				if (!url.indexOf) {
+					console.log(url);
+				}
 				if (url) {
-					var Backend = _.Backend.types.filter(function (Backend) {
+					var Backend = _.types.filter(function (Backend) {
 						return Backend.test(url);
-					})[0] || _.Backend.Remote;
+					})[0] || _.Remote;
 
-					return new Backend(url, storage);
+					return new Backend(url, mavo);
 				}
 
 				return null;
@@ -1301,8 +1294,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			types: [],
 
 			register: function register(Class) {
-				_.Backend[Class.prototype.id] = Class;
-				_.Backend.types.push(Class);
+				_[Class.prototype.id] = Class;
+				_.types.push(Class);
 				return Class;
 			}
 		}
@@ -1311,9 +1304,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	/**
   * Save in an HTML element
   */
-	_.Backend.register($.Class({
+	_.register($.Class({
 		id: "Element",
-		extends: _.Backend,
+		extends: _,
 		constructor: function constructor() {
 			this.permissions.on(["read", "edit", "save"]);
 
@@ -1343,9 +1336,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	}));
 
 	// Load from a remote URL, no save
-	_.Backend.register($.Class({
+	_.register($.Class({
 		id: "Remote",
-		extends: _.Backend,
+		extends: _,
 		constructor: function constructor() {
 			this.permissions.on("read");
 			this.url = new URL(this.url, location);
@@ -1359,8 +1352,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	}));
 
 	// Save in localStorage
-	_.Backend.register($.Class({
-		extends: _.Backend,
+	_.register($.Class({
+		extends: _,
 		id: "Local",
 		constructor: function constructor() {
 			this.permissions.on(["read", "edit", "save"]);
@@ -2851,7 +2844,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			var vocabElement = this.isRoot ? this.element.closest("[vocab]") : null || this.element;
+			var vocabElement = (this.isRoot ? this.element.closest("[vocab]") : null) || this.element;
 			this.vocab = vocabElement.getAttribute("vocab");
 
 			Mavo.hooks.run("scope-init-end", this);
@@ -3386,7 +3379,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 								// Don’t call this.mavo.save() as it will save other fields too
 								// We only want to save exposed controls, so save current status
-								_this5.mavo.storage.save();
+								_this5.mavo.store();
 
 								// Are there any unsaved changes from other properties?
 								_this5.mavo.setUnsavedChanges();
@@ -5221,7 +5214,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.hooks.add("render-start", function (_ref) {
 		var data = _ref.data;
 
-		if (this.storage && this.wrapper.classList.contains("debug-saving")) {
+		if (this.backend && this.wrapper.classList.contains("debug-saving")) {
 			var element = $("#" + this.id + "-debug-storage");
 
 			if (element) {
@@ -5460,8 +5453,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
 
-	Mavo.Storage.Backend.register($.Class({
-		extends: Mavo.Storage.Backend,
+	Mavo.Backend.register($.Class({
+		extends: Mavo.Backend,
 		id: "Dropbox",
 		constructor: function constructor() {
 			var _this = this;
@@ -5488,9 +5481,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					return;
 				}
 
-				_this.path = (_this.storage.param("path") || "") + new URL(_this.url).pathname.match(/[^/]*$/)[0];
+				_this.path = (_this.mavo.wrapper.getAttribute("data-dropbox-path") || "") + new URL(_this.url).pathname.match(/[^/]*$/)[0];
 
-				_this.key = _this.storage.param("key") || "fle6gsc61w5v79j";
+				_this.key = _this.mavo.wrapper.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
 
 				_this.client = new Dropbox.Client({ key: _this.key });
 			}).then(function () {
@@ -5587,13 +5580,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		return;
 	}
 
-	var _ = Mavo.Storage.Backend.register($.Class({
-		extends: Mavo.Storage.Backend,
+	var _ = Mavo.Backend.register($.Class({
+		extends: Mavo.Backend,
 		id: "Github",
 		constructor: function constructor() {
 			this.permissions.on("login");
 
-			this.key = this.storage.param("key") || "7e08e016048000bc594e";
+			this.key = this.mavo.wrapper.getAttribute("data-github-key") || "7e08e016048000bc594e";
 
 			// Extract info for username, repo, branch, filepath from URL
 			this.url = new URL(this.url, location);

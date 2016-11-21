@@ -14,7 +14,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var merge = require("merge2");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
-var mavo = "mavo util permissions storage node unit expression functions scope primitive collection prettyprint debug storage.dropbox storage.github"
+var mavo = "mavo util permissions backend node unit expression functions scope primitive collection prettyprint debug backend.dropbox backend.github"
 			.split(" ").map(path => `src/${path}.js`);
 
 gulp.task("concat", function() {
