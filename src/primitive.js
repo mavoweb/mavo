@@ -32,7 +32,7 @@ var _ = Mavo.Primitive = $.Class({
 
 			this.edit();
 		}
-		else if (!this.computed) {
+		else if (this.needsEdit) {
 			// If this is NOT exposed and NOT computed, we need an edit button
 			this.mavo.needsEdit = true;
 		}
@@ -75,7 +75,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.default = this.element.getAttribute("data-default");
 
-		if (this.computed || this.default === "") { // attribute exists, no value, default is template value
+		if (this.computed || this.constant || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
 		else if (this.default === null) { // attribute does not exist
@@ -117,7 +117,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (!this.computed) {
+		if (this.needsEdit) {
 			this.setValue(this.templateValue, {silent: true});
 		}
 
@@ -185,6 +185,14 @@ var _ = Mavo.Primitive = $.Class({
 		return this.editor === this.element;
 	},
 
+	get constant() {
+		return this.element.classList.contains("mv-constant");
+	},
+
+	get needsEdit() {
+		return !(this.exposed || this.constant || this.computed);
+	},
+
 	getData: function(o) {
 		o = o || {};
 
@@ -247,7 +255,7 @@ var _ = Mavo.Primitive = $.Class({
 	// Prepare to be edited
 	// Called when root edit button is pressed
 	preEdit: function () {
-		if (this.computed) {
+		if (this.computed || this.constant) {
 			return;
 		}
 
@@ -385,7 +393,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.computed || this.editing) {
+		if (this.computed || this.constant || this.editing) {
 			return;
 		}
 
@@ -444,7 +452,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	observe: function() {
-		if (!this.computed) {
+		if (!this.computed && !this.constant) {
 			this.observer = Mavo.observe(this.element, this.attribute, this.observer || (record => {
 				if (this.attribute || !this.mavo.editing) {
 					this.value = this.getValue();

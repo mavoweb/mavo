@@ -3024,7 +3024,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.editorType = "exposed";
 
 				this.edit();
-			} else if (!this.computed) {
+			} else if (this.needsEdit) {
 				// If this is NOT exposed and NOT computed, we need an edit button
 				this.mavo.needsEdit = true;
 			}
@@ -3088,7 +3088,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.default = this.element.getAttribute("data-default");
 
-			if (this.computed || this.default === "") {
+			if (this.computed || this.constant || this.default === "") {
 				// attribute exists, no value, default is template value
 				this.default = this.templateValue;
 			} else if (this.default === null) {
@@ -3138,7 +3138,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}
 
-			if (!this.computed) {
+			if (this.needsEdit) {
 				this.setValue(this.templateValue, { silent: true });
 			}
 
@@ -3204,6 +3204,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return this.editor === this.element;
 		},
 
+		get constant() {
+			return this.element.classList.contains("mv-constant");
+		},
+
+		get needsEdit() {
+			return !(this.exposed || this.constant || this.computed);
+		},
+
 		getData: function getData(o) {
 			o = o || {};
 
@@ -3266,7 +3274,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		preEdit: function preEdit() {
 			var _this4 = this;
 
-			if (this.computed) {
+			if (this.computed || this.constant) {
 				return;
 			}
 
@@ -3410,7 +3418,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		edit: function edit() {
-			if (this.computed || this.editing) {
+			if (this.computed || this.constant || this.editing) {
 				return;
 			}
 
@@ -3470,7 +3478,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		observe: function observe() {
 			var _this6 = this;
 
-			if (!this.computed) {
+			if (!this.computed && !this.constant) {
 				this.observer = Mavo.observe(this.element, this.attribute, this.observer || function (record) {
 					if (_this6.attribute || !_this6.mavo.editing) {
 						_this6.value = _this6.getValue();
