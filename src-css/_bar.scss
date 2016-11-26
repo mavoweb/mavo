@@ -95,9 +95,22 @@
 			content: "✓";
 		}
 
-		.mv-wrapper[data-mv-progress="Saving"] &::before {
-			content: "";
-			@extend %progress;
+		.mv-wrapper[data-mv-progress="Saving"] & {
+			color: hsla(0,0%,100%,.2);
+
+			&::before {
+				opacity: .2;
+			}
+
+			&::after {
+				content: "";
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				color: white;
+				@extend %progress;
+			}
 		}
 
 		&:enabled:hover {

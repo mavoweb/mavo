@@ -11,7 +11,7 @@
     background-size: .5em .5em, .5em .5em, 1em 1em;
     background-position: .25em 50%, 1.25em 50%, 2em 50%; } }
 
-.mv-wrapper[data-mv-progress]::after, .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::before {
+.mv-wrapper[data-mv-progress]::after, .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::after {
   width: 3em;
   height: 1em;
   background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 0 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 1.25em 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 2.25em 50%;
@@ -309,8 +309,17 @@
       content: "ing"; }
   .mv-bar .save::before {
     content: "✓"; }
-  .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::before {
-    content: ""; }
+  .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save {
+    color: rgba(255, 255, 255, 0.2); }
+    .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::before {
+      opacity: .2; }
+    .mv-wrapper[data-mv-progress="Saving"] .mv-bar .save::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      color: white; }
   .mv-bar .save:enabled:hover {
     background: #40bfbf; }
   .mv-bar .revert::before {
