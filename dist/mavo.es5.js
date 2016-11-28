@@ -733,7 +733,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				item: ".mv-item",
 				ui: ".mv-ui",
 				option: function option(name) {
-					return "[" + name + "], [data-" + name + "], [data-mv-options~='" + name + "'], ." + name;
+					return "[" + name + "], [data-" + name + "], ." + name;
 				},
 				container: {
 					"li": "ul, ol",

@@ -702,7 +702,7 @@ let s = _.selectors = {
 	computed: ".computed", // Properties orgroups with computed properties, will not be saved
 	item: ".mv-item",
 	ui: ".mv-ui",
-	option: name => `[${name}], [data-${name}], [data-mv-options~='${name}'], .${name}`,
+	option: name => `[${name}], [data-${name}], .${name}`,
 	container: {
 		"li": "ul, ol",
 		"tr": "table",

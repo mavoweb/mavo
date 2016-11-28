@@ -206,8 +206,7 @@
 	}
 
 	&[data-editing] {
-		.empty,
-		.placeholder {
+		.empty {
 			opacity: .5;
 		}
 

@@ -157,8 +157,7 @@
 .mv-wrapper:not([data-editing]):not(.unsaved-changes) .clear {
   display: none; }
 
-.mv-wrapper[data-editing] .empty,
-.mv-wrapper[data-editing] .placeholder {
+.mv-wrapper[data-editing] .empty {
   opacity: .5; }
 
 .mv-wrapper[data-editing] .mv-item:focus,
