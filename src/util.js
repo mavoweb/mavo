@@ -138,17 +138,25 @@ $.classProps.propagated = function(proto, names) {
 	});
 };
 
-// :focus-within shim
-document.addEventListener("focus", evt => {
-	$$(".focus-within").forEach(el => el.classList.remove("focus-within"));
+// :focus-within and :target-within shim
+function updateWithin(cl, element) {
+	cl = cl + "-within";
+	$$("." + cl).forEach(el => el.classList.remove(cl));
 
-	var element = evt.target;
-
-	while (element = element.parentNode) {
-		if (element.classList) {
-			element.classList.add("focus-within");
-		}
+	while (element && (element = element.parentNode) && element.classList) {
+		element.classList.add(cl);
 	}
+};
+
+document.addEventListener("focus", evt => {
+	updateWithin("focus", evt.target);
 }, true);
+
+addEventListener("hashchange", evt => {
+	updateWithin("target", $(location.hash));
+}, true);
+
+updateWithin("target", $(location.hash));
+updateWithin("focus", document.activeElement);
 
 })(Bliss, Bliss.$);

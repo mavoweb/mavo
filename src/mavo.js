@@ -117,7 +117,7 @@ var _ = self.Mavo = $.Class({
 					events: {
 						click: evt => {
 							evt.preventDefault();
-							this.login();
+							this.storage.login();
 						}
 					},
 					after: $(".status", this.ui.bar)
@@ -129,7 +129,7 @@ var _ = self.Mavo = $.Class({
 					if (location.hash === this.loginHash) {
 						// This just does location.hash = "" without getting a pointless # at the end of the URL
 						history.replaceState(null, document.title, new URL("", location) + "");
-						this.login();
+						this.storage.login();
 					}
 				})();
 				window.addEventListener("hashchange.mavo", login);

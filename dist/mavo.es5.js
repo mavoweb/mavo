@@ -962,18 +962,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	};
 
-	// :focus-within shim
+	// :focus-within and :target-within shim
 	document.addEventListener("focus", function (evt) {
-		$$(".focus-within").forEach(function (el) {
-			return el.classList.remove("focus-within");
+		var isFocus = evt.type == "focus";
+		var cl = (isFocus ? "focus" : "target") + "-within";
+		var element = isFocus ? evt.target : $(location.hash);
+
+		$$("." + cl).forEach(function (el) {
+			return el.classList.remove(cl);
 		});
 
-		var element = evt.target;
-
-		while (element = element.parentNode) {
-			if (element.classList) {
-				element.classList.add("focus-within");
-			}
+		while (element && (element = element.parentNode) && element.classList) {
+			element.classList.add(cl);
 		}
 	}, true);
 })(Bliss, Bliss.$);
