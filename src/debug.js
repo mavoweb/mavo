@@ -76,7 +76,7 @@ var _ = Mavo.Debug = {
 		}
 		else if (obj instanceof Mavo.Collection) {
 			if (obj.items.length > 0) {
-				if (obj.items[0] instanceof Mavo.Scope) {
+				if (obj.items[0] instanceof Mavo.Group) {
 					return `List: ${obj.items.length} group(s)`;
 				}
 				else {
@@ -87,7 +87,7 @@ var _ = Mavo.Debug = {
 				return _.printValue([]);
 			}
 		}
-		else if (obj instanceof Mavo.Scope) {
+		else if (obj instanceof Mavo.Group) {
 			// Group
 			return `Group with ${Object.keys(obj).length} properties`;
 		}
@@ -186,9 +186,9 @@ Mavo.hooks.add("render-start", function({data}) {
 	}
 });
 
-Mavo.hooks.add("scope-init-start", function() {
-	this.debug = this.debug || this.walkUp(scope => {
-		if (scope.debug) {
+Mavo.hooks.add("group-init-start", function() {
+	this.debug = this.debug || this.walkUp(group => {
+		if (group.debug) {
 			return true;
 		}
 	}) || Mavo.urlParam("debug") !== null;
@@ -229,7 +229,7 @@ Mavo.hooks.add("unit-init-end", function() {
 });
 
 Mavo.hooks.add("expressions-init-start", function() {
-	this.debug = this.scope.debug;
+	this.debug = this.group.debug;
 });
 
 Mavo.hooks.add("expression-eval-beforeeval", function() {
@@ -245,7 +245,7 @@ Mavo.hooks.add("expression-eval-error", function(env) {
 	}
 });
 
-Mavo.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) {
+Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) {
 	if (!this.debug) {
 		return;
 	}
@@ -295,12 +295,12 @@ Mavo.Scope.prototype.debugRow = function({element, attribute = null, tds = []}) 
 };
 
 Mavo.hooks.add("expressiontext-init-end", function() {
-	if (this.scope.debug) {
+	if (this.group.debug) {
 		this.debug = {};
 
 		this.template.forEach(expr => {
 			if (expr instanceof Mavo.Expression && !this.element.matches(".mv-debuginfo *")) {
-				this.scope.debugRow({
+				this.group.debugRow({
 					element: this.element,
 					attribute: this.attribute,
 					tds: ["Expression", {
@@ -327,7 +327,7 @@ Mavo.hooks.add("expressiontext-init-end", function() {
 	}
 });
 
-Mavo.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("group-init-end", function() {
 	// TODO make properties update, collapse duplicate expressions
 	if (this.debug instanceof Node) {
 		// We have a debug table, add stuff to it
@@ -365,7 +365,7 @@ Mavo.hooks.add("scope-init-end", function() {
 			}
 		});
 
-		this.scope.element.addEventListener("mavo:datachange", evt => {
+		this.group.element.addEventListener("mavo:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
 				var value = _.printValue(this.properties[property]);

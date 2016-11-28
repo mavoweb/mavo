@@ -1,31 +1,31 @@
 (function($, $$) {
 
-var _ = Mavo.Scope = $.Class({
+var _ = Mavo.Group = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
 		this.properties = {};
 
-		this.scope = this;
+		this.group = this;
 
-		Mavo.hooks.run("scope-init-start", this);
+		Mavo.hooks.run("group-init-start", this);
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {scope: this});
+			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
 		}
 
-		// Create Mavo objects for all properties in this scope (primitives or scopes),
-		// but not properties in descendant scopes (they will be handled by their scope)
+		// Create Mavo objects for all properties in this group (primitives orgroups),
+		// but not properties in descendantgroups (they will be handled by their group)
 		$$(Mavo.selectors.property, this.element).forEach(element => {
 			var property = Mavo.Node.getProperty(element);
 
 			if (this.contains(element)) {
 				var existing = this.properties[property];
 				var template = this.template? this.template.properties[property] : null;
-				var constructorOptions = {template, scope: this};
+				var constructorOptions = {template, group: this};
 
 				if (existing) {
-					// Two scopes with the same property, convert to static collection
+					// Twogroups with the same property, convert to static collection
 					var collection = existing;
 
 					if (!(existing instanceof Mavo.Collection)) {
@@ -52,7 +52,7 @@ var _ = Mavo.Scope = $.Class({
 		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
 		this.vocab = vocabElement.getAttribute("vocab");
 
-		Mavo.hooks.run("scope-init-end", this);
+		Mavo.hooks.run("group-init-end", this);
 	},
 
 	get isRoot() {
@@ -140,12 +140,12 @@ var _ = Mavo.Scope = $.Class({
 			return;
 		}
 
-		Mavo.hooks.run("scope-render-start", this);
+		Mavo.hooks.run("group-render-start", this);
 
 		// TODO retain dropped elements
 		data = Array.isArray(data)? data[0] : data;
 
-		// TODO what if it was a primitive and now it's a scope?
+		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.properties[this.property] with it
 
 		this.unhandled = $.extend({}, data, property => {
@@ -158,17 +158,17 @@ var _ = Mavo.Scope = $.Class({
 
 		this.save();
 
-		Mavo.hooks.run("scope-render-end", this);
+		Mavo.hooks.run("group-render-end", this);
 	},
 
-	// Check if this scope contains a property
+	// Check if this group contains a property
 	// property can be either a Mavo.Unit or a Node
 	contains: function(property) {
 		if (property instanceof Mavo.Unit) {
-			return property.parentScope === this;
+			return property.parentGroup === this;
 		}
 
-		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.scope));
+		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.group));
 	},
 
 	static: {
@@ -178,7 +178,7 @@ var _ = Mavo.Scope = $.Class({
 
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
-			if (Mavo.is("scope", element)) {
+			if (Mavo.is("group", element)) {
 				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
 
 				element.setAttribute("typeof", type);

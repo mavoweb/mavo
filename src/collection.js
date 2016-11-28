@@ -383,10 +383,10 @@ var _ = Mavo.Collection = $.Class({
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.add-${this.property}`;
-			var scope = this.closestCollection || this.marker.closest(Mavo.selectors.scope);
+			var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
 
-			if (scope) {
-				var button = $$(selector, scope).filter(button => {
+			if (group) {
+				var button = $$(selector, group).filter(button => {
 					return !this.templateElement.contains(button);
 				})[0];
 			}

@@ -244,7 +244,7 @@ var _ = Mavo.Primitive = $.Class({
 
 	revert: function() {
 		if (this.unsavedChanges && this.savedValue !== undefined) {
-			// FIXME if we have a collection of properties (not scopes), this will cause
+			// FIXME if we have a collection of properties (notgroups), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;

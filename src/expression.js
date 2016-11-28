@@ -205,7 +205,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			// No node provided, figure it out from path
 			this.node = this.path.reduce((node, index) => {
 				return node.childNodes[index];
-			}, this.all.scope.element);
+			}, this.all.group.element);
 		}
 
 		this.element = this.node;
@@ -309,7 +309,7 @@ var _ = Mavo.Expression.Text = $.Class({
 	},
 
 	proxy: {
-		scope: "all"
+		group: "all"
 	},
 
 	static: {
@@ -343,18 +343,18 @@ var _ = Mavo.Expression.Text = $.Class({
 (function() {
 
 var _ = Mavo.Expressions = $.Class({
-	constructor: function(scope) {
-		if (scope) {
-			this.scope = scope;
-			this.scope.expressions = this;
+	constructor: function(group) {
+		if (group) {
+			this.group = group;
+			this.group.expressions = this;
 		}
 
-		this.all = []; // all Expression.Text objects in this scope
+		this.all = []; // all Expression.Text objects in this group
 
 		Mavo.hooks.run("expressions-init-start", this);
 
-		if (this.scope) {
-			var template = this.scope.template;
+		if (this.group) {
+			var template = this.group.template;
 
 			if (template && template.expressions) {
 				// We know which expressions we have, don't traverse again
@@ -369,8 +369,8 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				var syntax = Mavo.Expression.Syntax.create(this.scope.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
-				this.traverse(this.scope.element, undefined, syntax);
+				var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
+				this.traverse(this.group.element, undefined, syntax);
 			}
 		}
 
@@ -379,20 +379,20 @@ var _ = Mavo.Expressions = $.Class({
 		this.active = true;
 
 		// Watch changes and update value
-		this.scope.element.addEventListener("mavo:datachange", evt => this.update());
+		this.group.element.addEventListener("mavo:datachange", evt => this.update());
 
 		this.update();
 	},
 
 	/**
-	 * Update all expressions in this scope
+	 * Update all expressions in this group
 	 */
 	update: function callee() {
-		if (!this.active || this.scope.isDeleted() || this.all.length + this.dependents.size === 0) {
+		if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
 			return;
 		}
 
-		var env = { context: this, data: this.scope.getRelativeData() };
+		var env = { context: this, data: this.group.getRelativeData() };
 
 		Mavo.hooks.run("expressions-update-start", env);
 
@@ -424,9 +424,9 @@ var _ = Mavo.Expressions = $.Class({
 			// Leaf node, extract references from content
 			this.extract(node, null, path, syntax);
 		}
-		// Traverse children and attributes as long as this is NOT the root of a child scope
+		// Traverse children and attributes as long as this is NOT the root of a child group
 		// (otherwise, it will be taken care of its own Expressions object)
-		else if (node == this.scope.element || !Mavo.is("scope", node)) {
+		else if (node == this.group.element || !Mavo.is("group", node)) {
 			syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
 			if (syntax === Mavo.Expression.Syntax.ESCAPE) {
@@ -459,12 +459,12 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 				}
 
 				// Look in ancestors
-				var ret = this.walkUp(scope => {
-					if (property in scope.properties) {
+				var ret = this.walkUp(group => {
+					if (property in group.properties) {
 						// TODO decouple
-						scope.expressions.dependents.add(this.expressions);
+						group.expressions.dependents.add(this.expressions);
 
-						return scope.properties[property].getRelativeData(o);
+						return group.properties[property].getRelativeData(o);
 					};
 				});
 
@@ -484,8 +484,8 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 				}
 
 				// First look in ancestors
-				var ret = this.walkUp(scope => {
-					if (property in scope.properties) {
+				var ret = this.walkUp(group => {
+					if (property in group.properties) {
 						return true;
 					};
 				});
@@ -521,7 +521,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true
 	return ret;
 };
 
-Mavo.hooks.add("scope-init-start", function() {
+Mavo.hooks.add("group-init-start", function() {
 	new Mavo.Expressions(this);
 });
 Mavo.hooks.add("primitive-init-start", function() {
@@ -533,15 +533,15 @@ Mavo.hooks.add("primitive-init-start", function() {
 	}
 });
 
-Mavo.hooks.add("scope-init-end", function() {
+Mavo.hooks.add("group-init-end", function() {
 	this.expressions.update();
 });
 
-Mavo.hooks.add("scope-render-start", function() {
+Mavo.hooks.add("group-render-start", function() {
 	this.expressions.active = false;
 });
 
-Mavo.hooks.add("scope-render-end", function() {
+Mavo.hooks.add("group-render-end", function() {
 	requestAnimationFrame(() => {
 		this.expressions.active = true;
 		this.expressions.update();

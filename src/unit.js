@@ -1,5 +1,5 @@
 /*
- * Mavo Unit: Super class that Scope and Primitive inherit from
+ * Mavo Unit: Super class that Group and Primitive inherit from
  */
 (function($, $$) {
 
@@ -14,7 +14,7 @@ var _ = Mavo.Unit = $.Class({
 
 		if (this.collection) {
 			// This is a collection item
-			this.scope = this.parentScope = this.collection.parentScope;
+			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 
 		if (!this.fromTemplate("computed", "required")) {
@@ -26,7 +26,7 @@ var _ = Mavo.Unit = $.Class({
 	},
 
 	/**
-	 * Check if this unit is either deleted or inside a deleted scope
+	 * Check if this unit is either deleted or inside a deleted group
 	 */
 	isDeleted: function() {
 		var ret = this.deleted;
@@ -35,7 +35,7 @@ var _ = Mavo.Unit = $.Class({
 			return true;
 		}
 
-		return !!this.parentScope && this.parentScope.isDeleted();
+		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
 	getData: function(o) {
@@ -49,9 +49,9 @@ var _ = Mavo.Unit = $.Class({
 			return null;
 		}
 
-		// Check if any of the parent scopes doesn't return data
-		this.walkUp(scope => {
-			if (isNull(scope)) {
+		// Check if any of the parentgroups doesn't return data
+		this.walkUp(group => {
+			if (isNull(group)) {
 				return null;
 			}
 		});
@@ -60,8 +60,8 @@ var _ = Mavo.Unit = $.Class({
 	lazy: {
 		closestCollection: function() {
 			return this.collection ||
-			       this.scope.collection ||
-			       (this.parentScope? this.parentScope.closestCollection : null);
+			       this.group.collection ||
+			       (this.parentGroup? this.parentGroup.closestCollection : null);
 		}
 	},
 
@@ -132,9 +132,9 @@ var _ = Mavo.Unit = $.Class({
 
 	static: {
 		get: function(element, prioritizePrimitive) {
-			var scope = Mavo.Scope.all.get(element);
+			var group = Mavo.Group.all.get(element);
 
-			return (prioritizePrimitive || !scope)? Mavo.Primitive.all.get(element) : scope;
+			return (prioritizePrimitive || !group)? Mavo.Primitive.all.get(element) : group;
 		},
 
 		create: function(element, mavo, o = {}) {
@@ -142,7 +142,7 @@ var _ = Mavo.Unit = $.Class({
 				throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
 			}
 
-			return new Mavo[Mavo.is("scope", element)? "Scope" : "Primitive"](element, mavo, o);
+			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
 		}
 	}
 });

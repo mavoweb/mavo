@@ -22,10 +22,10 @@ var _ = Mavo.Node = $.Class({
 
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
-			this.type = Mavo.Scope.normalize(element);
+			this.type = Mavo.Group.normalize(element);
 		}
 
-		this.scope = this.parentScope = o.scope;
+		this.group = this.parentGroup = o.group;
 
 		Mavo.hooks.run("node-init-end", this);
 	},
@@ -55,10 +55,10 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	walkUp: function(callback) {
-		var scope = this;
+		var group = this;
 
-		while (scope = scope.parentScope) {
-			var ret = callback(scope);
+		while (group = group.parentGroup) {
+			var ret = callback(group);
 
 			if (ret !== undefined) {
 				return ret;

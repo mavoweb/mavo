@@ -215,7 +215,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.autoEdit = _.has("autoedit", element);
 
-			this.element = _.is("scope", element) ? element : $(_.selectors.rootScope, element);
+			this.element = _.is("group", element) ? element : $(_.selectors.rootGroup, element);
 
 			if (!this.element) {
 				element.setAttribute("typeof", element.getAttribute("property") || "");
@@ -246,7 +246,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
 			// Apply heuristic for collections
-			$$(_.selectors.property + ", " + _.selectors.scope, element).concat([this.element]).forEach(function (element) {
+			$$(_.selectors.property + ", " + _.selectors.group, element).concat([this.element]).forEach(function (element) {
 				if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
 					element.setAttribute("data-multiple", "");
 				}
@@ -260,14 +260,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			// Apply heuristic for scopes
+			// Apply heuristic forgroups
 			$$(_.selectors.primitive, element).forEach(function (element) {
-				var isScope = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element) && ( // Contains other properties or non-form elements and...
+				var isGroup = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element) && ( // Contains other properties or non-form elements and...
 				Mavo.is("multiple", element) || // is a collection...
 				Mavo.Primitive.getValueAttribute(element) === null // ...or its content is not in an attribute
 				) || element.matches("template");
 
-				if (isScope) {
+				if (isGroup) {
 					element.setAttribute("typeof", "");
 				}
 			});
@@ -725,11 +725,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				specificProperty: function specificProperty(name) {
 					return "[property=" + name + "], [itemprop=" + name + "]";
 				},
-				scope: "[typeof], [itemscope], [itemtype], .mv-group",
+				group: "[typeof], [itemscope], [itemtype], .mv-group",
 				multiple: "[multiple], [data-multiple], .multiple",
 				required: "[required], [data-required], .required",
 				formControl: "input, select, option, textarea",
-				computed: ".computed", // Properties or scopes with computed properties, will not be saved
+				computed: ".computed", // Properties orgroups with computed properties, will not be saved
 				item: ".mv-item",
 				ui: ".mv-ui",
 				option: function option(name) {
@@ -772,8 +772,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			};
 
 			$.extend(_.selectors, {
-				primitive: andNot(s.property, s.scope),
-				rootScope: andNot(s.scope, s.property),
+				primitive: andNot(s.property, s.group),
+				rootGroup: andNot(s.group, s.property),
 				output: or(s.specificProperty("output"), ".output, .value"),
 				autoMultiple: and("li, tr, option", ":only-of-type")
 			});
@@ -1411,10 +1411,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (!this.fromTemplate("property", "type")) {
 				this.property = _.getProperty(element);
-				this.type = Mavo.Scope.normalize(element);
+				this.type = Mavo.Group.normalize(element);
 			}
 
-			this.scope = this.parentScope = o.scope;
+			this.group = this.parentGroup = o.group;
 
 			Mavo.hooks.run("node-init-end", this);
 		},
@@ -1444,10 +1444,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		walkUp: function walkUp(callback) {
-			var scope = this;
+			var group = this;
 
-			while (scope = scope.parentScope) {
-				var ret = callback(scope);
+			while (group = group.parentGroup) {
+				var ret = callback(group);
 
 				if (ret !== undefined) {
 					return ret;
@@ -1549,7 +1549,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 "use strict";
 
 /*
- * Mavo Unit: Super class that Scope and Primitive inherit from
+ * Mavo Unit: Super class that Group and Primitive inherit from
  */
 (function ($, $$) {
 
@@ -1566,7 +1566,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.collection) {
 				// This is a collection item
-				this.scope = this.parentScope = this.collection.parentScope;
+				this.group = this.parentGroup = this.collection.parentGroup;
 			}
 
 			if (!this.fromTemplate("computed", "required")) {
@@ -1578,7 +1578,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
-   * Check if this unit is either deleted or inside a deleted scope
+   * Check if this unit is either deleted or inside a deleted group
    */
 		isDeleted: function isDeleted() {
 			var ret = this.deleted;
@@ -1587,7 +1587,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return true;
 			}
 
-			return !!this.parentScope && this.parentScope.isDeleted();
+			return !!this.parentGroup && this.parentGroup.isDeleted();
 		},
 
 		getData: function getData(o) {
@@ -1601,9 +1601,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return null;
 			}
 
-			// Check if any of the parent scopes doesn't return data
-			this.walkUp(function (scope) {
-				if (isNull(scope)) {
+			// Check if any of the parentgroups doesn't return data
+			this.walkUp(function (group) {
+				if (isNull(group)) {
 					return null;
 				}
 			});
@@ -1611,7 +1611,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		lazy: {
 			closestCollection: function closestCollection() {
-				return this.collection || this.scope.collection || (this.parentScope ? this.parentScope.closestCollection : null);
+				return this.collection || this.group.collection || (this.parentGroup ? this.parentGroup.closestCollection : null);
 			}
 		},
 
@@ -1681,9 +1681,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			get: function get(element, prioritizePrimitive) {
-				var scope = Mavo.Scope.all.get(element);
+				var group = Mavo.Group.all.get(element);
 
-				return prioritizePrimitive || !scope ? Mavo.Primitive.all.get(element) : scope;
+				return prioritizePrimitive || !group ? Mavo.Primitive.all.get(element) : group;
 			},
 
 			create: function create(element, mavo) {
@@ -1693,7 +1693,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
 				}
 
-				return new Mavo[Mavo.is("scope", element) ? "Scope" : "Primitive"](element, mavo, o);
+				return new Mavo[Mavo.is("group", element) ? "Group" : "Primitive"](element, mavo, o);
 			}
 		}
 	});
@@ -1929,7 +1929,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// No node provided, figure it out from path
 					this.node = this.path.reduce(function (node, index) {
 						return node.childNodes[index];
-					}, this.all.scope.element);
+					}, this.all.group.element);
 				}
 
 				this.element = this.node;
@@ -2032,7 +2032,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			proxy: {
-				scope: "all"
+				group: "all"
 			},
 
 			static: {
@@ -2067,20 +2067,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	(function () {
 
 		var _ = Mavo.Expressions = $.Class({
-			constructor: function constructor(scope) {
+			constructor: function constructor(group) {
 				var _this2 = this;
 
-				if (scope) {
-					this.scope = scope;
-					this.scope.expressions = this;
+				if (group) {
+					this.group = group;
+					this.group.expressions = this;
 				}
 
-				this.all = []; // all Expression.Text objects in this scope
+				this.all = []; // all Expression.Text objects in this group
 
 				Mavo.hooks.run("expressions-init-start", this);
 
-				if (this.scope) {
-					var template = this.scope.template;
+				if (this.group) {
+					var template = this.group.template;
 
 					if (template && template.expressions) {
 						// We know which expressions we have, don't traverse again
@@ -2115,8 +2115,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					} else {
-						var syntax = Mavo.Expression.Syntax.create(this.scope.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
-						this.traverse(this.scope.element, undefined, syntax);
+						var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
+						this.traverse(this.group.element, undefined, syntax);
 					}
 				}
 
@@ -2125,7 +2125,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.active = true;
 
 				// Watch changes and update value
-				this.scope.element.addEventListener("mavo:datachange", function (evt) {
+				this.group.element.addEventListener("mavo:datachange", function (evt) {
 					return _this2.update();
 				});
 
@@ -2133,14 +2133,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			/**
-    * Update all expressions in this scope
+    * Update all expressions in this group
     */
 			update: function callee() {
-				if (!this.active || this.scope.isDeleted() || this.all.length + this.dependents.size === 0) {
+				if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
 					return;
 				}
 
-				var env = { context: this, data: this.scope.getRelativeData() };
+				var env = { context: this, data: this.group.getRelativeData() };
 
 				Mavo.hooks.run("expressions-update-start", env);
 
@@ -2220,9 +2220,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// Leaf node, extract references from content
 					this.extract(node, null, path, syntax);
 				}
-				// Traverse children and attributes as long as this is NOT the root of a child scope
+				// Traverse children and attributes as long as this is NOT the root of a child group
 				// (otherwise, it will be taken care of its own Expressions object)
-				else if (node == this.scope.element || !Mavo.is("scope", node)) {
+				else if (node == this.group.element || !Mavo.is("group", node)) {
 						syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
 						if (syntax === Mavo.Expression.Syntax.ESCAPE) {
@@ -2262,12 +2262,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// Look in ancestors
-					var ret = _this4.walkUp(function (scope) {
-						if (property in scope.properties) {
+					var ret = _this4.walkUp(function (group) {
+						if (property in group.properties) {
 							// TODO decouple
-							scope.expressions.dependents.add(_this4.expressions);
+							group.expressions.dependents.add(_this4.expressions);
 
-							return scope.properties[property].getRelativeData(o);
+							return group.properties[property].getRelativeData(o);
 						};
 					});
 
@@ -2287,8 +2287,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// First look in ancestors
-					var ret = _this4.walkUp(function (scope) {
-						if (property in scope.properties) {
+					var ret = _this4.walkUp(function (group) {
+						if (property in group.properties) {
 							return true;
 						};
 					});
@@ -2326,7 +2326,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		return ret;
 	};
 
-	Mavo.hooks.add("scope-init-start", function () {
+	Mavo.hooks.add("group-init-start", function () {
 		new Mavo.Expressions(this);
 	});
 	Mavo.hooks.add("primitive-init-start", function () {
@@ -2338,15 +2338,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	Mavo.hooks.add("scope-init-end", function () {
+	Mavo.hooks.add("group-init-end", function () {
 		this.expressions.update();
 	});
 
-	Mavo.hooks.add("scope-render-start", function () {
+	Mavo.hooks.add("group-render-start", function () {
 		this.expressions.active = false;
 	});
 
-	Mavo.hooks.add("scope-render-end", function () {
+	Mavo.hooks.add("group-render-end", function () {
 		var _this5 = this;
 
 		requestAnimationFrame(function () {
@@ -2789,34 +2789,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 (function ($, $$) {
 
-	var _ = Mavo.Scope = $.Class({
+	var _ = Mavo.Group = $.Class({
 		extends: Mavo.Unit,
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
 			this.properties = {};
 
-			this.scope = this;
+			this.group = this;
 
-			Mavo.hooks.run("scope-init-start", this);
+			Mavo.hooks.run("group-init-start", this);
 
 			// Should this element also create a primitive?
 			if (Mavo.Primitive.getValueAttribute(this.element)) {
-				var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, { scope: this });
+				var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, { group: this });
 			}
 
-			// Create Mavo objects for all properties in this scope (primitives or scopes),
-			// but not properties in descendant scopes (they will be handled by their scope)
+			// Create Mavo objects for all properties in this group (primitives orgroups),
+			// but not properties in descendantgroups (they will be handled by their group)
 			$$(Mavo.selectors.property, this.element).forEach(function (element) {
 				var property = Mavo.Node.getProperty(element);
 
 				if (_this.contains(element)) {
 					var existing = _this.properties[property];
 					var template = _this.template ? _this.template.properties[property] : null;
-					var constructorOptions = { template: template, scope: _this };
+					var constructorOptions = { template: template, group: _this };
 
 					if (existing) {
-						// Two scopes with the same property, convert to static collection
+						// Twogroups with the same property, convert to static collection
 						var collection = existing;
 
 						if (!(existing instanceof Mavo.Collection)) {
@@ -2842,7 +2842,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var vocabElement = (this.isRoot ? this.element.closest("[vocab]") : null) || this.element;
 			this.vocab = vocabElement.getAttribute("vocab");
 
-			Mavo.hooks.run("scope-init-end", this);
+			Mavo.hooks.run("group-init-end", this);
 		},
 
 		get isRoot() {
@@ -2934,12 +2934,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return;
 			}
 
-			Mavo.hooks.run("scope-render-start", this);
+			Mavo.hooks.run("group-render-start", this);
 
 			// TODO retain dropped elements
 			data = Array.isArray(data) ? data[0] : data;
 
-			// TODO what if it was a primitive and now it's a scope?
+			// TODO what if it was a primitive and now it's a group?
 			// In that case, render the this.properties[this.property] with it
 
 			this.unhandled = $.extend({}, data, function (property) {
@@ -2952,17 +2952,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.save();
 
-			Mavo.hooks.run("scope-render-end", this);
+			Mavo.hooks.run("group-render-end", this);
 		},
 
-		// Check if this scope contains a property
+		// Check if this group contains a property
 		// property can be either a Mavo.Unit or a Node
 		contains: function contains(property) {
 			if (property instanceof Mavo.Unit) {
-				return property.parentScope === this;
+				return property.parentGroup === this;
 			}
 
-			return property.parentNode && this.element === property.parentNode.closest(Mavo.selectors.scope);
+			return property.parentNode && this.element === property.parentNode.closest(Mavo.selectors.group);
 		},
 
 		static: {
@@ -2972,7 +2972,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			normalize: function normalize(element) {
 				// Get & normalize typeof name, if exists
-				if (Mavo.is("scope", element)) {
+				if (Mavo.is("group", element)) {
 					var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
 
 					element.setAttribute("typeof", type);
@@ -3261,7 +3261,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		revert: function revert() {
 			if (this.unsavedChanges && this.savedValue !== undefined) {
-				// FIXME if we have a collection of properties (not scopes), this will cause
+				// FIXME if we have a collection of properties (notgroups), this will cause
 				// cancel to not remove new unsaved items
 				// This should be fixed by handling this on the collection level.
 				this.value = this.savedValue;
@@ -4563,10 +4563,10 @@ Mavo.Primitive.register("button, .counter", {
 
 				// Find add button if provided, or generate one
 				var selector = "button.add-" + this.property;
-				var scope = this.closestCollection || this.marker.closest(Mavo.selectors.scope);
+				var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
 
-				if (scope) {
-					var button = $$(selector, scope).filter(function (button) {
+				if (group) {
+					var button = $$(selector, group).filter(function (button) {
 						return !_this4.templateElement.contains(button);
 					})[0];
 				}
@@ -5018,7 +5018,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return _.printValue(obj.value);
 			} else if (obj instanceof Mavo.Collection) {
 				if (obj.items.length > 0) {
-					if (obj.items[0] instanceof Mavo.Scope) {
+					if (obj.items[0] instanceof Mavo.Group) {
 						return "List: " + obj.items.length + " group(s)";
 					} else {
 						return "List: " + obj.items.map(_.printValue).join(", ");
@@ -5026,7 +5026,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				} else {
 					return _.printValue([]);
 				}
-			} else if (obj instanceof Mavo.Scope) {
+			} else if (obj instanceof Mavo.Group) {
 				// Group
 				return "Group with " + Object.keys(obj).length + " properties";
 			}
@@ -5124,9 +5124,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.hooks.add("scope-init-start", function () {
-		this.debug = this.debug || this.walkUp(function (scope) {
-			if (scope.debug) {
+	Mavo.hooks.add("group-init-start", function () {
+		this.debug = this.debug || this.walkUp(function (group) {
+			if (group.debug) {
 				return true;
 			}
 		}) || Mavo.urlParam("debug") !== null;
@@ -5162,7 +5162,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	});
 
 	Mavo.hooks.add("expressions-init-start", function () {
-		this.debug = this.scope.debug;
+		this.debug = this.group.debug;
 	});
 
 	Mavo.hooks.add("expression-eval-beforeeval", function () {
@@ -5178,7 +5178,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.Scope.prototype.debugRow = function (_ref2) {
+	Mavo.Group.prototype.debugRow = function (_ref2) {
 		var element = _ref2.element;
 		var _ref2$attribute = _ref2.attribute;
 		var attribute = _ref2$attribute === undefined ? null : _ref2$attribute;
@@ -5236,12 +5236,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.hooks.add("expressiontext-init-end", function () {
 		var _this = this;
 
-		if (this.scope.debug) {
+		if (this.group.debug) {
 			this.debug = {};
 
 			this.template.forEach(function (expr) {
 				if (expr instanceof Mavo.Expression && !_this.element.matches(".mv-debuginfo *")) {
-					_this.scope.debugRow({
+					_this.group.debugRow({
 						element: _this.element,
 						attribute: _this.attribute,
 						tds: ["Expression", {
@@ -5268,7 +5268,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.hooks.add("scope-init-end", function () {
+	Mavo.hooks.add("group-init-end", function () {
 		var _this2 = this;
 
 		// TODO make properties update, collapse duplicate expressions
@@ -5307,7 +5307,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			});
 
-			this.scope.element.addEventListener("mavo:datachange", function (evt) {
+			this.group.element.addEventListener("mavo:datachange", function (evt) {
 				$$("tr.debug-property", _this2.debug).forEach(function (tr) {
 					var property = tr.cells[1].textContent;
 					var value = _.printValue(_this2.properties[property]);
