@@ -33,38 +33,91 @@
 	]
 }</script>
 
+<section data-mavo="basicexpr">
+	<h2>Basic</h2>
+
+	<p>First column must be the same as the second.</p>
+
+	<table>
+		<tr>
+			<td>[40 + 2]</td>
+			<td>42</td>
+		</tr>
+		<tr>
+			<td>[40 +]</td>
+			<td>40 +</td>
+		</tr>
+		<tr>
+			<td><input value="[39 + 3]"></td>
+			<td><input value="42"></td>
+		</tr>
+	</table>
+
+</section>
+
 <section data-store="#countries">
 	<h2>With render (country data)</h2>
 
-	<ul>
-		<li property="country" data-multiple data-foo="[code]">
-			<span property="code">Code</span>
-			Expr: [code]
-			<br>
-			<span property="name" data-foo="[name]">Name</span>
-			Expr: [name]
-			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
-			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
-		</li>
-	</ul>
-	List: [country]
-	<div>Boolean count (must be 1): [count(isUS)]</div>
+	<p>First column must be the same as the second.</p>
+
+	<table>
+		<tr>
+			<td>
+				<ul>
+					<li property="country" data-multiple>
+						<span property="code"></span> [code]
+						<span property="name"></span> [name]
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online Online</li>
+					<li>usus United States UnitedStates</li>
+					<li>gbgb United Kingdom United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<td>[country]</td>
+			<td data-expressions="none">[object Object], [object Object], [object Object]</td>
+		</tr>
+		<tr>
+			<td>[count(code == us)]</td>
+			<td>1</td>
+		</tr>
+	</table>
 </section>
 
 <section class="mavo">
 	<h2>Without render</h2>
-	<ul>
-		<li property="country" data-multiple data-foo="[code]">
-			<span property="code">Code</span>
-			Expr: [code]
-			<br>
-			<span property="name" data-foo="[name]">Name</span>
-			Expr: [name]
-			<p>Computed property: isUS? <span property="isUS">[code == 'us']</span></p>
-			<p>Computed property based on computed property: isUSTrue? <span property="isUSTrue">[isUS === true]</span></p>
-		</li>
-	</ul>
-	List: [country]
+	<p>First column must be the same as the second.</p>
+
+	<table>
+		<tr>
+			<td>
+				<ul>
+					<li property="country" data-multiple>
+						<span property="code">Code</span> [code]
+						<span property="name">Name</span> [name]
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Code Code Name Name</li>
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<td>[country]</td>
+			<td data-expressions="none">[object Object]</td>
+		</tr>
+		<tr>
+			<td>[count(code)]</td>
+			<td>1</td>
+		</tr>
+	</table>
 </section>
 
 <script type="application/json" id="restaurants">{
@@ -147,11 +200,25 @@
 <section class="mavo">
 	<h1>data-content</h1>
 
-	<p>Everything should be either green or the number 42 or "With bug".</p>
-	<div data-content="39 + 3">Without expression syntax</div>
-	<div data-content="[44 - 2]">With expression syntax</div>
-	<div data-content="(39 + 3">With bug</div>
-	<div style="background: red" data-content="background: hsl([40 + 40], 100%, 50%)" data-attribute="style">With concatenation</div>
+	<p>First column must be the same as the second.</p>
+
+	<table>
+		<tr>
+			<td><div data-content="39 + 3">Without expression syntax</div></td>
+			<td>42</td>
+		</tr>
+		<tr>
+			<td><div data-content="(39 + 3">With bug</div></td>
+			<td>With bug</td>
+		</tr>
+		<tr>
+			<td><input data-content="39 + 3" value="In attribute"></td>
+			<td><input value="42"></td>
+		</tr>
+	</table>
+
+
+
 </section>
 
 <script src="../dist/mavo.js"></script>

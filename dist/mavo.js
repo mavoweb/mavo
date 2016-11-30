@@ -1537,7 +1537,7 @@ var _ = Mavo.Expression = $.Class({
 		catch (exception) {
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
-			this.value = _.ERROR;
+			this.value = exception;
 		}
 
 		return this.value;
@@ -1556,8 +1556,6 @@ var _ = Mavo.Expression = $.Class({
 	},
 
 	static: {
-		ERROR: "N/A",
-
 		/**
 		 * These serializers transform the AST into JS
 		 */
@@ -1715,6 +1713,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		this.node = o.node;
 		this.path = o.path;
 		this.syntax = o.syntax;
+		this.fallback = o.fallback;
 
 		if (!this.node) {
 			// No node provided, figure it out from path
@@ -1728,12 +1727,11 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		if (this.attribute == "data-content") {
 			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-			this.expression = Mavo.Primitive.getValue(this.element, "data-content", null, {raw: true});
+			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, {raw: true});
+			this.expression = this.element.getAttribute("data-content");
 
-			if (!this.syntax.test(this.expression)) {
-				// If no delimiters, assume entire thing is an expression
-				this.expression = this.syntax.start + this.expression + this.syntax.end;
-			}
+			this.template = [new Mavo.Expression(this.expression)];
+			this.expression = this.syntax.start + this.expression + this.syntax.end;
 		}
 		else {
 			if (this.node.nodeType === 3) {
@@ -1748,9 +1746,9 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 			this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
-		}
 
-		this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
+			this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
+		}
 
 		Mavo.hooks.run("expressiontext-init-end", this);
 
@@ -1772,6 +1770,9 @@ var _ = Mavo.Expression.Text = $.Class({
 
 				Mavo.hooks.run("expressiontext-update-aftereval", env);
 
+				if (env.value instanceof Error) {
+					return this.fallback !== undefined? this.fallback : env.expr.expression;
+				}
 				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
 					return "";
