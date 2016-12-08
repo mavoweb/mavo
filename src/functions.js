@@ -79,7 +79,10 @@ var _ = Mavo.Functions = {
 	idify: readable => ((text || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters
-		.toLowerCase()
+		.toLowerCase(),
+
+	uppercase: str => (str + "").toUpperCase(),
+	lowercase: str => (str + "").toLowerCase(),
 };
 
 Mavo.Script = {

@@ -2528,6 +2528,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.replace(/[^\w-]/g, "") // Remove weird characters
 			.toLowerCase();
+		},
+
+		uppercase: function uppercase(str) {
+			return (str + "").toUpperCase();
+		},
+		lowercase: function lowercase(str) {
+			return (str + "").toLowerCase();
 		}
 	};
 
@@ -2953,7 +2960,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			ret = {};
 
 			this.propagate(function (obj) {
-				if ((obj.saved || !o.store == "*") && !(obj.property in ret)) {
+				if ((obj.saved || o.store == "*") && !(obj.property in ret)) {
 					var data = obj.getData(o);
 
 					if (data !== null || o.null) {
@@ -2966,6 +2973,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				$.extend(ret, this.unhandled);
 			}
 
+			// JSON-LD stuff
 			if (this.type && this.type != _.DEFAULT_TYPE) {
 				ret["@type"] = this.type;
 			}
@@ -2974,7 +2982,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				ret["@context"] = this.vocab;
 			}
 
-			if (this.properties.summary) {
+			// Special summary property works like toString
+			if (ret.summary) {
 				ret.toString = function () {
 					return this.summary;
 				};

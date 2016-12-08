@@ -71,7 +71,7 @@ var _ = Mavo.Group = $.Class({
 		ret = {};
 
 		this.propagate(obj => {
-			if ((obj.saved || !o.store == "*") && !(obj.property in ret)) {
+			if ((obj.saved || o.store == "*") && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
 				if (data !== null || o.null) {
@@ -84,6 +84,7 @@ var _ = Mavo.Group = $.Class({
 			$.extend(ret, this.unhandled);
 		}
 
+		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {
 			ret["@type"] = this.type;
 		}
@@ -92,7 +93,8 @@ var _ = Mavo.Group = $.Class({
 			ret["@context"] = this.vocab;
 		}
 
-		if (this.properties.summary) {
+		// Special summary property works like toString
+		if (ret.summary) {
 			ret.toString = function() {
 				return this.summary;
 			};
