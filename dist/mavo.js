@@ -2520,6 +2520,12 @@ var _ = Mavo.Group = $.Class({
 			ret["@context"] = this.vocab;
 		}
 
+		if (this.properties.summary) {
+			ret.toString = function() {
+				return this.summary;
+			};
+		}
+
 		return ret;
 	},
 
