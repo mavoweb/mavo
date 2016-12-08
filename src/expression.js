@@ -444,8 +444,9 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true, null: true }) {
+Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, store: "*", null: true }) {
 	o.unhandled = this.mavo.unhandled;
+
 	var ret = this.getData(o);
 
 	if (self.Proxy && ret && typeof ret === "object") {
@@ -527,10 +528,11 @@ Mavo.hooks.add("group-init-start", function() {
 });
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
-	this.computed = !!this.expressionText;
 
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
+		this.store = this.store || "none";
+		this.constant = true;
 	}
 });
 

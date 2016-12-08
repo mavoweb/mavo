@@ -40,7 +40,7 @@
 
 	<table>
 		<tr>
-			<td>[40 + 2]</td>
+			<td property="prop1">[40 + 2]</td>
 			<td>42</td>
 		</tr>
 		<tr>
@@ -50,6 +50,18 @@
 		<tr>
 			<td><input value="[39 + 3]"></td>
 			<td><input value="42"></td>
+		</tr>
+		<tr>
+			<td property="prop2">[prop1 + 1]</td>
+			<td>43</td>
+		</tr>
+		<tr>
+			<td property="prop3">[prop2 + 1]</td>
+			<td>44</td>
+		</tr>
+		<tr>
+			<td>[prop3 + 1]</td>
+			<td>45</td>
 		</tr>
 	</table>
 

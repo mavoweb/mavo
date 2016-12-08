@@ -648,7 +648,7 @@ var _ = self.Mavo = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			this.wrapper[`${value? "set" : "remove"}Attribute`]("data-mv-progress", value);
+			$.toggleAttribute(this.wrapper, "data-mv-progress", value, value);
 		},
 
 		editing: {
@@ -674,7 +674,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			this.ui.bar[`${value? "remove" : "set"}Attribute`]("hidden", "");
+			$.toggleAttribute(this.ui.bar, "hidden", "", value);
 		}
 	},
 
@@ -683,7 +683,11 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: container => $$(_.selectors.init, container || document).map(element => new _(element)),
+		init: function(container) {
+			return $$(_.selectors.init, container || document)
+				.filter(element => !element.parentNode.closest(_.selectors.init))
+				.map(element => new _(element));
+		},
 
 		hooks: new $.Hooks()
 	}
@@ -699,7 +703,6 @@ let s = _.selectors = {
 	multiple: "[multiple], [data-multiple], .multiple",
 	required: "[required], [data-required], .required",
 	formControl: "input, select, option, textarea",
-	computed: ".computed", // Properties orgroups with computed properties, will not be saved
 	item: ".mv-item",
 	ui: ".mv-ui",
 	option: name => `[${name}], [data-${name}], .${name}`,
@@ -855,6 +858,15 @@ var _ = $.extend(Mavo, {
 
 // Bliss plugins
 
+$.add("toggleAttribute", function(name, value, test = value !== null) {
+	if (test) {
+		this.setAttribute(name, value);
+	}
+	else {
+		this.removeAttribute(name);
+	}
+});
+
 // Provide shortcuts to long property chains
 $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 	Object.defineProperty(obj, property, {
@@ -899,12 +911,16 @@ document.addEventListener("focus", evt => {
 	updateWithin("focus", evt.target);
 }, true);
 
+document.addEventListener("blur", evt => {
+	updateWithin("focus", null);
+}, true);
+
 addEventListener("hashchange", evt => {
 	updateWithin("target", $(location.hash));
 }, true);
 
 updateWithin("target", $(location.hash));
-updateWithin("focus", document.activeElement);
+updateWithin("focus", document.activeElement !== document.body? document.activeElement : null);
 
 })(Bliss, Bliss.$);
 
@@ -1381,12 +1397,16 @@ var _ = Mavo.Unit = $.Class({
 			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 
-		if (!this.fromTemplate("computed", "required")) {
-			this.computed = Mavo.is("computed", this.element);
+		if (!this.fromTemplate("required", "store")) {
 			this.required = Mavo.is("required", this.element);
+			this.store = this.element.getAttribute("data-store");
 		}
 
 		Mavo.hooks.run("unit-init-end", this);
+	},
+
+	get saved() {
+		return this.store !== "none";
 	},
 
 	/**
@@ -1407,13 +1427,13 @@ var _ = Mavo.Unit = $.Class({
 
 		var isNull = unit => unit.dirty && !o.dirty ||
 		                     unit.deleted && o.dirty ||
-		                     unit.computed && !o.computed;
+		                     !unit.saved && (o.store != "*");
 
 		if (isNull(this)) {
 			return null;
 		}
 
-		// Check if any of the parentgroups doesn't return data
+		// Check if any of the parent groups doesn't return data
 		this.walkUp(group => {
 			if (isNull(group)) {
 				return null;
@@ -1430,6 +1450,10 @@ var _ = Mavo.Unit = $.Class({
 	},
 
 	live: {
+		store: function(value) {
+			$.toggleAttribute(this.element, "data-store", value);
+		},
+
 		deleted: function(value) {
 			this.element.classList.toggle("deleted", value);
 
@@ -1484,7 +1508,7 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			if (value && (this.computed || !this.editing)) {
+			if (value && (!this.saved || !this.editing)) {
 				value = false;
 			}
 
@@ -1959,8 +1983,9 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, computed: true, null: true }) {
+Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, store: "*", null: true }) {
 	o.unhandled = this.mavo.unhandled;
+
 	var ret = this.getData(o);
 
 	if (self.Proxy && ret && typeof ret === "object") {
@@ -2042,10 +2067,11 @@ Mavo.hooks.add("group-init-start", function() {
 });
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
-	this.computed = !!this.expressionText;
 
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
+		this.store = this.store || "none";
+		this.constant = true;
 	}
 });
 
@@ -2473,8 +2499,7 @@ var _ = Mavo.Group = $.Class({
 		ret = {};
 
 		this.propagate(obj => {
-
-			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
+			if ((obj.saved || !o.store == "*") && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
 				if (data !== null || o.null) {
@@ -2600,7 +2625,7 @@ var _ = Mavo.Group = $.Class({
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
+		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue", "constant")) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -2610,11 +2635,11 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
+
+			this.constant = this.element.classList.contains("mv-constant");
 		}
 
 		this.view = "read";
-
-		this.computed = false;
 
 		Mavo.hooks.run("primitive-init-start", this);
 
@@ -2630,7 +2655,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.edit();
 		}
 		else if (this.needsEdit) {
-			// If this is NOT exposed and NOT computed, we need an edit button
 			this.mavo.needsEdit = true;
 		}
 
@@ -2672,7 +2696,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.default = this.element.getAttribute("data-default");
 
-		if (this.computed || this.constant || this.default === "") { // attribute exists, no value, default is template value
+		if (this.constant || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
 		}
 		else if (this.default === null) { // attribute does not exist
@@ -2782,12 +2806,8 @@ var _ = Mavo.Primitive = $.Class({
 		return this.editor === this.element;
 	},
 
-	get constant() {
-		return this.element.classList.contains("mv-constant");
-	},
-
 	get needsEdit() {
-		return !(this.exposed || this.constant || this.computed);
+		return !(this.exposed || this.constant);
 	},
 
 	getData: function(o) {
@@ -2852,7 +2872,7 @@ var _ = Mavo.Primitive = $.Class({
 	// Prepare to be edited
 	// Called when root edit button is pressed
 	preEdit: function () {
-		if (this.computed || this.constant) {
+		if (this.constant) {
 			return;
 		}
 
@@ -2956,6 +2976,10 @@ var _ = Mavo.Primitive = $.Class({
 			"focus": evt => {
 				this.editor.select && this.editor.select();
 			},
+			"keyup": evt => {
+
+
+			},
 			"mavo:datachange": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
@@ -2990,7 +3014,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.computed || this.constant || this.editing) {
+		if (this.constant || this.editing) {
 			return;
 		}
 
@@ -3049,7 +3073,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	observe: function() {
-		if (!this.computed && !this.constant) {
+		if (!this.constant) {
 			this.observer = Mavo.observe(this.element, this.attribute, this.observer || (record => {
 				if (this.attribute || !this.mavo.editing) {
 					this.value = this.getValue();
@@ -3122,7 +3146,7 @@ var _ = Mavo.Primitive = $.Class({
 		this._value = value;
 
 		if (!o.silent) {
-			if (!this.computed) {
+			if (this.saved) {
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
@@ -3152,7 +3176,7 @@ var _ = Mavo.Primitive = $.Class({
 			return this.setValue(value);
 		},
 
-		empty: function(value) {
+		empty: function (value) {
 			var hide = value && !this.exposed && !(this.attribute && $(Mavo.selectors.property, this.element));
 			this.element.classList.toggle("empty", hide);
 		},
@@ -3161,8 +3185,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.element.classList.toggle("editing", value == "edit");
 		},
 
-		computed: function (value) {
-			this.element.classList.toggle("computed", value);
+		constant: function (value) {
+			this.element.classList.toggle("mv-constant", value);
 		}
 	},
 

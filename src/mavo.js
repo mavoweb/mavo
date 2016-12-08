@@ -453,7 +453,7 @@ var _ = self.Mavo = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			this.wrapper[`${value? "set" : "remove"}Attribute`]("data-mv-progress", value);
+			$.toggleAttribute(this.wrapper, "data-mv-progress", value, value);
 		},
 
 		editing: {
@@ -479,7 +479,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			this.ui.bar[`${value? "remove" : "set"}Attribute`]("hidden", "");
+			$.toggleAttribute(this.ui.bar, "hidden", "", value);
 		}
 	},
 
@@ -488,7 +488,11 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
-		init: container => $$(_.selectors.init, container || document).map(element => new _(element)),
+		init: function(container) {
+			return $$(_.selectors.init, container || document)
+				.filter(element => !element.parentNode.closest(_.selectors.init))
+				.map(element => new _(element));
+		},
 
 		hooks: new $.Hooks()
 	}
@@ -504,7 +508,6 @@ let s = _.selectors = {
 	multiple: "[multiple], [data-multiple], .multiple",
 	required: "[required], [data-required], .required",
 	formControl: "input, select, option, textarea",
-	computed: ".computed", // Properties orgroups with computed properties, will not be saved
 	item: ".mv-item",
 	ui: ".mv-ui",
 	option: name => `[${name}], [data-${name}], .${name}`,

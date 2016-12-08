@@ -22,9 +22,6 @@
 [hidden] {
   display: none; }
 
-[data-store]:not(.mv-wrapper) {
-  opacity: .5; }
-
 .mv-highlight {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.5) inset ; }
 
@@ -169,21 +166,21 @@
 
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) input.mv-editor,
 .mv-wrapper[data-editing] [itemprop]:not([itemscope]) select.mv-editor,
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.mv-editor,
-.mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) select.mv-editor,
-.mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.mv-editor {
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) input.mv-editor,
+.mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) select.mv-editor,
+.mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) textarea.mv-editor {
   all: unset;
   cursor: auto; }
 
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) .mv-editor:hover {
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) .mv-editor:hover, .mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) .mv-editor:hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) textarea.mv-editor {
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) textarea.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) textarea.mv-editor {
   display: block;
   box-sizing: border-box;
   width: 100%; }
 
-.mv-wrapper[data-editing] [itemprop]:not([itemscope]) input.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.computed) input.mv-editor {
+.mv-wrapper[data-editing] [itemprop]:not([itemscope]) input.mv-editor, .mv-wrapper[data-editing] [property]:not([typeof]):not(.mv-constant) input.mv-editor {
   max-width: 100%; }
 
 .mv-popup {

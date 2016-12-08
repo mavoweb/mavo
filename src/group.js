@@ -71,8 +71,7 @@ var _ = Mavo.Group = $.Class({
 		ret = {};
 
 		this.propagate(obj => {
-
-			if ((!obj.computed || o.computed) && !(obj.property in ret)) {
+			if ((obj.saved || !o.store == "*") && !(obj.property in ret)) {
 				var data = obj.getData(o);
 
 				if (data !== null || o.null) {

@@ -5,11 +5,6 @@
 	display: none;
 }
 
-[data-store]:not(.mv-wrapper) {
-	// Unprocessed items
-	opacity: .5;
-}
-
 .mv-highlight {
 	@include highlight(hsla(58, 100%, 50%, .5));
 }
@@ -223,7 +218,7 @@
 		}
 
 		// Primitives
-		#{$primitive}:not(.computed) {
+		#{$primitive}:not(.mv-constant) {
 			& input.mv-editor,
 			& select.mv-editor,
 			& textarea.mv-editor {
