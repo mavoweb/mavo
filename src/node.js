@@ -23,6 +23,7 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
+			this.store = this.element.getAttribute("data-store");
 		}
 
 		this.group = this.parentGroup = o.group;
@@ -40,6 +41,10 @@ var _ = Mavo.Node = $.Class({
 
 	get data() {
 		return this.getData();
+	},
+
+	get saved() {
+		return this.store !== "none";
 	},
 
 	walk: function(callback) {

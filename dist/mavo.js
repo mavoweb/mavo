@@ -1276,6 +1276,7 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
+			this.store = this.element.getAttribute("data-store");
 		}
 
 		this.group = this.parentGroup = o.group;
@@ -1293,6 +1294,10 @@ var _ = Mavo.Node = $.Class({
 
 	get data() {
 		return this.getData();
+	},
+
+	get saved() {
+		return this.store !== "none";
 	},
 
 	walk: function(callback) {
@@ -1397,16 +1402,11 @@ var _ = Mavo.Unit = $.Class({
 			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 
-		if (!this.fromTemplate("required", "store")) {
+		if (!this.fromTemplate("required")) {
 			this.required = Mavo.is("required", this.element);
-			this.store = this.element.getAttribute("data-store");
 		}
 
 		Mavo.hooks.run("unit-init-end", this);
-	},
-
-	get saved() {
-		return this.store !== "none";
 	},
 
 	/**
@@ -1425,17 +1425,13 @@ var _ = Mavo.Unit = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		var isNull = unit => unit.dirty && !o.dirty ||
-		                     unit.deleted && o.dirty ||
-		                     !unit.saved && (o.store != "*");
-
-		if (isNull(this)) {
+		if (_.isNull(this, o)) {
 			return null;
 		}
 
 		// Check if any of the parent groups doesn't return data
 		this.walkUp(group => {
-			if (isNull(group)) {
+			if (_.isNull(group, o)) {
 				return null;
 			}
 		});
@@ -1531,6 +1527,12 @@ var _ = Mavo.Unit = $.Class({
 			}
 
 			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
+		},
+
+		isNull: function(unit, o) {
+			return unit.dirty && !o.dirty ||
+		           unit.deleted && o.dirty ||
+		           !unit.saved && (o.store != "*");
 		}
 	}
 });

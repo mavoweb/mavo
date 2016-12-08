@@ -1435,6 +1435,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (!this.fromTemplate("property", "type")) {
 				this.property = _.getProperty(element);
 				this.type = Mavo.Group.normalize(element);
+				this.store = this.element.getAttribute("data-store");
 			}
 
 			this.group = this.parentGroup = o.group;
@@ -1452,6 +1453,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		get data() {
 			return this.getData();
+		},
+
+		get saved() {
+			return this.store !== "none";
 		},
 
 		walk: function walk(callback) {
@@ -1592,16 +1597,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.group = this.parentGroup = this.collection.parentGroup;
 			}
 
-			if (!this.fromTemplate("required", "store")) {
+			if (!this.fromTemplate("required")) {
 				this.required = Mavo.is("required", this.element);
-				this.store = this.element.getAttribute("data-store");
 			}
 
 			Mavo.hooks.run("unit-init-end", this);
-		},
-
-		get saved() {
-			return this.store !== "none";
 		},
 
 		/**
@@ -1620,17 +1620,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		getData: function getData(o) {
 			o = o || {};
 
-			var isNull = function isNull(unit) {
-				return unit.dirty && !o.dirty || unit.deleted && o.dirty || !unit.saved && o.store != "*";
-			};
-
-			if (isNull(this)) {
+			if (_.isNull(this, o)) {
 				return null;
 			}
 
 			// Check if any of the parent groups doesn't return data
 			this.walkUp(function (group) {
-				if (isNull(group)) {
+				if (_.isNull(group, o)) {
 					return null;
 				}
 			});
@@ -1725,6 +1721,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return new Mavo[Mavo.is("group", element) ? "Group" : "Primitive"](element, mavo, o);
+			},
+
+			isNull: function isNull(unit, o) {
+				return unit.dirty && !o.dirty || unit.deleted && o.dirty || !unit.saved && o.store != "*";
 			}
 		}
 	});
