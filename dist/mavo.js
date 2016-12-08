@@ -1547,8 +1547,6 @@ var _ = Mavo.Expression = $.Class({
 	eval: function(data) {
 		this.oldValue = this.value;
 
-		// TODO convert to new Function() which is more optimizable by JS engines.
-		// Also, cache the function, since only data changes across invocations.
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
@@ -4781,6 +4779,7 @@ Mavo.hooks.add("expressiontext-init-end", function() {
 								events: {
 									input: evt => {
 										expr.expression = evt.target.value;
+										expr.debug = evt.target.parentNode.nextElementSibling;
 										this.update(this.data);
 									}
 								},

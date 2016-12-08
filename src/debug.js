@@ -311,6 +311,7 @@ Mavo.hooks.add("expressiontext-init-end", function() {
 								events: {
 									input: evt => {
 										expr.expression = evt.target.value;
+										expr.debug = evt.target.parentNode.nextElementSibling;
 										this.update(this.data);
 									}
 								},

@@ -1745,8 +1745,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		eval: function _eval(data) {
 			this.oldValue = this.value;
 
-			// TODO convert to new Function() which is more optimizable by JS engines.
-			// Also, cache the function, since only data changes across invocations.
 			Mavo.hooks.run("expression-eval-beforeeval", this);
 
 			try {
@@ -5287,6 +5285,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 								events: {
 									input: function input(evt) {
 										expr.expression = evt.target.value;
+										expr.debug = evt.target.parentNode.nextElementSibling;
 										_this.update(_this.data);
 									}
 								},
