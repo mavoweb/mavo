@@ -111,7 +111,7 @@ Mavo.Script = {
 				}
 			}
 
-			var prev = o.logical? true : operands[0], result;
+			var prev = o.logical? o.identity : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
 				let a = o.logical? operands[i - 1] : prev;
@@ -147,7 +147,12 @@ Mavo.Script = {
 				}
 
 				if (o.logical) {
-					prev = prev && result;
+					if (o.reduce) {
+						prev = o.reduce(prev, result);
+					}
+					else {
+						prev = prev && result;
+					}
 				}
 				else {
 					prev = result;
@@ -203,6 +208,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a <= b;
 			},
+			identity: true,
 			symbol: "<="
 		},
 		"lt": {
@@ -211,6 +217,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a < b;
 			},
+			identity: true,
 			symbol: "<"
 		},
 		"gte": {
@@ -219,6 +226,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a >= b;
 			},
+			identity: true,
 			symbol: ">="
 		},
 		"gt": {
@@ -227,13 +235,14 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a > b;
 			},
+			identity: true,
 			symbol: ">"
 		},
 		"eq": {
 			logical: true,
 			scalar: (a, b) => a == b,
 			symbol: ["=", "=="],
-			identity: null
+			identity: true
 		},
 		"and": {
 			logical: true,
@@ -244,6 +253,7 @@ Mavo.Script = {
 		"or": {
 			logical: true,
 			scalar: (a, b) => !!a || !!b,
+			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: "||"
 		}

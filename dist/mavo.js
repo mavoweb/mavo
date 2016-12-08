@@ -674,7 +674,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			$.toggleAttribute(this.ui.bar, "hidden", "", value);
+			$.toggleAttribute(this.ui.bar, "hidden", "", !value);
 		}
 	},
 
@@ -1741,21 +1741,15 @@ var _ = Mavo.Expression.Text = $.Class({
 			// No node provided, figure it out from path
 			this.node = this.path.reduce((node, index) => {
 				return node.childNodes[index];
-			}, this.all.group.element);
+			}, this.group.element);
 		}
 
 		this.element = this.node;
 		this.attribute = o.attribute || null;
 
-		if (this.attribute == "data-content") {
-			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, {raw: true});
-			this.expression = this.element.getAttribute("data-content");
+		Mavo.hooks.run("expressiontext-init-start", this);
 
-			this.template = [new Mavo.Expression(this.expression)];
-			this.expression = this.syntax.start + this.expression + this.syntax.end;
-		}
-		else {
+		if (!this.expression) { // Still unhandled?
 			if (this.node.nodeType === 3) {
 				this.element = this.node.parentNode;
 
@@ -1844,6 +1838,8 @@ var _ = Mavo.Expression.Text = $.Class({
 		else {
 			Mavo.Primitive.setValue(this.node, ret, this.attribute, {presentational: ret.presentational});
 		}
+
+		Mavo.hooks.run("expressiontext-update-end", this);
 	},
 
 	proxy: {
@@ -1918,8 +1914,6 @@ var _ = Mavo.Expressions = $.Class({
 
 		// Watch changes and update value
 		this.group.element.addEventListener("mavo:datachange", evt => this.update());
-
-		this.update();
 	},
 
 	/**
@@ -1944,7 +1938,7 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax) {
-		if ((attribute && attribute.name == "data-content") ||
+		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			this.all.push(new Mavo.Expression.Text({
@@ -1976,7 +1970,9 @@ var _ = Mavo.Expressions = $.Class({
 		}
 	},
 
-	static: {}
+	static: {
+		directives: ["data-if"]
+	}
 });
 
 })();
@@ -2063,6 +2059,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, store: "*", nu
 Mavo.hooks.add("group-init-start", function() {
 	new Mavo.Expressions(this);
 });
+
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
 
@@ -2089,6 +2086,58 @@ Mavo.hooks.add("group-render-end", function() {
 });
 
 })(Bliss, Bliss.$);
+
+// data-content plugin
+Mavo.Expressions.directives.push("data-content");
+
+Mavo.hooks.add("expressiontext-init-start", function() {
+	if (this.attribute == "data-content") {
+		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, {raw: true});
+		this.expression = this.element.getAttribute("data-content");
+
+		this.template = [new Mavo.Expression(this.expression)];
+		this.expression = this.syntax.start + this.expression + this.syntax.end;
+	}
+});
+
+// data-if plugin
+Mavo.Expressions.directives.push("data-if");
+
+Mavo.hooks.add("expressiontext-init-start", function() {
+	if (this.attribute == "data-if") {
+		this.expression = this.element.getAttribute("data-if");
+
+		this.template = [new Mavo.Expression(this.expression)];
+		this.expression = this.syntax.start + this.expression + this.syntax.end;
+	}
+});
+
+Mavo.hooks.add("expressiontext-update-end", function() {
+	if (this.attribute == "data-if") {
+		var value = this.value[0];
+
+		if (this.group.mavo.root) {
+			if ( !value && !Object.keys(this.group.properties).length) {
+				console.trace();
+			}
+			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+			if (value && this.comment && this.comment.parentNode) {
+				// Is removed from the DOM and needs to get back
+				this.comment.parentNode.replaceChild(this.element, this.comment);
+			}
+			else if (!value && this.element.parentNode) {
+				// Is in the DOM and needs to be removed
+				if (!this.comment) {
+					this.comment = document.createComment("mv-if");
+				}
+
+				this.element.parentNode.replaceChild(this.comment, this.element);
+			}
+		}
+
+	}
+});
 
 /**
  * Functions available inside Mavo expressions
@@ -2203,7 +2252,7 @@ Mavo.Script = {
 				}
 			}
 
-			var prev = o.logical? true : operands[0], result;
+			var prev = o.logical? o.identity : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
 				let a = o.logical? operands[i - 1] : prev;
@@ -2239,7 +2288,12 @@ Mavo.Script = {
 				}
 
 				if (o.logical) {
-					prev = prev && result;
+					if (o.reduce) {
+						prev = o.reduce(prev, result);
+					}
+					else {
+						prev = prev && result;
+					}
 				}
 				else {
 					prev = result;
@@ -2295,6 +2349,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a <= b;
 			},
+			identity: true,
 			symbol: "<="
 		},
 		"lt": {
@@ -2303,6 +2358,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a < b;
 			},
+			identity: true,
 			symbol: "<"
 		},
 		"gte": {
@@ -2311,6 +2367,7 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a >= b;
 			},
+			identity: true,
 			symbol: ">="
 		},
 		"gt": {
@@ -2319,13 +2376,14 @@ Mavo.Script = {
 				[a, b] = Mavo.Script.getNumericalOperands(a, b);
 				return a > b;
 			},
+			identity: true,
 			symbol: ">"
 		},
 		"eq": {
 			logical: true,
 			scalar: (a, b) => a == b,
 			symbol: ["=", "=="],
-			identity: null
+			identity: true
 		},
 		"and": {
 			logical: true,
@@ -2336,6 +2394,7 @@ Mavo.Script = {
 		"or": {
 			logical: true,
 			scalar: (a, b) => !!a || !!b,
+			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: "||"
 		}

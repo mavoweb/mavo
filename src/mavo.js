@@ -479,7 +479,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			$.toggleAttribute(this.ui.bar, "hidden", "", value);
+			$.toggleAttribute(this.ui.bar, "hidden", "", !value);
 		}
 	},
 
