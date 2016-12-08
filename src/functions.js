@@ -97,12 +97,11 @@ Mavo.Script = {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			for (let symbol of Mavo.toArray(o.symbol)) {
-
 				Mavo.Script.symbols[symbol] = name;
 			}
 		}
 
-		o.identity = o.identity || 0;
+		o.identity = o.identity === undefined? 0 : o.identity;
 
 		return _[name] = function(...operands) {
 			if (operands.length === 1) {
@@ -233,7 +232,8 @@ Mavo.Script = {
 		"eq": {
 			logical: true,
 			scalar: (a, b) => a == b,
-			symbol: ["=", "=="]
+			symbol: ["=", "=="],
+			identity: null
 		},
 		"and": {
 			logical: true,

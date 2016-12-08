@@ -2506,7 +2506,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 						var symbol = _step.value;
 
-
 						Mavo.Script.symbols[symbol] = name;
 					}
 				} catch (err) {
@@ -2525,7 +2524,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			o.identity = o.identity || 0;
+			o.identity = o.identity === undefined ? 0 : o.identity;
 
 			return _[name] = function () {
 				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
@@ -2704,7 +2703,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				scalar: function scalar(a, b) {
 					return a == b;
 				},
-				symbol: ["=", "=="]
+				symbol: ["=", "=="],
+				identity: null
 			},
 			"and": {
 				logical: true,
