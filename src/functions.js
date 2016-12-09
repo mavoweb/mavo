@@ -247,6 +247,12 @@ Mavo.Script = {
 			symbol: ["=", "=="],
 			identity: true
 		},
+		"neq": {
+			logical: true,
+			scalar: (a, b) => a != b,
+			symbol: ["!="],
+			identity: true
+		},
 		"and": {
 			logical: true,
 			scalar: (a, b) => !!a && !!b,

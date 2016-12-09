@@ -54,6 +54,12 @@
 		<dt title="4 operand equality">foo = bar = baz == yolo</dt>
 		<dd>eq(foo, bar, baz, yolo)</dd>
 
+		<dt>foo != bar</dt>
+		<dd>neq(foo, bar)</dd>
+
+		<dt>foo != bar != baz</dt>
+		<dd>neq(foo, bar, baz)</dd>
+
 		<dt title="Pass-through to JS">foo.filter(a => a + 5)</dt>
 
 		<dt title="Pass-through to JS">/* js */ 5+5</dt>
@@ -115,6 +121,15 @@
 		<dd>true</dd>
 
 		<dt>gt("1990-06-13", now)</dt>
+		<dd>false</dd>
+
+		<dt>neq(2, 2)</dt>
+		<dd>false</dd>
+
+		<dt>neq(foo, bar)</dt>
+		<dd>true</dd>
+
+		<dt>neq(2, 2, 3)</dt>
 		<dd>false</dd>
 
 		<dt>iff(4, 1, 2)</dt>
