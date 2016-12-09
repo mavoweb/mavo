@@ -188,20 +188,17 @@ var _ = Mavo.Primitive = $.Class({
 
 		var ret = this.super.getData.call(this, o);
 
-		if (ret === undefined) {
-			if (o.dirty) {
-				return this.value;
-			}
-			else {
-				ret = this.savedValue;
-
-				if (ret === "") {
-					return null;
-				}
-			}
+		if (ret !== undefined) {
+			return ret;
 		}
 
-		return ret;
+		ret = this.value;
+
+		if (ret === "") {
+			return null;
+		}
+
+		return ret; 
 	},
 
 	save: function() {
@@ -495,7 +492,6 @@ var _ = Mavo.Primitive = $.Class({
 					value: value,
 					mavo: this.mavo,
 					node: this,
-					dirty: this.editing,
 					action: "propertychange"
 				});
 			});

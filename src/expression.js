@@ -438,7 +438,7 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, store: "*", null: true }) {
+Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 	o.unhandled = this.mavo.unhandled;
 
 	var ret = this.getData(o);

@@ -10,7 +10,6 @@ var _ = Mavo.Unit = $.Class({
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
-		this.dirty = o.dirty;
 
 		if (this.collection) {
 			// This is a collection item
@@ -53,9 +52,7 @@ var _ = Mavo.Unit = $.Class({
 	},
 
 	isNull: function(o) {
-		return this.dirty && !o.dirty ||
-			   this.deleted && o.dirty ||
-			   !this.saved && (o.store != "*");
+		return this.deleted || !this.saved && (o.store != "*");
 	},
 
 	lazy: {

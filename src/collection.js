@@ -53,7 +53,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		});
 
-		if (!o.dirty && this.unhandled) {
+		if (this.unhandled) {
 			data = this.unhandled.before.concat(data, this.unhandled.after);
 		}
 
@@ -71,8 +71,7 @@ var _ = Mavo.Collection = $.Class({
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
-			type: this.type,
-			dirty: true
+			type: this.type
 		});
 
 		// Add delete & add buttons
@@ -226,7 +225,7 @@ var _ = Mavo.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.unsavedChanges = item.dirty = false;
+				item.unsavedChanges = false;
 			}
 		}
 	},

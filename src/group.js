@@ -80,7 +80,7 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
-		if (!o.dirty || o.unhandled) {
+		if (o.unhandled) {
 			$.extend(ret, this.unhandled);
 		}
 

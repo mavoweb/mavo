@@ -1323,7 +1323,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getFile: function getFile() {
-			var data = this.mavo.data;
+			var data = this.mavo.getData({ unhandled: true });
 
 			return {
 				data: data,
@@ -1630,7 +1630,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.constructor.all.set(this.element, this);
 
 			this.collection = o.collection;
-			this.dirty = o.dirty;
 
 			if (this.collection) {
 				// This is a collection item
@@ -1673,7 +1672,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		isNull: function isNull(o) {
-			return this.dirty && !o.dirty || this.deleted && o.dirty || !this.saved && o.store != "*";
+			return this.deleted || !this.saved && o.store != "*";
 		},
 
 		lazy: {
@@ -2313,7 +2312,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	Mavo.Node.prototype.getRelativeData = function () {
 		var _this4 = this;
 
-		var o = arguments.length <= 0 || arguments[0] === undefined ? { dirty: true, store: "*", null: true } : arguments[0];
+		var o = arguments.length <= 0 || arguments[0] === undefined ? { store: "*", null: true } : arguments[0];
 
 		o.unhandled = this.mavo.unhandled;
 
@@ -3009,7 +3008,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			if (!o.dirty || o.unhandled) {
+			if (o.unhandled) {
 				$.extend(ret, this.unhandled);
 			}
 
@@ -3353,16 +3352,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			var ret = this.super.getData.call(this, o);
 
-			if (ret === undefined) {
-				if (o.dirty) {
-					return this.value;
-				} else {
-					ret = this.savedValue;
+			if (ret !== undefined) {
+				return ret;
+			}
 
-					if (ret === "") {
-						return null;
-					}
-				}
+			ret = this.value;
+
+			if (ret === "") {
+				return null;
 			}
 
 			return ret;
@@ -3672,7 +3669,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						value: value,
 						mavo: _this7.mavo,
 						node: _this7,
-						dirty: _this7.editing,
 						action: "propertychange"
 					});
 				});
@@ -4268,7 +4264,7 @@ Mavo.Primitive.register("button, .counter", {
 				}
 			});
 
-			if (!o.dirty && this.unhandled) {
+			if (this.unhandled) {
 				data = this.unhandled.before.concat(data, this.unhandled.after);
 			}
 
@@ -4288,8 +4284,7 @@ Mavo.Primitive.register("button, .counter", {
 				collection: this,
 				template: this.itemTemplate || (this.template ? this.template.itemTemplate : null),
 				property: this.property,
-				type: this.type,
-				dirty: true
+				type: this.type
 			});
 
 			// Add delete & add buttons
@@ -4481,7 +4476,7 @@ Mavo.Primitive.register("button, .counter", {
 					if (item.deleted) {
 						this.delete(item, true);
 					} else {
-						item.unsavedChanges = item.dirty = false;
+						item.unsavedChanges = false;
 					}
 				}
 			} catch (err) {

@@ -1177,7 +1177,7 @@ var _ = Mavo.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	getFile: function() {
-		var data = this.mavo.data;
+		var data = this.mavo.getData({unhandled: true});
 
 		return {
 			data,
@@ -1434,7 +1434,6 @@ var _ = Mavo.Unit = $.Class({
 		this.constructor.all.set(this.element, this);
 
 		this.collection = o.collection;
-		this.dirty = o.dirty;
 
 		if (this.collection) {
 			// This is a collection item
@@ -1477,9 +1476,7 @@ var _ = Mavo.Unit = $.Class({
 	},
 
 	isNull: function(o) {
-		return this.dirty && !o.dirty ||
-			   this.deleted && o.dirty ||
-			   !this.saved && (o.store != "*");
+		return this.deleted || !this.saved && (o.store != "*");
 	},
 
 	lazy: {
@@ -2018,7 +2015,7 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { dirty: true, store: "*", null: true }) {
+Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 	o.unhandled = this.mavo.unhandled;
 
 	var ret = this.getData(o);
@@ -2609,7 +2606,7 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
-		if (!o.dirty || o.unhandled) {
+		if (o.unhandled) {
 			$.extend(ret, this.unhandled);
 		}
 
@@ -2919,20 +2916,17 @@ var _ = Mavo.Primitive = $.Class({
 
 		var ret = this.super.getData.call(this, o);
 
-		if (ret === undefined) {
-			if (o.dirty) {
-				return this.value;
-			}
-			else {
-				ret = this.savedValue;
-
-				if (ret === "") {
-					return null;
-				}
-			}
+		if (ret !== undefined) {
+			return ret;
 		}
 
-		return ret;
+		ret = this.value;
+
+		if (ret === "") {
+			return null;
+		}
+
+		return ret; 
 	},
 
 	save: function() {
@@ -3226,7 +3220,6 @@ var _ = Mavo.Primitive = $.Class({
 					value: value,
 					mavo: this.mavo,
 					node: this,
-					dirty: this.editing,
 					action: "propertychange"
 				});
 			});
@@ -3790,7 +3783,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		});
 
-		if (!o.dirty && this.unhandled) {
+		if (this.unhandled) {
 			data = this.unhandled.before.concat(data, this.unhandled.after);
 		}
 
@@ -3808,8 +3801,7 @@ var _ = Mavo.Collection = $.Class({
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
-			type: this.type,
-			dirty: true
+			type: this.type
 		});
 
 		// Add delete & add buttons
@@ -3963,7 +3955,7 @@ var _ = Mavo.Collection = $.Class({
 				this.delete(item, true);
 			}
 			else {
-				item.unsavedChanges = item.dirty = false;
+				item.unsavedChanges = false;
 			}
 		}
 	},

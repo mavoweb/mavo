@@ -75,7 +75,7 @@ gulp.task("transpile", function() {
 		.pipe(notify({
 			message: "Babel done!",
 			onLast: true
-		}));;
+		}));
 });
 
 gulp.task("minify", function() {
