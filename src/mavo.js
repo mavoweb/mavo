@@ -263,6 +263,29 @@ var _ = self.Mavo = $.Class({
 
 		if (!this.needsEdit) {
 			this.permissions.off(["edit", "add", "delete"]);
+
+			// If there's no edit mode, we must save immediately when properties change
+			this.wrapper.addEventListener("mavo:load", evt => {
+				var debouncedSave = _.debounce(() => {
+					console.log("Save called");
+					this.save();
+				}, 1000);
+
+				var callback = evt => {
+					if (evt.node.saved) {
+						console.log("Attempt to save", evt.property);
+						debouncedSave();
+					}
+				};
+
+				requestAnimationFrame(() => {
+					this.permissions.can("save", () => {
+						this.wrapper.addEventListener("mavo:datachange", callback);
+					}, () => {
+						this.wrapper.removeEventListener("mavo:datachange", callback);
+					});
+				});
+			});
 		}
 
 		Mavo.hooks.run("init-end", this);
@@ -423,6 +446,8 @@ var _ = self.Mavo = $.Class({
 				data: file.data,
 				dataString: file.dataString
 			});
+
+			this.lastSaved = Date.now();
 		})
 		.catch(err => {
 			if (err) {

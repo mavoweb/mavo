@@ -322,41 +322,12 @@ var _ = Mavo.Primitive = $.Class({
 			this.editorType = "created";
 		}
 
-		this.editor._.events({
+		$.events(this.editor, {
 			"input change": evt => {
-				var unsavedChanges = this.mavo.unsavedChanges;
-
 				this.value = this.editorValue;
-
-				// Editing exposed elements outside edit mode is instantly saved
-				if (
-					this.exposed &&
-					!this.mavo.editing && // must not be in edit mode
-				    this.mavo.permissions.save // must be able to save
-				) {
-					// TODO what if change event never fires? What if user
-					this.unsavedChanges = false;
-					this.mavo.unsavedChanges = unsavedChanges;
-
-					// Must not save too many times (e.g. not while dragging a slider)
-					if (evt.type == "change") {
-						this.save(); // Save current element
-
-						// Don’t call this.mavo.save() as it will save other fields too
-						// We only want to save exposed controls, so save current status
-						this.mavo.store();
-
-						// Are there any unsaved changes from other properties?
-						this.mavo.setUnsavedChanges();
-					}
-				}
 			},
 			"focus": evt => {
 				this.editor.select && this.editor.select();
-			},
-			"keyup": evt => {
-
-
 			},
 			"mavo:datachange": evt => {
 				if (evt.property === "output") {

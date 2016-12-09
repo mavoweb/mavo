@@ -458,6 +458,29 @@ var _ = self.Mavo = $.Class({
 
 		if (!this.needsEdit) {
 			this.permissions.off(["edit", "add", "delete"]);
+
+			// If there's no edit mode, we must save immediately when properties change
+			this.wrapper.addEventListener("mavo:load", evt => {
+				var debouncedSave = _.debounce(() => {
+					console.log("Save called");
+					this.save();
+				}, 1000);
+
+				var callback = evt => {
+					if (evt.node.saved) {
+						console.log("Attempt to save", evt.property);
+						debouncedSave();
+					}
+				};
+
+				requestAnimationFrame(() => {
+					this.permissions.can("save", () => {
+						this.wrapper.addEventListener("mavo:datachange", callback);
+					}, () => {
+						this.wrapper.removeEventListener("mavo:datachange", callback);
+					});
+				});
+			});
 		}
 
 		Mavo.hooks.run("init-end", this);
@@ -618,6 +641,8 @@ var _ = self.Mavo = $.Class({
 				data: file.data,
 				dataString: file.dataString
 			});
+
+			this.lastSaved = Date.now();
 		})
 		.catch(err => {
 			if (err) {
@@ -851,6 +876,20 @@ var _ = $.extend(Mavo, {
 		}
 
 		return null;
+	},
+
+	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
+	debounce: function (fn, delay) {
+		var timer = null;
+
+		return function () {
+			var context = this, args = arguments;
+
+			clearTimeout(timer);
+			timer = setTimeout(function () {
+				fn.apply(context, args);
+			}, delay);
+		};
 	},
 
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
@@ -3014,41 +3053,12 @@ var _ = Mavo.Primitive = $.Class({
 			this.editorType = "created";
 		}
 
-		this.editor._.events({
+		$.events(this.editor, {
 			"input change": evt => {
-				var unsavedChanges = this.mavo.unsavedChanges;
-
 				this.value = this.editorValue;
-
-				// Editing exposed elements outside edit mode is instantly saved
-				if (
-					this.exposed &&
-					!this.mavo.editing && // must not be in edit mode
-				    this.mavo.permissions.save // must be able to save
-				) {
-					// TODO what if change event never fires? What if user
-					this.unsavedChanges = false;
-					this.mavo.unsavedChanges = unsavedChanges;
-
-					// Must not save too many times (e.g. not while dragging a slider)
-					if (evt.type == "change") {
-						this.save(); // Save current element
-
-						// Don’t call this.mavo.save() as it will save other fields too
-						// We only want to save exposed controls, so save current status
-						this.mavo.store();
-
-						// Are there any unsaved changes from other properties?
-						this.mavo.setUnsavedChanges();
-					}
-				}
 			},
 			"focus": evt => {
 				this.editor.select && this.editor.select();
-			},
-			"keyup": evt => {
-
-
 			},
 			"mavo:datachange": evt => {
 				if (evt.property === "output") {
