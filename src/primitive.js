@@ -27,12 +27,15 @@ var _ = Mavo.Primitive = $.Class({
 
 		// Exposed widgets (visible always)
 		if (Mavo.is("formControl", this.element)) {
-			this.editor = this.element;
-			this.editorType = "exposed";
+			$.events(this.element, "input change", evt => {
+				if (evt.target === this.element) {
+					this.value = this.getValue();
+				}
+			});
 
-			this.edit();
+			this.constant = true;
 		}
-		else if (this.needsEdit) {
+		else if (!this.constant) {
 			this.mavo.needsEdit = true;
 		}
 
@@ -116,7 +119,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.needsEdit) {
+		if (!this.constant) {
 			this.setValue(this.templateValue, {silent: true});
 		}
 
@@ -180,27 +183,22 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	get exposed() {
-		return this.editor === this.element;
-	},
-
-	get needsEdit() {
-		return !(this.exposed || this.constant);
-	},
-
 	getData: function(o) {
 		o = o || {};
 
 		var ret = this.super.getData.call(this, o);
 
-		if (ret !== undefined) {
-			return ret;
-		}
+		if (ret === undefined) {
+			if (o.dirty) {
+				return this.value;
+			}
+			else {
+				ret = this.savedValue;
 
-		var ret = !o.dirty && !this.exposed? this.savedValue : this.value;
-
-		if (!o.dirty && ret === "") {
-			return null;
+				if (ret === "") {
+					return null;
+				}
+			}
 		}
 
 		return ret;
@@ -217,14 +215,12 @@ var _ = Mavo.Primitive = $.Class({
 		if (this.popup) {
 			this.popup.close();
 		}
-		else if (!this.attribute && !this.exposed && this.editing) {
+		else if (!this.attribute && this.editing) {
 			$.remove(this.editor);
 			this.element.textContent = this.editorValue;
 		}
 
-		if (!this.exposed) {
-			this.view = "read";
-		}
+		this.view = "read";
 
 		// Revert tabIndex
 		if (this.element._.data.prevTabindex !== null) {
@@ -282,9 +278,7 @@ var _ = Mavo.Primitive = $.Class({
 			"click.mavo:edit": evt => {
 				// Prevent default actions while editing
 				// e.g. following links etc
-				if (!this.exposed) {
-					evt.preventDefault();
-				}
+				evt.preventDefault();
 			}
 		});
 
@@ -341,18 +335,16 @@ var _ = Mavo.Primitive = $.Class({
 			this.editor.placeholder = "(" + this.label + ")";
 		}
 
-		if (!this.exposed) {
-			// Copy any data-input-* attributes from the element to the editor
-			var dataInput = /^data-input-/i;
-			$$(this.element.attributes).forEach(function (attribute) {
-				if (dataInput.test(attribute.name)) {
-					this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
-				}
-			}, this);
-
-			if (this.attribute) {
-				this.popup = new _.Popup(this);
+		// Copy any data-input-* attributes from the element to the editor
+		var dataInput = /^data-input-/i;
+		$$(this.element.attributes).forEach(function (attribute) {
+			if (dataInput.test(attribute.name)) {
+				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
 			}
+		}, this);
+
+		if (this.attribute) {
+			this.popup = new _.Popup(this);
 		}
 
 		if (!this.popup) {
@@ -378,13 +370,11 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (!this.attribute) {
-			if (this.editor.parentNode != this.element && !this.exposed) {
+			if (this.editor.parentNode != this.element) {
 				this.editorValue = this.value;
 				this.element.textContent = "";
 
-				if (!this.exposed) {
-					this.element.appendChild(this.editor);
-				}
+				this.element.appendChild(this.editor);
 			}
 		}
 
@@ -483,7 +473,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (!this.editing || this.attribute) {
-			if (this.editor && this.editor.matches("select") && !this.exposed && this.editor.selectedOptions[0]) {
+			if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
 				presentational = this.editor.selectedOptions[0].textContent;
 			}
 
@@ -526,7 +516,10 @@ var _ = Mavo.Primitive = $.Class({
 		},
 
 		empty: function (value) {
-			var hide = value && !this.exposed && !(this.attribute && $(Mavo.selectors.property, this.element));
+			var hide = value && // is empty
+			!this.constant && // and editable
+			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
+
 			this.element.classList.toggle("empty", hide);
 		},
 
@@ -676,7 +669,12 @@ var _ = Mavo.Primitive = $.Class({
 			// Set attribute anyway, even if we set a property because when
 			// they're not in sync it gets really fucking confusing.
 			if (attribute) {
-				if (element.getAttribute(attribute) != value) { // intentionally non-strict, e.g. "3." !== 3
+				if (datatype == "boolean") {
+					if (value != element.hasAttribute(attribute)) {
+						$.toggleAttribute(element, attribute, value, value);
+					}
+				}
+				else if (element.getAttribute(attribute) != value) { // intentionally non-strict, e.g. "3." !== 3
 					element.setAttribute(attribute, value);
 
 					if (presentational) {
@@ -1000,7 +998,7 @@ Mavo.Primitive.register("button, .counter", {
 
 			element.addEventListener("click", evt => {
 				let clicked = +element.getAttribute("data-clicked") || 0;
-				element.setAttribute("data-clicked", clicked + 1);
+				this.value = ++clicked;
 			});
 		}
 	}

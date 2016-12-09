@@ -481,6 +481,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (!this.needsEdit) {
 				this.permissions.off(["edit", "add", "delete"]);
+
+				// If there's no edit mode, we must save immediately when properties change
+				this.wrapper.addEventListener("mavo:load", function (evt) {
+					var debouncedSave = _.debounce(function () {
+						console.log("Save called");
+						_this.save();
+					}, 1000);
+
+					var callback = function callback(evt) {
+						if (evt.node.saved) {
+							console.log("Attempt to save", evt.property);
+							debouncedSave();
+						}
+					};
+
+					requestAnimationFrame(function () {
+						_this.permissions.can("save", function () {
+							_this.wrapper.addEventListener("mavo:datachange", callback);
+						}, function () {
+							_this.wrapper.removeEventListener("mavo:datachange", callback);
+						});
+					});
+				});
 			}
 
 			Mavo.hooks.run("init-end", this);
@@ -644,6 +667,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					data: file.data,
 					dataString: file.dataString
 				});
+
+				_this3.lastSaved = Date.now();
 			}).catch(function (err) {
 				if (err) {
 					console.error(err);
@@ -924,6 +949,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return null;
+		},
+
+		// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
+		debounce: function debounce(fn, delay) {
+			var timer = null;
+
+			return function () {
+				var context = this,
+				    args = arguments;
+
+				clearTimeout(timer);
+				timer = setTimeout(function () {
+					fn.apply(context, args);
+				}, delay);
+			};
 		},
 
 		escapeRegExp: function escapeRegExp(s) {
@@ -3126,11 +3166,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			// Exposed widgets (visible always)
 			if (Mavo.is("formControl", this.element)) {
-				this.editor = this.element;
-				this.editorType = "exposed";
+				$.events(this.element, "input change", function (evt) {
+					if (evt.target === _this.element) {
+						_this.value = _this.getValue();
+					}
+				});
 
-				this.edit();
-			} else if (this.needsEdit) {
+				this.constant = true;
+			} else if (!this.constant) {
 				this.mavo.needsEdit = true;
 			}
 
@@ -3243,7 +3286,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}
 
-			if (this.needsEdit) {
+			if (!this.constant) {
 				this.setValue(this.templateValue, { silent: true });
 			}
 
@@ -3305,27 +3348,21 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		get exposed() {
-			return this.editor === this.element;
-		},
-
-		get needsEdit() {
-			return !(this.exposed || this.constant);
-		},
-
 		getData: function getData(o) {
 			o = o || {};
 
 			var ret = this.super.getData.call(this, o);
 
-			if (ret !== undefined) {
-				return ret;
-			}
+			if (ret === undefined) {
+				if (o.dirty) {
+					return this.value;
+				} else {
+					ret = this.savedValue;
 
-			var ret = !o.dirty && !this.exposed ? this.savedValue : this.value;
-
-			if (!o.dirty && ret === "") {
-				return null;
+					if (ret === "") {
+						return null;
+					}
+				}
 			}
 
 			return ret;
@@ -3341,14 +3378,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			if (this.popup) {
 				this.popup.close();
-			} else if (!this.attribute && !this.exposed && this.editing) {
+			} else if (!this.attribute && this.editing) {
 				$.remove(this.editor);
 				this.element.textContent = this.editorValue;
 			}
 
-			if (!this.exposed) {
-				this.view = "read";
-			}
+			this.view = "read";
 
 			// Revert tabIndex
 			if (this.element._.data.prevTabindex !== null) {
@@ -3409,9 +3444,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				"click.mavo:edit": function clickMavoEdit(evt) {
 					// Prevent default actions while editing
 					// e.g. following links etc
-					if (!_this4.exposed) {
-						evt.preventDefault();
-					}
+					evt.preventDefault();
 				}
 			});
 
@@ -3455,37 +3488,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.editorType = "created";
 			}
 
-			this.editor._.events({
+			$.events(this.editor, {
 				"input change": function inputChange(evt) {
-					var unsavedChanges = _this5.mavo.unsavedChanges;
-
 					_this5.value = _this5.editorValue;
-
-					// Editing exposed elements outside edit mode is instantly saved
-					if (_this5.exposed && !_this5.mavo.editing && // must not be in edit mode
-					_this5.mavo.permissions.save // must be able to save
-					) {
-							// TODO what if change event never fires? What if user
-							_this5.unsavedChanges = false;
-							_this5.mavo.unsavedChanges = unsavedChanges;
-
-							// Must not save too many times (e.g. not while dragging a slider)
-							if (evt.type == "change") {
-								_this5.save(); // Save current element
-
-								// Don’t call this.mavo.save() as it will save other fields too
-								// We only want to save exposed controls, so save current status
-								_this5.mavo.store();
-
-								// Are there any unsaved changes from other properties?
-								_this5.mavo.setUnsavedChanges();
-							}
-						}
 				},
 				"focus": function focus(evt) {
 					_this5.editor.select && _this5.editor.select();
 				},
-				"keyup": function keyup(evt) {},
 				"mavo:datachange": function mavoDatachange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
@@ -3498,18 +3507,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.editor.placeholder = "(" + this.label + ")";
 			}
 
-			if (!this.exposed) {
-				// Copy any data-input-* attributes from the element to the editor
-				var dataInput = /^data-input-/i;
-				$$(this.element.attributes).forEach(function (attribute) {
-					if (dataInput.test(attribute.name)) {
-						this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
-					}
-				}, this);
-
-				if (this.attribute) {
-					this.popup = new _.Popup(this);
+			// Copy any data-input-* attributes from the element to the editor
+			var dataInput = /^data-input-/i;
+			$$(this.element.attributes).forEach(function (attribute) {
+				if (dataInput.test(attribute.name)) {
+					this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
 				}
+			}, this);
+
+			if (this.attribute) {
+				this.popup = new _.Popup(this);
 			}
 
 			if (!this.popup) {
@@ -3535,13 +3542,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if (!this.attribute) {
-				if (this.editor.parentNode != this.element && !this.exposed) {
+				if (this.editor.parentNode != this.element) {
 					this.editorValue = this.value;
 					this.element.textContent = "";
 
-					if (!this.exposed) {
-						this.element.appendChild(this.editor);
-					}
+					this.element.appendChild(this.editor);
 				}
 			}
 
@@ -3645,7 +3650,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if (!this.editing || this.attribute) {
-				if (this.editor && this.editor.matches("select") && !this.exposed && this.editor.selectedOptions[0]) {
+				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
 					presentational = this.editor.selectedOptions[0].textContent;
 				}
 
@@ -3688,7 +3693,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			empty: function empty(value) {
-				var hide = value && !this.exposed && !(this.attribute && $(Mavo.selectors.property, this.element));
+				var hide = value && // is empty
+				!this.constant && // and editable
+				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
+
 				this.element.classList.toggle("empty", hide);
 			},
 
@@ -3840,7 +3848,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				// Set attribute anyway, even if we set a property because when
 				// they're not in sync it gets really fucking confusing.
 				if (attribute) {
-					if (element.getAttribute(attribute) != value) {
+					if (datatype == "boolean") {
+						if (value != element.hasAttribute(attribute)) {
+							$.toggleAttribute(element, attribute, value, value);
+						}
+					} else if (element.getAttribute(attribute) != value) {
 						// intentionally non-strict, e.g. "3." !== 3
 						element.setAttribute(attribute, value);
 
@@ -4187,12 +4199,14 @@ Mavo.Primitive.register("button, .counter", {
 	datatype: "number",
 	is: "formControl",
 	init: function init(element) {
+		var _this11 = this;
+
 		if (this.attribute === "data-clicked") {
 			element.setAttribute("data-clicked", "0");
 
 			element.addEventListener("click", function (evt) {
 				var clicked = +element.getAttribute("data-clicked") || 0;
-				element.setAttribute("data-clicked", clicked + 1);
+				_this11.value = ++clicked;
 			});
 		}
 	}
