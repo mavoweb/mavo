@@ -40,16 +40,22 @@ var _ = Mavo.Unit = $.Class({
 	getData: function(o) {
 		o = o || {};
 
-		if (_.isNull(this, o)) {
+		if (this.isNull(o)) {
 			return null;
 		}
 
 		// Check if any of the parent groups doesn't return data
 		this.walkUp(group => {
-			if (_.isNull(group, o)) {
+			if (group.isNull(o)) {
 				return null;
 			}
 		});
+	},
+
+	isNull: function(o) {
+		return this.dirty && !o.dirty ||
+			   this.deleted && o.dirty ||
+			   !this.saved && (o.store != "*");
 	},
 
 	lazy: {
@@ -142,12 +148,6 @@ var _ = Mavo.Unit = $.Class({
 			}
 
 			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
-		},
-
-		isNull: function(unit, o) {
-			return unit.dirty && !o.dirty ||
-		           unit.deleted && o.dirty ||
-		           !unit.saved && (o.store != "*");
 		}
 	}
 });

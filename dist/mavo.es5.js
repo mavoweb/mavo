@@ -1620,16 +1620,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		getData: function getData(o) {
 			o = o || {};
 
-			if (_.isNull(this, o)) {
+			if (this.isNull(o)) {
 				return null;
 			}
 
 			// Check if any of the parent groups doesn't return data
 			this.walkUp(function (group) {
-				if (_.isNull(group, o)) {
+				if (group.isNull(o)) {
 					return null;
 				}
 			});
+		},
+
+		isNull: function isNull(o) {
+			return this.dirty && !o.dirty || this.deleted && o.dirty || !this.saved && o.store != "*";
 		},
 
 		lazy: {
@@ -1721,10 +1725,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return new Mavo[Mavo.is("group", element) ? "Group" : "Primitive"](element, mavo, o);
-			},
-
-			isNull: function isNull(unit, o) {
-				return unit.dirty && !o.dirty || unit.deleted && o.dirty || !unit.saved && o.store != "*";
 			}
 		}
 	});
