@@ -11,6 +11,7 @@ var sass = require("gulp-sass");
 var babel = require("gulp-babel");
 var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
+var notify = require("gulp-notify");
 var merge = require("merge2");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
@@ -48,7 +49,11 @@ gulp.task("sass", function() {
 		}))
 		.pipe(rename({ extname: ".css" }))
 		.pipe(sourcemaps.write("."))
-		.pipe(gulp.dest("."));
+		.pipe(gulp.dest("."))
+		.pipe(notify({
+			message: "Sass done!",
+			onLast: true
+		}));
 });
 
 var transpileStream = () => gulp.src(mavo)
@@ -66,7 +71,11 @@ gulp.task("transpile", function() {
 	return merge(gulp.src(dependencies), transpileStream())
 		.pipe(concat("mavo.es5.js"))
 		.pipe(sourcemaps.write("maps"))
-		.pipe(gulp.dest("dist"));
+		.pipe(gulp.dest("dist"))
+		.pipe(notify({
+			message: "Babel done!",
+			onLast: true
+		}));;
 });
 
 gulp.task("minify", function() {
