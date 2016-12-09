@@ -571,6 +571,10 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 
 		this.template = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
+
+		$.lazy(this, "childProperties", () => {
+			return $$(Mavo.selectors.property, this.element).map(el => Mavo.Unit.get(el));
+		});
 	}
 });
 
@@ -586,6 +590,11 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 			if (value && this.comment && this.comment.parentNode) {
 				// Is removed from the DOM and needs to get back
 				this.comment.parentNode.replaceChild(this.element, this.comment);
+
+				// Unmark any properties inside as hidden
+				for (let property of this.childProperties) {
+					property.hidden = false;
+				}
 			}
 			else if (!value && this.element.parentNode) {
 				// Is in the DOM and needs to be removed
@@ -594,8 +603,17 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				}
 
 				this.element.parentNode.replaceChild(this.comment, this.element);
+
+				// Mark any properties inside as hidden
+				for (let property of this.childProperties) {
+					property.hidden = true;
+				}
 			}
 		}
 
 	}
+});
+
+Mavo.hooks.add("unit-isdatanull", function(env) {
+	env.result = env.result || (this.hidden && env.options.store == "*");
 });

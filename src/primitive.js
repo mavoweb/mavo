@@ -183,22 +183,26 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: this.super.getData.call(this, o)
+		};
 
-		var ret = this.super.getData.call(this, o);
-
-		if (ret !== undefined) {
-			return ret;
+		if (env.data !== undefined) {
+			return env.data;
 		}
 
-		ret = this.value;
+		env.data = this.value;
 
-		if (ret === "") {
-			return null;
+		if (env.data === "") {
+			env.data = null;
 		}
 
-		return ret; 
+		Mavo.hooks.run("primitive-getdata-end", env);
+
+		return env.data;
 	},
 
 	save: function() {

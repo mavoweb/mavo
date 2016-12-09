@@ -462,13 +462,11 @@ var _ = self.Mavo = $.Class({
 			// If there's no edit mode, we must save immediately when properties change
 			this.wrapper.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
-					console.log("Save called");
 					this.save();
 				}, 1000);
 
 				var callback = evt => {
 					if (evt.node.saved) {
-						console.log("Attempt to save", evt.property);
 						debouncedSave();
 					}
 				};
@@ -1460,23 +1458,29 @@ var _ = Mavo.Unit = $.Class({
 		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
-	getData: function(o) {
-		o = o || {};
-
-		if (this.isNull(o)) {
+	getData: function(o = {}) {
+		if (this.isDataNull(o)) {
 			return null;
 		}
 
 		// Check if any of the parent groups doesn't return data
 		this.walkUp(group => {
-			if (group.isNull(o)) {
+			if (group.isDataNull(o)) {
 				return null;
 			}
 		});
 	},
 
-	isNull: function(o) {
-		return this.deleted || !this.saved && (o.store != "*");
+	isDataNull: function(o) {
+		var env = {
+			context: this,
+			options: o,
+			result: this.deleted || !this.saved && (o.store != "*")
+		};
+
+		Mavo.hooks.run("unit-isdatanull", env);
+
+		return env.result;
 	},
 
 	lazy: {
@@ -2148,6 +2152,10 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 
 		this.template = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
+
+		$.lazy(this, "childProperties", () => {
+			return $$(Mavo.selectors.property, this.element).map(el => Mavo.Unit.get(el));
+		});
 	}
 });
 
@@ -2163,6 +2171,11 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 			if (value && this.comment && this.comment.parentNode) {
 				// Is removed from the DOM and needs to get back
 				this.comment.parentNode.replaceChild(this.element, this.comment);
+
+				// Unmark any properties inside as hidden
+				for (let property of this.childProperties) {
+					property.hidden = false;
+				}
 			}
 			else if (!value && this.element.parentNode) {
 				// Is in the DOM and needs to be removed
@@ -2171,10 +2184,19 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				}
 
 				this.element.parentNode.replaceChild(this.comment, this.element);
+
+				// Mark any properties inside as hidden
+				for (let property of this.childProperties) {
+					property.hidden = true;
+				}
 			}
 		}
 
 	}
+});
+
+Mavo.hooks.add("unit-isdatanull", function(env) {
+	env.result = env.result || (this.hidden && env.options.store == "*");
 });
 
 /**
@@ -2585,48 +2607,52 @@ var _ = Mavo.Group = $.Class({
 		return !this.property;
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: this.super.getData.call(this, o)
+		};
 
-		var ret = this.super.getData.call(this, o);
-
-		if (ret !== undefined) {
-			return ret;
+		if (env.data !== undefined) {
+			return env.data;
 		}
 
-		ret = {};
+		env.data = {};
 
 		this.propagate(obj => {
-			if ((obj.saved || o.store == "*") && !(obj.property in ret)) {
+			if ((obj.saved || o.store == "*") && !(obj.property in env.data)) {
 				var data = obj.getData(o);
 
-				if (data !== null || o.null) {
-					ret[obj.property] = data;
+				if (data !== null || env.options.null) {
+					env.data[obj.property] = data;
 				}
 			}
 		});
 
-		if (o.unhandled) {
-			$.extend(ret, this.unhandled);
+		if (env.options.unhandled) {
+			$.extend(env.data, this.unhandled);
 		}
 
 		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {
-			ret["@type"] = this.type;
+			env.data["@type"] = this.type;
 		}
 
 		if (this.vocab) {
-			ret["@context"] = this.vocab;
+			env.data["@context"] = this.vocab;
 		}
 
 		// Special summary property works like toString
-		if (ret.summary) {
-			ret.toString = function() {
+		if (env.data.summary) {
+			env.data.toString = function() {
 				return this.summary;
 			};
 		}
 
-		return ret;
+		Mavo.hooks.run("primitive-getdata-end", env);
+
+		return env.data;
 	},
 
 	/**
@@ -2911,22 +2937,26 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: this.super.getData.call(this, o)
+		};
 
-		var ret = this.super.getData.call(this, o);
-
-		if (ret !== undefined) {
-			return ret;
+		if (env.data !== undefined) {
+			return env.data;
 		}
 
-		ret = this.value;
+		env.data = this.value;
 
-		if (ret === "") {
-			return null;
+		if (env.data === "") {
+			env.data = null;
 		}
 
-		return ret; 
+		Mavo.hooks.run("primitive-getdata-end", env);
+
+		return env.data;
 	},
 
 	save: function() {
@@ -3768,26 +3798,35 @@ var _ = Mavo.Collection = $.Class({
 		return this.items.length && this.items[0].element === this.element;
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: []
+		};
 
-		var data = [];
-
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (!item.deleted) {
-				var itemData = item.getData(o);
+				let itemData = item.getData(env.options);
 
 				if (itemData) {
-					data.push(itemData);
+					env.data.push(itemData);
 				}
 			}
-		});
-
-		if (this.unhandled) {
-			data = this.unhandled.before.concat(data, this.unhandled.after);
 		}
 
-		return data;
+		if (this.unhandled && env.options.unhandled) {
+			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
+		}
+
+		if (!this.mutable && env.data.length == 1) {
+			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
+			env.data = env.data[0];
+		}
+
+		Mavo.hooks.run("collection-getdata-end", env);
+
+		return env.data;
 	},
 
 	// Create item but don't insert it anywhere

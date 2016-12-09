@@ -267,13 +267,11 @@ var _ = self.Mavo = $.Class({
 			// If there's no edit mode, we must save immediately when properties change
 			this.wrapper.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
-					console.log("Save called");
 					this.save();
 				}, 1000);
 
 				var callback = evt => {
 					if (evt.node.saved) {
-						console.log("Attempt to save", evt.property);
 						debouncedSave();
 					}
 				};

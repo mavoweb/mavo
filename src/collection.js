@@ -38,26 +38,35 @@ var _ = Mavo.Collection = $.Class({
 		return this.items.length && this.items[0].element === this.element;
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: []
+		};
 
-		var data = [];
-
-		this.items.forEach(item => {
+		for (item of this.items) {
 			if (!item.deleted) {
-				var itemData = item.getData(o);
+				let itemData = item.getData(env.options);
 
 				if (itemData) {
-					data.push(itemData);
+					env.data.push(itemData);
 				}
 			}
-		});
-
-		if (this.unhandled) {
-			data = this.unhandled.before.concat(data, this.unhandled.after);
 		}
 
-		return data;
+		if (this.unhandled && env.options.unhandled) {
+			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
+		}
+
+		if (!this.mutable && env.data.length == 1) {
+			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
+			env.data = env.data[0];
+		}
+
+		Mavo.hooks.run("collection-getdata-end", env);
+
+		return env.data;
 	},
 
 	// Create item but don't insert it anywhere

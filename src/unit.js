@@ -36,23 +36,29 @@ var _ = Mavo.Unit = $.Class({
 		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
-	getData: function(o) {
-		o = o || {};
-
-		if (this.isNull(o)) {
+	getData: function(o = {}) {
+		if (this.isDataNull(o)) {
 			return null;
 		}
 
 		// Check if any of the parent groups doesn't return data
 		this.walkUp(group => {
-			if (group.isNull(o)) {
+			if (group.isDataNull(o)) {
 				return null;
 			}
 		});
 	},
 
-	isNull: function(o) {
-		return this.deleted || !this.saved && (o.store != "*");
+	isDataNull: function(o) {
+		var env = {
+			context: this,
+			options: o,
+			result: this.deleted || !this.saved && (o.store != "*")
+		};
+
+		Mavo.hooks.run("unit-isdatanull", env);
+
+		return env.result;
 	},
 
 	lazy: {

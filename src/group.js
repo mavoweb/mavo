@@ -59,48 +59,52 @@ var _ = Mavo.Group = $.Class({
 		return !this.property;
 	},
 
-	getData: function(o) {
-		o = o || {};
+	getData: function(o = {}) {
+		var env = {
+			context: this,
+			options: o,
+			data: this.super.getData.call(this, o)
+		};
 
-		var ret = this.super.getData.call(this, o);
-
-		if (ret !== undefined) {
-			return ret;
+		if (env.data !== undefined) {
+			return env.data;
 		}
 
-		ret = {};
+		env.data = {};
 
 		this.propagate(obj => {
-			if ((obj.saved || o.store == "*") && !(obj.property in ret)) {
+			if ((obj.saved || o.store == "*") && !(obj.property in env.data)) {
 				var data = obj.getData(o);
 
-				if (data !== null || o.null) {
-					ret[obj.property] = data;
+				if (data !== null || env.options.null) {
+					env.data[obj.property] = data;
 				}
 			}
 		});
 
-		if (o.unhandled) {
-			$.extend(ret, this.unhandled);
+		if (env.options.unhandled) {
+			$.extend(env.data, this.unhandled);
 		}
 
 		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {
-			ret["@type"] = this.type;
+			env.data["@type"] = this.type;
 		}
 
 		if (this.vocab) {
-			ret["@context"] = this.vocab;
+			env.data["@context"] = this.vocab;
 		}
 
 		// Special summary property works like toString
-		if (ret.summary) {
-			ret.toString = function() {
+		if (env.data.summary) {
+			env.data.toString = function() {
 				return this.summary;
 			};
 		}
 
-		return ret;
+		Mavo.hooks.run("primitive-getdata-end", env);
+
+		return env.data;
 	},
 
 	/**
