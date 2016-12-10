@@ -2335,6 +2335,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						return _this4.index + 1;
 					}
 
+					if (property == _this4.mavo.id) {
+						return data;
+					}
+
 					// Look in ancestors
 					var ret = _this4.walkUp(function (group) {
 						if (property in group.properties) {
@@ -2356,7 +2360,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// Property does not exist, look for it elsewhere
-					if (property == "$index") {
+					if (property == "$index" || property == _this4.mavo.id) {
 						return true;
 					}
 
@@ -2562,7 +2566,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			"=": "eq"
 		},
 
-		get now() {
+		get $now() {
 			return new Date();
 		},
 

@@ -2035,6 +2035,10 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 					return this.index + 1;
 				}
 
+				if (property == this.mavo.id) {
+					return data;
+				}
+
 				// Look in ancestors
 				var ret = this.walkUp(group => {
 					if (property in group.properties) {
@@ -2056,7 +2060,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 				}
 
 				// Property does not exist, look for it elsewhere
-				if (property == "$index") {
+				if (property == "$index" || property == this.mavo.id) {
 					return true;
 				}
 
@@ -2210,7 +2214,7 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
-	get now() {
+	get $now() {
 		return new Date();
 	},
 

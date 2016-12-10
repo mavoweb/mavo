@@ -9,7 +9,7 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
-	get now() {
+	get $now() {
 		return new Date();
 	},
 
