@@ -2662,6 +2662,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return new Date();
 		},
 
+		/*********************
+   * Number functions
+   *********************/
+
 		/**
    * Aggregate sum
    */
@@ -2728,6 +2732,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			return condition ? iftrue : iffalse;
 		},
+
+		/*********************
+   * String functions
+   *********************/
 
 		idify: function idify(readable) {
 			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens

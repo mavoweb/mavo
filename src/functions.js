@@ -13,6 +13,10 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
+	/*********************
+	 * Number functions
+	 *********************/
+
 	/**
 	 * Aggregate sum
 	 */
@@ -75,6 +79,10 @@ var _ = Mavo.Functions = {
 
 		return condition? iftrue : iffalse;
 	},
+
+	/*********************
+	 * String functions
+	 *********************/
 
 	idify: readable => ((text || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens

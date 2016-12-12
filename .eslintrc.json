@@ -1,33 +1,37 @@
 {
-    "parser": "babel-eslint",
-    "parserOptions": {
-        "ecmaVersion": 6,
-        "sourceType": "script",
-        "ecmaFeatures": {
-            "impliedStrict": true
-        }
-    },
-    "env": {
-        "browser": true,
-        "node": true
-    },
-    "rules": {
-        "semi": 1,
-        "no-dupe-args": 1,
-        "no-dupe-keys": 1,
-        "no-unreachable": 1,
-        "valid-typeof": 1,
-        "curly": 1,
-        "no-useless-call": 1,
-        "brace-style": [1, "stroustrup"],
-        "linebreak-style": [1, "unix"],
-        "no-lonely-if": 1,
-        "no-mixed-spaces-and-tabs": [1, "smart-tabs"],
-        "quotes": [1, "double", "avoid-escape"],
-        "spaced-comment": [1, "always"],
-        "space-before-blocks": [1, "always"],
-        "arrow-spacing": 1,
-        "comma-spacing": 1,
-        "keyword-spacing": 1
-    }
+	"parser": "babel-eslint",
+	"parserOptions": {
+		"ecmaVersion": 6,
+		"sourceType": "script",
+		"ecmaFeatures": {
+			"impliedStrict": true
+		}
+	},
+	"env": {
+		"browser": true,
+		"node": true
+	},
+	"rules": {
+		"semi": 1,
+		"no-dupe-args": 1,
+		"no-dupe-keys": 1,
+		"no-unreachable": 1,
+		"valid-typeof": 1,
+		"curly": 1,
+		"no-useless-call": 1,
+		"brace-style": [1, "stroustrup"],
+		"linebreak-style": [1, "unix"],
+		"no-lonely-if": 1,
+		"no-mixed-spaces-and-tabs": [1, "smart-tabs"],
+		"quotes": [1, "double", "avoid-escape"],
+        "spaced-comment": [1, "always", {
+            "block": {
+                "exceptions": ["*"]
+            }
+		}],
+		"space-before-blocks": [1, "always"],
+		"arrow-spacing": 1,
+		"comma-spacing": 1,
+		"keyword-spacing": 1
+	}
 }
