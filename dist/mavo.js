@@ -3919,27 +3919,28 @@ var _ = Mavo.Collection = $.Class({
 		// Add delete & add buttons
 		if (this.mutable) {
 			this.mavo.permissions.can("edit", () => {
-				$.create({
+				var itemControls = $(".mv-item-controls", element) || $.create({
 					className: "mv-item-controls mv-ui",
-					contents: [
-						{
-							tag: "button",
-							title: "Delete this " + this.name,
-							className: "delete",
-							events: {
-								"click": evt => this.delete(item)
-							}
-						}, {
-							tag: "button",
-							title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-							className: "add",
-							events: {
-								"click": evt => this.add(null, this.children.indexOf(item)).edit()
-							}
-						}
-					],
 					inside: element
 				});
+
+				$.contents(itemControls, [
+					{
+						tag: "button",
+						title: "Delete this " + this.name,
+						className: "delete",
+						events: {
+							"click": evt => this.delete(item)
+						}
+					}, {
+						tag: "button",
+						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
+						className: "add",
+						events: {
+							"click": evt => this.add(null, this.children.indexOf(item)).edit()
+						}
+					}
+				]);
 			});
 		}
 

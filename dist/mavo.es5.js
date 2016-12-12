@@ -4481,29 +4481,30 @@ Mavo.Primitive.register("button, .counter", {
 			// Add delete & add buttons
 			if (this.mutable) {
 				this.mavo.permissions.can("edit", function () {
-					$.create({
+					var itemControls = $(".mv-item-controls", element) || $.create({
 						className: "mv-item-controls mv-ui",
-						contents: [{
-							tag: "button",
-							title: "Delete this " + _this.name,
-							className: "delete",
-							events: {
-								"click": function click(evt) {
-									return _this.delete(item);
-								}
-							}
-						}, {
-							tag: "button",
-							title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
-							className: "add",
-							events: {
-								"click": function click(evt) {
-									return _this.add(null, _this.children.indexOf(item)).edit();
-								}
-							}
-						}],
 						inside: element
 					});
+
+					$.contents(itemControls, [{
+						tag: "button",
+						title: "Delete this " + _this.name,
+						className: "delete",
+						events: {
+							"click": function click(evt) {
+								return _this.delete(item);
+							}
+						}
+					}, {
+						tag: "button",
+						title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
+						className: "add",
+						events: {
+							"click": function click(evt) {
+								return _this.add(null, _this.children.indexOf(item)).edit();
+							}
+						}
+					}]);
 				});
 			}
 
