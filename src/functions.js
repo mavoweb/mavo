@@ -106,7 +106,7 @@ Mavo.Script = {
 
 		o.identity = o.identity === undefined? 0 : o.identity;
 
-		return _[name] = function(...operands) {
+		return _[name] = o.code || function(...operands) {
 			if (operands.length === 1) {
 				if (Array.isArray(operands[0])) {
 					// Operand is an array of operands, expand it out
@@ -149,13 +149,11 @@ Mavo.Script = {
 					}
 				}
 
-				if (o.logical) {
-					if (o.reduce) {
-						prev = o.reduce(prev, result);
-					}
-					else {
-						prev = prev && result;
-					}
+				if (o.reduce) {
+					prev = o.reduce(prev, result, a, b);
+				}
+				else if (o.logical) {
+					prev = prev && result;
 				}
 				else {
 					prev = result;
@@ -265,6 +263,20 @@ Mavo.Script = {
 			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: "||"
+		},
+		"concatenate": {
+			symbol: "&",
+			identity: "",
+			scalar: (a, b) => "" + a + b,
+			reduce: function(prev, result, a, b) {
+				if (Array.isArray(a) && typeof b == "string") {
+					let last = result.length - 1;
+					result[last] = result[last].slice(0, -b.length);
+					result = result.join("");
+				}
+
+				return result;
+			}
 		}
 	},
 

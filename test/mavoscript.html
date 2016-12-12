@@ -60,6 +60,9 @@
 		<dt>foo != bar != baz</dt>
 		<dd>neq(foo, bar, baz)</dd>
 
+		<dt>foo & bar & baz</dt>
+		<dd>concatenate(foo, bar, baz)</dd>
+
 		<dt title="Pass-through to JS">foo.filter(a => a + 5)</dt>
 
 		<dt title="Pass-through to JS">/* js */ 5+5</dt>
@@ -117,10 +120,10 @@
 		<dt>gt(3, 2, 3)</dt>
 		<dd>false</dd>
 
-		<dt>gt("2090-06-13", now)</dt>
+		<dt>gt("2090-06-13", $now)</dt>
 		<dd>true</dd>
 
-		<dt>gt("1990-06-13", now)</dt>
+		<dt>gt("1990-06-13", $now)</dt>
 		<dd>false</dd>
 
 		<dt>neq(2, 2)</dt>
@@ -143,6 +146,15 @@
 
 		<dt>iff([true, false, 0, 1], 1, [2, 3])</dt>
 		<dd>[1, 3, 3, 1]</dd>
+
+		<dt>"yolo" & 2</dt>
+		<dd>"yolo2"</dd>
+
+		<dt>[1, "hello"] & "#"</dt>
+		<dd>"1#hello"</dd>
+
+		<dt>[1, 2, 3] & "#" & ["a", "b", "c"]</dt>
+		<dd>["1#2#3a", "1#2#3b", "1#2#3c"]</dd>
 	</dl>
 </section>
 

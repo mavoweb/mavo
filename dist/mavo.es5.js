@@ -2787,7 +2787,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			o.identity = o.identity === undefined ? 0 : o.identity;
 
-			return _[name] = function () {
+			return _[name] = o.code || function () {
 				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
 					operands[_key] = arguments[_key];
 				}
@@ -2835,12 +2835,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 					}
 
-					if (o.logical) {
-						if (o.reduce) {
-							prev = o.reduce(prev, result);
-						} else {
-							prev = prev && result;
-						}
+					if (o.reduce) {
+						prev = o.reduce(prev, result, a, b);
+					} else if (o.logical) {
+						prev = prev && result;
 					} else {
 						prev = result;
 					}
@@ -3001,6 +2999,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				},
 				identity: false,
 				symbol: "||"
+			},
+			"concatenate": {
+				symbol: "&",
+				identity: "",
+				scalar: function scalar(a, b) {
+					return "" + a + b;
+				},
+				reduce: function reduce(prev, result, a, b) {
+					if (Array.isArray(a) && typeof b == "string") {
+						var last = result.length - 1;
+						result[last] = result[last].slice(0, -b.length);
+						result = result.join("");
+					}
+
+					return result;
+				}
 			}
 		},
 
