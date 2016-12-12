@@ -8,7 +8,7 @@ var _ = Mavo.Collection = $.Class({
 		 */
 		this.templateElement = this.element;
 
-		this.items = [];
+		this.children = [];
 
 		// ALL descendant property names as an array
 		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
@@ -30,12 +30,12 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	get length() {
-		return this.items.length;
+		return this.children.length;
 	},
 
 	// Collection still contains its template as data
 	get containsTemplate() {
-		return this.items.length && this.items[0].element === this.element;
+		return this.children.length && this.children[0].element === this.element;
 	},
 
 	getData: function(o = {}) {
@@ -45,7 +45,7 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		for (item of this.items) {
+		for (item of this.children) {
 			if (!item.deleted) {
 				let itemData = item.getData(env.options);
 
@@ -101,7 +101,7 @@ var _ = Mavo.Collection = $.Class({
 							title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 							className: "add",
 							events: {
-								"click": evt => this.add(null, this.items.indexOf(item)).edit()
+								"click": evt => this.add(null, this.children.indexOf(item)).edit()
 							}
 						}
 					],
@@ -127,7 +127,7 @@ var _ = Mavo.Collection = $.Class({
 			item = item || this.createItem();
 		}
 
-		if (index in this.items) {
+		if (index in this.children) {
 			if (this.bottomUp) {
 				index++;
 			}
@@ -138,16 +138,16 @@ var _ = Mavo.Collection = $.Class({
 
 		if (!item.element.parentNode) {
 			// Add it to the DOM, if not already in
-			var nextItem = this.items[index];
+			var nextItem = this.children[index];
 
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
 		// Update internal data model
-		this.items.splice(index, 0, item);
+		this.children.splice(index, 0, item);
 
 		for (let i = index - 1; i < this.length; i++) {
-			let item = this.items[i];
+			let item = this.children[i];
 
 			if (item) {
 				item.index = i;
@@ -170,15 +170,11 @@ var _ = Mavo.Collection = $.Class({
 		return item;
 	},
 
-	propagate: function() {
-		this.items.forEach(item => item.call.apply(item, arguments));
-	},
-
 	delete: function(item, hard) {
 		if (hard) {
 			// Hard delete
 			$.remove(item.element);
-			this.items.splice(this.items.indexOf(item), 1);
+			this.children.splice(this.children.indexOf(item), 1);
 			return;
 		}
 
@@ -195,10 +191,6 @@ var _ = Mavo.Collection = $.Class({
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
-	},
-
-	edit: function() {
-		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
 	},
 
 	/**
@@ -218,7 +210,7 @@ var _ = Mavo.Collection = $.Class({
 				}
 			});
 
-			this.items = [];
+			this.children = [];
 
 			this.marker._.fire("mavo:datachange", {
 				node: this,
@@ -229,7 +221,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		for (let item of this.items) {
+		for (let item of this.children) {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
@@ -239,14 +231,10 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	done: function() {
-
-	},
-
-	propagated: ["save", "done"],
+	propagated: ["save"],
 
 	revert: function() {
-		for (let item of this.items) {
+		for (let item of this.children) {
 			// Delete added items
 			if (item.unsavedChanges) {
 				this.delete(item, true);
@@ -273,10 +261,10 @@ var _ = Mavo.Collection = $.Class({
 		data = Mavo.toArray(data);
 
 		if (!this.mutable) {
-			this.items.forEach((item, i) => item.render(data && data[i]));
+			this.children.forEach((item, i) => item.render(data && data[i]));
 
 			if (data) {
-				this.unhandled.after = data.slice(this.items.length);
+				this.unhandled.after = data.slice(this.children.length);
 			}
 		}
 		else {
@@ -290,7 +278,7 @@ var _ = Mavo.Collection = $.Class({
 
 				item.render(datum);
 
-				this.items.push(item);
+				this.children.push(item);
 				item.index = i;
 
 				fragment.appendChild(item.element);
@@ -303,7 +291,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	find: function(property) {
-		var items = this.items.filter(item => !item.deleted);
+		var items = this.children.filter(item => !item.deleted);
 
 		if (this.property == property) {
 			return items;
@@ -340,7 +328,7 @@ var _ = Mavo.Collection = $.Class({
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
 					if (this.bottomUp) {
-						this.addButton._.before($.value(this.items[0], "element") || this.marker);
+						this.addButton._.before($.value(this.children[0], "element") || this.marker);
 					}
 					else {
 						var tag = this.element.tagName.toLowerCase();

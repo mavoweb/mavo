@@ -183,7 +183,7 @@ var _ = self.Mavo = $.Class({
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.editing? this.done() : this.edit(),
+				onclick: e => this.element.setAttribute("data-view", this.editing? "read" : "edit"),
 				inside: this.ui.bar
 			});
 
@@ -194,7 +194,7 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.edit);
 
 			if (this.editing) {
-				this.done();
+				this.element.setAttribute("data-view", "read");
 			}
 		});
 
@@ -289,6 +289,10 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-end", this);
 	},
 
+	get editing() {
+		return this.root.editing;
+	},
+
 	get data() {
 		return this.getData();
 	},
@@ -305,7 +309,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			if (this.editing) {
+			if (this.editing) { // TODO this logic should go to Node
 				this.done();
 				this.root.render(data);
 				this.edit();
@@ -327,8 +331,6 @@ var _ = self.Mavo = $.Class({
 	},
 
 	edit: function() {
-		this.editing = true;
-
 		this.root.edit();
 
 		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
@@ -382,7 +384,6 @@ var _ = self.Mavo = $.Class({
 	done: function() {
 		this.root.done();
 		$.unbind(this.wrapper, ".mavo:edit");
-		this.editing = false;
 		this.unsavedChanges = false;
 	},
 
@@ -477,19 +478,6 @@ var _ = self.Mavo = $.Class({
 	live: {
 		inProgress: function(value) {
 			$.toggleAttribute(this.wrapper, "data-mv-progress", value, value);
-		},
-
-		editing: {
-			set: function(value) {
-				this.wrapper.classList.toggle("editing", value);
-
-				if (value) {
-					this.wrapper.setAttribute("data-editing", "");
-				}
-				else {
-					this.wrapper.removeAttribute("data-editing");
-				}
-			}
 		},
 
 		unsavedChanges: function(value) {

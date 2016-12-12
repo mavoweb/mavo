@@ -75,12 +75,12 @@ var _ = Mavo.Debug = {
 			return _.printValue(obj.value);
 		}
 		else if (obj instanceof Mavo.Collection) {
-			if (obj.items.length > 0) {
-				if (obj.items[0] instanceof Mavo.Group) {
-					return `List: ${obj.items.length} group(s)`;
+			if (obj.children.length > 0) {
+				if (obj.children[0] instanceof Mavo.Group) {
+					return `List: ${obj.children.length} group(s)`;
 				}
 				else {
-					return "List: " + obj.items.map(_.printValue).join(", ");
+					return "List: " + obj.children.map(_.printValue).join(", ");
 				}
 			}
 			else {
@@ -369,7 +369,7 @@ Mavo.hooks.add("group-init-end", function() {
 		this.group.element.addEventListener("mavo:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
-				var value = _.printValue(this.properties[property]);
+				var value = _.printValue(this.children[property]);
 
 				if (tr.cells[2]) {
 					var td = tr.cells[2];

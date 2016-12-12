@@ -460,11 +460,11 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 
 				// Look in ancestors
 				var ret = this.walkUp(group => {
-					if (property in group.properties) {
+					if (property in group.children) {
 						// TODO decouple
 						group.expressions.dependents.add(this.expressions);
 
-						return group.properties[property].getRelativeData(o);
+						return group.children[property].getRelativeData(o);
 					};
 				});
 
@@ -485,7 +485,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 
 				// First look in ancestors
 				var ret = this.walkUp(group => {
-					if (property in group.properties) {
+					if (property in group.children) {
 						return true;
 					};
 				});
@@ -587,7 +587,7 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 		var value = this.value[0];
 
 		if (this.group.mavo.root) {
-			if ( !value && !Object.keys(this.group.properties).length) {
+			if ( !value && !Object.keys(this.group.children).length) {
 				console.trace();
 			}
 			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!

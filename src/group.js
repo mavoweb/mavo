@@ -3,7 +3,7 @@
 var _ = Mavo.Group = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		this.properties = {};
+		this.children = {};
 
 		this.group = this;
 
@@ -11,7 +11,7 @@ var _ = Mavo.Group = $.Class({
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
+			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
 		}
 
 		// Create Mavo objects for all properties in this group (primitives orgroups),
@@ -20,8 +20,8 @@ var _ = Mavo.Group = $.Class({
 			var property = Mavo.Node.getProperty(element);
 
 			if (this.contains(element)) {
-				var existing = this.properties[property];
-				var template = this.template? this.template.properties[property] : null;
+				var existing = this.children[property];
+				var template = this.template? this.template.children[property] : null;
 				var constructorOptions = {template, group: this};
 
 				if (existing) {
@@ -30,7 +30,7 @@ var _ = Mavo.Group = $.Class({
 
 					if (!(existing instanceof Mavo.Collection)) {
 						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-						this.properties[property] = existing.collection = collection;
+						this.children[property] = existing.collection = collection;
 						collection.add(existing);
 					}
 
@@ -44,7 +44,7 @@ var _ = Mavo.Group = $.Class({
 					// No existing properties with this id, normal case
 					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
 
-					this.properties[property] = obj;
+					this.children[property] = obj;
 				}
 			}
 		});
@@ -116,12 +116,12 @@ var _ = Mavo.Group = $.Class({
 			return this;
 		}
 
-		if (property in this.properties) {
-			return this.properties[property].find(property);
+		if (property in this.children) {
+			return this.children[property].find(property);
 		}
 
-		for (var prop in this.properties) {
-			var ret = this.properties[prop].find(property);
+		for (var prop in this.children) {
+			var ret = this.children[prop].find(property);
 
 			if (ret !== undefined) {
 				return ret;
@@ -129,21 +129,11 @@ var _ = Mavo.Group = $.Class({
 		}
 	},
 
-	propagate: function(callback) {
-		$.each(this.properties, (property, obj) => {
-			obj.call(...arguments);
-		});
-	},
-
 	save: function() {
 		this.unsavedChanges = false;
 	},
 
-	done: function() {
-		$.unbind(this.element, ".mavo:edit");
-	},
-
-	propagated: ["save", "done", "import", "clear"],
+	propagated: ["save", "import", "clear"],
 
 	// Inject data in this element
 	render: function(data) {
@@ -157,10 +147,10 @@ var _ = Mavo.Group = $.Class({
 		data = Array.isArray(data)? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a group?
-		// In that case, render the this.properties[this.property] with it
+		// In that case, render the this.children[this.property] with it
 
 		this.unhandled = $.extend({}, data, property => {
-			return !(property in this.properties);
+			return !(property in this.children);
 		});
 
 		this.propagate(obj => {

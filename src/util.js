@@ -31,35 +31,6 @@ var _ = $.extend(Mavo, {
 		return $.value.apply($, [data].concat(path.split("/")));
 	},
 
-	observe: function(element, attribute, observer, oldValue) {
-		if (!(observer instanceof MutationObserver)) {
-			observer = new MutationObserver(observer);
-		}
-
-		var options = {};
-
-		if (attribute) {
-			$.extend(options, {
-				attributes: true,
-				attributeFilter: attribute == "all"? undefined : [attribute],
-				attributeOldValue: !!oldValue
-			});
-		}
-
-		if (!attribute || attribute == "all") {
-			$.extend(options, {
-				characterData: true,
-				childList: true,
-				subtree: true,
-				characterDataOldValue: !!oldValue
-			});
-		}
-
-		observer.observe(element, options);
-
-		return observer;
-	},
-
 	// If the passed value is not an array, convert to an array
 	toArray: arr => {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
@@ -117,7 +88,77 @@ var _ = $.extend(Mavo, {
 		};
 	},
 
-	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
+	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
+
+	Observer: $.Class({
+		constructor: function(element, attribute, callback, oldValue) {
+			if (callback instanceof MutationObserver) {
+				this.observer = callback;
+			}
+
+			this.observer = this.observer || new MutationObserver(callback);
+			this.element = element;
+			this.callback = callback;
+			this.attribute = attribute;
+			this.oldValue = oldValue;
+
+			this.options = {};
+
+			if (attribute) {
+				$.extend(this.options, {
+					attributes: true,
+					attributeFilter: this.attribute == "all"? undefined : [this.attribute],
+					attributeOldValue: !!this.oldValue
+				});
+			}
+
+			if (!this.attribute || this.attribute == "all") {
+				$.extend(this.options, {
+					characterData: true,
+					childList: true,
+					subtree: true,
+					characterDataOldValue: !!this.oldValue
+				});
+			}
+
+			this.run();
+		},
+
+		pause: function() {
+			if (this.running) {
+				this.observer && this.observer.disconnect();
+				this.running = false;
+			}
+			
+			return this;
+		},
+
+		run: function() {
+			if (!this.running) {
+
+				this.observer && this.observer.observe(this.element, this.options);
+				this.running = true;
+			}
+
+			return this;
+		},
+
+		/**
+		 * Disconnect an observer, run some code, then observe again
+		 */
+		sneak: function(callback) {
+			if (this.running) {
+				this.pause();
+				var ret = callback();
+				this.run();
+			}
+			else {
+				var ret = callback();
+			}
+
+			return ret;
+		}
+	}),
 });
 
 // Bliss plugins

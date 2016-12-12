@@ -147,7 +147,7 @@
 		}
 	}
 
-	.mv-wrapper:not([data-editing]) &.deleted {
+	.mv-wrapper:not([data-view="edit"]) &.deleted {
 		display: none;
 	}
 }
@@ -167,7 +167,7 @@
 	}
 
 	&:not(.can-edit) {
-		.edit, [data-editing], .add {
+		.edit, [data-view="edit"], .add {
 			display: none;
 		}
 	}
@@ -189,7 +189,7 @@
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
-	&:not([data-editing]) {
+	&:not([data-view="edit"]) {
 		.empty,
 		.mv-item-controls,
 		button.add,
@@ -200,7 +200,8 @@
 		}
 	}
 
-	&[data-editing] {
+	&[data-view="edit"],
+	[data-view="edit"] {
 		.empty {
 			opacity: .5;
 		}
@@ -216,30 +217,30 @@
 		.mv-editor:focus {
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
+	}
+}
 
-		// Primitives
-		#{$primitive}:not(.mv-constant) {
-			& input.mv-editor,
-			& select.mv-editor,
-			& textarea.mv-editor {
-				all: unset;
-				cursor: auto;
-			}
+// Primitives
+#{$primitive}[data-view="edit"] {
+	& input.mv-editor,
+	& select.mv-editor,
+	& textarea.mv-editor {
+		all: unset;
+		cursor: auto;
+	}
 
-			.mv-editor:hover {
-				@include highlight(hsla(58, 100%, 50%, .2));
-			}
+	.mv-editor:hover {
+		@include highlight(hsla(58, 100%, 50%, .2));
+	}
 
-			& textarea.mv-editor {
-				display: block;
-				box-sizing: border-box;
-				width: 100%;
-			}
+	& textarea.mv-editor {
+		display: block;
+		box-sizing: border-box;
+		width: 100%;
+	}
 
-			input.mv-editor {
-				max-width: 100%;
-			}
-		}
+	input.mv-editor {
+		max-width: 100%;
 	}
 }
 

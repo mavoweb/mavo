@@ -25,7 +25,11 @@ gulp.task("concat", function() {
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.js"))
 		.pipe(sourcemaps.write("maps"))
-		.pipe(gulp.dest("dist"));
+		.pipe(gulp.dest("dist"))
+		.pipe(notify({
+			message: "Concat done!",
+			onLast: true
+		}));
 });
 
 gulp.task("sass", function() {

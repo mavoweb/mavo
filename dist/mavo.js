@@ -378,7 +378,7 @@ var _ = self.Mavo = $.Class({
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.editing? this.done() : this.edit(),
+				onclick: e => this.element.setAttribute("data-view", this.editing? "read" : "edit"),
 				inside: this.ui.bar
 			});
 
@@ -389,7 +389,7 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.edit);
 
 			if (this.editing) {
-				this.done();
+				this.element.setAttribute("data-view", "read");
 			}
 		});
 
@@ -484,6 +484,10 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-end", this);
 	},
 
+	get editing() {
+		return this.root.editing;
+	},
+
 	get data() {
 		return this.getData();
 	},
@@ -500,7 +504,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			if (this.editing) {
+			if (this.editing) { // TODO this logic should go to Node
 				this.done();
 				this.root.render(data);
 				this.edit();
@@ -522,8 +526,6 @@ var _ = self.Mavo = $.Class({
 	},
 
 	edit: function() {
-		this.editing = true;
-
 		this.root.edit();
 
 		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
@@ -577,7 +579,6 @@ var _ = self.Mavo = $.Class({
 	done: function() {
 		this.root.done();
 		$.unbind(this.wrapper, ".mavo:edit");
-		this.editing = false;
 		this.unsavedChanges = false;
 	},
 
@@ -672,19 +673,6 @@ var _ = self.Mavo = $.Class({
 	live: {
 		inProgress: function(value) {
 			$.toggleAttribute(this.wrapper, "data-mv-progress", value, value);
-		},
-
-		editing: {
-			set: function(value) {
-				this.wrapper.classList.toggle("editing", value);
-
-				if (value) {
-					this.wrapper.setAttribute("data-editing", "");
-				}
-				else {
-					this.wrapper.removeAttribute("data-editing");
-				}
-			}
 		},
 
 		unsavedChanges: function(value) {
@@ -804,35 +792,6 @@ var _ = $.extend(Mavo, {
 		return $.value.apply($, [data].concat(path.split("/")));
 	},
 
-	observe: function(element, attribute, observer, oldValue) {
-		if (!(observer instanceof MutationObserver)) {
-			observer = new MutationObserver(observer);
-		}
-
-		var options = {};
-
-		if (attribute) {
-			$.extend(options, {
-				attributes: true,
-				attributeFilter: attribute == "all"? undefined : [attribute],
-				attributeOldValue: !!oldValue
-			});
-		}
-
-		if (!attribute || attribute == "all") {
-			$.extend(options, {
-				characterData: true,
-				childList: true,
-				subtree: true,
-				characterDataOldValue: !!oldValue
-			});
-		}
-
-		observer.observe(element, options);
-
-		return observer;
-	},
-
 	// If the passed value is not an array, convert to an array
 	toArray: arr => {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
@@ -890,7 +849,77 @@ var _ = $.extend(Mavo, {
 		};
 	},
 
-	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")
+	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
+
+	Observer: $.Class({
+		constructor: function(element, attribute, callback, oldValue) {
+			if (callback instanceof MutationObserver) {
+				this.observer = callback;
+			}
+
+			this.observer = this.observer || new MutationObserver(callback);
+			this.element = element;
+			this.callback = callback;
+			this.attribute = attribute;
+			this.oldValue = oldValue;
+
+			this.options = {};
+
+			if (attribute) {
+				$.extend(this.options, {
+					attributes: true,
+					attributeFilter: this.attribute == "all"? undefined : [this.attribute],
+					attributeOldValue: !!this.oldValue
+				});
+			}
+
+			if (!this.attribute || this.attribute == "all") {
+				$.extend(this.options, {
+					characterData: true,
+					childList: true,
+					subtree: true,
+					characterDataOldValue: !!this.oldValue
+				});
+			}
+
+			this.run();
+		},
+
+		pause: function() {
+			if (this.running) {
+				this.observer && this.observer.disconnect();
+				this.running = false;
+			}
+			
+			return this;
+		},
+
+		run: function() {
+			if (!this.running) {
+
+				this.observer && this.observer.observe(this.element, this.options);
+				this.running = true;
+			}
+
+			return this;
+		},
+
+		/**
+		 * Disconnect an observer, run some code, then observe again
+		 */
+		sneak: function(callback) {
+			if (this.running) {
+				this.pause();
+				var ret = callback();
+				this.run();
+			}
+			else {
+				var ret = callback();
+			}
+
+			return ret;
+		}
+	}),
 });
 
 // Bliss plugins
@@ -1297,6 +1326,8 @@ var _ = Mavo.Node = $.Class({
 			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
 
+		this.uid = ++_.maxId;
+
 		this.element = element;
 		this.template = o.template;
 
@@ -1310,15 +1341,33 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 
-		if (!this.fromTemplate("property", "type")) {
+		if (!this.fromTemplate("property", "type", "views")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.store = this.element.getAttribute("data-store");
+			this.views = this.element.getAttribute("data-view");
 		}
+
+		this.viewObserver = new Mavo.Observer(this.element, "data-view", records => {
+			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, records, records[0].target == this.element);
+			this.view = this.element.getAttribute("data-view");
+			this[this.view == "edit"? "edit" : "done"]();
+		});
+
+		this.view = this.views || "read";
 
 		this.group = this.parentGroup = o.group;
 
 		Mavo.hooks.run("node-init-end", this);
+	},
+
+	get editing() {
+		return this.view == "edit";
+	},
+
+	get constant() {
+		// Is a "constant" if only allowed view is read
+		return this.views == "read";
 	},
 
 	get isRoot() {
@@ -1373,10 +1422,33 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	edit: function() {
-		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
+		this.view = "edit";
+		//if (this.uid == 32) {
+			//console.log("%cedit", "color:red; font-weight: bold;", this.property, this.uid);
+			//console.trace()
+		//}
+
+		this.propagate("edit");
 	},
 
-	propagated: ["save", "revert", "done", "import"],
+	done: function() {
+		this.view = "read";
+		$.unbind(this.element, ".mavo:edit");
+
+		this.propagate("done");
+	},
+
+	propagate: function() {
+		for (let i in this.children) {
+			let node = this.children[i];
+
+			if (node instanceof Mavo.Node) {
+				node.call(...arguments);
+			}
+		}
+	},
+
+	propagated: ["save", "revert"],
 
 	toJSON: Mavo.prototype.toJSON,
 
@@ -1390,7 +1462,22 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
+	live: {
+		view: function (value) {
+			if (this._view != value) {
+				//console.log("%cview on", "color:green;", this.property, this.uid, "from", this._view, "to", value);
+				// If we don't do this, calling edit or done below will
+				// result in infinite recursion
+				this._view = value;
+
+				this.viewObserver.sneak(() => this.element.setAttribute("data-view", value));
+			}
+		},
+	},
+
 	static: {
+		maxId: 0,
+
 		create: function(element, mavo, o = {}) {
 			if (Mavo.is("multiple", element) && !o.collection) {
 				return new Mavo.Collection(element, mavo, o);
@@ -2041,11 +2128,11 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 
 				// Look in ancestors
 				var ret = this.walkUp(group => {
-					if (property in group.properties) {
+					if (property in group.children) {
 						// TODO decouple
 						group.expressions.dependents.add(this.expressions);
 
-						return group.properties[property].getRelativeData(o);
+						return group.children[property].getRelativeData(o);
 					};
 				});
 
@@ -2066,7 +2153,7 @@ Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
 
 				// First look in ancestors
 				var ret = this.walkUp(group => {
-					if (property in group.properties) {
+					if (property in group.children) {
 						return true;
 					};
 				});
@@ -2168,7 +2255,7 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 		var value = this.value[0];
 
 		if (this.group.mavo.root) {
-			if ( !value && !Object.keys(this.group.properties).length) {
+			if ( !value && !Object.keys(this.group.children).length) {
 				console.trace();
 			}
 			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
@@ -2561,7 +2648,7 @@ function numbers(array, args) {
 var _ = Mavo.Group = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		this.properties = {};
+		this.children = {};
 
 		this.group = this;
 
@@ -2569,7 +2656,7 @@ var _ = Mavo.Group = $.Class({
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
-			var obj = this.properties[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
+			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
 		}
 
 		// Create Mavo objects for all properties in this group (primitives orgroups),
@@ -2578,8 +2665,8 @@ var _ = Mavo.Group = $.Class({
 			var property = Mavo.Node.getProperty(element);
 
 			if (this.contains(element)) {
-				var existing = this.properties[property];
-				var template = this.template? this.template.properties[property] : null;
+				var existing = this.children[property];
+				var template = this.template? this.template.children[property] : null;
 				var constructorOptions = {template, group: this};
 
 				if (existing) {
@@ -2588,7 +2675,7 @@ var _ = Mavo.Group = $.Class({
 
 					if (!(existing instanceof Mavo.Collection)) {
 						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-						this.properties[property] = existing.collection = collection;
+						this.children[property] = existing.collection = collection;
 						collection.add(existing);
 					}
 
@@ -2602,7 +2689,7 @@ var _ = Mavo.Group = $.Class({
 					// No existing properties with this id, normal case
 					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
 
-					this.properties[property] = obj;
+					this.children[property] = obj;
 				}
 			}
 		});
@@ -2674,12 +2761,12 @@ var _ = Mavo.Group = $.Class({
 			return this;
 		}
 
-		if (property in this.properties) {
-			return this.properties[property].find(property);
+		if (property in this.children) {
+			return this.children[property].find(property);
 		}
 
-		for (var prop in this.properties) {
-			var ret = this.properties[prop].find(property);
+		for (var prop in this.children) {
+			var ret = this.children[prop].find(property);
 
 			if (ret !== undefined) {
 				return ret;
@@ -2687,21 +2774,11 @@ var _ = Mavo.Group = $.Class({
 		}
 	},
 
-	propagate: function(callback) {
-		$.each(this.properties, (property, obj) => {
-			obj.call(...arguments);
-		});
-	},
-
 	save: function() {
 		this.unsavedChanges = false;
 	},
 
-	done: function() {
-		$.unbind(this.element, ".mavo:edit");
-	},
-
-	propagated: ["save", "done", "import", "clear"],
+	propagated: ["save", "import", "clear"],
 
 	// Inject data in this element
 	render: function(data) {
@@ -2715,10 +2792,10 @@ var _ = Mavo.Group = $.Class({
 		data = Array.isArray(data)? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a group?
-		// In that case, render the this.properties[this.property] with it
+		// In that case, render the this.children[this.property] with it
 
 		this.unhandled = $.extend({}, data, property => {
-			return !(property in this.properties);
+			return !(property in this.children);
 		});
 
 		this.propagate(obj => {
@@ -2767,7 +2844,7 @@ var _ = Mavo.Group = $.Class({
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue", "constant")) {
+		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -2777,11 +2854,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
-
-			this.constant = this.element.classList.contains("mv-constant");
 		}
-
-		this.view = "read";
 
 		Mavo.hooks.run("primitive-init-start", this);
 
@@ -2827,7 +2900,7 @@ var _ = Mavo.Primitive = $.Class({
 
 				// Update editor if original mutates
 				if (!this.template) {
-					Mavo.observe(original, "all", records => {
+					new Mavo.Observer(original, "all", records => {
 						for (let primitive of this.copies) {
 							primitive.editor = original.cloneNode(true);
 							primitive.setValue(primitive.value, {force: true, silent: true});
@@ -2848,7 +2921,7 @@ var _ = Mavo.Primitive = $.Class({
 			this.default = this.editor? this.editorValue : this.emptyValue;
 		}
 		else {
-			Mavo.observe(this.element, "data-default", record => {
+			new Mavo.Observer(this.element, "data-default", record => {
 				this.default = this.element.getAttribute("data-default");
 			});
 		}
@@ -2893,10 +2966,6 @@ var _ = Mavo.Primitive = $.Class({
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		this.observe();
-	},
-
-	get editing() {
-		return this.view == "edit";
 	},
 
 	get editorValue() {
@@ -2975,6 +3044,8 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	done: function () {
+		this.super.done.call(this);
+
 		this.unobserve();
 
 		if (this.popup) {
@@ -2984,8 +3055,6 @@ var _ = Mavo.Primitive = $.Class({
 			$.remove(this.editor);
 			this.element.textContent = this.editorValue;
 		}
-
-		this.view = "read";
 
 		// Revert tabIndex
 		if (this.element._.data.prevTabindex !== null) {
@@ -3006,62 +3075,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.value = this.savedValue;
 			this.unsavedChanges = false;
 		}
-	},
-
-	// Prepare to be edited
-	// Called when root edit button is pressed
-	preEdit: function () {
-		if (this.constant) {
-			return;
-		}
-
-		// Empty properties should become editable immediately
-		// otherwise they could be invisible!
-		if (this.empty && !this.attribute) {
-			this.edit();
-			return;
-		}
-
-		if (this.view == "preEdit") {
-			return;
-		}
-
-		this.view = "preEdit";
-
-		var timer;
-
-		this.element._.events({
-			// click is needed too because it works with the keyboard as well
-			"click.mavo:preedit": e => this.edit(),
-			"focus.mavo:preedit": e => {
-				this.edit();
-
-				if (!this.popup) {
-					this.editor.focus();
-				}
-			},
-			"click.mavo:edit": evt => {
-				// Prevent default actions while editing
-				// e.g. following links etc
-				evt.preventDefault();
-			}
-		});
-
-		if (!this.attribute) {
-			this.element._.events({
-				"mouseenter.mavo:preedit": e => {
-					clearTimeout(timer);
-					timer = setTimeout(() => this.edit(), 150);
-				},
-				"mouseleave.mavo:preedit": e => {
-					clearTimeout(timer);
-				}
-			});
-		}
-
-		// Make element focusable, so it can actually receive focus
-		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-		this.element.tabIndex = 0;
 	},
 
 	// Called only the first time this primitive is edited
@@ -3120,30 +3133,76 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.constant || this.editing) {
+		if (this.constant) {
 			return;
 		}
 
-		this.element._.unbind(".mavo:preedit");
+		this.super.edit.call(this);
 
-		if (this.initEdit) {
-			this.initEdit();
-		}
+		(new Promise((resolve, reject) => {
+			// Prepare for edit
 
-		if (this.popup) {
-			this.popup.show();
-		}
-
-		if (!this.attribute) {
-			if (this.editor.parentNode != this.element) {
-				this.editorValue = this.value;
-				this.element.textContent = "";
-
-				this.element.appendChild(this.editor);
+			// Empty properties should become editable immediately
+			// otherwise they could be invisible!
+			if (this.empty && !this.attribute) {
+				resolve();
 			}
-		}
 
-		this.view = "edit";
+			this.element._.events({
+				// click is needed too because it works with the keyboard as well
+				"click.mavo:preedit": e => this.edit(),
+				"focus.mavo:preedit": e => {
+					resolve();
+				},
+				"click.mavo:edit": evt => {
+					// Prevent default actions while editing
+					// e.g. following links etc
+					evt.preventDefault();
+				}
+			});
+
+			var timer;
+
+			if (!this.attribute) {
+				// Hovering over the element for over 150ms will trigger edit
+				this.element._.events({
+					"mouseenter.mavo:preedit": e => {
+						clearTimeout(timer);
+						timer = setTimeout(resolve, 150);
+					},
+					"mouseleave.mavo:preedit": e => {
+						clearTimeout(timer);
+					}
+				});
+			}
+
+			// Make element focusable, so it can actually receive focus
+			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
+			this.element.tabIndex = 0;
+		})).then(() => {
+			// Actual edit
+			this.element._.unbind(".mavo:preedit");
+
+			if (this.initEdit) {
+				this.initEdit();
+			}
+
+			if (this.popup) {
+				this.popup.show();
+			}
+			else {
+				this.editor.focus();
+			}
+
+			if (!this.attribute) {
+				if (this.editor.parentNode != this.element) {
+					this.editorValue = this.value;
+					this.element.textContent = "";
+
+					this.element.appendChild(this.editor);
+				}
+			}
+		});
 	}, // edit
 
 	clear: function() {
@@ -3178,16 +3237,16 @@ var _ = Mavo.Primitive = $.Class({
 
 	observe: function() {
 		if (!this.constant) {
-			this.observer = Mavo.observe(this.element, this.attribute, this.observer || (record => {
-				if (this.attribute || !this.mavo.editing) {
+			this.observer = this.observer? this.observer.run() : new Mavo.Observer(this.element, this.attribute, records => {
+				if (this.attribute || !this.editing) {
 					this.value = this.getValue();
 				}
-			}));
+			});
 		}
 	},
 
 	unobserve: function () {
-		this.observer && this.observer.disconnect();
+		this.observer && this.observer.pause();
 	},
 
 	/**
@@ -3265,10 +3324,6 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.view == "preEdit") {
-			this.preEdit();
-		}
-
 		this.observe();
 
 		return value;
@@ -3285,10 +3340,6 @@ var _ = Mavo.Primitive = $.Class({
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 			this.element.classList.toggle("empty", hide);
-		},
-
-		view: function (value) {
-			this.element.classList.toggle("editing", value == "edit");
 		},
 
 		constant: function (value) {
@@ -3778,7 +3829,7 @@ var _ = Mavo.Collection = $.Class({
 		 */
 		this.templateElement = this.element;
 
-		this.items = [];
+		this.children = [];
 
 		// ALL descendant property names as an array
 		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
@@ -3800,12 +3851,12 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	get length() {
-		return this.items.length;
+		return this.children.length;
 	},
 
 	// Collection still contains its template as data
 	get containsTemplate() {
-		return this.items.length && this.items[0].element === this.element;
+		return this.children.length && this.children[0].element === this.element;
 	},
 
 	getData: function(o = {}) {
@@ -3815,7 +3866,7 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		for (item of this.items) {
+		for (item of this.children) {
 			if (!item.deleted) {
 				let itemData = item.getData(env.options);
 
@@ -3871,7 +3922,7 @@ var _ = Mavo.Collection = $.Class({
 							title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 							className: "add",
 							events: {
-								"click": evt => this.add(null, this.items.indexOf(item)).edit()
+								"click": evt => this.add(null, this.children.indexOf(item)).edit()
 							}
 						}
 					],
@@ -3897,7 +3948,7 @@ var _ = Mavo.Collection = $.Class({
 			item = item || this.createItem();
 		}
 
-		if (index in this.items) {
+		if (index in this.children) {
 			if (this.bottomUp) {
 				index++;
 			}
@@ -3908,16 +3959,16 @@ var _ = Mavo.Collection = $.Class({
 
 		if (!item.element.parentNode) {
 			// Add it to the DOM, if not already in
-			var nextItem = this.items[index];
+			var nextItem = this.children[index];
 
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
 		// Update internal data model
-		this.items.splice(index, 0, item);
+		this.children.splice(index, 0, item);
 
 		for (let i = index - 1; i < this.length; i++) {
-			let item = this.items[i];
+			let item = this.children[i];
 
 			if (item) {
 				item.index = i;
@@ -3940,15 +3991,11 @@ var _ = Mavo.Collection = $.Class({
 		return item;
 	},
 
-	propagate: function() {
-		this.items.forEach(item => item.call.apply(item, arguments));
-	},
-
 	delete: function(item, hard) {
 		if (hard) {
 			// Hard delete
 			$.remove(item.element);
-			this.items.splice(this.items.indexOf(item), 1);
+			this.children.splice(this.children.indexOf(item), 1);
 			return;
 		}
 
@@ -3965,10 +4012,6 @@ var _ = Mavo.Collection = $.Class({
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
-	},
-
-	edit: function() {
-		this.propagate(obj => obj[obj.preEdit? "preEdit" : "edit"]());
 	},
 
 	/**
@@ -3988,7 +4031,7 @@ var _ = Mavo.Collection = $.Class({
 				}
 			});
 
-			this.items = [];
+			this.children = [];
 
 			this.marker._.fire("mavo:datachange", {
 				node: this,
@@ -3999,7 +4042,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		for (let item of this.items) {
+		for (let item of this.children) {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
@@ -4009,14 +4052,10 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	done: function() {
-
-	},
-
-	propagated: ["save", "done"],
+	propagated: ["save"],
 
 	revert: function() {
-		for (let item of this.items) {
+		for (let item of this.children) {
 			// Delete added items
 			if (item.unsavedChanges) {
 				this.delete(item, true);
@@ -4043,10 +4082,10 @@ var _ = Mavo.Collection = $.Class({
 		data = Mavo.toArray(data);
 
 		if (!this.mutable) {
-			this.items.forEach((item, i) => item.render(data && data[i]));
+			this.children.forEach((item, i) => item.render(data && data[i]));
 
 			if (data) {
-				this.unhandled.after = data.slice(this.items.length);
+				this.unhandled.after = data.slice(this.children.length);
 			}
 		}
 		else {
@@ -4060,7 +4099,7 @@ var _ = Mavo.Collection = $.Class({
 
 				item.render(datum);
 
-				this.items.push(item);
+				this.children.push(item);
 				item.index = i;
 
 				fragment.appendChild(item.element);
@@ -4073,7 +4112,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	find: function(property) {
-		var items = this.items.filter(item => !item.deleted);
+		var items = this.children.filter(item => !item.deleted);
 
 		if (this.property == property) {
 			return items;
@@ -4110,7 +4149,7 @@ var _ = Mavo.Collection = $.Class({
 				// Insert the add button if it's not already in the DOM
 				if (!this.addButton.parentNode) {
 					if (this.bottomUp) {
-						this.addButton._.before($.value(this.items[0], "element") || this.marker);
+						this.addButton._.before($.value(this.children[0], "element") || this.marker);
 					}
 					else {
 						var tag = this.element.tagName.toLowerCase();
@@ -4658,12 +4697,12 @@ var _ = Mavo.Debug = {
 			return _.printValue(obj.value);
 		}
 		else if (obj instanceof Mavo.Collection) {
-			if (obj.items.length > 0) {
-				if (obj.items[0] instanceof Mavo.Group) {
-					return `List: ${obj.items.length} group(s)`;
+			if (obj.children.length > 0) {
+				if (obj.children[0] instanceof Mavo.Group) {
+					return `List: ${obj.children.length} group(s)`;
 				}
 				else {
-					return "List: " + obj.items.map(_.printValue).join(", ");
+					return "List: " + obj.children.map(_.printValue).join(", ");
 				}
 			}
 			else {
@@ -4952,7 +4991,7 @@ Mavo.hooks.add("group-init-end", function() {
 		this.group.element.addEventListener("mavo:datachange", evt => {
 			$$("tr.debug-property", this.debug).forEach(tr => {
 				var property = tr.cells[1].textContent;
-				var value = _.printValue(this.properties[property]);
+				var value = _.printValue(this.children[property]);
 
 				if (tr.cells[2]) {
 					var td = tr.cells[2];

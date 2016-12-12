@@ -3,7 +3,7 @@
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue", "constant")) {
+		if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = _.getValueAttribute(this.element);
@@ -13,11 +13,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			this.datatype = _.getDatatype(this.element, this.attribute);
-
-			this.constant = this.element.classList.contains("mv-constant");
 		}
-
-		this.view = "read";
 
 		Mavo.hooks.run("primitive-init-start", this);
 
@@ -63,7 +59,7 @@ var _ = Mavo.Primitive = $.Class({
 
 				// Update editor if original mutates
 				if (!this.template) {
-					Mavo.observe(original, "all", records => {
+					new Mavo.Observer(original, "all", records => {
 						for (let primitive of this.copies) {
 							primitive.editor = original.cloneNode(true);
 							primitive.setValue(primitive.value, {force: true, silent: true});
@@ -84,7 +80,7 @@ var _ = Mavo.Primitive = $.Class({
 			this.default = this.editor? this.editorValue : this.emptyValue;
 		}
 		else {
-			Mavo.observe(this.element, "data-default", record => {
+			new Mavo.Observer(this.element, "data-default", record => {
 				this.default = this.element.getAttribute("data-default");
 			});
 		}
@@ -129,10 +125,6 @@ var _ = Mavo.Primitive = $.Class({
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		this.observe();
-	},
-
-	get editing() {
-		return this.view == "edit";
 	},
 
 	get editorValue() {
@@ -211,6 +203,8 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	done: function () {
+		this.super.done.call(this);
+
 		this.unobserve();
 
 		if (this.popup) {
@@ -220,8 +214,6 @@ var _ = Mavo.Primitive = $.Class({
 			$.remove(this.editor);
 			this.element.textContent = this.editorValue;
 		}
-
-		this.view = "read";
 
 		// Revert tabIndex
 		if (this.element._.data.prevTabindex !== null) {
@@ -242,62 +234,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.value = this.savedValue;
 			this.unsavedChanges = false;
 		}
-	},
-
-	// Prepare to be edited
-	// Called when root edit button is pressed
-	preEdit: function () {
-		if (this.constant) {
-			return;
-		}
-
-		// Empty properties should become editable immediately
-		// otherwise they could be invisible!
-		if (this.empty && !this.attribute) {
-			this.edit();
-			return;
-		}
-
-		if (this.view == "preEdit") {
-			return;
-		}
-
-		this.view = "preEdit";
-
-		var timer;
-
-		this.element._.events({
-			// click is needed too because it works with the keyboard as well
-			"click.mavo:preedit": e => this.edit(),
-			"focus.mavo:preedit": e => {
-				this.edit();
-
-				if (!this.popup) {
-					this.editor.focus();
-				}
-			},
-			"click.mavo:edit": evt => {
-				// Prevent default actions while editing
-				// e.g. following links etc
-				evt.preventDefault();
-			}
-		});
-
-		if (!this.attribute) {
-			this.element._.events({
-				"mouseenter.mavo:preedit": e => {
-					clearTimeout(timer);
-					timer = setTimeout(() => this.edit(), 150);
-				},
-				"mouseleave.mavo:preedit": e => {
-					clearTimeout(timer);
-				}
-			});
-		}
-
-		// Make element focusable, so it can actually receive focus
-		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-		this.element.tabIndex = 0;
 	},
 
 	// Called only the first time this primitive is edited
@@ -356,30 +292,76 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.constant || this.editing) {
+		if (this.constant) {
 			return;
 		}
 
-		this.element._.unbind(".mavo:preedit");
+		this.super.edit.call(this);
 
-		if (this.initEdit) {
-			this.initEdit();
-		}
+		(new Promise((resolve, reject) => {
+			// Prepare for edit
 
-		if (this.popup) {
-			this.popup.show();
-		}
-
-		if (!this.attribute) {
-			if (this.editor.parentNode != this.element) {
-				this.editorValue = this.value;
-				this.element.textContent = "";
-
-				this.element.appendChild(this.editor);
+			// Empty properties should become editable immediately
+			// otherwise they could be invisible!
+			if (this.empty && !this.attribute) {
+				resolve();
 			}
-		}
 
-		this.view = "edit";
+			this.element._.events({
+				// click is needed too because it works with the keyboard as well
+				"click.mavo:preedit": e => this.edit(),
+				"focus.mavo:preedit": e => {
+					resolve();
+				},
+				"click.mavo:edit": evt => {
+					// Prevent default actions while editing
+					// e.g. following links etc
+					evt.preventDefault();
+				}
+			});
+
+			var timer;
+
+			if (!this.attribute) {
+				// Hovering over the element for over 150ms will trigger edit
+				this.element._.events({
+					"mouseenter.mavo:preedit": e => {
+						clearTimeout(timer);
+						timer = setTimeout(resolve, 150);
+					},
+					"mouseleave.mavo:preedit": e => {
+						clearTimeout(timer);
+					}
+				});
+			}
+
+			// Make element focusable, so it can actually receive focus
+			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
+			this.element.tabIndex = 0;
+		})).then(() => {
+			// Actual edit
+			this.element._.unbind(".mavo:preedit");
+
+			if (this.initEdit) {
+				this.initEdit();
+			}
+
+			if (this.popup) {
+				this.popup.show();
+			}
+			else {
+				this.editor.focus();
+			}
+
+			if (!this.attribute) {
+				if (this.editor.parentNode != this.element) {
+					this.editorValue = this.value;
+					this.element.textContent = "";
+
+					this.element.appendChild(this.editor);
+				}
+			}
+		});
 	}, // edit
 
 	clear: function() {
@@ -414,16 +396,16 @@ var _ = Mavo.Primitive = $.Class({
 
 	observe: function() {
 		if (!this.constant) {
-			this.observer = Mavo.observe(this.element, this.attribute, this.observer || (record => {
-				if (this.attribute || !this.mavo.editing) {
+			this.observer = this.observer? this.observer.run() : new Mavo.Observer(this.element, this.attribute, records => {
+				if (this.attribute || !this.editing) {
 					this.value = this.getValue();
 				}
-			}));
+			});
 		}
 	},
 
 	unobserve: function () {
-		this.observer && this.observer.disconnect();
+		this.observer && this.observer.pause();
 	},
 
 	/**
@@ -501,10 +483,6 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.view == "preEdit") {
-			this.preEdit();
-		}
-
 		this.observe();
 
 		return value;
@@ -521,10 +499,6 @@ var _ = Mavo.Primitive = $.Class({
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 			this.element.classList.toggle("empty", hide);
-		},
-
-		view: function (value) {
-			this.element.classList.toggle("editing", value == "edit");
 		},
 
 		constant: function (value) {
