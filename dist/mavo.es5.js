@@ -2737,6 +2737,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * String functions
    *********************/
 
+		/**
+   * Replace all occurences of a string with another string
+   */
+		replace: function replace(haystack, needle, replacement) {
+			var iterations = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
+
+			if (Array.isArray(haystack)) {
+				return haystack.map(function (item) {
+					return _.replace(item, needle, replacement);
+				});
+			}
+
+			// Simple string replacement
+			var needleRegex = RegExp(Mavo.escapeRegExp(needle), "g");
+			var ret = haystack,
+			    prev;
+			var counter = 0;
+
+			while (ret != prev && counter++ < iterations) {
+				prev = ret; // foo
+				ret = ret.replace(needleRegex, replacement); // fo
+			}
+
+			return ret;
+		},
+
 		idify: function idify(readable) {
 			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.replace(/[^\w-]/g, "") // Remove weird characters
@@ -3013,15 +3039,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				identity: "",
 				scalar: function scalar(a, b) {
 					return "" + a + b;
-				},
-				reduce: function reduce(prev, result, a, b) {
-					if (Array.isArray(a) && typeof b == "string") {
-						var last = result.length - 1;
-						result[last] = result[last].slice(0, -b.length);
-						result = result.join("");
-					}
-
-					return result;
 				}
 			}
 		},

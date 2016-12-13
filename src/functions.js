@@ -84,6 +84,27 @@ var _ = Mavo.Functions = {
 	 * String functions
 	 *********************/
 
+	/**
+	 * Replace all occurences of a string with another string
+	 */
+	replace: function(haystack, needle, replacement, iterations = 1) {
+		if (Array.isArray(haystack)) {
+			return haystack.map(item => _.replace(item, needle, replacement));
+		}
+
+		// Simple string replacement
+		var needleRegex = RegExp(Mavo.escapeRegExp(needle), "g");
+		var ret = haystack, prev;
+		var counter = 0;
+
+		while (ret != prev && (counter++ < iterations)) {
+			prev = ret; // foo
+			ret = ret.replace(needleRegex, replacement); // fo
+		}
+
+		return ret;
+	},
+
 	idify: readable => ((text || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters
@@ -275,16 +296,7 @@ Mavo.Script = {
 		"concatenate": {
 			symbol: "&",
 			identity: "",
-			scalar: (a, b) => "" + a + b,
-			reduce: function(prev, result, a, b) {
-				if (Array.isArray(a) && typeof b == "string") {
-					let last = result.length - 1;
-					result[last] = result[last].slice(0, -b.length);
-					result = result.join("");
-				}
-
-				return result;
-			}
+			scalar: (a, b) => "" + a + b
 		}
 	},
 

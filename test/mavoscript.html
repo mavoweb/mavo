@@ -151,10 +151,25 @@
 		<dd>"yolo2"</dd>
 
 		<dt>[1, "hello"] & "#"</dt>
-		<dd>"1#hello"</dd>
+		<dd>["1#", "hello#"]</dd>
 
 		<dt>[1, 2, 3] & "#" & ["a", "b", "c"]</dt>
-		<dd>["1#2#3a", "1#2#3b", "1#2#3c"]</dd>
+		<dd>["1#a", "2#b", "3#c"]</dd>
+
+		<dt>replace("foooo", "o", "aa")</dt>
+		<dd>"faaaaaaaa"</dd>
+
+		<dt title="Array haystack">replace(["bar", "baz"], "a", "o")</dt>
+		<dd>["bor", "boz"]</dd>
+
+		<dt title="Non-recursive replace">replace("foooo", "oo", "o")</dt>
+		<dd>"foo"</dd>
+
+		<dt title="Recursive replace">replace("foooo", "oo", "o", 10)</dt>
+		<dd>"fo"</dd>
+
+		<dt title="Recursive replace with bound">replace("fo", "o", "oo", 2)</dt>
+		<dd>"foooo"</dd>
 	</dl>
 </section>
 
