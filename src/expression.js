@@ -531,7 +531,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
 		this.store = this.store || "none";
-		this.constant = true;
+		this.views = "read";
 	}
 });
 

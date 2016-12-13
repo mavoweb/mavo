@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Property</title>
+	<title>Property tests</title>
 	<link rel="stylesheet" href="../dist/mavo.css" />
 	<link rel="stylesheet" href="style.css" />
 </head>
@@ -27,7 +27,16 @@
 	]
 }</script>
 
+<section data-mavo="elementtypes" class="autoedit">
+	<h1>Different element types</h1>
 
+	<meter property="meter" value=".5"></meter>
+	<progress property="progress" value=".5"></progress>
+	<img src="http://mavo.io/logo.svg" style="width: 100px" property="picture">
+	<time property="emptyDate">Empty time</time>
+	<time property="date" datetime="1986-06-13">13 Jun 1986</time>
+	<meta property="meta" content="Foo">
+</section>
 
 <section data-store="#countries">
 	<h1>Different ways to specify property name</h1>
@@ -80,8 +89,8 @@
 	</div>
 </section>
 
-<section data-mavo="constants" data-store="local" class="debug-saving">
-	<div property="MyConstant" class="mv-constant">Constant, this must be saved but not be editable.</div>
+<section data-mavo="constants" data-store="local" class="autoedit debug-saving">
+	<div property="MyConstant" data-view="read">Constant, this must be saved but not be editable.</div>
 	<div property="NormalProperty">Normal property, must be editable and saveable.</div>
 </section>
 

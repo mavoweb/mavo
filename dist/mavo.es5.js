@@ -2506,7 +2506,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		if (this.expressionText) {
 			this.expressionText.primitive = this;
 			this.store = this.store || "none";
-			this.constant = true;
+			this.views = "read";
 		}
 	});
 
@@ -3354,34 +3354,38 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
-			if (!this.fromTemplate("attribute", "datatype", "humanReadable", "templateValue")) {
+			if (!this.fromTemplate("config", "attribute", "templateValue")) {
+				this.config = _.getConfig(element);
+
 				// Which attribute holds the data, if any?
 				// "null" or null for none (i.e. data is in content).
-				this.attribute = _.getValueAttribute(this.element);
-
-				if (this.attribute) {
-					this.humanReadable = this.attribute.humanReadable;
-				}
-
-				this.datatype = _.getDatatype(this.element, this.attribute);
+				this.attribute = _.getValueAttribute(this.element, this.config);
 			}
 
+			this.humanReadable = this.config.humanReadable;
+			this.datatype = this.config.datatype;
+			this.views = this.views || this.config.views;
+			this.view = this.views || "read";
+
 			Mavo.hooks.run("primitive-init-start", this);
+
+			if (this.config.init) {
+				this.config.init.call(this, this.element);
+			}
+
+			if (this.config.changeEvents) {
+				$.events(this.element, this.config.changeEvents, function (evt) {
+					if (evt.target === _this.element) {
+						_this.value = _this.getValue();
+					}
+				});
+			}
 
 			/**
     * Set up input widget
     */
 
-			// Exposed widgets (visible always)
-			if (Mavo.is("formControl", this.element)) {
-				$.events(this.element, "input change", function (evt) {
-					if (evt.target === _this.element) {
-						_this.value = _this.getValue();
-					}
-				});
-
-				this.constant = true;
-			} else if (!this.constant) {
+			if (!this.constant) {
 				this.mavo.needsEdit = true;
 			}
 
@@ -3392,7 +3396,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				})[0];
 
 				if (this.editor) {
-					this.editorType = "nested";
 					this.element.textContent = this.editorValue;
 					$.remove(this.editor);
 				}
@@ -3400,8 +3403,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			// Linked widgets
 			if (!this.editor && this.element.hasAttribute("data-edit")) {
-				this.editorType = "linked";
-
 				var original = $(this.element.getAttribute("data-edit"));
 
 				if (original && Mavo.is("formControl", original)) {
@@ -3628,18 +3629,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var editor = _.getMatch(this.element, _.editors);
+				var editor = this.config.editor;
 
-				if (editor.create) {
-					$.extend(this, editor, function (property) {
-						return property != "create";
-					});
+				if (this.config.setEditorValue) {
+					// TODO Temporary hack; refactor soon
+					this.setEditorValue = this.config.setEditorValue;
 				}
 
-				var create = editor.create || editor;
-				this.editor = $.create($.type(create) === "function" ? create.call(this) : create);
+				this.editor = $.create($.type(editor) === "function" ? editor.call(this) : editor);
 				this.editorValue = this.value;
-				this.editorType = "created";
 			}
 
 			$.events(this.editor, {
@@ -3662,7 +3660,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			// Copy any data-input-* attributes from the element to the editor
-			var dataInput = /^data-input-/i;
+			var dataInput = /^data-edit-/i;
 			$$(this.element.attributes).forEach(function (attribute) {
 				if (dataInput.test(attribute.name)) {
 					this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
@@ -3878,10 +3876,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 				this.element.classList.toggle("empty", hide);
-			},
-
-			constant: function constant(value) {
-				this.element.classList.toggle("mv-constant", value);
 			}
 		},
 
@@ -3901,33 +3895,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return ret;
 			},
 
-			getValueAttribute: function getValueAttribute(element) {
-				var ret = element.getAttribute("data-attribute") || _.getMatch(element, _.attributes);
+			getConfig: function getConfig(element) {
+				return _.getMatch(element, Mavo.Elements);
+			},
 
-				// TODO refactor this
-				if (ret && ret.value) {
-					ret = $.extend(new String(ret.value), ret);
-				}
+			getValueAttribute: function getValueAttribute(element) {
+				var config = arguments.length <= 1 || arguments[1] === undefined ? _.getConfig(element) : arguments[1];
+
+				var ret = element.getAttribute("data-attribute") || config.attribute;
 
 				if (!ret || ret === "null") {
 					ret = null;
 				}
-
-				return ret;
-			},
-
-			getDatatype: function getDatatype(element, attribute) {
-				var ret = element.getAttribute("datatype");
-
-				if (!ret) {
-					for (var selector in _.datatypes) {
-						if (element.matches(selector)) {
-							ret = _.datatypes[selector][attribute];
-						}
-					}
-				}
-
-				ret = ret || "string";
 
 				return ret;
 			},
@@ -3985,8 +3964,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			getValue: function getValue(element, attribute, datatype) {
 				var o = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
 
-				attribute = attribute || attribute === null ? attribute : _.getValueAttribute(element);
-				datatype = datatype || _.getDatatype(element, attribute);
+				if (attribute === undefined) {
+					var config = _.getConfig(element);
+					attribute = _.getValueAttribute(element, config);
+					datatype = config.undefined;
+				}
 
 				var ret;
 
@@ -4067,55 +4049,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return true;
 			},
 
-			register: function register(selector) {
-				var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-				if (o.attribute) {
-					Mavo.Primitive.attributes[selector] = o.attribute;
-				}
-
-				if (o.datatype) {
-					Mavo.Primitive.datatypes[selector] = o.datatype;
-				}
-
-				if (o.editor) {
-					Mavo.Primitive.editors[selector] = o.editor;
-				}
-
-				if (o.init) {
-					Mavo.hooks.add("primitive-init-start", function () {
-						if (this.element.matches(selector)) {
-							o.init.call(this, this.element);
-						}
-					});
-				}
-
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
-
-				try {
-					for (var _iterator2 = Mavo.toArray(o.is)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var id = _step2.value;
-
-						Mavo.selectors[id] += ", " + selector;
-					}
-				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
-						}
-					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
-						}
-					}
-				}
-			},
-
 			lazy: {
 				formatNumber: function formatNumber() {
 					var numberFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
@@ -4132,140 +4065,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		}
 	});
-
-	// Define default attributes
-	_.attributes = {
-		"img, video, audio": "src",
-		"a, link": "href",
-		"select, input, meter, progress": "value",
-		"input[type=checkbox]": "checked",
-		"time": {
-			value: "datetime",
-			humanReadable: function humanReadable(value) {
-				var date = new Date(value);
-
-				if (!value || isNaN(date)) {
-					return "(No " + this.label + ")";
-				}
-
-				// TODO do this properly (account for other datetime datatypes and different formats)
-				var options = {
-					"date": { day: "numeric", month: "short", year: "numeric" },
-					"month": { month: "long" },
-					"time": { hour: "numeric", minute: "numeric" },
-					"datetime-local": { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }
-				};
-
-				var format = options[this.editor && this.editor.type] || options.date;
-				format.timeZone = "UTC";
-
-				return date.toLocaleString("en-GB", format);
-			}
-		},
-		"meta": "content"
-	};
-
-	// Basic datatypes per attribute
-	// Only number, boolean
-	_.datatypes = {
-		"input[type=checkbox]": {
-			"checked": "boolean"
-		},
-		"input[type=range], input[type=number], meter, progress": {
-			"value": "number"
-		}
-	};
-
-	_.editors = {
-		"*": { "tag": "input" },
-
-		".number": {
-			"tag": "input",
-			"type": "number"
-		},
-
-		".boolean": {
-			"tag": "input",
-			"type": "checkbox"
-		},
-
-		"a, img, video, audio, .url": {
-			"tag": "input",
-			"type": "url",
-			"placeholder": "http://"
-		},
-
-		// Block elements
-		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address, .multiline": {
-			create: function create() {
-				var display = getComputedStyle(this.element).display;
-				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";
-				var editor = $.create(tag);
-
-				if (tag == "textarea") {
-					// Actually multiline
-					var width = this.element.offsetWidth;
-
-					if (width) {
-						editor.width = width;
-					}
-				}
-
-				return editor;
-			},
-
-			setEditorValue: function setEditorValue(value) {
-				if (this.datatype != "string") {
-					return;
-				}
-
-				var cs = getComputedStyle(this.element);
-				value = value || "";
-
-				if (["normal", "nowrap"].indexOf(cs.whiteSpace) > -1) {
-					// Collapse lines
-					value = value.replace(/\r?\n/g, " ");
-				}
-
-				if (["normal", "nowrap", "pre-line"].indexOf(cs.whiteSpace) > -1) {
-					// Collapse whitespace
-					value = value.replace(/^[ \t]+|[ \t]+$/gm, "").replace(/[ \t]+/g, " ");
-				}
-
-				this.editor.value = value;
-				return true;
-			}
-		},
-
-		"meter, progress": function meterProgress() {
-			return $.create({
-				tag: "input",
-				type: "range",
-				min: this.element.getAttribute("min") || 0,
-				max: this.element.getAttribute("max") || 100
-			});
-		},
-
-		"time, .date": function timeDate() {
-			var types = {
-				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-				"month": /^[Y\d]{4}-[M\d]{2}$/i,
-				"time": /^[H\d]{2}:[M\d]{2}/i,
-				"week": /[Y\d]{4}-W[W\d]{2}$/i,
-				"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-			};
-
-			var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
-
-			for (var type in types) {
-				if (types[type].test(datetime)) {
-					break;
-				}
-			}
-
-			return $.create("input", { type: type });
-		}
-	};
 
 	_.Popup = $.Class({
 		constructor: function constructor(primitive) {
@@ -4368,25 +4167,191 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 })(Bliss, Bliss.$);
+"use strict";
 
-// Example plugin: button
-Mavo.Primitive.register("button, .counter", {
-	attribute: "data-clicked",
-	datatype: "number",
-	is: "formControl",
-	init: function init(element) {
-		var _this11 = this;
+/**
+ * Configuration for different types of elements. Options:
+ * - attribute {String}
+ * - useProperty {Boolean}
+ * - datatype {"number"|"boolean"|"string"} Default is "string"
+ * - views
+ * - editor {Object|Function}
+ * - setEditorValue temporary
+ * - edit
+ * - done
+ * - observe
+ * @
+ */
+(function ($, $$) {
 
-		if (this.attribute === "data-clicked") {
-			element.setAttribute("data-clicked", "0");
+	Mavo.Elements = {
+		"*": {
+			editor: {
+				tag: "input"
+			}
+		},
 
-			element.addEventListener("click", function (evt) {
-				var clicked = +element.getAttribute("data-clicked") || 0;
-				_this11.value = ++clicked;
-			});
+		"img, video, audio": {
+			attribute: "src",
+			editor: {
+				"tag": "input",
+				"type": "url",
+				"placeholder": "http://"
+			}
+		},
+
+		"a, link": {
+			attribute: "href"
+		},
+
+		"select, input": {
+			attribute: "value",
+			views: "read",
+			changeEvents: "input change"
+		},
+
+		"textarea": {
+			views: "read",
+			changeEvents: "input"
+		},
+
+		"input[type=range], input[type=number]": {
+			attribute: "value",
+			datatype: "number",
+			views: "read",
+			changeEvents: "input change"
+		},
+
+		"button, .counter": {
+			attribute: "data-clicked",
+			datatype: "number",
+			views: "read",
+			init: function init(element) {
+				var _this = this;
+
+				if (this.attribute === "data-clicked") {
+					element.setAttribute("data-clicked", "0");
+
+					element.addEventListener("click", function (evt) {
+						var clicked = +element.getAttribute("data-clicked") || 0;
+						_this.value = ++clicked;
+					});
+				}
+			}
+		},
+
+		"input[type=checkbox]": {
+			attribute: "checked",
+			datatype: "boolean",
+			views: "read",
+			changeEvents: "click"
+		},
+
+		"meter, progress": {
+			attribute: "value",
+			datatype: "number",
+			editor: function editor() {
+				var min = this.element.getAttribute("min") || 0;
+				var max = this.element.getAttribute("max") || 1;
+
+				return $.create({
+					tag: "input",
+					type: "range",
+					min: min, max: max,
+					step: max - min > 1 ? 1 : (max - min) / 100
+				});
+			}
+		},
+
+		"meta": {
+			attribute: "content"
+		},
+
+		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address, .multiline": {
+			editor: function editor() {
+				var display = getComputedStyle(this.element).display;
+				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";
+				var editor = $.create(tag);
+
+				if (tag == "textarea") {
+					// Actually multiline
+					var width = this.element.offsetWidth;
+
+					if (width) {
+						editor.width = width;
+					}
+				}
+
+				return editor;
+			},
+
+			setEditorValue: function setEditorValue(value) {
+				if (this.datatype != "string") {
+					return;
+				}
+
+				var cs = getComputedStyle(this.element);
+				value = value || "";
+
+				if (["normal", "nowrap"].indexOf(cs.whiteSpace) > -1) {
+					// Collapse lines
+					value = value.replace(/\r?\n/g, " ");
+				}
+
+				if (["normal", "nowrap", "pre-line"].indexOf(cs.whiteSpace) > -1) {
+					// Collapse whitespace
+					value = value.replace(/^[ \t]+|[ \t]+$/gm, "").replace(/[ \t]+/g, " ");
+				}
+
+				this.editor.value = value;
+				return true;
+			}
+		},
+
+		"time": {
+			attribute: "datetime",
+			editor: function editor() {
+				var types = {
+					"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+					"month": /^[Y\d]{4}-[M\d]{2}$/i,
+					"time": /^[H\d]{2}:[M\d]{2}/i,
+					"week": /[Y\d]{4}-W[W\d]{2}$/i,
+					"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+				};
+
+				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+
+				for (var type in types) {
+					if (types[type].test(datetime)) {
+						break;
+					}
+				}
+
+				return $.create("input", { type: type });
+			},
+			humanReadable: function humanReadable(value) {
+				var date = new Date(value);
+
+				if (!value || isNaN(date)) {
+					return "(No " + this.label + ")";
+				}
+
+				// TODO do this properly (account for other datetime datatypes and different formats)
+				var options = {
+					"date": { day: "numeric", month: "short", year: "numeric" },
+					"month": { month: "long" },
+					"time": { hour: "numeric", minute: "numeric" },
+					"datetime-local": { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }
+				};
+
+				var format = options[this.editor && this.editor.type] || options.date;
+				format.timeZone = "UTC";
+
+				return date.toLocaleString("en-GB", format);
+			}
 		}
-	}
-});
+	};
+})(Bliss, Bliss.$);
 "use strict";
 
 (function ($, $$) {
