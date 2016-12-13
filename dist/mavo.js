@@ -2397,6 +2397,10 @@ var _ = Mavo.Functions = {
 		return ret;
 	},
 
+	join: function(array, glue = "") {
+		return Mavo.toArray(array).join(glue);
+	},
+
 	idify: readable => ((text || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters
@@ -2961,13 +2965,13 @@ var _ = Mavo.Primitive = $.Class({
 		if (this.collection) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
-				this.unobserve();
-				var ui = $.remove($(".mv-item-controls", this.element));
+				this.sneak(() => {
+					var ui = $.remove($(".mv-item-controls", this.element));
 
-				var ret = callback();
+					var ret = callback();
 
-				$.inside(ui, this.element);
-				this.observe();
+					$.inside(ui, this.element);
+				});
 
 				return ret;
 			};
@@ -2997,7 +3001,11 @@ var _ = Mavo.Primitive = $.Class({
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
-		this.observe();
+		this.observer = new Mavo.Observer(this.element, this.attribute, records => {
+			if (this.attribute || !this.editing) {
+				this.value = this.getValue();
+			}
+		});
 	},
 
 	get editorValue() {
@@ -3078,25 +3086,23 @@ var _ = Mavo.Primitive = $.Class({
 	done: function () {
 		this.super.done.call(this);
 
-		this.unobserve();
+		this.sneak(() => {
+			if (this.popup) {
+				this.popup.close();
+			}
+			else if (!this.attribute && this.editing) {
+				$.remove(this.editor);
+				this.element.textContent = this.editorValue;
+			}
 
-		if (this.popup) {
-			this.popup.close();
-		}
-		else if (!this.attribute && this.editing) {
-			$.remove(this.editor);
-			this.element.textContent = this.editorValue;
-		}
-
-		// Revert tabIndex
-		if (this.element._.data.prevTabindex !== null) {
-			this.element.tabIndex = this.element._.data.prevTabindex;
-		}
-		else {
-			this.element.removeAttribute("tabindex");
-		}
-
-		this.observe();
+			// Revert tabIndex
+			if (this.element._.data.prevTabindex !== null) {
+				this.element.tabIndex = this.element._.data.prevTabindex;
+			}
+			else {
+				this.element.removeAttribute("tabindex");
+			}
+		});
 	},
 
 	revert: function() {
@@ -3107,6 +3113,10 @@ var _ = Mavo.Primitive = $.Class({
 			this.value = this.savedValue;
 			this.unsavedChanges = false;
 		}
+	},
+
+	sneak: function(callback) {
+		this.observer? this.observer.sneak(callback) : callback();
 	},
 
 	// Called only the first time this primitive is edited
@@ -3267,20 +3277,6 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	observe: function() {
-		if (!this.constant) {
-			this.observer = this.observer? this.observer.run() : new Mavo.Observer(this.element, this.attribute, records => {
-				if (this.attribute || !this.editing) {
-					this.value = this.getValue();
-				}
-			});
-		}
-	},
-
-	unobserve: function () {
-		this.observer && this.observer.pause();
-	},
-
 	/**
 	 * Get value from the DOM
 	 */
@@ -3306,57 +3302,55 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	setValue: function (value, o = {}) {
-		this.unobserve();
-
-		if ($.type(value) == "object" && "value" in value) {
-			var presentational = value.presentational;
-			value = value.value;
-		}
-
-		value = value || value === 0? value : "";
-		value = _.safeCast(value, this.datatype);
-
-		if (value == this._value && !o.force) {
-			return value;
-		}
-
-		if (this.editor && document.activeElement != this.editor) {
-			this.editorValue = value;
-		}
-
-		if (this.humanReadable && this.attribute) {
-			presentational = this.humanReadable(value);
-		}
-
-		if (!this.editing || this.attribute) {
-			if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-				presentational = this.editor.selectedOptions[0].textContent;
+		this.sneak(() => {
+			if ($.type(value) == "object" && "value" in value) {
+				var presentational = value.presentational;
+				value = value.value;
 			}
 
-			_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
-		}
+			value = value || value === 0? value : "";
+			value = _.safeCast(value, this.datatype);
 
-		this.empty = value === "";
-
-		this._value = value;
-
-		if (!o.silent) {
-			if (this.saved) {
-				this.unsavedChanges = this.mavo.unsavedChanges = true;
+			if (value == this._value && !o.force) {
+				return value;
 			}
 
-			requestAnimationFrame(() => {
-				$.fire(this.element, "mavo:datachange", {
-					property: this.property,
-					value: value,
-					mavo: this.mavo,
-					node: this,
-					action: "propertychange"
+			if (this.editor && document.activeElement != this.editor) {
+				this.editorValue = value;
+			}
+
+			if (this.humanReadable && this.attribute) {
+				presentational = this.humanReadable(value);
+			}
+
+			if (!this.editing || this.attribute) {
+				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+					presentational = this.editor.selectedOptions[0].textContent;
+				}
+
+				_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
+			}
+
+			this.empty = value === "";
+
+			this._value = value;
+
+			if (!o.silent) {
+				if (this.saved) {
+					this.unsavedChanges = this.mavo.unsavedChanges = true;
+				}
+
+				requestAnimationFrame(() => {
+					$.fire(this.element, "mavo:datachange", {
+						property: this.property,
+						value: value,
+						mavo: this.mavo,
+						node: this,
+						action: "propertychange"
+					});
 				});
-			});
-		}
-
-		this.observe();
+			}
+		});
 
 		return value;
 	},
@@ -3521,7 +3515,7 @@ var _ = Mavo.Primitive = $.Class({
 						$.toggleAttribute(element, attribute, value, value);
 					}
 				}
-				else if (element.getAttribute(attribute) != value) { // intentionally non-strict, e.g. "3." !== 3
+				else if (element.getAttribute(attribute) != value) {  // intentionally non-strict, e.g. "3." !== 3
 					element.setAttribute(attribute, value);
 
 					if (presentational) {
@@ -3607,7 +3601,7 @@ var _ = Mavo.Primitive = $.Class({
 _.attributes = {
 	"img, video, audio": "src",
 	"a, link": "href",
-	"select, input, textarea, meter, progress": "value",
+	"select, input, meter, progress": "value",
 	"input[type=checkbox]": "checked",
 	"time": {
 		value: "datetime",

@@ -105,6 +105,10 @@ var _ = Mavo.Functions = {
 		return ret;
 	},
 
+	join: function(array, glue = "") {
+		return Mavo.toArray(array).join(glue);
+	},
+
 	idify: readable => ((text || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters

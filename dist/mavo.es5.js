@@ -2763,6 +2763,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return ret;
 		},
 
+		join: function join(array) {
+			var glue = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
+
+			return Mavo.toArray(array).join(glue);
+		},
+
 		idify: function idify(readable) {
 			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.replace(/[^\w-]/g, "") // Remove weird characters
@@ -3453,13 +3459,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (this.collection) {
 				// Collection of primitives, deal with setting textContent etc without the UI interfering.
 				var swapUI = function swapUI(callback) {
-					_this.unobserve();
-					var ui = $.remove($(".mv-item-controls", _this.element));
+					_this.sneak(function () {
+						var ui = $.remove($(".mv-item-controls", _this.element));
 
-					var ret = callback();
+						var ret = callback();
 
-					$.inside(ui, _this.element);
-					_this.observe();
+						$.inside(ui, _this.element);
+					});
 
 					return ret;
 				};
@@ -3497,7 +3503,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
 			// so we cannot depend on mutation observers for everything :(
-			this.observe();
+			this.observer = new Mavo.Observer(this.element, this.attribute, function (records) {
+				if (_this.attribute || !_this.editing) {
+					_this.value = _this.getValue();
+				}
+			});
 		},
 
 		get editorValue() {
@@ -3576,25 +3586,25 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		done: function done() {
+			var _this4 = this;
+
 			this.super.done.call(this);
 
-			this.unobserve();
+			this.sneak(function () {
+				if (_this4.popup) {
+					_this4.popup.close();
+				} else if (!_this4.attribute && _this4.editing) {
+					$.remove(_this4.editor);
+					_this4.element.textContent = _this4.editorValue;
+				}
 
-			if (this.popup) {
-				this.popup.close();
-			} else if (!this.attribute && this.editing) {
-				$.remove(this.editor);
-				this.element.textContent = this.editorValue;
-			}
-
-			// Revert tabIndex
-			if (this.element._.data.prevTabindex !== null) {
-				this.element.tabIndex = this.element._.data.prevTabindex;
-			} else {
-				this.element.removeAttribute("tabindex");
-			}
-
-			this.observe();
+				// Revert tabIndex
+				if (_this4.element._.data.prevTabindex !== null) {
+					_this4.element.tabIndex = _this4.element._.data.prevTabindex;
+				} else {
+					_this4.element.removeAttribute("tabindex");
+				}
+			});
 		},
 
 		revert: function revert() {
@@ -3607,9 +3617,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
+		sneak: function sneak(callback) {
+			this.observer ? this.observer.sneak(callback) : callback();
+		},
+
 		// Called only the first time this primitive is edited
 		initEdit: function initEdit() {
-			var _this4 = this;
+			var _this5 = this;
 
 			if (!this.editor) {
 				// No editor provided, use default for element type
@@ -3630,15 +3644,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			$.events(this.editor, {
 				"input change": function inputChange(evt) {
-					_this4.value = _this4.editorValue;
+					_this5.value = _this5.editorValue;
 				},
 				"focus": function focus(evt) {
-					_this4.editor.select && _this4.editor.select();
+					_this5.editor.select && _this5.editor.select();
 				},
 				"mavo:datachange": function mavoDatachange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
-						$.fire(_this4.editor, "input");
+						$.fire(_this5.editor, "input");
 					}
 				}
 			});
@@ -3667,7 +3681,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		edit: function edit() {
-			var _this5 = this;
+			var _this6 = this;
 
 			if (this.constant) {
 				return;
@@ -3680,14 +3694,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				// Empty properties should become editable immediately
 				// otherwise they could be invisible!
-				if (_this5.empty && !_this5.attribute) {
+				if (_this6.empty && !_this6.attribute) {
 					resolve();
 				}
 
-				_this5.element._.events({
+				_this6.element._.events({
 					// click is needed too because it works with the keyboard as well
 					"click.mavo:preedit": function clickMavoPreedit(e) {
-						return _this5.edit();
+						return _this6.edit();
 					},
 					"focus.mavo:preedit": function focusMavoPreedit(e) {
 						resolve();
@@ -3701,9 +3715,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				var timer;
 
-				if (!_this5.attribute) {
+				if (!_this6.attribute) {
 					// Hovering over the element for over 150ms will trigger edit
-					_this5.element._.events({
+					_this6.element._.events({
 						"mouseenter.mavo:preedit": function mouseenterMavoPreedit(e) {
 							clearTimeout(timer);
 							timer = setTimeout(resolve, 150);
@@ -3715,28 +3729,28 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				// Make element focusable, so it can actually receive focus
-				_this5.element._.data.prevTabindex = _this5.element.getAttribute("tabindex");
-				_this5.element.tabIndex = 0;
+				_this6.element._.data.prevTabindex = _this6.element.getAttribute("tabindex");
+				_this6.element.tabIndex = 0;
 			}).then(function () {
 				// Actual edit
-				_this5.element._.unbind(".mavo:preedit");
+				_this6.element._.unbind(".mavo:preedit");
 
-				if (_this5.initEdit) {
-					_this5.initEdit();
+				if (_this6.initEdit) {
+					_this6.initEdit();
 				}
 
-				if (_this5.popup) {
-					_this5.popup.show();
+				if (_this6.popup) {
+					_this6.popup.show();
 				} else {
-					_this5.editor.focus();
+					_this6.editor.focus();
 				}
 
-				if (!_this5.attribute) {
-					if (_this5.editor.parentNode != _this5.element) {
-						_this5.editorValue = _this5.value;
-						_this5.element.textContent = "";
+				if (!_this6.attribute) {
+					if (_this6.editor.parentNode != _this6.element) {
+						_this6.editorValue = _this6.value;
+						_this6.element.textContent = "";
 
-						_this5.element.appendChild(_this5.editor);
+						_this6.element.appendChild(_this6.editor);
 					}
 				}
 			});
@@ -3771,22 +3785,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		observe: function observe() {
-			var _this6 = this;
-
-			if (!this.constant) {
-				this.observer = this.observer ? this.observer.run() : new Mavo.Observer(this.element, this.attribute, function (records) {
-					if (_this6.attribute || !_this6.editing) {
-						_this6.value = _this6.getValue();
-					}
-				});
-			}
-		},
-
-		unobserve: function unobserve() {
-			this.observer && this.observer.pause();
-		},
-
 		/**
    * Get value from the DOM
    */
@@ -3816,57 +3814,55 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-			this.unobserve();
-
-			if ($.type(value) == "object" && "value" in value) {
-				var presentational = value.presentational;
-				value = value.value;
-			}
-
-			value = value || value === 0 ? value : "";
-			value = _.safeCast(value, this.datatype);
-
-			if (value == this._value && !o.force) {
-				return value;
-			}
-
-			if (this.editor && document.activeElement != this.editor) {
-				this.editorValue = value;
-			}
-
-			if (this.humanReadable && this.attribute) {
-				presentational = this.humanReadable(value);
-			}
-
-			if (!this.editing || this.attribute) {
-				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-					presentational = this.editor.selectedOptions[0].textContent;
+			this.sneak(function () {
+				if ($.type(value) == "object" && "value" in value) {
+					var presentational = value.presentational;
+					value = value.value;
 				}
 
-				_.setValue(this.element, { value: value, presentational: presentational }, this.attribute, this.datatype);
-			}
+				value = value || value === 0 ? value : "";
+				value = _.safeCast(value, _this7.datatype);
 
-			this.empty = value === "";
-
-			this._value = value;
-
-			if (!o.silent) {
-				if (this.saved) {
-					this.unsavedChanges = this.mavo.unsavedChanges = true;
+				if (value == _this7._value && !o.force) {
+					return value;
 				}
 
-				requestAnimationFrame(function () {
-					$.fire(_this7.element, "mavo:datachange", {
-						property: _this7.property,
-						value: value,
-						mavo: _this7.mavo,
-						node: _this7,
-						action: "propertychange"
+				if (_this7.editor && document.activeElement != _this7.editor) {
+					_this7.editorValue = value;
+				}
+
+				if (_this7.humanReadable && _this7.attribute) {
+					presentational = _this7.humanReadable(value);
+				}
+
+				if (!_this7.editing || _this7.attribute) {
+					if (_this7.editor && _this7.editor.matches("select") && _this7.editor.selectedOptions[0]) {
+						presentational = _this7.editor.selectedOptions[0].textContent;
+					}
+
+					_.setValue(_this7.element, { value: value, presentational: presentational }, _this7.attribute, _this7.datatype);
+				}
+
+				_this7.empty = value === "";
+
+				_this7._value = value;
+
+				if (!o.silent) {
+					if (_this7.saved) {
+						_this7.unsavedChanges = _this7.mavo.unsavedChanges = true;
+					}
+
+					requestAnimationFrame(function () {
+						$.fire(_this7.element, "mavo:datachange", {
+							property: _this7.property,
+							value: value,
+							mavo: _this7.mavo,
+							node: _this7,
+							action: "propertychange"
+						});
 					});
-				});
-			}
-
-			this.observe();
+				}
+			});
 
 			return value;
 		},
@@ -4141,7 +4137,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	_.attributes = {
 		"img, video, audio": "src",
 		"a, link": "href",
-		"select, input, textarea, meter, progress": "value",
+		"select, input, meter, progress": "value",
 		"input[type=checkbox]": "checked",
 		"time": {
 			value: "datetime",
