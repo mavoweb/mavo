@@ -167,7 +167,8 @@
 	}
 
 	&:not(.can-edit) {
-		.edit, [data-view="edit"], .add {
+		.edit,
+		[data-view="edit"], .add {
 			display: none;
 		}
 	}
@@ -217,6 +218,19 @@
 		.mv-editor:focus {
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
+	}
+}
+
+meta[property][data-view="edit"] {
+	display: inline-block;
+	padding: .15em .4em;
+	border: 1px dashed;
+	margin: 0 .2em;
+	color: gray;
+	font-weight: bold;
+
+	&::before {
+		content: attr(property);
 	}
 }
 

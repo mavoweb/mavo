@@ -81,12 +81,12 @@ Mavo.Elements = {
 			var min = this.element.getAttribute("min") || 0;
 			var max = this.element.getAttribute("max") || 1;
 
-			return $.create({
+			return {
 				tag: "input",
 				type: "range",
 				min, max,
 				step: max - min > 1? 1 : (max - min) / 100
-			});
+			};
 		}
 	},
 
@@ -154,7 +154,7 @@ Mavo.Elements = {
 				}
 			}
 
-			return $.create("input", {type: type});
+			return {tag: "input", type};
 		},
 		humanReadable: function (value) {
 			var date = new Date(value);

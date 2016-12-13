@@ -247,7 +247,7 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.editor) {
 			// No editor provided, use default for element type
 			// Find default editor for datatype
-			var editor = this.config.editor;
+			var editor = this.config.editor || Mavo.Elements["*"].editor;
 
 			if (this.config.setEditorValue) {
 				// TODO Temporary hack; refactor soon

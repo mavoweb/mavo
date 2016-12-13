@@ -3629,7 +3629,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var editor = this.config.editor;
+				var editor = this.config.editor || Mavo.Elements["*"].editor;
 
 				if (this.config.setEditorValue) {
 					// TODO Temporary hack; refactor soon
@@ -4254,12 +4254,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var min = this.element.getAttribute("min") || 0;
 				var max = this.element.getAttribute("max") || 1;
 
-				return $.create({
+				return {
 					tag: "input",
 					type: "range",
 					min: min, max: max,
 					step: max - min > 1 ? 1 : (max - min) / 100
-				});
+				};
 			}
 		},
 
@@ -4327,7 +4327,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 
-				return $.create("input", { type: type });
+				return { tag: "input", type: type };
 			},
 			humanReadable: function humanReadable(value) {
 				var date = new Date(value);
