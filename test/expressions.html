@@ -140,53 +140,6 @@
 	</table>
 </section>
 
-<script type="application/json" id="restaurants">{
-	"restaurant": [
-		{
-			"visit": [
-				{
-					"dish": [
-						{
-							"dishRating": 4
-						}
-					]
-				}
-			]
-		}
-	]
-}</script>
-<section data-store="#restaurants" id="nestedAverage" class="autoedit">
-	<h2>Nested average, meter, countif</h2>
-
-	<article property="restaurant" data-multiple>
-		<meter property="rating" min="0" max="5" value="[average(visitRating)]" title="Overall rating: [rating]"></meter>
-
-		<section>
-			<article property="visit" data-multiple>
-				<header>
-					<p>
-						Average dish rating
-						<span property="visitRating">[average(dishRating)]</span>
-					</p>
-				</header>
-
-				<section>
-					<ul>
-						<li property="dish" data-multiple>
-							<p>
-								Rating:
-								<meter property="dishRating" value="4" max="5"></meter>
-							</p>
-						</li>
-					</ul>
-				</section>
-			</article>
-		</section>
-	</article>
-
-	<footer>Total: [count(rating > 3)] good restaurants out of [count(restaurant)] total</footer>
-</section>
-
 <section class="mavo mv-keep-unhandled" data-source="#countries">
 	<h1>Broad references</h1>
 
@@ -236,9 +189,6 @@
 			<td><input value="42"></td>
 		</tr>
 	</table>
-
-
-
 </section>
 
 <script src="../dist/mavo.js"></script>

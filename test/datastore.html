@@ -34,7 +34,7 @@
 	</ul>
 </section>
 
-<section data-store="../demos/talks/countries.json">
+<section data-store="http://mavo.io/demos/talks/countries.json">
 	<h2>Remote</h2>
 
 	<ul>
@@ -45,7 +45,45 @@
 	</ul>
 </section>
 
-<section data-store="local" data-source="../demos/talks/countries.json" id="dualstoretest">
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+<section data-mavo data-source="#countries">
+	<h2>No store, element source</h2>
+
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code"></span> [code]
+			<span property="name"></span> [name]
+		</li>
+	</ul>
+</section>
+
+<section data-mavo data-source="http://mavo.io/demos/talks/countries.json">
+	<h2>No store, remote source</h2>
+
+	<ul>
+		<li property="country" data-multiple>
+			<span property="code"></span> [code]
+			<span property="name"></span> [name]
+		</li>
+	</ul>
+</section>
+
+<section data-store="local" data-source="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
 	<h2>Local store, remote source</h2>
 
 	<ul>

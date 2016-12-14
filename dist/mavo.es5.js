@@ -210,6 +210,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Assign a unique (for the page) id to this mavo instance
 			this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || "mavo" + this.index;
+			element.setAttribute("data-mavo", this.id);
 
 			this.unhandled = element.classList.contains("mv-keep-unhandled");
 
@@ -378,7 +379,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var action = _ref.action;
 				var value = _ref.value;
 
-				_this.wrapper.classList.toggle("can-" + action, value);
+				_this.wrapper.classList.toggle("can-" + action, !!value);
 			});
 
 			this.permissions.can(["edit", "add", "delete"], function () {
@@ -469,6 +470,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.storage || this.source) {
 				// Fetch existing data
+				if (!this.storage) {
+					this.source.permissions.can("read", function () {
+						return _this.permissions.read = true;
+					});
+				}
+
 				this.permissions.can("read", function () {
 					return _this.load();
 				});

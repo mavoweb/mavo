@@ -9,6 +9,7 @@ var _ = self.Mavo = $.Class({
 
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
+		element.setAttribute("data-mavo", this.id);
 
 		this.unhandled = element.classList.contains("mv-keep-unhandled");
 
@@ -176,7 +177,7 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges(false);
 
 		this.permissions.onchange(({action, value}) => {
-			this.wrapper.classList.toggle(`can-${action}`, value);
+			this.wrapper.classList.toggle(`can-${action}`, !!value);
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
@@ -252,6 +253,10 @@ var _ = self.Mavo = $.Class({
 
 		if (this.storage || this.source) {
 			// Fetch existing data
+			if (!this.storage) {
+				this.source.permissions.can("read", () => this.permissions.read = true);
+			}
+
 			this.permissions.can("read", () => this.load());
 		}
 		else {
