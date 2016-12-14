@@ -16,30 +16,37 @@ for (let h1 of $$("body > section > h1")) {
 }
 
 
-var hashchanged = () => {
+var hashchanged = evt => {
 	if (location.hash) {
 		var target = $(location.hash);
 
 		if (target.matches("body > section")) {
+			if (evt) {
+				location.reload();
+				return true;
+			}
+
 			// Isolate this test
 			for (let section of $$(`body > section:not(${location.hash})`)) {
 				section.remove();
 			}
+
+			$.create("p", {
+				className: "notice",
+				contents: [
+					"Some tests hidden. ",
+					{
+						tag: "a",
+						href: "#",
+						onclick: evt => location.reload(),
+						textContent: "Show all tests"
+					}
+				],
+				start: document.body
+			});
 		}
 
-		$.create("p", {
-			className: "notice",
-			contents: [
-				"Some tests hidden. ",
-				{
-					tag: "a",
-					href: "#",
-					onclick: evt => location.reload(),
-					textContent: "Show all tests"
-				}
-			],
-			start: document.body
-		});
+
 	}
 };
 
