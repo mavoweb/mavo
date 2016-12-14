@@ -214,7 +214,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.unhandled = element.classList.contains("mv-keep-unhandled");
 
-			this.autoEdit = _.has("autoedit", element);
+			this.autoEdit = _.has("mv-autoedit", element);
 
 			this.element = _.is("group", element) ? element : $(_.selectors.rootGroup, element);
 
@@ -2775,7 +2775,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		idify: function idify(readable) {
-			return ((text || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
+			return ((readable || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.replace(/[^\w-]/g, "") // Remove weird characters
 			.toLowerCase();
 		},
@@ -5445,7 +5445,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 
-	Mavo.selectors.debug = ".debug";
+	Mavo.selectors.debug = ".mv-debug";
 
 	var selector = ", .mv-debuginfo";
 

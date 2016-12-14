@@ -13,7 +13,7 @@ var _ = self.Mavo = $.Class({
 
 		this.unhandled = element.classList.contains("mv-keep-unhandled");
 
-		this.autoEdit = _.has("autoedit", element);
+		this.autoEdit = _.has("mv-autoedit", element);
 
 		this.element = _.is("group", element)? element : $(_.selectors.rootGroup, element);
 

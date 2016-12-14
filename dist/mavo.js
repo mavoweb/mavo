@@ -208,7 +208,7 @@ var _ = self.Mavo = $.Class({
 
 		this.unhandled = element.classList.contains("mv-keep-unhandled");
 
-		this.autoEdit = _.has("autoedit", element);
+		this.autoEdit = _.has("mv-autoedit", element);
 
 		this.element = _.is("group", element)? element : $(_.selectors.rootGroup, element);
 
@@ -2400,7 +2400,7 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).join(glue);
 	},
 
-	idify: readable => ((text || "") + "")
+	idify: readable => ((readable || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters
 		.toLowerCase(),
@@ -4847,7 +4847,7 @@ var _ = Mavo.Debug = {
 
 Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 
-Mavo.selectors.debug = ".debug";
+Mavo.selectors.debug = ".mv-debug";
 
 var selector = ", .mv-debuginfo";
 

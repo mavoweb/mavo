@@ -461,18 +461,18 @@ meter[property][data-mode="edit"], progress[property][data-mode="edit"] {
         cursor: help; }
         .mv-debuginfo > table td:nth-child(4):hover {
           background: rgba(255, 247, 0, 0.3); }
-    .mv-debuginfo > table tr.debug-property td:nth-child(1)::before {
+    .mv-debuginfo > table tr.mv-debug-property td:nth-child(1)::before {
       content: "P"; }
-    .mv-debuginfo > table tr.debug-property,
-    .mv-debuginfo > table tr.debug-property td:nth-child(2) {
+    .mv-debuginfo > table tr.mv-debug-property,
+    .mv-debuginfo > table tr.mv-debug-property td:nth-child(2) {
       overflow: hidden; }
-    .mv-debuginfo > table tr.debug-expression td:nth-child(1)::before {
+    .mv-debuginfo > table tr.mv-debug-expression td:nth-child(1)::before {
       content: "=";
       background: #e6801a; }
-    .mv-debuginfo > table tr.debug-warning td:nth-child(1)::before {
+    .mv-debuginfo > table tr.mv-debug-warning td:nth-child(1)::before {
       content: "!";
       background: #f2330d; }
-    .mv-debuginfo > table tr.debug-warning td:nth-child(2) {
+    .mv-debuginfo > table tr.mv-debug-warning td:nth-child(2) {
       overflow: hidden;
       font-family: "Helvetica Neue", sans-serif;
       color: #f88;

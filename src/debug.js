@@ -140,7 +140,7 @@ var _ = Mavo.Debug = {
 
 Mavo.prototype.render = _.timed("render", Mavo.prototype.render);
 
-Mavo.selectors.debug = ".debug";
+Mavo.selectors.debug = ".mv-debug";
 
 var selector = ", .mv-debuginfo";
 

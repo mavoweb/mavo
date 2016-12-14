@@ -138,7 +138,7 @@
 		}
 
 		tr {
-			&.debug-property {
+			&.mv-debug-property {
 				td:nth-child(1)::before {
 					content: "P";
 				},
@@ -148,14 +148,14 @@
 				}
 			}
 
-			&.debug-expression {
+			&.mv-debug-expression {
 				td:nth-child(1)::before {
 					content: "=";
 					background: hsl(30, 80%, 50%);
 				}
 			}
 
-			&.debug-warning {
+			&.mv-debug-warning {
 				td:nth-child(1)::before {
 					content: "!";
 					background: hsl(10, 90%, 50%);
