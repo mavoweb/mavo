@@ -147,7 +147,7 @@
 		}
 	}
 
-	.mv-wrapper:not([data-view="edit"]) &.deleted {
+	.mv-wrapper:not([data-mode="edit"]) &.deleted {
 		display: none;
 	}
 }
@@ -168,7 +168,7 @@
 
 	&:not(.can-edit) {
 		.edit,
-		[data-view="edit"], .add {
+		[data-mode="edit"], .add {
 			display: none;
 		}
 	}
@@ -190,7 +190,7 @@
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
-	&:not([data-view="edit"]) {
+	&:not([data-mode="edit"]) {
 		.empty,
 		.mv-item-controls,
 		button.add,
@@ -201,8 +201,8 @@
 		}
 	}
 
-	&[data-view="edit"],
-	[data-view="edit"] {
+	&[data-mode="edit"],
+	[data-mode="edit"] {
 		.empty {
 			opacity: .5;
 		}
@@ -221,21 +221,8 @@
 	}
 }
 
-meta[property][data-view="edit"] {
-	display: inline-block;
-	padding: .15em .4em;
-	border: 1px dashed;
-	margin: 0 .2em;
-	color: gray;
-	font-weight: bold;
-
-	&::before {
-		content: attr(property);
-	}
-}
-
 // Primitives
-#{$primitive}[data-view="edit"] {
+#{$primitive}[data-mode="edit"] {
 	& input.mv-editor,
 	& select.mv-editor,
 	& textarea.mv-editor {
@@ -255,6 +242,27 @@ meta[property][data-view="edit"] {
 
 	input.mv-editor {
 		max-width: 100%;
+	}
+}
+
+// Specific styling per element type
+
+meta[property][data-mode="edit"] {
+	display: inline-block;
+	padding: .15em .4em;
+	border: 1px dashed;
+	margin: 0 .2em;
+	color: gray;
+	font-weight: bold;
+
+	&::before {
+		content: attr(property);
+	}
+}
+
+meter, progress {
+	&[property][data-mode="edit"] {
+		cursor: ew-resize;
 	}
 }
 

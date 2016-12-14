@@ -386,7 +386,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					className: "edit",
 					textContent: "Edit",
 					onclick: function onclick(e) {
-						return _this.element.setAttribute("data-view", _this.editing ? "read" : "edit");
+						return _this.editing ? _this.done() : _this.edit();
 					},
 					inside: _this.ui.bar
 				});
@@ -401,7 +401,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				$.remove(_this.ui.edit);
 
 				if (_this.editing) {
-					_this.element.setAttribute("data-view", "read");
+					_this.done();
 				}
 			});
 
@@ -963,9 +963,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.run();
 			},
 
-			pause: function pause() {
+			stop: function stop() {
 				if (this.running) {
-					this.observer && this.observer.disconnect();
+					this.observer.disconnect();
 					this.running = false;
 				}
 
@@ -974,8 +974,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			run: function run() {
 				if (!this.running) {
-
-					this.observer && this.observer.observe(this.element, this.options);
+					this.observer.observe(this.element, this.options);
 					this.running = true;
 				}
 
@@ -986,10 +985,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     * Disconnect an observer, run some code, then observe again
     */
 			sneak: function sneak(callback) {
+				var _this = this;
+
 				if (this.running) {
-					this.pause();
+					this.stop();
 					var ret = callback();
-					this.run();
+					requestAnimationFrame(function () {
+						return _this.run();
+					});
 				} else {
 					var ret = callback();
 				}
@@ -1504,20 +1507,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mavo = mavo;
 
-			if (!this.fromTemplate("property", "type", "views")) {
+			if (!this.fromTemplate("property", "type", "modes")) {
 				this.property = _.getProperty(element);
 				this.type = Mavo.Group.normalize(element);
 				this.store = this.element.getAttribute("data-store");
-				this.views = this.element.getAttribute("data-view");
+				this.modes = this.element.getAttribute("data-mode");
 			}
 
-			this.viewObserver = new Mavo.Observer(this.element, "data-view", function (records) {
-				console.log("%cmutation observer on", "color:purple;", _this.property, _this.uid, records, records[0].target == _this.element);
-				_this.view = _this.element.getAttribute("data-view");
-				_this[_this.view == "edit" ? "edit" : "done"]();
+			this.modeObserver = new Mavo.Observer(this.element, "data-mode", function (records) {
+				console.log("%cmutation observer on", "color:purple;", _this.property, _this.uid, _this.template);
+				_this.mode = _this.element.getAttribute("data-mode");
+				_this[_this.mode == "edit" ? "edit" : "done"]();
 			});
 
-			this.view = this.views || "read";
+			this.mode = this.modes || "read";
 
 			this.group = this.parentGroup = o.group;
 
@@ -1525,12 +1528,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		get editing() {
-			return this.view == "edit";
+			return this.mode == "edit";
 		},
 
 		get constant() {
-			// Is a "constant" if only allowed view is read
-			return this.views == "read";
+			// Is a "constant" if only allowed mode is read
+			return this.modes == "read";
 		},
 
 		get isRoot() {
@@ -1588,17 +1591,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		edit: function edit() {
-			this.view = "edit";
-			//if (this.uid == 32) {
-			//console.log("%cedit", "color:red; font-weight: bold;", this.property, this.uid);
-			//console.trace()
-			//}
+			this.mode = "edit";
 
 			this.propagate("edit");
 		},
 
 		done: function done() {
-			this.view = "read";
+			this.mode = "read";
 			$.unbind(this.element, ".mavo:edit");
 
 			this.propagate("done");
@@ -1654,17 +1653,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		live: {
-			view: function view(value) {
+			mode: function mode(value) {
 				var _this2 = this;
 
-				if (this._view != value) {
-					//console.log("%cview on", "color:green;", this.property, this.uid, "from", this._view, "to", value);
-					// If we don't do this, calling edit or done below will
+				if (this._mode != value) {
+					// If we don't do this, calling setAttribute below will
 					// result in infinite recursion
-					this._view = value;
+					this._mode = value;
 
-					this.viewObserver.sneak(function () {
-						return _this2.element.setAttribute("data-view", value);
+					this.modeObserver.sneak(function () {
+						return _this2.element.setAttribute("data-mode", value);
 					});
 				}
 			}
@@ -2190,7 +2188,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (this.primitive) {
 					this.primitive.value = ret;
 				} else {
-					Mavo.Primitive.setValue(this.node, ret, this.attribute, { presentational: ret.presentational });
+					Mavo.Primitive.setValue(this.node, ret, { attribute: this.attribute });
 				}
 
 				Mavo.hooks.run("expressiontext-update-end", this);
@@ -2506,7 +2504,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		if (this.expressionText) {
 			this.expressionText.primitive = this;
 			this.store = this.store || "none";
-			this.views = "read";
+			this.modes = "read";
 		}
 	});
 
@@ -2534,7 +2532,7 @@ Mavo.Expressions.directives.push("data-content");
 Mavo.hooks.add("expressiontext-init-start", function () {
 	if (this.attribute == "data-content") {
 		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, { raw: true });
+		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, { attribute: this.attribute });
 		this.expression = this.element.getAttribute("data-content");
 
 		this.template = [new Mavo.Expression(this.expression)];
@@ -3354,27 +3352,27 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
-			if (!this.fromTemplate("config", "attribute", "templateValue")) {
-				this.config = _.getConfig(element);
+			if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
+				this.defaults = _.getDefaults(element);
 
 				// Which attribute holds the data, if any?
 				// "null" or null for none (i.e. data is in content).
-				this.attribute = _.getValueAttribute(this.element, this.config);
+				this.attribute = _.getValueAttribute(this.element, this.defaults);
 			}
 
-			this.humanReadable = this.config.humanReadable;
-			this.datatype = this.config.datatype;
-			this.views = this.views || this.config.views;
-			this.view = this.views || "read";
+			this.humanReadable = this.defaults.humanReadable;
+			this.datatype = this.defaults.datatype;
+			this.modes = this.modes || this.defaults.modes;
+			this.mode = this.modes || "read";
 
 			Mavo.hooks.run("primitive-init-start", this);
 
-			if (this.config.init) {
-				this.config.init.call(this, this.element);
+			if (this.defaults.init) {
+				this.defaults.init.call(this, this.element);
 			}
 
-			if (this.config.changeEvents) {
-				$.events(this.element, this.config.changeEvents, function (evt) {
+			if (this.defaults.changeEvents) {
+				$.events(this.element, this.defaults.changeEvents, function (evt) {
 					if (evt.target === _this.element) {
 						_this.value = _this.getValue();
 					}
@@ -3522,7 +3520,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
-					return _.getValue(this.editor, undefined, this.datatype);
+					return _.getValue(this.editor, { datatype: this.datatype });
 				}
 
 				// if we're here, this.editor is an entire HTML structure
@@ -3541,7 +3539,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
-					_.setValue(this.editor, value);
+					_.setValue(this.editor, value, { defaults: this.editorDefaults });
 				} else {
 					// if we're here, this.editor is an entire HTML structure
 					var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
@@ -3592,20 +3590,25 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.super.done.call(this);
 
 			this.sneak(function () {
+				if (_this4.defaults.done) {
+					_this4.defaults.done.call(_this4);
+					return;
+				}
+
 				if (_this4.popup) {
 					_this4.popup.close();
-				} else if (!_this4.attribute && _this4.editing) {
+				} else if (!_this4.attribute && _this4.editor) {
 					$.remove(_this4.editor);
 					_this4.element.textContent = _this4.editorValue;
 				}
-
-				// Revert tabIndex
-				if (_this4.element._.data.prevTabindex !== null) {
-					_this4.element.tabIndex = _this4.element._.data.prevTabindex;
-				} else {
-					_this4.element.removeAttribute("tabindex");
-				}
 			});
+
+			// Revert tabIndex
+			if (this.element._.data.prevTabindex !== null) {
+				this.element.tabIndex = this.element._.data.prevTabindex;
+			} else {
+				this.element.removeAttribute("tabindex");
+			}
 		},
 
 		revert: function revert() {
@@ -3629,11 +3632,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var editor = this.config.editor || Mavo.Elements["*"].editor;
+				var editor = this.defaults.editor || Mavo.Elements["*"].editor;
 
-				if (this.config.setEditorValue) {
+				if (this.defaults.setEditorValue) {
 					// TODO Temporary hack; refactor soon
-					this.setEditorValue = this.config.setEditorValue;
+					this.setEditorValue = this.defaults.setEditorValue;
 				}
 
 				this.editor = $.create($.type(editor) === "function" ? editor.call(this) : editor);
@@ -3687,6 +3690,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.super.edit.call(this);
 
+			// Make element focusable, so it can actually receive focus
+			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
+			this.element.tabIndex = 0;
+
+			if (this.defaults.edit) {
+				this.defaults.edit.call(this);
+				return;
+			}
+
 			new Promise(function (resolve, reject) {
 				// Prepare for edit
 
@@ -3725,10 +3737,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						}
 					});
 				}
-
-				// Make element focusable, so it can actually receive focus
-				_this6.element._.data.prevTabindex = _this6.element.getAttribute("tabindex");
-				_this6.element.tabIndex = 0;
 			}).then(function () {
 				// Actual edit
 				_this6.element._.unbind(".mavo:preedit");
@@ -3755,7 +3763,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}, // edit
 
 		clear: function clear() {
-			this.value = this.emptyValue;
+			if (!this.constant) {
+				this.value = this.emptyValue;
+			}
 		},
 
 		render: function render(data) {
@@ -3787,7 +3797,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
    * Get value from the DOM
    */
 		getValue: function getValue(o) {
-			return _.getValue(this.element, this.attribute, this.datatype, o);
+			return _.getValue(this.element, {
+				defaults: this.defaults,
+				attribute: this.attribute,
+				datatype: this.datatype
+			});
 		},
 
 		lazy: {
@@ -3804,6 +3818,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				return "";
+			},
+
+			editorDefaults: function editorDefaults() {
+				return this.editor && _.getDefaults(this.editor);
 			}
 		},
 
@@ -3838,7 +3856,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						presentational = _this7.editor.selectedOptions[0].textContent;
 					}
 
-					_.setValue(_this7.element, { value: value, presentational: presentational }, _this7.attribute, _this7.datatype);
+					_.setValue(_this7.element, { value: value, presentational: presentational }, {
+						defaults: _this7.defaults,
+						attribute: _this7.attribute,
+						datatype: _this7.datatype
+					});
 				}
 
 				_this7.empty = value === "";
@@ -3882,27 +3904,22 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		static: {
 			all: new WeakMap(),
 
-			getMatch: function getMatch(element, all) {
-				// TODO specificity
+			getDefaults: function getDefaults(element) {
 				var ret = null;
 
-				for (var selector in all) {
+				for (var selector in Mavo.Elements) {
 					if (element.matches(selector)) {
-						ret = all[selector];
+						ret = Mavo.Elements[selector];
 					}
 				}
 
 				return ret;
 			},
 
-			getConfig: function getConfig(element) {
-				return _.getMatch(element, Mavo.Elements);
-			},
-
 			getValueAttribute: function getValueAttribute(element) {
-				var config = arguments.length <= 1 || arguments[1] === undefined ? _.getConfig(element) : arguments[1];
+				var defaults = arguments.length <= 1 || arguments[1] === undefined ? _.getDefaults(element) : arguments[1];
 
-				var ret = element.getAttribute("data-attribute") || config.attribute;
+				var ret = element.getAttribute("data-attribute") || defaults.attribute;
 
 				if (!ret || ret === "null") {
 					ret = null;
@@ -3961,13 +3978,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return value;
 			},
 
-			getValue: function getValue(element, attribute, datatype) {
-				var o = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
+			getValue: function getValue(element, _ref) {
+				var _ref$defaults = _ref.defaults;
+				var defaults = _ref$defaults === undefined ? _.getDefaults(element) : _ref$defaults;
+				var _ref$attribute = _ref.attribute;
+				var attribute = _ref$attribute === undefined ? _.getValueAttribute(element, defaults) : _ref$attribute;
+				var _ref$datatype = _ref.datatype;
+				var datatype = _ref$datatype === undefined ? defaults.datatype : _ref$datatype;
 
-				if (attribute === undefined) {
-					var config = _.getConfig(element);
-					attribute = _.getValueAttribute(element, config);
-					datatype = config.undefined;
+				if (defaults.getValue && attribute == defaults.attribute) {
+					return defaults.getValue(element);
 				}
 
 				var ret;
@@ -3985,27 +4005,37 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return _.safeCast(ret, datatype);
 			},
 
-			setValue: function setValue(element, value, attribute, datatype) {
+			setValue: function setValue(element, value, _ref2) {
+				var defaults = _ref2.defaults;
+				var attribute = _ref2.attribute;
+				var datatype = _ref2.datatype;
+
 				if ($.type(value) == "object" && "value" in value) {
 					var presentational = value.presentational;
 					value = value.value;
 				}
 
-				if (attribute !== null) {
-					attribute = attribute || _.getValueAttribute(element);
+				if (element.nodeType === 1) {
+					defaults = defaults || _.getDefaults(element);
+					attribute = attribute !== undefined ? attribute : _.getValueAttribute(element, defaults);
+					datatype = datatype !== undefined ? datatype : defaults.datatype;
+
+					if (defaults.setValue && attribute == defaults.attribute) {
+						return defaults.setValue(element, value);
+					}
 				}
 
-				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
-					// Setting properties (if they exist) instead of attributes
-					// is needed for dynamic elements such as checkboxes, sliders etc
-					try {
-						element[attribute] = value;
-					} catch (e) {}
-				}
-
-				// Set attribute anyway, even if we set a property because when
-				// they're not in sync it gets really fucking confusing.
 				if (attribute) {
+					if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+						// Setting properties (if they exist) instead of attributes
+						// is needed for dynamic elements such as checkboxes, sliders etc
+						try {
+							element[attribute] = value;
+						} catch (e) {}
+					}
+
+					// Set attribute anyway, even if we set a property because when
+					// they're not in sync it gets really fucking confusing.
 					if (datatype == "boolean") {
 						if (value != element.hasAttribute(attribute)) {
 							$.toggleAttribute(element, attribute, value, value);
@@ -4174,7 +4204,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * - attribute {String}
  * - useProperty {Boolean}
  * - datatype {"number"|"boolean"|"string"} Default is "string"
- * - views
+ * - modes
  * - editor {Object|Function}
  * - setEditorValue temporary
  * - edit
@@ -4206,26 +4236,32 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		"select, input": {
 			attribute: "value",
-			views: "read",
+			modes: "read",
 			changeEvents: "input change"
 		},
 
 		"textarea": {
-			views: "read",
-			changeEvents: "input"
+			modes: "read",
+			changeEvents: "input",
+			getValue: function getValue(element) {
+				return element.value;
+			},
+			setValue: function setValue(element, value) {
+				return element.value = value;
+			}
 		},
 
 		"input[type=range], input[type=number]": {
 			attribute: "value",
 			datatype: "number",
-			views: "read",
+			modes: "read",
 			changeEvents: "input change"
 		},
 
 		"button, .counter": {
 			attribute: "data-clicked",
 			datatype: "number",
-			views: "read",
+			modes: "read",
 			init: function init(element) {
 				var _this = this;
 
@@ -4243,23 +4279,61 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		"input[type=checkbox]": {
 			attribute: "checked",
 			datatype: "boolean",
-			views: "read",
+			modes: "read",
 			changeEvents: "click"
 		},
 
 		"meter, progress": {
 			attribute: "value",
 			datatype: "number",
-			editor: function editor() {
-				var min = this.element.getAttribute("min") || 0;
-				var max = this.element.getAttribute("max") || 1;
+			edit: function edit() {
+				var _this2 = this;
 
-				return {
-					tag: "input",
-					type: "range",
-					min: min, max: max,
-					step: max - min > 1 ? 1 : (max - min) / 100
-				};
+				var min = +this.element.getAttribute("min") || 0;
+				var max = +this.element.getAttribute("max") || 1;
+				var range = max - min;
+				var step = +this.element.getAttribute("data-edit-step") || (range > 1 ? 1 : range / 100);
+
+				this.element.addEventListener("mousemove.mavo:edit", function (evt) {
+					// Change property as mouse moves
+					var left = _this2.element.getBoundingClientRect().left;
+					var offset = Math.max(0, (evt.clientX - left) / _this2.element.offsetWidth);
+					var newValue = min + range * offset;
+					var mod = newValue % step;
+
+					newValue += mod > step / 2 ? step - mod : -mod;
+					newValue = Math.max(min, Math.min(newValue, max));
+
+					_this2.sneak(function () {
+						return _this2.element.setAttribute("value", newValue);
+					});
+				});
+
+				this.element.addEventListener("mouseleave.mavo:edit", function (evt) {
+					// Return to actual value
+					_this2.sneak(function () {
+						return _this2.element.setAttribute("value", _this2.value);
+					});
+				});
+
+				this.element.addEventListener("click.mavo:edit", function (evt) {
+					// Register change
+					_this2.value = _this2.getValue();
+				});
+
+				this.element.addEventListener("keydown.mavo:edit", function (evt) {
+					// Edit with arrow keys
+					if (evt.target == _this2.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+						var increment = step * (evt.keyCode == 39 ? 1 : -1) * (evt.shiftKey ? 10 : 1);
+						var newValue = _this2.value + increment;
+						newValue = Math.max(min, Math.min(newValue, max));
+
+						_this2.element.setAttribute("value", newValue);
+					}
+				});
+			},
+			done: function done() {
+				$.unbind(this.element, ".mavo:edit");
 			}
 		},
 
@@ -4467,7 +4541,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			// Add delete & add buttons
 			if (this.mutable) {
 				this.mavo.permissions.can("edit", function () {
-					var itemControls = $(".mv-item-controls", element) || $.create({
+					var itemControls = $$(".mv-item-controls", element).filter(function (el) {
+						return el.closest(Mavo.selectors.item) == element;
+					})[0];
+
+					itemControls = itemControls || $.create({
 						className: "mv-item-controls mv-ui",
 						inside: element
 					});
@@ -4577,6 +4655,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				_this2.unsavedChanges = item.unsavedChanges = _this2.mavo.unsavedChanges = true;
 			});
+		},
+
+		edit: function edit() {
+			this.propagate("edit");
+		},
+
+		done: function done() {
+			this.propagate("done");
 		},
 
 		/**

@@ -3,7 +3,7 @@
  * - attribute {String}
  * - useProperty {Boolean}
  * - datatype {"number"|"boolean"|"string"} Default is "string"
- * - views
+ * - modes
  * - editor {Object|Function}
  * - setEditorValue temporary
  * - edit
@@ -35,26 +35,28 @@ Mavo.Elements = {
 
 	"select, input": {
 		attribute: "value",
-		views: "read",
+		modes: "read",
 		changeEvents: "input change"
 	},
 
 	"textarea": {
-		views: "read",
-		changeEvents: "input"
+		modes: "read",
+		changeEvents: "input",
+		getValue: element => element.value,
+		setValue: (element, value) => element.value = value
 	},
 
 	"input[type=range], input[type=number]": {
 		attribute: "value",
 		datatype: "number",
-		views: "read",
+		modes: "read",
 		changeEvents: "input change"
 	},
 
 	"button, .counter": {
 		attribute: "data-clicked",
 		datatype: "number",
-		views: "read",
+		modes: "read",
 		init: function(element) {
 			if (this.attribute === "data-clicked") {
 				element.setAttribute("data-clicked", "0");
@@ -70,23 +72,55 @@ Mavo.Elements = {
 	"input[type=checkbox]": {
 		attribute: "checked",
 		datatype: "boolean",
-		views: "read",
+		modes: "read",
 		changeEvents: "click"
 	},
 
 	"meter, progress": {
 		attribute: "value",
 		datatype: "number",
-		editor: function() {
-			var min = this.element.getAttribute("min") || 0;
-			var max = this.element.getAttribute("max") || 1;
+		edit: function() {
+			var min = +this.element.getAttribute("min") || 0;
+			var max = +this.element.getAttribute("max") || 1;
+			var range = max - min;
+			var step = +this.element.getAttribute("data-edit-step") || (range > 1? 1 : range/100);
 
-			return {
-				tag: "input",
-				type: "range",
-				min, max,
-				step: max - min > 1? 1 : (max - min) / 100
-			};
+			this.element.addEventListener("mousemove.mavo:edit", evt => {
+				// Change property as mouse moves
+				var left = this.element.getBoundingClientRect().left;
+				var offset = Math.max(0, (evt.clientX - left) / this.element.offsetWidth);
+				var newValue = min + range * offset;
+				var mod = newValue % step;
+
+				newValue += mod > step/2? step - mod : -mod;
+				newValue = Math.max(min, Math.min(newValue, max));
+
+				this.sneak(() => this.element.setAttribute("value", newValue));
+			});
+
+			this.element.addEventListener("mouseleave.mavo:edit", evt => {
+				// Return to actual value
+				this.sneak(() => this.element.setAttribute("value", this.value));
+			});
+
+			this.element.addEventListener("click.mavo:edit", evt => {
+				// Register change
+				this.value = this.getValue();
+			});
+
+			this.element.addEventListener("keydown.mavo:edit", evt => {
+				// Edit with arrow keys
+				if (evt.target == this.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+					var increment = step * (evt.keyCode == 39? 1 : -1) * (evt.shiftKey? 10 : 1);
+					var newValue = this.value + increment;
+					newValue = Math.max(min, Math.min(newValue, max));
+
+					this.element.setAttribute("value", newValue);
+				}
+			});
+		},
+		done: function() {
+			$.unbind(this.element, ".mavo:edit");
 		}
 	},
 

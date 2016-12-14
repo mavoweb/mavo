@@ -86,7 +86,10 @@ var _ = Mavo.Collection = $.Class({
 		// Add delete & add buttons
 		if (this.mutable) {
 			this.mavo.permissions.can("edit", () => {
-				var itemControls = $(".mv-item-controls", element) || $.create({
+				var itemControls = $$(".mv-item-controls", element)
+				                       .filter(el => el.closest(Mavo.selectors.item) == element)[0];
+
+				itemControls = itemControls || $.create({
 					className: "mv-item-controls mv-ui",
 					inside: element
 				});
@@ -192,6 +195,14 @@ var _ = Mavo.Collection = $.Class({
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
+	},
+
+	edit: function() {
+		this.propagate("edit");
+	},
+
+	done: function() {
+		this.propagate("done");
 	},
 
 	/**

@@ -124,19 +124,18 @@ var _ = $.extend(Mavo, {
 			this.run();
 		},
 
-		pause: function() {
+		stop: function() {
 			if (this.running) {
-				this.observer && this.observer.disconnect();
+				this.observer.disconnect();
 				this.running = false;
 			}
-			
+
 			return this;
 		},
 
 		run: function() {
 			if (!this.running) {
-
-				this.observer && this.observer.observe(this.element, this.options);
+				this.observer.observe(this.element, this.options);
 				this.running = true;
 			}
 
@@ -148,9 +147,9 @@ var _ = $.extend(Mavo, {
 		 */
 		sneak: function(callback) {
 			if (this.running) {
-				this.pause();
+				this.stop();
 				var ret = callback();
-				this.run();
+				requestAnimationFrame(() => this.run());
 			}
 			else {
 				var ret = callback();

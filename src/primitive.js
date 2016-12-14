@@ -3,27 +3,27 @@
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("config", "attribute", "templateValue")) {
-			this.config = _.getConfig(element);
+		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
+			this.defaults = _.getDefaults(element);
 
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
-			this.attribute = _.getValueAttribute(this.element, this.config);
+			this.attribute = _.getValueAttribute(this.element, this.defaults);
 		}
 
-		this.humanReadable = this.config.humanReadable;
-		this.datatype = this.config.datatype;
-		this.views = this.views || this.config.views;
-		this.view = this.views || "read";
+		this.humanReadable = this.defaults.humanReadable;
+		this.datatype = this.defaults.datatype;
+		this.modes = this.modes || this.defaults.modes;
+		this.mode = this.modes || "read";
 
 		Mavo.hooks.run("primitive-init-start", this);
 
-		if (this.config.init) {
-			this.config.init.call(this, this.element);
+		if (this.defaults.init) {
+			this.defaults.init.call(this, this.element);
 		}
 
-		if (this.config.changeEvents) {
-			$.events(this.element, this.config.changeEvents, evt => {
+		if (this.defaults.changeEvents) {
+			$.events(this.element, this.defaults.changeEvents, evt => {
 				if (evt.target === this.element) {
 					this.value = this.getValue();
 				}
@@ -142,7 +142,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
-				return _.getValue(this.editor, undefined, this.datatype);
+				return _.getValue(this.editor, {datatype: this.datatype});
 			}
 
 			// if we're here, this.editor is an entire HTML structure
@@ -161,7 +161,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
-				_.setValue(this.editor, value);
+				_.setValue(this.editor, value, {defaults: this.editorDefaults});
 			}
 			else {
 				// if we're here, this.editor is an entire HTML structure
@@ -210,22 +210,27 @@ var _ = Mavo.Primitive = $.Class({
 		this.super.done.call(this);
 
 		this.sneak(() => {
+			if (this.defaults.done) {
+				this.defaults.done.call(this);
+				return;
+			}
+
 			if (this.popup) {
 				this.popup.close();
 			}
-			else if (!this.attribute && this.editing) {
+			else if (!this.attribute && this.editor) {
 				$.remove(this.editor);
 				this.element.textContent = this.editorValue;
 			}
-
-			// Revert tabIndex
-			if (this.element._.data.prevTabindex !== null) {
-				this.element.tabIndex = this.element._.data.prevTabindex;
-			}
-			else {
-				this.element.removeAttribute("tabindex");
-			}
 		});
+
+		// Revert tabIndex
+		if (this.element._.data.prevTabindex !== null) {
+			this.element.tabIndex = this.element._.data.prevTabindex;
+		}
+		else {
+			this.element.removeAttribute("tabindex");
+		}
 	},
 
 	revert: function() {
@@ -247,11 +252,11 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.editor) {
 			// No editor provided, use default for element type
 			// Find default editor for datatype
-			var editor = this.config.editor || Mavo.Elements["*"].editor;
+			var editor = this.defaults.editor || Mavo.Elements["*"].editor;
 
-			if (this.config.setEditorValue) {
+			if (this.defaults.setEditorValue) {
 				// TODO Temporary hack; refactor soon
-				this.setEditorValue = this.config.setEditorValue;
+				this.setEditorValue = this.defaults.setEditorValue;
 			}
 
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
@@ -303,6 +308,15 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.super.edit.call(this);
 
+		// Make element focusable, so it can actually receive focus
+		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
+		this.element.tabIndex = 0;
+
+		if (this.defaults.edit) {
+			this.defaults.edit.call(this);
+			return;
+		}
+
 		(new Promise((resolve, reject) => {
 			// Prepare for edit
 
@@ -339,10 +353,6 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			}
-
-			// Make element focusable, so it can actually receive focus
-			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-			this.element.tabIndex = 0;
 		})).then(() => {
 			// Actual edit
 			this.element._.unbind(".mavo:preedit");
@@ -370,7 +380,9 @@ var _ = Mavo.Primitive = $.Class({
 	}, // edit
 
 	clear: function() {
-		this.value = this.emptyValue;
+		if (!this.constant) {
+			this.value = this.emptyValue;
+		}
 	},
 
 	render: function(data) {
@@ -403,7 +415,11 @@ var _ = Mavo.Primitive = $.Class({
 	 * Get value from the DOM
 	 */
 	getValue: function(o) {
-		return _.getValue(this.element, this.attribute, this.datatype, o);
+		return _.getValue(this.element, {
+			defaults: this.defaults,
+			attribute: this.attribute,
+			datatype: this.datatype
+		});
 	},
 
 	lazy: {
@@ -420,6 +436,10 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			return "";
+		},
+
+		editorDefaults: function() {
+			return this.editor && _.getDefaults(this.editor);
 		}
 	},
 
@@ -450,7 +470,11 @@ var _ = Mavo.Primitive = $.Class({
 					presentational = this.editor.selectedOptions[0].textContent;
 				}
 
-				_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
+				_.setValue(this.element, {value, presentational}, {
+					defaults: this.defaults,
+					attribute: this.attribute,
+					datatype: this.datatype
+				});
 			}
 
 			this.empty = value === "";
@@ -494,25 +518,20 @@ var _ = Mavo.Primitive = $.Class({
 	static: {
 		all: new WeakMap(),
 
-		getMatch: function (element, all) {
-			// TODO specificity
+		getDefaults: function (element) {
 			var ret = null;
 
-			for (var selector in all) {
+			for (var selector in Mavo.Elements) {
 				if (element.matches(selector)) {
-					ret = all[selector];
+					ret = Mavo.Elements[selector];
 				}
 			}
 
 			return ret;
 		},
 
-		getConfig: function (element) {
-			return _.getMatch(element, Mavo.Elements);
-		},
-
-		getValueAttribute: function (element, config = _.getConfig(element)) {
-			var ret = element.getAttribute("data-attribute") || config.attribute;
+		getValueAttribute: function (element, defaults = _.getDefaults(element)) {
+			var ret = element.getAttribute("data-attribute") || defaults.attribute;
 
 			if (!ret || ret === "null") {
 				ret = null;
@@ -568,11 +587,13 @@ var _ = Mavo.Primitive = $.Class({
 			return value;
 		},
 
-		getValue: function (element, attribute, datatype, o = {}) {
-			if (attribute === undefined) {
-				var config = _.getConfig(element);
-				attribute = _.getValueAttribute(element, config);
-				datatype = config.undefined;
+		getValue: function (element, {
+			defaults = _.getDefaults(element),
+			attribute = _.getValueAttribute(element, defaults),
+			datatype = defaults.datatype
+		}) {
+			if (defaults.getValue && attribute == defaults.attribute) {
+				return defaults.getValue(element);
 			}
 
 			var ret;
@@ -592,28 +613,34 @@ var _ = Mavo.Primitive = $.Class({
 			return _.safeCast(ret, datatype);
 		},
 
-		setValue: function (element, value, attribute, datatype) {
+		setValue: function (element, value, {defaults, attribute, datatype}) {
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;
 			}
 
-			if (attribute !== null) {
-				attribute = attribute ||  _.getValueAttribute(element);
-			}
+			if (element.nodeType === 1) {
+				defaults = defaults || _.getDefaults(element);
+				attribute = attribute !== undefined? attribute : _.getValueAttribute(element, defaults);
+				datatype = datatype !== undefined? datatype : defaults.datatype;
 
-			if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
-				// Setting properties (if they exist) instead of attributes
-				// is needed for dynamic elements such as checkboxes, sliders etc
-				try {
-					element[attribute] = value;
+				if (defaults.setValue && attribute == defaults.attribute) {
+					return defaults.setValue(element, value);
 				}
-				catch (e) {}
 			}
 
-			// Set attribute anyway, even if we set a property because when
-			// they're not in sync it gets really fucking confusing.
 			if (attribute) {
+				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+					// Setting properties (if they exist) instead of attributes
+					// is needed for dynamic elements such as checkboxes, sliders etc
+					try {
+						element[attribute] = value;
+					}
+					catch (e) {}
+				}
+
+				// Set attribute anyway, even if we set a property because when
+				// they're not in sync it gets really fucking confusing.
 				if (datatype == "boolean") {
 					if (value != element.hasAttribute(attribute)) {
 						$.toggleAttribute(element, attribute, value, value);

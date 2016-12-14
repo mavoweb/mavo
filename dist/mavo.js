@@ -378,7 +378,7 @@ var _ = self.Mavo = $.Class({
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.element.setAttribute("data-view", this.editing? "read" : "edit"),
+				onclick: e => this.editing? this.done() : this.edit(),
 				inside: this.ui.bar
 			});
 
@@ -389,7 +389,7 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.edit);
 
 			if (this.editing) {
-				this.element.setAttribute("data-view", "read");
+				this.done();
 			}
 		});
 
@@ -885,19 +885,18 @@ var _ = $.extend(Mavo, {
 			this.run();
 		},
 
-		pause: function() {
+		stop: function() {
 			if (this.running) {
-				this.observer && this.observer.disconnect();
+				this.observer.disconnect();
 				this.running = false;
 			}
-			
+
 			return this;
 		},
 
 		run: function() {
 			if (!this.running) {
-
-				this.observer && this.observer.observe(this.element, this.options);
+				this.observer.observe(this.element, this.options);
 				this.running = true;
 			}
 
@@ -909,9 +908,9 @@ var _ = $.extend(Mavo, {
 		 */
 		sneak: function(callback) {
 			if (this.running) {
-				this.pause();
+				this.stop();
 				var ret = callback();
-				this.run();
+				requestAnimationFrame(() => this.run());
 			}
 			else {
 				var ret = callback();
@@ -1341,20 +1340,20 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 
-		if (!this.fromTemplate("property", "type", "views")) {
+		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.store = this.element.getAttribute("data-store");
-			this.views = this.element.getAttribute("data-view");
+			this.modes = this.element.getAttribute("data-mode");
 		}
 
-		this.viewObserver = new Mavo.Observer(this.element, "data-view", records => {
-			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, records, records[0].target == this.element);
-			this.view = this.element.getAttribute("data-view");
-			this[this.view == "edit"? "edit" : "done"]();
+		this.modeObserver = new Mavo.Observer(this.element, "data-mode", records => {
+			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
+			this.mode = this.element.getAttribute("data-mode");
+			this[this.mode == "edit"? "edit" : "done"]();
 		});
 
-		this.view = this.views || "read";
+		this.mode = this.modes || "read";
 
 		this.group = this.parentGroup = o.group;
 
@@ -1362,12 +1361,12 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get editing() {
-		return this.view == "edit";
+		return this.mode == "edit";
 	},
 
 	get constant() {
-		// Is a "constant" if only allowed view is read
-		return this.views == "read";
+		// Is a "constant" if only allowed mode is read
+		return this.modes == "read";
 	},
 
 	get isRoot() {
@@ -1422,17 +1421,13 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	edit: function() {
-		this.view = "edit";
-		//if (this.uid == 32) {
-			//console.log("%cedit", "color:red; font-weight: bold;", this.property, this.uid);
-			//console.trace()
-		//}
+		this.mode = "edit";
 
 		this.propagate("edit");
 	},
 
 	done: function() {
-		this.view = "read";
+		this.mode = "read";
 		$.unbind(this.element, ".mavo:edit");
 
 		this.propagate("done");
@@ -1463,14 +1458,13 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	live: {
-		view: function (value) {
-			if (this._view != value) {
-				//console.log("%cview on", "color:green;", this.property, this.uid, "from", this._view, "to", value);
-				// If we don't do this, calling edit or done below will
+		mode: function (value) {
+			if (this._mode != value) {
+				// If we don't do this, calling setAttribute below will
 				// result in infinite recursion
-				this._view = value;
+				this._mode = value;
 
-				this.viewObserver.sneak(() => this.element.setAttribute("data-view", value));
+				this.modeObserver.sneak(() => this.element.setAttribute("data-mode", value));
 			}
 		},
 	},
@@ -1965,7 +1959,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			this.primitive.value = ret;
 		}
 		else {
-			Mavo.Primitive.setValue(this.node, ret, this.attribute, {presentational: ret.presentational});
+			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
 		}
 
 		Mavo.hooks.run("expressiontext-update-end", this);
@@ -2199,7 +2193,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
 		this.store = this.store || "none";
-		this.views = "read";
+		this.modes = "read";
 	}
 });
 
@@ -2226,7 +2220,7 @@ Mavo.Expressions.directives.push("data-content");
 Mavo.hooks.add("expressiontext-init-start", function() {
 	if (this.attribute == "data-content") {
 		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, {raw: true});
+		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		this.expression = this.element.getAttribute("data-content");
 
 		this.template = [new Mavo.Expression(this.expression)];
@@ -2880,27 +2874,27 @@ var _ = Mavo.Group = $.Class({
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
 	constructor: function (element, mavo, o) {
-		if (!this.fromTemplate("config", "attribute", "templateValue")) {
-			this.config = _.getConfig(element);
+		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
+			this.defaults = _.getDefaults(element);
 
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
-			this.attribute = _.getValueAttribute(this.element, this.config);
+			this.attribute = _.getValueAttribute(this.element, this.defaults);
 		}
 
-		this.humanReadable = this.config.humanReadable;
-		this.datatype = this.config.datatype;
-		this.views = this.views || this.config.views;
-		this.view = this.views || "read";
+		this.humanReadable = this.defaults.humanReadable;
+		this.datatype = this.defaults.datatype;
+		this.modes = this.modes || this.defaults.modes;
+		this.mode = this.modes || "read";
 
 		Mavo.hooks.run("primitive-init-start", this);
 
-		if (this.config.init) {
-			this.config.init.call(this, this.element);
+		if (this.defaults.init) {
+			this.defaults.init.call(this, this.element);
 		}
 
-		if (this.config.changeEvents) {
-			$.events(this.element, this.config.changeEvents, evt => {
+		if (this.defaults.changeEvents) {
+			$.events(this.element, this.defaults.changeEvents, evt => {
 				if (evt.target === this.element) {
 					this.value = this.getValue();
 				}
@@ -3019,7 +3013,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
-				return _.getValue(this.editor, undefined, this.datatype);
+				return _.getValue(this.editor, {datatype: this.datatype});
 			}
 
 			// if we're here, this.editor is an entire HTML structure
@@ -3038,7 +3032,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
-				_.setValue(this.editor, value);
+				_.setValue(this.editor, value, {defaults: this.editorDefaults});
 			}
 			else {
 				// if we're here, this.editor is an entire HTML structure
@@ -3087,22 +3081,27 @@ var _ = Mavo.Primitive = $.Class({
 		this.super.done.call(this);
 
 		this.sneak(() => {
+			if (this.defaults.done) {
+				this.defaults.done.call(this);
+				return;
+			}
+
 			if (this.popup) {
 				this.popup.close();
 			}
-			else if (!this.attribute && this.editing) {
+			else if (!this.attribute && this.editor) {
 				$.remove(this.editor);
 				this.element.textContent = this.editorValue;
 			}
-
-			// Revert tabIndex
-			if (this.element._.data.prevTabindex !== null) {
-				this.element.tabIndex = this.element._.data.prevTabindex;
-			}
-			else {
-				this.element.removeAttribute("tabindex");
-			}
 		});
+
+		// Revert tabIndex
+		if (this.element._.data.prevTabindex !== null) {
+			this.element.tabIndex = this.element._.data.prevTabindex;
+		}
+		else {
+			this.element.removeAttribute("tabindex");
+		}
 	},
 
 	revert: function() {
@@ -3124,11 +3123,11 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.editor) {
 			// No editor provided, use default for element type
 			// Find default editor for datatype
-			var editor = this.config.editor || Mavo.Elements["*"].editor;
+			var editor = this.defaults.editor || Mavo.Elements["*"].editor;
 
-			if (this.config.setEditorValue) {
+			if (this.defaults.setEditorValue) {
 				// TODO Temporary hack; refactor soon
-				this.setEditorValue = this.config.setEditorValue;
+				this.setEditorValue = this.defaults.setEditorValue;
 			}
 
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
@@ -3180,6 +3179,15 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.super.edit.call(this);
 
+		// Make element focusable, so it can actually receive focus
+		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
+		this.element.tabIndex = 0;
+
+		if (this.defaults.edit) {
+			this.defaults.edit.call(this);
+			return;
+		}
+
 		(new Promise((resolve, reject) => {
 			// Prepare for edit
 
@@ -3216,10 +3224,6 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			}
-
-			// Make element focusable, so it can actually receive focus
-			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-			this.element.tabIndex = 0;
 		})).then(() => {
 			// Actual edit
 			this.element._.unbind(".mavo:preedit");
@@ -3247,7 +3251,9 @@ var _ = Mavo.Primitive = $.Class({
 	}, // edit
 
 	clear: function() {
-		this.value = this.emptyValue;
+		if (!this.constant) {
+			this.value = this.emptyValue;
+		}
 	},
 
 	render: function(data) {
@@ -3280,7 +3286,11 @@ var _ = Mavo.Primitive = $.Class({
 	 * Get value from the DOM
 	 */
 	getValue: function(o) {
-		return _.getValue(this.element, this.attribute, this.datatype, o);
+		return _.getValue(this.element, {
+			defaults: this.defaults,
+			attribute: this.attribute,
+			datatype: this.datatype
+		});
 	},
 
 	lazy: {
@@ -3297,6 +3307,10 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			return "";
+		},
+
+		editorDefaults: function() {
+			return this.editor && _.getDefaults(this.editor);
 		}
 	},
 
@@ -3327,7 +3341,11 @@ var _ = Mavo.Primitive = $.Class({
 					presentational = this.editor.selectedOptions[0].textContent;
 				}
 
-				_.setValue(this.element, {value, presentational}, this.attribute, this.datatype);
+				_.setValue(this.element, {value, presentational}, {
+					defaults: this.defaults,
+					attribute: this.attribute,
+					datatype: this.datatype
+				});
 			}
 
 			this.empty = value === "";
@@ -3371,25 +3389,20 @@ var _ = Mavo.Primitive = $.Class({
 	static: {
 		all: new WeakMap(),
 
-		getMatch: function (element, all) {
-			// TODO specificity
+		getDefaults: function (element) {
 			var ret = null;
 
-			for (var selector in all) {
+			for (var selector in Mavo.Elements) {
 				if (element.matches(selector)) {
-					ret = all[selector];
+					ret = Mavo.Elements[selector];
 				}
 			}
 
 			return ret;
 		},
 
-		getConfig: function (element) {
-			return _.getMatch(element, Mavo.Elements);
-		},
-
-		getValueAttribute: function (element, config = _.getConfig(element)) {
-			var ret = element.getAttribute("data-attribute") || config.attribute;
+		getValueAttribute: function (element, defaults = _.getDefaults(element)) {
+			var ret = element.getAttribute("data-attribute") || defaults.attribute;
 
 			if (!ret || ret === "null") {
 				ret = null;
@@ -3445,11 +3458,13 @@ var _ = Mavo.Primitive = $.Class({
 			return value;
 		},
 
-		getValue: function (element, attribute, datatype, o = {}) {
-			if (attribute === undefined) {
-				var config = _.getConfig(element);
-				attribute = _.getValueAttribute(element, config);
-				datatype = config.undefined;
+		getValue: function (element, {
+			defaults = _.getDefaults(element),
+			attribute = _.getValueAttribute(element, defaults),
+			datatype = defaults.datatype
+		}) {
+			if (defaults.getValue && attribute == defaults.attribute) {
+				return defaults.getValue(element);
 			}
 
 			var ret;
@@ -3469,28 +3484,34 @@ var _ = Mavo.Primitive = $.Class({
 			return _.safeCast(ret, datatype);
 		},
 
-		setValue: function (element, value, attribute, datatype) {
+		setValue: function (element, value, {defaults, attribute, datatype}) {
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;
 			}
 
-			if (attribute !== null) {
-				attribute = attribute ||  _.getValueAttribute(element);
-			}
+			if (element.nodeType === 1) {
+				defaults = defaults || _.getDefaults(element);
+				attribute = attribute !== undefined? attribute : _.getValueAttribute(element, defaults);
+				datatype = datatype !== undefined? datatype : defaults.datatype;
 
-			if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
-				// Setting properties (if they exist) instead of attributes
-				// is needed for dynamic elements such as checkboxes, sliders etc
-				try {
-					element[attribute] = value;
+				if (defaults.setValue && attribute == defaults.attribute) {
+					return defaults.setValue(element, value);
 				}
-				catch (e) {}
 			}
 
-			// Set attribute anyway, even if we set a property because when
-			// they're not in sync it gets really fucking confusing.
 			if (attribute) {
+				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+					// Setting properties (if they exist) instead of attributes
+					// is needed for dynamic elements such as checkboxes, sliders etc
+					try {
+						element[attribute] = value;
+					}
+					catch (e) {}
+				}
+
+				// Set attribute anyway, even if we set a property because when
+				// they're not in sync it gets really fucking confusing.
 				if (datatype == "boolean") {
 					if (value != element.hasAttribute(attribute)) {
 						$.toggleAttribute(element, attribute, value, value);
@@ -3654,7 +3675,7 @@ _.Popup = $.Class({
  * - attribute {String}
  * - useProperty {Boolean}
  * - datatype {"number"|"boolean"|"string"} Default is "string"
- * - views
+ * - modes
  * - editor {Object|Function}
  * - setEditorValue temporary
  * - edit
@@ -3686,26 +3707,28 @@ Mavo.Elements = {
 
 	"select, input": {
 		attribute: "value",
-		views: "read",
+		modes: "read",
 		changeEvents: "input change"
 	},
 
 	"textarea": {
-		views: "read",
-		changeEvents: "input"
+		modes: "read",
+		changeEvents: "input",
+		getValue: element => element.value,
+		setValue: (element, value) => element.value = value
 	},
 
 	"input[type=range], input[type=number]": {
 		attribute: "value",
 		datatype: "number",
-		views: "read",
+		modes: "read",
 		changeEvents: "input change"
 	},
 
 	"button, .counter": {
 		attribute: "data-clicked",
 		datatype: "number",
-		views: "read",
+		modes: "read",
 		init: function(element) {
 			if (this.attribute === "data-clicked") {
 				element.setAttribute("data-clicked", "0");
@@ -3721,23 +3744,55 @@ Mavo.Elements = {
 	"input[type=checkbox]": {
 		attribute: "checked",
 		datatype: "boolean",
-		views: "read",
+		modes: "read",
 		changeEvents: "click"
 	},
 
 	"meter, progress": {
 		attribute: "value",
 		datatype: "number",
-		editor: function() {
-			var min = this.element.getAttribute("min") || 0;
-			var max = this.element.getAttribute("max") || 1;
+		edit: function() {
+			var min = +this.element.getAttribute("min") || 0;
+			var max = +this.element.getAttribute("max") || 1;
+			var range = max - min;
+			var step = +this.element.getAttribute("data-edit-step") || (range > 1? 1 : range/100);
 
-			return {
-				tag: "input",
-				type: "range",
-				min, max,
-				step: max - min > 1? 1 : (max - min) / 100
-			};
+			this.element.addEventListener("mousemove.mavo:edit", evt => {
+				// Change property as mouse moves
+				var left = this.element.getBoundingClientRect().left;
+				var offset = Math.max(0, (evt.clientX - left) / this.element.offsetWidth);
+				var newValue = min + range * offset;
+				var mod = newValue % step;
+
+				newValue += mod > step/2? step - mod : -mod;
+				newValue = Math.max(min, Math.min(newValue, max));
+
+				this.sneak(() => this.element.setAttribute("value", newValue));
+			});
+
+			this.element.addEventListener("mouseleave.mavo:edit", evt => {
+				// Return to actual value
+				this.sneak(() => this.element.setAttribute("value", this.value));
+			});
+
+			this.element.addEventListener("click.mavo:edit", evt => {
+				// Register change
+				this.value = this.getValue();
+			});
+
+			this.element.addEventListener("keydown.mavo:edit", evt => {
+				// Edit with arrow keys
+				if (evt.target == this.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+					var increment = step * (evt.keyCode == 39? 1 : -1) * (evt.shiftKey? 10 : 1);
+					var newValue = this.value + increment;
+					newValue = Math.max(min, Math.min(newValue, max));
+
+					this.element.setAttribute("value", newValue);
+				}
+			});
+		},
+		done: function() {
+			$.unbind(this.element, ".mavo:edit");
 		}
 	},
 
@@ -3920,7 +3975,10 @@ var _ = Mavo.Collection = $.Class({
 		// Add delete & add buttons
 		if (this.mutable) {
 			this.mavo.permissions.can("edit", () => {
-				var itemControls = $(".mv-item-controls", element) || $.create({
+				var itemControls = $$(".mv-item-controls", element)
+				                       .filter(el => el.closest(Mavo.selectors.item) == element)[0];
+
+				itemControls = itemControls || $.create({
 					className: "mv-item-controls mv-ui",
 					inside: element
 				});
@@ -4026,6 +4084,14 @@ var _ = Mavo.Collection = $.Class({
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
+	},
+
+	edit: function() {
+		this.propagate("edit");
+	},
+
+	done: function() {
+		this.propagate("done");
 	},
 
 	/**

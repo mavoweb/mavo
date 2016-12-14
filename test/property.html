@@ -30,7 +30,9 @@
 <section data-mavo="elementtypes" class="autoedit">
 	<h1>Different element types</h1>
 
-	<meter property="meter" value=".5"></meter>
+	<span property="span">Just a span</span>
+	<meter property="meter" value="50" max="100"></meter> [meter]<br>
+	Meter no default: <meter property="meterNoDefault"></meter> [meterNoDefault]</span><br>
 	<progress property="progress" value=".5"></progress>
 	<img src="http://mavo.io/logo.svg" style="width: 100px" property="picture">
 	<time property="emptyDate">Empty time</time>
@@ -90,7 +92,7 @@
 </section>
 
 <section data-mavo="constants" data-store="local" class="autoedit debug-saving">
-	<div property="MyConstant" data-view="read">Constant, this must be saved but not be editable.</div>
+	<div property="MyConstant" data-mode="read">Constant, this must be saved but not be editable.</div>
 	<div property="NormalProperty">Normal property, must be editable and saveable.</div>
 </section>
 

@@ -297,7 +297,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			this.primitive.value = ret;
 		}
 		else {
-			Mavo.Primitive.setValue(this.node, ret, this.attribute, {presentational: ret.presentational});
+			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
 		}
 
 		Mavo.hooks.run("expressiontext-update-end", this);
@@ -531,7 +531,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
 		this.store = this.store || "none";
-		this.views = "read";
+		this.modes = "read";
 	}
 });
 
@@ -558,7 +558,7 @@ Mavo.Expressions.directives.push("data-content");
 Mavo.hooks.add("expressiontext-init-start", function() {
 	if (this.attribute == "data-content") {
 		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, this.attribute, null, {raw: true});
+		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		this.expression = this.element.getAttribute("data-content");
 
 		this.template = [new Mavo.Expression(this.expression)];

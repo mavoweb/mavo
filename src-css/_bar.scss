@@ -80,7 +80,7 @@
 			content: "✎";
 		}
 
-		.mv-wrapper[data-view="edit"] & {
+		.mv-wrapper[data-mode="edit"] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
 
@@ -140,7 +140,7 @@
 			background: #b00;
 		}
 
-		.mv-wrapper:not([data-view="edit"]) & {
+		.mv-wrapper:not([data-mode="edit"]) & {
 			display: none;
 		}
 	}

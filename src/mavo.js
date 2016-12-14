@@ -183,7 +183,7 @@ var _ = self.Mavo = $.Class({
 			this.ui.edit = $.create("button", {
 				className: "edit",
 				textContent: "Edit",
-				onclick: e => this.element.setAttribute("data-view", this.editing? "read" : "edit"),
+				onclick: e => this.editing? this.done() : this.edit(),
 				inside: this.ui.bar
 			});
 
@@ -194,7 +194,7 @@ var _ = self.Mavo = $.Class({
 			$.remove(this.ui.edit);
 
 			if (this.editing) {
-				this.element.setAttribute("data-view", "read");
+				this.done();
 			}
 		});
 

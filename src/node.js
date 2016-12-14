@@ -22,20 +22,20 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 
-		if (!this.fromTemplate("property", "type", "views")) {
+		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.store = this.element.getAttribute("data-store");
-			this.views = this.element.getAttribute("data-view");
+			this.modes = this.element.getAttribute("data-mode");
 		}
 
-		this.viewObserver = new Mavo.Observer(this.element, "data-view", records => {
-			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, records, records[0].target == this.element);
-			this.view = this.element.getAttribute("data-view");
-			this[this.view == "edit"? "edit" : "done"]();
+		this.modeObserver = new Mavo.Observer(this.element, "data-mode", records => {
+			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
+			this.mode = this.element.getAttribute("data-mode");
+			this[this.mode == "edit"? "edit" : "done"]();
 		});
 
-		this.view = this.views || "read";
+		this.mode = this.modes || "read";
 
 		this.group = this.parentGroup = o.group;
 
@@ -43,12 +43,12 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get editing() {
-		return this.view == "edit";
+		return this.mode == "edit";
 	},
 
 	get constant() {
-		// Is a "constant" if only allowed view is read
-		return this.views == "read";
+		// Is a "constant" if only allowed mode is read
+		return this.modes == "read";
 	},
 
 	get isRoot() {
@@ -103,17 +103,13 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	edit: function() {
-		this.view = "edit";
-		//if (this.uid == 32) {
-			//console.log("%cedit", "color:red; font-weight: bold;", this.property, this.uid);
-			//console.trace()
-		//}
+		this.mode = "edit";
 
 		this.propagate("edit");
 	},
 
 	done: function() {
-		this.view = "read";
+		this.mode = "read";
 		$.unbind(this.element, ".mavo:edit");
 
 		this.propagate("done");
@@ -144,14 +140,13 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	live: {
-		view: function (value) {
-			if (this._view != value) {
-				//console.log("%cview on", "color:green;", this.property, this.uid, "from", this._view, "to", value);
-				// If we don't do this, calling edit or done below will
+		mode: function (value) {
+			if (this._mode != value) {
+				// If we don't do this, calling setAttribute below will
 				// result in infinite recursion
-				this._view = value;
+				this._mode = value;
 
-				this.viewObserver.sneak(() => this.element.setAttribute("data-view", value));
+				this.modeObserver.sneak(() => this.element.setAttribute("data-mode", value));
 			}
 		},
 	},
