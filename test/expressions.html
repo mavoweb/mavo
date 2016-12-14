@@ -34,7 +34,7 @@
 }</script>
 
 <section data-mavo="basicexpr">
-	<h2>Basic</h2>
+	<h1>Basic</h1>
 
 	<table class="reftest">
 		<tr>
@@ -61,12 +61,16 @@
 			<td>[prop3 + 1]</td>
 			<td>45</td>
 		</tr>
+		<tr>
+			<td>[false]</td>
+			<td>false</td>
+		</tr>
 	</table>
 
 </section>
 
 <section data-store="#countries">
-	<h2>With render (country data)</h2>
+	<h1>With render (country data)</h1>
 
 	<table class="reftest">
 		<tr>
@@ -106,7 +110,7 @@
 </section>
 
 <section class="mavo">
-	<h2>Without render</h2>
+	<h1>Without render</h1>
 
 	<table class="reftest">
 		<tr>
@@ -228,12 +232,12 @@
 	</table>
 </section>
 
-<section class="mavo mv-debug">
+<section class="mavo mv-debug" id="mvIf">
 	<h1>data-if</h1>
 
 	<table class="reftest">
 		<tr>
-			<td>A<span data-if="false">B</span>C</td>
+			<td>A<span data-if="5 < 0">B</span>C</td>
 			<td>AC</td>
 		</tr>
 		<tr>

@@ -109,7 +109,7 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).join(glue);
 	},
 
-	idify: readable => ((text || "") + "")
+	idify: readable => ((readable || "") + "")
 		.replace(/\s+/g, "-") // Convert whitespace to hyphens
 		.replace(/[^\w-]/g, "") // Remove weird characters
 		.toLowerCase(),

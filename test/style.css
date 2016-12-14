@@ -1,5 +1,16 @@
 :root {
-  --ciel: #cceeff; }
+  --ciel: #cceeff;
+  --dark: #337799; }
+
+body {
+  max-width: 50em;
+  margin: auto; }
+
+a {
+  color: var(--dark); }
+
+a:not(:hover) {
+  text-decoration: none; }
 
 .pass {
   --color: #ceec93;
@@ -13,20 +24,19 @@
   --color: #e87d7d;
   --dark-color: #ad1f1f; }
 
-body {
-  max-width: 50em;
-  margin: auto; }
-
 body > section {
   border: 0.2em solid var(--ciel);
   margin: .5em 0;
   padding: .5em;
   border-radius: .3em; }
   body > section h1 {
-    margin: 0; }
+    margin: 0;
+    font: bold 200%/1 Helvetica Neue, sans-serif;
+    color: var(--dark);
+    letter-spacing: -.04em; }
 
-body > p,
-body > section > p {
+body > section > p,
+.notice {
   width: -webkit-max-content;
   width: -moz-max-content;
   width: max-content;
@@ -34,13 +44,17 @@ body > section > p {
   background: var(--ciel);
   font-style: italic;
   border-radius: .2em; }
-  body > p::before,
-  body > section > p::before {
-    content: "Instructions: ";
-    font-size: 80%;
-    font-weight: bold;
-    font-style: normal;
-    text-transform: uppercase; }
+
+.notice {
+  margin: 1em auto;
+  font-size: 125%; }
+
+body > section > p::before {
+  content: "Instructions: ";
+  font-size: 80%;
+  font-weight: bold;
+  font-style: normal;
+  text-transform: uppercase; }
 
 dl.tests {
   display: -ms-flexbox;
@@ -86,25 +100,22 @@ dl.tests {
   dl.tests dd {
     width: 30%; }
 
-table {
+table.reftest {
   width: 100%;
   display: -ms-flexbox;
   display: flex;
   -ms-flex-flow: column;
   flex-flow: column; }
-
-tr {
-  display: -ms-flexbox;
-  display: flex;
-  border: 1px solid rgba(0, 0, 0, 0.1); }
-
-td {
-  -ms-flex: 1;
-  flex: 1;
-  padding: .4em; }
-
-td:not(:last-child) {
-  border-right: 1px solid rgba(0, 0, 0, 0.1); }
+  table.reftest tr {
+    display: -ms-flexbox;
+    display: flex;
+    border: 1px solid rgba(0, 0, 0, 0.1); }
+  table.reftest td {
+    -ms-flex: 1;
+    flex: 1;
+    padding: .4em; }
+  table.reftest td:not(:last-child) {
+    border-right: 1px solid rgba(0, 0, 0, 0.1); }
 
 table.reftest tr {
   margin: .4em 0;

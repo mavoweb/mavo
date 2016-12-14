@@ -4,6 +4,48 @@ if (typeof self["test_" + page] == "function") {
 	self["test_" + page]();
 }
 
+for (let h1 of $$("body > section > h1")) {
+	let section = h1.parentNode;
+
+	section.id = section.id || Mavo.Functions.idify(h1.textContent);
+
+	$.create("a", {
+		href: "#" + section.id,
+		around: h1.firstChild
+	});
+}
+
+
+var hashchanged = () => {
+	if (location.hash) {
+		var target = $(location.hash);
+
+		if (target.matches("body > section")) {
+			// Isolate this test
+			for (let section of $$(`body > section:not(${location.hash})`)) {
+				section.remove();
+			}
+		}
+
+		$.create("p", {
+			className: "notice",
+			contents: [
+				"Some tests hidden. ",
+				{
+					tag: "a",
+					href: "#",
+					onclick: evt => location.reload(),
+					textContent: "Show all tests"
+				}
+			],
+			start: document.body
+		});
+	}
+};
+
+hashchanged();
+onhashchange = hashchanged;
+
 requestAnimationFrame(() => {
 	let pseudo = (element, pseudo) => {
 		var content = getComputedStyle(element, ":" + pseudo).content;
@@ -43,9 +85,6 @@ requestAnimationFrame(() => {
 							});
 						}
 					}
-				}
-				else {
-					console.log(content(td), content(ref));
 				}
 
 				tr.classList.remove("pass", "fail");
