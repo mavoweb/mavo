@@ -2,7 +2,7 @@
 Mavo.Primitive.editors.img = {
 	create: function() {
 		var root = $.create("div", {
-			className: "image-popup",
+			className: "mv-image-popup",
 			events: {
 				"dragenter dragover drop": function(evt) {
 					evt.stopPropagation();
@@ -19,10 +19,10 @@ Mavo.Primitive.editors.img = {
 			{
 				tag: "input",
 				type: "url",
-				className: "value"
+				className: "mv-value"
 			}, {
 				tag: "label",
-				className: "upload",
+				className: "mv-upload",
 				contents: ["Upload: ", {
 					tag: "input",
 					type: "file",
@@ -46,7 +46,7 @@ Mavo.Primitive.editors.img = {
 					}
 				}]
 			}, {
-				className: "tip",
+				className: "mv-tip",
 				innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste the image to be uploaded!"
 			}
 		]});

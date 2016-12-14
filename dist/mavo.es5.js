@@ -296,8 +296,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				})
 			};
 
-			this.ui.status = $(".status", this.ui.bar) || $.create("span", {
-				className: "status",
+			this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
+				className: "mv-status",
 				inside: this.ui.bar
 			});
 
@@ -314,14 +314,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						tag: "a",
 						href: _this.loginHash,
 						textContent: "Login",
-						className: "login button",
+						className: "mv-login mv-button",
 						events: {
 							click: function click(evt) {
 								evt.preventDefault();
 								_this.storage.login();
 							}
 						},
-						after: $(".status", _this.ui.bar)
+						after: $(".mv-status", _this.ui.bar)
 					});
 
 					// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -343,12 +343,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.wrapper.addEventListener("mavo:login.mavo", function (evt) {
 					if (evt.backend == _this.storage) {
 						// ignore logins from source backend
-						var status = $(".status", _this.ui.bar);
+						var status = $(".mv-status", _this.ui.bar);
 						status.innerHTML = "";
 						status._.contents(["Logged in to " + evt.backend.id + " as ", { tag: "strong", innerHTML: evt.name }, {
 							tag: "button",
 							textContent: "Logout",
-							className: "logout",
+							className: "mv-logout",
 							events: {
 								click: function click(e) {
 									return evt.backend.logout();
@@ -359,7 +359,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 
 				this.wrapper.addEventListener("mavo:logout.mavo", function (evt) {
-					$(".status", _this.ui.bar).textContent = "";
+					$(".mv-status", _this.ui.bar).textContent = "";
 				});
 			}
 
@@ -379,12 +379,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var action = _ref.action;
 				var value = _ref.value;
 
-				_this.wrapper.classList.toggle("can-" + action, !!value);
+				_this.wrapper.classList.toggle("mv-can-" + action, !!value);
 			});
 
 			this.permissions.can(["edit", "add", "delete"], function () {
 				_this.ui.edit = $.create("button", {
-					className: "edit",
+					className: "mv-edit",
 					textContent: "Edit",
 					onclick: function onclick(e) {
 						return _this.editing ? _this.done() : _this.edit();
@@ -409,25 +409,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.needsEdit) {
 				this.permissions.can("save", function () {
 					_this.ui.save = $.create("button", {
-						className: "save",
+						className: "mv-save",
 						textContent: "Save",
 						events: {
 							click: function click(e) {
 								return _this.save();
 							},
 							"mouseenter focus": function mouseenterFocus(e) {
-								_this.wrapper.classList.add("save-hovered");
+								_this.wrapper.classList.add("mv-save-hovered");
 								_this.setUnsavedChanges();
 							},
 							"mouseleave blur": function mouseleaveBlur(e) {
-								return _this.wrapper.classList.remove("save-hovered");
+								return _this.wrapper.classList.remove("mv-save-hovered");
 							}
 						},
 						inside: _this.ui.bar
 					});
 
 					_this.ui.revert = $.create("button", {
-						className: "revert",
+						className: "mv-revert",
 						textContent: "Revert",
 						disabled: true,
 						events: {
@@ -436,12 +436,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							},
 							"mouseenter focus": function mouseenterFocus(e) {
 								if (!_this.unsavedChanges) {
-									_this.wrapper.classList.add("revert-hovered");
+									_this.wrapper.classList.add("mv-revert-hovered");
 									_this.setUnsavedChanges();
 								}
 							},
 							"mouseleave blur": function mouseleaveBlur(e) {
-								return _this.wrapper.classList.remove("revert-hovered");
+								return _this.wrapper.classList.remove("mv-revert-hovered");
 							}
 						},
 						inside: _this.ui.bar
@@ -454,7 +454,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions.can("delete", function () {
 				_this.ui.clear = $.create("button", {
-					className: "clear",
+					className: "mv-clear",
 					textContent: "Clear",
 					onclick: function onclick(e) {
 						return _this.clear();
@@ -560,18 +560,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.root.edit();
 
 			$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", function (evt) {
-				if (evt.target.matches(".mv-item-controls .delete")) {
+				if (evt.target.matches(".mv-item-controls .mv-delete")) {
 					var item = evt.target.closest(_.selectors.item);
-					item.classList.toggle("delete-hover", evt.type == "mouseenter");
+					item.classList.toggle("mv-delete-hover", evt.type == "mouseenter");
 				}
 
 				if (evt.target.matches(_.selectors.item)) {
-					evt.target.classList.remove("has-hovered-item");
+					evt.target.classList.remove("mv-has-hovered-item");
 
 					var parent = evt.target.parentNode.closest(_.selectors.item);
 
 					if (parent) {
-						parent.classList.toggle("has-hovered-item", evt.type == "mouseenter");
+						parent.classList.toggle("mv-has-hovered-item", evt.type == "mouseenter");
 					}
 				}
 			}, true);
@@ -708,7 +708,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
-				this.wrapper.classList.toggle("unsaved-changes", value);
+				this.wrapper.classList.toggle("mv-unsaved-changes", value);
 
 				if (this.ui && this.ui.save) {
 					this.ui.save.disabled = !value;
@@ -748,8 +748,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return "[property=" + name + "], [itemprop=" + name + "]";
 				},
 				group: "[typeof], [itemscope], [itemtype], .mv-group",
-				multiple: "[multiple], [data-multiple], .multiple",
-				required: "[required], [data-required], .required",
+				multiple: "[multiple], [data-multiple], .mv-multiple",
+				required: "[required], [data-required], .mv-required",
 				formControl: "input, select, option, textarea",
 				item: ".mv-item",
 				ui: ".mv-ui",
@@ -795,7 +795,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			$.extend(_.selectors, {
 				primitive: andNot(s.property, s.group),
 				rootGroup: andNot(s.group, s.property),
-				output: or(s.specificProperty("output"), ".output, .value"),
+				output: or(s.specificProperty("output"), ".mv-output, .mv-value"),
 				autoMultiple: and("li, tr, option", ":only-of-type")
 			});
 		})();
@@ -1792,7 +1792,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			deleted: function deleted(value) {
 				var _this = this;
 
-				this.element.classList.toggle("deleted", value);
+				this.element.classList.toggle("mv-deleted", value);
 
 				if (value) {
 					// Soft delete, store element contents in a fragment
@@ -1804,7 +1804,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					$.contents(this.element, [{
 						tag: "button",
-						className: "close mv-ui",
+						className: "mv-close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function click(evt) {
@@ -1813,7 +1813,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 					}, "Deleted " + this.name, {
 						tag: "button",
-						className: "undo mv-ui",
+						className: "mv-undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": function click(evt) {
@@ -1822,7 +1822,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 					}]);
 
-					this.element.classList.remove("delete-hover");
+					this.element.classList.remove("mv-delete-hover");
 				} else if (this.deleted) {
 					// Undelete
 					this.element.textContent = "";
@@ -1846,7 +1846,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					value = false;
 				}
 
-				this.element.classList.toggle("unsaved-changes", value);
+				this.element.classList.toggle("mv-unsaved-changes", value);
 
 				return value;
 			}
@@ -3904,7 +3904,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				!this.constant && // and editable
 				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
-				this.element.classList.toggle("empty", hide);
+				this.element.classList.toggle("mv-empty", hide);
 			}
 		},
 
@@ -4560,7 +4560,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					$.contents(itemControls, [{
 						tag: "button",
 						title: "Delete this " + _this.name,
-						className: "delete",
+						className: "mv-delete",
 						events: {
 							"click": function click(evt) {
 								return _this.delete(item);
@@ -4569,7 +4569,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}, {
 						tag: "button",
 						title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
-						className: "add",
+						className: "mv-add",
 						events: {
 							"click": function click(evt) {
 								return _this.add(null, _this.children.indexOf(item)).edit();
@@ -4928,7 +4928,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var _this4 = this;
 
 				// Find add button if provided, or generate one
-				var selector = "button.add-" + this.property;
+				var selector = "button.mv-add-" + this.property;
 				var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
 
 				if (group) {
@@ -4939,7 +4939,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				if (!button) {
 					button = $.create("button", {
-						className: "add",
+						className: "mv-add",
 						textContent: "Add " + this.name
 					});
 				};
@@ -4947,7 +4947,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				button.classList.add("mv-ui", "mv-add");
 
 				if (this.property) {
-					button.classList.add("add-" + this.property);
+					button.classList.add("mv-add-" + this.property);
 				}
 
 				button.addEventListener("click", function (evt) {
@@ -5454,10 +5454,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	// Add element to show saved data
 	Mavo.hooks.add("init-tree-after", function () {
 		if (this.root.debug) {
-			this.wrapper.classList.add("debug-saving");
+			this.wrapper.classList.add("mv-debug-saving");
 		}
 
-		if (this.store && this.wrapper.classList.contains("debug-saving")) {
+		if (this.store && this.wrapper.classList.contains("mv-debug-saving")) {
 			var element;
 
 			var details = $.create("details", {
@@ -5477,7 +5477,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.hooks.add("render-start", function (_ref) {
 		var data = _ref.data;
 
-		if (this.backend && this.wrapper.classList.contains("debug-saving")) {
+		if (this.backend && this.wrapper.classList.contains("mv-debug-saving")) {
 			var element = $("#" + this.id + "-debug-storage");
 
 			if (element) {
@@ -5533,14 +5533,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	Mavo.hooks.add("expression-eval-beforeeval", function () {
 		if (this.debug) {
-			this.debug.classList.remove("error");
+			this.debug.classList.remove("mv-error");
 		}
 	});
 
 	Mavo.hooks.add("expression-eval-error", function (env) {
 		if (this.debug) {
 			this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
-			this.debug.classList.add("error");
+			this.debug.classList.add("mv-error");
 		}
 	});
 
@@ -5593,7 +5593,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 
 		var tr = $.create("tr", {
-			className: "debug-" + type.toLowerCase(),
+			className: "mv-debug-" + type.toLowerCase(),
 			contents: tds,
 			inside: this.debug
 		});
@@ -5693,13 +5693,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			env.td = env.expr.debug;
 
 			if (env.td) {
-				env.td.classList.remove("error");
+				env.td.classList.remove("mv-error");
 			}
 		}
 	});
 
 	Mavo.hooks.add("expressiontext-update-aftereval", function (env) {
-		if (env.td && !env.td.classList.contains("error")) {
+		if (env.td && !env.td.classList.contains("mv-error")) {
 			var value = _.printValue(env.value);
 			env.td.textContent = env.td.title = value;
 		}

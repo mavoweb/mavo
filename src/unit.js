@@ -75,7 +75,7 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		deleted: function(value) {
-			this.element.classList.toggle("deleted", value);
+			this.element.classList.toggle("mv-deleted", value);
 
 			if (value) {
 				// Soft delete, store element contents in a fragment
@@ -88,7 +88,7 @@ var _ = Mavo.Unit = $.Class({
 				$.contents(this.element, [
 					{
 						tag: "button",
-						className: "close mv-ui",
+						className: "mv-close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function(evt) {
@@ -99,7 +99,7 @@ var _ = Mavo.Unit = $.Class({
 					"Deleted " + this.name,
 					{
 						tag: "button",
-						className: "undo mv-ui",
+						className: "mv-undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": evt => this.deleted = false
@@ -107,7 +107,7 @@ var _ = Mavo.Unit = $.Class({
 					}
 				]);
 
-				this.element.classList.remove("delete-hover");
+				this.element.classList.remove("mv-delete-hover");
 			}
 			else if (this.deleted) {
 				// Undelete
@@ -132,7 +132,7 @@ var _ = Mavo.Unit = $.Class({
 				value = false;
 			}
 
-			this.element.classList.toggle("unsaved-changes", value);
+			this.element.classList.toggle("mv-unsaved-changes", value);
 
 			return value;
 		}

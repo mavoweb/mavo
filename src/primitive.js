@@ -511,7 +511,7 @@ var _ = Mavo.Primitive = $.Class({
 			!this.constant && // and editable
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
-			this.element.classList.toggle("empty", hide);
+			this.element.classList.toggle("mv-empty", hide);
 		}
 	},
 

@@ -98,14 +98,14 @@ var _ = Mavo.Collection = $.Class({
 					{
 						tag: "button",
 						title: "Delete this " + this.name,
-						className: "delete",
+						className: "mv-delete",
 						events: {
 							"click": evt => this.delete(item)
 						}
 					}, {
 						tag: "button",
 						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-						className: "add",
+						className: "mv-add",
 						events: {
 							"click": evt => this.add(null, this.children.indexOf(item)).edit()
 						}
@@ -390,7 +390,7 @@ var _ = Mavo.Collection = $.Class({
 
 		addButton: function() {
 			// Find add button if provided, or generate one
-			var selector = `button.add-${this.property}`;
+			var selector = `button.mv-add-${this.property}`;
 			var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
 
 			if (group) {
@@ -401,7 +401,7 @@ var _ = Mavo.Collection = $.Class({
 
 			if (!button) {
 				button = $.create("button", {
-					className: "add",
+					className: "mv-add",
 					textContent: "Add " + this.name
 				});
 			};
@@ -409,7 +409,7 @@ var _ = Mavo.Collection = $.Class({
 			button.classList.add("mv-ui", "mv-add");
 
 			if (this.property) {
-				button.classList.add(`add-${this.property}`);
+				button.classList.add(`mv-add-${this.property}`);
 			}
 
 			button.addEventListener("click", evt => {

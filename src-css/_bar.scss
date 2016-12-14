@@ -20,7 +20,7 @@
 		text-decoration: none;
 	}
 
-	&.fixed {
+	&.mv-fixed {
 		position: fixed;
 		top: 0;
 		left: 0;
@@ -28,13 +28,13 @@
 		z-index: 10000; // this is wrong, but must override other wrong things :(
 	}
 
-	&:not(.fixed) {
+	&:not(.mv-fixed) {
 		border-radius: .3em;
 		margin-bottom: 1em;
 		box-shadow: 0 0 0 1px rgba(0,0,0,.3) inset, 0 .1em .4em rgba(0, 0, 0, .3);
 	}
 
-	button, .button {
+	button, .mv-button {
 		all: unset;
 		font-weight: bold;
 		cursor: pointer;
@@ -50,7 +50,7 @@
 	}
 
 	& > button,
-	& > .button {
+	& > .mv-button {
 		padding: .3em .6em .4em;
 		border: 0;
 
@@ -68,14 +68,14 @@
 		}
 	}
 
-	.avatar {
+	.mv-avatar {
 		all: unset;
 		display: inline-block;
 		vertical-align: -.1em;
 		max-height: 1em;
 	}
 
-	.edit {
+	.mv-edit {
 		&::before {
 			content: "✎";
 		}
@@ -90,7 +90,7 @@
 		}
 	}
 
-	.save {
+	.mv-save {
 		&::before {
 			content: "✓";
 		}
@@ -118,7 +118,7 @@
 		}
 	}
 
-	.revert {
+	.mv-revert {
 		&::before {
 			content: "✘";
 		}
@@ -128,7 +128,7 @@
 		}
 	}
 
-	.clear {
+	.mv-clear {
 		&::before {
 			@extend %rubbish-bin;
 			vertical-align: -.25em;
@@ -145,13 +145,13 @@
 		}
 	}
 
-	.status {
+	.mv-status {
 		flex: 1;
 		line-height: 2.4;
 		margin-top: auto;
 		margin-bottom: auto;
 
-		.logout {
+		.mv-logout {
 			vertical-align: .2em;
 			border: 1px solid rgba(0,0,0,.4);
 			border-radius: .3em;
@@ -168,7 +168,7 @@
 		}
 	}
 
-	.status:empty {
+	.mv-status:empty {
 		content: "Not logged in";
 	}
 }

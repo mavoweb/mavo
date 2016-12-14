@@ -149,10 +149,10 @@ Stretchy.selectors.filter += selector;
 // Add element to show saved data
 Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
-		this.wrapper.classList.add("debug-saving");
+		this.wrapper.classList.add("mv-debug-saving");
 	}
 
-	if (this.store && this.wrapper.classList.contains("debug-saving")) {
+	if (this.store && this.wrapper.classList.contains("mv-debug-saving")) {
 		var element;
 
 		var details = $.create("details", {
@@ -173,7 +173,7 @@ Mavo.hooks.add("init-tree-after", function() {
 });
 
 Mavo.hooks.add("render-start", function({data}) {
-	if (this.backend && this.wrapper.classList.contains("debug-saving")) {
+	if (this.backend && this.wrapper.classList.contains("mv-debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
@@ -234,14 +234,14 @@ Mavo.hooks.add("expressions-init-start", function() {
 
 Mavo.hooks.add("expression-eval-beforeeval", function() {
 	if (this.debug) {
-		this.debug.classList.remove("error");
+		this.debug.classList.remove("mv-error");
 	}
 });
 
 Mavo.hooks.add("expression-eval-error", function(env) {
 	if (this.debug) {
 		this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
-		this.debug.classList.add("error");
+		this.debug.classList.add("mv-error");
 	}
 });
 
@@ -288,7 +288,7 @@ Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) 
 	}
 
 	var tr = $.create("tr", {
-		className: "debug-" + type.toLowerCase(),
+		className: "mv-debug-" + type.toLowerCase(),
 		contents: tds,
 		inside: this.debug
 	});
@@ -385,13 +385,13 @@ Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 		env.td = env.expr.debug;
 
 		if (env.td) {
-			env.td.classList.remove("error");
+			env.td.classList.remove("mv-error");
 		}
 	}
 });
 
 Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
-	if (env.td && !env.td.classList.contains("error")) {
+	if (env.td && !env.td.classList.contains("mv-error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;
 	}

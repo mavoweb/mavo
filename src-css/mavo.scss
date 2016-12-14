@@ -24,12 +24,12 @@
 	border-radius: 1em;
 	white-space: nowrap;
 
-	.mv-item:hover:not(.has-hovered-item) > &,
-	.mv-item:not(:hover):not(.has-hovered-item) .mv-item:focus > &,
-	.mv-item:not(:hover):not(.has-hovered-item) .mv-item.focus-within:not(:hover) > &,
+	.mv-item:hover:not(.mv-has-hovered-item) > &,
+	.mv-item:not(:hover):not(.mv-has-hovered-item) .mv-item:focus > &,
+	.mv-item:not(:hover):not(.mv-has-hovered-item) .mv-item.mv-focus-within:not(:hover) > &,
 	&:hover,
-	.mv-item:not(:hover):not(.has-hovered-item) > &:focus,
-	.mv-item:not(:hover):not(.has-hovered-item) > &.focus-within {
+	.mv-item:not(:hover):not(.mv-has-hovered-item) > &:focus,
+	.mv-item:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
 		transition: .4s opacity;
 		opacity: 1;
 		pointer-events: auto;
@@ -70,7 +70,7 @@
 		}
 	}
 
-	.delete {
+	.mv-delete {
 		$color: rgb(200,0,0);
 		color: $color;
 
@@ -89,7 +89,7 @@
 		}
 	}
 
-	.add {
+	.mv-add {
 		$color: hsl(80, 80%, 40%);
 
 		color: $color;
@@ -104,8 +104,8 @@
 		}
 	}
 
-	.mv-wrapper:not(.can-delete) & .delete,
-	.mv-wrapper:not(.can-add) & .add {
+	.mv-wrapper:not(.mv-can-delete) & .mv-delete,
+	.mv-wrapper:not(.mv-can-add) & .mv-add {
 		display: none;
 	}
 }
@@ -113,19 +113,19 @@
 .mv-item {
 	position: relative;
 
-	&.delete-hover, // basically &:has(> .delete:hover)
-	&.deleted {
+	&.mv-delete-hover, // basically &:has(> .mv-delete:hover)
+	&.mv-deleted {
 		@include highlight(hsla(0,100%,50%,.2), "!important");
 	}
 
-	&.deleted {
+	&.mv-deleted {
 		display: block;
 
 		button {
 			display: inline-block;
 			margin-left: .4em;
 
-			&.close {
+			&.mv-close {
 				all: unset;
 				float: right;
 				width: 1.1em;
@@ -147,28 +147,28 @@
 		}
 	}
 
-	.mv-wrapper:not([data-mode="edit"]) &.deleted {
+	.mv-wrapper:not([data-mode="edit"]) &.mv-deleted {
 		display: none;
 	}
 }
 
 .mv-wrapper {
-	[property].multiline {
+	[property].mv-multiline {
 		white-space: pre-line;
 	}
 
-	button.add {
+	button.mv-add {
 		display: inline-block;
 		vertical-align: middle;
 	}
 
-	&:not(.can-add) button.add {
+	&:not(.mv-can-add) button.mv-add {
 		display: none;
 	}
 
-	&:not(.can-edit) {
-		.edit,
-		[data-mode="edit"], .add {
+	&:not(.mv-can-edit) {
+		.mv-edit,
+		[data-mode="edit"], .mv-add {
 			display: none;
 		}
 	}
@@ -183,27 +183,27 @@
 		@extend %progress;
 	}
 
-	&.save-hovered [property].unsaved-changes,
-	&.save-hovered [typeof].unsaved-changes,
-	&.revert-hovered [property].unsaved-changes,
-	&.revert-hovered [typeof].unsaved-changes {
+	&.mv-save-hovered [property].mv-unsaved-changes,
+	&.mv-save-hovered [typeof].mv-unsaved-changes,
+	&.mv-revert-hovered [property].mv-unsaved-changes,
+	&.mv-revert-hovered [typeof].mv-unsaved-changes {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
 	&:not([data-mode="edit"]) {
-		.empty,
+		.mv-empty,
 		.mv-item-controls,
-		button.add,
-		&:not(.unsaved-changes) .save,
-		&:not(.unsaved-changes) .revert,
-		&:not(.unsaved-changes) .clear {
+		button.mv-add,
+		&:not(.mv-unsaved-changes) .mv-save,
+		&:not(.mv-unsaved-changes) .mv-revert,
+		&:not(.mv-unsaved-changes) .mv-clear {
 			display: none;
 		}
 	}
 
 	&[data-mode="edit"],
 	[data-mode="edit"] {
-		.empty {
+		.mv-empty {
 			opacity: .5;
 		}
 
@@ -307,8 +307,8 @@ meter, progress {
 		border: 1px solid rgba(0,0,0,.2);
 	}
 
-	.image-popup {
-		.image-preview {
+	.mv-image-popup {
+		.mv-image-preview {
 			position: relative;
 			display: inline-block;
 
@@ -331,12 +331,12 @@ meter, progress {
 			}
 		}
 
-		.upload {
+		.mv-upload {
 			display: block;
 			margin: .8em 0;
 		}
 
-		.tip {
+		.mv-tip {
 			font-size: 70%;
 			color: gray;
 		}

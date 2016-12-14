@@ -291,8 +291,8 @@ var _ = self.Mavo = $.Class({
 			})
 		};
 
-		this.ui.status = $(".status", this.ui.bar) || $.create("span", {
-			className: "status",
+		this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
+			className: "mv-status",
 			inside: this.ui.bar
 		});
 
@@ -309,14 +309,14 @@ var _ = self.Mavo = $.Class({
 					tag: "a",
 					href: this.loginHash,
 					textContent: "Login",
-					className: "login button",
+					className: "mv-login mv-button",
 					events: {
 						click: evt => {
 							evt.preventDefault();
 							this.storage.login();
 						}
 					},
-					after: $(".status", this.ui.bar)
+					after: $(".mv-status", this.ui.bar)
 				});
 
 				// We also support a hash to trigger login, in case the user doesn't want visible login UI
@@ -337,7 +337,7 @@ var _ = self.Mavo = $.Class({
 			// Update login status
 			this.wrapper.addEventListener("mavo:login.mavo", evt => {
 				if (evt.backend == this.storage) { // ignore logins from source backend
-					var status = $(".status", this.ui.bar);
+					var status = $(".mv-status", this.ui.bar);
 					status.innerHTML = "";
 					status._.contents([
 						"Logged in to " + evt.backend.id + " as ",
@@ -345,7 +345,7 @@ var _ = self.Mavo = $.Class({
 						{
 							tag: "button",
 							textContent: "Logout",
-							className: "logout",
+							className: "mv-logout",
 							events: {
 								click: e => evt.backend.logout()
 							},
@@ -355,7 +355,7 @@ var _ = self.Mavo = $.Class({
 			});
 
 			this.wrapper.addEventListener("mavo:logout.mavo", evt => {
-				$(".status", this.ui.bar).textContent = "";
+				$(".mv-status", this.ui.bar).textContent = "";
 			});
 		}
 
@@ -372,12 +372,12 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges(false);
 
 		this.permissions.onchange(({action, value}) => {
-			this.wrapper.classList.toggle(`can-${action}`, !!value);
+			this.wrapper.classList.toggle(`mv-can-${action}`, !!value);
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
 			this.ui.edit = $.create("button", {
-				className: "edit",
+				className: "mv-edit",
 				textContent: "Edit",
 				onclick: e => this.editing? this.done() : this.edit(),
 				inside: this.ui.bar
@@ -397,32 +397,32 @@ var _ = self.Mavo = $.Class({
 		if (this.needsEdit) {
 			this.permissions.can("save", () => {
 				this.ui.save = $.create("button", {
-					className: "save",
+					className: "mv-save",
 					textContent: "Save",
 					events: {
 						click: e => this.save(),
 						"mouseenter focus": e => {
-							this.wrapper.classList.add("save-hovered");
+							this.wrapper.classList.add("mv-save-hovered");
 							this.setUnsavedChanges();
 						},
-						"mouseleave blur": e => this.wrapper.classList.remove("save-hovered")
+						"mouseleave blur": e => this.wrapper.classList.remove("mv-save-hovered")
 					},
 					inside: this.ui.bar
 				});
 
 				this.ui.revert = $.create("button", {
-					className: "revert",
+					className: "mv-revert",
 					textContent: "Revert",
 					disabled: true,
 					events: {
 						click: e => this.revert(),
 						"mouseenter focus": e => {
 							if (!this.unsavedChanges) {
-								this.wrapper.classList.add("revert-hovered");
+								this.wrapper.classList.add("mv-revert-hovered");
 								this.setUnsavedChanges();
 							}
 						},
-						"mouseleave blur": e => this.wrapper.classList.remove("revert-hovered")
+						"mouseleave blur": e => this.wrapper.classList.remove("mv-revert-hovered")
 					},
 					inside: this.ui.bar
 				});
@@ -434,7 +434,7 @@ var _ = self.Mavo = $.Class({
 
 		this.permissions.can("delete", () => {
 			this.ui.clear = $.create("button", {
-				className: "clear",
+				className: "mv-clear",
 				textContent: "Clear",
 				onclick: e => this.clear()
 			});
@@ -534,18 +534,18 @@ var _ = self.Mavo = $.Class({
 		this.root.edit();
 
 		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
-			if (evt.target.matches(".mv-item-controls .delete")) {
+			if (evt.target.matches(".mv-item-controls .mv-delete")) {
 				var item = evt.target.closest(_.selectors.item);
-				item.classList.toggle("delete-hover", evt.type == "mouseenter");
+				item.classList.toggle("mv-delete-hover", evt.type == "mouseenter");
 			}
 
 			if (evt.target.matches(_.selectors.item)) {
-				evt.target.classList.remove("has-hovered-item");
+				evt.target.classList.remove("mv-has-hovered-item");
 
 				var parent = evt.target.parentNode.closest(_.selectors.item);
 
 				if (parent) {
-					parent.classList.toggle("has-hovered-item", evt.type == "mouseenter");
+					parent.classList.toggle("mv-has-hovered-item", evt.type == "mouseenter");
 				}
 			}
 		}, true);
@@ -681,7 +681,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		unsavedChanges: function(value) {
-			this.wrapper.classList.toggle("unsaved-changes", value);
+			this.wrapper.classList.toggle("mv-unsaved-changes", value);
 
 			if (this.ui && this.ui.save) {
 				this.ui.save.disabled = !value;
@@ -716,8 +716,8 @@ let s = _.selectors = {
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[multiple], [data-multiple], .multiple",
-	required: "[required], [data-required], .required",
+	multiple: "[multiple], [data-multiple], .mv-multiple",
+	required: "[required], [data-required], .mv-required",
 	formControl: "input, select, option, textarea",
 	item: ".mv-item",
 	ui: ".mv-ui",
@@ -746,7 +746,7 @@ let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2))
 $.extend(_.selectors, {
 	primitive: andNot(s.property, s.group),
 	rootGroup: andNot(s.group, s.property),
-	output: or(s.specificProperty("output"), ".output, .value"),
+	output: or(s.specificProperty("output"), ".mv-output, .mv-value"),
 	autoMultiple: and("li, tr, option", ":only-of-type")
 });
 
@@ -1583,7 +1583,7 @@ var _ = Mavo.Unit = $.Class({
 		},
 
 		deleted: function(value) {
-			this.element.classList.toggle("deleted", value);
+			this.element.classList.toggle("mv-deleted", value);
 
 			if (value) {
 				// Soft delete, store element contents in a fragment
@@ -1596,7 +1596,7 @@ var _ = Mavo.Unit = $.Class({
 				$.contents(this.element, [
 					{
 						tag: "button",
-						className: "close mv-ui",
+						className: "mv-close mv-ui",
 						textContent: "×",
 						events: {
 							"click": function(evt) {
@@ -1607,7 +1607,7 @@ var _ = Mavo.Unit = $.Class({
 					"Deleted " + this.name,
 					{
 						tag: "button",
-						className: "undo mv-ui",
+						className: "mv-undo mv-ui",
 						textContent: "Undo",
 						events: {
 							"click": evt => this.deleted = false
@@ -1615,7 +1615,7 @@ var _ = Mavo.Unit = $.Class({
 					}
 				]);
 
-				this.element.classList.remove("delete-hover");
+				this.element.classList.remove("mv-delete-hover");
 			}
 			else if (this.deleted) {
 				// Undelete
@@ -1640,7 +1640,7 @@ var _ = Mavo.Unit = $.Class({
 				value = false;
 			}
 
-			this.element.classList.toggle("unsaved-changes", value);
+			this.element.classList.toggle("mv-unsaved-changes", value);
 
 			return value;
 		}
@@ -3387,7 +3387,7 @@ var _ = Mavo.Primitive = $.Class({
 			!this.constant && // and editable
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
-			this.element.classList.toggle("empty", hide);
+			this.element.classList.toggle("mv-empty", hide);
 		}
 	},
 
@@ -3992,14 +3992,14 @@ var _ = Mavo.Collection = $.Class({
 					{
 						tag: "button",
 						title: "Delete this " + this.name,
-						className: "delete",
+						className: "mv-delete",
 						events: {
 							"click": evt => this.delete(item)
 						}
 					}, {
 						tag: "button",
 						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-						className: "add",
+						className: "mv-add",
 						events: {
 							"click": evt => this.add(null, this.children.indexOf(item)).edit()
 						}
@@ -4284,7 +4284,7 @@ var _ = Mavo.Collection = $.Class({
 
 		addButton: function() {
 			// Find add button if provided, or generate one
-			var selector = `button.add-${this.property}`;
+			var selector = `button.mv-add-${this.property}`;
 			var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
 
 			if (group) {
@@ -4295,7 +4295,7 @@ var _ = Mavo.Collection = $.Class({
 
 			if (!button) {
 				button = $.create("button", {
-					className: "add",
+					className: "mv-add",
 					textContent: "Add " + this.name
 				});
 			};
@@ -4303,7 +4303,7 @@ var _ = Mavo.Collection = $.Class({
 			button.classList.add("mv-ui", "mv-add");
 
 			if (this.property) {
-				button.classList.add(`add-${this.property}`);
+				button.classList.add(`mv-add-${this.property}`);
 			}
 
 			button.addEventListener("click", evt => {
@@ -4856,10 +4856,10 @@ Stretchy.selectors.filter += selector;
 // Add element to show saved data
 Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
-		this.wrapper.classList.add("debug-saving");
+		this.wrapper.classList.add("mv-debug-saving");
 	}
 
-	if (this.store && this.wrapper.classList.contains("debug-saving")) {
+	if (this.store && this.wrapper.classList.contains("mv-debug-saving")) {
 		var element;
 
 		var details = $.create("details", {
@@ -4880,7 +4880,7 @@ Mavo.hooks.add("init-tree-after", function() {
 });
 
 Mavo.hooks.add("render-start", function({data}) {
-	if (this.backend && this.wrapper.classList.contains("debug-saving")) {
+	if (this.backend && this.wrapper.classList.contains("mv-debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
@@ -4941,14 +4941,14 @@ Mavo.hooks.add("expressions-init-start", function() {
 
 Mavo.hooks.add("expression-eval-beforeeval", function() {
 	if (this.debug) {
-		this.debug.classList.remove("error");
+		this.debug.classList.remove("mv-error");
 	}
 });
 
 Mavo.hooks.add("expression-eval-error", function(env) {
 	if (this.debug) {
 		this.debug.innerHTML = _.friendlyError(env.exception, env.expression);
-		this.debug.classList.add("error");
+		this.debug.classList.add("mv-error");
 	}
 });
 
@@ -4995,7 +4995,7 @@ Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) 
 	}
 
 	var tr = $.create("tr", {
-		className: "debug-" + type.toLowerCase(),
+		className: "mv-debug-" + type.toLowerCase(),
 		contents: tds,
 		inside: this.debug
 	});
@@ -5092,13 +5092,13 @@ Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 		env.td = env.expr.debug;
 
 		if (env.td) {
-			env.td.classList.remove("error");
+			env.td.classList.remove("mv-error");
 		}
 	}
 });
 
 Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
-	if (env.td && !env.td.classList.contains("error")) {
+	if (env.td && !env.td.classList.contains("mv-error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;
 	}
