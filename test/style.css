@@ -1,6 +1,18 @@
 :root {
   --ciel: #cceeff; }
 
+.pass {
+  --color: #ceec93;
+  --dark-color: #84b620; }
+
+.fail {
+  --color: #f7d4d4;
+  --dark-color: #d92626; }
+
+.error {
+  --color: #e87d7d;
+  --dark-color: #ad1f1f; }
+
 body {
   max-width: 50em;
   margin: auto; }
@@ -57,7 +69,7 @@ dl.tests {
     mix-blend-mode: multiply;
     font: italic 70% sans-serif; }
   dl.tests .pass, dl.tests .pass + dd {
-    background: #c4e87d; }
+    background: #ceec93; }
   dl.tests .pass + dd {
     width: 60%; }
   dl.tests .fail, dl.tests .fail + dd, dl.tests .fail + dd + dd {
@@ -73,5 +85,45 @@ dl.tests {
     width: 40%; }
   dl.tests dd {
     width: 30%; }
+
+table {
+  width: 100%;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-flow: column;
+  flex-flow: column; }
+
+tr {
+  display: -ms-flexbox;
+  display: flex;
+  border: 1px solid rgba(0, 0, 0, 0.1); }
+
+td {
+  -ms-flex: 1;
+  flex: 1;
+  padding: .4em; }
+
+td:not(:last-child) {
+  border-right: 1px solid rgba(0, 0, 0, 0.1); }
+
+table.reftest tr {
+  margin: .4em 0;
+  background: var(--color); }
+
+table.reftest tr[title] {
+  position: relative; }
+  table.reftest tr[title] td {
+    padding-top: 1.5em; }
+  table.reftest tr[title]::before {
+    content: attr(title);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: .4em;
+    background: linear-gradient(to right, var(--dark-color), transparent);
+    color: white;
+    font: bold 75%/1 sans-serif;
+    text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
 
 /*# sourceMappingURL=style.css.map */

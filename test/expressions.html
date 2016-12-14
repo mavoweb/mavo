@@ -36,9 +36,7 @@
 <section data-mavo="basicexpr">
 	<h2>Basic</h2>
 
-	<p>First column must be the same as the second.</p>
-
-	<table>
+	<table class="reftest">
 		<tr>
 			<td property="prop1">[40 + 2]</td>
 			<td>42</td>
@@ -70,9 +68,7 @@
 <section data-store="#countries">
 	<h2>With render (country data)</h2>
 
-	<p>First column must be the same as the second.</p>
-
-	<table>
+	<table class="reftest">
 		<tr>
 			<td>[count(country)]</td>
 			<td>3</td>
@@ -111,9 +107,8 @@
 
 <section class="mavo">
 	<h2>Without render</h2>
-	<p>First column must be the same as the second.</p>
 
-	<table>
+	<table class="reftest">
 		<tr>
 			<td>
 				<ul>
@@ -143,39 +138,81 @@
 <section class="mavo mv-keep-unhandled" data-source="#countries">
 	<h1>Broad references</h1>
 
-	<select>
-		<option value="[code]" property="country" data-multiple typeof>[name]</option>
-	</select>
+	<table class="reftest">
+		<tr>
+			<td>
+				<select size="3">
+					<option value="[code]" property="country" data-multiple typeof>[name]</option>
+				</select>
+			</td>
+			<td>
+				<select size="3">
+					<option value="">Online</option>
+					<option value="us">United States</option>
+					<option value="gb">United Kingdom</option>
+				</select>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section class="mavo" data-source="#countries">
+<style>
+	#customSyntax .reftest td:empty::before {
+		/* If this goes inside the Mavo it will be parsed as an expression and
+		 * we cannot use data-expressions="none" to escape because that's
+		 * exactly what we're testing here!
+		 */
+		content: "[1 + 2]";
+	}
+</style>
+
+<section class="mavo" id="customSyntax" data-source="#countries">
 	<h1>Custom expression syntax</h1>
 
-	<p>All of the following should be green. There should be no red.</p>
-
-	<ul>
-		<li style="background: hsl([40 + 40], 100%, 50%)">Normal
-			<div style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with the same syntax</div>
-			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)" data-expressions="[[ ]]">Inner with different syntax</div>
-		</li>
-		<li data-expressions="{{ }}" style="background: hsl({{40 + 40}}, 100%, 50%)">Double brace</li>
-		<li data-expressions="[[ ]]" style="background: hsl([[40 + 40]], 100%, 50%)">Double bracket
-			<div style="background: red; background: hsl([[40 + 40]], 100%, 45%)">Inner with the same syntax</div>
-			<div data-expressions="[ ]" style="background: red; background: hsl([40 + 40], 100%, 45%)">Inner with different syntax</div>
-		</li>
-		<li data-expressions="none" style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Escape expressions (data-expressions="none")</li>
-		<li data-expressions=" " style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">No delimiter (data-expressions=" "), should escape
-			<div style="background: yellowgreen; background: hsl([40 - 40], 100%, 50%)">Inner with the same syntax</div>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td data-expressions="[[ ]]">[[1 + 2]]</td>
+			<td>3</td>
+		</tr>
+		<tr>
+			<td data-expressions="{{ }}">{{1 + 2}}</td>
+			<td>3</td>
+		</tr>
+		<tr>
+			<td data-expressions="{{ }}">[1 + 2]</td>
+			<td></td>
+		</tr>
+		<tr title="Inner with different syntax">
+			<td data-expressions="{{ }}"><span data-expressions="( )">(1 + 2)</td>
+			<td>3</td>
+		</tr>
+		<tr title="Inner with different syntax">
+			<td data-expressions="{{ }}"><span data-expressions="( )">{{1 + 2}}</td>
+			<td>{{1 + 2}}</td>
+		</tr>
+		<tr title="Inner with the same syntax">
+			<td data-expressions="{{ }}"><span data-expressions="{{ }}">{{1 + 2}}</td>
+			<td>3</td>
+		</tr>
+		<tr title="Escape expressions">
+			<td data-expressions="none">[1 + 2]</td>
+			<td></td>
+		</tr>
+		<tr title="Invalid delimiter (no space)">
+			<td data-expressions="[]">[1 + 2]</td>
+			<td></td>
+		</tr>
+		<tr title="Invalid delimiter (only space)">
+			<td data-expressions=" ">[1 + 2]</td>
+			<td></td>
+		</tr>
+	</table>
 </section>
 
 <section class="mavo">
 	<h1>data-content</h1>
 
-	<p>First column must be the same as the second.</p>
-
-	<table>
+	<table class="reftest">
 		<tr>
 			<td><div data-content="39 + 3">Without expression syntax</div></td>
 			<td>42</td>
@@ -191,7 +228,31 @@
 	</table>
 </section>
 
+<section class="mavo mv-debug">
+	<h1>data-if</h1>
+
+	<table class="reftest">
+		<tr>
+			<td>A<span data-if="false">B</span>C</td>
+			<td>AC</td>
+		</tr>
+		<tr>
+			<td>A<span data-if="true">B</span>C</td>
+			<td>ABC</td>
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td></td>
+		</tr>
+	</table>
+</section>
+
 <script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
 
 </body>
 </html>

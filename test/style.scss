@@ -2,6 +2,25 @@
 	--ciel: hsl(200, 100%, 90%);
 }
 
+$pass: hsl(80, 70%, 75%);
+$fail: hsl(0, 70%, 90%);
+$error: hsl(0, 70%, 70%);
+
+.pass {
+	--color: $pass;
+	--dark-color: hsl(80, 70%, 42%);
+}
+
+.fail {
+	--color: $fail;
+	--dark-color: hsl(0, 70%, 50%);
+}
+
+.error {
+	--color: $error;
+	--dark-color: hsl(0, 70%, 40%);
+}
+
 body {
 	max-width: 50em;
 	margin: auto;
@@ -75,7 +94,7 @@ dl.tests {
 
 	.pass {
 		&, & + dd {
-			background: hsl(80, 70%, 70%);
+			background: $pass;
 		}
 
 		& + dd { width: 60%; }
@@ -83,13 +102,13 @@ dl.tests {
 
 	.fail {
 		&, & + dd, & + dd + dd {
-			background: hsl(0, 70%, 90%);
+			background: $fail;
 		}
 	}
 
 	.error {
 		&, & + dd, & + dd + dd {
-			background: hsl(0, 70%, 70%);
+			background: $error;
 		}
 	}
 
@@ -106,5 +125,51 @@ dl.tests {
 
 	dd {
 		width: 30%;
+	}
+}
+
+table {
+	width: 100%;
+	display: flex;
+	flex-flow: column;
+}
+
+tr {
+	display: flex;
+	border: 1px solid hsla(0, 0%, 0%, .1);
+}
+
+td {
+	flex: 1;
+	padding: .4em;
+}
+
+td:not(:last-child) {
+	border-right: 1px solid hsla(0, 0%, 0%, .1);
+}
+
+table.reftest {
+	tr {
+		margin: .4em 0;
+		background: var(--color);
+	}
+
+	tr[title] {
+		position: relative;
+
+		td {
+			padding-top: 1.5em;
+		}
+
+		&::before {
+			content: attr(title);
+			position: absolute;
+			top: 0; left: 0; right: 0;
+			padding: .4em;
+			background: linear-gradient(to right, var(--dark-color), transparent);
+			color: white;
+			font: bold 75%/1 sans-serif;
+			text-shadow: 0 0 1px rgba(0,0,0,.5);
+		}
 	}
 }
