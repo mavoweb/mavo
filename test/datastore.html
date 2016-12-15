@@ -24,7 +24,7 @@
 </section>
 
 <section data-store="local" id="localstoretest">
-	<h2>Local</h2>
+	<h1>Local</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -35,7 +35,7 @@
 </section>
 
 <section data-store="http://mavo.io/demos/talks/countries.json">
-	<h2>Remote</h2>
+	<h1>Remote</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -62,7 +62,7 @@
 	]
 }</script>
 <section data-mavo data-source="#countries">
-	<h2>No store, element source</h2>
+	<h1>No store, element source</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -73,7 +73,7 @@
 </section>
 
 <section data-mavo data-source="http://mavo.io/demos/talks/countries.json">
-	<h2>No store, remote source</h2>
+	<h1>No store, remote source</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -84,7 +84,7 @@
 </section>
 
 <section data-store="local" data-source="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
-	<h2>Local store, remote source</h2>
+	<h1>Local store, remote source</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -95,7 +95,7 @@
 </section>
 
 <section data-mavo="githubtest" data-store="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-	<h2>Github</h2>
+	<h1>Github</h1>
 	<a href="?githubtest_store=local&amp;githubtest_source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
 	<ul>
 		<li property="country" data-multiple>
@@ -106,7 +106,7 @@
 </section>
 
 <section data-store="local" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-	<h2>Local store, Github source</h2>
+	<h1>Local store, Github source</h1>
 
 	<ul>
 		<li property="country" data-multiple>
@@ -117,7 +117,7 @@
 </section>
 
 <section class="mavo" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-	<h2>No store, Github source</h2>
+	<h1>No store, Github source</h1>
 	<p>Should display data but no editing controls</p>
 
 	<ul>
@@ -143,7 +143,7 @@
 	}
 </script>
 <section data-store="local" data-source="#country-data">
-	<h2>Local store, Element source</h2>
+	<h1>Local store, Element source</h1>
 
 	<p>Should display Greece and Poland if no data</p>
 
@@ -158,6 +158,7 @@
 
 
 <script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
 
 </body>
 </html>
