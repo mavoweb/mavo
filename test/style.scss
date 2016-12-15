@@ -154,11 +154,22 @@ table.reftest {
 
 	tr {
 		display: flex;
+	}
+
+	tbody > tr {
 		border: 1px solid hsla(0, 0%, 0%, .1);
 	}
 
-	td {
+	td, th {
 		flex: 1;
+	}
+
+	th {
+		padding: 0;
+		color: gray;
+	}
+
+	td {
 		padding: .4em;
 	}
 

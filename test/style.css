@@ -108,11 +108,16 @@ table.reftest {
   flex-flow: column; }
   table.reftest tr {
     display: -ms-flexbox;
-    display: flex;
+    display: flex; }
+  table.reftest tbody > tr {
     border: 1px solid rgba(0, 0, 0, 0.1); }
-  table.reftest td {
+  table.reftest td, table.reftest th {
     -ms-flex: 1;
-    flex: 1;
+    flex: 1; }
+  table.reftest th {
+    padding: 0;
+    color: gray; }
+  table.reftest td {
     padding: .4em; }
   table.reftest td:not(:last-child) {
     border-right: 1px solid rgba(0, 0, 0, 0.1); }

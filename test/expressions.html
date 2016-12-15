@@ -232,12 +232,12 @@
 	</table>
 </section>
 
-<section class="mavo mv-debug" id="mvIf">
+<section class="mavo" id="mvIf">
 	<h1>data-if</h1>
 
 	<table class="reftest">
 		<tr>
-			<td>A<span data-if="5 < 0">B</span>C</td>
+			<td>A<span data-if="false">B</span>C</td>
 			<td>AC</td>
 		</tr>
 		<tr>
@@ -245,14 +245,38 @@
 			<td>ABC</td>
 		</tr>
 		<tr>
-			<td></td>
-			<td></td>
+			<td>A<span data-if="true">B<span data-if="true">C</span></span>D</td>
+			<td>ABCD</td>
 		</tr>
 		<tr>
-			<td></td>
-			<td></td>
+			<td>A<span data-if="true">B<span data-if="false">C</span></span>D</td>
+			<td>ABD</td>
+		</tr>
+		<tr>
+			<td>A<span data-if="false">B<span data-if="true">C</span></span>D</td>
+			<td>AD</td>
+		</tr>
+		<tr>
+			<td>A<span data-if="false"><span property="prop1">C</span></span>[prop1]</td>
+			<td>A</td>
+		</tr>
+		<tr>
+			<td>A<span data-if="false">B<span data-if="true"><span property="prop2">C</span></span></span>[prop2]</td>
+			<td>A</td>
 		</tr>
 	</table>
+</section>
+
+<section class="mavo" id="ifteraction">
+	<h1>data-if Interactive tests</h1>
+
+	<p>Check the checkbox. The displayed value next to the input should go from "1" to "2 3"</p>
+
+	<input property="prop1" type="checkbox">
+	<span data-if="prop1">
+		<span property="prop2">2</span>
+	</span>
+	[prop2 + 1]
 </section>
 
 <script src="../dist/mavo.js"></script>

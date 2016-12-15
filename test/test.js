@@ -67,6 +67,19 @@ requestAnimationFrame(() => {
 			before: table
 		});
 
+		$.create("thead", {
+			contents: [
+				{
+					tag: "tr",
+					contents: [
+						{ tag: "th", textContent: "Actual" },
+						{ tag: "th", textContent: "Expected" }
+					]
+				}
+			],
+			start: table
+		});
+
 		for (let td of $$("tr td:first-child", table)) {
 			let tr = td.parentNode;
 			let ref = tr.cells[1];
