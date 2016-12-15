@@ -199,6 +199,8 @@ if (self.MutationObserver) {
 
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
+		this.treeBuilt = Mavo.defer();
+		
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
@@ -366,6 +368,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-before", this);
 
 		this.root = Mavo.Node.create(this.element, this);
+		this.treeBuilt.resolve();
 
 		Mavo.hooks.run("init-tree-after", this);
 
@@ -924,6 +927,20 @@ var _ = $.extend(Mavo, {
 			return ret;
 		}
 	}),
+
+	defer: function() {
+		var res, rej;
+
+		var promise = new Promise((resolve, reject) => {
+			res = resolve;
+			rej = reject;
+		});
+
+		promise.resolve = res;
+		promise.reject = rej;
+
+		return promise;
+	}
 });
 
 // Bliss plugins
@@ -1859,7 +1876,7 @@ _.default = new _("[", "]");
 
 var _ = Mavo.Expression.Text = $.Class({
 	constructor: function(o) {
-		this.all = o.all; // the Mavo.Expressions object that this belongs to
+		this.group = o.group;
 		this.node = o.node;
 		this.path = o.path;
 		this.syntax = o.syntax;
@@ -1903,6 +1920,8 @@ var _ = Mavo.Expression.Text = $.Class({
 		this.data = data;
 
 		var ret = {};
+
+		this.oldValue = this.value;
 
 		ret.value = this.value = this.template.map(expr => {
 			if (expr instanceof Mavo.Expression) {
@@ -1970,10 +1989,6 @@ var _ = Mavo.Expression.Text = $.Class({
 		Mavo.hooks.run("expressiontext-update-end", this);
 	},
 
-	proxy: {
-		group: "all"
-	},
-
 	static: {
 		elements: new WeakMap(),
 
@@ -2025,7 +2040,7 @@ var _ = Mavo.Expressions = $.Class({
 						path: et.path,
 						syntax: et.syntax,
 						attribute: et.attribute,
-						all: this,
+						group: this.group,
 						template: et
 					}));
 				}
@@ -2073,14 +2088,20 @@ var _ = Mavo.Expressions = $.Class({
 				node, syntax,
 				path: (path || "").slice(1).split("/").map(i => +i),
 				attribute: attribute && attribute.name,
-				all: this
+				group: this.group
 			}));
 		}
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
 	traverse: function(node, path = "", syntax) {
-		if (node.nodeType === 3 || node.nodeType === 8) { // Text node
+		if (node.nodeType === 8) {
+			// We don't want expressions to be picked up from comments!
+			// Commenting stuff out is a common debugging technique
+			return;
+		}
+
+		if (node.nodeType === 3) { // Text node
 			// Leaf node, extract references from content
 			this.extract(node, null, path, syntax);
 		}
@@ -2099,7 +2120,7 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	static: {
-		directives: ["data-if"]
+		directives: []
 	}
 });
 
@@ -2243,8 +2264,30 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 		this.template = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-		$.lazy(this, "childProperties", () => {
-			return $$(Mavo.selectors.property, this.element).map(el => Mavo.Unit.get(el));
+		$.lazy(this, "properties", () => {
+			var properties = $$(Mavo.selectors.property, this.element).map(el => {
+				return {
+					property: Mavo.Unit.get(el),
+					isChild: el.closest("[data-if]") == this.element
+				};
+			});
+
+			if (properties.length) {
+				// When the element is detached, datachange events from properties
+				// do not propagate up to the group so expressions do not recalculate.
+				// We must do this manually.
+				this.element.addEventListener("mavo:datachange", evt => {
+					// Cannot redispatch synchronously
+					requestAnimationFrame(() => {
+						if (!this.element.parentNode) { // still out of the DOM?
+							this.group.element.dispatchEvent(evt);
+						}
+					});
+
+				});
+			}
+
+			return properties;
 		});
 	}
 });
@@ -2253,21 +2296,22 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 	if (this.attribute == "data-if") {
 		var value = this.value[0];
 
-		if (this.group.mavo.root) {
-			if ( !value && !Object.keys(this.group.children).length) {
-				console.trace();
-			}
-			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-			if (value && this.comment && this.comment.parentNode) {
-				// Is removed from the DOM and needs to get back
-				this.comment.parentNode.replaceChild(this.element, this.comment);
+		// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+		this.group.mavo.treeBuilt.then(() => {
+			if (value) {
+				if (this.comment && this.comment.parentNode) {
+					// Is removed from the DOM and needs to get back
+					this.comment.parentNode.replaceChild(this.element, this.comment);
 
-				// Unmark any properties inside as hidden
-				for (let property of this.childProperties) {
-					property.hidden = false;
+					// Unmark any properties inside as hidden
+					for (let p of this.properties) {
+						if (p.isChild) {
+							p.property.hidden = false;
+						}
+					}
 				}
 			}
-			else if (!value && this.element.parentNode) {
+			else if (this.element.parentNode) {
 				// Is in the DOM and needs to be removed
 				if (!this.comment) {
 					this.comment = document.createComment("mv-if");
@@ -2276,12 +2320,11 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				this.element.parentNode.replaceChild(this.comment, this.element);
 
 				// Mark any properties inside as hidden
-				for (let property of this.childProperties) {
-					property.hidden = true;
+				for (let p of this.properties) {
+					p.property.hidden = true;
 				}
 			}
-		}
-
+		});
 	}
 });
 
@@ -3362,19 +3405,21 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => {
-					$.fire(this.element, "mavo:datachange", {
-						property: this.property,
-						value: value,
-						mavo: this.mavo,
-						node: this,
-						action: "propertychange"
-					});
-				});
+				requestAnimationFrame(() => this.dataChanged(value));
 			}
 		});
 
 		return value;
+	},
+
+	dataChanged: function(value) {
+		$.fire(this.element, "mavo:datachange", {
+			property: this.property,
+			value: value,
+			mavo: this.mavo,
+			node: this,
+			action: "propertychange"
+		});
 	},
 
 	live: {
@@ -3388,6 +3433,13 @@ var _ = Mavo.Primitive = $.Class({
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 			this.element.classList.toggle("mv-empty", hide);
+		},
+
+		hidden: function(value) {
+			if (this._hidden !== value) {
+				this._hidden = value;
+				this.dataChanged();
+			}
 		}
 	},
 

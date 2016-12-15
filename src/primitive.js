@@ -486,19 +486,21 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => {
-					$.fire(this.element, "mavo:datachange", {
-						property: this.property,
-						value: value,
-						mavo: this.mavo,
-						node: this,
-						action: "propertychange"
-					});
-				});
+				requestAnimationFrame(() => this.dataChanged(value));
 			}
 		});
 
 		return value;
+	},
+
+	dataChanged: function(value) {
+		$.fire(this.element, "mavo:datachange", {
+			property: this.property,
+			value: value,
+			mavo: this.mavo,
+			node: this,
+			action: "propertychange"
+		});
 	},
 
 	live: {
@@ -512,6 +514,13 @@ var _ = Mavo.Primitive = $.Class({
 			!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 			this.element.classList.toggle("mv-empty", hide);
+		},
+
+		hidden: function(value) {
+			if (this._hidden !== value) {
+				this._hidden = value;
+				this.dataChanged();
+			}
 		}
 	},
 

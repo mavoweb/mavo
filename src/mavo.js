@@ -4,6 +4,8 @@
 
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
+		this.treeBuilt = Mavo.defer();
+		
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
@@ -171,6 +173,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-before", this);
 
 		this.root = Mavo.Node.create(this.element, this);
+		this.treeBuilt.resolve();
 
 		Mavo.hooks.run("init-tree-after", this);
 
