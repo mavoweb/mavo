@@ -232,12 +232,12 @@ var _ = Mavo.Expression.Text = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	update: function(data) {
+	update: function(data = this.data) {
 		this.data = data;
 
 		var ret = {};
 
-		this.oldValue = this.value;
+		Mavo.hooks.run("expressiontext-update-start", this);
 
 		ret.value = this.value = this.template.map(expr => {
 			if (expr instanceof Mavo.Expression) {
@@ -574,57 +574,46 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 Mavo.Expressions.directives.push("data-if");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
-	if (this.attribute == "data-if") {
-		this.expression = this.element.getAttribute("data-if");
+	if (this.attribute != "data-if") {
+		return;
+	}
 
-		this.template = [new Mavo.Expression(this.expression)];
-		this.expression = this.syntax.start + this.expression + this.syntax.end;
+	this.expression = this.element.getAttribute("data-if");
+	this.template = [new Mavo.Expression(this.expression)];
+	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-		$.lazy(this, "properties", () => {
-			var properties = $$(Mavo.selectors.property, this.element).map(el => {
-				return {
-					property: Mavo.Unit.get(el),
-					isChild: el.closest("[data-if]") == this.element
-				};
-			});
+	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
 
-			if (properties.length) {
-				// When the element is detached, datachange events from properties
-				// do not propagate up to the group so expressions do not recalculate.
-				// We must do this manually.
-				this.element.addEventListener("mavo:datachange", evt => {
-					// Cannot redispatch synchronously
-					requestAnimationFrame(() => {
-						if (!this.element.parentNode) { // still out of the DOM?
-							this.group.element.dispatchEvent(evt);
-						}
-					});
-
-				});
-			}
-
-			return properties;
-		});
+	if (this.parentIf) {
+		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 	}
 });
 
 Mavo.hooks.add("expressiontext-update-end", function() {
-	if (this.attribute == "data-if") {
-		var value = this.value[0];
+	if (this.attribute != "data-if") {
+		return;
+	}
 
-		// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-		this.group.mavo.treeBuilt.then(() => {
+	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+	this.group.mavo.treeBuilt.then(() => {
+		var value = this.value[0];
+		var oldValue = this.oldValue && this.oldValue[0];
+
+		if (this.parentIf) {
+			var parentValue = this.parentIf.value[0];
+			this.value[0] = value = value && parentValue;
+		}
+
+		if (value === oldValue) {
+			return;
+		}
+
+		if (parentValue !== false) {
+			// If parent if was false, it wouldn't matter whether this is in the DOM or not
 			if (value) {
 				if (this.comment && this.comment.parentNode) {
 					// Is removed from the DOM and needs to get back
 					this.comment.parentNode.replaceChild(this.element, this.comment);
-
-					// Unmark any properties inside as hidden
-					for (let p of this.properties) {
-						if (p.isChild) {
-							p.property.hidden = false;
-						}
-					}
 				}
 			}
 			else if (this.element.parentNode) {
@@ -634,16 +623,60 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				}
 
 				this.element.parentNode.replaceChild(this.comment, this.element);
-
-				// Mark any properties inside as hidden
-				for (let p of this.properties) {
-					p.property.hidden = true;
-				}
 			}
-		});
-	}
+		}
+
+		// Mark any properties inside as hidden or not
+		if (this.childProperties) {
+			for (let property of this.childProperties) {
+				property.hidden = !value;
+			}
+		}
+
+		if (this.childIfs) {
+			for (let childIf of this.childIfs) {
+				childIf.update();
+			}
+		}
+
+		this.oldValue = this.value;
+	});
 });
 
 Mavo.hooks.add("unit-isdatanull", function(env) {
 	env.result = env.result || (this.hidden && env.options.store == "*");
+});
+
+$.live(Mavo.Primitive.prototype, "hidden", function(value) {
+	if (this._hidden !== value) {
+		this._hidden = value;
+		this.dataChanged();
+	}
+});
+
+$.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
+	if (this.attribute != "data-if") {
+		return;
+	}
+
+	var properties = $$(Mavo.selectors.property, this.element)
+					.filter(el => el.closest("[data-if]") == this.element)
+					.map(el => Mavo.Unit.get(el));
+
+	if (properties.length) {
+		// When the element is detached, datachange events from properties
+		// do not propagate up to the group so expressions do not recalculate.
+		// We must do this manually.
+		this.element.addEventListener("mavo:datachange", evt => {
+			// Cannot redispatch synchronously
+			requestAnimationFrame(() => {
+				if (!this.element.parentNode) { // still out of the DOM?
+					this.group.element.dispatchEvent(evt);
+				}
+			});
+
+		});
+	}
+
+	return properties;
 });

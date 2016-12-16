@@ -2147,14 +2147,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 			},
 
-			update: function update(data) {
+			update: function update() {
 				var _this = this;
+
+				var data = arguments.length <= 0 || arguments[0] === undefined ? this.data : arguments[0];
 
 				this.data = data;
 
 				var ret = {};
 
-				this.oldValue = this.value;
+				Mavo.hooks.run("expressiontext-update-start", this);
 
 				ret.value = this.value = this.template.map(function (expr) {
 					if (expr instanceof Mavo.Expression) {
@@ -2572,123 +2574,158 @@ Mavo.hooks.add("expressiontext-init-start", function () {
 Mavo.Expressions.directives.push("data-if");
 
 Mavo.hooks.add("expressiontext-init-start", function () {
-	var _this6 = this;
+	if (this.attribute != "data-if") {
+		return;
+	}
 
-	if (this.attribute == "data-if") {
-		this.expression = this.element.getAttribute("data-if");
+	this.expression = this.element.getAttribute("data-if");
+	this.template = [new Mavo.Expression(this.expression)];
+	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-		this.template = [new Mavo.Expression(this.expression)];
-		this.expression = this.syntax.start + this.expression + this.syntax.end;
+	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
 
-		$.lazy(this, "properties", function () {
-			var properties = $$(Mavo.selectors.property, _this6.element).map(function (el) {
-				return {
-					property: Mavo.Unit.get(el),
-					isChild: el.closest("[data-if]") == _this6.element
-				};
-			});
-
-			if (properties.length) {
-				// When the element is detached, datachange events from properties
-				// do not propagate up to the group so expressions do not recalculate.
-				// We must do this manually.
-				_this6.element.addEventListener("mavo:datachange", function (evt) {
-					// Cannot redispatch synchronously
-					requestAnimationFrame(function () {
-						if (!_this6.element.parentNode) {
-							// still out of the DOM?
-							_this6.group.element.dispatchEvent(evt);
-						}
-					});
-				});
-			}
-
-			return properties;
-		});
+	if (this.parentIf) {
+		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 	}
 });
 
 Mavo.hooks.add("expressiontext-update-end", function () {
-	var _this7 = this;
+	var _this6 = this;
 
-	if (this.attribute == "data-if") {
-		var value = this.value[0];
+	if (this.attribute != "data-if") {
+		return;
+	}
 
-		// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-		this.group.mavo.treeBuilt.then(function () {
+	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+	this.group.mavo.treeBuilt.then(function () {
+		var value = _this6.value[0];
+		var oldValue = _this6.oldValue && _this6.oldValue[0];
+
+		if (_this6.parentIf) {
+			var parentValue = _this6.parentIf.value[0];
+			_this6.value[0] = value = value && parentValue;
+		}
+
+		if (value === oldValue) {
+			return;
+		}
+
+		if (parentValue !== false) {
+			// If parent if was false, it wouldn't matter whether this is in the DOM or not
 			if (value) {
-				if (_this7.comment && _this7.comment.parentNode) {
+				if (_this6.comment && _this6.comment.parentNode) {
 					// Is removed from the DOM and needs to get back
-					_this7.comment.parentNode.replaceChild(_this7.element, _this7.comment);
-
-					// Unmark any properties inside as hidden
-					var _iteratorNormalCompletion4 = true;
-					var _didIteratorError4 = false;
-					var _iteratorError4 = undefined;
-
-					try {
-						for (var _iterator4 = _this7.properties[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-							var p = _step4.value;
-
-							if (p.isChild) {
-								p.property.hidden = false;
-							}
-						}
-					} catch (err) {
-						_didIteratorError4 = true;
-						_iteratorError4 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion4 && _iterator4.return) {
-								_iterator4.return();
-							}
-						} finally {
-							if (_didIteratorError4) {
-								throw _iteratorError4;
-							}
-						}
-					}
+					_this6.comment.parentNode.replaceChild(_this6.element, _this6.comment);
 				}
-			} else if (_this7.element.parentNode) {
+			} else if (_this6.element.parentNode) {
 				// Is in the DOM and needs to be removed
-				if (!_this7.comment) {
-					_this7.comment = document.createComment("mv-if");
+				if (!_this6.comment) {
+					_this6.comment = document.createComment("mv-if");
 				}
 
-				_this7.element.parentNode.replaceChild(_this7.comment, _this7.element);
+				_this6.element.parentNode.replaceChild(_this6.comment, _this6.element);
+			}
+		}
 
-				// Mark any properties inside as hidden
-				var _iteratorNormalCompletion5 = true;
-				var _didIteratorError5 = false;
-				var _iteratorError5 = undefined;
+		// Mark any properties inside as hidden or not
+		if (_this6.childProperties) {
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
 
+			try {
+				for (var _iterator4 = _this6.childProperties[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var property = _step4.value;
+
+					property.hidden = !value;
+				}
+			} catch (err) {
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
+			} finally {
 				try {
-					for (var _iterator5 = _this7.properties[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-						var _p = _step5.value;
-
-						_p.property.hidden = true;
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
 					}
-				} catch (err) {
-					_didIteratorError5 = true;
-					_iteratorError5 = err;
 				} finally {
-					try {
-						if (!_iteratorNormalCompletion5 && _iterator5.return) {
-							_iterator5.return();
-						}
-					} finally {
-						if (_didIteratorError5) {
-							throw _iteratorError5;
-						}
+					if (_didIteratorError4) {
+						throw _iteratorError4;
 					}
 				}
 			}
-		});
-	}
+		}
+
+		if (_this6.childIfs) {
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
+
+			try {
+				for (var _iterator5 = _this6.childIfs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var childIf = _step5.value;
+
+					childIf.update();
+				}
+			} catch (err) {
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
+					}
+				} finally {
+					if (_didIteratorError5) {
+						throw _iteratorError5;
+					}
+				}
+			}
+		}
+
+		_this6.oldValue = _this6.value;
+	});
 });
 
 Mavo.hooks.add("unit-isdatanull", function (env) {
 	env.result = env.result || this.hidden && env.options.store == "*";
+});
+
+$.live(Mavo.Primitive.prototype, "hidden", function (value) {
+	if (this._hidden !== value) {
+		this._hidden = value;
+		this.dataChanged();
+	}
+});
+
+$.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
+	var _this7 = this;
+
+	if (this.attribute != "data-if") {
+		return;
+	}
+
+	var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
+		return el.closest("[data-if]") == _this7.element;
+	}).map(function (el) {
+		return Mavo.Unit.get(el);
+	});
+
+	if (properties.length) {
+		// When the element is detached, datachange events from properties
+		// do not propagate up to the group so expressions do not recalculate.
+		// We must do this manually.
+		this.element.addEventListener("mavo:datachange", function (evt) {
+			// Cannot redispatch synchronously
+			requestAnimationFrame(function () {
+				if (!_this7.element.parentNode) {
+					// still out of the DOM?
+					_this7.group.element.dispatchEvent(evt);
+				}
+			});
+		});
+	}
+
+	return properties;
 });
 "use strict";
 
@@ -3953,13 +3990,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 				this.element.classList.toggle("mv-empty", hide);
-			},
-
-			hidden: function hidden(value) {
-				if (this._hidden !== value) {
-					this._hidden = value;
-					this.dataChanged();
-				}
 			}
 		},
 

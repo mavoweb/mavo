@@ -270,13 +270,28 @@
 <section class="mavo" id="ifteraction">
 	<h1>data-if Interactive tests</h1>
 
-	<p>Check the checkbox. The displayed value next to the input should go from "1" to "2 3"</p>
+	<p>Check the checkbox. The displayed value next to it should go from "1 1 1" to "2 4 6 3 5 7"</p>
 
-	<input property="prop1" type="checkbox">
-	<span data-if="prop1">
-		<span property="prop2">2</span>
-	</span>
-	[prop2 + 1]
+	<table class="reftest">
+		<tr>
+			<td>
+				<input property="test" type="checkbox">
+				<span data-if="test" class="if1">
+					<span property="nested1">2</span>
+
+					<span data-if="true" class="if2">
+						<span property="nested2">4</span>
+
+						<span data-if="true" class="if3">
+							<span property="nested3">6</span>
+						</span>
+					</span>
+				</span>
+				[nested1 + 1] [nested2 + 1] [nested3 + 1]
+			</td>
+			<td>2 4 6 3 5 7</td>
+		</tr>
+	</table>
 </section>
 
 <script src="../dist/mavo.js"></script>

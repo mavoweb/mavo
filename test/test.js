@@ -4,6 +4,19 @@ if (typeof self["test_" + page] == "function") {
 	self["test_" + page]();
 }
 
+self.Test = {
+	pseudo: (element, pseudo) => {
+		var content = getComputedStyle(element, ":" + pseudo).content;
+		return content.replace(/^"|"$/g, "");
+	},
+
+	content: function(td) {
+		var content = Test.pseudo(td, "before") + td.textContent + Test.pseudo(td, "after");
+
+		return content.replace(/\s+/g, " ").trim();
+	}
+};
+
 for (let h1 of $$("body > section > h1")) {
 	let section = h1.parentNode;
 
@@ -54,18 +67,14 @@ hashchanged();
 onhashchange = hashchanged;
 
 requestAnimationFrame(() => {
-	let pseudo = (element, pseudo) => {
-		var content = getComputedStyle(element, ":" + pseudo).content;
-		return content.replace(/^"|"$/g, "");
-	};
-
-	let content = td => pseudo(td, "before") + td.textContent + pseudo(td, "after");
 
 	for (let table of $$("table.reftest")) {
-		$.create("p", {
-			textContent: "First column must be the same as the second.",
-			before: table
-		});
+		if (!$("p", table.parentNode)) {
+			$.create("p", {
+				textContent: "First column must be the same as the second.",
+				before: table
+			});
+		}
 
 		$.create("thead", {
 			contents: [
@@ -85,7 +94,7 @@ requestAnimationFrame(() => {
 			let ref = tr.cells[1];
 
 			let compare = () => {
-				var pass = content(td) == content(ref);
+				var pass = Test.content(td) == Test.content(ref);
 
 				if (pass) {
 					let child = td.firstElementChild;
