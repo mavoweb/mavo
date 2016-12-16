@@ -1890,1346 +1890,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-(function ($, $$) {
-
-	var _ = Mavo.Expression = $.Class({
-		constructor: function constructor(expression) {
-			this.expression = expression;
-		},
-
-		eval: function _eval(data) {
-			this.oldValue = this.value;
-
-			Mavo.hooks.run("expression-eval-beforeeval", this);
-
-			try {
-				if (!this.function) {
-					this.function = _.compile(this.expression);
-				}
-
-				this.value = this.function(data);
-			} catch (exception) {
-				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
-
-				this.value = exception;
-			}
-
-			return this.value;
-		},
-
-		toString: function toString() {
-			return this.expression;
-		},
-
-
-		live: {
-			expression: function expression(value) {
-				var code = value = value.trim();
-
-				this.function = null;
-			}
-		},
-
-		static: {
-			/**
-    * These serializers transform the AST into JS
-    */
-			serializers: {
-				"BinaryExpression": function BinaryExpression(node) {
-					return _.serialize(node.left) + " " + node.operator + " " + _.serialize(node.right);
-				},
-				"UnaryExpression": function UnaryExpression(node) {
-					return "" + node.operator + _.serialize(node.argument);
-				},
-				"CallExpression": function CallExpression(node) {
-					return _.serialize(node.callee) + "(" + node.arguments.map(_.serialize).join(", ") + ")";
-				},
-				"ConditionalExpression": function ConditionalExpression(node) {
-					return _.serialize(node.test) + "? " + _.serialize(node.consequent) + " : " + _.serialize(node.alternate);
-				},
-				"MemberExpression": function MemberExpression(node) {
-					return _.serialize(node.object) + "[" + _.serialize(node.property) + "]";
-				},
-				"ArrayExpression": function ArrayExpression(node) {
-					return "[" + node.elements.map(_.serialize).join(", ") + "]";
-				},
-				"Literal": function Literal(node) {
-					return node.raw;
-				},
-				"Identifier": function Identifier(node) {
-					return node.name;
-				},
-				"ThisExpression": function ThisExpression(node) {
-					return "this";
-				},
-				"Compound": function Compound(node) {
-					return node.body.map(_.serialize).join(" ");
-				}
-			},
-
-			/**
-    * These are run before the serializers and transform the expression to support MavoScript
-    */
-			transformations: {
-				"BinaryExpression": function BinaryExpression(node) {
-					var name = Mavo.Script.getOperatorName(node.operator);
-					var details = Mavo.Script.operators[name];
-
-					// Flatten same operator calls
-					var nodeLeft = node;
-					var args = [];
-
-					do {
-						args.unshift(nodeLeft.right);
-						nodeLeft = nodeLeft.left;
-					} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
-
-					args.unshift(nodeLeft);
-
-					if (args.length > 1) {
-						return name + "(" + args.map(_.serialize).join(", ") + ")";
-					}
-				},
-				"CallExpression": function CallExpression(node) {
-					if (node.callee.type == "Identifier" && node.callee.name == "if") {
-						node.callee.name = "iff";
-					}
-				}
-			},
-
-			serialize: function serialize(node) {
-				if (_.transformations[node.type]) {
-					var ret = _.transformations[node.type](node);
-
-					if (ret !== undefined) {
-						return ret;
-					}
-				}
-
-				return _.serializers[node.type](node);
-			},
-
-			rewrite: function rewrite(code) {
-				try {
-					return _.serialize(_.parse(code));
-				} catch (e) {
-					// Parsing as MavoScript failed, falling back to plain JS
-					return code;
-				}
-			},
-
-			compile: function compile(code) {
-				code = _.rewrite(code);
-
-				return new Function("data", "with(Mavo.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\treturn " + code + ";\n\t\t\t\t\t}");
-			},
-
-			parse: self.jsep
-		}
-	});
-
-	if (self.jsep) {
-		jsep.addBinaryOp("and", 2);
-		jsep.addBinaryOp("or", 2);
-		jsep.addBinaryOp("=", 6);
-		jsep.removeBinaryOp("===");
-	}
-
-	_.serializers.LogicalExpression = _.serializers.BinaryExpression;
-	_.transformations.LogicalExpression = _.transformations.BinaryExpression;
-
-	(function () {
-		var _ = Mavo.Expression.Syntax = $.Class({
-			constructor: function constructor(start, end) {
-				this.start = start;
-				this.end = end;
-				this.regex = RegExp(Mavo.escapeRegExp(start) + "([\\S\\s]+?)" + Mavo.escapeRegExp(end), "gi");
-			},
-
-			test: function test(str) {
-				this.regex.lastIndex = 0;
-
-				return this.regex.test(str);
-			},
-
-			tokenize: function tokenize(str) {
-				var match,
-				    ret = [],
-				    lastIndex = 0;
-
-				this.regex.lastIndex = 0;
-
-				while ((match = this.regex.exec(str)) !== null) {
-					// Literal before the expression
-					if (match.index > lastIndex) {
-						ret.push(str.substring(lastIndex, match.index));
-					}
-
-					lastIndex = this.regex.lastIndex;
-
-					ret.push(new Mavo.Expression(match[1]));
-				}
-
-				// Literal at the end
-				if (lastIndex < str.length) {
-					ret.push(str.substring(lastIndex));
-				}
-
-				return ret;
-			},
-
-			static: {
-				create: function create(element) {
-					if (element) {
-						var syntax = element.getAttribute("data-expressions");
-
-						if (syntax) {
-							syntax = syntax.trim();
-							return (/\s/.test(syntax) ? new (Function.prototype.bind.apply(_, [null].concat(_toConsumableArray(syntax.split(/\s+/)))))() : _.ESCAPE
-							);
-						}
-					}
-				},
-
-				ESCAPE: -1
-			}
-		});
-
-		_.default = new _("[", "]");
-	})();
-
-	(function () {
-
-		var _ = Mavo.Expression.Text = $.Class({
-			constructor: function constructor(o) {
-				this.group = o.group;
-				this.node = o.node;
-				this.path = o.path;
-				this.syntax = o.syntax;
-				this.fallback = o.fallback;
-
-				if (!this.node) {
-					// No node provided, figure it out from path
-					this.node = this.path.reduce(function (node, index) {
-						return node.childNodes[index];
-					}, this.group.element);
-				}
-
-				this.element = this.node;
-				this.attribute = o.attribute || null;
-
-				Mavo.hooks.run("expressiontext-init-start", this);
-
-				if (!this.expression) {
-					// Still unhandled?
-					if (this.node.nodeType === 3) {
-						this.element = this.node.parentNode;
-
-						// If no element siblings make this.node the element, which is more robust
-						// Same if attribute, there are no attributes on a text node!
-						if (!this.node.parentNode.children.length || this.attribute) {
-							this.node = this.element;
-							this.element.normalize();
-						}
-					}
-
-					this.expression = (this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
-
-					this.template = o.template ? o.template.template : this.syntax.tokenize(this.expression);
-				}
-
-				Mavo.hooks.run("expressiontext-init-end", this);
-
-				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
-			},
-
-			update: function update() {
-				var _this = this;
-
-				var data = arguments.length <= 0 || arguments[0] === undefined ? this.data : arguments[0];
-
-				this.data = data;
-
-				var ret = {};
-
-				Mavo.hooks.run("expressiontext-update-start", this);
-
-				ret.value = this.value = this.template.map(function (expr) {
-					if (expr instanceof Mavo.Expression) {
-						var env = { context: _this, expr: expr };
-
-						Mavo.hooks.run("expressiontext-update-beforeeval", env);
-
-						env.value = env.expr.eval(data);
-
-						Mavo.hooks.run("expressiontext-update-aftereval", env);
-
-						if (env.value instanceof Error) {
-							return _this.fallback !== undefined ? _this.fallback : env.expr.expression;
-						}
-						if (env.value === undefined || env.value === null) {
-							// Don’t print things like "undefined" or "null"
-							return "";
-						}
-
-						return env.value;
-					}
-
-					return expr;
-				});
-
-				if (!this.attribute) {
-					// Separate presentational & actual values only apply when content is variable
-					ret.presentational = this.value.map(function (value) {
-						if (Array.isArray(value)) {
-							return value.join(", ");
-						}
-
-						if (typeof value == "number") {
-							return Mavo.Primitive.formatNumber(value);
-						}
-
-						return value;
-					});
-
-					ret.presentational = ret.presentational.length === 1 ? ret.presentational[0] : ret.presentational.join("");
-				}
-
-				ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
-
-				if (this.primitive && this.template.length === 1) {
-					if (typeof ret.value === "number") {
-						this.primitive.datatype = "number";
-					} else if (typeof ret.value === "boolean") {
-						this.primitive.datatype = "boolean";
-					}
-				}
-
-				if (ret.presentational === ret.value) {
-					ret = ret.value;
-				}
-
-				if (this.primitive) {
-					this.primitive.value = ret;
-				} else {
-					Mavo.Primitive.setValue(this.node, ret, { attribute: this.attribute });
-				}
-
-				Mavo.hooks.run("expressiontext-update-end", this);
-			},
-
-			static: {
-				elements: new WeakMap(),
-
-				/**
-     * Search for Mavo.Expression.Text object(s) associated with a given element
-     * and optionally an attribute.
-     *
-     * @return If one argument, array of matching Expression.Text objects.
-     *         If two arguments, the matching Expression.Text object or null
-     */
-				search: function search(element, attribute) {
-					var all = _.elements.get(element) || [];
-
-					if (arguments.length > 1) {
-						if (!all.length) {
-							return null;
-						}
-
-						return all.filter(function (et) {
-							return et.attribute === attribute;
-						})[0] || null;
-					}
-
-					return all;
-				}
-			}
-		});
-	})();
-
-	(function () {
-
-		var _ = Mavo.Expressions = $.Class({
-			constructor: function constructor(group) {
-				var _this2 = this;
-
-				if (group) {
-					this.group = group;
-					this.group.expressions = this;
-				}
-
-				this.all = []; // all Expression.Text objects in this group
-
-				Mavo.hooks.run("expressions-init-start", this);
-
-				if (this.group) {
-					var template = this.group.template;
-
-					if (template && template.expressions) {
-						// We know which expressions we have, don't traverse again
-						var _iteratorNormalCompletion = true;
-						var _didIteratorError = false;
-						var _iteratorError = undefined;
-
-						try {
-							for (var _iterator = template.expressions.all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-								var et = _step.value;
-
-								this.all.push(new Mavo.Expression.Text({
-									path: et.path,
-									syntax: et.syntax,
-									attribute: et.attribute,
-									group: this.group,
-									template: et
-								}));
-							}
-						} catch (err) {
-							_didIteratorError = true;
-							_iteratorError = err;
-						} finally {
-							try {
-								if (!_iteratorNormalCompletion && _iterator.return) {
-									_iterator.return();
-								}
-							} finally {
-								if (_didIteratorError) {
-									throw _iteratorError;
-								}
-							}
-						}
-					} else {
-						var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
-						this.traverse(this.group.element, undefined, syntax);
-					}
-				}
-
-				this.dependents = new Set();
-
-				this.active = true;
-
-				// Watch changes and update value
-				this.group.element.addEventListener("mavo:datachange", function (evt) {
-					return _this2.update();
-				});
-			},
-
-			/**
-    * Update all expressions in this group
-    */
-			update: function callee() {
-				if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
-					return;
-				}
-
-				var env = { context: this, data: this.group.getRelativeData() };
-
-				Mavo.hooks.run("expressions-update-start", env);
-
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
-
-				try {
-					for (var _iterator2 = this.all[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var ref = _step2.value;
-
-						ref.update(env.data);
-					}
-				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
-						}
-					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
-						}
-					}
-				}
-
-				var _iteratorNormalCompletion3 = true;
-				var _didIteratorError3 = false;
-				var _iteratorError3 = undefined;
-
-				try {
-					for (var _iterator3 = this.dependents[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-						var exp = _step3.value;
-
-						exp.update();
-					}
-				} catch (err) {
-					_didIteratorError3 = true;
-					_iteratorError3 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion3 && _iterator3.return) {
-							_iterator3.return();
-						}
-					} finally {
-						if (_didIteratorError3) {
-							throw _iteratorError3;
-						}
-					}
-				}
-			},
-
-			extract: function extract(node, attribute, path, syntax) {
-				if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
-					this.all.push(new Mavo.Expression.Text({
-						node: node, syntax: syntax,
-						path: (path || "").slice(1).split("/").map(function (i) {
-							return +i;
-						}),
-						attribute: attribute && attribute.name,
-						group: this.group
-					}));
-				}
-			},
-
-			// Traverse an element, including attribute nodes, text nodes and all descendants
-			traverse: function traverse(node) {
-				var _this3 = this;
-
-				var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
-				var syntax = arguments[2];
-
-				if (node.nodeType === 8) {
-					// We don't want expressions to be picked up from comments!
-					// Commenting stuff out is a common debugging technique
-					return;
-				}
-
-				if (node.nodeType === 3) {
-					// Text node
-					// Leaf node, extract references from content
-					this.extract(node, null, path, syntax);
-				}
-				// Traverse children and attributes as long as this is NOT the root of a child group
-				// (otherwise, it will be taken care of its own Expressions object)
-				else if (node == this.group.element || !Mavo.is("group", node)) {
-						syntax = Mavo.Expression.Syntax.create(node) || syntax;
-
-						if (syntax === Mavo.Expression.Syntax.ESCAPE) {
-							return;
-						}
-
-						$$(node.attributes).forEach(function (attribute) {
-							return _this3.extract(node, attribute, path, syntax);
-						});
-						$$(node.childNodes).forEach(function (child, i) {
-							return _this3.traverse(child, path + "/" + i, syntax);
-						});
-					}
-			},
-
-			static: {
-				directives: []
-			}
-		});
-	})();
-
-	Mavo.Node.prototype.getRelativeData = function () {
-		var _this4 = this;
-
-		var o = arguments.length <= 0 || arguments[0] === undefined ? { store: "*", null: true } : arguments[0];
-
-		o.unhandled = this.mavo.unhandled;
-
-		var ret = this.getData(o);
-
-		if (self.Proxy && ret && (typeof ret === "undefined" ? "undefined" : _typeof(ret)) === "object") {
-			ret = new Proxy(ret, {
-				get: function get(data, property) {
-					if (property in data) {
-						return data[property];
-					}
-
-					if (property == "$index") {
-						return _this4.index + 1;
-					}
-
-					if (property == _this4.mavo.id) {
-						return data;
-					}
-
-					// Look in ancestors
-					var ret = _this4.walkUp(function (group) {
-						if (property in group.children) {
-							// TODO decouple
-							group.expressions.dependents.add(_this4.expressions);
-
-							return group.children[property].getRelativeData(o);
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-				},
-
-				has: function has(data, property) {
-					if (property in data) {
-						return true;
-					}
-
-					// Property does not exist, look for it elsewhere
-					if (property == "$index" || property == _this4.mavo.id) {
-						return true;
-					}
-
-					// First look in ancestors
-					var ret = _this4.walkUp(function (group) {
-						if (property in group.children) {
-							return true;
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
-
-					// Still not found, look in descendants
-					ret = _this4.find(property);
-
-					if (ret !== undefined) {
-						if (Array.isArray(ret)) {
-							ret = ret.map(function (item) {
-								return item.getData(o);
-							}).filter(function (item) {
-								return item !== null;
-							});
-						} else {
-							ret = ret.getData(o);
-						}
-
-						data[property] = ret;
-
-						return true;
-					}
-				},
-
-				set: function set(data, property, value) {
-					throw Error("You can’t set data via expressions.");
-				}
-			});
-		}
-
-		return ret;
-	};
-
-	Mavo.hooks.add("group-init-start", function () {
-		new Mavo.Expressions(this);
-	});
-
-	Mavo.hooks.add("primitive-init-start", function () {
-		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
-
-		if (this.expressionText) {
-			this.expressionText.primitive = this;
-			this.store = this.store || "none";
-			this.modes = "read";
-		}
-	});
-
-	Mavo.hooks.add("group-init-end", function () {
-		this.expressions.update();
-	});
-
-	Mavo.hooks.add("group-render-start", function () {
-		this.expressions.active = false;
-	});
-
-	Mavo.hooks.add("group-render-end", function () {
-		var _this5 = this;
-
-		requestAnimationFrame(function () {
-			_this5.expressions.active = true;
-			_this5.expressions.update();
-		});
-	});
-})(Bliss, Bliss.$);
-
-// data-content plugin
-Mavo.Expressions.directives.push("data-content");
-
-Mavo.hooks.add("expressiontext-init-start", function () {
-	if (this.attribute == "data-content") {
-		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, { attribute: this.attribute });
-		this.expression = this.element.getAttribute("data-content");
-
-		this.template = [new Mavo.Expression(this.expression)];
-		this.expression = this.syntax.start + this.expression + this.syntax.end;
-	}
-});
-
-// data-if plugin
-Mavo.Expressions.directives.push("data-if");
-
-Mavo.hooks.add("expressiontext-init-start", function () {
-	if (this.attribute != "data-if") {
-		return;
-	}
-
-	this.expression = this.element.getAttribute("data-if");
-	this.template = [new Mavo.Expression(this.expression)];
-	this.expression = this.syntax.start + this.expression + this.syntax.end;
-
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
-
-	if (this.parentIf) {
-		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
-	}
-});
-
-Mavo.hooks.add("expressiontext-update-end", function () {
-	var _this6 = this;
-
-	if (this.attribute != "data-if") {
-		return;
-	}
-
-	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-	this.group.mavo.treeBuilt.then(function () {
-		var value = _this6.value[0];
-		var oldValue = _this6.oldValue && _this6.oldValue[0];
-
-		if (_this6.parentIf) {
-			var parentValue = _this6.parentIf.value[0];
-			_this6.value[0] = value = value && parentValue;
-		}
-
-		if (value === oldValue) {
-			return;
-		}
-
-		if (parentValue !== false) {
-			// If parent if was false, it wouldn't matter whether this is in the DOM or not
-			if (value) {
-				if (_this6.comment && _this6.comment.parentNode) {
-					// Is removed from the DOM and needs to get back
-					_this6.comment.parentNode.replaceChild(_this6.element, _this6.comment);
-				}
-			} else if (_this6.element.parentNode) {
-				// Is in the DOM and needs to be removed
-				if (!_this6.comment) {
-					_this6.comment = document.createComment("mv-if");
-				}
-
-				_this6.element.parentNode.replaceChild(_this6.comment, _this6.element);
-			}
-		}
-
-		// Mark any properties inside as hidden or not
-		if (_this6.childProperties) {
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
-
-			try {
-				for (var _iterator4 = _this6.childProperties[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var property = _step4.value;
-
-					property.hidden = !value;
-				}
-			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
-					}
-				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
-					}
-				}
-			}
-		}
-
-		if (_this6.childIfs) {
-			var _iteratorNormalCompletion5 = true;
-			var _didIteratorError5 = false;
-			var _iteratorError5 = undefined;
-
-			try {
-				for (var _iterator5 = _this6.childIfs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-					var childIf = _step5.value;
-
-					childIf.update();
-				}
-			} catch (err) {
-				_didIteratorError5 = true;
-				_iteratorError5 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion5 && _iterator5.return) {
-						_iterator5.return();
-					}
-				} finally {
-					if (_didIteratorError5) {
-						throw _iteratorError5;
-					}
-				}
-			}
-		}
-
-		_this6.oldValue = _this6.value;
-	});
-});
-
-Mavo.hooks.add("unit-isdatanull", function (env) {
-	env.result = env.result || this.hidden && env.options.store == "*";
-});
-
-$.live(Mavo.Primitive.prototype, "hidden", function (value) {
-	if (this._hidden !== value) {
-		this._hidden = value;
-		this.dataChanged();
-	}
-});
-
-$.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
-	var _this7 = this;
-
-	if (this.attribute != "data-if") {
-		return;
-	}
-
-	var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
-		return el.closest("[data-if]") == _this7.element;
-	}).map(function (el) {
-		return Mavo.Unit.get(el);
-	});
-
-	if (properties.length) {
-		// When the element is detached, datachange events from properties
-		// do not propagate up to the group so expressions do not recalculate.
-		// We must do this manually.
-		this.element.addEventListener("mavo:datachange", function (evt) {
-			// Cannot redispatch synchronously
-			requestAnimationFrame(function () {
-				if (!_this7.element.parentNode) {
-					// still out of the DOM?
-					_this7.group.element.dispatchEvent(evt);
-				}
-			});
-		});
-	}
-
-	return properties;
-});
-"use strict";
-
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
-/**
- * Functions available inside Mavo expressions
- */
-
-(function () {
-
-	var _ = Mavo.Functions = {
-		operators: {
-			"=": "eq"
-		},
-
-		get $now() {
-			return new Date();
-		},
-
-		/*********************
-   * Number functions
-   *********************/
-
-		/**
-   * Aggregate sum
-   */
-		sum: function sum(array) {
-			return numbers(array, arguments).reduce(function (prev, current) {
-				return +prev + (+current || 0);
-			}, 0);
-		},
-
-		/**
-   * Average of an array of numbers
-   */
-		average: function average(array) {
-			array = numbers(array, arguments);
-
-			return array.length && _.sum(array) / array.length;
-		},
-
-		/**
-   * Min of an array of numbers
-   */
-		min: function min(array) {
-			return Math.min.apply(Math, _toConsumableArray(numbers(array, arguments)));
-		},
-
-		/**
-   * Max of an array of numbers
-   */
-		max: function max(array) {
-			return Math.max.apply(Math, _toConsumableArray(numbers(array, arguments)));
-		},
-
-		count: function count(array) {
-			return Mavo.toArray(array).filter(function (a) {
-				return a !== null && a !== false && a !== "";
-			}).length;
-		},
-
-		round: function round(num, decimals) {
-			if (!num || !decimals || !isFinite(num)) {
-				return Math.round(num);
-			}
-
-			return +num.toLocaleString("en-US", {
-				useGrouping: false,
-				maximumFractionDigits: decimals
-			});
-		},
-
-		iff: function iff(condition, iftrue) {
-			var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
-
-			if (Array.isArray(condition)) {
-				return condition.map(function (c, i) {
-					var ret = c ? iftrue : iffalse;
-
-					if (Array.isArray(ret)) {
-						return ret[Math.min(i, ret.length - 1)];
-					}
-
-					return ret;
-				});
-			}
-
-			return condition ? iftrue : iffalse;
-		},
-
-		/*********************
-   * String functions
-   *********************/
-
-		/**
-   * Replace all occurences of a string with another string
-   */
-		replace: function replace(haystack, needle, replacement) {
-			var iterations = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
-
-			if (Array.isArray(haystack)) {
-				return haystack.map(function (item) {
-					return _.replace(item, needle, replacement);
-				});
-			}
-
-			// Simple string replacement
-			var needleRegex = RegExp(Mavo.escapeRegExp(needle), "g");
-			var ret = haystack,
-			    prev;
-			var counter = 0;
-
-			while (ret != prev && counter++ < iterations) {
-				prev = ret; // foo
-				ret = ret.replace(needleRegex, replacement); // fo
-			}
-
-			return ret;
-		},
-
-		join: function join(array) {
-			var glue = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
-
-			return Mavo.toArray(array).join(glue);
-		},
-
-		idify: function idify(readable) {
-			return ((readable || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
-			.replace(/[^\w-]/g, "") // Remove weird characters
-			.toLowerCase();
-		},
-
-		uppercase: function uppercase(str) {
-			return (str + "").toUpperCase();
-		},
-		lowercase: function lowercase(str) {
-			return (str + "").toLowerCase();
-		}
-	};
-
-	Mavo.Script = {
-		addUnaryOperator: function addUnaryOperator(name, o) {
-			return function (operand) {
-				return Array.isArray(operand) ? operand.map(o.scalar) : o.scalar(operand);
-			};
-		},
-
-		/**
-   * Extend a scalar operator to arrays, or arrays and scalars
-   * The operation between arrays is applied element-wise.
-   * The operation operation between a scalar and an array will result in
-   * the operation being applied between the scalar and every array element.
-   */
-		addBinaryOperator: function addBinaryOperator(name, o) {
-			if (o.symbol) {
-				// Build map of symbols to function names for easy rewriting
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
-
-				try {
-					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var symbol = _step.value;
-
-						Mavo.Script.symbols[symbol] = name;
-					}
-				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
-						}
-					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
-						}
-					}
-				}
-			}
-
-			o.identity = o.identity === undefined ? 0 : o.identity;
-
-			return _[name] = o.code || function () {
-				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
-					operands[_key] = arguments[_key];
-				}
-
-				if (operands.length === 1) {
-					if (Array.isArray(operands[0])) {
-						// Operand is an array of operands, expand it out
-						operands = [].concat(_toConsumableArray(operands[0]));
-					}
-				}
-
-				var prev = o.logical ? o.identity : operands[0],
-				    result;
-
-				var _loop = function _loop(i) {
-					var a = o.logical ? operands[i - 1] : prev;
-					var b = operands[i];
-
-					if (Array.isArray(b)) {
-						if (typeof o.identity == "number") {
-							b = numbers(b);
-						}
-
-						if (Array.isArray(a)) {
-							result = [].concat(_toConsumableArray(b.map(function (n, i) {
-								return o.scalar(a[i] === undefined ? o.identity : a[i], n);
-							})), _toConsumableArray(a.slice(b.length)));
-						} else {
-							result = b.map(function (n) {
-								return o.scalar(a, n);
-							});
-						}
-					} else {
-						// Operand is scalar
-						if (typeof o.identity == "number") {
-							b = +b;
-						}
-
-						if (Array.isArray(a)) {
-							result = a.map(function (n) {
-								return o.scalar(n, b);
-							});
-						} else {
-							result = o.scalar(a, b);
-						}
-					}
-
-					if (o.reduce) {
-						prev = o.reduce(prev, result, a, b);
-					} else if (o.logical) {
-						prev = prev && result;
-					} else {
-						prev = result;
-					}
-				};
-
-				for (var i = 1; i < operands.length; i++) {
-					_loop(i);
-				}
-
-				return prev;
-			};
-		},
-
-		/**
-   * Mapping of operator symbols to function name.
-   * Populated via addOperator() and addLogicalOperator()
-   */
-		symbols: {},
-
-		getOperatorName: function getOperatorName(op) {
-			return Mavo.Script.symbols[op] || op;
-		},
-
-		/**
-   * Operations for elements and scalars.
-   * Operations between arrays happen element-wise.
-   * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
-   * Ordered by precedence (higher to lower)
-   * @param scalar {Function} The operation between two scalars
-   * @param identity The operation’s identity element. Defaults to 0.
-   */
-		operators: {
-			"not": {
-				scalar: function scalar(a) {
-					return function (a) {
-						return !a;
-					};
-				}
-			},
-			"multiply": {
-				scalar: function scalar(a, b) {
-					return a * b;
-				},
-				identity: 1,
-				symbol: "*"
-			},
-			"divide": {
-				scalar: function scalar(a, b) {
-					return a / b;
-				},
-				identity: 1,
-				symbol: "/"
-			},
-			"add": {
-				scalar: function scalar(a, b) {
-					return +a + +b;
-				},
-				symbol: "+"
-			},
-			"subtract": {
-				scalar: function scalar(a, b) {
-					return a - b;
-				},
-				symbol: "-"
-			},
-
-			"lte": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					var _Mavo$Script$getNumer = Mavo.Script.getNumericalOperands(a, b);
-
-					var _Mavo$Script$getNumer2 = _slicedToArray(_Mavo$Script$getNumer, 2);
-
-					a = _Mavo$Script$getNumer2[0];
-					b = _Mavo$Script$getNumer2[1];
-
-					return a <= b;
-				},
-				identity: true,
-				symbol: "<="
-			},
-			"lt": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					var _Mavo$Script$getNumer3 = Mavo.Script.getNumericalOperands(a, b);
-
-					var _Mavo$Script$getNumer4 = _slicedToArray(_Mavo$Script$getNumer3, 2);
-
-					a = _Mavo$Script$getNumer4[0];
-					b = _Mavo$Script$getNumer4[1];
-
-					return a < b;
-				},
-				identity: true,
-				symbol: "<"
-			},
-			"gte": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					var _Mavo$Script$getNumer5 = Mavo.Script.getNumericalOperands(a, b);
-
-					var _Mavo$Script$getNumer6 = _slicedToArray(_Mavo$Script$getNumer5, 2);
-
-					a = _Mavo$Script$getNumer6[0];
-					b = _Mavo$Script$getNumer6[1];
-
-					return a >= b;
-				},
-				identity: true,
-				symbol: ">="
-			},
-			"gt": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					var _Mavo$Script$getNumer7 = Mavo.Script.getNumericalOperands(a, b);
-
-					var _Mavo$Script$getNumer8 = _slicedToArray(_Mavo$Script$getNumer7, 2);
-
-					a = _Mavo$Script$getNumer8[0];
-					b = _Mavo$Script$getNumer8[1];
-
-					return a > b;
-				},
-				identity: true,
-				symbol: ">"
-			},
-			"eq": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					return a == b;
-				},
-				symbol: ["=", "=="],
-				identity: true
-			},
-			"neq": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					return a != b;
-				},
-				symbol: ["!="],
-				identity: true
-			},
-			"and": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					return !!a && !!b;
-				},
-				identity: true,
-				symbol: "&&"
-			},
-			"or": {
-				logical: true,
-				scalar: function scalar(a, b) {
-					return !!a || !!b;
-				},
-				reduce: function reduce(p, r) {
-					return p || r;
-				},
-				identity: false,
-				symbol: "||"
-			},
-			"concatenate": {
-				symbol: "&",
-				identity: "",
-				scalar: function scalar(a, b) {
-					return "" + a + b;
-				}
-			}
-		},
-
-		getNumericalOperands: function getNumericalOperands(a, b) {
-			if (isNaN(a) || isNaN(b)) {
-				// Try comparing as dates
-				var da = new Date(a),
-				    db = new Date(b);
-
-				if (!isNaN(da) && !isNaN(db)) {
-					// Both valid dates
-					return [da, db];
-				}
-			}
-
-			return [a, b];
-		}
-	};
-
-	for (var name in Mavo.Script.operators) {
-		var details = Mavo.Script.operators[name];
-
-		if (details.scalar.length < 2) {
-			Mavo.Script.addUnaryOperator(name, details);
-		} else {
-			Mavo.Script.addBinaryOperator(name, details);
-		}
-	}
-
-	var aliases = {
-		average: "avg",
-		iff: "iff IF",
-		subtract: "minus",
-		multiply: "mult product",
-		divide: "div",
-		lt: "lessThan smaller",
-		gt: "moreThan greater greaterThan bigger",
-		eq: "equal equality"
-	};
-
-	var _loop2 = function _loop2(_name) {
-		aliases[_name].split(/\s+/g).forEach(function (alias) {
-			return _[alias] = _[_name];
-		});
-	};
-
-	for (var _name in aliases) {
-		_loop2(_name);
-	}
-
-	// Make function names case insensitive
-	Mavo.Functions._Trap = self.Proxy ? new Proxy(_, {
-		get: function get(functions, property) {
-			if (property in functions) {
-				return functions[property];
-			}
-
-			var propertyL = property.toLowerCase && property.toLowerCase();
-
-			if (propertyL && functions.hasOwnProperty(propertyL)) {
-				return functions[propertyL];
-			}
-
-			if (property in Math || propertyL in Math) {
-				return Math[property] || Math[propertyL];
-			}
-
-			if (property in self) {
-				return self[property];
-			}
-
-			// Prevent undefined at all costs
-			return property;
-		},
-
-		// Super ugly hack, but otherwise data is not
-		// the local variable it should be, but the string "data"
-		// so all property lookups fail.
-		has: function has(functions, property) {
-			return property != "data";
-		}
-	}) : Mavo.Functions;
-
-	/**
-  * Private helper methods
-  */
-	function numbers(array, args) {
-		array = Array.isArray(array) ? array : args ? $$(args) : [array];
-
-		return array.filter(function (number) {
-			return !isNaN(number) && number !== "";
-		}).map(function (n) {
-			return +n;
-		});
-	}
-})();
-"use strict";
-
 (function ($, $$) {
 
 	var _ = Mavo.Group = $.Class({
@@ -3543,13 +2203,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}
 
-			if (this.collection) {
+			if (this.collection && !this.attribute) {
 				// Collection of primitives, deal with setting textContent etc without the UI interfering.
 				var swapUI = function swapUI(callback) {
+					var ret;
+
 					_this.sneak(function () {
 						var ui = $.remove($(".mv-item-controls", _this.element));
 
-						var ret = callback();
+						ret = callback();
 
 						$.inside(ui, _this.element);
 					});
@@ -5046,6 +3708,1346 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 })(Bliss, Bliss.$);
+"use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+(function ($, $$) {
+
+	var _ = Mavo.Expression = $.Class({
+		constructor: function constructor(expression) {
+			this.expression = expression;
+		},
+
+		eval: function _eval(data) {
+			this.oldValue = this.value;
+
+			Mavo.hooks.run("expression-eval-beforeeval", this);
+
+			try {
+				if (!this.function) {
+					this.function = _.compile(this.expression);
+				}
+
+				this.value = this.function(data);
+			} catch (exception) {
+				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
+
+				this.value = exception;
+			}
+
+			return this.value;
+		},
+
+		toString: function toString() {
+			return this.expression;
+		},
+
+
+		live: {
+			expression: function expression(value) {
+				var code = value = value.trim();
+
+				this.function = null;
+			}
+		},
+
+		static: {
+			/**
+    * These serializers transform the AST into JS
+    */
+			serializers: {
+				"BinaryExpression": function BinaryExpression(node) {
+					return _.serialize(node.left) + " " + node.operator + " " + _.serialize(node.right);
+				},
+				"UnaryExpression": function UnaryExpression(node) {
+					return "" + node.operator + _.serialize(node.argument);
+				},
+				"CallExpression": function CallExpression(node) {
+					return _.serialize(node.callee) + "(" + node.arguments.map(_.serialize).join(", ") + ")";
+				},
+				"ConditionalExpression": function ConditionalExpression(node) {
+					return _.serialize(node.test) + "? " + _.serialize(node.consequent) + " : " + _.serialize(node.alternate);
+				},
+				"MemberExpression": function MemberExpression(node) {
+					return _.serialize(node.object) + "[" + _.serialize(node.property) + "]";
+				},
+				"ArrayExpression": function ArrayExpression(node) {
+					return "[" + node.elements.map(_.serialize).join(", ") + "]";
+				},
+				"Literal": function Literal(node) {
+					return node.raw;
+				},
+				"Identifier": function Identifier(node) {
+					return node.name;
+				},
+				"ThisExpression": function ThisExpression(node) {
+					return "this";
+				},
+				"Compound": function Compound(node) {
+					return node.body.map(_.serialize).join(" ");
+				}
+			},
+
+			/**
+    * These are run before the serializers and transform the expression to support MavoScript
+    */
+			transformations: {
+				"BinaryExpression": function BinaryExpression(node) {
+					var name = Mavo.Script.getOperatorName(node.operator);
+					var details = Mavo.Script.operators[name];
+
+					// Flatten same operator calls
+					var nodeLeft = node;
+					var args = [];
+
+					do {
+						args.unshift(nodeLeft.right);
+						nodeLeft = nodeLeft.left;
+					} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
+
+					args.unshift(nodeLeft);
+
+					if (args.length > 1) {
+						return name + "(" + args.map(_.serialize).join(", ") + ")";
+					}
+				},
+				"CallExpression": function CallExpression(node) {
+					if (node.callee.type == "Identifier" && node.callee.name == "if") {
+						node.callee.name = "iff";
+					}
+				}
+			},
+
+			serialize: function serialize(node) {
+				if (_.transformations[node.type]) {
+					var ret = _.transformations[node.type](node);
+
+					if (ret !== undefined) {
+						return ret;
+					}
+				}
+
+				return _.serializers[node.type](node);
+			},
+
+			rewrite: function rewrite(code) {
+				try {
+					return _.serialize(_.parse(code));
+				} catch (e) {
+					// Parsing as MavoScript failed, falling back to plain JS
+					return code;
+				}
+			},
+
+			compile: function compile(code) {
+				code = _.rewrite(code);
+
+				return new Function("data", "with(Mavo.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\treturn " + code + ";\n\t\t\t\t\t}");
+			},
+
+			parse: self.jsep
+		}
+	});
+
+	if (self.jsep) {
+		jsep.addBinaryOp("and", 2);
+		jsep.addBinaryOp("or", 2);
+		jsep.addBinaryOp("=", 6);
+		jsep.removeBinaryOp("===");
+	}
+
+	_.serializers.LogicalExpression = _.serializers.BinaryExpression;
+	_.transformations.LogicalExpression = _.transformations.BinaryExpression;
+
+	(function () {
+		var _ = Mavo.Expression.Syntax = $.Class({
+			constructor: function constructor(start, end) {
+				this.start = start;
+				this.end = end;
+				this.regex = RegExp(Mavo.escapeRegExp(start) + "([\\S\\s]+?)" + Mavo.escapeRegExp(end), "gi");
+			},
+
+			test: function test(str) {
+				this.regex.lastIndex = 0;
+
+				return this.regex.test(str);
+			},
+
+			tokenize: function tokenize(str) {
+				var match,
+				    ret = [],
+				    lastIndex = 0;
+
+				this.regex.lastIndex = 0;
+
+				while ((match = this.regex.exec(str)) !== null) {
+					// Literal before the expression
+					if (match.index > lastIndex) {
+						ret.push(str.substring(lastIndex, match.index));
+					}
+
+					lastIndex = this.regex.lastIndex;
+
+					ret.push(new Mavo.Expression(match[1]));
+				}
+
+				// Literal at the end
+				if (lastIndex < str.length) {
+					ret.push(str.substring(lastIndex));
+				}
+
+				return ret;
+			},
+
+			static: {
+				create: function create(element) {
+					if (element) {
+						var syntax = element.getAttribute("data-expressions");
+
+						if (syntax) {
+							syntax = syntax.trim();
+							return (/\s/.test(syntax) ? new (Function.prototype.bind.apply(_, [null].concat(_toConsumableArray(syntax.split(/\s+/)))))() : _.ESCAPE
+							);
+						}
+					}
+				},
+
+				ESCAPE: -1
+			}
+		});
+
+		_.default = new _("[", "]");
+	})();
+
+	(function () {
+
+		var _ = Mavo.Expression.Text = $.Class({
+			constructor: function constructor(o) {
+				this.group = o.group;
+				this.node = o.node;
+				this.path = o.path;
+				this.syntax = o.syntax;
+				this.fallback = o.fallback;
+
+				if (!this.node) {
+					// No node provided, figure it out from path
+					this.node = this.path.reduce(function (node, index) {
+						return node.childNodes[index];
+					}, this.group.element);
+				}
+
+				this.element = this.node;
+				this.attribute = o.attribute || null;
+
+				Mavo.hooks.run("expressiontext-init-start", this);
+
+				if (!this.expression) {
+					// Still unhandled?
+					if (this.node.nodeType === 3) {
+						this.element = this.node.parentNode;
+
+						// If no element siblings make this.node the element, which is more robust
+						// Same if attribute, there are no attributes on a text node!
+						if (!this.node.parentNode.children.length || this.attribute) {
+							this.node = this.element;
+							this.element.normalize();
+						}
+					}
+
+					this.expression = (this.attribute ? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
+
+					this.template = o.template ? o.template.template : this.syntax.tokenize(this.expression);
+				}
+
+				Mavo.hooks.run("expressiontext-init-end", this);
+
+				_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
+			},
+
+			update: function update() {
+				var _this = this;
+
+				var data = arguments.length <= 0 || arguments[0] === undefined ? this.data : arguments[0];
+
+				this.data = data;
+
+				var ret = {};
+
+				Mavo.hooks.run("expressiontext-update-start", this);
+
+				ret.value = this.value = this.template.map(function (expr) {
+					if (expr instanceof Mavo.Expression) {
+						var env = { context: _this, expr: expr };
+
+						Mavo.hooks.run("expressiontext-update-beforeeval", env);
+
+						env.value = env.expr.eval(data);
+
+						Mavo.hooks.run("expressiontext-update-aftereval", env);
+
+						if (env.value instanceof Error) {
+							return _this.fallback !== undefined ? _this.fallback : env.expr.expression;
+						}
+						if (env.value === undefined || env.value === null) {
+							// Don’t print things like "undefined" or "null"
+							return "";
+						}
+
+						return env.value;
+					}
+
+					return expr;
+				});
+
+				if (!this.attribute) {
+					// Separate presentational & actual values only apply when content is variable
+					ret.presentational = this.value.map(function (value) {
+						if (Array.isArray(value)) {
+							return value.join(", ");
+						}
+
+						if (typeof value == "number") {
+							return Mavo.Primitive.formatNumber(value);
+						}
+
+						return value;
+					});
+
+					ret.presentational = ret.presentational.length === 1 ? ret.presentational[0] : ret.presentational.join("");
+				}
+
+				ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
+
+				if (this.primitive && this.template.length === 1) {
+					if (typeof ret.value === "number") {
+						this.primitive.datatype = "number";
+					} else if (typeof ret.value === "boolean") {
+						this.primitive.datatype = "boolean";
+					}
+				}
+
+				if (ret.presentational === ret.value) {
+					ret = ret.value;
+				}
+
+				if (this.primitive) {
+					this.primitive.value = ret;
+				} else {
+					Mavo.Primitive.setValue(this.node, ret, { attribute: this.attribute });
+				}
+
+				Mavo.hooks.run("expressiontext-update-end", this);
+			},
+
+			static: {
+				elements: new WeakMap(),
+
+				/**
+     * Search for Mavo.Expression.Text object(s) associated with a given element
+     * and optionally an attribute.
+     *
+     * @return If one argument, array of matching Expression.Text objects.
+     *         If two arguments, the matching Expression.Text object or null
+     */
+				search: function search(element, attribute) {
+					var all = _.elements.get(element) || [];
+
+					if (arguments.length > 1) {
+						if (!all.length) {
+							return null;
+						}
+
+						return all.filter(function (et) {
+							return et.attribute === attribute;
+						})[0] || null;
+					}
+
+					return all;
+				}
+			}
+		});
+	})();
+
+	(function () {
+
+		var _ = Mavo.Expressions = $.Class({
+			constructor: function constructor(group) {
+				var _this2 = this;
+
+				if (group) {
+					this.group = group;
+					this.group.expressions = this;
+				}
+
+				this.all = []; // all Expression.Text objects in this group
+
+				Mavo.hooks.run("expressions-init-start", this);
+
+				if (this.group) {
+					var template = this.group.template;
+
+					if (template && template.expressions) {
+						// We know which expressions we have, don't traverse again
+						var _iteratorNormalCompletion = true;
+						var _didIteratorError = false;
+						var _iteratorError = undefined;
+
+						try {
+							for (var _iterator = template.expressions.all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+								var et = _step.value;
+
+								this.all.push(new Mavo.Expression.Text({
+									path: et.path,
+									syntax: et.syntax,
+									attribute: et.attribute,
+									group: this.group,
+									template: et
+								}));
+							}
+						} catch (err) {
+							_didIteratorError = true;
+							_iteratorError = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion && _iterator.return) {
+									_iterator.return();
+								}
+							} finally {
+								if (_didIteratorError) {
+									throw _iteratorError;
+								}
+							}
+						}
+					} else {
+						var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
+						this.traverse(this.group.element, undefined, syntax);
+					}
+				}
+
+				this.dependents = new Set();
+
+				this.active = true;
+
+				// Watch changes and update value
+				this.group.element.addEventListener("mavo:datachange", function (evt) {
+					return _this2.update();
+				});
+			},
+
+			/**
+    * Update all expressions in this group
+    */
+			update: function callee() {
+				if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
+					return;
+				}
+
+				var env = { context: this, data: this.group.getRelativeData() };
+
+				Mavo.hooks.run("expressions-update-start", env);
+
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
+
+				try {
+					for (var _iterator2 = this.all[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var ref = _step2.value;
+
+						ref.update(env.data);
+					}
+				} catch (err) {
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
+						}
+					} finally {
+						if (_didIteratorError2) {
+							throw _iteratorError2;
+						}
+					}
+				}
+
+				var _iteratorNormalCompletion3 = true;
+				var _didIteratorError3 = false;
+				var _iteratorError3 = undefined;
+
+				try {
+					for (var _iterator3 = this.dependents[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+						var exp = _step3.value;
+
+						exp.update();
+					}
+				} catch (err) {
+					_didIteratorError3 = true;
+					_iteratorError3 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion3 && _iterator3.return) {
+							_iterator3.return();
+						}
+					} finally {
+						if (_didIteratorError3) {
+							throw _iteratorError3;
+						}
+					}
+				}
+			},
+
+			extract: function extract(node, attribute, path, syntax) {
+				if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
+					this.all.push(new Mavo.Expression.Text({
+						node: node, syntax: syntax,
+						path: (path || "").slice(1).split("/").map(function (i) {
+							return +i;
+						}),
+						attribute: attribute && attribute.name,
+						group: this.group
+					}));
+				}
+			},
+
+			// Traverse an element, including attribute nodes, text nodes and all descendants
+			traverse: function traverse(node) {
+				var _this3 = this;
+
+				var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
+				var syntax = arguments[2];
+
+				if (node.nodeType === 8) {
+					// We don't want expressions to be picked up from comments!
+					// Commenting stuff out is a common debugging technique
+					return;
+				}
+
+				if (node.nodeType === 3) {
+					// Text node
+					// Leaf node, extract references from content
+					this.extract(node, null, path, syntax);
+				}
+				// Traverse children and attributes as long as this is NOT the root of a child group
+				// (otherwise, it will be taken care of its own Expressions object)
+				else if (node == this.group.element || !Mavo.is("group", node)) {
+						syntax = Mavo.Expression.Syntax.create(node) || syntax;
+
+						if (syntax === Mavo.Expression.Syntax.ESCAPE) {
+							return;
+						}
+
+						$$(node.attributes).forEach(function (attribute) {
+							return _this3.extract(node, attribute, path, syntax);
+						});
+						$$(node.childNodes).forEach(function (child, i) {
+							return _this3.traverse(child, path + "/" + i, syntax);
+						});
+					}
+			},
+
+			static: {
+				directives: []
+			}
+		});
+	})();
+
+	Mavo.Node.prototype.getRelativeData = function () {
+		var _this4 = this;
+
+		var o = arguments.length <= 0 || arguments[0] === undefined ? { store: "*", null: true } : arguments[0];
+
+		o.unhandled = this.mavo.unhandled;
+
+		var ret = this.getData(o);
+
+		if (self.Proxy && ret && (typeof ret === "undefined" ? "undefined" : _typeof(ret)) === "object") {
+			ret = new Proxy(ret, {
+				get: function get(data, property) {
+					if (property in data) {
+						return data[property];
+					}
+
+					if (property == "$index") {
+						return _this4.index + 1;
+					}
+
+					if (property == _this4.mavo.id) {
+						return data;
+					}
+
+					// Look in ancestors
+					var ret = _this4.walkUp(function (group) {
+						if (property in group.children) {
+							// TODO decouple
+							group.expressions.dependents.add(_this4.expressions);
+
+							return group.children[property].getRelativeData(o);
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+				},
+
+				has: function has(data, property) {
+					if (property in data) {
+						return true;
+					}
+
+					// Property does not exist, look for it elsewhere
+					if (property == "$index" || property == _this4.mavo.id) {
+						return true;
+					}
+
+					// First look in ancestors
+					var ret = _this4.walkUp(function (group) {
+						if (property in group.children) {
+							return true;
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+
+					// Still not found, look in descendants
+					ret = _this4.find(property);
+
+					if (ret !== undefined) {
+						if (Array.isArray(ret)) {
+							ret = ret.map(function (item) {
+								return item.getData(o);
+							}).filter(function (item) {
+								return item !== null;
+							});
+						} else {
+							ret = ret.getData(o);
+						}
+
+						data[property] = ret;
+
+						return true;
+					}
+				},
+
+				set: function set(data, property, value) {
+					throw Error("You can’t set data via expressions.");
+				}
+			});
+		}
+
+		return ret;
+	};
+
+	Mavo.hooks.add("group-init-start", function () {
+		new Mavo.Expressions(this);
+	});
+
+	Mavo.hooks.add("primitive-init-start", function () {
+		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+
+		if (this.expressionText) {
+			this.expressionText.primitive = this;
+			this.store = this.store || "none";
+			this.modes = "read";
+		}
+	});
+
+	Mavo.hooks.add("group-init-end", function () {
+		this.expressions.update();
+	});
+
+	Mavo.hooks.add("group-render-start", function () {
+		this.expressions.active = false;
+	});
+
+	Mavo.hooks.add("group-render-end", function () {
+		var _this5 = this;
+
+		requestAnimationFrame(function () {
+			_this5.expressions.active = true;
+			_this5.expressions.update();
+		});
+	});
+})(Bliss, Bliss.$);
+
+// data-content plugin
+Mavo.Expressions.directives.push("data-content");
+
+Mavo.hooks.add("expressiontext-init-start", function () {
+	if (this.attribute == "data-content") {
+		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, { attribute: this.attribute });
+		this.expression = this.element.getAttribute("data-content");
+
+		this.template = [new Mavo.Expression(this.expression)];
+		this.expression = this.syntax.start + this.expression + this.syntax.end;
+	}
+});
+
+// data-if plugin
+Mavo.Expressions.directives.push("data-if");
+
+Mavo.hooks.add("expressiontext-init-start", function () {
+	if (this.attribute != "data-if") {
+		return;
+	}
+
+	this.expression = this.element.getAttribute("data-if");
+	this.template = [new Mavo.Expression(this.expression)];
+	this.expression = this.syntax.start + this.expression + this.syntax.end;
+
+	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
+
+	if (this.parentIf) {
+		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
+	}
+});
+
+Mavo.hooks.add("expressiontext-update-end", function () {
+	var _this6 = this;
+
+	if (this.attribute != "data-if") {
+		return;
+	}
+
+	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+	this.group.mavo.treeBuilt.then(function () {
+		var value = _this6.value[0];
+		var oldValue = _this6.oldValue && _this6.oldValue[0];
+
+		if (_this6.parentIf) {
+			var parentValue = _this6.parentIf.value[0];
+			_this6.value[0] = value = value && parentValue;
+		}
+
+		if (value === oldValue) {
+			return;
+		}
+
+		if (parentValue !== false) {
+			// If parent if was false, it wouldn't matter whether this is in the DOM or not
+			if (value) {
+				if (_this6.comment && _this6.comment.parentNode) {
+					// Is removed from the DOM and needs to get back
+					_this6.comment.parentNode.replaceChild(_this6.element, _this6.comment);
+				}
+			} else if (_this6.element.parentNode) {
+				// Is in the DOM and needs to be removed
+				if (!_this6.comment) {
+					_this6.comment = document.createComment("mv-if");
+				}
+
+				_this6.element.parentNode.replaceChild(_this6.comment, _this6.element);
+			}
+		}
+
+		// Mark any properties inside as hidden or not
+		if (_this6.childProperties) {
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
+
+			try {
+				for (var _iterator4 = _this6.childProperties[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var property = _step4.value;
+
+					property.hidden = !value;
+				}
+			} catch (err) {
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
+					}
+				} finally {
+					if (_didIteratorError4) {
+						throw _iteratorError4;
+					}
+				}
+			}
+		}
+
+		if (_this6.childIfs) {
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
+
+			try {
+				for (var _iterator5 = _this6.childIfs[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var childIf = _step5.value;
+
+					childIf.update();
+				}
+			} catch (err) {
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
+					}
+				} finally {
+					if (_didIteratorError5) {
+						throw _iteratorError5;
+					}
+				}
+			}
+		}
+
+		_this6.oldValue = _this6.value;
+	});
+});
+
+Mavo.hooks.add("unit-isdatanull", function (env) {
+	env.result = env.result || this.hidden && env.options.store == "*";
+});
+
+$.live(Mavo.Primitive.prototype, "hidden", function (value) {
+	if (this._hidden !== value) {
+		this._hidden = value;
+		this.dataChanged();
+	}
+});
+
+$.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
+	var _this7 = this;
+
+	if (this.attribute != "data-if") {
+		return;
+	}
+
+	var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
+		return el.closest("[data-if]") == _this7.element;
+	}).map(function (el) {
+		return Mavo.Unit.get(el);
+	});
+
+	if (properties.length) {
+		// When the element is detached, datachange events from properties
+		// do not propagate up to the group so expressions do not recalculate.
+		// We must do this manually.
+		this.element.addEventListener("mavo:datachange", function (evt) {
+			// Cannot redispatch synchronously
+			requestAnimationFrame(function () {
+				if (!_this7.element.parentNode) {
+					// still out of the DOM?
+					_this7.group.element.dispatchEvent(evt);
+				}
+			});
+		});
+	}
+
+	return properties;
+});
+"use strict";
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+/**
+ * Functions available inside Mavo expressions
+ */
+
+(function () {
+
+	var _ = Mavo.Functions = {
+		operators: {
+			"=": "eq"
+		},
+
+		get $now() {
+			return new Date();
+		},
+
+		/*********************
+   * Number functions
+   *********************/
+
+		/**
+   * Aggregate sum
+   */
+		sum: function sum(array) {
+			return numbers(array, arguments).reduce(function (prev, current) {
+				return +prev + (+current || 0);
+			}, 0);
+		},
+
+		/**
+   * Average of an array of numbers
+   */
+		average: function average(array) {
+			array = numbers(array, arguments);
+
+			return array.length && _.sum(array) / array.length;
+		},
+
+		/**
+   * Min of an array of numbers
+   */
+		min: function min(array) {
+			return Math.min.apply(Math, _toConsumableArray(numbers(array, arguments)));
+		},
+
+		/**
+   * Max of an array of numbers
+   */
+		max: function max(array) {
+			return Math.max.apply(Math, _toConsumableArray(numbers(array, arguments)));
+		},
+
+		count: function count(array) {
+			return Mavo.toArray(array).filter(function (a) {
+				return a !== null && a !== false && a !== "";
+			}).length;
+		},
+
+		round: function round(num, decimals) {
+			if (!num || !decimals || !isFinite(num)) {
+				return Math.round(num);
+			}
+
+			return +num.toLocaleString("en-US", {
+				useGrouping: false,
+				maximumFractionDigits: decimals
+			});
+		},
+
+		iff: function iff(condition, iftrue) {
+			var iffalse = arguments.length <= 2 || arguments[2] === undefined ? "" : arguments[2];
+
+			if (Array.isArray(condition)) {
+				return condition.map(function (c, i) {
+					var ret = c ? iftrue : iffalse;
+
+					if (Array.isArray(ret)) {
+						return ret[Math.min(i, ret.length - 1)];
+					}
+
+					return ret;
+				});
+			}
+
+			return condition ? iftrue : iffalse;
+		},
+
+		/*********************
+   * String functions
+   *********************/
+
+		/**
+   * Replace all occurences of a string with another string
+   */
+		replace: function replace(haystack, needle, replacement) {
+			var iterations = arguments.length <= 3 || arguments[3] === undefined ? 1 : arguments[3];
+
+			if (Array.isArray(haystack)) {
+				return haystack.map(function (item) {
+					return _.replace(item, needle, replacement);
+				});
+			}
+
+			// Simple string replacement
+			var needleRegex = RegExp(Mavo.escapeRegExp(needle), "g");
+			var ret = haystack,
+			    prev;
+			var counter = 0;
+
+			while (ret != prev && counter++ < iterations) {
+				prev = ret; // foo
+				ret = ret.replace(needleRegex, replacement); // fo
+			}
+
+			return ret;
+		},
+
+		join: function join(array) {
+			var glue = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
+
+			return Mavo.toArray(array).join(glue);
+		},
+
+		idify: function idify(readable) {
+			return ((readable || "") + "").replace(/\s+/g, "-") // Convert whitespace to hyphens
+			.replace(/[^\w-]/g, "") // Remove weird characters
+			.toLowerCase();
+		},
+
+		uppercase: function uppercase(str) {
+			return (str + "").toUpperCase();
+		},
+		lowercase: function lowercase(str) {
+			return (str + "").toLowerCase();
+		}
+	};
+
+	Mavo.Script = {
+		addUnaryOperator: function addUnaryOperator(name, o) {
+			return function (operand) {
+				return Array.isArray(operand) ? operand.map(o.scalar) : o.scalar(operand);
+			};
+		},
+
+		/**
+   * Extend a scalar operator to arrays, or arrays and scalars
+   * The operation between arrays is applied element-wise.
+   * The operation operation between a scalar and an array will result in
+   * the operation being applied between the scalar and every array element.
+   */
+		addBinaryOperator: function addBinaryOperator(name, o) {
+			if (o.symbol) {
+				// Build map of symbols to function names for easy rewriting
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var symbol = _step.value;
+
+						Mavo.Script.symbols[symbol] = name;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			}
+
+			o.identity = o.identity === undefined ? 0 : o.identity;
+
+			return _[name] = o.code || function () {
+				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
+					operands[_key] = arguments[_key];
+				}
+
+				if (operands.length === 1) {
+					if (Array.isArray(operands[0])) {
+						// Operand is an array of operands, expand it out
+						operands = [].concat(_toConsumableArray(operands[0]));
+					}
+				}
+
+				var prev = o.logical ? o.identity : operands[0],
+				    result;
+
+				var _loop = function _loop(i) {
+					var a = o.logical ? operands[i - 1] : prev;
+					var b = operands[i];
+
+					if (Array.isArray(b)) {
+						if (typeof o.identity == "number") {
+							b = numbers(b);
+						}
+
+						if (Array.isArray(a)) {
+							result = [].concat(_toConsumableArray(b.map(function (n, i) {
+								return o.scalar(a[i] === undefined ? o.identity : a[i], n);
+							})), _toConsumableArray(a.slice(b.length)));
+						} else {
+							result = b.map(function (n) {
+								return o.scalar(a, n);
+							});
+						}
+					} else {
+						// Operand is scalar
+						if (typeof o.identity == "number") {
+							b = +b;
+						}
+
+						if (Array.isArray(a)) {
+							result = a.map(function (n) {
+								return o.scalar(n, b);
+							});
+						} else {
+							result = o.scalar(a, b);
+						}
+					}
+
+					if (o.reduce) {
+						prev = o.reduce(prev, result, a, b);
+					} else if (o.logical) {
+						prev = prev && result;
+					} else {
+						prev = result;
+					}
+				};
+
+				for (var i = 1; i < operands.length; i++) {
+					_loop(i);
+				}
+
+				return prev;
+			};
+		},
+
+		/**
+   * Mapping of operator symbols to function name.
+   * Populated via addOperator() and addLogicalOperator()
+   */
+		symbols: {},
+
+		getOperatorName: function getOperatorName(op) {
+			return Mavo.Script.symbols[op] || op;
+		},
+
+		/**
+   * Operations for elements and scalars.
+   * Operations between arrays happen element-wise.
+   * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
+   * Ordered by precedence (higher to lower)
+   * @param scalar {Function} The operation between two scalars
+   * @param identity The operation’s identity element. Defaults to 0.
+   */
+		operators: {
+			"not": {
+				scalar: function scalar(a) {
+					return function (a) {
+						return !a;
+					};
+				}
+			},
+			"multiply": {
+				scalar: function scalar(a, b) {
+					return a * b;
+				},
+				identity: 1,
+				symbol: "*"
+			},
+			"divide": {
+				scalar: function scalar(a, b) {
+					return a / b;
+				},
+				identity: 1,
+				symbol: "/"
+			},
+			"add": {
+				scalar: function scalar(a, b) {
+					return +a + +b;
+				},
+				symbol: "+"
+			},
+			"subtract": {
+				scalar: function scalar(a, b) {
+					return a - b;
+				},
+				symbol: "-"
+			},
+
+			"lte": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer2 = _slicedToArray(_Mavo$Script$getNumer, 2);
+
+					a = _Mavo$Script$getNumer2[0];
+					b = _Mavo$Script$getNumer2[1];
+
+					return a <= b;
+				},
+				identity: true,
+				symbol: "<="
+			},
+			"lt": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer3 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer4 = _slicedToArray(_Mavo$Script$getNumer3, 2);
+
+					a = _Mavo$Script$getNumer4[0];
+					b = _Mavo$Script$getNumer4[1];
+
+					return a < b;
+				},
+				identity: true,
+				symbol: "<"
+			},
+			"gte": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer5 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer6 = _slicedToArray(_Mavo$Script$getNumer5, 2);
+
+					a = _Mavo$Script$getNumer6[0];
+					b = _Mavo$Script$getNumer6[1];
+
+					return a >= b;
+				},
+				identity: true,
+				symbol: ">="
+			},
+			"gt": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					var _Mavo$Script$getNumer7 = Mavo.Script.getNumericalOperands(a, b);
+
+					var _Mavo$Script$getNumer8 = _slicedToArray(_Mavo$Script$getNumer7, 2);
+
+					a = _Mavo$Script$getNumer8[0];
+					b = _Mavo$Script$getNumer8[1];
+
+					return a > b;
+				},
+				identity: true,
+				symbol: ">"
+			},
+			"eq": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return a == b;
+				},
+				symbol: ["=", "=="],
+				identity: true
+			},
+			"neq": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return a != b;
+				},
+				symbol: ["!="],
+				identity: true
+			},
+			"and": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return !!a && !!b;
+				},
+				identity: true,
+				symbol: "&&"
+			},
+			"or": {
+				logical: true,
+				scalar: function scalar(a, b) {
+					return !!a || !!b;
+				},
+				reduce: function reduce(p, r) {
+					return p || r;
+				},
+				identity: false,
+				symbol: "||"
+			},
+			"concatenate": {
+				symbol: "&",
+				identity: "",
+				scalar: function scalar(a, b) {
+					return "" + a + b;
+				}
+			}
+		},
+
+		getNumericalOperands: function getNumericalOperands(a, b) {
+			if (isNaN(a) || isNaN(b)) {
+				// Try comparing as dates
+				var da = new Date(a),
+				    db = new Date(b);
+
+				if (!isNaN(da) && !isNaN(db)) {
+					// Both valid dates
+					return [da, db];
+				}
+			}
+
+			return [a, b];
+		}
+	};
+
+	for (var name in Mavo.Script.operators) {
+		var details = Mavo.Script.operators[name];
+
+		if (details.scalar.length < 2) {
+			Mavo.Script.addUnaryOperator(name, details);
+		} else {
+			Mavo.Script.addBinaryOperator(name, details);
+		}
+	}
+
+	var aliases = {
+		average: "avg",
+		iff: "iff IF",
+		subtract: "minus",
+		multiply: "mult product",
+		divide: "div",
+		lt: "lessThan smaller",
+		gt: "moreThan greater greaterThan bigger",
+		eq: "equal equality"
+	};
+
+	var _loop2 = function _loop2(_name) {
+		aliases[_name].split(/\s+/g).forEach(function (alias) {
+			return _[alias] = _[_name];
+		});
+	};
+
+	for (var _name in aliases) {
+		_loop2(_name);
+	}
+
+	// Make function names case insensitive
+	Mavo.Functions._Trap = self.Proxy ? new Proxy(_, {
+		get: function get(functions, property) {
+			if (property in functions) {
+				return functions[property];
+			}
+
+			var propertyL = property.toLowerCase && property.toLowerCase();
+
+			if (propertyL && functions.hasOwnProperty(propertyL)) {
+				return functions[propertyL];
+			}
+
+			if (property in Math || propertyL in Math) {
+				return Math[property] || Math[propertyL];
+			}
+
+			if (property in self) {
+				return self[property];
+			}
+
+			// Prevent undefined at all costs
+			return property;
+		},
+
+		// Super ugly hack, but otherwise data is not
+		// the local variable it should be, but the string "data"
+		// so all property lookups fail.
+		has: function has(functions, property) {
+			return property != "data";
+		}
+	}) : Mavo.Functions;
+
+	/**
+  * Private helper methods
+  */
+	function numbers(array, args) {
+		array = Array.isArray(array) ? array : args ? $$(args) : [array];
+
+		return array.filter(function (number) {
+			return !isNaN(number) && number !== "";
+		}).map(function (n) {
+			return +n;
+		});
+	}
+})();
 "use strict";
 
 /*

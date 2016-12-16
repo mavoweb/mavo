@@ -85,13 +85,15 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.collection) {
+		if (this.collection && !this.attribute) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = callback => {
+				var ret;
+
 				this.sneak(() => {
 					var ui = $.remove($(".mv-item-controls", this.element));
 
-					var ret = callback();
+					ret = callback();
 
 					$.inside(ui, this.element);
 				});
