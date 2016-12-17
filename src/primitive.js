@@ -2,6 +2,7 @@
 
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
+	nodeType: "Primitive",
 	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
 			this.defaults = _.getDefaults(element);
@@ -85,38 +86,6 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.collection && !this.attribute) {
-			// Collection of primitives, deal with setting textContent etc without the UI interfering.
-			var swapUI = callback => {
-				var ret;
-
-				this.sneak(() => {
-					var ui = $.remove($(".mv-item-controls", this.element));
-
-					ret = callback();
-
-					$.inside(ui, this.element);
-				});
-
-				return ret;
-			};
-
-			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-			["textContent", "innerHTML"].forEach(property => {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
-
-				Object.defineProperty(this.element, property, {
-					get: function() {
-						return swapUI(() => descriptor.get.call(this));
-					},
-
-					set: function(value) {
-						swapUI(() => descriptor.set.call(this, value));
-					}
-				});
-			});
-		}
-
 		if (!this.constant) {
 			this.setValue(this.templateValue, {silent: true});
 		}
@@ -131,6 +100,8 @@ var _ = Mavo.Primitive = $.Class({
 				this.value = this.getValue();
 			}
 		});
+
+		Mavo.hooks.run("primitive-init-end", this);
 	},
 
 	get editorValue() {

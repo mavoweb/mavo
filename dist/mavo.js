@@ -1446,6 +1446,8 @@ var _ = Mavo.Node = $.Class({
 		this.mode = "edit";
 
 		this.propagate("edit");
+
+		Mavo.hooks.run("node-edit-end", this);
 	},
 
 	done: function() {
@@ -1453,6 +1455,8 @@ var _ = Mavo.Node = $.Class({
 		$.unbind(this.element, ".mavo:edit");
 
 		this.propagate("done");
+
+		Mavo.hooks.run("node-done-end", this);
 	},
 
 	propagate: function() {
@@ -1486,7 +1490,10 @@ var _ = Mavo.Node = $.Class({
 				// result in infinite recursion
 				this._mode = value;
 
-				this.modeObserver.sneak(() => this.element.setAttribute("data-mode", value));
+				this.modeObserver.sneak(() => {
+					var set = this.modes || this.mode == "edit";
+					$.toggleAttribute(this.element, "data-mode", value, set);
+				});
 			}
 		},
 	},
@@ -1686,6 +1693,7 @@ var _ = Mavo.Unit = $.Class({
 
 var _ = Mavo.Group = $.Class({
 	extends: Mavo.Unit,
+	nodeType: "Group",
 	constructor: function (element, mavo, o) {
 		this.children = {};
 
@@ -1882,6 +1890,7 @@ var _ = Mavo.Group = $.Class({
 
 var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Unit,
+	nodeType: "Primitive",
 	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
 			this.defaults = _.getDefaults(element);
@@ -1965,38 +1974,6 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.collection && !this.attribute) {
-			// Collection of primitives, deal with setting textContent etc without the UI interfering.
-			var swapUI = callback => {
-				var ret;
-
-				this.sneak(() => {
-					var ui = $.remove($(".mv-item-controls", this.element));
-
-					ret = callback();
-
-					$.inside(ui, this.element);
-				});
-
-				return ret;
-			};
-
-			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-			["textContent", "innerHTML"].forEach(property => {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
-
-				Object.defineProperty(this.element, property, {
-					get: function() {
-						return swapUI(() => descriptor.get.call(this));
-					},
-
-					set: function(value) {
-						swapUI(() => descriptor.set.call(this, value));
-					}
-				});
-			});
-		}
-
 		if (!this.constant) {
 			this.setValue(this.templateValue, {silent: true});
 		}
@@ -2011,6 +1988,8 @@ var _ = Mavo.Primitive = $.Class({
 				this.value = this.getValue();
 			}
 		});
+
+		Mavo.hooks.run("primitive-init-end", this);
 	},
 
 	get editorValue() {
@@ -2904,6 +2883,7 @@ Mavo.Elements = {
 
 var _ = Mavo.Collection = $.Class({
 	extends: Mavo.Node,
+	nodeType: "Collection",
 	constructor: function (element, mavo, o) {
 		/*
 		 * Create the template, remove it from the DOM and store it
@@ -2984,37 +2964,6 @@ var _ = Mavo.Collection = $.Class({
 			property: this.property,
 			type: this.type
 		});
-
-		// Add delete & add buttons
-		if (this.mutable) {
-			this.mavo.permissions.can("edit", () => {
-				var itemControls = $$(".mv-item-controls", element)
-				                       .filter(el => el.closest(Mavo.selectors.item) == element)[0];
-
-				itemControls = itemControls || $.create({
-					className: "mv-item-controls mv-ui",
-					inside: element
-				});
-
-				$.contents(itemControls, [
-					{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => this.delete(item)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => this.add(null, this.children.indexOf(item)).edit()
-						}
-					}
-				]);
-			});
-		}
 
 		return item;
 	},
@@ -3100,11 +3049,36 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
-		this.propagate("edit");
+		this.super.edit.call(this);
+
+		if (this.mutable) {
+			// Insert the add button if it's not already in the DOM
+			if (!this.addButton.parentNode) {
+				if (this.bottomUp) {
+					this.addButton._.before($.value(this.children[0], "element") || this.marker);
+				}
+				else {
+					var tag = this.element.tagName.toLowerCase();
+					var containerSelector = Mavo.selectors.container[tag];
+
+					if (containerSelector) {
+						var after = this.marker.closest(containerSelector);
+					}
+
+					this.addButton._.after(after && after.parentNode? after : this.marker);
+				}
+			}
+		}
 	},
 
 	done: function() {
-		this.propagate("done");
+		this.super.done.call(this);
+
+		if (this.mutable) {
+			if (this.addButton.parentNode) {
+				this.addButton.remove();
+			}
+		}
 	},
 
 	/**
@@ -3238,23 +3212,6 @@ var _ = Mavo.Collection = $.Class({
 				});
 
 				this.templateElement.classList.add("mv-item");
-
-				// Insert the add button if it's not already in the DOM
-				if (!this.addButton.parentNode) {
-					if (this.bottomUp) {
-						this.addButton._.before($.value(this.children[0], "element") || this.marker);
-					}
-					else {
-						var tag = this.element.tagName.toLowerCase();
-						var containerSelector = Mavo.selectors.container[tag];
-
-						if (containerSelector) {
-							var after = this.marker.closest(containerSelector);
-						}
-
-						this.addButton._.after(after && after.parentNode? after : this.marker);
-					}
-				}
 			}
 		}
 	},
@@ -3321,6 +3278,83 @@ var _ = Mavo.Collection = $.Class({
 			});
 
 			return button;
+		}
+	}
+});
+
+Mavo.hooks.add("primitive-init-end", function() {
+	if (this.collection && !this.attribute) {
+		// Collection of primitives, deal with setting textContent etc without the UI interfering.
+		var swapUI = callback => {
+			var ret;
+
+			this.sneak(() => {
+				var ui = $.remove($(".mv-item-controls", this.element));
+
+				ret = callback();
+
+				$.inside(ui, this.element);
+			});
+
+			return ret;
+		};
+
+		// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+		["textContent", "innerHTML"].forEach(property => {
+			var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+
+			Object.defineProperty(this.element, property, {
+				get: function() {
+					return swapUI(() => descriptor.get.call(this));
+				},
+
+				set: function(value) {
+					swapUI(() => descriptor.set.call(this, value));
+				}
+			});
+		});
+	}
+});
+
+Mavo.hooks.add("node-edit-end", function() {
+	if (this.collection) {
+		if (!this.itemControls) {
+			this.itemControls = $$(".mv-item-controls", this.element)
+								   .filter(el => el.closest(Mavo.selectors.item) == element)[0];
+
+			this.itemControls = this.itemControls || $.create({
+				className: "mv-item-controls mv-ui"
+			});
+
+			$.set(this.itemControls, {
+				contents: [
+					{
+						tag: "button",
+						title: "Delete this " + this.name,
+						className: "mv-delete",
+						events: {
+							"click": evt => this.delete(item)
+						}
+					}, {
+						tag: "button",
+						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
+						className: "mv-add",
+						events: {
+							"click": evt => this.add(null, this.children.indexOf(item)).edit()
+						}
+					}
+				]
+			});
+		}
+
+		this.element.appendChild(this.itemControls);
+	}
+});
+
+Mavo.hooks.add("node-done-end", function() {
+	if (this.collection) {
+		if (this.itemControls) {
+			this.itemControls.remove();
 		}
 	}
 });

@@ -106,6 +106,8 @@ var _ = Mavo.Node = $.Class({
 		this.mode = "edit";
 
 		this.propagate("edit");
+
+		Mavo.hooks.run("node-edit-end", this);
 	},
 
 	done: function() {
@@ -113,6 +115,8 @@ var _ = Mavo.Node = $.Class({
 		$.unbind(this.element, ".mavo:edit");
 
 		this.propagate("done");
+
+		Mavo.hooks.run("node-done-end", this);
 	},
 
 	propagate: function() {
@@ -146,7 +150,10 @@ var _ = Mavo.Node = $.Class({
 				// result in infinite recursion
 				this._mode = value;
 
-				this.modeObserver.sneak(() => this.element.setAttribute("data-mode", value));
+				this.modeObserver.sneak(() => {
+					var set = this.modes || this.mode == "edit";
+					$.toggleAttribute(this.element, "data-mode", value, set);
+				});
 			}
 		},
 	},

@@ -1618,6 +1618,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mode = "edit";
 
 			this.propagate("edit");
+
+			Mavo.hooks.run("node-edit-end", this);
 		},
 
 		done: function done() {
@@ -1625,6 +1627,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			$.unbind(this.element, ".mavo:edit");
 
 			this.propagate("done");
+
+			Mavo.hooks.run("node-done-end", this);
 		},
 
 		propagate: function propagate() {
@@ -1686,7 +1690,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this._mode = value;
 
 					this.modeObserver.sneak(function () {
-						return _this2.element.setAttribute("data-mode", value);
+						var set = _this2.modes || _this2.mode == "edit";
+						$.toggleAttribute(_this2.element, "data-mode", value, set);
 					});
 				}
 			}
@@ -1894,6 +1899,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	var _ = Mavo.Group = $.Class({
 		extends: Mavo.Unit,
+		nodeType: "Group",
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
@@ -2097,6 +2103,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	var _ = Mavo.Primitive = $.Class({
 		extends: Mavo.Unit,
+		nodeType: "Primitive",
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
@@ -2203,46 +2210,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 			}
 
-			if (this.collection && !this.attribute) {
-				// Collection of primitives, deal with setting textContent etc without the UI interfering.
-				var swapUI = function swapUI(callback) {
-					var ret;
-
-					_this.sneak(function () {
-						var ui = $.remove($(".mv-item-controls", _this.element));
-
-						ret = callback();
-
-						$.inside(ui, _this.element);
-					});
-
-					return ret;
-				};
-
-				// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-				["textContent", "innerHTML"].forEach(function (property) {
-					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
-
-					Object.defineProperty(_this.element, property, {
-						get: function get() {
-							var _this2 = this;
-
-							return swapUI(function () {
-								return descriptor.get.call(_this2);
-							});
-						},
-
-						set: function set(value) {
-							var _this3 = this;
-
-							swapUI(function () {
-								return descriptor.set.call(_this3, value);
-							});
-						}
-					});
-				});
-			}
-
 			if (!this.constant) {
 				this.setValue(this.templateValue, { silent: true });
 			}
@@ -2257,6 +2224,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this.value = _this.getValue();
 				}
 			});
+
+			Mavo.hooks.run("primitive-init-end", this);
 		},
 
 		get editorValue() {
@@ -2335,21 +2304,21 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		done: function done() {
-			var _this4 = this;
+			var _this2 = this;
 
 			this.super.done.call(this);
 
 			this.sneak(function () {
-				if (_this4.defaults.done) {
-					_this4.defaults.done.call(_this4);
+				if (_this2.defaults.done) {
+					_this2.defaults.done.call(_this2);
 					return;
 				}
 
-				if (_this4.popup) {
-					_this4.popup.close();
-				} else if (!_this4.attribute && _this4.editor) {
-					$.remove(_this4.editor);
-					_this4.element.textContent = _this4.editorValue;
+				if (_this2.popup) {
+					_this2.popup.close();
+				} else if (!_this2.attribute && _this2.editor) {
+					$.remove(_this2.editor);
+					_this2.element.textContent = _this2.editorValue;
 				}
 			});
 
@@ -2377,7 +2346,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		// Called only the first time this primitive is edited
 		initEdit: function initEdit() {
-			var _this5 = this;
+			var _this3 = this;
 
 			if (!this.editor) {
 				// No editor provided, use default for element type
@@ -2395,15 +2364,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			$.events(this.editor, {
 				"input change": function inputChange(evt) {
-					_this5.value = _this5.editorValue;
+					_this3.value = _this3.editorValue;
 				},
 				"focus": function focus(evt) {
-					_this5.editor.select && _this5.editor.select();
+					_this3.editor.select && _this3.editor.select();
 				},
 				"mavo:datachange": function mavoDatachange(evt) {
 					if (evt.property === "output") {
 						evt.stopPropagation();
-						$.fire(_this5.editor, "input");
+						$.fire(_this3.editor, "input");
 					}
 				}
 			});
@@ -2432,7 +2401,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		edit: function edit() {
-			var _this6 = this;
+			var _this4 = this;
 
 			if (this.constant) {
 				return;
@@ -2454,14 +2423,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				// Empty properties should become editable immediately
 				// otherwise they could be invisible!
-				if (_this6.empty && !_this6.attribute) {
+				if (_this4.empty && !_this4.attribute) {
 					resolve();
 				}
 
-				_this6.element._.events({
+				_this4.element._.events({
 					// click is needed too because it works with the keyboard as well
 					"click.mavo:preedit": function clickMavoPreedit(e) {
-						return _this6.edit();
+						return _this4.edit();
 					},
 					"focus.mavo:preedit": function focusMavoPreedit(e) {
 						resolve();
@@ -2475,9 +2444,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				var timer;
 
-				if (!_this6.attribute) {
+				if (!_this4.attribute) {
 					// Hovering over the element for over 150ms will trigger edit
-					_this6.element._.events({
+					_this4.element._.events({
 						"mouseenter.mavo:preedit": function mouseenterMavoPreedit(e) {
 							clearTimeout(timer);
 							timer = setTimeout(resolve, 150);
@@ -2489,24 +2458,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			}).then(function () {
 				// Actual edit
-				_this6.element._.unbind(".mavo:preedit");
+				_this4.element._.unbind(".mavo:preedit");
 
-				if (_this6.initEdit) {
-					_this6.initEdit();
+				if (_this4.initEdit) {
+					_this4.initEdit();
 				}
 
-				if (_this6.popup) {
-					_this6.popup.show();
+				if (_this4.popup) {
+					_this4.popup.show();
 				} else {
-					_this6.editor.focus();
+					_this4.editor.focus();
 				}
 
-				if (!_this6.attribute) {
-					if (_this6.editor.parentNode != _this6.element) {
-						_this6.editorValue = _this6.value;
-						_this6.element.textContent = "";
+				if (!_this4.attribute) {
+					if (_this4.editor.parentNode != _this4.element) {
+						_this4.editorValue = _this4.value;
+						_this4.element.textContent = "";
 
-						_this6.element.appendChild(_this6.editor);
+						_this4.element.appendChild(_this4.editor);
 					}
 				}
 			});
@@ -2576,7 +2545,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		setValue: function setValue(value) {
-			var _this7 = this;
+			var _this5 = this;
 
 			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
@@ -2587,43 +2556,43 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				value = value || value === 0 ? value : "";
-				value = _.safeCast(value, _this7.datatype);
+				value = _.safeCast(value, _this5.datatype);
 
-				if (value == _this7._value && !o.force) {
+				if (value == _this5._value && !o.force) {
 					return value;
 				}
 
-				if (_this7.editor && document.activeElement != _this7.editor) {
-					_this7.editorValue = value;
+				if (_this5.editor && document.activeElement != _this5.editor) {
+					_this5.editorValue = value;
 				}
 
-				if (_this7.humanReadable && _this7.attribute) {
-					presentational = _this7.humanReadable(value);
+				if (_this5.humanReadable && _this5.attribute) {
+					presentational = _this5.humanReadable(value);
 				}
 
-				if (!_this7.editing || _this7.attribute) {
-					if (_this7.editor && _this7.editor.matches("select") && _this7.editor.selectedOptions[0]) {
-						presentational = _this7.editor.selectedOptions[0].textContent;
+				if (!_this5.editing || _this5.attribute) {
+					if (_this5.editor && _this5.editor.matches("select") && _this5.editor.selectedOptions[0]) {
+						presentational = _this5.editor.selectedOptions[0].textContent;
 					}
 
-					_.setValue(_this7.element, { value: value, presentational: presentational }, {
-						defaults: _this7.defaults,
-						attribute: _this7.attribute,
-						datatype: _this7.datatype
+					_.setValue(_this5.element, { value: value, presentational: presentational }, {
+						defaults: _this5.defaults,
+						attribute: _this5.attribute,
+						datatype: _this5.datatype
 					});
 				}
 
-				_this7.empty = value === "";
+				_this5.empty = value === "";
 
-				_this7._value = value;
+				_this5._value = value;
 
 				if (!o.silent) {
-					if (_this7.saved) {
-						_this7.unsavedChanges = _this7.mavo.unsavedChanges = true;
+					if (_this5.saved) {
+						_this5.unsavedChanges = _this5.mavo.unsavedChanges = true;
 					}
 
 					requestAnimationFrame(function () {
-						return _this7.dataChanged(value);
+						return _this5.dataChanged(value);
 					});
 				}
 			});
@@ -2852,7 +2821,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	_.Popup = $.Class({
 		constructor: function constructor(primitive) {
-			var _this8 = this;
+			var _this6 = this;
 
 			this.primitive = primitive;
 
@@ -2863,12 +2832,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				events: {
 					keyup: function keyup(evt) {
 						if (evt.keyCode == 13 || evt.keyCode == 27) {
-							if (_this8.popup.contains(document.activeElement)) {
-								_this8.element.focus();
+							if (_this6.popup.contains(document.activeElement)) {
+								_this6.element.focus();
 							}
 
 							evt.stopPropagation();
-							_this8.hide();
+							_this6.hide();
 						}
 					}
 				}
@@ -2881,25 +2850,25 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		show: function show() {
-			var _this9 = this;
+			var _this7 = this;
 
 			$.unbind([this.element, this.popup], ".mavo:showpopup");
 
 			this.shown = true;
 
 			this.hideCallback = function (evt) {
-				if (!_this9.popup.contains(evt.target) && !_this9.element.contains(evt.target)) {
-					_this9.hide();
+				if (!_this7.popup.contains(evt.target) && !_this7.element.contains(evt.target)) {
+					_this7.hide();
 				}
 			};
 
 			this.position = function (evt) {
-				var bounds = _this9.element.getBoundingClientRect();
+				var bounds = _this7.element.getBoundingClientRect();
 				var x = bounds.left;
 				var y = bounds.bottom;
 
 				// TODO what if it doesn’t fit?
-				$.style(_this9.popup, { top: y + "px", left: x + "px" });
+				$.style(_this7.popup, { top: y + "px", left: x + "px" });
 			};
 
 			this.position();
@@ -2907,7 +2876,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			document.body.appendChild(this.popup);
 
 			requestAnimationFrame(function (e) {
-				return _this9.popup.removeAttribute("hidden");
+				return _this7.popup.removeAttribute("hidden");
 			}); // trigger transition
 
 			$.events(document, "focus click", this.hideCallback, true);
@@ -2915,7 +2884,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		hide: function hide() {
-			var _this10 = this;
+			var _this8 = this;
 
 			$.unbind(document, "focus click", this.hideCallback, true);
 			window.removeEventListener("scroll", this.position);
@@ -2923,18 +2892,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.shown = false;
 
 			setTimeout(function () {
-				$.remove(_this10.popup);
+				$.remove(_this8.popup);
 			}, parseFloat(getComputedStyle(this.popup).transitionDuration) * 1000 || 400); // TODO transition-duration could override this
 
 			$.events(this.element, {
 				"click.mavo:showpopup": function clickMavoShowpopup(evt) {
-					_this10.show();
+					_this8.show();
 				},
 				"keyup.mavo:showpopup": function keyupMavoShowpopup(evt) {
 					if ([13, 113].indexOf(evt.keyCode) > -1) {
 						// Enter or F2
-						_this10.show();
-						_this10.editor.focus();
+						_this8.show();
+						_this8.editor.focus();
 					}
 				}
 			});
@@ -3186,6 +3155,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	var _ = Mavo.Collection = $.Class({
 		extends: Mavo.Node,
+		nodeType: "Collection",
 		constructor: function constructor(element, mavo, o) {
 			/*
     * Create the template, remove it from the DOM and store it
@@ -3279,8 +3249,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		// Create item but don't insert it anywhere
 		// Mostly used internally
 		createItem: function createItem(element) {
-			var _this = this;
-
 			if (!element) {
 				element = this.templateElement.cloneNode(true);
 			}
@@ -3291,40 +3259,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				property: this.property,
 				type: this.type
 			});
-
-			// Add delete & add buttons
-			if (this.mutable) {
-				this.mavo.permissions.can("edit", function () {
-					var itemControls = $$(".mv-item-controls", element).filter(function (el) {
-						return el.closest(Mavo.selectors.item) == element;
-					})[0];
-
-					itemControls = itemControls || $.create({
-						className: "mv-item-controls mv-ui",
-						inside: element
-					});
-
-					$.contents(itemControls, [{
-						tag: "button",
-						title: "Delete this " + _this.name,
-						className: "mv-delete",
-						events: {
-							"click": function click(evt) {
-								return _this.delete(item);
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Add new " + _this.name.replace(/s$/i, "") + " " + (_this.bottomUp ? "after" : "before"),
-						className: "mv-add",
-						events: {
-							"click": function click(evt) {
-								return _this.add(null, _this.children.indexOf(item)).edit();
-							}
-						}
-					}]);
-				});
-			}
 
 			return item;
 		},
@@ -3387,7 +3321,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		delete: function _delete(item, hard) {
-			var _this2 = this;
+			var _this = this;
 
 			if (hard) {
 				// Hard delete
@@ -3401,22 +3335,46 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				item.element.style.opacity = "";
 
 				item.element._.fire("mavo:datachange", {
-					node: _this2,
-					mavo: _this2.mavo,
+					node: _this,
+					mavo: _this.mavo,
 					action: "delete",
 					item: item
 				});
 
-				_this2.unsavedChanges = item.unsavedChanges = _this2.mavo.unsavedChanges = true;
+				_this.unsavedChanges = item.unsavedChanges = _this.mavo.unsavedChanges = true;
 			});
 		},
 
 		edit: function edit() {
-			this.propagate("edit");
+			this.super.edit.call(this);
+
+			if (this.mutable) {
+				// Insert the add button if it's not already in the DOM
+				if (!this.addButton.parentNode) {
+					if (this.bottomUp) {
+						this.addButton._.before($.value(this.children[0], "element") || this.marker);
+					} else {
+						var tag = this.element.tagName.toLowerCase();
+						var containerSelector = Mavo.selectors.container[tag];
+
+						if (containerSelector) {
+							var after = this.marker.closest(containerSelector);
+						}
+
+						this.addButton._.after(after && after.parentNode ? after : this.marker);
+					}
+				}
+			}
 		},
 
 		done: function done() {
-			this.propagate("done");
+			this.super.done.call(this);
+
+			if (this.mutable) {
+				if (this.addButton.parentNode) {
+					this.addButton.remove();
+				}
+			}
 		},
 
 		/**
@@ -3540,7 +3498,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		render: function render(data) {
-			var _this3 = this;
+			var _this2 = this;
 
 			this.unhandled = { before: [], after: [] };
 
@@ -3565,11 +3523,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var fragment = document.createDocumentFragment();
 
 				data.forEach(function (datum, i) {
-					var item = _this3.createItem();
+					var item = _this2.createItem();
 
 					item.render(datum);
 
-					_this3.children.push(item);
+					_this2.children.push(item);
 					item.index = i;
 
 					fragment.appendChild(item.element);
@@ -3619,22 +3577,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					});
 
 					this.templateElement.classList.add("mv-item");
-
-					// Insert the add button if it's not already in the DOM
-					if (!this.addButton.parentNode) {
-						if (this.bottomUp) {
-							this.addButton._.before($.value(this.children[0], "element") || this.marker);
-						} else {
-							var tag = this.element.tagName.toLowerCase();
-							var containerSelector = Mavo.selectors.container[tag];
-
-							if (containerSelector) {
-								var after = this.marker.closest(containerSelector);
-							}
-
-							this.addButton._.after(after && after.parentNode ? after : this.marker);
-						}
-					}
 				}
 			}
 		},
@@ -3672,7 +3614,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			addButton: function addButton() {
-				var _this4 = this;
+				var _this3 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -3680,7 +3622,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this4.templateElement.contains(button);
+						return !_this3.templateElement.contains(button);
 					})[0];
 				}
 
@@ -3700,10 +3642,102 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this4.add().edit();
+					_this3.add().edit();
 				});
 
 				return button;
+			}
+		}
+	});
+
+	Mavo.hooks.add("primitive-init-end", function () {
+		var _this4 = this;
+
+		if (this.collection && !this.attribute) {
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
+			var swapUI = function swapUI(callback) {
+				var ret;
+
+				_this4.sneak(function () {
+					var ui = $.remove($(".mv-item-controls", _this4.element));
+
+					ret = callback();
+
+					$.inside(ui, _this4.element);
+				});
+
+				return ret;
+			};
+
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+			["textContent", "innerHTML"].forEach(function (property) {
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+
+				Object.defineProperty(_this4.element, property, {
+					get: function get() {
+						var _this5 = this;
+
+						return swapUI(function () {
+							return descriptor.get.call(_this5);
+						});
+					},
+
+					set: function set(value) {
+						var _this6 = this;
+
+						swapUI(function () {
+							return descriptor.set.call(_this6, value);
+						});
+					}
+				});
+			});
+		}
+	});
+
+	Mavo.hooks.add("node-edit-end", function () {
+		var _this7 = this;
+
+		if (this.collection) {
+			if (!this.itemControls) {
+				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
+					return el.closest(Mavo.selectors.item) == element;
+				})[0];
+
+				this.itemControls = this.itemControls || $.create({
+					className: "mv-item-controls mv-ui"
+				});
+
+				$.set(this.itemControls, {
+					contents: [{
+						tag: "button",
+						title: "Delete this " + this.name,
+						className: "mv-delete",
+						events: {
+							"click": function click(evt) {
+								return _this7.delete(item);
+							}
+						}
+					}, {
+						tag: "button",
+						title: "Add new " + this.name.replace(/s$/i, "") + " " + (this.bottomUp ? "after" : "before"),
+						className: "mv-add",
+						events: {
+							"click": function click(evt) {
+								return _this7.add(null, _this7.children.indexOf(item)).edit();
+							}
+						}
+					}]
+				});
+			}
+
+			this.element.appendChild(this.itemControls);
+		}
+	});
+
+	Mavo.hooks.add("node-done-end", function () {
+		if (this.collection) {
+			if (this.itemControls) {
+				this.itemControls.remove();
 			}
 		}
 	});

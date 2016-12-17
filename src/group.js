@@ -2,6 +2,7 @@
 
 var _ = Mavo.Group = $.Class({
 	extends: Mavo.Unit,
+	nodeType: "Group",
 	constructor: function (element, mavo, o) {
 		this.children = {};
 
