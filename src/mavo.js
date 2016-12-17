@@ -5,7 +5,7 @@
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();
-		
+
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
@@ -46,13 +46,6 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
-
-		// Apply heuristic for collections
-		$$(_.selectors.property + ", " + _.selectors.group, element).concat([this.element]).forEach(element => {
-			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
-				element.setAttribute("data-multiple", "");
-			}
-		});
 
 		// Ctrl + S or Cmd + S to save
 		this.wrapper.addEventListener("keydown", evt => {
@@ -525,7 +518,6 @@ let s = _.selectors = {
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
 	multiple: "[multiple], [data-multiple], .mv-multiple",
-	required: "[required], [data-required], .mv-required",
 	formControl: "input, select, option, textarea",
 	item: ".mv-item",
 	ui: ".mv-ui",

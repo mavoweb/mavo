@@ -2,15 +2,19 @@
 
 var _ = Mavo.Node = $.Class({
 	abstract: true,
-	constructor: function (element, mavo, o = {}) {
+	constructor: function (element, mavo, options = {}) {
 		if (!element || !mavo) {
 			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
 
+		var env = {context: this, options};
+
 		this.uid = ++_.maxId;
 
+		_.all.set(element, [...(_.all.get(this.element) || []), this]);
+
 		this.element = element;
-		this.template = o.template;
+		this.template = env.options.template;
 
 		if (this.template) {
 			// TODO remove if this is deleted
@@ -37,9 +41,9 @@ var _ = Mavo.Node = $.Class({
 
 		this.mode = this.modes || "read";
 
-		this.group = this.parentGroup = o.group;
+		this.group = this.parentGroup = env.options.group;
 
-		Mavo.hooks.run("node-init-end", this);
+		Mavo.hooks.run("node-init-end", env);
 	},
 
 	get editing() {
@@ -65,6 +69,31 @@ var _ = Mavo.Node = $.Class({
 
 	get saved() {
 		return this.store !== "none";
+	},
+
+	getData: function(o = {}) {
+		if (this.isDataNull(o)) {
+			return null;
+		}
+
+		// Check if any of the parent groups doesn't return data
+		this.walkUp(group => {
+			if (group.isDataNull(o)) {
+				return null;
+			}
+		});
+	},
+
+	isDataNull: function(o) {
+		var env = {
+			context: this,
+			options: o,
+			result: this.deleted || !this.saved && (o.store != "*")
+		};
+
+		Mavo.hooks.run("unit-isdatanull", env);
+
+		return env.result;
 	},
 
 	walk: function(callback) {
@@ -138,6 +167,20 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	live: {
+		store: function(value) {
+			$.toggleAttribute(this.element, "data-store", value);
+		},
+
+		unsavedChanges: function(value) {
+			if (value && (!this.saved || !this.editing)) {
+				value = false;
+			}
+
+			this.element.classList.toggle("mv-unsaved-changes", value);
+
+			return value;
+		},
+
 		mode: function (value) {
 			if (this._mode != value) {
 				// If we don't do this, calling setAttribute below will
@@ -155,12 +198,14 @@ var _ = Mavo.Node = $.Class({
 	static: {
 		maxId: 0,
 
+		all: new WeakMap(),
+
 		create: function(element, mavo, o = {}) {
 			if (Mavo.is("multiple", element) && !o.collection) {
 				return new Mavo.Collection(element, mavo, o);
 			}
 
-			return Mavo.Unit.create(...arguments);
+			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
 		},
 
 		/**
@@ -178,6 +223,18 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return property;
+		},
+
+		get: function(element, prioritizePrimitive) {
+			var nodes = (_.all.get(element) || []).filter(node => !(node instanceof Mavo.Collection));
+
+			if (nodes.length < 2 || !prioritizePrimitive) {
+				return nodes[0];
+			}
+
+			if (nodes[0] instanceof Mavo.Group) {
+				return node[1];
+			}
 		}
 	}
 });

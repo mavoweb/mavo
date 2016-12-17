@@ -222,7 +222,7 @@ Mavo.hooks.add("group-init-start", function() {
 	}
 }, true);
 
-Mavo.hooks.add("unit-init-end", function() {
+Mavo.hooks.add("node-init-end", function() {
 	if (this.collection) {
 		this.debug = this.collection.debug;
 	}

@@ -200,7 +200,7 @@ if (self.MutationObserver) {
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();
-		
+
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
@@ -241,13 +241,6 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
-
-		// Apply heuristic for collections
-		$$(_.selectors.property + ", " + _.selectors.group, element).concat([this.element]).forEach(element => {
-			if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
-				element.setAttribute("data-multiple", "");
-			}
-		});
 
 		// Ctrl + S or Cmd + S to save
 		this.wrapper.addEventListener("keydown", evt => {
@@ -720,7 +713,6 @@ let s = _.selectors = {
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
 	multiple: "[multiple], [data-multiple], .mv-multiple",
-	required: "[required], [data-required], .mv-required",
 	formControl: "input, select, option, textarea",
 	item: ".mv-item",
 	ui: ".mv-ui",
@@ -1342,15 +1334,19 @@ _.register($.Class({
 
 var _ = Mavo.Node = $.Class({
 	abstract: true,
-	constructor: function (element, mavo, o = {}) {
+	constructor: function (element, mavo, options = {}) {
 		if (!element || !mavo) {
 			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
 
+		var env = {context: this, options};
+
 		this.uid = ++_.maxId;
 
+		_.all.set(element, [...(_.all.get(this.element) || []), this]);
+
 		this.element = element;
-		this.template = o.template;
+		this.template = env.options.template;
 
 		if (this.template) {
 			// TODO remove if this is deleted
@@ -1377,9 +1373,9 @@ var _ = Mavo.Node = $.Class({
 
 		this.mode = this.modes || "read";
 
-		this.group = this.parentGroup = o.group;
+		this.group = this.parentGroup = env.options.group;
 
-		Mavo.hooks.run("node-init-end", this);
+		Mavo.hooks.run("node-init-end", env);
 	},
 
 	get editing() {
@@ -1405,6 +1401,31 @@ var _ = Mavo.Node = $.Class({
 
 	get saved() {
 		return this.store !== "none";
+	},
+
+	getData: function(o = {}) {
+		if (this.isDataNull(o)) {
+			return null;
+		}
+
+		// Check if any of the parent groups doesn't return data
+		this.walkUp(group => {
+			if (group.isDataNull(o)) {
+				return null;
+			}
+		});
+	},
+
+	isDataNull: function(o) {
+		var env = {
+			context: this,
+			options: o,
+			result: this.deleted || !this.saved && (o.store != "*")
+		};
+
+		Mavo.hooks.run("unit-isdatanull", env);
+
+		return env.result;
 	},
 
 	walk: function(callback) {
@@ -1478,6 +1499,20 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	live: {
+		store: function(value) {
+			$.toggleAttribute(this.element, "data-store", value);
+		},
+
+		unsavedChanges: function(value) {
+			if (value && (!this.saved || !this.editing)) {
+				value = false;
+			}
+
+			this.element.classList.toggle("mv-unsaved-changes", value);
+
+			return value;
+		},
+
 		mode: function (value) {
 			if (this._mode != value) {
 				// If we don't do this, calling setAttribute below will
@@ -1495,12 +1530,14 @@ var _ = Mavo.Node = $.Class({
 	static: {
 		maxId: 0,
 
+		all: new WeakMap(),
+
 		create: function(element, mavo, o = {}) {
 			if (Mavo.is("multiple", element) && !o.collection) {
 				return new Mavo.Collection(element, mavo, o);
 			}
 
-			return Mavo.Unit.create(...arguments);
+			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
 		},
 
 		/**
@@ -1518,165 +1555,18 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return property;
-		}
-	}
-});
-
-})(Bliss, Bliss.$);
-
-/*
- * Mavo Unit: Super class that Group and Primitive inherit from
- */
-(function($, $$) {
-
-var _ = Mavo.Unit = $.Class({
-	abstract: true,
-	extends: Mavo.Node,
-	constructor: function(element, mavo, o = {}) {
-		this.constructor.all.set(this.element, this);
-
-		this.collection = o.collection;
-
-		if (this.collection) {
-			// This is a collection item
-			this.group = this.parentGroup = this.collection.parentGroup;
-		}
-
-		if (!this.fromTemplate("required")) {
-			this.required = Mavo.is("required", this.element);
-		}
-
-		Mavo.hooks.run("unit-init-end", this);
-	},
-
-	/**
-	 * Check if this unit is either deleted or inside a deleted group
-	 */
-	isDeleted: function() {
-		var ret = this.deleted;
-
-		if (this.deleted) {
-			return true;
-		}
-
-		return !!this.parentGroup && this.parentGroup.isDeleted();
-	},
-
-	getData: function(o = {}) {
-		if (this.isDataNull(o)) {
-			return null;
-		}
-
-		// Check if any of the parent groups doesn't return data
-		this.walkUp(group => {
-			if (group.isDataNull(o)) {
-				return null;
-			}
-		});
-	},
-
-	isDataNull: function(o) {
-		var env = {
-			context: this,
-			options: o,
-			result: this.deleted || !this.saved && (o.store != "*")
-		};
-
-		Mavo.hooks.run("unit-isdatanull", env);
-
-		return env.result;
-	},
-
-	lazy: {
-		closestCollection: function() {
-			return this.collection ||
-			       this.group.collection ||
-			       (this.parentGroup? this.parentGroup.closestCollection : null);
-		}
-	},
-
-	live: {
-		store: function(value) {
-			$.toggleAttribute(this.element, "data-store", value);
 		},
 
-		deleted: function(value) {
-			this.element.classList.toggle("mv-deleted", value);
-
-			if (value) {
-				// Soft delete, store element contents in a fragment
-				// and replace them with an undo prompt.
-				this.elementContents = document.createDocumentFragment();
-				$$(this.element.childNodes).forEach(node => {
-					this.elementContents.appendChild(node);
-				});
-
-				$.contents(this.element, [
-					{
-						tag: "button",
-						className: "mv-close mv-ui",
-						textContent: "×",
-						events: {
-							"click": function(evt) {
-								$.remove(this.parentNode);
-							}
-						}
-					},
-					"Deleted " + this.name,
-					{
-						tag: "button",
-						className: "mv-undo mv-ui",
-						textContent: "Undo",
-						events: {
-							"click": evt => this.deleted = false
-						}
-					}
-				]);
-
-				this.element.classList.remove("mv-delete-hover");
-			}
-			else if (this.deleted) {
-				// Undelete
-				this.element.textContent = "";
-				this.element.appendChild(this.elementContents);
-
-				// otherwise expressions won't update because this will still seem as deleted
-				// Alternatively, we could fire datachange with a timeout.
-				this._deleted = false;
-
-				$.fire(this.element, "mavo:datachange", {
-					unit: this.collection,
-					mavo: this.mavo,
-					action: "undelete",
-					item: this
-				});
-			}
-		},
-
-		unsavedChanges: function(value) {
-			if (value && (!this.saved || !this.editing)) {
-				value = false;
-			}
-
-			this.element.classList.toggle("mv-unsaved-changes", value);
-
-			return value;
-		}
-	},
-
-	static: {
 		get: function(element, prioritizePrimitive) {
-			var group = Mavo.Group.all.get(element);
+			var nodes = (_.all.get(element) || []).filter(node => !(node instanceof Mavo.Collection));
 
-			return (prioritizePrimitive || !group)? Mavo.Primitive.all.get(element) : group;
-		},
-
-		create: function(element, mavo, o = {}) {
-			if (!element || !mavo) {
-				throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
+			if (nodes.length < 2 || !prioritizePrimitive) {
+				return nodes[0];
 			}
 
-			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
+			if (nodes[0] instanceof Mavo.Group) {
+				return node[1];
+			}
 		}
 	}
 });
@@ -1686,7 +1576,7 @@ var _ = Mavo.Unit = $.Class({
 (function($, $$) {
 
 var _ = Mavo.Group = $.Class({
-	extends: Mavo.Unit,
+	extends: Mavo.Node,
 	nodeType: "Group",
 	constructor: function (element, mavo, o) {
 		this.children = {};
@@ -1795,7 +1685,7 @@ var _ = Mavo.Group = $.Class({
 
 	/**
 	 * Search entire subtree for property, return relative value
-	 * @return {Mavo.Unit}
+	 * @return {Mavo.Node}
 	 */
 	find: function(property) {
 		if (this.property == property) {
@@ -1849,9 +1739,8 @@ var _ = Mavo.Group = $.Class({
 	},
 
 	// Check if this group contains a property
-	// property can be either a Mavo.Unit or a Node
 	contains: function(property) {
-		if (property instanceof Mavo.Unit) {
+		if (property instanceof Mavo.Node) {
 			return property.parentGroup === this;
 		}
 
@@ -1883,7 +1772,7 @@ var _ = Mavo.Group = $.Class({
 (function($, $$) {
 
 var _ = Mavo.Primitive = $.Class({
-	extends: Mavo.Unit,
+	extends: Mavo.Node,
 	nodeType: "Primitive",
 	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
@@ -2004,7 +1893,7 @@ var _ = Mavo.Primitive = $.Class({
 			var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 			if (output) {
-				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
+				return _.getValue(output);
 			}
 		}
 	},
@@ -2023,12 +1912,7 @@ var _ = Mavo.Primitive = $.Class({
 				var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 				if (output) {
-					if (_.all.has(output)) {
-						_.all.get(output).value = value;
-					}
-					else {
-						_.setValue(output, value);
-					}
+					_.setValue(output, value);
 				}
 			}
 		}
@@ -2090,7 +1974,7 @@ var _ = Mavo.Primitive = $.Class({
 
 	revert: function() {
 		if (this.unsavedChanges && this.savedValue !== undefined) {
-			// FIXME if we have a collection of properties (notgroups), this will cause
+			// FIXME if we have a collection of properties (not groups), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;
@@ -2952,7 +2836,7 @@ var _ = Mavo.Collection = $.Class({
 			element = this.templateElement.cloneNode(true);
 		}
 
-		var item = Mavo.Unit.create(element, this.mavo, {
+		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
@@ -2964,13 +2848,13 @@ var _ = Mavo.Collection = $.Class({
 
 	/**
 	 * Add a new item to this collection
-	 * @param item {Node|Mavo.Unit} Optional. Element or Mavo object for the new item
+	 * @param item {Node|Mavo.Node} Optional. Element or Mavo object for the new item
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
 	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
-			item = Mavo.Unit.get(item) || this.createItem(item);
+			item = Mavo.Node.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();
@@ -3196,8 +3080,6 @@ var _ = Mavo.Collection = $.Class({
 
 				this.mavo.needsEdit = true;
 
-				this.required = this.templateElement.matches(Mavo.selectors.required);
-
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
@@ -3314,7 +3196,7 @@ Mavo.hooks.add("node-edit-end", function() {
 	if (this.collection) {
 		if (!this.itemControls) {
 			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.item) == element)[0];
+								   .filter(el => el.closest(Mavo.selectors.item) == this.element)[0];
 
 			this.itemControls = this.itemControls || $.create({
 				className: "mv-item-controls mv-ui"
@@ -3350,6 +3232,87 @@ Mavo.hooks.add("node-done-end", function() {
 		if (this.itemControls) {
 			this.itemControls.remove();
 		}
+	}
+});
+
+$.lazy(Mavo.Node.prototype, "closestCollection", function() {
+	return this.collection ||
+		   this.group.collection ||
+		   (this.parentGroup? this.parentGroup.closestCollection : null);
+});
+
+$.live(Mavo.Node.prototype, "deleted", function(value) {
+	this.element.classList.toggle("mv-deleted", value);
+
+	if (value) {
+		// Soft delete, store element contents in a fragment
+		// and replace them with an undo prompt.
+		this.elementContents = document.createDocumentFragment();
+		$$(this.element.childNodes).forEach(node => {
+			this.elementContents.appendChild(node);
+		});
+
+		$.contents(this.element, [
+			{
+				tag: "button",
+				className: "mv-close mv-ui",
+				textContent: "×",
+				events: {
+					"click": function(evt) {
+						$.remove(this.parentNode);
+					}
+				}
+			},
+			"Deleted " + this.name,
+			{
+				tag: "button",
+				className: "mv-undo mv-ui",
+				textContent: "Undo",
+				events: {
+					"click": evt => this.deleted = false
+				}
+			}
+		]);
+
+		this.element.classList.remove("mv-delete-hover");
+	}
+	else if (this.deleted) {
+		// Undelete
+		this.element.textContent = "";
+		this.element.appendChild(this.elementContents);
+
+		// otherwise expressions won't update because this will still seem as deleted
+		// Alternatively, we could fire datachange with a timeout.
+		this._deleted = false;
+
+		$.fire(this.element, "mavo:datachange", {
+			unit: this.collection,
+			mavo: this.mavo,
+			action: "undelete",
+			item: this
+		});
+	}
+});
+
+/**
+ * Check if this unit is either deleted or inside a deleted group
+ */
+Mavo.Node.prototype.isDeleted = function() {
+	var ret = this.deleted;
+
+	if (this.deleted) {
+		return true;
+	}
+
+	return !!this.parentGroup && this.parentGroup.isDeleted();
+};
+
+Mavo.hooks.add("node-init-end", function(env) {
+	this.collection = env.options.collection;
+
+	if (this.collection) {
+		// This is a collection item
+		this.group = this.parentGroup = this.collection.parentGroup;
 	}
 });
 
@@ -4018,7 +3981,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 
 	var properties = $$(Mavo.selectors.property, this.element)
 					.filter(el => el.closest("[data-if]") == this.element)
-					.map(el => Mavo.Unit.get(el));
+					.map(el => Mavo.Node.get(el));
 
 	if (properties.length) {
 		// When the element is detached, datachange events from properties
@@ -5037,7 +5000,7 @@ Mavo.hooks.add("group-init-start", function() {
 	}
 }, true);
 
-Mavo.hooks.add("unit-init-end", function() {
+Mavo.hooks.add("node-init-end", function() {
 	if (this.collection) {
 		this.debug = this.collection.debug;
 	}
@@ -5537,7 +5500,7 @@ var _ = Mavo.Backend.register($.Class({
 			$.fire(this.mavo.wrapper, "mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
-							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}
+							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}
 						</a>`
 			});
 		});

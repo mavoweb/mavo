@@ -1,7 +1,7 @@
 (function($, $$) {
 
 var _ = Mavo.Group = $.Class({
-	extends: Mavo.Unit,
+	extends: Mavo.Node,
 	nodeType: "Group",
 	constructor: function (element, mavo, o) {
 		this.children = {};
@@ -110,7 +110,7 @@ var _ = Mavo.Group = $.Class({
 
 	/**
 	 * Search entire subtree for property, return relative value
-	 * @return {Mavo.Unit}
+	 * @return {Mavo.Node}
 	 */
 	find: function(property) {
 		if (this.property == property) {
@@ -164,9 +164,8 @@ var _ = Mavo.Group = $.Class({
 	},
 
 	// Check if this group contains a property
-	// property can be either a Mavo.Unit or a Node
 	contains: function(property) {
-		if (property instanceof Mavo.Unit) {
+		if (property instanceof Mavo.Node) {
 			return property.parentGroup === this;
 		}
 

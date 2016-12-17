@@ -199,7 +199,7 @@ var _ = Mavo.Backend.register($.Class({
 			$.fire(this.mavo.wrapper, "mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
-							<img class="avatar" src="${accountInfo.avatar_url}" /> ${name}
+							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}
 						</a>`
 			});
 		});

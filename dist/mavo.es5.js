@@ -248,13 +248,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
-			// Apply heuristic for collections
-			$$(_.selectors.property + ", " + _.selectors.group, element).concat([this.element]).forEach(function (element) {
-				if (_.is("autoMultiple", element) && !element.hasAttribute("data-multiple")) {
-					element.setAttribute("data-multiple", "");
-				}
-			});
-
 			// Ctrl + S or Cmd + S to save
 			this.wrapper.addEventListener("keydown", function (evt) {
 				if (evt.keyCode == 83 && evt[_.superKey]) {
@@ -752,7 +745,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				},
 				group: "[typeof], [itemscope], [itemtype], .mv-group",
 				multiple: "[multiple], [data-multiple], .mv-multiple",
-				required: "[required], [data-required], .mv-required",
 				formControl: "input, select, option, textarea",
 				item: ".mv-item",
 				ui: ".mv-ui",
@@ -1502,6 +1494,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss);
 "use strict";
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 (function ($, $$) {
 
 	var _ = Mavo.Node = $.Class({
@@ -1509,16 +1503,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor(element, mavo) {
 			var _this = this;
 
-			var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+			var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 			if (!element || !mavo) {
 				throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 			}
 
+			var env = { context: this, options: options };
+
 			this.uid = ++_.maxId;
 
+			_.all.set(element, [].concat(_toConsumableArray(_.all.get(this.element) || []), [this]));
+
 			this.element = element;
-			this.template = o.template;
+			this.template = env.options.template;
 
 			if (this.template) {
 				// TODO remove if this is deleted
@@ -1544,9 +1542,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mode = this.modes || "read";
 
-			this.group = this.parentGroup = o.group;
+			this.group = this.parentGroup = env.options.group;
 
-			Mavo.hooks.run("node-init-end", this);
+			Mavo.hooks.run("node-init-end", env);
 		},
 
 		get editing() {
@@ -1572,6 +1570,33 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		get saved() {
 			return this.store !== "none";
+		},
+
+		getData: function getData() {
+			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+			if (this.isDataNull(o)) {
+				return null;
+			}
+
+			// Check if any of the parent groups doesn't return data
+			this.walkUp(function (group) {
+				if (group.isDataNull(o)) {
+					return null;
+				}
+			});
+		},
+
+		isDataNull: function isDataNull(o) {
+			var env = {
+				context: this,
+				options: o,
+				result: this.deleted || !this.saved && o.store != "*"
+			};
+
+			Mavo.hooks.run("unit-isdatanull", env);
+
+			return env.result;
 		},
 
 		walk: function walk(callback) {
@@ -1617,13 +1642,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		propagate: function propagate(callback) {
 			for (var i in this.children) {
-				var node = this.children[i];
+				var _node = this.children[i];
 
-				if (node instanceof Mavo.Node) {
+				if (_node instanceof Mavo.Node) {
 					if (typeof callback === "function") {
-						callback.call(node, node);
-					} else if (callback in node) {
-						node[callback]();
+						callback.call(_node, _node);
+					} else if (callback in _node) {
+						_node[callback]();
 					}
 				}
 			}
@@ -1669,6 +1694,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		live: {
+			store: function store(value) {
+				$.toggleAttribute(this.element, "data-store", value);
+			},
+
+			unsavedChanges: function unsavedChanges(value) {
+				if (value && (!this.saved || !this.editing)) {
+					value = false;
+				}
+
+				this.element.classList.toggle("mv-unsaved-changes", value);
+
+				return value;
+			},
+
 			mode: function mode(value) {
 				var _this2 = this;
 
@@ -1688,16 +1727,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			maxId: 0,
 
-			create: function create(element, mavo) {
-				var _Mavo$Unit;
+			all: new WeakMap(),
 
+			create: function create(element, mavo) {
 				var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 				if (Mavo.is("multiple", element) && !o.collection) {
 					return new Mavo.Collection(element, mavo, o);
 				}
 
-				return (_Mavo$Unit = Mavo.Unit).create.apply(_Mavo$Unit, arguments);
+				return new Mavo[Mavo.is("group", element) ? "Group" : "Primitive"](element, mavo, o);
 			},
 
 			/**
@@ -1715,168 +1754,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return property;
-			}
-		}
-	});
-})(Bliss, Bliss.$);
-"use strict";
-
-/*
- * Mavo Unit: Super class that Group and Primitive inherit from
- */
-(function ($, $$) {
-
-	var _ = Mavo.Unit = $.Class({
-		abstract: true,
-		extends: Mavo.Node,
-		constructor: function constructor(element, mavo) {
-			var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-			this.constructor.all.set(this.element, this);
-
-			this.collection = o.collection;
-
-			if (this.collection) {
-				// This is a collection item
-				this.group = this.parentGroup = this.collection.parentGroup;
-			}
-
-			if (!this.fromTemplate("required")) {
-				this.required = Mavo.is("required", this.element);
-			}
-
-			Mavo.hooks.run("unit-init-end", this);
-		},
-
-		/**
-   * Check if this unit is either deleted or inside a deleted group
-   */
-		isDeleted: function isDeleted() {
-			var ret = this.deleted;
-
-			if (this.deleted) {
-				return true;
-			}
-
-			return !!this.parentGroup && this.parentGroup.isDeleted();
-		},
-
-		getData: function getData() {
-			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-			if (this.isDataNull(o)) {
-				return null;
-			}
-
-			// Check if any of the parent groups doesn't return data
-			this.walkUp(function (group) {
-				if (group.isDataNull(o)) {
-					return null;
-				}
-			});
-		},
-
-		isDataNull: function isDataNull(o) {
-			var env = {
-				context: this,
-				options: o,
-				result: this.deleted || !this.saved && o.store != "*"
-			};
-
-			Mavo.hooks.run("unit-isdatanull", env);
-
-			return env.result;
-		},
-
-		lazy: {
-			closestCollection: function closestCollection() {
-				return this.collection || this.group.collection || (this.parentGroup ? this.parentGroup.closestCollection : null);
-			}
-		},
-
-		live: {
-			store: function store(value) {
-				$.toggleAttribute(this.element, "data-store", value);
 			},
 
-			deleted: function deleted(value) {
-				var _this = this;
-
-				this.element.classList.toggle("mv-deleted", value);
-
-				if (value) {
-					// Soft delete, store element contents in a fragment
-					// and replace them with an undo prompt.
-					this.elementContents = document.createDocumentFragment();
-					$$(this.element.childNodes).forEach(function (node) {
-						_this.elementContents.appendChild(node);
-					});
-
-					$.contents(this.element, [{
-						tag: "button",
-						className: "mv-close mv-ui",
-						textContent: "×",
-						events: {
-							"click": function click(evt) {
-								$.remove(this.parentNode);
-							}
-						}
-					}, "Deleted " + this.name, {
-						tag: "button",
-						className: "mv-undo mv-ui",
-						textContent: "Undo",
-						events: {
-							"click": function click(evt) {
-								return _this.deleted = false;
-							}
-						}
-					}]);
-
-					this.element.classList.remove("mv-delete-hover");
-				} else if (this.deleted) {
-					// Undelete
-					this.element.textContent = "";
-					this.element.appendChild(this.elementContents);
-
-					// otherwise expressions won't update because this will still seem as deleted
-					// Alternatively, we could fire datachange with a timeout.
-					this._deleted = false;
-
-					$.fire(this.element, "mavo:datachange", {
-						unit: this.collection,
-						mavo: this.mavo,
-						action: "undelete",
-						item: this
-					});
-				}
-			},
-
-			unsavedChanges: function unsavedChanges(value) {
-				if (value && (!this.saved || !this.editing)) {
-					value = false;
-				}
-
-				this.element.classList.toggle("mv-unsaved-changes", value);
-
-				return value;
-			}
-		},
-
-		static: {
 			get: function get(element, prioritizePrimitive) {
-				var group = Mavo.Group.all.get(element);
+				var nodes = (_.all.get(element) || []).filter(function (node) {
+					return !(node instanceof Mavo.Collection);
+				});
 
-				return prioritizePrimitive || !group ? Mavo.Primitive.all.get(element) : group;
-			},
-
-			create: function create(element, mavo) {
-				var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-				if (!element || !mavo) {
-					throw new TypeError("Mavo.Unit.create() requires an element argument and a mavo object");
+				if (nodes.length < 2 || !prioritizePrimitive) {
+					return nodes[0];
 				}
 
-				return new Mavo[Mavo.is("group", element) ? "Group" : "Primitive"](element, mavo, o);
+				if (nodes[0] instanceof Mavo.Group) {
+					return node[1];
+				}
 			}
 		}
 	});
@@ -1886,7 +1777,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($, $$) {
 
 	var _ = Mavo.Group = $.Class({
-		extends: Mavo.Unit,
+		extends: Mavo.Node,
 		nodeType: "Group",
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
@@ -1998,7 +1889,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		/**
    * Search entire subtree for property, return relative value
-   * @return {Mavo.Unit}
+   * @return {Mavo.Node}
    */
 		find: function find(property) {
 			if (this.property == property) {
@@ -2054,9 +1945,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		// Check if this group contains a property
-		// property can be either a Mavo.Unit or a Node
 		contains: function contains(property) {
-			if (property instanceof Mavo.Unit) {
+			if (property instanceof Mavo.Node) {
 				return property.parentGroup === this;
 			}
 
@@ -2090,7 +1980,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 (function ($, $$) {
 
 	var _ = Mavo.Primitive = $.Class({
-		extends: Mavo.Unit,
+		extends: Mavo.Node,
 		nodeType: "Primitive",
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
@@ -2234,7 +2124,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 				if (output) {
-					return _.all.has(output) ? _.all.get(output).value : _.getValue(output);
+					return _.getValue(output);
 				}
 			}
 		},
@@ -2252,11 +2142,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 					if (output) {
-						if (_.all.has(output)) {
-							_.all.get(output).value = value;
-						} else {
-							_.setValue(output, value);
-						}
+						_.setValue(output, value);
 					}
 				}
 			}
@@ -2320,7 +2206,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		revert: function revert() {
 			if (this.unsavedChanges && this.savedValue !== undefined) {
-				// FIXME if we have a collection of properties (notgroups), this will cause
+				// FIXME if we have a collection of properties (not groups), this will cause
 				// cancel to not remove new unsaved items
 				// This should be fixed by handling this on the collection level.
 				this.value = this.savedValue;
@@ -3241,7 +3127,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				element = this.templateElement.cloneNode(true);
 			}
 
-			var item = Mavo.Unit.create(element, this.mavo, {
+			var item = Mavo.Node.create(element, this.mavo, {
 				collection: this,
 				template: this.itemTemplate || (this.template ? this.template.itemTemplate : null),
 				property: this.property,
@@ -3253,7 +3139,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		/**
    * Add a new item to this collection
-   * @param item {Node|Mavo.Unit} Optional. Element or Mavo object for the new item
+   * @param item {Node|Mavo.Node} Optional. Element or Mavo object for the new item
    * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
    * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
    */
@@ -3261,7 +3147,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			var o = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 			if (item instanceof Node) {
-				item = Mavo.Unit.get(item) || this.createItem(item);
+				item = Mavo.Node.get(item) || this.createItem(item);
 			} else {
 				item = item || this.createItem();
 			}
@@ -3555,8 +3441,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 					this.mavo.needsEdit = true;
 
-					this.required = this.templateElement.matches(Mavo.selectors.required);
-
 					// Keep position of the template in the DOM, since we might remove it
 					this.marker = $.create("div", {
 						hidden: true,
@@ -3688,7 +3572,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		if (this.collection) {
 			if (!this.itemControls) {
 				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
-					return el.closest(Mavo.selectors.item) == element;
+					return el.closest(Mavo.selectors.item) == _this7.element;
 				})[0];
 
 				this.itemControls = this.itemControls || $.create({
@@ -3727,6 +3611,84 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (this.itemControls) {
 				this.itemControls.remove();
 			}
+		}
+	});
+
+	$.lazy(Mavo.Node.prototype, "closestCollection", function () {
+		return this.collection || this.group.collection || (this.parentGroup ? this.parentGroup.closestCollection : null);
+	});
+
+	$.live(Mavo.Node.prototype, "deleted", function (value) {
+		var _this8 = this;
+
+		this.element.classList.toggle("mv-deleted", value);
+
+		if (value) {
+			// Soft delete, store element contents in a fragment
+			// and replace them with an undo prompt.
+			this.elementContents = document.createDocumentFragment();
+			$$(this.element.childNodes).forEach(function (node) {
+				_this8.elementContents.appendChild(node);
+			});
+
+			$.contents(this.element, [{
+				tag: "button",
+				className: "mv-close mv-ui",
+				textContent: "×",
+				events: {
+					"click": function click(evt) {
+						$.remove(this.parentNode);
+					}
+				}
+			}, "Deleted " + this.name, {
+				tag: "button",
+				className: "mv-undo mv-ui",
+				textContent: "Undo",
+				events: {
+					"click": function click(evt) {
+						return _this8.deleted = false;
+					}
+				}
+			}]);
+
+			this.element.classList.remove("mv-delete-hover");
+		} else if (this.deleted) {
+			// Undelete
+			this.element.textContent = "";
+			this.element.appendChild(this.elementContents);
+
+			// otherwise expressions won't update because this will still seem as deleted
+			// Alternatively, we could fire datachange with a timeout.
+			this._deleted = false;
+
+			$.fire(this.element, "mavo:datachange", {
+				unit: this.collection,
+				mavo: this.mavo,
+				action: "undelete",
+				item: this
+			});
+		}
+	});
+
+	/**
+  * Check if this unit is either deleted or inside a deleted group
+  */
+	Mavo.Node.prototype.isDeleted = function () {
+		var ret = this.deleted;
+
+		if (this.deleted) {
+			return true;
+		}
+
+		return !!this.parentGroup && this.parentGroup.isDeleted();
+	};
+
+	Mavo.hooks.add("node-init-end", function (env) {
+		this.collection = env.options.collection;
+
+		if (this.collection) {
+			// This is a collection item
+			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 	});
 })(Bliss, Bliss.$);
@@ -4549,7 +4511,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
 	var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
 		return el.closest("[data-if]") == _this7.element;
 	}).map(function (el) {
-		return Mavo.Unit.get(el);
+		return Mavo.Node.get(el);
 	});
 
 	if (properties.length) {
@@ -5630,7 +5592,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	}, true);
 
-	Mavo.hooks.add("unit-init-end", function () {
+	Mavo.hooks.add("node-init-end", function () {
 		if (this.collection) {
 			this.debug = this.collection.debug;
 		}
@@ -6151,7 +6113,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var name = accountInfo.name || accountInfo.login;
 				$.fire(_this3.mavo.wrapper, "mavo:login", {
 					backend: _this3,
-					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + name + "\n\t\t\t\t\t\t</a>"
+					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"mv-avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + name + "\n\t\t\t\t\t\t</a>"
 				});
 			});
 		},

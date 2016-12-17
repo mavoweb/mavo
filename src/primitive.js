@@ -1,7 +1,7 @@
 (function($, $$) {
 
 var _ = Mavo.Primitive = $.Class({
-	extends: Mavo.Unit,
+	extends: Mavo.Node,
 	nodeType: "Primitive",
 	constructor: function (element, mavo, o) {
 		if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
@@ -122,7 +122,7 @@ var _ = Mavo.Primitive = $.Class({
 			var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 			if (output) {
-				return _.all.has(output)? _.all.get(output).value : _.getValue(output);
+				return _.getValue(output);
 			}
 		}
 	},
@@ -141,12 +141,7 @@ var _ = Mavo.Primitive = $.Class({
 				var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
 				if (output) {
-					if (_.all.has(output)) {
-						_.all.get(output).value = value;
-					}
-					else {
-						_.setValue(output, value);
-					}
+					_.setValue(output, value);
 				}
 			}
 		}
@@ -208,7 +203,7 @@ var _ = Mavo.Primitive = $.Class({
 
 	revert: function() {
 		if (this.unsavedChanges && this.savedValue !== undefined) {
-			// FIXME if we have a collection of properties (notgroups), this will cause
+			// FIXME if we have a collection of properties (not groups), this will cause
 			// cancel to not remove new unsaved items
 			// This should be fixed by handling this on the collection level.
 			this.value = this.savedValue;

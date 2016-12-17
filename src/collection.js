@@ -77,7 +77,7 @@ var _ = Mavo.Collection = $.Class({
 			element = this.templateElement.cloneNode(true);
 		}
 
-		var item = Mavo.Unit.create(element, this.mavo, {
+		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
 			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
 			property: this.property,
@@ -89,13 +89,13 @@ var _ = Mavo.Collection = $.Class({
 
 	/**
 	 * Add a new item to this collection
-	 * @param item {Node|Mavo.Unit} Optional. Element or Mavo object for the new item
+	 * @param item {Node|Mavo.Node} Optional. Element or Mavo object for the new item
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
 	add: function(item, index, o = {}) {
 		if (item instanceof Node) {
-			item = Mavo.Unit.get(item) || this.createItem(item);
+			item = Mavo.Node.get(item) || this.createItem(item);
 		}
 		else {
 			item = item || this.createItem();
@@ -321,8 +321,6 @@ var _ = Mavo.Collection = $.Class({
 
 				this.mavo.needsEdit = true;
 
-				this.required = this.templateElement.matches(Mavo.selectors.required);
-
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = $.create("div", {
 					hidden: true,
@@ -439,7 +437,7 @@ Mavo.hooks.add("node-edit-end", function() {
 	if (this.collection) {
 		if (!this.itemControls) {
 			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.item) == element)[0];
+								   .filter(el => el.closest(Mavo.selectors.item) == this.element)[0];
 
 			this.itemControls = this.itemControls || $.create({
 				className: "mv-item-controls mv-ui"
@@ -475,6 +473,87 @@ Mavo.hooks.add("node-done-end", function() {
 		if (this.itemControls) {
 			this.itemControls.remove();
 		}
+	}
+});
+
+$.lazy(Mavo.Node.prototype, "closestCollection", function() {
+	return this.collection ||
+		   this.group.collection ||
+		   (this.parentGroup? this.parentGroup.closestCollection : null);
+});
+
+$.live(Mavo.Node.prototype, "deleted", function(value) {
+	this.element.classList.toggle("mv-deleted", value);
+
+	if (value) {
+		// Soft delete, store element contents in a fragment
+		// and replace them with an undo prompt.
+		this.elementContents = document.createDocumentFragment();
+		$$(this.element.childNodes).forEach(node => {
+			this.elementContents.appendChild(node);
+		});
+
+		$.contents(this.element, [
+			{
+				tag: "button",
+				className: "mv-close mv-ui",
+				textContent: "×",
+				events: {
+					"click": function(evt) {
+						$.remove(this.parentNode);
+					}
+				}
+			},
+			"Deleted " + this.name,
+			{
+				tag: "button",
+				className: "mv-undo mv-ui",
+				textContent: "Undo",
+				events: {
+					"click": evt => this.deleted = false
+				}
+			}
+		]);
+
+		this.element.classList.remove("mv-delete-hover");
+	}
+	else if (this.deleted) {
+		// Undelete
+		this.element.textContent = "";
+		this.element.appendChild(this.elementContents);
+
+		// otherwise expressions won't update because this will still seem as deleted
+		// Alternatively, we could fire datachange with a timeout.
+		this._deleted = false;
+
+		$.fire(this.element, "mavo:datachange", {
+			unit: this.collection,
+			mavo: this.mavo,
+			action: "undelete",
+			item: this
+		});
+	}
+});
+
+/**
+ * Check if this unit is either deleted or inside a deleted group
+ */
+Mavo.Node.prototype.isDeleted = function() {
+	var ret = this.deleted;
+
+	if (this.deleted) {
+		return true;
+	}
+
+	return !!this.parentGroup && this.parentGroup.isDeleted();
+};
+
+Mavo.hooks.add("node-init-end", function(env) {
+	this.collection = env.options.collection;
+
+	if (this.collection) {
+		// This is a collection item
+		this.group = this.parentGroup = this.collection.parentGroup;
 	}
 });
 

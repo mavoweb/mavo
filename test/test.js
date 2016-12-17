@@ -111,6 +111,7 @@ requestAnimationFrame(() => {
 								var refOption = refChild.options[i];
 								var same = option.textContent == refOption.textContent &&
 								           option.value == refOption.value;
+								pass = pass && same;
 							});
 						}
 					}

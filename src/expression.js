@@ -661,7 +661,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 
 	var properties = $$(Mavo.selectors.property, this.element)
 					.filter(el => el.closest("[data-if]") == this.element)
-					.map(el => Mavo.Unit.get(el));
+					.map(el => Mavo.Node.get(el));
 
 	if (properties.length) {
 		// When the element is detached, datachange events from properties
