@@ -1502,8 +1502,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss);
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
-
 (function ($, $$) {
 
 	var _ = Mavo.Node = $.Class({
@@ -1600,20 +1598,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		call: function call(callback) {
-			for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-				args[_key - 1] = arguments[_key];
-			}
-
-			args = args || [];
-
-			if (typeof callback === "string") {
-				return this[callback].apply(this, _toConsumableArray(args));
-			} else {
-				return callback.apply(this, [this].concat(_toConsumableArray(args)));
-			}
-		},
-
 		edit: function edit() {
 			this.mode = "edit";
 
@@ -1631,12 +1615,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Mavo.hooks.run("node-done-end", this);
 		},
 
-		propagate: function propagate() {
+		propagate: function propagate(callback) {
 			for (var i in this.children) {
 				var node = this.children[i];
 
 				if (node instanceof Mavo.Node) {
-					node.call.apply(node, arguments);
+					if (typeof callback === "function") {
+						callback.call(node, node);
+					} else if (callback in node) {
+						node[callback]();
+					}
 				}
 			}
 		},
@@ -1647,8 +1635,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		fromTemplate: function fromTemplate() {
 			if (this.template) {
-				for (var _len2 = arguments.length, properties = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-					properties[_key2] = arguments[_key2];
+				for (var _len = arguments.length, properties = Array(_len), _key = 0; _key < _len; _key++) {
+					properties[_key] = arguments[_key];
 				}
 
 				var _iteratorNormalCompletion = true;

@@ -91,17 +91,6 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	call: function(callback, ...args) {
-		args = args || [];
-
-		if (typeof callback === "string") {
-			return this[callback](...args);
-		}
-		else {
-			return callback.apply(this, [this, ...args]);
-		}
-	},
-
 	edit: function() {
 		this.mode = "edit";
 
@@ -119,12 +108,17 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-done-end", this);
 	},
 
-	propagate: function() {
+	propagate: function(callback) {
 		for (let i in this.children) {
 			let node = this.children[i];
 
 			if (node instanceof Mavo.Node) {
-				node.call(...arguments);
+				if (typeof callback === "function") {
+					callback.call(node, node);
+				}
+				else if (callback in node) {
+					node[callback]();
+				}
 			}
 		}
 	},
