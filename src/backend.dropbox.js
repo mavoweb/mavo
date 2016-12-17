@@ -32,9 +32,9 @@ Mavo.Backend.register($.Class({
 				return;
 			}
 
-			this.path = (this.mavo.wrapper.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.mavo.element.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.key = this.mavo.wrapper.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
+			this.key = this.mavo.element.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
 
 			this.client = new Dropbox.Client({ key: this.key });
 		})).then(() => {
@@ -90,7 +90,7 @@ Mavo.Backend.register($.Class({
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					$.fire(this.mavo.wrapper, "mavo:login", $.extend({backend: this}, accountInfo));
+					$.fire(this.mavo.element, "mavo:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -101,7 +101,7 @@ Mavo.Backend.register($.Class({
 			this.client.signOut(null, () => {
 				this.permissions.off(["edit", "add", "delete"]).on("login");
 
-				this.mavo.wrapper._.fire("mavo:logout", {backend: this});
+				this.mavo.element._.fire("mavo:logout", {backend: this});
 				resolve();
 			});
 		});

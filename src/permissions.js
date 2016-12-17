@@ -106,7 +106,7 @@ var _ = Mavo.Permissions = $.Class({
 		// need to set it manually, otherwise it still has its previous value
 		this["_" + action] = value;
 
-		// TODO add classes to wrapper
+		// TODO add classes to element
 		this.triggers.forEach(trigger => {
 			var match = this.is(trigger.actions, trigger.value);
 

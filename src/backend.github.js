@@ -10,7 +10,7 @@ var _ = Mavo.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("login");
 
-		this.key = this.mavo.wrapper.getAttribute("data-github-key") || "7e08e016048000bc594e";
+		this.key = this.mavo.element.getAttribute("data-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);
@@ -185,7 +185,7 @@ var _ = Mavo.Backend.register($.Class({
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.mavo.wrapper._.fire("mavo:logout", {backend: this});
+			this.mavo.element._.fire("mavo:logout", {backend: this});
 		}
 
 		return Promise.resolve();
@@ -196,7 +196,7 @@ var _ = Mavo.Backend.register($.Class({
 			this.user = accountInfo;
 
 			var name = accountInfo.name || accountInfo.login;
-			$.fire(this.mavo.wrapper, "mavo:login", {
+			$.fire(this.mavo.element, "mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
 							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}

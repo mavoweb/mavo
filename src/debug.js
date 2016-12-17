@@ -149,10 +149,10 @@ Stretchy.selectors.filter += selector;
 // Add element to show saved data
 Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
-		this.wrapper.classList.add("mv-debug-saving");
+		this.element.classList.add("mv-debug-saving");
 	}
 
-	if (this.store && this.wrapper.classList.contains("mv-debug-saving")) {
+	if (this.store && this.element.classList.contains("mv-debug-saving")) {
 		var element;
 
 		var details = $.create("details", {
@@ -161,10 +161,10 @@ Mavo.hooks.add("init-tree-after", function() {
 				{tag: "Summary", textContent: "Saved data"},
 				element = $.create("pre", {id: this.id + "-debug-storage"})
 			],
-			after: this.wrapper
+			after: this.element
 		});
 
-		this.wrapper.addEventListener("mavo:save", evt => {
+		this.element.addEventListener("mavo:save", evt => {
 			element.innerHTML = "";
 
 			element.appendChild(prettyPrint(evt.data));
@@ -173,7 +173,7 @@ Mavo.hooks.add("init-tree-after", function() {
 });
 
 Mavo.hooks.add("render-start", function({data}) {
-	if (this.backend && this.wrapper.classList.contains("mv-debug-saving")) {
+	if (this.backend && this.element.classList.contains("mv-debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {

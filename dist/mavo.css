@@ -11,7 +11,7 @@
     background-size: .5em .5em, .5em .5em, 1em 1em;
     background-position: .25em 50%, 1.25em 50%, 2em 50%; } }
 
-.mv-wrapper[data-mv-progress]::after, .mv-wrapper[data-mv-progress="Saving"] .mv-bar .mv-save::after {
+[data-mavo][data-mv-progress]::after, [data-mavo][data-mv-progress="Saving"] .mv-bar .mv-save::after {
   width: 3em;
   height: 1em;
   background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 0 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 1.25em 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 2.25em 50%;
@@ -88,8 +88,8 @@
     .mv-item-controls .mv-add:hover {
       background-color: #81b814;
       color: white; }
-  .mv-wrapper:not(.mv-can-delete) .mv-item-controls .mv-delete,
-  .mv-wrapper:not(.mv-can-add) .mv-item-controls .mv-add {
+  [data-mavo]:not(.mv-can-delete) .mv-item-controls .mv-delete,
+  [data-mavo]:not(.mv-can-add) .mv-item-controls .mv-add {
     display: none; }
 
 .mv-item {
@@ -117,56 +117,56 @@
         text-align: center; }
         .mv-item.mv-deleted button.mv-close:hover {
           background: #b40000; }
-  .mv-wrapper:not([data-mode="edit"]) .mv-item.mv-deleted {
+  [data-mavo]:not([data-mode="edit"]) .mv-item.mv-deleted {
     display: none; }
 
-.mv-wrapper [property].mv-multiline {
+[data-mavo] [property].mv-multiline {
   white-space: pre-line; }
 
-.mv-wrapper button.mv-add {
+[data-mavo] button.mv-add {
   display: inline-block;
   vertical-align: middle; }
 
-.mv-wrapper:not(.mv-can-add) button.mv-add {
+[data-mavo]:not(.mv-can-add) button.mv-add {
   display: none; }
 
-.mv-wrapper:not(.mv-can-edit) .mv-edit,
-.mv-wrapper:not(.mv-can-edit) [data-mode="edit"], .mv-wrapper:not(.mv-can-edit) .mv-add {
+[data-mavo]:not(.mv-can-edit) .mv-edit,
+[data-mavo]:not(.mv-can-edit) [data-mode="edit"], [data-mavo]:not(.mv-can-edit) .mv-add {
   display: none; }
 
-.mv-wrapper[data-mv-progress="Loading"] .mv-item {
+[data-mavo][data-mv-progress="Loading"] .mv-item {
   display: none; }
 
-.mv-wrapper[data-mv-progress]::after {
+[data-mavo][data-mv-progress]::after {
   content: "";
   display: inline-block; }
 
-.mv-wrapper.mv-save-hovered [property].mv-unsaved-changes,
-.mv-wrapper.mv-save-hovered [typeof].mv-unsaved-changes,
-.mv-wrapper.mv-revert-hovered [property].mv-unsaved-changes,
-.mv-wrapper.mv-revert-hovered [typeof].mv-unsaved-changes {
+[data-mavo].mv-save-hovered [property].mv-unsaved-changes,
+[data-mavo].mv-save-hovered [typeof].mv-unsaved-changes,
+[data-mavo].mv-revert-hovered [property].mv-unsaved-changes,
+[data-mavo].mv-revert-hovered [typeof].mv-unsaved-changes {
   box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
 
-.mv-wrapper:not([data-mode="edit"]) .mv-empty,
-.mv-wrapper:not([data-mode="edit"]) .mv-item-controls,
-.mv-wrapper:not([data-mode="edit"]) button.mv-add,
-.mv-wrapper:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-save,
-.mv-wrapper:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-revert,
-.mv-wrapper:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-clear {
+[data-mavo]:not([data-mode="edit"]) .mv-empty,
+[data-mavo]:not([data-mode="edit"]) .mv-item-controls,
+[data-mavo]:not([data-mode="edit"]) button.mv-add,
+[data-mavo]:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-save,
+[data-mavo]:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-revert,
+[data-mavo]:not([data-mode="edit"]):not(.mv-unsaved-changes) .mv-clear {
   display: none; }
 
-.mv-wrapper[data-mode="edit"] .mv-empty,
-.mv-wrapper [data-mode="edit"] .mv-empty {
+[data-mavo][data-mode="edit"] .mv-empty,
+[data-mavo] [data-mode="edit"] .mv-empty {
   opacity: .5; }
 
-.mv-wrapper[data-mode="edit"] .mv-item:focus,
-.mv-wrapper[data-mode="edit"] .mv-editor:focus,
-.mv-wrapper [data-mode="edit"] .mv-item:focus,
-.mv-wrapper [data-mode="edit"] .mv-editor:focus {
+[data-mavo][data-mode="edit"] .mv-item:focus,
+[data-mavo][data-mode="edit"] .mv-editor:focus,
+[data-mavo] [data-mode="edit"] .mv-item:focus,
+[data-mavo] [data-mode="edit"] .mv-editor:focus {
   outline: none; }
 
-.mv-wrapper[data-mode="edit"] .mv-editor:focus,
-.mv-wrapper [data-mode="edit"] .mv-editor:focus {
+[data-mavo][data-mode="edit"] .mv-editor:focus,
+[data-mavo] [data-mode="edit"] .mv-editor:focus {
   box-shadow: 0 0 0 1px rgba(133, 160, 173, 0.5), 1px 1px 0.5em 1px rgba(0, 0, 0, 0.3) !important; }
 
 [itemprop]:not([itemscope]) input.mv-editor,
@@ -316,18 +316,18 @@ meter[property][data-mode="edit"], progress[property][data-mode="edit"] {
     max-height: 1em; }
   .mv-bar .mv-edit::before {
     content: "✎"; }
-  .mv-wrapper[data-mode="edit"] .mv-bar .mv-edit {
+  [data-mavo][data-mode="edit"] .mv-bar .mv-edit {
     background: rgba(0, 0, 0, 0.6);
     box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset; }
-    .mv-wrapper[data-mode="edit"] .mv-bar .mv-edit::after {
+    [data-mavo][data-mode="edit"] .mv-bar .mv-edit::after {
       content: "ing"; }
   .mv-bar .mv-save::before {
     content: "✓"; }
-  .mv-wrapper[data-mv-progress="Saving"] .mv-bar .mv-save {
+  [data-mavo][data-mv-progress="Saving"] .mv-bar .mv-save {
     color: rgba(255, 255, 255, 0.2); }
-    .mv-wrapper[data-mv-progress="Saving"] .mv-bar .mv-save::before {
+    [data-mavo][data-mv-progress="Saving"] .mv-bar .mv-save::before {
       opacity: .2; }
-    .mv-wrapper[data-mv-progress="Saving"] .mv-bar .mv-save::after {
+    [data-mavo][data-mv-progress="Saving"] .mv-bar .mv-save::after {
       content: "";
       position: absolute;
       left: 50%;
@@ -347,7 +347,7 @@ meter[property][data-mode="edit"], progress[property][data-mode="edit"] {
     filter: saturate(0) brightness(600%); }
   .mv-bar .mv-clear:enabled:hover {
     background: #b00; }
-  .mv-wrapper:not([data-mode="edit"]) .mv-bar .mv-clear {
+  [data-mavo]:not([data-mode="edit"]) .mv-bar .mv-clear {
     display: none; }
   .mv-bar .mv-status {
     -ms-flex: 1;

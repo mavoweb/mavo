@@ -209,25 +209,14 @@ var _ = self.Mavo = $.Class({
 		element.setAttribute("data-mavo", this.id);
 
 		this.unhandled = element.classList.contains("mv-keep-unhandled");
-
 		this.autoEdit = _.has("mv-autoedit", element);
 
-		this.element = _.is("group", element)? element : $(_.selectors.rootGroup, element);
-
-		if (!this.element) {
-			element.setAttribute("typeof", element.getAttribute("property") || "");
-			element.removeAttribute("property");
-			this.element = element;
-		}
-
-		this.element.classList.add("mv-root");
+		this.element = element;
 
 		if (this.index == 1) {
 			this.storage = _.urlParam("store");
 			this.source = _.urlParam("source");
 		}
-
-		this.wrapper = element.closest(".mv-wrapper") || element;
 
 		this.storage = this.storage || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
 		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
@@ -243,14 +232,16 @@ var _ = self.Mavo = $.Class({
 		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
 		// Ctrl + S or Cmd + S to save
-		this.wrapper.addEventListener("keydown", evt => {
+		this.element.addEventListener("keydown", evt => {
 			if (evt.keyCode == 83 && evt[_.superKey]) {
 				evt.preventDefault();
 				this.save();
 			}
 		});
 
-		// Apply heuristic forgroups
+		this.element.setAttribute("typeof", "");
+
+		// Apply heuristic for groups
 		$$(_.selectors.primitive, element).forEach(element => {
 			var isGroup = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element) && (// Contains other properties or non-form elements and...
 			                Mavo.is("multiple", element) || // is a collection...
@@ -262,27 +253,10 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
-		if (this.wrapper === this.element && _.is("multiple", element)) {
-			// Need to create a wrapper
-			var around = this.element;
-
-			// Avoid producing invalid HTML
-			if (this.element.matches("li, option")) {
-				around = around.parentNode;
-			}
-			else if (this.element.matches("td, tr, tbody, thead, tfoot")) {
-				around = around.closest("table");
-			}
-
-			this.wrapper = $.create({ around });
-		}
-
-		this.wrapper.classList.add("mv-wrapper");
-
 		this.ui = {
-			bar: $(".mv-bar", this.wrapper) || $.create({
+			bar: $(".mv-bar", this.element) || $.create({
 				className: "mv-bar mv-ui",
-				start: this.wrapper
+				start: this.element
 			})
 		};
 
@@ -326,11 +300,11 @@ var _ = self.Mavo = $.Class({
 				window.addEventListener("hashchange.mavo", login);
 			}, () => {
 				$.remove(this.authControls.login);
-				this.wrapper._.unbind("hashchange.mavo");
+				this.element._.unbind("hashchange.mavo");
 			});
 
 			// Update login status
-			this.wrapper.addEventListener("mavo:login.mavo", evt => {
+			this.element.addEventListener("mavo:login.mavo", evt => {
 				if (evt.backend == this.storage) { // ignore logins from source backend
 					var status = $(".mv-status", this.ui.bar);
 					status.innerHTML = "";
@@ -349,7 +323,7 @@ var _ = self.Mavo = $.Class({
 				}
 			});
 
-			this.wrapper.addEventListener("mavo:logout.mavo", evt => {
+			this.element.addEventListener("mavo:logout.mavo", evt => {
 				$(".mv-status", this.ui.bar).textContent = "";
 			});
 		}
@@ -360,7 +334,7 @@ var _ = self.Mavo = $.Class({
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
 
-		this.root = Mavo.Node.create(this.element, this);
+		this.root = new Mavo.Group(this.element, this);
 		this.treeBuilt.resolve();
 
 		Mavo.hooks.run("init-tree-after", this);
@@ -368,7 +342,7 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges(false);
 
 		this.permissions.onchange(({action, value}) => {
-			this.wrapper.classList.toggle(`mv-can-${action}`, !!value);
+			this.element.classList.toggle(`mv-can-${action}`, !!value);
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
@@ -380,7 +354,7 @@ var _ = self.Mavo = $.Class({
 			});
 
 			if (this.autoEdit) {
-				this.wrapper.addEventListener("mavo:load", evt => this.ui.edit.click());
+				this.element.addEventListener("mavo:load", evt => this.ui.edit.click());
 			}
 		}, () => { // cannot
 			$.remove(this.ui.edit);
@@ -398,10 +372,10 @@ var _ = self.Mavo = $.Class({
 					events: {
 						click: e => this.save(),
 						"mouseenter focus": e => {
-							this.wrapper.classList.add("mv-save-hovered");
+							this.element.classList.add("mv-save-hovered");
 							this.setUnsavedChanges();
 						},
-						"mouseleave blur": e => this.wrapper.classList.remove("mv-save-hovered")
+						"mouseleave blur": e => this.element.classList.remove("mv-save-hovered")
 					},
 					inside: this.ui.bar
 				});
@@ -414,11 +388,11 @@ var _ = self.Mavo = $.Class({
 						click: e => this.revert(),
 						"mouseenter focus": e => {
 							if (!this.unsavedChanges) {
-								this.wrapper.classList.add("mv-revert-hovered");
+								this.element.classList.add("mv-revert-hovered");
 								this.setUnsavedChanges();
 							}
 						},
-						"mouseleave blur": e => this.wrapper.classList.remove("mv-revert-hovered")
+						"mouseleave blur": e => this.element.classList.remove("mv-revert-hovered")
 					},
 					inside: this.ui.bar
 				});
@@ -454,14 +428,14 @@ var _ = self.Mavo = $.Class({
 			// No storage
 			this.permissions.on(["read", "edit"]);
 
-			$.fire(this.wrapper, "mavo:load");
+			$.fire(this.element, "mavo:load");
 		}
 
 		if (!this.needsEdit) {
 			this.permissions.off(["edit", "add", "delete"]);
 
 			// If there's no edit mode, we must save immediately when properties change
-			this.wrapper.addEventListener("mavo:load", evt => {
+			this.element.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
 					this.save();
 				}, 1000);
@@ -474,9 +448,9 @@ var _ = self.Mavo = $.Class({
 
 				requestAnimationFrame(() => {
 					this.permissions.can("save", () => {
-						this.wrapper.addEventListener("mavo:datachange", callback);
+						this.element.addEventListener("mavo:datachange", callback);
 					}, () => {
-						this.wrapper.removeEventListener("mavo:datachange", callback);
+						this.element.removeEventListener("mavo:datachange", callback);
 					});
 				});
 			});
@@ -529,7 +503,7 @@ var _ = self.Mavo = $.Class({
 	edit: function() {
 		this.root.edit();
 
-		$.events(this.wrapper, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
+		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls .mv-delete")) {
 				var item = evt.target.closest(_.selectors.item);
 				item.classList.toggle("mv-delete-hover", evt.type == "mouseenter");
@@ -579,7 +553,7 @@ var _ = self.Mavo = $.Class({
 	// Conclude editing
 	done: function() {
 		this.root.done();
-		$.unbind(this.wrapper, ".mavo:edit");
+		$.unbind(this.element, ".mavo:edit");
 		this.unsavedChanges = false;
 	},
 
@@ -623,7 +597,7 @@ var _ = self.Mavo = $.Class({
 		})
 		.then(() => {
 			this.inProgress = false;
-			$.fire(this.wrapper, "mavo:load");
+			$.fire(this.element, "mavo:load");
 		});
 	},
 
@@ -637,7 +611,7 @@ var _ = self.Mavo = $.Class({
 		this.storage.login()
 		.then(() => this.storage.put())
 		.then(file => {
-			$.fire(this.wrapper, "mavo:save", {
+			$.fire(this.element, "mavo:save", {
 				data: file.data,
 				dataString: file.dataString
 			});
@@ -673,11 +647,11 @@ var _ = self.Mavo = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			$.toggleAttribute(this.wrapper, "data-mv-progress", value, value);
+			$.toggleAttribute(this.element, "data-mv-progress", value, value);
 		},
 
 		unsavedChanges: function(value) {
-			this.wrapper.classList.toggle("mv-unsaved-changes", value);
+			this.element.classList.toggle("mv-unsaved-changes", value);
 
 			if (this.ui && this.ui.save) {
 				this.ui.save.disabled = !value;
@@ -1111,7 +1085,7 @@ var _ = Mavo.Permissions = $.Class({
 		// need to set it manually, otherwise it still has its previous value
 		this["_" + action] = value;
 
-		// TODO add classes to wrapper
+		// TODO add classes to element
 		this.triggers.forEach(trigger => {
 			var match = this.is(trigger.actions, trigger.value);
 
@@ -3236,6 +3210,9 @@ Mavo.hooks.add("node-done-end", function() {
 });
 
 $.lazy(Mavo.Node.prototype, "closestCollection", function() {
+	if (!this.group) {
+		console.log(this.nodeType);
+	}
 	return this.collection ||
 		   this.group.collection ||
 		   (this.parentGroup? this.parentGroup.closestCollection : null);
@@ -4927,10 +4904,10 @@ Stretchy.selectors.filter += selector;
 // Add element to show saved data
 Mavo.hooks.add("init-tree-after", function() {
 	if (this.root.debug) {
-		this.wrapper.classList.add("mv-debug-saving");
+		this.element.classList.add("mv-debug-saving");
 	}
 
-	if (this.store && this.wrapper.classList.contains("mv-debug-saving")) {
+	if (this.store && this.element.classList.contains("mv-debug-saving")) {
 		var element;
 
 		var details = $.create("details", {
@@ -4939,10 +4916,10 @@ Mavo.hooks.add("init-tree-after", function() {
 				{tag: "Summary", textContent: "Saved data"},
 				element = $.create("pre", {id: this.id + "-debug-storage"})
 			],
-			after: this.wrapper
+			after: this.element
 		});
 
-		this.wrapper.addEventListener("mavo:save", evt => {
+		this.element.addEventListener("mavo:save", evt => {
 			element.innerHTML = "";
 
 			element.appendChild(prettyPrint(evt.data));
@@ -4951,7 +4928,7 @@ Mavo.hooks.add("init-tree-after", function() {
 });
 
 Mavo.hooks.add("render-start", function({data}) {
-	if (this.backend && this.wrapper.classList.contains("mv-debug-saving")) {
+	if (this.backend && this.element.classList.contains("mv-debug-saving")) {
 		var element = $(`#${this.id}-debug-storage`);
 
 		if (element) {
@@ -5213,9 +5190,9 @@ Mavo.Backend.register($.Class({
 				return;
 			}
 
-			this.path = (this.mavo.wrapper.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.mavo.element.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.key = this.mavo.wrapper.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
+			this.key = this.mavo.element.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
 
 			this.client = new Dropbox.Client({ key: this.key });
 		})).then(() => {
@@ -5271,7 +5248,7 @@ Mavo.Backend.register($.Class({
 			// Not returning a promise here, since processes depending on login don't need to wait for this
 			this.client.getAccountInfo((error, accountInfo) => {
 				if (!error) {
-					$.fire(this.mavo.wrapper, "mavo:login", $.extend({backend: this}, accountInfo));
+					$.fire(this.mavo.element, "mavo:login", $.extend({backend: this}, accountInfo));
 				}
 			});
 		}).catch(() => {});
@@ -5282,7 +5259,7 @@ Mavo.Backend.register($.Class({
 			this.client.signOut(null, () => {
 				this.permissions.off(["edit", "add", "delete"]).on("login");
 
-				this.mavo.wrapper._.fire("mavo:logout", {backend: this});
+				this.mavo.element._.fire("mavo:logout", {backend: this});
 				resolve();
 			});
 		});
@@ -5311,7 +5288,7 @@ var _ = Mavo.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("login");
 
-		this.key = this.mavo.wrapper.getAttribute("data-github-key") || "7e08e016048000bc594e";
+		this.key = this.mavo.element.getAttribute("data-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);
@@ -5486,7 +5463,7 @@ var _ = Mavo.Backend.register($.Class({
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.mavo.wrapper._.fire("mavo:logout", {backend: this});
+			this.mavo.element._.fire("mavo:logout", {backend: this});
 		}
 
 		return Promise.resolve();
@@ -5497,7 +5474,7 @@ var _ = Mavo.Backend.register($.Class({
 			this.user = accountInfo;
 
 			var name = accountInfo.name || accountInfo.login;
-			$.fire(this.mavo.wrapper, "mavo:login", {
+			$.fire(this.mavo.element, "mavo:login", {
 				backend: this,
 				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
 							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}

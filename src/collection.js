@@ -477,6 +477,9 @@ Mavo.hooks.add("node-done-end", function() {
 });
 
 $.lazy(Mavo.Node.prototype, "closestCollection", function() {
+	if (!this.group) {
+		console.log(this.nodeType);
+	}
 	return this.collection ||
 		   this.group.collection ||
 		   (this.parentGroup? this.parentGroup.closestCollection : null);

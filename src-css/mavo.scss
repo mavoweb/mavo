@@ -104,8 +104,8 @@
 		}
 	}
 
-	.mv-wrapper:not(.mv-can-delete) & .mv-delete,
-	.mv-wrapper:not(.mv-can-add) & .mv-add {
+	[data-mavo]:not(.mv-can-delete) & .mv-delete,
+	[data-mavo]:not(.mv-can-add) & .mv-add {
 		display: none;
 	}
 }
@@ -147,12 +147,12 @@
 		}
 	}
 
-	.mv-wrapper:not([data-mode="edit"]) &.mv-deleted {
+	[data-mavo]:not([data-mode="edit"]) &.mv-deleted {
 		display: none;
 	}
 }
 
-.mv-wrapper {
+[data-mavo] {
 	[property].mv-multiline {
 		white-space: pre-line;
 	}

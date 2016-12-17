@@ -80,7 +80,7 @@
 			content: "✎";
 		}
 
-		.mv-wrapper[data-mode="edit"] & {
+		[data-mavo][data-mode="edit"] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
 
@@ -95,7 +95,7 @@
 			content: "✓";
 		}
 
-		.mv-wrapper[data-mv-progress="Saving"] & {
+		[data-mavo][data-mv-progress="Saving"] & {
 			color: hsla(0,0%,100%,.2);
 
 			&::before {
@@ -140,7 +140,7 @@
 			background: #b00;
 		}
 
-		.mv-wrapper:not([data-mode="edit"]) & {
+		[data-mavo]:not([data-mode="edit"]) & {
 			display: none;
 		}
 	}
