@@ -54,15 +54,15 @@ Mavo.Elements = {
 	},
 
 	"button, .counter": {
-		attribute: "data-clicked",
+		attribute: "mv-clicked",
 		datatype: "number",
 		modes: "read",
 		init: function(element) {
-			if (this.attribute === "data-clicked") {
-				element.setAttribute("data-clicked", "0");
+			if (this.attribute === "mv-clicked") {
+				element.setAttribute("mv-clicked", "0");
 
 				element.addEventListener("click", evt => {
-					let clicked = +element.getAttribute("data-clicked") || 0;
+					let clicked = +element.getAttribute("mv-clicked") || 0;
 					this.value = ++clicked;
 				});
 			}
@@ -83,7 +83,7 @@ Mavo.Elements = {
 			var min = +this.element.getAttribute("min") || 0;
 			var max = +this.element.getAttribute("max") || 1;
 			var range = max - min;
-			var step = +this.element.getAttribute("data-edit-step") || (range > 1? 1 : range/100);
+			var step = +this.element.getAttribute("mv-edit-step") || (range > 1? 1 : range/100);
 
 			this.element.addEventListener("mousemove.mavo:edit", evt => {
 				// Change property as mouse moves

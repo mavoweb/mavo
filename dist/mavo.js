@@ -201,28 +201,43 @@ var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();
 
+		this.element = element;
+
+		// Convert any data-mv-* attributes to mv-*
+		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
+		for (let element of $$(dataMv.join(", "), this.element).concat(this.element)) {
+			for (let attribute of _.attributes) {
+				let value = element.getAttribute("data-" + attribute);
+
+				if (value !== null) {
+					element.setAttribute(attribute, value);
+				}
+
+			}
+		}
+
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
-		element.setAttribute("data-mavo", this.id);
+		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
+		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = element.classList.contains("mv-keep-unhandled");
-		this.autoEdit = _.has("mv-autoedit", element);
-
-		this.element = element;
+		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
+		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 		if (this.index == 1) {
 			this.storage = _.urlParam("store");
 			this.source = _.urlParam("source");
 		}
 
-		this.storage = this.storage || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
-		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
+		this.storage = this.storage || _.urlParam(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
+		this.source = this.source || _.urlParam(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
 
-		if (this.storage && !/^\s*none\s*$/i.test(this.storage)) {
-			this.storage = _.Backend.create(this.storage, this);
+		if (this.storage) {
+			this.storage = this.storage.trim();
+
+			this.storage = this.storage == "none"? null : _.Backend.create(this.storage, this);
 		}
 
 		if (this.source) {
@@ -649,7 +664,7 @@ var _ = self.Mavo = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			$.toggleAttribute(this.element, "data-mv-progress", value, value);
+			$.toggleAttribute(this.element, "mv-progress", value, value);
 		},
 
 		unsavedChanges: function(value) {
@@ -677,22 +692,26 @@ var _ = self.Mavo = $.Class({
 				.map(element => new _(element));
 		},
 
-		hooks: new $.Hooks()
+		hooks: new $.Hooks(),
+
+		attributes: [
+			"mv-app", "mv-storage", "mv-init", "mv-attribute",
+			"mv-default", "mv-mode", "mv-edit", "mv-permisssions"
+		]
 	}
 });
 
 {
 
 let s = _.selectors = {
-	init: ".mavo, [mavo], [data-mavo], [data-store]",
+	init: ".mv-app, [mv-app], [data-mv-app], [mv-storage], [data-mv-storage]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[multiple], [data-multiple], .mv-multiple",
+	multiple: "[mv-multiple], .mv-multiple",
 	formControl: "input, select, option, textarea",
 	item: ".mv-item",
 	ui: ".mv-ui",
-	option: name => `[${name}], [data-${name}], .${name}`,
 	container: {
 		"li": "ul, ol",
 		"tr": "table",
@@ -717,8 +736,7 @@ let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2))
 $.extend(_.selectors, {
 	primitive: andNot(s.property, s.group),
 	rootGroup: andNot(s.group, s.property),
-	output: or(s.specificProperty("output"), ".mv-output, .mv-value"),
-	autoMultiple: and("li, tr, option", ":only-of-type")
+	output: or(s.specificProperty("output"), ".mv-output, .mv-value")
 });
 
 }
@@ -786,8 +804,19 @@ var _ = $.extend(Mavo, {
 		return element.matches && element.matches(_.selectors[thing]);
 	},
 
-	has: function(option, element) {
-		return element.matches && element.matches(_.selectors.option(option));
+	/**
+	 * Get the value of an attribute, with fallback attributes in priority order.
+	 */
+	getAttribute: function(element, ...attributes) {
+		for (let i=0, attribute; attribute = attributes[i]; i++) {
+			let value = element.getAttribute(attribute);
+
+			if (value) {
+				return value;
+			}
+		}
+
+		return null;
 	},
 
 	urlParam: function(...names) {
@@ -1348,13 +1377,13 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
-			this.store = this.element.getAttribute("data-store");
-			this.modes = this.element.getAttribute("data-mode");
+			this.store = this.element.getAttribute("mv-storage");
+			this.modes = this.element.getAttribute("mv-mode");
 		}
 
-		this.modeObserver = new Mavo.Observer(this.element, "data-mode", records => {
+		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
-			this.mode = this.element.getAttribute("data-mode");
+			this.mode = this.element.getAttribute("mv-mode");
 			this[this.mode == "edit"? "edit" : "done"]();
 		});
 
@@ -1487,7 +1516,7 @@ var _ = Mavo.Node = $.Class({
 
 	live: {
 		store: function(value) {
-			$.toggleAttribute(this.element, "data-store", value);
+			$.toggleAttribute(this.element, "mv-storage", value);
 		},
 
 		unsavedChanges: function(value) {
@@ -1508,7 +1537,7 @@ var _ = Mavo.Node = $.Class({
 
 				this.modeObserver.sneak(() => {
 					var set = this.modes || this.mode == "edit";
-					$.toggleAttribute(this.element, "data-mode", value, set);
+					$.toggleAttribute(this.element, "mv-mode", value, set);
 				});
 			}
 		},
@@ -1742,7 +1771,7 @@ var _ = Mavo.Group = $.Class({
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
 			if (Mavo.is("group", element)) {
-				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
+				var type = Mavo.getAttribute(element, "typeof", "itemtype") || _.DEFAULT_TYPE;
 
 				element.setAttribute("typeof", type);
 
@@ -1809,8 +1838,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		// Linked widgets
-		if (!this.editor && this.element.hasAttribute("data-edit")) {
-			var original = $(this.element.getAttribute("data-edit"));
+		if (!this.editor && this.element.hasAttribute("mv-edit")) {
+			var original = $(this.element.getAttribute("mv-edit"));
 
 			if (original && Mavo.is("formControl", original)) {
 				this.editor = original.cloneNode(true);
@@ -1829,7 +1858,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.templateValue = this.getValue();
 
-		this.default = this.element.getAttribute("data-default");
+		this.default = this.element.getAttribute("mv-default");
 
 		if (this.constant || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
@@ -1838,8 +1867,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.default = this.editor? this.editorValue : this.emptyValue;
 		}
 		else {
-			new Mavo.Observer(this.element, "data-default", record => {
-				this.default = this.element.getAttribute("data-default");
+			new Mavo.Observer(this.element, "mv-default", record => {
+				this.default = this.element.getAttribute("mv-default");
 			});
 		}
 
@@ -2003,7 +2032,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		// Copy any data-input-* attributes from the element to the editor
-		var dataInput = /^data-edit-/i;
+		var dataInput = /^mv-edit-/i;
 		$$(this.element.attributes).forEach(function (attribute) {
 			if (dataInput.test(attribute.name)) {
 				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
@@ -2254,7 +2283,7 @@ var _ = Mavo.Primitive = $.Class({
 		},
 
 		getValueAttribute: function (element, defaults = _.getDefaults(element)) {
-			var ret = element.getAttribute("data-attribute") || defaults.attribute;
+			var ret = element.getAttribute("mv-attribute") || defaults.attribute;
 
 			if (!ret || ret === "null") {
 				ret = null;
@@ -2578,15 +2607,15 @@ Mavo.Elements = {
 	},
 
 	"button, .counter": {
-		attribute: "data-clicked",
+		attribute: "mv-clicked",
 		datatype: "number",
 		modes: "read",
 		init: function(element) {
-			if (this.attribute === "data-clicked") {
-				element.setAttribute("data-clicked", "0");
+			if (this.attribute === "mv-clicked") {
+				element.setAttribute("mv-clicked", "0");
 
 				element.addEventListener("click", evt => {
-					let clicked = +element.getAttribute("data-clicked") || 0;
+					let clicked = +element.getAttribute("mv-clicked") || 0;
 					this.value = ++clicked;
 				});
 			}
@@ -2607,7 +2636,7 @@ Mavo.Elements = {
 			var min = +this.element.getAttribute("min") || 0;
 			var max = +this.element.getAttribute("max") || 1;
 			var range = max - min;
-			var step = +this.element.getAttribute("data-edit-step") || (range > 1? 1 : range/100);
+			var step = +this.element.getAttribute("mv-edit-step") || (range > 1? 1 : range/100);
 
 			this.element.addEventListener("mousemove.mavo:edit", evt => {
 				// Change property as mouse moves
@@ -2740,6 +2769,8 @@ Mavo.Elements = {
 })(Bliss, Bliss.$);
 
 (function($, $$) {
+
+Mavo.attributes.push("mv-multiple", "mv-order");
 
 var _ = Mavo.Collection = $.Class({
 	extends: Mavo.Node,
@@ -3057,7 +3088,7 @@ var _ = Mavo.Collection = $.Class({
 			if (value && value !== this.mutable) {
 				// Why is all this code here? Because we want it executed
 				// every time mutable changes, not just in the constructor
-				// (think multiple elements with the same property name, where only one has data-multiple)
+				// (think multiple elements with the same property name, where only one has mv-multiple)
 				this._mutable = value;
 
 				this.mavo.needsEdit = true;
@@ -3084,7 +3115,7 @@ var _ = Mavo.Collection = $.Class({
 				return false;
 			}
 
-			var order = this.templateElement.getAttribute("data-order");
+			var order = this.templateElement.getAttribute("mv-order");
 			if (order !== null) {
 				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);
@@ -3305,6 +3336,8 @@ Mavo.hooks.add("node-init-end", function(env) {
 
 (function($, $$) {
 
+Mavo.attributes.push("mv-expressions", "mv-value", "mv-if");
+
 var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
 		this.expression = expression;
@@ -3476,7 +3509,7 @@ var _ = Mavo.Expression.Syntax = $.Class({
 	static: {
 		create: function(element) {
 			if (element) {
-				var syntax = element.getAttribute("data-expressions");
+				var syntax = element.getAttribute("mv-expressions");
 
 				if (syntax) {
 					syntax = syntax.trim();
@@ -3667,7 +3700,7 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
+				var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 				this.traverse(this.group.element, undefined, syntax);
 			}
 		}
@@ -3861,33 +3894,33 @@ Mavo.hooks.add("group-render-end", function() {
 
 })(Bliss, Bliss.$);
 
-// data-content plugin
-Mavo.Expressions.directives.push("data-content");
+// mv-value plugin
+Mavo.Expressions.directives.push("mv-value");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
-	if (this.attribute == "data-content") {
+	if (this.attribute == "mv-value") {
 		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
 		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-		this.expression = this.element.getAttribute("data-content");
+		this.expression = this.element.getAttribute("mv-value");
 
 		this.template = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 	}
 });
 
-// data-if plugin
-Mavo.Expressions.directives.push("data-if");
+// mv-if plugin
+Mavo.Expressions.directives.push("mv-if");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
-	this.expression = this.element.getAttribute("data-if");
+	this.expression = this.element.getAttribute("mv-if");
 	this.template = [new Mavo.Expression(this.expression)];
 	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
+	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 	if (this.parentIf) {
 		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
@@ -3895,7 +3928,7 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 });
 
 Mavo.hooks.add("expressiontext-update-end", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
@@ -3960,12 +3993,12 @@ $.live(Mavo.Primitive.prototype, "hidden", function(value) {
 });
 
 $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
 	var properties = $$(Mavo.selectors.property, this.element)
-					.filter(el => el.closest("[data-if]") == this.element)
+					.filter(el => el.closest("[mv-if]") == this.element)
 					.map(el => Mavo.Node.get(el));
 
 	if (properties.length) {
@@ -4978,7 +5011,7 @@ Mavo.hooks.add("group-init-start", function() {
 					contents: $.create("summary", {
 						textContent: "Debug"
 					}),
-					"data-expressions": "none"
+					"mv-expressions": "none"
 				})
 			})
 		});
@@ -5100,7 +5133,7 @@ Mavo.hooks.add("group-init-end", function() {
 		$$(selector, this.element).forEach(element => {
 			this.debugRow({
 				element,
-				tds: ["Warning", "data-multiple without a property attribute"]
+				tds: ["Warning", "mv-multiple without a property attribute"]
 			});
 		});
 
@@ -5198,9 +5231,9 @@ Mavo.Backend.register($.Class({
 				return;
 			}
 
-			this.path = (this.mavo.element.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.mavo.element.getAttribute("mv-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.key = this.mavo.element.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
+			this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "fle6gsc61w5v79j";
 
 			this.client = new Dropbox.Client({ key: this.key });
 		})).then(() => {
@@ -5296,7 +5329,7 @@ var _ = Mavo.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("login");
 
-		this.key = this.mavo.element.getAttribute("data-github-key") || "7e08e016048000bc594e";
+		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);

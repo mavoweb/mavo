@@ -80,7 +80,7 @@
 			content: "✎";
 		}
 
-		[data-mavo][data-mode="edit"] & {
+		[mv-app][mv-mode="edit"] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
 
@@ -95,7 +95,7 @@
 			content: "✓";
 		}
 
-		[data-mavo][data-mv-progress="Saving"] & {
+		[mv-app][mv-progress="Saving"] & {
 			color: hsla(0,0%,100%,.2);
 
 			&::before {
@@ -140,7 +140,7 @@
 			background: #b00;
 		}
 
-		[data-mavo]:not([data-mode="edit"]) & {
+		[mv-app]:not([mv-mode="edit"]) & {
 			display: none;
 		}
 	}

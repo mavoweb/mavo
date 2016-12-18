@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Syntax tests</title>
+	<link rel="stylesheet" href="../dist/mavo.css" />
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<h1>Syntax tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<section mv-storage="#countries">
+	<h1>Different ways to specify property name</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="country" mv-multiple>
+					<span itemprop="code"></span>
+					<span property class="name"></span>
+				</div>
+			</td>
+			<td>
+				<div>Online</div>
+				<div>us United States</div>
+				<div>gb United Kingdom</div>
+			</td>
+		</tr>
+	</table>
+
+</section>
+
+<section data-mv-storage="#countries">
+	<h1>data-mv-* attributes</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="country" data-mv-multiple>
+					<span property="code"></span>
+					<span property="name"></span>
+				</div>
+			</td>
+			<td>
+				<div>Online</div>
+				<div>us United States</div>
+				<div>gb United Kingdom</div>
+			</td>
+		</tr>
+	</table>
+</section>
+
+<script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
+
+</body>
+</html>

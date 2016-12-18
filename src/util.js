@@ -49,8 +49,19 @@ var _ = $.extend(Mavo, {
 		return element.matches && element.matches(_.selectors[thing]);
 	},
 
-	has: function(option, element) {
-		return element.matches && element.matches(_.selectors.option(option));
+	/**
+	 * Get the value of an attribute, with fallback attributes in priority order.
+	 */
+	getAttribute: function(element, ...attributes) {
+		for (let i=0, attribute; attribute = attributes[i]; i++) {
+			let value = element.getAttribute(attribute);
+
+			if (value) {
+				return value;
+			}
+		}
+
+		return null;
 	},
 
 	urlParam: function(...names) {

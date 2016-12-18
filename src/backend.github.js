@@ -10,7 +10,7 @@ var _ = Mavo.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on("login");
 
-		this.key = this.mavo.element.getAttribute("data-github-key") || "7e08e016048000bc594e";
+		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);

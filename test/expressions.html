@@ -33,7 +33,7 @@
 	]
 }</script>
 
-<section data-mavo="basicexpr">
+<section mv-app="basicexpr">
 	<h1>Basic</h1>
 
 	<table class="reftest">
@@ -69,7 +69,7 @@
 
 </section>
 
-<section data-store="#countries">
+<section mv-storage="#countries">
 	<h1>With render (country data)</h1>
 
 	<table class="reftest">
@@ -84,7 +84,7 @@
 		<tr>
 			<td>
 				<ul>
-					<li property="country" data-multiple>
+					<li property="country" mv-multiple>
 						<span property="code"></span> [code]
 						<span property="name"></span> [name]
 					</li>
@@ -100,7 +100,7 @@
 		</tr>
 		<tr>
 			<td>[country]</td>
-			<td data-expressions="none">[object Object], [object Object], [object Object]</td>
+			<td mv-expressions="none">[object Object], [object Object], [object Object]</td>
 		</tr>
 		<tr>
 			<td>[count(code == us)]</td>
@@ -109,14 +109,14 @@
 	</table>
 </section>
 
-<section class="mavo">
+<section class="mv-app">
 	<h1>Without render</h1>
 
 	<table class="reftest">
 		<tr>
 			<td>
 				<ul>
-					<li property="country" data-multiple>
+					<li property="country" mv-multiple>
 						<span property="code">Code</span> [code]
 						<span property="name">Name</span> [name]
 					</li>
@@ -130,7 +130,7 @@
 		</tr>
 		<tr>
 			<td>[country]</td>
-			<td data-expressions="none">[object Object]</td>
+			<td mv-expressions="none">[object Object]</td>
 		</tr>
 		<tr>
 			<td>[count(code)]</td>
@@ -139,14 +139,14 @@
 	</table>
 </section>
 
-<section class="mavo mv-keep-unhandled" data-source="#countries">
+<section class="mv-app mv-keep-unhandled" mv-init="#countries">
 	<h1>Broad references</h1>
 
 	<table class="reftest">
 		<tr>
 			<td>
 				<select size="3">
-					<option value="[code]" property="country" data-multiple typeof>[name]</option>
+					<option value="[code]" property="country" mv-multiple typeof>[name]</option>
 				</select>
 			</td>
 			<td>
@@ -163,112 +163,112 @@
 <style>
 	#customSyntax .reftest td:empty::before {
 		/* If this goes inside the Mavo it will be parsed as an expression and
-		 * we cannot use data-expressions="none" to escape because that's
+		 * we cannot use mv-expressions="none" to escape because that's
 		 * exactly what we're testing here!
 		 */
 		content: "[1 + 2]";
 	}
 </style>
 
-<section class="mavo" id="customSyntax" data-source="#countries">
+<section class="mv-app" id="customSyntax" mv-init="#countries">
 	<h1>Custom expression syntax</h1>
 
 	<table class="reftest">
 		<tr>
-			<td data-expressions="[[ ]]">[[1 + 2]]</td>
+			<td mv-expressions="[[ ]]">[[1 + 2]]</td>
 			<td>3</td>
 		</tr>
 		<tr>
-			<td data-expressions="{{ }}">{{1 + 2}}</td>
+			<td mv-expressions="{{ }}">{{1 + 2}}</td>
 			<td>3</td>
 		</tr>
 		<tr>
-			<td data-expressions="{{ }}">[1 + 2]</td>
+			<td mv-expressions="{{ }}">[1 + 2]</td>
 			<td></td>
 		</tr>
 		<tr title="Inner with different syntax">
-			<td data-expressions="{{ }}"><span data-expressions="( )">(1 + 2)</td>
+			<td mv-expressions="{{ }}"><span mv-expressions="( )">(1 + 2)</td>
 			<td>3</td>
 		</tr>
 		<tr title="Inner with different syntax">
-			<td data-expressions="{{ }}"><span data-expressions="( )">{{1 + 2}}</td>
+			<td mv-expressions="{{ }}"><span mv-expressions="( )">{{1 + 2}}</td>
 			<td>{{1 + 2}}</td>
 		</tr>
 		<tr title="Inner with the same syntax">
-			<td data-expressions="{{ }}"><span data-expressions="{{ }}">{{1 + 2}}</td>
+			<td mv-expressions="{{ }}"><span mv-expressions="{{ }}">{{1 + 2}}</td>
 			<td>3</td>
 		</tr>
 		<tr title="Escape expressions">
-			<td data-expressions="none">[1 + 2]</td>
+			<td mv-expressions="none">[1 + 2]</td>
 			<td></td>
 		</tr>
 		<tr title="Invalid delimiter (no space)">
-			<td data-expressions="[]">[1 + 2]</td>
+			<td mv-expressions="[]">[1 + 2]</td>
 			<td></td>
 		</tr>
 		<tr title="Invalid delimiter (only space)">
-			<td data-expressions=" ">[1 + 2]</td>
+			<td mv-expressions=" ">[1 + 2]</td>
 			<td></td>
 		</tr>
 	</table>
 </section>
 
-<section class="mavo">
-	<h1>data-content</h1>
+<section class="mv-app">
+	<h1>mv-value</h1>
 
 	<table class="reftest">
 		<tr>
-			<td><div data-content="39 + 3">Without expression syntax</div></td>
+			<td><div mv-value="39 + 3">Without expression syntax</div></td>
 			<td>42</td>
 		</tr>
 		<tr>
-			<td><div data-content="(39 + 3">With bug</div></td>
+			<td><div mv-value="(39 + 3">With bug</div></td>
 			<td>With bug</td>
 		</tr>
 		<tr>
-			<td><input data-content="39 + 3" value="In attribute"></td>
+			<td><input mv-value="39 + 3" value="In attribute"></td>
 			<td><input value="42"></td>
 		</tr>
 	</table>
 </section>
 
-<section class="mavo" id="mvIf">
-	<h1>data-if</h1>
+<section class="mv-app" id="mvIf">
+	<h1>mv-if</h1>
 
 	<table class="reftest">
 		<tr>
-			<td>A<span data-if="false">B</span>C</td>
+			<td>A<span mv-if="false">B</span>C</td>
 			<td>AC</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="true">B</span>C</td>
+			<td>A<span mv-if="true">B</span>C</td>
 			<td>ABC</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="true">B<span data-if="true">C</span></span>D</td>
+			<td>A<span mv-if="true">B<span mv-if="true">C</span></span>D</td>
 			<td>ABCD</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="true">B<span data-if="false">C</span></span>D</td>
+			<td>A<span mv-if="true">B<span mv-if="false">C</span></span>D</td>
 			<td>ABD</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="false">B<span data-if="true">C</span></span>D</td>
+			<td>A<span mv-if="false">B<span mv-if="true">C</span></span>D</td>
 			<td>AD</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="false"><span property="prop1">C</span></span>[prop1]</td>
+			<td>A<span mv-if="false"><span property="prop1">C</span></span>[prop1]</td>
 			<td>A</td>
 		</tr>
 		<tr>
-			<td>A<span data-if="false">B<span data-if="true"><span property="prop2">C</span></span></span>[prop2]</td>
+			<td>A<span mv-if="false">B<span mv-if="true"><span property="prop2">C</span></span></span>[prop2]</td>
 			<td>A</td>
 		</tr>
 	</table>
 </section>
 
-<section class="mavo" id="ifteraction">
-	<h1>data-if Interactive tests</h1>
+<section class="mv-app" id="ifteraction">
+	<h1>mv-if Interactive tests</h1>
 
 	<p>Check the checkbox. The displayed value next to it should go from "1 1 1" to "2 4 6 3 5 7"</p>
 
@@ -276,13 +276,13 @@
 		<tr>
 			<td>
 				<input property="test" type="checkbox">
-				<span data-if="test" class="if1">
+				<span mv-if="test" class="if1">
 					<span property="nested1">2</span>
 
-					<span data-if="true" class="if2">
+					<span mv-if="true" class="if2">
 						<span property="nested2">4</span>
 
-						<span data-if="true" class="if3">
+						<span mv-if="true" class="if3">
 							<span property="nested3">6</span>
 						</span>
 					</span>

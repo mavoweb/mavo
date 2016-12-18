@@ -27,7 +27,7 @@
 	]
 }</script>
 
-<section data-mavo="elementtypes" class="autoedit">
+<section mv-app="elementtypes" class="autoedit">
 	<h1>Different element types</h1>
 
 	<span property="span">Just a span</span>
@@ -40,17 +40,7 @@
 	<meta property="meta" content="Foo">
 </section>
 
-<section data-store="#countries">
-	<h1>Different ways to specify property name</h1>
-	<ul>
-		<li property="country" data-multiple>
-			Itemprop: <strong itemprop="code"></strong>
-			Property name from class: <strong property class="name"></strong>
-		</li>
-	</li>
-</section>
-
-<section data-mavo="exposed">
+<section mv-app="exposed">
 	<h1>Form controls</h1>
 
 	<div>
@@ -80,7 +70,7 @@
 	<textarea property="bio"></textarea> Bio: [bio]
 </section>
 
-<section data-mavo="buttons">
+<section mv-app="buttons">
 	<div>
 		<button property="myButton">Click me</button>
 		Value: [myButton]
@@ -91,13 +81,15 @@
 	</div>
 </section>
 
-<section data-mavo="constants" data-store="local" class="autoedit debug-saving">
-	<div property="MyConstant" data-mode="read">Constant, this must be saved but not be editable.</div>
+<section mv-app="constants" mv-storage="none" class="mv-autoedit mv-debug-saving">
+	<h1>Constants</h1>
+	<div property="MyConstant" mv-mode="read">Constant, this must be saved but not be editable.</div>
 	<div property="NormalProperty">Normal property, must be editable and saveable.</div>
 </section>
 
 
 <script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
 
 </body>
 </html>

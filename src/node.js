@@ -29,13 +29,13 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
-			this.store = this.element.getAttribute("data-store");
-			this.modes = this.element.getAttribute("data-mode");
+			this.store = this.element.getAttribute("mv-storage");
+			this.modes = this.element.getAttribute("mv-mode");
 		}
 
-		this.modeObserver = new Mavo.Observer(this.element, "data-mode", records => {
+		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
-			this.mode = this.element.getAttribute("data-mode");
+			this.mode = this.element.getAttribute("mv-mode");
 			this[this.mode == "edit"? "edit" : "done"]();
 		});
 
@@ -168,7 +168,7 @@ var _ = Mavo.Node = $.Class({
 
 	live: {
 		store: function(value) {
-			$.toggleAttribute(this.element, "data-store", value);
+			$.toggleAttribute(this.element, "mv-storage", value);
 		},
 
 		unsavedChanges: function(value) {
@@ -189,7 +189,7 @@ var _ = Mavo.Node = $.Class({
 
 				this.modeObserver.sneak(() => {
 					var set = this.modes || this.mode == "edit";
-					$.toggleAttribute(this.element, "data-mode", value, set);
+					$.toggleAttribute(this.element, "mv-mode", value, set);
 				});
 			}
 		},

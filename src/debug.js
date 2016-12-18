@@ -215,7 +215,7 @@ Mavo.hooks.add("group-init-start", function() {
 					contents: $.create("summary", {
 						textContent: "Debug"
 					}),
-					"data-expressions": "none"
+					"mv-expressions": "none"
 				})
 			})
 		});
@@ -337,7 +337,7 @@ Mavo.hooks.add("group-init-end", function() {
 		$$(selector, this.element).forEach(element => {
 			this.debugRow({
 				element,
-				tds: ["Warning", "data-multiple without a property attribute"]
+				tds: ["Warning", "mv-multiple without a property attribute"]
 			});
 		});
 

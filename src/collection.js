@@ -1,5 +1,7 @@
 (function($, $$) {
 
+Mavo.attributes.push("mv-multiple", "mv-order");
+
 var _ = Mavo.Collection = $.Class({
 	extends: Mavo.Node,
 	nodeType: "Collection",
@@ -316,7 +318,7 @@ var _ = Mavo.Collection = $.Class({
 			if (value && value !== this.mutable) {
 				// Why is all this code here? Because we want it executed
 				// every time mutable changes, not just in the constructor
-				// (think multiple elements with the same property name, where only one has data-multiple)
+				// (think multiple elements with the same property name, where only one has mv-multiple)
 				this._mutable = value;
 
 				this.mavo.needsEdit = true;
@@ -343,7 +345,7 @@ var _ = Mavo.Collection = $.Class({
 				return false;
 			}
 
-			var order = this.templateElement.getAttribute("data-order");
+			var order = this.templateElement.getAttribute("mv-order");
 			if (order !== null) {
 				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);

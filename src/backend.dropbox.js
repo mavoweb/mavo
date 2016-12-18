@@ -32,9 +32,9 @@ Mavo.Backend.register($.Class({
 				return;
 			}
 
-			this.path = (this.mavo.element.getAttribute("data-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
+			this.path = (this.mavo.element.getAttribute("mv-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
 
-			this.key = this.mavo.element.getAttribute("data-dropbox-key") || "fle6gsc61w5v79j";
+			this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "fle6gsc61w5v79j";
 
 			this.client = new Dropbox.Client({ key: this.key });
 		})).then(() => {

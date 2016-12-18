@@ -27,10 +27,11 @@
 	]
 }</script>
 
-<section data-mavo="types" autoedit>
+<section mv-app="types" autoedit>
 	<h1>Different types of elements</h1>
 
-	<span property="name">Lea Verou</span>
+	<span property="inline">Inline element</span>
+	<div property="block">Block element</div>
 
 	<div>
 		<time property="date"></time>
@@ -40,12 +41,12 @@
 
 
 	<svg width="300" height="100">
-		<circle cx="50" cy="50" r="50" property="circle" data-attribute="r" id="circle"></circle>
-		<use xlink:href="#circle" property="circleCopy" data-attribute="fill" fill="orange" x="100" />
+		<circle cx="50" cy="50" r="50" property="circle" mv-attribute="r" id="circle"></circle>
+		<use xlink:href="#circle" property="circleCopy" mv-attribute="fill" fill="orange" x="100" />
 	</svg>
 </section>
 
-<section data-mavo="nested" autoedit>
+<section mv-app="nested" autoedit>
 	<h1>Nested controls</h1>
 	<span property="country">
 		<select>
@@ -55,14 +56,14 @@
 	</span>
 </section>
 
-<section data-mavo="empty" autoedit>
+<section mv-app="empty" autoedit>
 	<h1>Empty handling</h1>
 	<span property="span"></span>
 	<img src="" property="image">
 	<address property="address"></address>
 </section>
 
-<section data-mavo="whitespace" autoedit>
+<section mv-app="whitespace" autoedit>
 	<h1>White-space handling</h1>
 
 	<h2>white-space: normal block element</h2>
@@ -94,8 +95,8 @@
 <section>
 	<h1>&lt;ul> root</h1>
 
-	<ul data-mavo="ulroot">
-	    <li property="foo" data-multiple>
+	<ul mv-app="ulroot">
+	    <li property="foo" mv-multiple>
 			<span property="code">us</span>
 			<span property="name">United States</span>
 		</li>
@@ -105,14 +106,14 @@
 <section>
 	<h1>Collection of primitives, &lt;ul> root</h1>
 
-	<ul data-mavo="copur">
-	    <li property="foo" data-multiple>Foo</li>
+	<ul mv-app="copur">
+	    <li property="foo" mv-multiple>Foo</li>
 	</ul>
 </section>
 
 <section>
 	<h1>&lt;summary> element</h1>
-	<details class="mavo">
+	<details class="mv-app">
 		<summary>
 			Some text <span property="prop1">prop1</span>
 		</summary>
@@ -121,7 +122,6 @@
 </section>
 
 <script src="../dist/mavo.js"></script>
-<script src="../plugins/primitive.tinymce.js"></script>
 
 <script src="test.js"></script>
 

@@ -6,28 +6,43 @@ var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();
 
+		this.element = element;
+
+		// Convert any data-mv-* attributes to mv-*
+		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
+		for (let element of $$(dataMv.join(", "), this.element).concat(this.element)) {
+			for (let attribute of _.attributes) {
+				let value = element.getAttribute("data-" + attribute);
+
+				if (value !== null) {
+					element.setAttribute(attribute, value);
+				}
+
+			}
+		}
+
 		// Index among other mavos in the page, 1 is first
 		this.index = _.all.push(this);
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = element.getAttribute("data-mavo") || Mavo.Node.getProperty(element) || element.id || `mavo${this.index}`;
-		element.setAttribute("data-mavo", this.id);
+		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
+		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = element.classList.contains("mv-keep-unhandled");
-		this.autoEdit = _.has("mv-autoedit", element);
-
-		this.element = element;
+		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
+		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 		if (this.index == 1) {
 			this.storage = _.urlParam("store");
 			this.source = _.urlParam("source");
 		}
 
-		this.storage = this.storage || _.urlParam(`${this.id}_store`) || element.getAttribute("data-store") || null;
-		this.source = this.source || _.urlParam(`${this.id}_source`) || element.getAttribute("data-source") || null;
+		this.storage = this.storage || _.urlParam(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
+		this.source = this.source || _.urlParam(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
 
-		if (this.storage && !/^\s*none\s*$/i.test(this.storage)) {
-			this.storage = _.Backend.create(this.storage, this);
+		if (this.storage) {
+			this.storage = this.storage.trim();
+
+			this.storage = this.storage == "none"? null : _.Backend.create(this.storage, this);
 		}
 
 		if (this.source) {
@@ -454,7 +469,7 @@ var _ = self.Mavo = $.Class({
 
 	live: {
 		inProgress: function(value) {
-			$.toggleAttribute(this.element, "data-mv-progress", value, value);
+			$.toggleAttribute(this.element, "mv-progress", value, value);
 		},
 
 		unsavedChanges: function(value) {
@@ -482,22 +497,26 @@ var _ = self.Mavo = $.Class({
 				.map(element => new _(element));
 		},
 
-		hooks: new $.Hooks()
+		hooks: new $.Hooks(),
+
+		attributes: [
+			"mv-app", "mv-storage", "mv-init", "mv-attribute",
+			"mv-default", "mv-mode", "mv-edit", "mv-permisssions"
+		]
 	}
 });
 
 {
 
 let s = _.selectors = {
-	init: ".mavo, [mavo], [data-mavo], [data-store]",
+	init: ".mv-app, [mv-app], [data-mv-app], [mv-storage], [data-mv-storage]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[multiple], [data-multiple], .mv-multiple",
+	multiple: "[mv-multiple], .mv-multiple",
 	formControl: "input, select, option, textarea",
 	item: ".mv-item",
 	ui: ".mv-ui",
-	option: name => `[${name}], [data-${name}], .${name}`,
 	container: {
 		"li": "ul, ol",
 		"tr": "table",
@@ -522,8 +541,7 @@ let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2))
 $.extend(_.selectors, {
 	primitive: andNot(s.property, s.group),
 	rootGroup: andNot(s.group, s.property),
-	output: or(s.specificProperty("output"), ".mv-output, .mv-value"),
-	autoMultiple: and("li, tr, option", ":only-of-type")
+	output: or(s.specificProperty("output"), ".mv-output, .mv-value")
 });
 
 }

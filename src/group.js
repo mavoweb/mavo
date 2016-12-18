@@ -180,7 +180,7 @@ var _ = Mavo.Group = $.Class({
 		normalize: function(element) {
 			// Get & normalize typeof name, if exists
 			if (Mavo.is("group", element)) {
-				var type = element.getAttribute("typeof") || element.getAttribute("itemtype") || _.DEFAULT_TYPE;
+				var type = Mavo.getAttribute(element, "typeof", "itemtype") || _.DEFAULT_TYPE;
 
 				element.setAttribute("typeof", type);
 

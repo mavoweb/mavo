@@ -1,5 +1,7 @@
 (function($, $$) {
 
+Mavo.attributes.push("mv-expressions", "mv-value", "mv-if");
+
 var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
 		this.expression = expression;
@@ -171,7 +173,7 @@ var _ = Mavo.Expression.Syntax = $.Class({
 	static: {
 		create: function(element) {
 			if (element) {
-				var syntax = element.getAttribute("data-expressions");
+				var syntax = element.getAttribute("mv-expressions");
 
 				if (syntax) {
 					syntax = syntax.trim();
@@ -362,7 +364,7 @@ var _ = Mavo.Expressions = $.Class({
 				}
 			}
 			else {
-				var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[data-expressions]")) || Mavo.Expression.Syntax.default;
+				var syntax = Mavo.Expression.Syntax.create(this.group.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 				this.traverse(this.group.element, undefined, syntax);
 			}
 		}
@@ -556,33 +558,33 @@ Mavo.hooks.add("group-render-end", function() {
 
 })(Bliss, Bliss.$);
 
-// data-content plugin
-Mavo.Expressions.directives.push("data-content");
+// mv-value plugin
+Mavo.Expressions.directives.push("mv-value");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
-	if (this.attribute == "data-content") {
+	if (this.attribute == "mv-value") {
 		this.attribute = Mavo.Primitive.getValueAttribute(this.element);
 		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-		this.expression = this.element.getAttribute("data-content");
+		this.expression = this.element.getAttribute("mv-value");
 
 		this.template = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 	}
 });
 
-// data-if plugin
-Mavo.Expressions.directives.push("data-if");
+// mv-if plugin
+Mavo.Expressions.directives.push("mv-if");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
-	this.expression = this.element.getAttribute("data-if");
+	this.expression = this.element.getAttribute("mv-if");
 	this.template = [new Mavo.Expression(this.expression)];
 	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[data-if]"), "data-if");
+	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 	if (this.parentIf) {
 		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
@@ -590,7 +592,7 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 });
 
 Mavo.hooks.add("expressiontext-update-end", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
@@ -655,12 +657,12 @@ $.live(Mavo.Primitive.prototype, "hidden", function(value) {
 });
 
 $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
-	if (this.attribute != "data-if") {
+	if (this.attribute != "mv-if") {
 		return;
 	}
 
 	var properties = $$(Mavo.selectors.property, this.element)
-					.filter(el => el.closest("[data-if]") == this.element)
+					.filter(el => el.closest("[mv-if]") == this.element)
 					.map(el => Mavo.Node.get(el));
 
 	if (properties.length) {

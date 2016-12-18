@@ -2,43 +2,43 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>data-store and data-source tests</title>
+	<title>mv-storage and mv-init tests</title>
 	<link rel="stylesheet" href="../dist/mavo.css" />
 	<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h1>data-store and data-source tests</h1>
+<h1>mv-storage and mv-init tests</h1>
 
-<section class="mavo">
+<section class="mv-app">
 	<h1>None</h1>
 
 	<a href="?store=local&amp;source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
 	</ul>
 </section>
 
-<section data-store="local" id="localstoretest">
+<section mv-storage="local" id="localstoretest">
 	<h1>Local</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
 	</ul>
 </section>
 
-<section data-store="http://mavo.io/demos/talks/countries.json">
+<section mv-storage="http://mavo.io/demos/talks/countries.json">
 	<h1>Remote</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
@@ -61,67 +61,67 @@
 		}
 	]
 }</script>
-<section data-mavo data-source="#countries">
+<section mv-app mv-init="#countries">
 	<h1>No store, element source</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code"></span> [code]
 			<span property="name"></span> [name]
 		</li>
 	</ul>
 </section>
 
-<section data-mavo data-source="http://mavo.io/demos/talks/countries.json">
+<section mv-app mv-init="http://mavo.io/demos/talks/countries.json">
 	<h1>No store, remote source</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code"></span> [code]
 			<span property="name"></span> [name]
 		</li>
 	</ul>
 </section>
 
-<section data-store="local" data-source="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
+<section mv-storage="local" mv-init="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
 	<h1>Local store, remote source</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
 	</ul>
 </section>
 
-<section data-mavo="githubtest" data-store="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<section mv-app="githubtest" mv-storage="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
 	<h1>Github</h1>
 	<a href="?githubtest_store=local&amp;githubtest_source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
 	</ul>
 </section>
 
-<section data-store="local" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<section mv-storage="local" mv-init="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
 	<h1>Local store, Github source</h1>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
 	</ul>
 </section>
 
-<section class="mavo" data-source="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<section class="mv-app" mv-init="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
 	<h1>No store, Github source</h1>
 	<p>Should display data but no editing controls</p>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>
@@ -142,13 +142,13 @@
 		]
 	}
 </script>
-<section data-store="local" data-source="#country-data">
+<section mv-storage="local" mv-init="#country-data">
 	<h1>Local store, Element source</h1>
 
 	<p>Should display Greece and Poland if no data</p>
 
 	<ul>
-		<li property="country" data-multiple>
+		<li property="country" mv-multiple>
 			<span property="code">Code</span>
 			<span property="name">Name</span>
 		</li>

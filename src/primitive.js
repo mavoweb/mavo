@@ -51,8 +51,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		// Linked widgets
-		if (!this.editor && this.element.hasAttribute("data-edit")) {
-			var original = $(this.element.getAttribute("data-edit"));
+		if (!this.editor && this.element.hasAttribute("mv-edit")) {
+			var original = $(this.element.getAttribute("mv-edit"));
 
 			if (original && Mavo.is("formControl", original)) {
 				this.editor = original.cloneNode(true);
@@ -71,7 +71,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.templateValue = this.getValue();
 
-		this.default = this.element.getAttribute("data-default");
+		this.default = this.element.getAttribute("mv-default");
 
 		if (this.constant || this.default === "") { // attribute exists, no value, default is template value
 			this.default = this.templateValue;
@@ -80,8 +80,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.default = this.editor? this.editorValue : this.emptyValue;
 		}
 		else {
-			new Mavo.Observer(this.element, "data-default", record => {
-				this.default = this.element.getAttribute("data-default");
+			new Mavo.Observer(this.element, "mv-default", record => {
+				this.default = this.element.getAttribute("mv-default");
 			});
 		}
 
@@ -245,7 +245,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		// Copy any data-input-* attributes from the element to the editor
-		var dataInput = /^data-edit-/i;
+		var dataInput = /^mv-edit-/i;
 		$$(this.element.attributes).forEach(function (attribute) {
 			if (dataInput.test(attribute.name)) {
 				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
@@ -496,7 +496,7 @@ var _ = Mavo.Primitive = $.Class({
 		},
 
 		getValueAttribute: function (element, defaults = _.getDefaults(element)) {
-			var ret = element.getAttribute("data-attribute") || defaults.attribute;
+			var ret = element.getAttribute("mv-attribute") || defaults.attribute;
 
 			if (!ret || ret === "null") {
 				ret = null;
