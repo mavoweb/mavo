@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>TinyMCE tests</title>
+	<link rel="stylesheet" href="/test/style.css" />
+	<link rel="stylesheet" href="/dist/mavo.css" />
+</head>
+<body>
+
+<h1>TinyMCE tests</h1>
+
+<section data-mavo="tinymce" data-store="local">
+	<h1>Rich text properties</h1>
+
+	<div class="tinymce" property="richtext">
+		Hello, I am <strong>Lea Verou</strong>. <a href="http://mavo.io">Mavo</a> is awesome.
+	</div>
+
+	<div class="tinymce" property="richtext2">
+		And this is another one.
+	</div>
+</section>
+
+<script src="/dist/mavo.js"></script>
+<script src="mavo-tinymce.js"></script>
+
+<script src="/test/test.js"></script>
+
+</body>
+</html>
