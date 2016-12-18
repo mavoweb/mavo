@@ -30,6 +30,8 @@
 <section data-mavo="types" autoedit>
 	<h1>Different types of elements</h1>
 
+	<span property="name">Lea Verou</span>
+
 	<div>
 		<time property="date"></time>
 		<time property="date2" datetime="1986-06-13"></time>
@@ -118,7 +120,23 @@
 	</details>
 </section>
 
+<section data-mavo="tinymce" data-store="local">
+	<h1>Rich text</h1>
+
+	<div class="tinymce" property="richtext">
+		Hello, I am <strong>Lea Verou</strong>. <a href="http://mavo.io">Mavo</a> is awesome.
+	</div>
+
+	<div class="tinymce" property="richtext2">
+		And this is another one.
+	</div>
+
+
+</section>
+
 <script src="../dist/mavo.js"></script>
+<script src="../plugins/primitive.tinymce.js"></script>
+
 <script src="test.js"></script>
 
 </body>

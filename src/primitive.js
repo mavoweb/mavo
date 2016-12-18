@@ -12,7 +12,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.attribute = _.getValueAttribute(this.element, this.defaults);
 		}
 
-		this.humanReadable = this.defaults.humanReadable;
 		this.datatype = this.defaults.datatype;
 		this.modes = this.modes || this.defaults.modes;
 		this.mode = this.modes || "read";
@@ -105,12 +104,8 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	get editorValue() {
-		if (this.getEditorValue) {
-			var value = this.getEditorValue();
-
-			if (value !== undefined) {
-				return value;
-			}
+		if (this.defaults.getEditorValue) {
+			return this.defaults.getEditorValue.call(this);
 		}
 
 		if (this.editor) {
@@ -128,8 +123,8 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	set editorValue(value) {
-		if (this.setEditorValue && this.setEditorValue(value) !== undefined) {
-			return;
+		if (this.defaults.setEditorValue) {
+			return this.defaults.setEditorValue.call(this, value);
 		}
 
 		if (this.editor) {
@@ -177,6 +172,10 @@ var _ = Mavo.Primitive = $.Class({
 	done: function () {
 		this.super.done.call(this);
 
+		if ("preEdit" in this) {
+			$.unbind(this.element, ".mavo:preedit .mavo:edit");
+		}
+
 		this.sneak(() => {
 			if (this.defaults.done) {
 				this.defaults.done.call(this);
@@ -221,11 +220,6 @@ var _ = Mavo.Primitive = $.Class({
 			// No editor provided, use default for element type
 			// Find default editor for datatype
 			var editor = this.defaults.editor || Mavo.Elements["*"].editor;
-
-			if (this.defaults.setEditorValue) {
-				// TODO Temporary hack; refactor soon
-				this.setEditorValue = this.defaults.setEditorValue;
-			}
 
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
 			this.editorValue = this.value;
@@ -280,38 +274,27 @@ var _ = Mavo.Primitive = $.Class({
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 		this.element.tabIndex = 0;
 
-		if (this.defaults.edit) {
-			this.defaults.edit.call(this);
-			return;
-		}
+		// Prevent default actions while editing
+		// e.g. following links etc
+		this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
 
-		(new Promise((resolve, reject) => {
-			// Prepare for edit
-
+		this.preEdit = Mavo.defer((resolve, reject) => {
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
 			if (this.empty && !this.attribute) {
-				resolve();
+				return resolve();
 			}
-
-			this.element._.events({
-				// click is needed too because it works with the keyboard as well
-				"click.mavo:preedit": e => this.edit(),
-				"focus.mavo:preedit": e => {
-					resolve();
-				},
-				"click.mavo:edit": evt => {
-					// Prevent default actions while editing
-					// e.g. following links etc
-					evt.preventDefault();
-				}
-			});
 
 			var timer;
 
+			$.events(this.element, {
+				"click.mavo:preedit": resolve,
+				"focus.mavo:preedit": resolve
+			});
+
 			if (!this.attribute) {
 				// Hovering over the element for over 150ms will trigger edit
-				this.element._.events({
+				$.events(this.element, {
 					"mouseenter.mavo:preedit": e => {
 						clearTimeout(timer);
 						timer = setTimeout(resolve, 150);
@@ -321,9 +304,16 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			}
-		})).then(() => {
+		});
+
+		if (this.defaults.edit) {
+			this.defaults.edit.call(this);
+			return;
+		}
+
+		this.preEdit.then(() => {
 			// Actual edit
-			this.element._.unbind(".mavo:preedit");
+			$.unbind(this.element, ".mavo:preedit");
 
 			if (this.initEdit) {
 				this.initEdit();
@@ -429,20 +419,25 @@ var _ = Mavo.Primitive = $.Class({
 				this.editorValue = value;
 			}
 
-			if (this.humanReadable && this.attribute) {
-				presentational = this.humanReadable(value);
+			if (this.defaults.humanReadable && this.attribute) {
+				presentational = this.defaults.humanReadable.call(this, value);
 			}
 
 			if (!this.editing || this.attribute) {
-				if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-					presentational = this.editor.selectedOptions[0].textContent;
+				if (this.defaults.setValue) {
+					this.defaults.setValue.call(this, this.element, value);
 				}
+				else {
+					if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
+						presentational = this.editor.selectedOptions[0].textContent;
+					}
 
-				_.setValue(this.element, {value, presentational}, {
-					defaults: this.defaults,
-					attribute: this.attribute,
-					datatype: this.datatype
-				});
+					_.setValue(this.element, {value, presentational}, {
+						defaults: this.defaults,
+						attribute: this.attribute,
+						datatype: this.datatype
+					});
+				}
 			}
 
 			this.empty = value === "";

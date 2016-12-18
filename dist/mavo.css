@@ -169,23 +169,21 @@
 [data-mavo] [data-mode="edit"] .mv-editor:focus {
   box-shadow: 0 0 0 1px rgba(133, 160, 173, 0.5), 1px 1px 0.5em 1px rgba(0, 0, 0, 0.3) !important; }
 
-[itemprop]:not([itemscope]) input.mv-editor,
-[itemprop]:not([itemscope]) select.mv-editor,
-[itemprop]:not([itemscope]) textarea.mv-editor, [property]:not([typeof])[data-mode="edit"] input.mv-editor,
-[property]:not([typeof])[data-mode="edit"] select.mv-editor,
-[property]:not([typeof])[data-mode="edit"] textarea.mv-editor {
+[property][data-mode="edit"]:not([typeof]) input.mv-editor,
+[property][data-mode="edit"]:not([typeof]) select.mv-editor,
+[property][data-mode="edit"]:not([typeof]) textarea.mv-editor {
   all: unset;
   cursor: auto; }
 
-[itemprop]:not([itemscope]) .mv-editor:hover, [property]:not([typeof])[data-mode="edit"] .mv-editor:hover {
+[property][data-mode="edit"]:not([typeof]):hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
-[itemprop]:not([itemscope]) textarea.mv-editor, [property]:not([typeof])[data-mode="edit"] textarea.mv-editor {
+[property][data-mode="edit"]:not([typeof]) textarea.mv-editor {
   display: block;
   box-sizing: border-box;
   width: 100%; }
 
-[itemprop]:not([itemscope]) input.mv-editor, [property]:not([typeof])[data-mode="edit"] input.mv-editor {
+[property][data-mode="edit"]:not([typeof]) input.mv-editor {
   max-width: 100%; }
 
 meta[property][data-mode="edit"] {

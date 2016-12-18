@@ -222,7 +222,7 @@
 }
 
 // Primitives
-#{$primitive}[data-mode="edit"] {
+[property][data-mode="edit"]:not([typeof]) {
 	& input.mv-editor,
 	& select.mv-editor,
 	& textarea.mv-editor {
@@ -230,7 +230,7 @@
 		cursor: auto;
 	}
 
-	.mv-editor:hover {
+	&:hover {
 		@include highlight(hsla(58, 100%, 50%, .2));
 	}
 

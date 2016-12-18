@@ -159,16 +159,27 @@ var _ = $.extend(Mavo, {
 		}
 	}),
 
-	defer: function() {
+	defer: function(constructor) {
 		var res, rej;
 
 		var promise = new Promise((resolve, reject) => {
+			if (constructor) {
+				constructor(resolve, reject);
+			}
+
 			res = resolve;
 			rej = reject;
 		});
 
-		promise.resolve = res;
-		promise.reject = rej;
+		promise.resolve = a => {
+			res(a);
+			return promise;
+		};
+
+		promise.reject = a => {
+			rej(a);
+			return promise;
+		};
 
 		return promise;
 	}
@@ -217,7 +228,7 @@ $.classProps.propagated = function(proto, names) {
 
 // :focus-within and :target-within shim
 function updateWithin(cl, element) {
-	cl = cl + "-within";
+	cl = "mv-" + cl + "-within";
 	$$("." + cl).forEach(el => el.classList.remove(cl));
 
 	while (element && (element = element.parentNode) && element.classList) {

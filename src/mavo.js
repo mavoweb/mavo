@@ -48,13 +48,15 @@ var _ = self.Mavo = $.Class({
 
 		// Apply heuristic for groups
 		$$(_.selectors.primitive, element).forEach(element => {
-			var isGroup = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element) && (// Contains other properties or non-form elements and...
-			                Mavo.is("multiple", element) || // is a collection...
-			                Mavo.Primitive.getValueAttribute(element) === null  // ...or its content is not in an attribute
-						) || element.matches("template");
+			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
-			if (isGroup) {
-				element.setAttribute("typeof", "");
+			if (hasChildren) {
+				var defaults = Mavo.Primitive.getDefaults(element);
+				var isCollection = Mavo.is("multiple", element);
+
+				if (isCollection || !Mavo.Primitive.getValueAttribute(element, defaults) && !defaults.hasChildren) {
+					element.setAttribute("typeof", "");
+				}
 			}
 		});
 

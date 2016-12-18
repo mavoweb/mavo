@@ -252,7 +252,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var isGroup = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element) && ( // Contains other properties or non-form elements and...
 				Mavo.is("multiple", element) || // is a collection...
 				Mavo.Primitive.getValueAttribute(element) === null // ...or its content is not in an attribute
-				) || element.matches("template");
+				);
 
 				if (isGroup) {
 					element.setAttribute("typeof", "");
@@ -978,16 +978,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		}),
 
-		defer: function defer() {
+		defer: function defer(constructor) {
 			var res, rej;
 
 			var promise = new Promise(function (resolve, reject) {
+				if (constructor) {
+					constructor(resolve, reject);
+				}
+
 				res = resolve;
 				rej = reject;
 			});
 
-			promise.resolve = res;
-			promise.reject = rej;
+			promise.resolve = function (a) {
+				res(a);
+				return promise;
+			};
+
+			promise.reject = function (a) {
+				rej(a);
+				return promise;
+			};
 
 			return promise;
 		}
@@ -1037,7 +1048,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// :focus-within and :target-within shim
 	function updateWithin(cl, element) {
-		cl = cl + "-within";
+		cl = "mv-" + cl + "-within";
 		$$("." + cl).forEach(function (el) {
 			return el.classList.remove(cl);
 		});
@@ -1968,7 +1979,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this.attribute = _.getValueAttribute(this.element, this.defaults);
 			}
 
-			this.humanReadable = this.defaults.humanReadable;
 			this.datatype = this.defaults.datatype;
 			this.modes = this.modes || this.defaults.modes;
 			this.mode = this.modes || "read";
@@ -2082,12 +2092,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		get editorValue() {
-			if (this.getEditorValue) {
-				var value = this.getEditorValue();
-
-				if (value !== undefined) {
-					return value;
-				}
+			if (this.defaults.getEditorValue) {
+				return this.defaults.getEditorValue.call(this);
 			}
 
 			if (this.editor) {
@@ -2105,8 +2111,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		set editorValue(value) {
-			if (this.setEditorValue && this.setEditorValue(value) !== undefined) {
-				return;
+			if (this.defaults.setEditorValue) {
+				return this.defaults.setEditorValue.call(this, value);
 			}
 
 			if (this.editor) {
@@ -2157,6 +2163,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.super.done.call(this);
 
+			if ("preEdit" in this) {
+				$.unbind(this.element, ".mavo:preedit .mavo:edit");
+			}
+
 			this.sneak(function () {
 				if (_this2.defaults.done) {
 					_this2.defaults.done.call(_this2);
@@ -2201,11 +2211,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				// No editor provided, use default for element type
 				// Find default editor for datatype
 				var editor = this.defaults.editor || Mavo.Elements["*"].editor;
-
-				if (this.defaults.setEditorValue) {
-					// TODO Temporary hack; refactor soon
-					this.setEditorValue = this.defaults.setEditorValue;
-				}
 
 				this.editor = $.create($.type(editor) === "function" ? editor.call(this) : editor);
 				this.editorValue = this.value;
@@ -2262,40 +2267,29 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
 			this.element.tabIndex = 0;
 
-			if (this.defaults.edit) {
-				this.defaults.edit.call(this);
-				return;
-			}
+			// Prevent default actions while editing
+			// e.g. following links etc
+			this.element.addEventListener("click.mavo:edit", function (evt) {
+				return evt.preventDefault();
+			});
 
-			new Promise(function (resolve, reject) {
-				// Prepare for edit
-
+			this.preEdit = Mavo.defer(function (resolve, reject) {
 				// Empty properties should become editable immediately
 				// otherwise they could be invisible!
 				if (_this4.empty && !_this4.attribute) {
-					resolve();
+					return resolve();
 				}
-
-				_this4.element._.events({
-					// click is needed too because it works with the keyboard as well
-					"click.mavo:preedit": function clickMavoPreedit(e) {
-						return _this4.edit();
-					},
-					"focus.mavo:preedit": function focusMavoPreedit(e) {
-						resolve();
-					},
-					"click.mavo:edit": function clickMavoEdit(evt) {
-						// Prevent default actions while editing
-						// e.g. following links etc
-						evt.preventDefault();
-					}
-				});
 
 				var timer;
 
+				$.events(_this4.element, {
+					"click.mavo:preedit": resolve,
+					"focus.mavo:preedit": resolve
+				});
+
 				if (!_this4.attribute) {
 					// Hovering over the element for over 150ms will trigger edit
-					_this4.element._.events({
+					$.events(_this4.element, {
 						"mouseenter.mavo:preedit": function mouseenterMavoPreedit(e) {
 							clearTimeout(timer);
 							timer = setTimeout(resolve, 150);
@@ -2305,9 +2299,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						}
 					});
 				}
-			}).then(function () {
+			});
+
+			if (this.defaults.edit) {
+				this.defaults.edit.call(this);
+				return;
+			}
+
+			this.preEdit.then(function () {
 				// Actual edit
-				_this4.element._.unbind(".mavo:preedit");
+				$.unbind(_this4.element, ".mavo:preedit");
 
 				if (_this4.initEdit) {
 					_this4.initEdit();
@@ -2415,20 +2416,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this5.editorValue = value;
 				}
 
-				if (_this5.humanReadable && _this5.attribute) {
-					presentational = _this5.humanReadable(value);
+				if (_this5.defaults.humanReadable && _this5.attribute) {
+					presentational = _this5.defaults.humanReadable.call(_this5, value);
 				}
 
 				if (!_this5.editing || _this5.attribute) {
-					if (_this5.editor && _this5.editor.matches("select") && _this5.editor.selectedOptions[0]) {
-						presentational = _this5.editor.selectedOptions[0].textContent;
-					}
+					if (_this5.defaults.setValue) {
+						_this5.defaults.setValue.call(_this5, _this5.element, value);
+					} else {
+						if (_this5.editor && _this5.editor.matches("select") && _this5.editor.selectedOptions[0]) {
+							presentational = _this5.editor.selectedOptions[0].textContent;
+						}
 
-					_.setValue(_this5.element, { value: value, presentational: presentational }, {
-						defaults: _this5.defaults,
-						attribute: _this5.attribute,
-						datatype: _this5.datatype
-					});
+						_.setValue(_this5.element, { value: value, presentational: presentational }, {
+							defaults: _this5.defaults,
+							attribute: _this5.attribute,
+							datatype: _this5.datatype
+						});
+					}
 				}
 
 				_this5.empty = value === "";
@@ -2913,7 +2918,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "content"
 		},
 
-		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address, .multiline": {
+		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address": {
 			editor: function editor() {
 				var display = getComputedStyle(this.element).display;
 				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";
