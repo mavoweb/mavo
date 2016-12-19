@@ -510,7 +510,7 @@ var _ = self.Mavo = $.Class({
 
 		init: function(container) {
 			return $$(_.selectors.init, container || document)
-				.filter(element => !element.parentNode.closest(_.selectors.init))
+				.filter(element => element == document.documentElement || !element.parentNode.closest(_.selectors.init))
 				.map(element => new _(element));
 		},
 
