@@ -359,7 +359,14 @@ var _ = self.Mavo = $.Class({
 		this.setUnsavedChanges(false);
 
 		this.permissions.onchange(({action, value}) => {
-			this.element.classList.toggle(`mv-can-${action}`, !!value);
+			var permissions = this.element.getAttribute("mv-permissions") || "";
+			permissions = permissions.trim().split(/\s+/).filter(a => a != action);
+
+			if (value) {
+				permissions.push(action);
+			}
+
+			this.element.setAttribute("mv-permissions", permissions.join(" "));
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
@@ -371,7 +378,7 @@ var _ = self.Mavo = $.Class({
 			});
 
 			if (this.autoEdit) {
-				this.element.addEventListener("mavo:load", evt => this.ui.edit.click());
+				this.ui.edit.click();
 			}
 		}, () => { // cannot
 			$.remove(this.ui.edit);

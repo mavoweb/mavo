@@ -410,7 +410,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var action = _ref.action;
 				var value = _ref.value;
 
-				_this.element.classList.toggle("mv-can-" + action, !!value);
+				var permissions = _this.element.getAttribute("mv-permissions") || "";
+				permissions = permissions.trim().split(/\s+/).filter(function (a) {
+					return a != action;
+				});
+
+				if (value) {
+					permissions.push(action);
+				}
+
+				_this.element.setAttribute("mv-permissions", permissions.join(" "));
 			});
 
 			this.permissions.can(["edit", "add", "delete"], function () {
@@ -424,9 +433,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 
 				if (_this.autoEdit) {
-					_this.element.addEventListener("mavo:load", function (evt) {
-						return _this.ui.edit.click();
-					});
+					_this.ui.edit.click();
 				}
 			}, function () {
 				// cannot

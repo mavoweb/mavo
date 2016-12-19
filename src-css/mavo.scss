@@ -104,8 +104,8 @@
 		}
 	}
 
-	[mv-app]:not(.mv-can-delete) & .mv-delete,
-	[mv-app]:not(.mv-can-add) & .mv-add {
+	[mv-app]:not([mv-permissions~="delete"]) & .mv-delete,
+	[mv-app]:not([mv-permissions~="add"]) & .mv-add {
 		display: none;
 	}
 }
@@ -162,11 +162,11 @@
 		vertical-align: middle;
 	}
 
-	&:not(.mv-can-add) button.mv-add {
+	&:not([mv-permissions~="add"]) button.mv-add {
 		display: none;
 	}
 
-	&:not(.mv-can-edit) {
+	&:not([mv-permissions~="edit"]) {
 		.mv-edit,
 		[mv-mode="edit"], .mv-add {
 			display: none;
