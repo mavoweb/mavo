@@ -3010,7 +3010,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			setEditorValue: function setEditorValue(value) {
-				if (this.datatype != "string") {
+				if (this.datatype && this.datatype != "string") {
 					return;
 				}
 
@@ -3641,7 +3641,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						className: "mv-delete",
 						events: {
 							"click": function click(evt) {
-								return _this7.delete(item);
+								return _this7.collection.delete(_this7);
 							}
 						}
 					}, {
@@ -3650,14 +3650,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						className: "mv-add",
 						events: {
 							"click": function click(evt) {
-								return _this7.add(null, _this7.children.indexOf(item)).edit();
+								return _this7.collection.add(null, _this7.children.indexOf(item)).edit();
 							}
 						}
 					}]
 				});
 			}
 
-			this.element.appendChild(this.itemControls);
+			if (!this.itemControls.parentNode) {
+				this.element.appendChild(this.itemControls);
+			}
 		}
 	});
 
@@ -4245,6 +4247,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			extract: function extract(node, attribute, path, syntax) {
+				if (attribute && attribute.name == "mv-expressions") {
+					return;
+				}
+
 				if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
 					this.all.push(new Mavo.Expression.Text({
 						node: node, syntax: syntax,

@@ -10,8 +10,23 @@ self.Test = {
 		return content.replace(/^"|"$/g, "");
 	},
 
-	content: function(td) {
-		var content = Test.pseudo(td, "before") + td.textContent + Test.pseudo(td, "after");
+	// Get content of a td for reftest
+	content: function(node) {
+		var content = Test.pseudo(node, "before");
+		var treeWalker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+
+		while (treeWalker.nextNode()) {
+			let node = treeWalker.currentNode;
+
+			if (node.nodeType == 3) {
+				content += node.textContent;
+			}
+			else if (node.matches("input, textarea")) {
+				content += node.value;
+			}
+		}
+
+		content += Test.pseudo(node, "after");
 
 		return content.replace(/\s+/g, " ").trim();
 	}
@@ -123,6 +138,7 @@ requestAnimationFrame(() => {
 
 			compare();
 			new Mavo.Observer(td, null, compare);
+			$.events(td, "input change", compare);
 		}
 	}
 });

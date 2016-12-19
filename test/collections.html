@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Collection tests</title>
+	<link rel="stylesheet" href="../dist/mavo.css" />
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		[mv-app="customitemcontrols"] .mv-item-controls {
+			position: static;
+			opacity: 1;
+			border: 0;
+			pointer-events: auto;
+		}
+	</style>
+</head>
+<body>
+
+<h1>Collection tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<script type="application/json" id="numbers">{
+	"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+}</script>
+
+<section mv-app="primitives" mv-storage="#numbers">
+	<h1>Collection of primitives</h1>
+	<table class="reftest">
+		<tr>
+			<td><span property="numbers" mv-multiple></span></td>
+			<td>12345678910</td>
+		</tr>
+	</table>
+</section>
+
+<section mv-app="customitemcontrols" mv-storage="#countries" class="mv-autoedit">
+	<h1>Custom item controls placement</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="country" data-mv-multiple>
+					<div class="mv-item-controls">A</div>
+					<span property="code"></span>
+					<span property="name"></span>
+				</div>
+			</td>
+			<td>
+				<div><div class="mv-item-controls">A</div> Online</div>
+				<div><div class="mv-item-controls">A</div> us United States</div>
+				<div><div class="mv-item-controls">A</div> gb United Kingdom </div><button class="mv-add">Add country</button>
+			</td>
+		</tr>
+	</table>
+</section>
+
+<script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
+
+</body>
+</html>

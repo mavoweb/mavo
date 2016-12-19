@@ -147,7 +147,7 @@ Mavo.Elements = {
 		},
 
 		setEditorValue: function(value) {
-			if (this.datatype != "string") {
+			if (this.datatype && this.datatype != "string") {
 				return;
 			}
 

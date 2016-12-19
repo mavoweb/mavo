@@ -2700,7 +2700,7 @@ Mavo.Elements = {
 		},
 
 		setEditorValue: function(value) {
-			if (this.datatype != "string") {
+			if (this.datatype && this.datatype != "string") {
 				return;
 			}
 
@@ -3222,21 +3222,23 @@ Mavo.hooks.add("node-edit-end", function() {
 						title: "Delete this " + this.name,
 						className: "mv-delete",
 						events: {
-							"click": evt => this.delete(item)
+							"click": evt => this.collection.delete(this)
 						}
 					}, {
 						tag: "button",
 						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 						className: "mv-add",
 						events: {
-							"click": evt => this.add(null, this.children.indexOf(item)).edit()
+							"click": evt => this.collection.add(null, this.children.indexOf(item)).edit()
 						}
 					}
 				]
 			});
 		}
 
-		this.element.appendChild(this.itemControls);
+		if (!this.itemControls.parentNode) {
+			this.element.appendChild(this.itemControls);
+		}
 	}
 });
 
@@ -3735,6 +3737,10 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax) {
+		if (attribute && attribute.name == "mv-expressions") {
+			return;
+		}
+
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {

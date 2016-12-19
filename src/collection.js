@@ -452,21 +452,23 @@ Mavo.hooks.add("node-edit-end", function() {
 						title: "Delete this " + this.name,
 						className: "mv-delete",
 						events: {
-							"click": evt => this.delete(item)
+							"click": evt => this.collection.delete(this)
 						}
 					}, {
 						tag: "button",
 						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 						className: "mv-add",
 						events: {
-							"click": evt => this.add(null, this.children.indexOf(item)).edit()
+							"click": evt => this.collection.add(null, this.children.indexOf(item)).edit()
 						}
 					}
 				]
 			});
 		}
 
-		this.element.appendChild(this.itemControls);
+		if (!this.itemControls.parentNode) {
+			this.element.appendChild(this.itemControls);
+		}
 	}
 });
 

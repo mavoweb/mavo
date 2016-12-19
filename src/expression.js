@@ -399,6 +399,10 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax) {
+		if (attribute && attribute.name == "mv-expressions") {
+			return;
+		}
+
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
