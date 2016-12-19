@@ -8,6 +8,9 @@ var _ = self.Mavo = $.Class({
 
 		this.element = element;
 
+		// Index among other mavos in the page, 1 is first
+		this.index = _.all.push(this);
+
 		// Convert any data-mv-* attributes to mv-*
 		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
 		for (let element of $$(dataMv.join(", "), this.element).concat(this.element)) {
@@ -20,9 +23,6 @@ var _ = self.Mavo = $.Class({
 
 			}
 		}
-
-		// Index among other mavos in the page, 1 is first
-		this.index = _.all.push(this);
 
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
@@ -149,6 +149,16 @@ var _ = self.Mavo = $.Class({
 				$(".mv-status", this.ui.bar).textContent = "";
 			});
 		}
+
+		// Prevent editing properties inside <summary> to open and close the summary (fix bug #82)
+		if ($("summary [property]:not([typeof])")) {
+			this.element.addEventListener("click", evt => {
+				if (evt.target != document.activeElement) {
+					evt.preventDefault();
+				}
+			});
+		}
+
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = false;

@@ -209,6 +209,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.element = element;
 
+			// Index among other mavos in the page, 1 is first
+			this.index = _.all.push(this);
+
 			// Convert any data-mv-* attributes to mv-*
 			var dataMv = _.attributes.map(function (attribute) {
 				return "[data-" + attribute + "]";
@@ -250,7 +253,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 
-				// Index among other mavos in the page, 1 is first
+				// Assign a unique (for the page) id to this mavo instance
 			} catch (err) {
 				_didIteratorError = true;
 				_iteratorError = err;
@@ -266,9 +269,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			this.index = _.all.push(this);
-
-			// Assign a unique (for the page) id to this mavo instance
 			this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index;
 			this.element.setAttribute("mv-app", this.id);
 
