@@ -41,11 +41,19 @@ body > section {
 	padding: .5em;
 	border-radius: .3em;
 
-	h1 {
+	& > h1 {
 		margin: 0;
 		font: bold 200%/1 Helvetica Neue, sans-serif;
 		color: var(--dark);
 		letter-spacing: -.04em;
+	}
+
+	script[type="application/json"] {
+		padding: .5em;
+		background: var(--ciel);
+		display: block;
+		font-family: monospace;
+		white-space: pre;
 	}
 }
 

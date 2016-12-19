@@ -18,6 +18,80 @@
 
 <h1>Collection tests</h1>
 
+<script type="application/json" id="numbers">{
+	"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+}</script>
+
+<section mv-app="nested" mv-storage="#people" class="mv-autoedit">
+	<h1>Nested collections</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="person" mv-multiple>
+					<strong property="name">John Doe</strong>
+					<ul>
+						<li property="hobby" mv-multiple>Fishing</li>
+					</ul>
+				</div>
+				<div property="cat" mv-multiple>
+					<strong property="name">John Doe</strong>
+					<ul>
+						<li property="hobby" mv-multiple>Fishing</li>
+					</ul>
+				</div>
+			</td>
+			<td>
+				<strong>Lea Verou</strong><br />
+				CodingDesignCooking
+				<button>Add hobby</button>
+				<strong>David Karger</strong><br />
+				DancingTheory
+				<button>Add hobby</button>
+				<button>Add person</button>
+				<strong>Vector</strong>
+				EatingPurring
+				<button>Add hobby</button>
+				<strong>Chiki</strong>
+				Playing
+				<button>Add hobby</button>
+				<button>Add cat</button>
+			</td>
+		</tr>
+	</table>
+	<script type="application/json" id="people" mv-expressions="none">{
+	"person": [
+		{
+			"name": "Lea Verou",
+			"hobby": ["Coding", "Design", "Cooking"]
+		},
+		{
+			"name": "David Karger",
+			"hobby": ["Dancing", "Theory"]
+		}
+	],
+	"cat": [
+		{
+			"name": "Vector",
+			"hobby": ["Eating", "Purring"]
+		},
+		{
+			"name": "Chiki",
+			"hobby": "Playing"
+		}
+	]
+}</script>
+</section>
+
+<section mv-app="primitives" mv-storage="#numbers">
+	<h1>Collection of primitives</h1>
+	<table class="reftest">
+		<tr>
+			<td><span property="numbers" mv-multiple></span></td>
+			<td>12345678910</td>
+		</tr>
+	</table>
+</section>
+
 <script type="application/json" id="countries">{
 	"country": [
 		{
@@ -34,27 +108,12 @@
 		}
 	]
 }</script>
-
-<script type="application/json" id="numbers">{
-	"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-}</script>
-
-<section mv-app="primitives" mv-storage="#numbers">
-	<h1>Collection of primitives</h1>
-	<table class="reftest">
-		<tr>
-			<td><span property="numbers" mv-multiple></span></td>
-			<td>12345678910</td>
-		</tr>
-	</table>
-</section>
-
 <section mv-app="customitemcontrols" mv-storage="#countries" class="mv-autoedit">
 	<h1>Custom item controls placement</h1>
 	<table class="reftest">
 		<tr>
 			<td>
-				<div property="country" data-mv-multiple>
+				<div property="country" mv-multiple>
 					<div class="mv-item-controls">A</div>
 					<span property="code"></span>
 					<span property="name"></span>
