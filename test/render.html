@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Render tests</title>
+	<link rel="stylesheet" href="../dist/mavo.css" />
+	<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<h1>Render tests</h1>
+
+<script type="application/json" id="countries">{
+	"country": [
+		{
+			"code": "",
+			"name": "Online"
+		},
+		{
+			"code": "us",
+			"name": "United States"
+		},
+		{
+			"code": "gb",
+			"name": "United Kingdom"
+		}
+	]
+}</script>
+
+<script type="application/json" id="deep">
+{
+	"deep1": {
+		"deep1": {
+			"deep1": [
+				{
+					"deep1": "YOLO"
+				}
+			]
+		}
+	}
+}
+</script>
+
+<section mv-app mv-storage="#countries">
+	<h1>No store, element source</h1>
+
+	<table class="reftest">
+		<tr>
+			<td><span property="deep1">?</span></td>
+			<td>YOLO</td>
+		</tr>
+	</table>
+</section>
+
+<script src="../dist/mavo.js"></script>
+<script src="test.js"></script>
+
+</body>
+</html>
