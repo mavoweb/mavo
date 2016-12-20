@@ -46,6 +46,8 @@ body > section > p,
   width: -webkit-max-content;
   width: -moz-max-content;
   width: max-content;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: .4em 1em;
   background: var(--ciel);
   font-style: italic;

@@ -12,6 +12,13 @@
 			border: 0;
 			pointer-events: auto;
 		}
+
+		[mv-app="nested"] div[mv-multiple] {
+			border: 1px solid #ddd;
+			background: #eee;
+			padding: .5em;
+			margin: .5em;
+		}
 	</style>
 </head>
 <body>
@@ -24,40 +31,24 @@
 
 <section mv-app="nested" mv-storage="#people" class="mv-autoedit">
 	<h1>Nested collections</h1>
-	<table class="reftest">
-		<tr>
-			<td>
-				<div property="person" mv-multiple>
-					<strong property="name">John Doe</strong>
-					<ul>
-						<li property="hobby" mv-multiple>Fishing</li>
-					</ul>
-				</div>
-				<div property="cat" mv-multiple>
-					<strong property="name">John Doe</strong>
-					<ul>
-						<li property="hobby" mv-multiple>Fishing</li>
-					</ul>
-				</div>
-			</td>
-			<td>
-				<strong>Lea Verou</strong><br />
-				CodingDesignCooking
-				<button>Add hobby</button>
-				<strong>David Karger</strong><br />
-				DancingTheory
-				<button>Add hobby</button>
-				<button>Add person</button>
-				<strong>Vector</strong>
-				EatingPurring
-				<button>Add hobby</button>
-				<strong>Chiki</strong>
-				Playing
-				<button>Add hobby</button>
-				<button>Add cat</button>
-			</td>
-		</tr>
-	</table>
+	<p>Use this to test dragging, both within a collection and to different collections.
+	You should be able to drag across hobby lists or cats to people and vice versa, but not hobbies to people or people to hobbies.</p>
+
+	<div property="person" mv-multiple>
+		<strong property="name">John Doe</strong>
+		<ul>
+			<li property="hobby" mv-multiple>Fishing</li>
+		</ul>
+	</div>
+	<div property="cat" mv-multiple>
+		<strong property="name">John Doe</strong>
+		<ul>
+			<li property="hobby" mv-multiple>Fishing</li>
+		</ul>
+	</div>
+	<div>There are [count(person)] people and [count(cat)] cats, which have a total of [count(hobby)] hobbies.</div>
+	<div>Another random div</div>
+
 	<script type="application/json" id="people" mv-expressions="none">{
 	"person": [
 		{

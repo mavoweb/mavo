@@ -108,6 +108,10 @@ requestAnimationFrame(() => {
 			let tr = td.parentNode;
 			let ref = tr.cells[1];
 
+			if (!ref) {
+				return;
+			}
+
 			let compare = () => {
 				var pass = Test.content(td) == Test.content(ref);
 

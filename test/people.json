@@ -1,0 +1,22 @@
+{
+	"person": [
+		{
+			"name": "Lea Verou",
+			"hobby": ["Coding", "Design", "Cooking"]
+		},
+		{
+			"name": "David Karger",
+			"hobby": ["Dancing", "Theory"]
+		}
+	],
+	"cat": [
+		{
+			"name": "Vector",
+			"hobby": ["Eating", "Purring"]
+		},
+		{
+			"name": "Chiki",
+			"hobby": "Playing"
+		}
+	]
+}

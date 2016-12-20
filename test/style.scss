@@ -60,6 +60,8 @@ body > section {
 body > section > p,
 .notice {
 	width: max-content;
+	max-width: 100%;
+	box-sizing: border-box;
 	padding: .4em 1em;
 	background: var(--ciel);
 	font-style: italic;

@@ -109,6 +109,79 @@
 	</table>
 </section>
 
+<section mv-app mv-storage="local" mv-init="people.json">
+	<h1>Aggregates</h1>
+
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="person" mv-multiple>
+					<strong property="name">John Doe</strong>
+					<ul>
+						<li property="hobby" mv-multiple>Fishing</li>
+					</ul>
+				</div>
+				<div property="cat" mv-multiple>
+					<strong property="name">John Doe</strong>
+					<ul>
+						<li property="hobby" mv-multiple>Fishing</li>
+					</ul>
+				</div>
+			</td>
+			<td>
+
+				<div>
+					<strong>Lea Verou</strong>
+					<ul>
+						<li>Coding</li><li>Design</li><li>Cooking</li>
+					</ul>
+				</div><div>
+					<strong>David Karger</strong>
+					<ul>
+						<li>Dancing</li><li>Theory</li>
+					</ul>
+				</div>
+				<div>
+					<strong>Vector</strong>
+					<ul>
+						<li>Eating</li><li>Purring</li>
+					</ul>
+				</div><div>
+					<strong>Chiki</strong>
+					<ul>
+						<li>Playing</li>
+					</ul>
+				</div>
+
+			</td>
+		</tr>
+		<tr>
+			<td>[count(person)]</td>
+			<td>2</td>
+		</tr>
+		<tr>
+			<td>[count(cat)]</td>
+			<td>2</td>
+		</tr>
+		<tr title="Count of property that exists in both collections">
+			<td>[count(name)]</td>
+			<td>4</td>
+		</tr>
+		<tr title="Count of property that exists in both collections">
+			<td>[count(hobby)]</td>
+			<td>8</td>
+		</tr>
+		<tr title="Count of property from specific collection">
+			<td>[count(person.hobby)]</td>
+			<td>5</td>
+		</tr>
+		<tr title="Count of property from specific collection">
+			<td>[count(cat.hobby)]</td>
+			<td>3</td>
+		</tr>
+	</table>
+</section>
+
 <section class="mv-app">
 	<h1>Without render</h1>
 
