@@ -36,6 +36,14 @@ var _ = $.extend(Mavo, {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
+	delete: (arr, element) => {
+		var index = arr && arr.indexOf(element);
+
+		if (index > -1) {
+			arr.splice(index, 1);
+		}
+	},
+
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {
 		if (!Array.isArray(arr)) {
@@ -45,8 +53,30 @@ var _ = $.extend(Mavo, {
 		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 	},
 
-	is: function(thing, element) {
-		return element.matches && element.matches(_.selectors[thing]);
+	is: function(thing, ...elements) {
+		for (let element of elements) {
+			if (element && element.matches && element.matches(_.selectors[thing])) {
+				return true;
+			}
+		}
+
+		return false;
+	},
+
+	data: (element, name, value) => {
+		if (value === undefined) {
+			return $.value(element, "_", "data", "mavo", name);
+		}
+		else {
+			element._.data.mavo = element._.mavo || {};
+			element._.data.mavo[name] = value;
+		}
+	},
+
+	pushUnique: (arr, item) => {
+		if (arr.indexOf(item) === -1) {
+			arr.push(item);
+		}
 	},
 
 	/**

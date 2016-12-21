@@ -417,7 +417,13 @@ var _ = self.Mavo = $.Class({
 		})
 		.then(response => {
 			if (response && $.type(response) == "string") {
-				response = JSON.parse(response);
+				try {
+					response = JSON.parse(response);
+				}
+				catch (e) {
+					console.log("%cJSON parse error", "color: red; font-weight: bold", response);
+					response = "";
+				}
 			}
 
 			this.render(response);
@@ -535,11 +541,11 @@ let s = _.selectors = {
 	item: ".mv-item",
 	ui: ".mv-ui",
 	container: {
-		"li": "ul, ol",
+		// "li": "ul, ol",
 		"tr": "table",
 		"option": "select",
-		"dt": "dl",
-		"dd": "dl"
+		// "dt": "dl",
+		// "dd": "dl"
 	}
 };
 

@@ -34,16 +34,16 @@
 	<p>Use this to test dragging, both within a collection and to different collections.
 	You should be able to drag across hobby lists or cats to people and vice versa, but not hobbies to people or people to hobbies.</p>
 
-	<div property="person" mv-multiple>
+	<div property="person" mv-multiple mv-accepts="cat">
 		<strong property="name">John Doe</strong>
 		<ul>
 			<li property="hobby" mv-multiple>Fishing</li>
 		</ul>
 	</div>
-	<div property="cat" mv-multiple>
+	<div property="cat" mv-multiple mv-accepts="person">
 		<strong property="name">John Doe</strong>
 		<ul>
-			<li property="hobby" mv-multiple>Fishing</li>
+			<li property="hobby" mv-multiple mv-related="hobby">Fishing</li>
 		</ul>
 	</div>
 	<div>There are [count(person)] people and [count(cat)] cats, which have a total of [count(hobby)] hobbies.</div>

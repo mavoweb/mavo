@@ -48,6 +48,10 @@ var hashchanged = evt => {
 	if (location.hash) {
 		var target = $(location.hash);
 
+		if (!target) {
+			return;
+		}
+
 		if (target.matches("body > section")) {
 			if (evt) {
 				location.reload();

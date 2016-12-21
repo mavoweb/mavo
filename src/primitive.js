@@ -159,7 +159,7 @@ var _ = Mavo.Primitive = $.Class({
 			env.data = null;
 		}
 
-		Mavo.hooks.run("primitive-getdata-end", env);
+		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
 	},
@@ -449,21 +449,15 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => this.dataChanged(value));
+				requestAnimationFrame(() => this.dataChanged("propertychange", {value}));
 			}
 		});
 
 		return value;
 	},
 
-	dataChanged: function(value) {
-		$.fire(this.element, "mavo:datachange", {
-			property: this.property,
-			value: value,
-			mavo: this.mavo,
-			node: this,
-			action: "propertychange"
-		});
+	dataChanged: function(action = "propertychange", o) {
+		return this.super.dataChanged.call(this, action, o);
 	},
 
 	live: {

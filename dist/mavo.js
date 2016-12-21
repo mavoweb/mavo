@@ -612,7 +612,13 @@ var _ = self.Mavo = $.Class({
 		})
 		.then(response => {
 			if (response && $.type(response) == "string") {
-				response = JSON.parse(response);
+				try {
+					response = JSON.parse(response);
+				}
+				catch (e) {
+					console.log("%cJSON parse error", "color: red; font-weight: bold", response);
+					response = "";
+				}
 			}
 
 			this.render(response);
@@ -730,11 +736,11 @@ let s = _.selectors = {
 	item: ".mv-item",
 	ui: ".mv-ui",
 	container: {
-		"li": "ul, ol",
+		// "li": "ul, ol",
 		"tr": "table",
 		"option": "select",
-		"dt": "dl",
-		"dd": "dl"
+		// "dt": "dl",
+		// "dd": "dl"
 	}
 };
 
@@ -808,6 +814,14 @@ var _ = $.extend(Mavo, {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
+	delete: (arr, element) => {
+		var index = arr && arr.indexOf(element);
+
+		if (index > -1) {
+			arr.splice(index, 1);
+		}
+	},
+
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {
 		if (!Array.isArray(arr)) {
@@ -817,8 +831,30 @@ var _ = $.extend(Mavo, {
 		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 	},
 
-	is: function(thing, element) {
-		return element.matches && element.matches(_.selectors[thing]);
+	is: function(thing, ...elements) {
+		for (let element of elements) {
+			if (element && element.matches && element.matches(_.selectors[thing])) {
+				return true;
+			}
+		}
+
+		return false;
+	},
+
+	data: (element, name, value) => {
+		if (value === undefined) {
+			return $.value(element, "_", "data", "mavo", name);
+		}
+		else {
+			element._.data.mavo = element._.mavo || {};
+			element._.data.mavo[name] = value;
+		}
+	},
+
+	pushUnique: (arr, item) => {
+		if (arr.indexOf(item) === -1) {
+			arr.push(item);
+		}
 	},
 
 	/**
@@ -1531,6 +1567,19 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
+	dataChanged: function(action, o = {}) {
+		$.fire(o.element || this.element, "mavo:datachange", $.extend({
+			property: this.property,
+			action,
+			mavo: this.mavo,
+			node: this
+		}, o));
+	},
+
+	toString: function() {
+		return `${this.nodeType} (${this.property})`;
+	},
+
 	live: {
 		store: function(value) {
 			$.toggleAttribute(this.element, "mv-storage", value);
@@ -1711,7 +1760,7 @@ var _ = Mavo.Group = $.Class({
 			};
 		}
 
-		Mavo.hooks.run("primitive-getdata-end", env);
+		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
 	},
@@ -1720,21 +1769,32 @@ var _ = Mavo.Group = $.Class({
 	 * Search entire subtree for property, return relative value
 	 * @return {Mavo.Node}
 	 */
-	find: function(property) {
+	find: function(property, o = {}) {
 		if (this.property == property) {
 			return this;
 		}
 
 		if (property in this.children) {
-			return this.children[property].find(property);
+			return this.children[property].find(property, o);
 		}
 
+		var all = [];
+
 		for (var prop in this.children) {
-			var ret = this.children[prop].find(property);
+			var ret = this.children[prop].find(property, o);
 
 			if (ret !== undefined) {
-				return ret;
+				if (Array.isArray(ret)) {
+					all.push(...ret);
+				}
+				else {
+					return ret;
+				}
 			}
+		}
+
+		if (all.length) {
+			return all;
 		}
 	},
 
@@ -1963,7 +2023,7 @@ var _ = Mavo.Primitive = $.Class({
 			env.data = null;
 		}
 
-		Mavo.hooks.run("primitive-getdata-end", env);
+		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
 	},
@@ -2253,21 +2313,15 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => this.dataChanged(value));
+				requestAnimationFrame(() => this.dataChanged("propertychange", {value}));
 			}
 		});
 
 		return value;
 	},
 
-	dataChanged: function(value) {
-		$.fire(this.element, "mavo:datachange", {
-			property: this.property,
-			value: value,
-			mavo: this.mavo,
-			node: this,
-			action: "propertychange"
-		});
+	dataChanged: function(action = "propertychange", o) {
+		return this.super.dataChanged.call(this, action, o);
 	},
 
 	live: {
@@ -2787,7 +2841,7 @@ Mavo.Elements = {
 
 (function($, $$) {
 
-Mavo.attributes.push("mv-multiple", "mv-order");
+Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts");
 
 var _ = Mavo.Collection = $.Class({
 	extends: Mavo.Node,
@@ -2801,9 +2855,10 @@ var _ = Mavo.Collection = $.Class({
 		this.children = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("properties", "mutable", "templateElement")) {
+		if (!this.fromTemplate("properties", "mutable", "templateElement", "accepts")) {
 			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
+			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
@@ -2854,7 +2909,7 @@ var _ = Mavo.Collection = $.Class({
 			env.data = env.data[0];
 		}
 
-		Mavo.hooks.run("collection-getdata-end", env);
+		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
 	},
@@ -2890,24 +2945,34 @@ var _ = Mavo.Collection = $.Class({
 			item = item || this.createItem();
 		}
 
+		if (item.collection != this) {
+			this.adopt(item);
+		}
+
 		if (index in this.children) {
 			if (this.bottomUp) {
 				index++;
 			}
 		}
-		else {
+		else if (index === undefined) {
 			index = this.bottomUp? 0 : this.length;
 		}
 
-		if (!item.element.parentNode) {
-			// Add it to the DOM, if not already in
+		if (this.mutable) {
+			// Add it to the DOM, or fix its place
 			var nextItem = this.children[index];
 
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
 		// Update internal data model
+		var currentIndex = this.children.indexOf(item);
+		if (currentIndex > -1) {
+			this.children.splice(currentIndex, 1);
+		}
+
 		this.children.splice(index, 0, item);
+
 
 		for (let i = index - 1; i < this.length; i++) {
 			let item = this.children[i];
@@ -2916,12 +2981,7 @@ var _ = Mavo.Collection = $.Class({
 				item.index = i;
 
 				if (!o.silent) {
-					item.element._.fire("mavo:datachange", {
-						node: this,
-						mavo: this.mavo,
-						action: "add",
-						item
-					});
+					item.dataChanged("add");
 				}
 			}
 		}
@@ -2931,6 +2991,35 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		return item;
+	},
+
+	adopt: function(item) {
+		if (item.collection) {
+			// It belongs to another collection, delete from there first
+			item.collection.children.splice(item.collection.children.indexOf(item), 1);
+			item.collection.dataChanged("delete");
+		}
+
+		 // Update collection & closestCollection properties
+		this.walk(obj => {
+			if (obj.closestCollection === item.collection) {
+				obj.closestCollection = this;
+			}
+
+			// Belongs to another Mavo?
+			if (item.mavo != this.mavo) {
+				item.mavo = this.mavo;
+			}
+		});
+
+		item.collection = this;
+
+		// Adjust templates and their copies
+		if (item.template) {
+			Mavo.delete(item.template.copies, item);
+
+			item.template = this.itemTemplate;
+		}
 	},
 
 	delete: function(item, hard) {
@@ -2945,12 +3034,7 @@ var _ = Mavo.Collection = $.Class({
 			item.deleted = true; // schedule for deletion
 			item.element.style.opacity = "";
 
-			item.element._.fire("mavo:datachange", {
-				node: this,
-				mavo: this.mavo,
-				action: "delete",
-				item: item
-			});
+			item.dataChanged("delete");
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
@@ -2970,12 +3054,17 @@ var _ = Mavo.Collection = $.Class({
 					var containerSelector = Mavo.selectors.container[tag];
 
 					if (containerSelector) {
-						var after = this.marker.closest(containerSelector);
+						var after = this.marker.parentNode.closest(containerSelector);
 					}
 
 					this.addButton._.after(after && after.parentNode? after : this.marker);
 				}
 			}
+
+			// Set up drag & drop
+			_.dragula.then(() => {
+				this.getDragula();
+			});
 		}
 	},
 
@@ -3008,12 +3097,13 @@ var _ = Mavo.Collection = $.Class({
 
 			this.children = [];
 
-			this.marker._.fire("mavo:datachange", {
-				node: this,
-				mavo: this.mavo,
-				action: "clear"
-			});
+			this.dataChanged("clear");
 		}
+	},
+
+	dataChanged: function(action, o = {}) {
+		o.element = o.element || this.marker;
+		return this.super.dataChanged.call(this, action, o);
 	},
 
 	save: function() {
@@ -3086,18 +3176,24 @@ var _ = Mavo.Collection = $.Class({
 		this.save();
 	},
 
-	find: function(property) {
+	find: function(property, o = {}) {
 		var items = this.children.filter(item => !item.deleted);
 
 		if (this.property == property) {
-			return items;
+			return o.collections? this : items;
 		}
 
 		if (this.properties.indexOf(property) > -1) {
-			var ret = items.map(item => item.find(property));
+			var ret = items.map(item => item.find(property, o));
 
 			return Mavo.flatten(ret);
 		}
+	},
+
+	isCompatible: function(c) {
+		return c && this.itemTemplate.nodeType == c.itemTemplate.nodeType && (c === this
+		       || c.template == this || this.template == c || this.template && this.template == c.template
+		       || this.accepts.indexOf(c.property) > -1);
 	},
 
 	live: {
@@ -3111,15 +3207,93 @@ var _ = Mavo.Collection = $.Class({
 				this.mavo.needsEdit = true;
 
 				// Keep position of the template in the DOM, since we might remove it
-				this.marker = $.create("div", {
-					hidden: true,
-					className: "mv-marker",
-					after: this.templateElement
-				});
+				this.marker = document.createComment("mv-marker");
+				Mavo.data(this.marker, "collection", this);
+				$.after(this.marker, this.templateElement);
 
 				this.templateElement.classList.add("mv-item");
 			}
 		}
+	},
+
+	// Make sure to only call after dragula has loaded
+	getDragula: function() {
+		if (this.dragula) {
+			return this.dragula;
+		}
+
+		if (this.template) {
+			Mavo.pushUnique(this.template.dragula.containers, this.marker.parentNode);
+			return this.dragula = this.template.dragula || this.template.getDragula();
+		}
+
+		this.dragula = dragula({
+			containers: [this.marker.parentNode],
+			isContainer: el => {
+				if (this.accepts.length) {
+					return Mavo.flatten(this.accepts.map(property => this.mavo.root.find(property, {collections: true})))
+								.filter(c => c && c instanceof _)
+								.map(c => c.marker.parentNode)
+								.indexOf(el) > -1;
+				}
+			},
+			moves: (el, container, handle) => {
+				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
+			},
+			accepts: function(el, target, source, next) {
+				if (el.contains(target)) {
+					return false;
+				}
+
+				var previous = next? next.previousElementSibling : target.lastElementChild;
+
+				var collection = _.get(previous) || _.get(next);
+
+				if (!collection) {
+					return false;
+				}
+
+				var item = Mavo.Node.get(el);
+
+				return item && item.collection.isCompatible(collection);
+			}
+		});
+
+		this.dragula.on("drop", (el, target, source, next) => {
+			var item = Mavo.Node.get(el);
+			var oldIndex = item && item.index;
+			if (next && !target.contains(next)) {
+				console.log(this.property, target, next, this.dragula);
+			};
+			next = next || el.nextElementSibling;
+			var previous = el.previousElementSibling;
+			var collection = _.get(previous) || _.get(next);
+			var closestItem = Mavo.Node.get(previous) || Mavo.Node.get(next);
+
+
+			if (closestItem && closestItem.collection != collection) {
+				closestItem = null;
+			}
+
+			if (item.collection.isCompatible(collection)) {
+				if (closestItem) {
+					var index = closestItem.index + (closestItem.element === previous);
+				}
+				else {
+					// Collection is empty and/or we dragged on the Add button
+					var index = collection.children.length;
+				}
+
+				collection.add(item, index);
+			}
+			else {
+				return this.dragula.cancel(true);
+			}
+		});
+
+		_.dragulas.push(this.dragula);
+
+		return this.dragula;
 	},
 
 	lazy: {
@@ -3156,7 +3330,7 @@ var _ = Mavo.Collection = $.Class({
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.mv-add-${this.property}`;
-			var group = this.closestCollection || this.marker.closest(Mavo.selectors.group);
+			var group = this.closestCollection || this.marker.parentNode.closest(Mavo.selectors.group);
 
 			if (group) {
 				var button = $$(selector, group).filter(button => {
@@ -3172,6 +3346,7 @@ var _ = Mavo.Collection = $.Class({
 			};
 
 			button.classList.add("mv-ui", "mv-add");
+			Mavo.data(button, "collection", this);
 
 			if (this.property) {
 				button.classList.add(`mv-add-${this.property}`);
@@ -3184,6 +3359,27 @@ var _ = Mavo.Collection = $.Class({
 			});
 
 			return button;
+		}
+	},
+
+	static: {
+		dragulas: [],
+		get: element => {
+			// Is it an add button or a marker?
+			var collection = Mavo.data(element, "collection");
+
+			if (collection) {
+				return collection;
+			}
+
+			// Maybe it's a collection item?
+			var item = Mavo.Node.get(element);
+
+			return item && item.collection || null;
+		},
+
+		lazy: {
+			dragula: () => $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js")
 		}
 	}
 });
@@ -3246,8 +3442,12 @@ Mavo.hooks.add("node-edit-end", function() {
 						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 						className: "mv-add",
 						events: {
-							"click": evt => this.collection.add(null, this.children.indexOf(item)).edit()
+							"click": evt => this.collection.add(null, this.collection.children.indexOf(item)).edit()
 						}
+					}, {
+						tag: "button",
+						title: "Drag to reorder " + this.name,
+						className: "mv-drag-handle"
 					}
 				]
 			});
@@ -3267,13 +3467,14 @@ Mavo.hooks.add("node-done-end", function() {
 	}
 });
 
-$.lazy(Mavo.Node.prototype, "closestCollection", function() {
-	if (!this.group) {
-		console.log(this.nodeType);
-	}
+Mavo.Node.prototype.getClosestCollection = function() {
 	return this.collection ||
 		   this.group.collection ||
 		   (this.parentGroup? this.parentGroup.closestCollection : null);
+};
+
+$.lazy(Mavo.Node.prototype, "closestCollection", function() {
+	return this.getClosestCollection();
 });
 
 $.live(Mavo.Node.prototype, "deleted", function(value) {
@@ -3320,12 +3521,7 @@ $.live(Mavo.Node.prototype, "deleted", function(value) {
 		// Alternatively, we could fire datachange with a timeout.
 		this._deleted = false;
 
-		$.fire(this.element, "mavo:datachange", {
-			unit: this.collection,
-			mavo: this.mavo,
-			action: "undelete",
-			item: this
-		});
+		this.dataChanged("undelete");
 	}
 });
 
@@ -3371,7 +3567,7 @@ var _ = Mavo.Expression = $.Class({
 			if (!this.function) {
 				this.function = _.compile(this.expression);
 			}
-
+			
 			this.value = this.function(data);
 		}
 		catch (exception) {
@@ -3404,7 +3600,7 @@ var _ = Mavo.Expression = $.Class({
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
 			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
 			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-			"MemberExpression": node => `${_.serialize(node.object)}[${_.serialize(node.property)}]`,
+			"MemberExpression": node => `${_.serialize(node.object)}["${node.property.name || node.property.value}"]`,
 			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
 			"Literal": node => node.raw,
 			"Identifier": node => node.name,
@@ -3803,87 +3999,94 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
-	o.unhandled = this.mavo.unhandled;
+if (self.Proxy) {
+	Mavo.hooks.add("node-getdata-end", function(env) {
+		if (env.options.relative && env.data && typeof env.data === "object") {
+			env.data = new Proxy(env.data, {
+				get: (data, property, proxy) => {
+					// Checking if property is in proxy might add it to the data
+					if (property in data || (property in proxy && property in data)) {
+						return data[property];
+					}
 
-	var ret = this.getData(o);
+					if (property == "$index") {
+						return this.index + 1;
+					}
 
-	if (self.Proxy && ret && typeof ret === "object") {
-		ret = new Proxy(ret, {
-			get: (data, property) => {
-				if (property in data) {
-					return data[property];
-				}
+					if (property == this.mavo.id) {
+						return data;
+					}
 
-				if (property == "$index") {
-					return this.index + 1;
-				}
+					// Look in ancestors
+					var ret = this.walkUp(group => {
+						if (property in group.children) {
+							group.expressions.dependents.add(this.expressions);
 
-				if (property == this.mavo.id) {
-					return data;
-				}
+							return group.children[property].getData(env.options);
+						};
+					});
 
-				// Look in ancestors
-				var ret = this.walkUp(group => {
-					if (property in group.children) {
-						// TODO decouple
-						group.expressions.dependents.add(this.expressions);
+					if (ret !== undefined) {
+						return ret;
+					}
+				},
 
-						return group.children[property].getRelativeData(o);
-					};
-				});
-
-				if (ret !== undefined) {
-					return ret;
-				}
-			},
-
-			has: (data, property) => {
-				if (property in data) {
-					return true;
-				}
-
-				// Property does not exist, look for it elsewhere
-				if (property == "$index" || property == this.mavo.id) {
-					return true;
-				}
-
-				// First look in ancestors
-				var ret = this.walkUp(group => {
-					if (property in group.children) {
+				has: (data, property) => {
+					if (property in data) {
 						return true;
-					};
-				});
-
-				if (ret !== undefined) {
-					return ret;
-				}
-
-				// Still not found, look in descendants
-				ret = this.find(property);
-
-				if (ret !== undefined) {
-					if (Array.isArray(ret)) {
-						ret = ret.map(item => item.getData(o))
-								 .filter(item => item !== null);
-					}
-					else {
-						ret = ret.getData(o);
 					}
 
-					data[property] = ret;
+					// Property does not exist, look for it elsewhere
 
-					return true;
+					if (property == "$index" || property == this.mavo.id) {
+						return true;
+					}
+
+					// First look in ancestors
+					var ret = this.walkUp(group => {
+						if (property in group.children) {
+							return true;
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+
+					// Still not found, look in descendants
+					ret = this.find(property);
+
+					if (ret !== undefined) {
+						if (Array.isArray(ret)) {
+							ret = ret.map(item => item.getData(env.options))
+									 .filter(item => item !== null);
+						}
+						else {
+							ret = ret.getData(env.options);
+						}
+
+						data[property] = ret;
+
+						return true;
+					}
+				},
+
+				set: function(data, property, value) {
+					throw Error("You can’t set data via expressions.");
 				}
-			},
+			});
+		}
+	});
+}
 
-			set: function(data, property, value) {
-				throw Error("You can’t set data via expressions.");
-			}
-		});
-	}
 
-	return ret;
+Mavo.Node.prototype.getRelativeData = function() {
+	return this.getData({
+		relative: true,
+		store: "*",
+		null: true,
+		unhandled: this.mavo.unhandled
+	});
 };
 
 Mavo.hooks.add("group-init-start", function() {

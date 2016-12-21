@@ -166,6 +166,19 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
+	dataChanged: function(action, o = {}) {
+		$.fire(o.element || this.element, "mavo:datachange", $.extend({
+			property: this.property,
+			action,
+			mavo: this.mavo,
+			node: this
+		}, o));
+	},
+
+	toString: function() {
+		return `${this.nodeType} (${this.property})`;
+	},
+
 	live: {
 		store: function(value) {
 			$.toggleAttribute(this.element, "mv-storage", value);

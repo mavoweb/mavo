@@ -91,7 +91,6 @@
 
 	.mv-add {
 		$color: hsl(80, 80%, 40%);
-
 		color: $color;
 
 		&::before {
@@ -101,6 +100,12 @@
 		&:hover {
 			background-color: $color;
 			color: white;
+		}
+	}
+
+	.mv-drag-handle {
+		&::before {
+			content: "≡";
 		}
 	}
 
@@ -150,6 +155,26 @@
 	[mv-app]:not([mv-mode="edit"]) &.mv-deleted {
 		display: none;
 	}
+
+	// Dragula styles
+	&.gu-mirror {
+		position: fixed !important;
+		margin: 0 !important;
+		z-index: 9999 !important;
+		opacity: 0.8;
+	}
+
+	&.gu-transit {
+		opacity: 0.2;
+	}
+}
+
+.gu-hide {
+	display: none !important;
+}
+
+.gu-unselectable {
+	user-select: none !important;
 }
 
 [mv-app] {

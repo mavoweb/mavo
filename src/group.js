@@ -103,7 +103,7 @@ var _ = Mavo.Group = $.Class({
 			};
 		}
 
-		Mavo.hooks.run("primitive-getdata-end", env);
+		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
 	},
@@ -112,21 +112,32 @@ var _ = Mavo.Group = $.Class({
 	 * Search entire subtree for property, return relative value
 	 * @return {Mavo.Node}
 	 */
-	find: function(property) {
+	find: function(property, o = {}) {
 		if (this.property == property) {
 			return this;
 		}
 
 		if (property in this.children) {
-			return this.children[property].find(property);
+			return this.children[property].find(property, o);
 		}
 
+		var all = [];
+
 		for (var prop in this.children) {
-			var ret = this.children[prop].find(property);
+			var ret = this.children[prop].find(property, o);
 
 			if (ret !== undefined) {
-				return ret;
+				if (Array.isArray(ret)) {
+					all.push(...ret);
+				}
+				else {
+					return ret;
+				}
 			}
+		}
+
+		if (all.length) {
+			return all;
 		}
 	},
 

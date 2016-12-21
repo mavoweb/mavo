@@ -16,7 +16,7 @@ var _ = Mavo.Expression = $.Class({
 			if (!this.function) {
 				this.function = _.compile(this.expression);
 			}
-
+			
 			this.value = this.function(data);
 		}
 		catch (exception) {
@@ -49,7 +49,7 @@ var _ = Mavo.Expression = $.Class({
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
 			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
 			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-			"MemberExpression": node => `${_.serialize(node.object)}[${_.serialize(node.property)}]`,
+			"MemberExpression": node => `${_.serialize(node.object)}["${node.property.name || node.property.value}"]`,
 			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
 			"Literal": node => node.raw,
 			"Identifier": node => node.name,
@@ -448,87 +448,94 @@ var _ = Mavo.Expressions = $.Class({
 
 })();
 
-Mavo.Node.prototype.getRelativeData = function(o = { store: "*", null: true }) {
-	o.unhandled = this.mavo.unhandled;
+if (self.Proxy) {
+	Mavo.hooks.add("node-getdata-end", function(env) {
+		if (env.options.relative && env.data && typeof env.data === "object") {
+			env.data = new Proxy(env.data, {
+				get: (data, property, proxy) => {
+					// Checking if property is in proxy might add it to the data
+					if (property in data || (property in proxy && property in data)) {
+						return data[property];
+					}
 
-	var ret = this.getData(o);
+					if (property == "$index") {
+						return this.index + 1;
+					}
 
-	if (self.Proxy && ret && typeof ret === "object") {
-		ret = new Proxy(ret, {
-			get: (data, property) => {
-				if (property in data) {
-					return data[property];
-				}
+					if (property == this.mavo.id) {
+						return data;
+					}
 
-				if (property == "$index") {
-					return this.index + 1;
-				}
+					// Look in ancestors
+					var ret = this.walkUp(group => {
+						if (property in group.children) {
+							group.expressions.dependents.add(this.expressions);
 
-				if (property == this.mavo.id) {
-					return data;
-				}
+							return group.children[property].getData(env.options);
+						};
+					});
 
-				// Look in ancestors
-				var ret = this.walkUp(group => {
-					if (property in group.children) {
-						// TODO decouple
-						group.expressions.dependents.add(this.expressions);
+					if (ret !== undefined) {
+						return ret;
+					}
+				},
 
-						return group.children[property].getRelativeData(o);
-					};
-				});
-
-				if (ret !== undefined) {
-					return ret;
-				}
-			},
-
-			has: (data, property) => {
-				if (property in data) {
-					return true;
-				}
-
-				// Property does not exist, look for it elsewhere
-				if (property == "$index" || property == this.mavo.id) {
-					return true;
-				}
-
-				// First look in ancestors
-				var ret = this.walkUp(group => {
-					if (property in group.children) {
+				has: (data, property) => {
+					if (property in data) {
 						return true;
-					};
-				});
-
-				if (ret !== undefined) {
-					return ret;
-				}
-
-				// Still not found, look in descendants
-				ret = this.find(property);
-
-				if (ret !== undefined) {
-					if (Array.isArray(ret)) {
-						ret = ret.map(item => item.getData(o))
-								 .filter(item => item !== null);
-					}
-					else {
-						ret = ret.getData(o);
 					}
 
-					data[property] = ret;
+					// Property does not exist, look for it elsewhere
 
-					return true;
+					if (property == "$index" || property == this.mavo.id) {
+						return true;
+					}
+
+					// First look in ancestors
+					var ret = this.walkUp(group => {
+						if (property in group.children) {
+							return true;
+						};
+					});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+
+					// Still not found, look in descendants
+					ret = this.find(property);
+
+					if (ret !== undefined) {
+						if (Array.isArray(ret)) {
+							ret = ret.map(item => item.getData(env.options))
+									 .filter(item => item !== null);
+						}
+						else {
+							ret = ret.getData(env.options);
+						}
+
+						data[property] = ret;
+
+						return true;
+					}
+				},
+
+				set: function(data, property, value) {
+					throw Error("You can’t set data via expressions.");
 				}
-			},
+			});
+		}
+	});
+}
 
-			set: function(data, property, value) {
-				throw Error("You can’t set data via expressions.");
-			}
-		});
-	}
 
-	return ret;
+Mavo.Node.prototype.getRelativeData = function() {
+	return this.getData({
+		relative: true,
+		store: "*",
+		null: true,
+		unhandled: this.mavo.unhandled
+	});
 };
 
 Mavo.hooks.add("group-init-start", function() {

@@ -117,14 +117,16 @@
 			<td>
 				<div property="person" mv-multiple>
 					<strong property="name">John Doe</strong>
+					<span property="age">20</span>
 					<ul>
 						<li property="hobby" mv-multiple>Fishing</li>
 					</ul>
 				</div>
 				<div property="cat" mv-multiple>
-					<strong property="name">John Doe</strong>
+					<strong property="name">Jane Cat</strong>
+					<span property="age">1</span>
 					<ul>
-						<li property="hobby" mv-multiple>Fishing</li>
+						<li property="hobby" mv-multiple>Purring</li>
 					</ul>
 				</div>
 			</td>
@@ -132,22 +134,26 @@
 
 				<div>
 					<strong>Lea Verou</strong>
+					31
 					<ul>
 						<li>Coding</li><li>Design</li><li>Cooking</li>
 					</ul>
 				</div><div>
 					<strong>David Karger</strong>
+					49
 					<ul>
 						<li>Dancing</li><li>Theory</li>
 					</ul>
 				</div>
 				<div>
 					<strong>Vector</strong>
+					10
 					<ul>
 						<li>Eating</li><li>Purring</li>
 					</ul>
 				</div><div>
 					<strong>Chiki</strong>
+					1
 					<ul>
 						<li>Playing</li>
 					</ul>
@@ -177,6 +183,10 @@
 		</tr>
 		<tr title="Count of property from specific collection">
 			<td>[count(cat.hobby)]</td>
+			<td>3</td>
+		</tr>
+		<tr title="Filtered count">
+			<td>[count(age > 5)]</td>
 			<td>3</td>
 		</tr>
 	</table>
