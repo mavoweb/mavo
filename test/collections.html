@@ -13,11 +13,44 @@
 			pointer-events: auto;
 		}
 
-		[mv-app="nested"] div[mv-multiple] {
-			border: 1px solid #ddd;
-			background: #eee;
+		div[mv-multiple] {
+			border: 1px solid rgba(0,0,0,.2);
+			background: rgba(0,0,0,.1);
 			padding: .5em;
 			margin: .5em;
+		}
+
+		[mv-app="indexes"] div[mv-multiple] {
+			display: flex;
+			counter-increment: index;
+			font-weight: bold;
+		}
+
+		[mv-app="indexes"] div[mv-multiple]::before,
+		[mv-app="indexes"] div[mv-multiple]::after {
+			content: attr(title);
+			padding: .1em .5em;
+			margin-right: .5em;
+			background: black;
+			color: white;
+		}
+
+		[mv-app="indexes"] div[mv-multiple]::before {
+			margin-right: auto;
+		}
+
+		[mv-app="indexes"] div[mv-multiple]::after {
+			content: counter(index);
+			background: green;
+			margin-left: auto;
+		}
+
+		[mv-app="indexes"] .mv-item-controls {
+			position: static;
+			opacity: 1;
+			pointer-events: auto;
+			border: 0;
+			margin-left: auto;
 		}
 	</style>
 </head>
@@ -77,10 +110,34 @@
 	<h1>Collection of primitives</h1>
 	<table class="reftest">
 		<tr>
-			<td><span property="numbers" mv-multiple></span></td>
+			<td><div property="numbers" mv-multiple></div></td>
 			<td>12345678910</td>
 		</tr>
 	</table>
+</section>
+
+<script type="application/json" id="indexes" mv-expressions="none">
+{
+	"number": [
+		{"value": 1},
+		{"value": 2},
+		{"value": 3},
+		{"value": 4},
+		{"value": 5},
+		{"value": 6},
+		{"value": 7},
+		{"value": 8},
+		{"value": 9},
+		{"value": 10}
+	]
+}
+</script>
+<section mv-app="indexes" mv-storage="#indexes" class="mv-autoedit">
+	<h1>Indices</h1>
+	<p>Drag and drop and see if indices stay correct. The numbers in the black squares must always match the numbers in the green squares.</p>
+	<div property="number" mv-multiple title="[$index]">
+		<span property="value"></span>
+	</div>
 </section>
 
 <script type="application/json" id="countries">{

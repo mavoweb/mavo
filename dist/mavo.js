@@ -1577,10 +1577,15 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	toString: function() {
-		return `${this.nodeType} (${this.property})`;
+		return `#${this.uid}: ${this.nodeType} (${this.property})`;
 	},
 
 	live: {
+		// index: function(value) {
+		// 	console.log(`${this._index} to ${value} on`, this.element);
+		// 	console.trace();
+		// },
+
 		store: function(value) {
 			$.toggleAttribute(this.element, "mv-storage", value);
 		},
@@ -2878,11 +2883,6 @@ var _ = Mavo.Collection = $.Class({
 		return this.children.length;
 	},
 
-	// Collection still contains its template as data
-	get containsTemplate() {
-		return this.children.length && this.children[0].element === this.element;
-	},
-
 	getData: function(o = {}) {
 		var env = {
 			context: this,
@@ -2966,37 +2966,66 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		// Update internal data model
-		var currentIndex = this.children.indexOf(item);
-		if (currentIndex > -1) {
-			this.children.splice(currentIndex, 1);
-		}
+		var changed = this.splice({
+			remove: item
+		}, {
+			index: index,
+			add: item
+		});
 
-		this.children.splice(index, 0, item);
-
-
-		for (let i = index - 1; i < this.length; i++) {
-			let item = this.children[i];
-
-			if (item) {
-				item.index = i;
-
-				if (!o.silent) {
-					item.dataChanged("add");
-				}
+		changed.forEach(item => {
+			if (!o.silent) {
+				item.dataChanged("move");
+				item.unsavedChanges = true;
 			}
-		}
+		});
 
 		if (!o.silent) {
-			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
+			this.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
 		return item;
 	},
 
+	splice: function(...actions) {
+		for (let action of actions) {
+			if (action.index === undefined && action.remove && isNaN(action.remove)) {
+				// Remove is an item
+				action.index = this.children.indexOf(action.remove);
+				action.remove = 1;
+			}
+		}
+
+		// Sort in reverse index order
+		actions.sort((a, b) => b.index - a.index);
+
+		for (let action of actions) {
+			if (action.index > -1 && (action.remove || action.add)) {
+				action.remove = action.remove || 0;
+				action.add = Mavo.toArray(action.add);
+
+				this.children.splice(action.index, +action.remove, ...action.add);
+			}
+		}
+
+		var changed = [];
+
+		for (let i = 0; i < this.length; i++) {
+			let item = this.children[i];
+
+			if (item && item.index !== i) {
+				item.index = i;
+				changed.push(item);
+			}
+		}
+
+		return changed;
+	},
+
 	adopt: function(item) {
 		if (item.collection) {
 			// It belongs to another collection, delete from there first
-			item.collection.children.splice(item.collection.children.indexOf(item), 1);
+			item.collection.splice({remove: item});
 			item.collection.dataChanged("delete");
 		}
 
@@ -3026,7 +3055,7 @@ var _ = Mavo.Collection = $.Class({
 		if (hard) {
 			// Hard delete
 			$.remove(item.element);
-			this.children.splice(this.children.indexOf(item), 1);
+			this.splice({remove: item});
 			return;
 		}
 
@@ -3150,7 +3179,7 @@ var _ = Mavo.Collection = $.Class({
 			this.children.forEach((item, i) => item.render(data && data[i]));
 
 			if (data) {
-				this.unhandled.after = data.slice(this.children.length);
+				this.unhandled.after = data.slice(this.length);
 			}
 		}
 		else {
@@ -3227,6 +3256,7 @@ var _ = Mavo.Collection = $.Class({
 			return this.dragula = this.template.dragula || this.template.getDragula();
 		}
 
+		var me = this;
 		this.dragula = dragula({
 			containers: [this.marker.parentNode],
 			isContainer: el => {
@@ -3236,6 +3266,8 @@ var _ = Mavo.Collection = $.Class({
 								.map(c => c.marker.parentNode)
 								.indexOf(el) > -1;
 				}
+
+				return false;
 			},
 			moves: (el, container, handle) => {
 				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
@@ -3259,31 +3291,20 @@ var _ = Mavo.Collection = $.Class({
 			}
 		});
 
-		this.dragula.on("drop", (el, target, source, next) => {
+		this.dragula.on("drop", (el, target, source) => {
 			var item = Mavo.Node.get(el);
 			var oldIndex = item && item.index;
-			if (next && !target.contains(next)) {
-				console.log(this.property, target, next, this.dragula);
-			};
-			next = next || el.nextElementSibling;
+			var next = el.nextElementSibling;
 			var previous = el.previousElementSibling;
 			var collection = _.get(previous) || _.get(next);
 			var closestItem = Mavo.Node.get(previous) || Mavo.Node.get(next);
-
 
 			if (closestItem && closestItem.collection != collection) {
 				closestItem = null;
 			}
 
 			if (item.collection.isCompatible(collection)) {
-				if (closestItem) {
-					var index = closestItem.index + (closestItem.element === previous);
-				}
-				else {
-					// Collection is empty and/or we dragged on the Add button
-					var index = collection.children.length;
-				}
-
+				var index = closestItem? closestItem.index + (closestItem.element === previous) : collection.length;
 				collection.add(item, index);
 			}
 			else {

@@ -176,10 +176,15 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	toString: function() {
-		return `${this.nodeType} (${this.property})`;
+		return `#${this.uid}: ${this.nodeType} (${this.property})`;
 	},
 
 	live: {
+		// index: function(value) {
+		// 	console.log(`${this._index} to ${value} on`, this.element);
+		// 	console.trace();
+		// },
+
 		store: function(value) {
 			$.toggleAttribute(this.element, "mv-storage", value);
 		},

@@ -807,11 +807,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				item: ".mv-item",
 				ui: ".mv-ui",
 				container: {
-					"li": "ul, ol",
+					// "li": "ul, ol",
 					"tr": "table",
-					"option": "select",
-					"dt": "dl",
-					"dd": "dl"
+					"option": "select"
 				}
 			};
 
@@ -954,6 +952,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return false;
+		},
+
+		data: function data(element, name, value) {
+			if (value === undefined) {
+				return $.value(element, "_", "data", "mavo", name);
+			} else {
+				element._.data.mavo = element._.mavo || {};
+				element._.data.mavo[name] = value;
+			}
+		},
+
+		pushUnique: function pushUnique(arr, item) {
+			if (arr.indexOf(item) === -1) {
+				arr.push(item);
+			}
 		},
 
 		/**
@@ -1823,7 +1836,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}, o));
 		},
 
+		toString: function toString() {
+			return "#" + this.uid + ": " + this.nodeType + " (" + this.property + ")";
+		},
+
 		live: {
+			// index: function(value) {
+			// 	console.log(`${this._index} to ${value} on`, this.element);
+			// 	console.trace();
+			// },
+
 			store: function store(value) {
 				$.toggleAttribute(this.element, "mv-storage", value);
 			},
@@ -2024,17 +2046,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Mavo.Node}
    */
 		find: function find(property) {
+			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
 			if (this.property == property) {
 				return this;
 			}
 
 			if (property in this.children) {
-				return this.children[property].find(property);
+				return this.children[property].find(property, o);
 			}
 
 			var all = [];
+
 			for (var prop in this.children) {
-				var ret = this.children[prop].find(property);
+				var ret = this.children[prop].find(property, o);
 
 				if (ret !== undefined) {
 					if (Array.isArray(ret)) {
@@ -3157,6 +3182,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 })(Bliss, Bliss.$);
 "use strict";
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 (function ($, $$) {
 
 	Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts");
@@ -3165,8 +3192,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		extends: Mavo.Node,
 		nodeType: "Collection",
 		constructor: function constructor(element, mavo, o) {
-			var _this = this;
-
 			/*
     * Create the template, remove it from the DOM and store it
     */
@@ -3189,12 +3214,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var item = this.createItem(this.element);
 				this.add(item);
 				this.itemTemplate = item.template || item;
-
-				if (!this.constant) {
-					this.mavo.permissions.can(["edit", "add", "delete"], function () {
-						_.dragulaContainer(_this.marker.parentNode);
-					});
-				}
 			}
 
 			Mavo.hooks.run("collection-init-end", this);
@@ -3202,11 +3221,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		get length() {
 			return this.children.length;
-		},
-
-		// Collection still contains its template as data
-		get containsTemplate() {
-			return this.children.length && this.children[0].element === this.element;
 		},
 
 		getData: function getData() {
@@ -3307,58 +3321,139 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				index = this.bottomUp ? 0 : this.length;
 			}
 
-			if (!item.element.parentNode) {
-				// Add it to the DOM, if not already in
+			if (this.mutable) {
+				// Add it to the DOM, or fix its place
 				var nextItem = this.children[index];
 
 				item.element._.before(nextItem && nextItem.element || this.marker);
 			}
 
 			// Update internal data model
-			var currentIndex = this.children.indexOf(item);
-			if (currentIndex > -1) {
-				this.children.splice(currentIndex, 1);
-			}
+			var changed = this.splice({
+				remove: item
+			}, {
+				index: index,
+				add: item
+			});
 
-			this.children.splice(index, 0, item);
-
-			for (var i = index - 1; i < this.length; i++) {
-				var _item = this.children[i];
-
-				if (_item) {
-					_item.index = i;
-
-					if (!o.silent) {
-						_item.dataChanged("add");
-					}
+			changed.forEach(function (item) {
+				if (!o.silent) {
+					item.dataChanged("move");
+					item.unsavedChanges = true;
 				}
-			}
+			});
 
 			if (!o.silent) {
-				this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
+				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
 			return item;
 		},
 
+		splice: function splice() {
+			for (var _len = arguments.length, actions = Array(_len), _key = 0; _key < _len; _key++) {
+				actions[_key] = arguments[_key];
+			}
+
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = actions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var action = _step2.value;
+
+					if (action.index === undefined && action.remove && isNaN(action.remove)) {
+						// Remove is an item
+						action.index = this.children.indexOf(action.remove);
+						action.remove = 1;
+					}
+				}
+
+				// Sort in reverse index order
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			actions.sort(function (a, b) {
+				return b.index - a.index;
+			});
+
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
+
+			try {
+				for (var _iterator3 = actions[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var _action = _step3.value;
+
+					if (_action.index > -1 && (_action.remove || _action.add)) {
+						var _children;
+
+						_action.remove = _action.remove || 0;
+						_action.add = Mavo.toArray(_action.add);
+
+						(_children = this.children).splice.apply(_children, [_action.index, +_action.remove].concat(_toConsumableArray(_action.add)));
+					}
+				}
+			} catch (err) {
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
+					}
+				} finally {
+					if (_didIteratorError3) {
+						throw _iteratorError3;
+					}
+				}
+			}
+
+			var changed = [];
+
+			for (var i = 0; i < this.length; i++) {
+				var _item = this.children[i];
+
+				if (_item && _item.index !== i) {
+					_item.index = i;
+					changed.push(_item);
+				}
+			}
+
+			return changed;
+		},
+
 		adopt: function adopt(item) {
-			var _this2 = this;
+			var _this = this;
 
 			if (item.collection) {
 				// It belongs to another collection, delete from there first
-				item.collection.children.splice(item.collection.children.indexOf(item), 1);
+				item.collection.splice({ remove: item });
 				item.collection.dataChanged("delete");
 			}
 
 			// Update collection & closestCollection properties
 			this.walk(function (obj) {
 				if (obj.closestCollection === item.collection) {
-					obj.closestCollection = _this2;
+					obj.closestCollection = _this;
 				}
 
 				// Belongs to another Mavo?
-				if (item.mavo != _this2.mavo) {
-					item.mavo = _this2.mavo;
+				if (item.mavo != _this.mavo) {
+					item.mavo = _this.mavo;
 				}
 			});
 
@@ -3373,12 +3468,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		delete: function _delete(item, hard) {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (hard) {
 				// Hard delete
 				$.remove(item.element);
-				this.children.splice(this.children.indexOf(item), 1);
+				this.splice({ remove: item });
 				return;
 			}
 
@@ -3388,11 +3483,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				item.dataChanged("delete");
 
-				_this3.unsavedChanges = item.unsavedChanges = _this3.mavo.unsavedChanges = true;
+				_this2.unsavedChanges = item.unsavedChanges = _this2.mavo.unsavedChanges = true;
 			});
 		},
 
 		edit: function edit() {
+			var _this3 = this;
+
 			this.super.edit.call(this);
 
 			if (this.mutable) {
@@ -3409,10 +3506,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						}
 
 						this.addButton._.after(after && after.parentNode ? after : this.marker);
-
-						_.dragulaContainer(this.addButton.parentNode);
 					}
 				}
+
+				// Set up drag & drop
+				_.dragula.then(function () {
+					_this3.getDragula();
+				});
 			}
 		},
 
@@ -3436,29 +3536,29 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						item.element.remove();
 					} else {
 						// Document fragment, remove all children
-						var _iteratorNormalCompletion2 = true;
-						var _didIteratorError2 = false;
-						var _iteratorError2 = undefined;
+						var _iteratorNormalCompletion4 = true;
+						var _didIteratorError4 = false;
+						var _iteratorError4 = undefined;
 
 						try {
-							for (var _iterator2 = item.element.childNodes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-								var node = _step2.value;
+							for (var _iterator4 = item.element.childNodes[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+								var node = _step4.value;
 
 								(function (node) {
 									return node.remove();
 								});
 							}
 						} catch (err) {
-							_didIteratorError2 = true;
-							_iteratorError2 = err;
+							_didIteratorError4 = true;
+							_iteratorError4 = err;
 						} finally {
 							try {
-								if (!_iteratorNormalCompletion2 && _iterator2.return) {
-									_iterator2.return();
+								if (!_iteratorNormalCompletion4 && _iterator4.return) {
+									_iterator4.return();
 								}
 							} finally {
-								if (_didIteratorError2) {
-									throw _iteratorError2;
+								if (_didIteratorError4) {
+									throw _iteratorError4;
 								}
 							}
 						}
@@ -3479,13 +3579,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		save: function save() {
-			var _iteratorNormalCompletion3 = true;
-			var _didIteratorError3 = false;
-			var _iteratorError3 = undefined;
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
 
 			try {
-				for (var _iterator3 = this.children[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-					var _item2 = _step3.value;
+				for (var _iterator5 = this.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var _item2 = _step5.value;
 
 					if (_item2.deleted) {
 						this.delete(_item2, true);
@@ -3494,16 +3594,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 			} catch (err) {
-				_didIteratorError3 = true;
-				_iteratorError3 = err;
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion3 && _iterator3.return) {
-						_iterator3.return();
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
 					}
 				} finally {
-					if (_didIteratorError3) {
-						throw _iteratorError3;
+					if (_didIteratorError5) {
+						throw _iteratorError5;
 					}
 				}
 			}
@@ -3512,13 +3612,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		propagated: ["save"],
 
 		revert: function revert() {
-			var _iteratorNormalCompletion4 = true;
-			var _didIteratorError4 = false;
-			var _iteratorError4 = undefined;
+			var _iteratorNormalCompletion6 = true;
+			var _didIteratorError6 = false;
+			var _iteratorError6 = undefined;
 
 			try {
-				for (var _iterator4 = this.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var _item3 = _step4.value;
+				for (var _iterator6 = this.children[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+					var _item3 = _step6.value;
 
 					// Delete added items
 					if (_item3.unsavedChanges) {
@@ -3534,16 +3634,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 			} catch (err) {
-				_didIteratorError4 = true;
-				_iteratorError4 = err;
+				_didIteratorError6 = true;
+				_iteratorError6 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion4 && _iterator4.return) {
-						_iterator4.return();
+					if (!_iteratorNormalCompletion6 && _iterator6.return) {
+						_iterator6.return();
 					}
 				} finally {
-					if (_didIteratorError4) {
-						throw _iteratorError4;
+					if (_didIteratorError6) {
+						throw _iteratorError6;
 					}
 				}
 			}
@@ -3566,7 +3666,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				});
 
 				if (data) {
-					this.unhandled.after = data.slice(this.children.length);
+					this.unhandled.after = data.slice(this.length);
 				}
 			} else {
 				this.clear();
@@ -3592,17 +3692,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		find: function find(property) {
+			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
 			var items = this.children.filter(function (item) {
 				return !item.deleted;
 			});
 
 			if (this.property == property) {
-				return items;
+				return o.collections ? this : items;
 			}
 
 			if (this.properties.indexOf(property) > -1) {
 				var ret = items.map(function (item) {
-					return item.find(property);
+					return item.find(property, o);
 				});
 
 				return Mavo.flatten(ret);
@@ -3610,7 +3712,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		isCompatible: function isCompatible(c) {
-			return c === this || c.template == this || this.template == c || this.template == c.template || this.accepts.indexOf(c.property) > -1;
+			return c && this.itemTemplate.nodeType == c.itemTemplate.nodeType && (c === this || c.template == this || this.template == c || this.template && this.template == c.template || this.accepts.indexOf(c.property) > -1);
 		},
 
 		live: {
@@ -3625,12 +3727,88 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 					// Keep position of the template in the DOM, since we might remove it
 					this.marker = document.createComment("mv-marker");
-					this.marker._.MavoCollection = this;
+					Mavo.data(this.marker, "collection", this);
 					$.after(this.marker, this.templateElement);
 
 					this.templateElement.classList.add("mv-item");
 				}
 			}
+		},
+
+		// Make sure to only call after dragula has loaded
+		getDragula: function getDragula() {
+			var _this5 = this;
+
+			if (this.dragula) {
+				return this.dragula;
+			}
+
+			if (this.template) {
+				Mavo.pushUnique(this.template.dragula.containers, this.marker.parentNode);
+				return this.dragula = this.template.dragula || this.template.getDragula();
+			}
+
+			var me = this;
+			this.dragula = dragula({
+				containers: [this.marker.parentNode],
+				isContainer: function isContainer(el) {
+					if (_this5.accepts.length) {
+						return Mavo.flatten(_this5.accepts.map(function (property) {
+							return _this5.mavo.root.find(property, { collections: true });
+						})).filter(function (c) {
+							return c && c instanceof _;
+						}).map(function (c) {
+							return c.marker.parentNode;
+						}).indexOf(el) > -1;
+					}
+
+					return false;
+				},
+				moves: function moves(el, container, handle) {
+					return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
+				},
+				accepts: function accepts(el, target, source, next) {
+					if (el.contains(target)) {
+						return false;
+					}
+
+					var previous = next ? next.previousElementSibling : target.lastElementChild;
+
+					var collection = _.get(previous) || _.get(next);
+
+					if (!collection) {
+						return false;
+					}
+
+					var item = Mavo.Node.get(el);
+
+					return item && item.collection.isCompatible(collection);
+				}
+			});
+
+			this.dragula.on("drop", function (el, target, source) {
+				var item = Mavo.Node.get(el);
+				var oldIndex = item && item.index;
+				var next = el.nextElementSibling;
+				var previous = el.previousElementSibling;
+				var collection = _.get(previous) || _.get(next);
+				var closestItem = Mavo.Node.get(previous) || Mavo.Node.get(next);
+
+				if (closestItem && closestItem.collection != collection) {
+					closestItem = null;
+				}
+
+				if (item.collection.isCompatible(collection)) {
+					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
+					collection.add(item, index);
+				} else {
+					return _this5.dragula.cancel(true);
+				}
+			});
+
+			_.dragulas.push(this.dragula);
+
+			return this.dragula;
 		},
 
 		lazy: {
@@ -3666,7 +3844,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			addButton: function addButton() {
-				var _this5 = this;
+				var _this6 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -3674,7 +3852,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this5.templateElement.contains(button);
+						return !_this6.templateElement.contains(button);
 					})[0];
 				}
 
@@ -3686,7 +3864,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				};
 
 				button.classList.add("mv-ui", "mv-add");
-				button._.data.MavoCollection = this;
+				Mavo.data(button, "collection", this);
 
 				if (this.property) {
 					button.classList.add("mv-add-" + this.property);
@@ -3695,7 +3873,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this5.add().edit();
+					_this6.add().edit();
 				});
 
 				return button;
@@ -3703,9 +3881,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		static: {
+			dragulas: [],
 			get: function get(element) {
 				// Is it an add button or a marker?
-				var collection = $.value(element, $.property, "MavoCollection");
+				var collection = Mavo.data(element, "collection");
 
 				if (collection) {
 					return collection;
@@ -3717,95 +3896,28 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return item && item.collection || null;
 			},
 
-			dragulaContainer: function dragulaContainer(element) {
-				_.dragula.then(function () {
-					if (_.drake.containers.indexOf(element) === -1) {
-						_.drake.containers.push(element);
-					}
-				});
-			},
-
 			lazy: {
-				dragula: function (_dragula) {
-					function dragula() {
-						return _dragula.apply(this, arguments);
-					}
-
-					dragula.toString = function () {
-						return _dragula.toString();
-					};
-
-					return dragula;
-				}(function () {
-					return $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js").then(function () {
-						_.drake = _.drake || dragula({
-							moves: function moves(el, container, target) {
-								return target.classList.contains("mv-drag-handle") && target.closest(Mavo.selectors.item) === el;
-							},
-							accepts: function accepts(el, target, source, next) {
-								if (el.contains(target)) {
-									return false;
-								}
-
-								var previous = next ? next.previousElementSibling : target.lastElementChild;
-
-								var collection = _.get(previous) || _.get(next);
-
-								if (!collection) {
-									console.log(next, previous);
-									return false;
-								}
-
-								return Mavo.Node.get(el).collection.isCompatible(collection);
-							}
-						});
-
-						// TODO prevent being dropped in the wrong positions
-						_.drake.on("drop", function (el, target, source, next) {
-
-							var item = Mavo.Node.get(el);
-							var oldIndex = item && item.index;
-							var previous = el.previousElementSibling;
-							var collection = _.get(previous) || _.get(next);
-							var closestItem = Mavo.Node.get(previous) || Mavo.Node.get(next);
-
-							if (closestItem && closestItem.collection != collection) {
-								closestItem = null;
-							}
-
-							if (item.collection.isCompatible(collection)) {
-								if (closestItem) {
-									var index = closestItem.index + (closestItem.element === previous);
-								} else {
-									// Collection is empty and/or we dragged on the Add button
-									var index = collection.children.length;
-								}
-
-								collection.add(item, index);
-							} else {
-								return _.drake.cancel(true);
-							}
-						});
-					});
-				})
+				dragula: function dragula() {
+					return $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js");
+				}
 			}
 		}
 	});
 
 	Mavo.hooks.add("primitive-init-end", function () {
-		var _this6 = this;
+		var _this7 = this;
 
 		if (this.collection && !this.attribute) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = function swapUI(callback) {
 				var ret;
 
-				_this6.sneak(function () {
-					var ui = $.remove($(".mv-item-controls", _this6.element));
+				_this7.sneak(function () {
+					var ui = $.remove($(".mv-item-controls", _this7.element));
 
 					ret = callback();
 
-					$.inside(ui, _this6.element);
+					$.inside(ui, _this7.element);
 				});
 
 				return ret;
@@ -3815,20 +3927,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			["textContent", "innerHTML"].forEach(function (property) {
 				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-				Object.defineProperty(_this6.element, property, {
+				Object.defineProperty(_this7.element, property, {
 					get: function get() {
-						var _this7 = this;
+						var _this8 = this;
 
 						return swapUI(function () {
-							return descriptor.get.call(_this7);
+							return descriptor.get.call(_this8);
 						});
 					},
 
 					set: function set(value) {
-						var _this8 = this;
+						var _this9 = this;
 
 						swapUI(function () {
-							return descriptor.set.call(_this8, value);
+							return descriptor.set.call(_this9, value);
 						});
 					}
 				});
@@ -3837,12 +3949,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	});
 
 	Mavo.hooks.add("node-edit-end", function () {
-		var _this9 = this;
+		var _this10 = this;
 
 		if (this.collection) {
 			if (!this.itemControls) {
 				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
-					return el.closest(Mavo.selectors.item) == _this9.element;
+					return el.closest(Mavo.selectors.item) == _this10.element;
 				})[0];
 
 				this.itemControls = this.itemControls || $.create({
@@ -3856,7 +3968,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						className: "mv-delete",
 						events: {
 							"click": function click(evt) {
-								return _this9.collection.delete(_this9);
+								return _this10.collection.delete(_this10);
 							}
 						}
 					}, {
@@ -3865,7 +3977,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						className: "mv-add",
 						events: {
 							"click": function click(evt) {
-								return _this9.collection.add(null, _this9.children.indexOf(item)).edit();
+								return _this10.collection.add(null, _this10.collection.children.indexOf(item)).edit();
 							}
 						}
 					}, {
@@ -3899,7 +4011,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	});
 
 	$.live(Mavo.Node.prototype, "deleted", function (value) {
-		var _this10 = this;
+		var _this11 = this;
 
 		this.element.classList.toggle("mv-deleted", value);
 
@@ -3908,7 +4020,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			// and replace them with an undo prompt.
 			this.elementContents = document.createDocumentFragment();
 			$$(this.element.childNodes).forEach(function (node) {
-				_this10.elementContents.appendChild(node);
+				_this11.elementContents.appendChild(node);
 			});
 
 			$.contents(this.element, [{
@@ -3926,7 +4038,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				textContent: "Undo",
 				events: {
 					"click": function click(evt) {
-						return _this10.deleted = false;
+						return _this11.deleted = false;
 					}
 				}
 			}]);
