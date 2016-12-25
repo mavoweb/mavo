@@ -1841,11 +1841,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		live: {
-			// index: function(value) {
-			// 	console.log(`${this._index} to ${value} on`, this.element);
-			// 	console.trace();
-			// },
-
 			store: function store(value) {
 				$.toggleAttribute(this.element, "mv-storage", value);
 			},
@@ -2239,25 +2234,29 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.templateValue = this.getValue();
 
-			this.default = this.element.getAttribute("mv-default");
+			this._default = this.element.getAttribute("mv-default");
 
-			if (this.constant || this.default === "") {
-				// attribute exists, no value, default is template value
-				this.default = this.templateValue;
-			} else if (this.default === null) {
-				// attribute does not exist
-				this.default = this.editor ? this.editorValue : this.emptyValue;
+			if (this.default === null) {
+				// no mv-default
+				this._default = this.constant ? this.templateValue : this.editor ? this.editorValue : undefined;
+			} else if (this.default === "") {
+				// mv-default exists, no value, default is template value
+				this._default = this.templateValue;
 			} else {
+				// mv-default with value
 				new Mavo.Observer(this.element, "mv-default", function (record) {
 					_this.default = _this.element.getAttribute("mv-default");
 				});
 			}
 
-			if (!this.constant) {
-				this.setValue(this.templateValue, { silent: true });
-			}
+			// if (!this.constant) {
+			// 	this.setValue(this.templateValue, {silent: true});
+			// }
 
-			this.setValue(this.template ? this.default : this.templateValue, { silent: true });
+
+			this.initialValue = (!this.template && this.default === undefined ? this.templateValue : this.default) || this.emptyValue;
+
+			this.setValue(this.initialValue, { silent: true });
 
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
@@ -2600,7 +2599,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					presentational = _this5.defaults.humanReadable.call(_this5, value);
 				}
 
-				if (!_this5.editing || _this5.attribute) {
+				if (!_this5.editing || _this5.attribute || !_this5.editor) {
 					if (_this5.defaults.setValue) {
 						_this5.defaults.setValue.call(_this5, _this5.element, value);
 					} else {
@@ -2642,6 +2641,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		live: {
+			default: function _default(value) {
+				if (this.value == this._default) {
+
+					this.value = value;
+				}
+			},
+
 			value: function value(_value) {
 				return this.setValue(_value);
 			},
@@ -2780,7 +2786,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				if (attribute) {
-					if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+					if (attribute in element && _.useProperty(element, attribute) && element[attribute] !== value) {
 						// Setting properties (if they exist) instead of attributes
 						// is needed for dynamic elements such as checkboxes, sliders etc
 						try {
@@ -3390,6 +3396,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return b.index - a.index;
 			});
 
+			// FIXME this could still result in buggy behavior.
+			// Think of e.g. adding items on i, then removing > 1 items on i-1.
+			// The new items would get removed instead of the old ones.
+			// Not a pressing issue though since we always remove 1 max when adding things too.
 			var _iteratorNormalCompletion3 = true;
 			var _didIteratorError3 = false;
 			var _iteratorError3 = undefined;

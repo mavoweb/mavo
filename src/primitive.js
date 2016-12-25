@@ -71,25 +71,28 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.templateValue = this.getValue();
 
-		this.default = this.element.getAttribute("mv-default");
+		this._default = this.element.getAttribute("mv-default");
 
-		if (this.constant || this.default === "") { // attribute exists, no value, default is template value
-			this.default = this.templateValue;
+		if (this.default === null) { // no mv-default
+			this._default = this.constant? this.templateValue : (this.editor? this.editorValue : undefined);
 		}
-		else if (this.default === null) { // attribute does not exist
-			this.default = this.editor? this.editorValue : this.emptyValue;
+		else if (this.default === "") { // mv-default exists, no value, default is template value
+			this._default = this.templateValue;
 		}
-		else {
+		else { // mv-default with value
 			new Mavo.Observer(this.element, "mv-default", record => {
 				this.default = this.element.getAttribute("mv-default");
 			});
 		}
 
-		if (!this.constant) {
-			this.setValue(this.templateValue, {silent: true});
-		}
+		// if (!this.constant) {
+		// 	this.setValue(this.templateValue, {silent: true});
+		// }
 
-		this.setValue(this.template? this.default : this.templateValue, {silent: true});
+
+		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
+
+		this.setValue(this.initialValue, {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -423,7 +426,7 @@ var _ = Mavo.Primitive = $.Class({
 				presentational = this.defaults.humanReadable.call(this, value);
 			}
 
-			if (!this.editing || this.attribute) {
+			if (!this.editing || this.attribute || !this.editor) {
 				if (this.defaults.setValue) {
 					this.defaults.setValue.call(this, this.element, value);
 				}
@@ -461,6 +464,13 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	live: {
+		default: function (value) {
+			if (this.value == this._default) {
+
+				this.value = value;
+			}
+		},
+
 		value: function (value) {
 			return this.setValue(value);
 		},
@@ -589,7 +599,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			if (attribute) {
-				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+				if (attribute in element && _.useProperty(element, attribute) && element[attribute] !== value) {
 					// Setting properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					try {

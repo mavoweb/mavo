@@ -377,6 +377,26 @@
 	</table>
 </section>
 
+<section mv-app="mvdefault">
+	<h1>Dyamic mv-default</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<input type="range" property="prop1" value="50">
+				<span property="prop2" mv-default="[prop1 + 1]"></span>
+			</td>
+			<td>[prop1] [prop1 + 1]</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="number" property="prop3">
+				<input property="prop4" mv-default="[prop3 + 1]">
+			</td>
+			<td>[prop3] [prop3 + 1]</td>
+		</tr>
+	</table>
+</section>
+
 <script src="../dist/mavo.js"></script>
 <script src="test.js"></script>
 

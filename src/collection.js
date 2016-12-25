@@ -153,6 +153,10 @@ var _ = Mavo.Collection = $.Class({
 		// Sort in reverse index order
 		actions.sort((a, b) => b.index - a.index);
 
+		// FIXME this could still result in buggy behavior.
+		// Think of e.g. adding items on i, then removing > 1 items on i-1.
+		// The new items would get removed instead of the old ones.
+		// Not a pressing issue though since we always remove 1 max when adding things too.
 		for (let action of actions) {
 			if (action.index > -1 && (action.remove || action.add)) {
 				action.remove = action.remove || 0;

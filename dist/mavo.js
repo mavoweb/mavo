@@ -1581,11 +1581,6 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	live: {
-		// index: function(value) {
-		// 	console.log(`${this._index} to ${value} on`, this.element);
-		// 	console.trace();
-		// },
-
 		store: function(value) {
 			$.toggleAttribute(this.element, "mv-storage", value);
 		},
@@ -1940,25 +1935,28 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.templateValue = this.getValue();
 
-		this.default = this.element.getAttribute("mv-default");
+		this._default = this.element.getAttribute("mv-default");
 
-		if (this.constant || this.default === "") { // attribute exists, no value, default is template value
-			this.default = this.templateValue;
+		if (this.default === null) { // no mv-default
+			this._default = this.constant? this.templateValue : (this.editor? this.editorValue : undefined);
 		}
-		else if (this.default === null) { // attribute does not exist
-			this.default = this.editor? this.editorValue : this.emptyValue;
+		else if (this.default === "") { // mv-default exists, no value, default is template value
+			this._default = this.templateValue;
 		}
-		else {
+		else { // mv-default with value
 			new Mavo.Observer(this.element, "mv-default", record => {
 				this.default = this.element.getAttribute("mv-default");
 			});
 		}
 
-		if (!this.constant) {
-			this.setValue(this.templateValue, {silent: true});
-		}
+		// if (!this.constant) {
+		// 	this.setValue(this.templateValue, {silent: true});
+		// }
 
-		this.setValue(this.template? this.default : this.templateValue, {silent: true});
+
+		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
+
+		this.setValue(this.initialValue, {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -2292,7 +2290,7 @@ var _ = Mavo.Primitive = $.Class({
 				presentational = this.defaults.humanReadable.call(this, value);
 			}
 
-			if (!this.editing || this.attribute) {
+			if (!this.editing || this.attribute || !this.editor) {
 				if (this.defaults.setValue) {
 					this.defaults.setValue.call(this, this.element, value);
 				}
@@ -2330,6 +2328,13 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	live: {
+		default: function (value) {
+			if (this.value == this._default) {
+
+				this.value = value;
+			}
+		},
+
 		value: function (value) {
 			return this.setValue(value);
 		},
@@ -2458,7 +2463,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			if (attribute) {
-				if (attribute in element && _.useProperty(element, attribute) && element[attribute] != value) {
+				if (attribute in element && _.useProperty(element, attribute) && element[attribute] !== value) {
 					// Setting properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					try {
@@ -2999,6 +3004,10 @@ var _ = Mavo.Collection = $.Class({
 		// Sort in reverse index order
 		actions.sort((a, b) => b.index - a.index);
 
+		// FIXME this could still result in buggy behavior.
+		// Think of e.g. adding items on i, then removing > 1 items on i-1.
+		// The new items would get removed instead of the old ones.
+		// Not a pressing issue though since we always remove 1 max when adding things too.
 		for (let action of actions) {
 			if (action.index > -1 && (action.remove || action.add)) {
 				action.remove = action.remove || 0;
