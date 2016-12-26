@@ -1050,8 +1050,9 @@ function updateWithin(cl, element) {
 	cl = "mv-" + cl + "-within";
 	$$("." + cl).forEach(el => el.classList.remove(cl));
 
-	while (element && (element = element.parentNode) && element.classList) {
+	while (element && element.classList) {
 		element.classList.add(cl);
+		element = element.parentNode;
 	}
 };
 
@@ -1065,9 +1066,13 @@ document.addEventListener("blur", evt => {
 
 addEventListener("hashchange", evt => {
 	updateWithin("target", $(location.hash));
-}, true);
+});
 
-updateWithin("target", $(location.hash));
+document.documentElement.addEventListener("mavo:datachange", evt => {
+	// TODO debounce
+	updateWithin("target", $(location.hash));
+});
+
 updateWithin("focus", document.activeElement !== document.body? document.activeElement : null);
 
 })(Bliss, Bliss.$);

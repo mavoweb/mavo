@@ -372,6 +372,10 @@ meter, progress {
 	a {
 		color: inherit;
 	}
+
+	@media print {
+		display: none !important;
+	}
 }
 
 @import 'bar';

@@ -273,6 +273,10 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
 .mv-ui a {
   color: inherit; }
 
+@media print {
+  .mv-ui {
+    display: none !important; } }
+
 .mv-bar {
   all: initial;
   visibility: inherit;

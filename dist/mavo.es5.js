@@ -1199,8 +1199,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return el.classList.remove(cl);
 		});
 
-		while (element && (element = element.parentNode) && element.classList) {
+		while (element && element.classList) {
 			element.classList.add(cl);
+			element = element.parentNode;
 		}
 	};
 
@@ -1214,9 +1215,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	addEventListener("hashchange", function (evt) {
 		updateWithin("target", $(location.hash));
-	}, true);
+	});
 
-	updateWithin("target", $(location.hash));
+	document.documentElement.addEventListener("mavo:datachange", function (evt) {
+		// TODO debounce
+		updateWithin("target", $(location.hash));
+	});
+
 	updateWithin("focus", document.activeElement !== document.body ? document.activeElement : null);
 })(Bliss, Bliss.$);
 "use strict";
