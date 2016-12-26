@@ -3324,11 +3324,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.adopt(item);
 			}
 
-			if (index in this.children) {
-				if (this.bottomUp) {
-					index++;
-				}
-			} else if (index === undefined) {
+			if (index === undefined) {
 				index = this.bottomUp ? 0 : this.length;
 			}
 
@@ -3759,7 +3755,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (this.template) {
-				Mavo.pushUnique(this.template.dragula.containers, this.marker.parentNode);
+				Mavo.pushUnique(this.template.getDragula().containers, this.marker.parentNode);
 				return this.dragula = this.template.dragula || this.template.getDragula();
 			}
 
@@ -3992,7 +3988,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						className: "mv-add",
 						events: {
 							"click": function click(evt) {
-								return _this10.collection.add(null, _this10.collection.children.indexOf(item)).edit();
+								var item = _this10.collection.add(null, _this10.collection.children.indexOf(_this10));
+
+								if (evt[Mavo.superKey]) {
+									item.render(_this10.data);
+								}
+
+								return item.edit();
 							}
 						}
 					}, {
