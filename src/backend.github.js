@@ -52,8 +52,7 @@ var _ = Mavo.Backend.register($.Class({
 				return Promise.reject(err.xhr);
 			}
 			else {
-				console.error(err);
-				console.log(err.stack);
+				this.mavo.error("Something went wrong while connecting to Github", err);
 			}
 		})
 		.then(xhr => Promise.resolve(xhr.response));
@@ -88,7 +87,7 @@ var _ = Mavo.Backend.register($.Class({
 				content: _.btoa(file.dataString),
 				branch: this.branch,
 				sha: fileInfo.sha
-			}, "PUT");
+			}, "PUT").then(data => file);
 		}, xhr => {
 			if (xhr.status == 404) {
 				// File does not exist, create it
@@ -98,10 +97,11 @@ var _ = Mavo.Backend.register($.Class({
 					branch: this.branch
 				}, "PUT");
 			}
-			// TODO include time out
-		}).then(data => {
-			console.log("success");
-			return file;
+			else {
+				this.mavo.error(xhr.status? `HTTP error ${xhr.status}` : "Can’t connect to the Internet", xhr);
+			}
+
+			return null;
 		});
 	},
 

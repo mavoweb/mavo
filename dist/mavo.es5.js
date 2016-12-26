@@ -579,6 +579,37 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return _.toJSON(data);
 		},
 
+		error: function error(message) {
+			var close = function close() {
+				return $.transition(error, { opacity: 0 }).then($.remove);
+			};
+			var closeTimeout = setTimeout(close, 5000);
+			var error = $.create("p", {
+				className: "mv-error mv-ui",
+				contents: [message, {
+					tag: "button",
+					className: "mv-close mv-ui",
+					textContent: "×",
+					events: {
+						"click": close
+					}
+				}],
+				start: this.element
+			});
+
+			// Log more info for programmers
+
+			for (var _len = arguments.length, log = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+				log[_key - 1] = arguments[_key];
+			}
+
+			if (log.length > 0) {
+				var _console;
+
+				(_console = console).log.apply(_console, ["%c" + message, "color: red; font-weight: bold"].concat(log));
+			}
+		},
+
 		render: function render(data) {
 			_.hooks.run("render-start", { context: this, data: data });
 
@@ -688,7 +719,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					try {
 						response = JSON.parse(response);
 					} catch (e) {
-						console.log("%cJSON parse error", "color: red; font-weight: bold", response);
+						_this2.error("The data is corrupted.");
+						_this2.error("The data is corrupted.", e, response);
 						response = "";
 					}
 				}
@@ -1147,6 +1179,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			};
 
 			return promise;
+		},
+
+		/**
+   * Run & Return a function
+   */
+		rr: function rr(f) {
+			f();
+			return f;
 		}
 	});
 

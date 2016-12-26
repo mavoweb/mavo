@@ -111,22 +111,6 @@
     .mv-item.mv-deleted button {
       display: inline-block;
       margin-left: .4em; }
-      .mv-item.mv-deleted button.mv-close {
-        all: unset;
-        float: right;
-        width: 1.1em;
-        padding-bottom: .1em;
-        border: none;
-        border-radius: 50%;
-        margin: 0 0 0 1em;
-        background: rgba(180, 0, 0, 0.6);
-        color: white;
-        font-weight: bold;
-        line-height: 1;
-        cursor: pointer;
-        text-align: center; }
-        .mv-item.mv-deleted button.mv-close:hover {
-          background: #b40000; }
   [mv-app]:not([mv-mode="edit"]) .mv-item.mv-deleted {
     display: none; }
   .mv-item.gu-mirror {
@@ -145,6 +129,22 @@
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   user-select: none !important; }
+
+button.mv-close {
+  all: unset;
+  float: right;
+  width: 1.1em;
+  padding-bottom: .1em;
+  border: none;
+  border-radius: 50%;
+  margin: 0 0 0 1em;
+  background: rgba(180, 0, 0, 0.6);
+  color: white;
+  font: bold 100%/1 sans-serif;
+  cursor: pointer;
+  text-align: center; }
+  button.mv-close:hover {
+    background: #b40000; }
 
 [mv-app] [property].mv-multiline {
   white-space: pre-line; }
@@ -284,6 +284,36 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
 @media print {
   .mv-ui {
     display: none !important; } }
+
+.mv-error {
+  position: fixed;
+  top: 1em;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: .5em 1em;
+  border-radius: .3em;
+  margin: 0;
+  box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
+  background: rgba(255, 179, 179, 0.9);
+  color: #660000;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  font-size: 120%;
+  animation: error-appear .5s backwards; }
+
+@keyframes error-appear {
+  from {
+    transform: translateX(-50%) translateY(-10vh);
+    opacity: 0; } }
+  .mv-error::before {
+    content: "😳 Oh noes! ";
+    color: #bf4040;
+    text-transform: uppercase;
+    font-size: 85%;
+    font-weight: bold; }
+  .mv-error + .mv-error {
+    top: 4em;
+    animation-delay: .5s; }
 
 .mv-bar {
   all: initial;

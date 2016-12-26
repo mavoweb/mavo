@@ -223,6 +223,14 @@ var _ = $.extend(Mavo, {
 		};
 
 		return promise;
+	},
+
+	/**
+	 * Run & Return a function
+	 */
+	rr: function(f) {
+		f();
+		return f;
 	}
 });
 

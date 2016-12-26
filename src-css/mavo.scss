@@ -138,26 +138,6 @@
 		button {
 			display: inline-block;
 			margin-left: .4em;
-
-			&.mv-close {
-				all: unset;
-				float: right;
-				width: 1.1em;
-				padding-bottom: .1em;
-				border: none;
-				border-radius: 50%;
-				margin: 0 0 0 1em;
-				background: rgba(180, 0, 0, .6);
-				color: white;
-				font-weight: bold;
-				line-height: 1;
-				cursor: pointer;
-				text-align: center;
-
-				&:hover {
-					background: rgba(180, 0, 0, 1);
-				}
-			}
 		}
 	}
 
@@ -184,6 +164,25 @@
 
 .gu-unselectable {
 	user-select: none !important;
+}
+
+button.mv-close {
+	all: unset;
+	float: right;
+	width: 1.1em;
+	padding-bottom: .1em;
+	border: none;
+	border-radius: 50%;
+	margin: 0 0 0 1em;
+	background: rgba(180, 0, 0, .6);
+	color: white;
+	font: bold 100%/1 sans-serif;
+	cursor: pointer;
+	text-align: center;
+
+	&:hover {
+		background: rgba(180, 0, 0, 1);
+	}
 }
 
 [mv-app] {
@@ -384,6 +383,43 @@ meter, progress {
 
 	@media print {
 		display: none !important;
+	}
+}
+
+.mv-error {
+	position: fixed;
+	top: 1em;
+	left: 50%;
+	z-index: 2;
+	transform: translateX(-50%);
+	padding: .5em 1em;
+	border-radius: .3em;
+	margin: 0;
+	box-shadow: 0 .2em .2em rgba(0,0,0,.2);
+	background: hsla(0,100%,85%,.9);
+	color: hsl(0,100%,20%);
+	text-shadow: 0 1px 1px hsla(0,0%,100%,.5);
+	font-size: 120%;
+	animation: error-appear .5s backwards;
+
+	@keyframes error-appear {
+		from {
+			transform: translateX(-50%) translateY(-10vh);
+			opacity: 0;
+		}
+	}
+
+	&::before {
+		content: "😳 Oh noes! ";
+		color: hsl(0,50%,50%);
+		text-transform: uppercase;
+		font-size: 85%;
+		font-weight: bold;
+	}
+
+	& + .mv-error {
+		top: 4em;
+		animation-delay: .5s;
 	}
 }
 

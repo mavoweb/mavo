@@ -314,6 +314,35 @@ var _ = self.Mavo = $.Class({
 		return _.toJSON(data);
 	},
 
+	error: function(message, ...log) {
+		var close = () => $.transition(error, {opacity: 0}).then($.remove);
+		var closeTimeout;
+		var error = $.create("p", {
+			className: "mv-error mv-ui",
+			contents: [
+				message,
+				{
+					tag: "button",
+					className: "mv-close mv-ui",
+					textContent: "×",
+					events: {
+						"click": close
+					}
+				}
+			],
+			events: {
+				mouseenter: e => clearTimeout(closeTimeout),
+				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000))
+			},
+			start: this.element
+		});
+
+		// Log more info for programmers
+		if (log.length > 0) {
+			console.log("%c" + message, "color: red; font-weight: bold", ...log);
+		}
+	},
+
 	render: function(data) {
 		_.hooks.run("render-start", {context: this, data});
 
@@ -421,7 +450,7 @@ var _ = self.Mavo = $.Class({
 					response = JSON.parse(response);
 				}
 				catch (e) {
-					console.log("%cJSON parse error", "color: red; font-weight: bold", response);
+					this.error("The data is corrupted.", e, response);
 					response = "";
 				}
 			}
@@ -434,9 +463,7 @@ var _ = self.Mavo = $.Class({
 					this.render("");
 				}
 				else {
-					// TODO display error to user
-					console.error(err);
-					console.log(err.stack);
+					this.error("The data could not be loaded.", err);
 				}
 			}
 		})
@@ -456,17 +483,20 @@ var _ = self.Mavo = $.Class({
 		this.storage.login()
 		.then(() => this.storage.put())
 		.then(file => {
-			$.fire(this.element, "mavo:save", {
-				data: file.data,
-				dataString: file.dataString
-			});
+			if (file) {
+				$.fire(this.element, "mavo:save", {
+					data: file.data,
+					dataString: file.dataString
+				});
 
-			this.lastSaved = Date.now();
+				this.lastSaved = Date.now();
+
+				this.unsavedChanges = false;
+			}
 		})
 		.catch(err => {
 			if (err) {
-				console.error(err);
-				console.log(err.stack);
+				this.error("Problem saving data", err);
 			}
 		})
 		.then(() => {
@@ -478,8 +508,6 @@ var _ = self.Mavo = $.Class({
 		this.root.save();
 
 		this.store();
-
-		this.unsavedChanges = false;
 	},
 
 	revert: function() {
