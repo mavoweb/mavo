@@ -397,6 +397,42 @@
 	</table>
 </section>
 
+<section mv-app="booleanattr">
+	<h1>Boolean attributes</h1>
+	<table class="reftest">
+		<tr>
+			<td>
+				<input type="checkbox" property="prop1" checked>
+				<input type="checkbox" checked="[prop1]">
+			</td>
+			<td>
+				<input type="checkbox" checked>
+				<input type="checkbox" checked>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="checkbox" property="prop2">
+				<input type="checkbox" checked="[prop2]">
+			</td>
+			<td>
+				<input type="checkbox">
+				<input type="checkbox">
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input type="checkbox" property="prop3" checked>
+				<input type="checkbox" disabled="[prop3]">
+			</td>
+			<td>
+				<input type="checkbox" checked>
+				<input type="checkbox" disabled>
+			</td>
+		</tr>
+	</table>
+</section>
+
 <script src="../dist/mavo.js"></script>
 <script src="test.js"></script>
 
