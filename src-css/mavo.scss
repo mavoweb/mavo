@@ -104,6 +104,12 @@
 	}
 
 	.mv-drag-handle {
+		cursor: grab;
+
+		&:active {
+			cursor: grabbing;
+		}
+
 		&::before {
 			content: "≡";
 		}

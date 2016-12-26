@@ -88,8 +88,14 @@
     .mv-item-controls .mv-add:hover {
       background-color: #81b814;
       color: white; }
-  .mv-item-controls .mv-drag-handle::before {
-    content: "≡"; }
+  .mv-item-controls .mv-drag-handle {
+    cursor: -webkit-grab;
+    cursor: grab; }
+    .mv-item-controls .mv-drag-handle:active {
+      cursor: -webkit-grabbing;
+      cursor: grabbing; }
+    .mv-item-controls .mv-drag-handle::before {
+      content: "≡"; }
   [mv-app]:not([mv-permissions~="delete"]) .mv-item-controls .mv-delete,
   [mv-app]:not([mv-permissions~="add"]) .mv-item-controls .mv-add {
     display: none; }
