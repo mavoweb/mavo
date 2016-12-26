@@ -102,7 +102,9 @@
 
 .mv-item {
   position: relative; }
-  .mv-item.mv-delete-hover, .mv-item.mv-deleted {
+  .mv-item.mv-highlight {
+    box-shadow: 0 0 0 50vmax rgba(149, 191, 64, 0.25) inset !important; }
+  .mv-item.mv-deleted {
     box-shadow: 0 0 0 50vmax rgba(255, 0, 0, 0.2) inset !important; }
   .mv-item.mv-deleted {
     display: block; }

@@ -692,7 +692,7 @@ $.live(Mavo.Node.prototype, "deleted", function(value) {
 			}
 		]);
 
-		this.element.classList.remove("mv-delete-hover");
+		this.element.classList.remove("mv-highlight");
 	}
 	else if (this.deleted) {
 		// Undelete

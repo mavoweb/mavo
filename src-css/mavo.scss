@@ -124,7 +124,10 @@
 .mv-item {
 	position: relative;
 
-	&.mv-delete-hover, // basically &:has(> .mv-delete:hover)
+	&.mv-highlight {  // basically &:has(> .mv-item-controls:hover)
+		@include highlight(hsla(80, 50%, 50%, .25), "!important");
+	}
+
 	&.mv-deleted {
 		@include highlight(hsla(0,100%,50%,.2), "!important");
 	}

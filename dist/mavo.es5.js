@@ -607,9 +607,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.root.edit();
 
 			$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", function (evt) {
-				if (evt.target.matches(".mv-item-controls .mv-delete")) {
+				if (evt.target.matches(".mv-item-controls *")) {
 					var item = evt.target.closest(_.selectors.item);
-					item.classList.toggle("mv-delete-hover", evt.type == "mouseenter");
+					item.classList.toggle("mv-highlight", evt.type == "mouseenter");
 				}
 
 				if (evt.target.matches(_.selectors.item)) {
@@ -4060,7 +4060,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}]);
 
-			this.element.classList.remove("mv-delete-hover");
+			this.element.classList.remove("mv-highlight");
 		} else if (this.deleted) {
 			// Undelete
 			this.element.textContent = "";
