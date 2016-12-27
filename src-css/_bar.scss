@@ -113,7 +113,11 @@
 			}
 		}
 
-		&:enabled:hover {
+		&.mv-unsaved-changes {
+			text-shadow: 0 0 .2em hsl(200, 100%, 70%), 0 0 .3em hsl(200, 100%, 70%);
+		}
+
+		&:hover {
 			background: hsl(180, 50%, 50%);
 		}
 	}
@@ -129,6 +133,8 @@
 	}
 
 	.mv-clear {
+		order: 9999;
+		
 		&::before {
 			@extend %rubbish-bin;
 			vertical-align: -.25em;

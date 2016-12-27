@@ -216,10 +216,7 @@ button.mv-close {
 		@extend %progress;
 	}
 
-	&.mv-save-hovered [property].mv-unsaved-changes,
-	&.mv-save-hovered [typeof].mv-unsaved-changes,
-	&.mv-revert-hovered [property].mv-unsaved-changes,
-	&.mv-revert-hovered [typeof].mv-unsaved-changes {
+	&.mv-highlight-unsaved .mv-unsaved-changes {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 

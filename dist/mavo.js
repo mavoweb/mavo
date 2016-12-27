@@ -406,10 +406,9 @@ var _ = self.Mavo = $.Class({
 					events: {
 						click: e => this.save(),
 						"mouseenter focus": e => {
-							this.element.classList.add("mv-save-hovered");
-							this.setUnsavedChanges();
+							this.element.classList.add("mv-highlight-unsaved");
 						},
-						"mouseleave blur": e => this.element.classList.remove("mv-save-hovered")
+						"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
 					},
 					inside: this.ui.bar
 				});
@@ -421,12 +420,9 @@ var _ = self.Mavo = $.Class({
 					events: {
 						click: e => this.revert(),
 						"mouseenter focus": e => {
-							if (!this.unsavedChanges) {
-								this.element.classList.add("mv-revert-hovered");
-								this.setUnsavedChanges();
-							}
+							this.element.classList.add("mv-highlight-unsaved");
 						},
-						"mouseleave blur": e => this.element.classList.remove("mv-revert-hovered")
+						"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
 					},
 					inside: this.ui.bar
 				});
@@ -558,8 +554,7 @@ var _ = self.Mavo = $.Class({
 
 	clear: function() {
 		if (confirm("This will delete all your data. Are you sure?")) {
-			this.store(null);
-			this.root.clear();
+			this.store(null).then(() => this.root.clear());
 		}
 	},
 
@@ -675,9 +670,24 @@ var _ = self.Mavo = $.Class({
 
 		this.inProgress = "Saving";
 
-		this.storage.login()
+		return this.storage.login()
 		.then(() => this.storage.put())
 		.then(file => {
+			this.inProgress = false;
+			return file;
+		})
+		.catch(err => {
+			if (err) {
+				this.error("Problem saving data", err);
+			}
+
+			this.inProgress = false;
+			return Promise.reject(err);
+		});
+	},
+
+	save: function() {
+		return this.store().then(file => {
 			if (file) {
 				$.fire(this.element, "mavo:save", {
 					data: file.data,
@@ -685,24 +695,10 @@ var _ = self.Mavo = $.Class({
 				});
 
 				this.lastSaved = Date.now();
-
+				this.root.save();
 				this.unsavedChanges = false;
 			}
-		})
-		.catch(err => {
-			if (err) {
-				this.error("Problem saving data", err);
-			}
-		})
-		.then(() => {
-			this.inProgress = false;
 		});
-	},
-
-	save: function() {
-		this.root.save();
-
-		this.store();
 	},
 
 	revert: function() {
@@ -722,7 +718,7 @@ var _ = self.Mavo = $.Class({
 			this.element.classList.toggle("mv-unsaved-changes", value);
 
 			if (this.ui && this.ui.save) {
-				this.ui.save.disabled = !value;
+				this.ui.save.classList.toggle("mv-unsaved-changes", value);
 				this.ui.revert.disabled = !value;
 			}
 		},
