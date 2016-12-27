@@ -3637,7 +3637,7 @@ var _ = Mavo.Expression = $.Class({
 			if (!this.function) {
 				this.function = _.compile(this.expression);
 			}
-			
+
 			this.value = this.function(data);
 		}
 		catch (exception) {
@@ -3655,7 +3655,7 @@ var _ = Mavo.Expression = $.Class({
 
 	live: {
 		expression: function(value) {
-			var code = value = value.trim();
+			var code = value = value;
 
 			this.function = null;
 		}
@@ -3845,7 +3845,30 @@ var _ = Mavo.Expression.Text = $.Class({
 				}
 			}
 
-			this.expression = (this.attribute? this.node.getAttribute(this.attribute) : this.node.textContent).trim();
+			if (this.attribute) {
+				this.expression = this.node.getAttribute(this.attribute).trim();
+			}
+			else {
+				// Move whitespace outside to prevent it from messing with types
+				this.node.normalize();
+
+				if (this.node.firstChild && this.node.childNodes.length === 1 && this.node.firstChild.nodeType === 3) {
+					var whitespace = this.node.firstChild.textContent.match(/^\s*|\s*$/g);
+
+					if (whitespace[1]) {
+						this.node.firstChild.splitText(this.node.firstChild.textContent.length - whitespace[1].length);
+						$.after(this.node.lastChild, this.node);
+					}
+
+					if (whitespace[0]) {
+						this.node.firstChild.splitText(whitespace[0].length);
+						this.node.parentNode.insertBefore(this.node.firstChild, this.node);
+					}
+				}
+
+				this.expression = this.node.textContent;
+			}
+
 
 			this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
 		}
