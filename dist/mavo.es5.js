@@ -4033,11 +4033,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 					}, {
 						tag: "button",
-						title: "Add new " + this.name.replace(/s$/i, "") + " " + (this.bottomUp ? "after" : "before"),
+						title: "Add new " + this.name.replace(/s$/i, "") + " " + (this.collection.bottomUp ? "after" : "before"),
 						className: "mv-add",
 						events: {
 							"click": function click(evt) {
-								var item = _this10.collection.add(null, _this10.collection.children.indexOf(_this10));
+								var item = _this10.collection.add(null, _this10.index + _this10.collection.bottomUp);
 
 								if (evt[Mavo.superKey]) {
 									item.render(_this10.data);

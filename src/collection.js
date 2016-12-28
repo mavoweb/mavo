@@ -613,11 +613,11 @@ Mavo.hooks.add("node-edit-end", function() {
 						}
 					}, {
 						tag: "button",
-						title: `Add new ${this.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
+						title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
 						className: "mv-add",
 						events: {
 							"click": evt => {
-								var item = this.collection.add(null, this.collection.children.indexOf(this));
+								var item = this.collection.add(null, this.index + this.collection.bottomUp);
 
 								if (evt[Mavo.superKey]) {
 									item.render(this.data);
