@@ -623,6 +623,10 @@ Mavo.hooks.add("node-edit-end", function() {
 									item.render(this.data);
 								}
 
+								if (!Mavo.inViewport(item.element)) {
+									item.element.scrollIntoView({behavior: "smooth"});
+								}
+
 								return item.edit();
 							}
 						}

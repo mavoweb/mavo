@@ -1004,6 +1004,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
+		inViewport: function inViewport(element) {
+			var r = element.getBoundingClientRect();
+
+			return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) && ( // vertical
+			0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+		},
+
 		pushUnique: function pushUnique(arr, item) {
 			if (arr.indexOf(item) === -1) {
 				arr.push(item);
@@ -4041,6 +4048,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 								if (evt[Mavo.superKey]) {
 									item.render(_this10.data);
+								}
+
+								if (!Mavo.inViewport(item.element)) {
+									item.element.scrollIntoView({ behavior: "smooth" });
 								}
 
 								return item.edit();

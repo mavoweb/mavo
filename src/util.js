@@ -73,6 +73,13 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	inViewport: element => {
+		var r = element.getBoundingClientRect();
+
+		return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
+		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+	},
+
 	pushUnique: (arr, item) => {
 		if (arr.indexOf(item) === -1) {
 			arr.push(item);
