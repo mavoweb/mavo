@@ -301,6 +301,9 @@ Mavo.Script = {
 			symbol: "&",
 			identity: "",
 			scalar: (a, b) => "" + a + b
+		},
+		"filter": {
+			scalar: (a, b) => b? a : null
 		}
 	},
 

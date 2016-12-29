@@ -5431,6 +5431,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				scalar: function scalar(a, b) {
 					return "" + a + b;
 				}
+			},
+			"filter": {
+				scalar: function scalar(a, b) {
+					return b ? a : null;
+				}
 			}
 		},
 

@@ -173,6 +173,18 @@
 
 		<dt title="Recursive replace with bound">replace("fo", "o", "oo", 2)</dt>
 		<dd>"foooo"</dd>
+
+		<dt>filter(42, false)</dt>
+		<dd>null</dd>
+
+		<dt>filter(42, true)</dt>
+		<dd>42</dd>
+
+		<dt>filter([1, 2, 3], [false, true, false])</dt>
+		<dd>[null, 2, null]</dd>
+
+		<dt>filter([1, 2, 3], [true, true, false], [false, true, false])</dt>
+		<dd>[null, 2, null]</dd>
 	</dl>
 </section>
 
