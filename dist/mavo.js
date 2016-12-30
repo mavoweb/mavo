@@ -3630,9 +3630,9 @@ Mavo.hooks.add("node-init-end", function(env) {
 
 })(Bliss, Bliss.$);
 
-(function($, $$) {
+(function($) {
 
-Mavo.attributes.push("mv-expressions", "mv-value", "mv-if");
+Mavo.attributes.push("mv-expressions");
 
 var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
@@ -3764,8 +3764,7 @@ if (self.jsep) {
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
-(function() {
-var _ = Mavo.Expression.Syntax = $.Class({
+_.Syntax = $.Class({
 	constructor: function(start, end) {
 		this.start = start;
 		this.end = end;
@@ -3809,7 +3808,7 @@ var _ = Mavo.Expression.Syntax = $.Class({
 
 				if (syntax) {
 					syntax = syntax.trim();
-					return /\s/.test(syntax)? new _(...syntax.split(/\s+/)) : _.ESCAPE;
+					return /\s/.test(syntax)? new _.Syntax(...syntax.split(/\s+/)) : _.Syntax.ESCAPE;
 				}
 			}
 		},
@@ -3818,11 +3817,11 @@ var _ = Mavo.Expression.Syntax = $.Class({
 	}
 });
 
-_.default = new _("[", "]");
+_.Syntax.default = new _.Syntax("[", "]");
 
-})();
+})(Bliss);
 
-(function() {
+(function($) {
 
 var _ = Mavo.Expression.Text = $.Class({
 	constructor: function(o) {
@@ -3988,9 +3987,11 @@ var _ = Mavo.Expression.Text = $.Class({
 	}
 });
 
-})();
+})(Bliss);
 
-(function() {
+(function($, $$) {
+
+Mavo.attributes.push("mv-value", "mv-if");
 
 var _ = Mavo.Expressions = $.Class({
 	constructor: function(group) {
@@ -4100,8 +4101,6 @@ var _ = Mavo.Expressions = $.Class({
 		directives: []
 	}
 });
-
-})();
 
 if (self.Proxy) {
 	Mavo.hooks.add("node-getdata-end", function(env) {
