@@ -468,7 +468,7 @@ var _ = self.Mavo = $.Class({
 			this.element.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
 					this.save();
-				}, 1000);
+				}, 4000);
 
 				var callback = evt => {
 					if (evt.node.saved) {
@@ -731,6 +731,16 @@ var _ = self.Mavo = $.Class({
 	static: {
 		all: [],
 
+		get: function(id) {
+			for (let mavo of _.all) {
+				if (mavo.id === id) {
+					return mavo;
+				}
+			}
+
+			return null;
+		},
+
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 
 		init: function(container) {
@@ -926,15 +936,18 @@ var _ = $.extend(Mavo, {
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 	debounce: function (fn, delay) {
-		var timer = null;
+		var timer = null, code;
 
 		return function () {
 			var context = this, args = arguments;
+			code = function () {
+				fn.apply(context, args);
+				removeEventListener("beforeunload", code);
+			};
 
 			clearTimeout(timer);
-			timer = setTimeout(function () {
-				fn.apply(context, args);
-			}, delay);
+			timer = setTimeout(code, delay);
+			addEventListener("beforeunload", code);
 		};
 	},
 

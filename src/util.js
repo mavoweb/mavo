@@ -124,15 +124,18 @@ var _ = $.extend(Mavo, {
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 	debounce: function (fn, delay) {
-		var timer = null;
+		var timer = null, code;
 
 		return function () {
 			var context = this, args = arguments;
+			code = function () {
+				fn.apply(context, args);
+				removeEventListener("beforeunload", code);
+			};
 
 			clearTimeout(timer);
-			timer = setTimeout(function () {
-				fn.apply(context, args);
-			}, delay);
+			timer = setTimeout(code, delay);
+			addEventListener("beforeunload", code);
 		};
 	},
 

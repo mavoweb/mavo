@@ -273,7 +273,7 @@ var _ = self.Mavo = $.Class({
 			this.element.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
 					this.save();
-				}, 1000);
+				}, 4000);
 
 				var callback = evt => {
 					if (evt.node.saved) {
@@ -535,6 +535,16 @@ var _ = self.Mavo = $.Class({
 
 	static: {
 		all: [],
+
+		get: function(id) {
+			for (let mavo of _.all) {
+				if (mavo.id === id) {
+					return mavo;
+				}
+			}
+
+			return null;
+		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 

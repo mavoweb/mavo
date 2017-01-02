@@ -536,7 +536,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element.addEventListener("mavo:load", function (evt) {
 					var debouncedSave = _.debounce(function () {
 						_this.save();
-					}, 1000);
+					}, 4000);
 
 					var callback = function callback(evt) {
 						if (evt.node.saved) {
@@ -817,6 +817,37 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			all: [],
 
+			get: function get(id) {
+				var _iteratorNormalCompletion3 = true;
+				var _didIteratorError3 = false;
+				var _iteratorError3 = undefined;
+
+				try {
+					for (var _iterator3 = _.all[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+						var mavo = _step3.value;
+
+						if (mavo.id === id) {
+							return mavo;
+						}
+					}
+				} catch (err) {
+					_didIteratorError3 = true;
+					_iteratorError3 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion3 && _iterator3.return) {
+							_iterator3.return();
+						}
+					} finally {
+						if (_didIteratorError3) {
+							throw _iteratorError3;
+						}
+					}
+				}
+
+				return null;
+			},
+
 			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
 
 			init: function init(container) {
@@ -1083,16 +1114,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 		debounce: function debounce(fn, delay) {
-			var timer = null;
+			var timer = null,
+			    _code;
 
 			return function () {
 				var context = this,
 				    args = arguments;
+				_code = function code() {
+					fn.apply(context, args);
+					removeEventListener("beforeunload", _code);
+				};
 
 				clearTimeout(timer);
-				timer = setTimeout(function () {
-					fn.apply(context, args);
-				}, delay);
+				timer = setTimeout(_code, delay);
+				addEventListener("beforeunload", _code);
 			};
 		},
 
