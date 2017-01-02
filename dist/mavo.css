@@ -282,7 +282,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   .mv-ui {
     display: none !important; } }
 
-.mv-error {
+p.mv-error {
   position: fixed;
   top: 1em;
   left: 50%;
@@ -302,13 +302,13 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   from {
     transform: translateX(-50%) translateY(-10vh);
     opacity: 0; } }
-  .mv-error::before {
+  p.mv-error::before {
     content: "😳 Oh noes! ";
     color: #bf4040;
     text-transform: uppercase;
     font-size: 85%;
     font-weight: bold; }
-  .mv-error + .mv-error {
+  p.mv-error + .mv-error {
     top: 4em;
     animation-delay: .5s; }
 

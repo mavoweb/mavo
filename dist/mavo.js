@@ -468,7 +468,7 @@ var _ = self.Mavo = $.Class({
 			this.element.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
 					this.save();
-				}, 4000);
+				}, 3000);
 
 				var callback = evt => {
 					if (evt.node.saved) {

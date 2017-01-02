@@ -536,7 +536,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element.addEventListener("mavo:load", function (evt) {
 					var debouncedSave = _.debounce(function () {
 						_this.save();
-					}, 4000);
+					}, 3000);
 
 					var callback = function callback(evt) {
 						if (evt.node.saved) {
