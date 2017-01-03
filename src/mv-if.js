@@ -7,10 +7,10 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 	}
 
 	this.expression = this.element.getAttribute("mv-if");
-	this.template = [new Mavo.Expression(this.expression)];
+	this.parsed = [new Mavo.Expression(this.expression)];
 	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
+	this.parentIf = this.element.parentNode && Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 	if (this.parentIf) {
 		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);

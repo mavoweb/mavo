@@ -3406,7 +3406,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
-			return item;
+			var env = { context: this, item: item };
+			Mavo.hooks.run("collection-add-end", env);
+
+			return env.item;
 		},
 
 		splice: function splice() {
@@ -3746,6 +3749,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					item.index = i;
 
 					fragment.appendChild(item.element);
+
+					var env = { context: _this4, item: item };
+					Mavo.hooks.run("collection-add-end", env);
 				});
 
 				this.marker.parentNode.insertBefore(fragment, this.marker);
@@ -4371,12 +4377,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($) {
 
 	var _ = Mavo.Expression.Text = $.Class({
-		constructor: function constructor(o) {
-			this.group = o.group;
+		constructor: function constructor() {
+			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+			this.template = o.template && o.template.template || o.template;
+
+			var _arr = ["group", "path", "syntax", "fallback", "attribute"];
+			for (var _i = 0; _i < _arr.length; _i++) {
+				var prop = _arr[_i];
+				this[prop] = o[prop] === undefined && this.template ? this.template[prop] : o[prop];
+			}
+
 			this.node = o.node;
-			this.path = o.path;
-			this.syntax = o.syntax;
-			this.fallback = o.fallback;
 
 			if (!this.node) {
 				// No node provided, figure it out from path
@@ -4386,7 +4398,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.element = this.node;
-			this.attribute = o.attribute || null;
+			this.attribute = this.attribute || null;
 
 			Mavo.hooks.run("expressiontext-init-start", this);
 
@@ -4426,7 +4438,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.expression = this.node.textContent;
 				}
 
-				this.template = o.template ? o.template.template : this.syntax.tokenize(this.expression);
+				this.parsed = o.template ? o.template.parsed : this.syntax.tokenize(this.expression);
 			}
 
 			Mavo.hooks.run("expressiontext-init-end", this);
@@ -4445,7 +4457,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			Mavo.hooks.run("expressiontext-update-start", this);
 
-			ret.value = this.value = this.template.map(function (expr) {
+			ret.value = this.value = this.parsed.map(function (expr) {
 				if (expr instanceof Mavo.Expression) {
 					var env = { context: _this, expr: expr };
 
@@ -4488,7 +4500,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			ret.value = ret.value.length === 1 ? ret.value[0] : ret.value.join("");
 
-			if (this.primitive && this.template.length === 1) {
+			if (this.primitive && this.parsed.length === 1) {
 				if (typeof ret.value === "number") {
 					this.primitive.datatype = "number";
 				} else if (typeof ret.value === "boolean") {
@@ -4572,11 +4584,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 							var et = _step.value;
 
 							this.all.push(new Mavo.Expression.Text({
-								path: et.path,
-								syntax: et.syntax,
-								attribute: et.attribute,
-								group: this.group,
-								template: et
+								template: et,
+								group: this.group
 							}));
 						}
 					} catch (err) {
@@ -4680,9 +4689,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
 				this.all.push(new Mavo.Expression.Text({
 					node: node, syntax: syntax,
-					path: (path || "").slice(1).split("/").map(function (i) {
+					path: path ? path.slice(1).split("/").map(function (i) {
 						return +i;
-					}),
+					}) : [],
 					attribute: attribute && attribute.name,
 					group: this.group
 				}));
@@ -4827,6 +4836,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		new Mavo.Expressions(this);
 	});
 
+	Mavo.hooks.add("collection-add-end", function (env) {
+		if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+			var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+
+			if (et) {
+				et.group.expressions.all.push(new Mavo.Expression.Text({
+					node: env.item.element,
+					template: et
+				}));
+			}
+		}
+	});
+
+	Mavo.hooks.add("group-init-end", function () {
+		this.expressions.update();
+	});
+
+	// Link primitive with its expressionText object
 	Mavo.hooks.add("primitive-init-start", function () {
 		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
 
@@ -4837,10 +4864,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.hooks.add("group-init-end", function () {
-		this.expressions.update();
-	});
-
+	// Disable expressions during rendering, for performance
 	Mavo.hooks.add("group-render-start", function () {
 		this.expressions.active = false;
 	});
@@ -4864,7 +4888,7 @@ Mavo.hooks.add("expressiontext-init-start", function () {
 		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, { attribute: this.attribute });
 		this.expression = this.element.getAttribute("mv-value");
 
-		this.template = [new Mavo.Expression(this.expression)];
+		this.parsed = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 	}
 });
@@ -4879,10 +4903,10 @@ Mavo.hooks.add("expressiontext-init-start", function () {
 	}
 
 	this.expression = this.element.getAttribute("mv-if");
-	this.template = [new Mavo.Expression(this.expression)];
+	this.parsed = [new Mavo.Expression(this.expression)];
 	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
+	this.parentIf = this.element.parentNode && Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 	if (this.parentIf) {
 		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);

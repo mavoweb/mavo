@@ -1,3 +1,6 @@
+::before {
+  content: var(--prepend) " "; }
+
 :root {
   --ciel: #cceeff;
   --dark: #337799; }

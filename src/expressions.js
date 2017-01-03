@@ -20,11 +20,8 @@ var _ = Mavo.Expressions = $.Class({
 				// We know which expressions we have, don't traverse again
 				for (let et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
-						path: et.path,
-						syntax: et.syntax,
-						attribute: et.attribute,
-						group: this.group,
-						template: et
+						template: et,
+						group: this.group
 					}));
 				}
 			}
@@ -73,7 +70,7 @@ var _ = Mavo.Expressions = $.Class({
 		) {
 			this.all.push(new Mavo.Expression.Text({
 				node, syntax,
-				path: (path || "").slice(1).split("/").map(i => +i),
+				path: path? path.slice(1).split("/").map(i => +i) : [],
 				attribute: attribute && attribute.name,
 				group: this.group
 			}));
@@ -205,6 +202,24 @@ Mavo.hooks.add("group-init-start", function() {
 	new Mavo.Expressions(this);
 });
 
+Mavo.hooks.add("collection-add-end", function(env) {
+	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+
+		if (et) {
+			et.group.expressions.all.push(new Mavo.Expression.Text({
+				node: env.item.element,
+				template: et
+			}));
+		}
+	}
+});
+
+Mavo.hooks.add("group-init-end", function() {
+	this.expressions.update();
+});
+
+// Link primitive with its expressionText object
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
 
@@ -215,10 +230,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 	}
 });
 
-Mavo.hooks.add("group-init-end", function() {
-	this.expressions.update();
-});
-
+// Disable expressions during rendering, for performance
 Mavo.hooks.add("group-render-start", function() {
 	this.expressions.active = false;
 });
@@ -241,7 +253,7 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		this.expression = this.element.getAttribute("mv-value");
 
-		this.template = [new Mavo.Expression(this.expression)];
+		this.parsed = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 	}
 });

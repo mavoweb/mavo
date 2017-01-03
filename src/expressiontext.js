@@ -1,12 +1,14 @@
 (function($) {
 
 var _ = Mavo.Expression.Text = $.Class({
-	constructor: function(o) {
-		this.group = o.group;
+	constructor: function(o = {}) {
+		this.template = o.template && o.template.template || o.template;
+
+		for (let prop of ["group", "path", "syntax", "fallback", "attribute"]) {
+			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
+		}
+
 		this.node = o.node;
-		this.path = o.path;
-		this.syntax = o.syntax;
-		this.fallback = o.fallback;
 
 		if (!this.node) {
 			// No node provided, figure it out from path
@@ -16,7 +18,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		this.element = this.node;
-		this.attribute = o.attribute || null;
+		this.attribute = this.attribute || null;
 
 		Mavo.hooks.run("expressiontext-init-start", this);
 
@@ -57,7 +59,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 
-			this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
+			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
 		Mavo.hooks.run("expressiontext-init-end", this);
@@ -72,7 +74,7 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		Mavo.hooks.run("expressiontext-update-start", this);
 
-		ret.value = this.value = this.template.map(expr => {
+		ret.value = this.value = this.parsed.map(expr => {
 			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
@@ -115,7 +117,7 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
 
-		if (this.primitive && this.template.length === 1) {
+		if (this.primitive && this.parsed.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
 			}

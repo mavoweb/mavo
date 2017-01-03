@@ -110,8 +110,25 @@
 	<h1>Collection of primitives</h1>
 	<table class="reftest">
 		<tr>
-			<td><div property="numbers" mv-multiple></div></td>
-			<td>12345678910</td>
+			<td>
+				<div property="numbers" mv-multiple style="--prepend: '[numbers]'"></div>
+			</td>
+			<td>
+				<div mv-multiple="" style="--prepend: '1'">1</div>
+				<div mv-multiple="" style="--prepend: '2'">2</div>
+				<div mv-multiple="" style="--prepend: '3'">3</div>
+				<div mv-multiple="" style="--prepend: '4'">4</div>
+				<div mv-multiple="" style="--prepend: '5'">5</div>
+				<div mv-multiple="" style="--prepend: '6'">6</div>
+				<div mv-multiple="" style="--prepend: '7'">7</div>
+				<div mv-multiple="" style="--prepend: '8'">8</div>
+				<div mv-multiple="" style="--prepend: '9'">9</div>
+				<div mv-multiple="" style="--prepend: '10'">10</div>
+			</td>
+		</tr>
+		<tr>
+			<td>[numbers]</td>
+			<td>1, 2, 3, 4, 5, 6, 7, 8, 9, 10</td>
 		</tr>
 	</table>
 </section>

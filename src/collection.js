@@ -133,7 +133,10 @@ var _ = Mavo.Collection = $.Class({
 			this.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
-		return item;
+		var env = {context: this, item};
+		Mavo.hooks.run("collection-add-end", env);
+
+		return env.item;
 	},
 
 	splice: function(...actions) {
@@ -350,6 +353,9 @@ var _ = Mavo.Collection = $.Class({
 				item.index = i;
 
 				fragment.appendChild(item.element);
+
+				var env = {context: this, item};
+				Mavo.hooks.run("collection-add-end", env);
 			});
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);

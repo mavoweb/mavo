@@ -1,3 +1,7 @@
+::before {
+	content: var(--prepend) " ";
+}
+
 :root {
 	--ciel: hsl(200, 100%, 90%);
 	--dark: hsl(200, 50%, 40%);

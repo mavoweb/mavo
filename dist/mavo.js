@@ -3026,7 +3026,10 @@ var _ = Mavo.Collection = $.Class({
 			this.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
-		return item;
+		var env = {context: this, item};
+		Mavo.hooks.run("collection-add-end", env);
+
+		return env.item;
 	},
 
 	splice: function(...actions) {
@@ -3243,6 +3246,9 @@ var _ = Mavo.Collection = $.Class({
 				item.index = i;
 
 				fragment.appendChild(item.element);
+
+				var env = {context: this, item};
+				Mavo.hooks.run("collection-add-end", env);
 			});
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
@@ -3822,12 +3828,14 @@ _.Syntax.default = new _.Syntax("[", "]");
 (function($) {
 
 var _ = Mavo.Expression.Text = $.Class({
-	constructor: function(o) {
-		this.group = o.group;
+	constructor: function(o = {}) {
+		this.template = o.template && o.template.template || o.template;
+
+		for (let prop of ["group", "path", "syntax", "fallback", "attribute"]) {
+			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
+		}
+
 		this.node = o.node;
-		this.path = o.path;
-		this.syntax = o.syntax;
-		this.fallback = o.fallback;
 
 		if (!this.node) {
 			// No node provided, figure it out from path
@@ -3837,7 +3845,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		this.element = this.node;
-		this.attribute = o.attribute || null;
+		this.attribute = this.attribute || null;
 
 		Mavo.hooks.run("expressiontext-init-start", this);
 
@@ -3878,7 +3886,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 
-			this.template = o.template? o.template.template : this.syntax.tokenize(this.expression);
+			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
 		Mavo.hooks.run("expressiontext-init-end", this);
@@ -3893,7 +3901,7 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		Mavo.hooks.run("expressiontext-update-start", this);
 
-		ret.value = this.value = this.template.map(expr => {
+		ret.value = this.value = this.parsed.map(expr => {
 			if (expr instanceof Mavo.Expression) {
 				var env = {context: this, expr};
 
@@ -3936,7 +3944,7 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
 
-		if (this.primitive && this.template.length === 1) {
+		if (this.primitive && this.parsed.length === 1) {
 			if (typeof ret.value === "number") {
 				this.primitive.datatype = "number";
 			}
@@ -4009,11 +4017,8 @@ var _ = Mavo.Expressions = $.Class({
 				// We know which expressions we have, don't traverse again
 				for (let et of template.expressions.all) {
 					this.all.push(new Mavo.Expression.Text({
-						path: et.path,
-						syntax: et.syntax,
-						attribute: et.attribute,
-						group: this.group,
-						template: et
+						template: et,
+						group: this.group
 					}));
 				}
 			}
@@ -4062,7 +4067,7 @@ var _ = Mavo.Expressions = $.Class({
 		) {
 			this.all.push(new Mavo.Expression.Text({
 				node, syntax,
-				path: (path || "").slice(1).split("/").map(i => +i),
+				path: path? path.slice(1).split("/").map(i => +i) : [],
 				attribute: attribute && attribute.name,
 				group: this.group
 			}));
@@ -4194,6 +4199,24 @@ Mavo.hooks.add("group-init-start", function() {
 	new Mavo.Expressions(this);
 });
 
+Mavo.hooks.add("collection-add-end", function(env) {
+	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+
+		if (et) {
+			et.group.expressions.all.push(new Mavo.Expression.Text({
+				node: env.item.element,
+				template: et
+			}));
+		}
+	}
+});
+
+Mavo.hooks.add("group-init-end", function() {
+	this.expressions.update();
+});
+
+// Link primitive with its expressionText object
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
 
@@ -4204,10 +4227,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 	}
 });
 
-Mavo.hooks.add("group-init-end", function() {
-	this.expressions.update();
-});
-
+// Disable expressions during rendering, for performance
 Mavo.hooks.add("group-render-start", function() {
 	this.expressions.active = false;
 });
@@ -4230,7 +4250,7 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 		this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		this.expression = this.element.getAttribute("mv-value");
 
-		this.template = [new Mavo.Expression(this.expression)];
+		this.parsed = [new Mavo.Expression(this.expression)];
 		this.expression = this.syntax.start + this.expression + this.syntax.end;
 	}
 });
@@ -4244,10 +4264,10 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 	}
 
 	this.expression = this.element.getAttribute("mv-if");
-	this.template = [new Mavo.Expression(this.expression)];
+	this.parsed = [new Mavo.Expression(this.expression)];
 	this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-	this.parentIf = Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
+	this.parentIf = this.element.parentNode && Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 	if (this.parentIf) {
 		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
