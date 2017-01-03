@@ -762,7 +762,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return file;
 			}).catch(function (err) {
 				if (err) {
-					_this4.error("Problem saving data", err);
+					var message = "Problem saving data";
+
+					if (err.status && err.statusText) {
+						message += " (HTTP " + err.status + ": " + err.statusText + ")";
+					}
+
+					_this4.error(message, err);
 				}
 
 				_this4.inProgress = false;

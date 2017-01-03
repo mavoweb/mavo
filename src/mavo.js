@@ -483,7 +483,13 @@ var _ = self.Mavo = $.Class({
 		})
 		.catch(err => {
 			if (err) {
-				this.error("Problem saving data", err);
+				var message = "Problem saving data";
+
+				if (err.status && err.statusText) {
+					message += ` (HTTP ${err.status}: ${err.statusText})`;
+				}
+
+				this.error(message, err);
 			}
 
 			this.inProgress = false;
