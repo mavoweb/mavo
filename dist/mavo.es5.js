@@ -4548,6 +4548,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		}
 	});
+
+	// Link primitive with its expressionText object
+	Mavo.hooks.add("primitive-init-start", function () {
+		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+
+		if (this.expressionText) {
+			this.expressionText.primitive = this;
+			this.store = this.store || "none";
+			this.modes = "read";
+		}
+	});
+
+	// Fix expressions on primitive collections
+	Mavo.hooks.add("collection-add-end", function (env) {
+		if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+			var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+
+			if (et) {
+				et.group.expressions.all.push(new Mavo.Expression.Text({
+					node: env.item.element,
+					template: et
+				}));
+			}
+		}
+	});
 })(Bliss);
 "use strict";
 
@@ -4836,32 +4861,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		new Mavo.Expressions(this);
 	});
 
-	Mavo.hooks.add("collection-add-end", function (env) {
-		if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
-			var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
-
-			if (et) {
-				et.group.expressions.all.push(new Mavo.Expression.Text({
-					node: env.item.element,
-					template: et
-				}));
-			}
-		}
-	});
-
 	Mavo.hooks.add("group-init-end", function () {
 		this.expressions.update();
-	});
-
-	// Link primitive with its expressionText object
-	Mavo.hooks.add("primitive-init-start", function () {
-		this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
-
-		if (this.expressionText) {
-			this.expressionText.primitive = this;
-			this.store = this.store || "none";
-			this.modes = "read";
-		}
 	});
 
 	// Disable expressions during rendering, for performance
