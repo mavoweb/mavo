@@ -5466,7 +5466,7 @@ Mavo.hooks.add("expressiontext-init-end", function() {
 	if (this.group.debug) {
 		this.debug = {};
 
-		this.template.forEach(expr => {
+		this.parsed.forEach(expr => {
 			if (expr instanceof Mavo.Expression && !this.element.matches(".mv-debuginfo *")) {
 				this.group.debugRow({
 					element: this.element,

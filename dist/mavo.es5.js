@@ -6247,7 +6247,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		if (this.group.debug) {
 			this.debug = {};
 
-			this.template.forEach(function (expr) {
+			this.parsed.forEach(function (expr) {
 				if (expr instanceof Mavo.Expression && !_this.element.matches(".mv-debuginfo *")) {
 					_this.group.debugRow({
 						element: _this.element,
