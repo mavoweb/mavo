@@ -13,6 +13,27 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
+	urlOption: function(...names) {
+		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
+		var value = null;
+
+		for (let name of names) {
+			if (searchParams) {
+				value = searchParams.get(name);
+			}
+			else {
+				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
+				value = match && (match[1] || "");
+			}
+
+			if (value !== null) {
+				return value;
+			}
+		}
+
+		return null;
+	},
+
 	/*********************
 	 * Number functions
 	 *********************/

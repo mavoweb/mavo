@@ -101,27 +101,6 @@ var _ = $.extend(Mavo, {
 		return null;
 	},
 
-	urlParam: function(...names) {
-		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
-		var value = null;
-
-		for (let name of names) {
-			if (searchParams) {
-				value = searchParams.get(name);
-			}
-			else {
-				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
-				value = match && (match[1] || "");
-			}
-
-			if (value !== null) {
-				return value;
-			}
-		}
-
-		return null;
-	},
-
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 	debounce: function (fn, delay) {
 		var timer = null, code;

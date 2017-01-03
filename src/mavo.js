@@ -32,12 +32,12 @@ var _ = self.Mavo = $.Class({
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 		if (this.index == 1) {
-			this.storage = _.urlParam("store");
-			this.source = _.urlParam("source");
+			this.storage = _.Functions.urlOption("store");
+			this.source = _.Functions.urlOption("source");
 		}
 
-		this.storage = this.storage || _.urlParam(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
-		this.source = this.source || _.urlParam(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
+		this.storage = this.storage || _.Functions.urlOption(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
+		this.source = this.source || _.Functions.urlOption(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
 
 		if (this.storage) {
 			this.storage = this.storage.trim();

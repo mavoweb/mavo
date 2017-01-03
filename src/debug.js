@@ -191,7 +191,7 @@ Mavo.hooks.add("group-init-start", function() {
 		if (group.debug) {
 			return true;
 		}
-	}) || Mavo.urlParam("debug") !== null;
+	}) || Mavo.Functions.urlOption("debug") !== null;
 
 	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;

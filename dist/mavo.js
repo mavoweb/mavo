@@ -227,12 +227,12 @@ var _ = self.Mavo = $.Class({
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 		if (this.index == 1) {
-			this.storage = _.urlParam("store");
-			this.source = _.urlParam("source");
+			this.storage = _.Functions.urlOption("store");
+			this.source = _.Functions.urlOption("source");
 		}
 
-		this.storage = this.storage || _.urlParam(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
-		this.source = this.source || _.urlParam(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
+		this.storage = this.storage || _.Functions.urlOption(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
+		this.source = this.source || _.Functions.urlOption(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
 
 		if (this.storage) {
 			this.storage = this.storage.trim();
@@ -906,27 +906,6 @@ var _ = $.extend(Mavo, {
 			let value = element.getAttribute(attribute);
 
 			if (value) {
-				return value;
-			}
-		}
-
-		return null;
-	},
-
-	urlParam: function(...names) {
-		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
-		var value = null;
-
-		for (let name of names) {
-			if (searchParams) {
-				value = searchParams.get(name);
-			}
-			else {
-				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
-				value = match && (match[1] || "");
-			}
-
-			if (value !== null) {
 				return value;
 			}
 		}
@@ -4376,6 +4355,27 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
+	urlOption: function(...names) {
+		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
+		var value = null;
+
+		for (let name of names) {
+			if (searchParams) {
+				value = searchParams.get(name);
+			}
+			else {
+				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
+				value = match && (match[1] || "");
+			}
+
+			if (value !== null) {
+				return value;
+			}
+		}
+
+		return null;
+	},
+
 	/*********************
 	 * Number functions
 	 *********************/
@@ -5332,7 +5332,7 @@ Mavo.hooks.add("group-init-start", function() {
 		if (group.debug) {
 			return true;
 		}
-	}) || Mavo.urlParam("debug") !== null;
+	}) || Mavo.Functions.urlOption("debug") !== null;
 
 	if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 		this.debug = true;

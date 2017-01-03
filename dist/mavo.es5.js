@@ -276,12 +276,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 			if (this.index == 1) {
-				this.storage = _.urlParam("store");
-				this.source = _.urlParam("source");
+				this.storage = _.Functions.urlOption("store");
+				this.source = _.Functions.urlOption("source");
 			}
 
-			this.storage = this.storage || _.urlParam(this.id + "_store") || this.element.getAttribute("mv-storage") || null;
-			this.source = this.source || _.urlParam(this.id + "_source") || this.element.getAttribute("mv-init") || null;
+			this.storage = this.storage || _.Functions.urlOption(this.id + "_store") || this.element.getAttribute("mv-storage") || null;
+			this.source = this.source || _.Functions.urlOption(this.id + "_source") || this.element.getAttribute("mv-init") || null;
 
 			if (this.storage) {
 				this.storage = this.storage.trim();
@@ -1061,51 +1061,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (value) {
 					return value;
-				}
-			}
-
-			return null;
-		},
-
-		urlParam: function urlParam() {
-			var searchParams = "searchParams" in URL.prototype ? new URL(location).searchParams : null;
-			var value = null;
-
-			for (var _len3 = arguments.length, names = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-				names[_key3] = arguments[_key3];
-			}
-
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = names[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var name = _step2.value;
-
-					if (searchParams) {
-						value = searchParams.get(name);
-					} else {
-						var match = location.search.match(RegExp("[?&]" + name + "(?:=([^&]+))?(?=&|$)", "i"));
-						value = match && (match[1] || "");
-					}
-
-					if (value !== null) {
-						return value;
-					}
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
 				}
 			}
 
@@ -5087,6 +5042,51 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return new Date();
 		},
 
+		urlOption: function urlOption() {
+			var searchParams = "searchParams" in URL.prototype ? new URL(location).searchParams : null;
+			var value = null;
+
+			for (var _len = arguments.length, names = Array(_len), _key = 0; _key < _len; _key++) {
+				names[_key] = arguments[_key];
+			}
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = names[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var name = _step.value;
+
+					if (searchParams) {
+						value = searchParams.get(name);
+					} else {
+						var match = location.search.match(RegExp("[?&]" + name + "(?:=([^&]+))?(?=&|$)", "i"));
+						value = match && (match[1] || "");
+					}
+
+					if (value !== null) {
+						return value;
+					}
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			return null;
+		},
+
 		/*********************
    * Number functions
    *********************/
@@ -5224,27 +5224,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		addBinaryOperator: function addBinaryOperator(name, o) {
 			if (o.symbol) {
 				// Build map of symbols to function names for easy rewriting
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
 
 				try {
-					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var symbol = _step.value;
+					for (var _iterator2 = Mavo.toArray(o.symbol)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var symbol = _step2.value;
 
 						Mavo.Script.symbols[symbol] = name;
 					}
 				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
 						}
 					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
+						if (_didIteratorError2) {
+							throw _iteratorError2;
 						}
 					}
 				}
@@ -5253,8 +5253,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			o.identity = o.identity === undefined ? 0 : o.identity;
 
 			return _[name] = o.code || function () {
-				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
-					operands[_key] = arguments[_key];
+				for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+					operands[_key2] = arguments[_key2];
 				}
 
 				if (operands.length === 1) {
@@ -6106,7 +6106,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (group.debug) {
 				return true;
 			}
-		}) || Mavo.urlParam("debug") !== null;
+		}) || Mavo.Functions.urlOption("debug") !== null;
 
 		if (!this.debug && this.element.closest(Mavo.selectors.debug)) {
 			this.debug = true;
