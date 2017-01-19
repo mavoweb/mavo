@@ -36,13 +36,13 @@ var _ = Mavo.Expressions = $.Class({
 		this.active = true;
 
 		// Watch changes and update value
-		this.group.element.addEventListener("mavo:datachange", evt => this.update());
+		this.group.element.addEventListener("mavo:datachange", evt => this.update(evt));
 	},
 
 	/**
 	 * Update all expressions in this group
 	 */
-	update: function callee() {
+	update: function callee(evt) {
 		if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
 			return;
 		}
@@ -52,7 +52,7 @@ var _ = Mavo.Expressions = $.Class({
 		Mavo.hooks.run("expressions-update-start", env);
 
 		for (let ref of this.all) {
-			ref.update(env.data);
+			ref.update(env.data, evt);
 		}
 
 		for (let exp of this.dependents) {
@@ -125,19 +125,6 @@ if (self.Proxy) {
 					if (property == this.mavo.id) {
 						return data;
 					}
-
-					// Look in ancestors
-					var ret = this.walkUp(group => {
-						if (property in group.children) {
-							group.expressions.dependents.add(this.expressions);
-
-							return group.children[property].getData(env.options);
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
 				},
 
 				has: (data, property) => {
@@ -154,30 +141,30 @@ if (self.Proxy) {
 					// First look in ancestors
 					var ret = this.walkUp(group => {
 						if (property in group.children) {
-							return true;
+							return group.children[property];
 						};
 					});
 
-					if (ret !== undefined) {
-						return ret;
+					if (ret === undefined) {
+						// Still not found, look in descendants
+						ret = this.find(property);
 					}
-
-					// Still not found, look in descendants
-					ret = this.find(property);
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getData(env.options))
+							ret = ret.map(item => item.getRelativeData(env.options))
 									 .filter(item => item !== null);
 						}
-						else {
-							ret = ret.getData(env.options);
+						else if (ret instanceof Mavo.Node) {
+							ret = ret.getRelativeData(env.options);
 						}
 
 						data[property] = ret;
 
 						return true;
 					}
+
+					return false;
 				},
 
 				set: function(data, property, value) {

@@ -15,6 +15,7 @@ var _ = Mavo.Expression = $.Class({
 		try {
 			if (!this.function) {
 				this.function = _.compile(this.expression);
+				this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 			}
 
 			this.value = this.function(data);
@@ -30,6 +31,34 @@ var _ = Mavo.Expression = $.Class({
 
 	toString() {
 		return this.expression;
+	},
+
+	changedBy: function(evt) {
+		if (!this.identifiers || !evt) {
+			return true;
+		}
+
+		if (this.identifiers.indexOf(evt.property) > -1) {
+			return true;
+		}
+
+		if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+			if (this.identifiers.indexOf("$index") > -1) {
+				return true;
+			}
+
+			var collection = evt.node.collection || evt.node;
+
+			if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
+				return true;
+			}
+		}
+
+		if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
+			return true; // contains a Mavo id
+		}
+
+		return false;
 	},
 
 	live: {

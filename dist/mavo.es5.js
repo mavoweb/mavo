@@ -269,7 +269,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index;
+			_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index);
 			this.element.setAttribute("mv-app", this.id);
 
 			this.unhandled = this.element.classList.contains("mv-keep-unhandled");
@@ -823,6 +823,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			all: [],
 
+			allIds: [],
+
 			get: function get(id) {
 				var _iteratorNormalCompletion3 = true;
 				var _didIteratorError3 = false;
@@ -984,6 +986,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (index > -1) {
 				arr.splice(index, 1);
 			}
+		},
+
+		hasIntersection: function hasIntersection(arr1, arr2) {
+			return !arr1.every(function (el) {
+				return arr2.indexOf(el) == -1;
+			});
 		},
 
 		// Recursively flatten a multi-dimensional array
@@ -4179,6 +4187,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			try {
 				if (!this.function) {
 					this.function = _.compile(this.expression);
+					this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 				}
 
 				this.value = this.function(data);
@@ -4195,6 +4204,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.expression;
 		},
 
+
+		changedBy: function changedBy(evt) {
+			if (!this.identifiers || !evt) {
+				return true;
+			}
+
+			if (this.identifiers.indexOf(evt.property) > -1) {
+				return true;
+			}
+
+			if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+				if (this.identifiers.indexOf("$index") > -1) {
+					return true;
+				}
+
+				var collection = evt.node.collection || evt.node;
+
+				if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
+					return true;
+				}
+			}
+
+			if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
+				return true; // contains a Mavo id
+			}
+
+			return false;
+		},
 
 		live: {
 			expression: function expression(value) {
@@ -4446,36 +4483,68 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 		},
 
+		dependsOn: function dependsOn() {
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = this.parsed[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var exp = _step.value;
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+		},
+
 		update: function update() {
 			var _this = this;
 
 			var data = arguments.length <= 0 || arguments[0] === undefined ? this.data : arguments[0];
+			var evt = arguments[1];
 
 			this.data = data;
 
 			var ret = {};
 
 			Mavo.hooks.run("expressiontext-update-start", this);
-
+			if (this.expression == "[if(absolute, uppercase(type), type)] [arcFlags] [x] [y]") {
+				console.log(data, this.element.getAttribute("content"), this.group.element);
+			}
 			ret.value = this.value = this.parsed.map(function (expr) {
 				if (expr instanceof Mavo.Expression) {
-					var env = { context: _this, expr: expr };
+					if (expr.changedBy(evt)) {
+						var env = { context: _this, expr: expr };
 
-					Mavo.hooks.run("expressiontext-update-beforeeval", env);
+						Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
-					env.value = env.expr.eval(data);
+						env.value = env.expr.eval(data);
 
-					Mavo.hooks.run("expressiontext-update-aftereval", env);
+						Mavo.hooks.run("expressiontext-update-aftereval", env);
 
-					if (env.value instanceof Error) {
-						return _this.fallback !== undefined ? _this.fallback : env.expr.expression;
+						if (env.value instanceof Error) {
+							return _this.fallback !== undefined ? _this.fallback : env.expr.expression;
+						}
+						if (env.value === undefined || env.value === null) {
+							// Don’t print things like "undefined" or "null"
+							return "";
+						}
+
+						return env.value;
+					} else {
+						return expr.value;
 					}
-					if (env.value === undefined || env.value === null) {
-						// Don’t print things like "undefined" or "null"
-						return "";
-					}
-
-					return env.value;
 				}
 
 				return expr;
@@ -4639,14 +4708,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			// Watch changes and update value
 			this.group.element.addEventListener("mavo:datachange", function (evt) {
-				return _this.update();
+				return _this.update(evt);
 			});
 		},
 
 		/**
    * Update all expressions in this group
    */
-		update: function callee() {
+		update: function callee(evt) {
 			if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
 				return;
 			}
@@ -4663,7 +4732,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				for (var _iterator2 = this.all[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 					var ref = _step2.value;
 
-					ref.update(env.data);
+					ref.update(env.data, evt);
 				}
 			} catch (err) {
 				_didIteratorError2 = true;
@@ -4783,19 +4852,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						if (property == _this3.mavo.id) {
 							return data;
 						}
-
-						// Look in ancestors
-						var ret = _this3.walkUp(function (group) {
-							if (property in group.children) {
-								group.expressions.dependents.add(_this3.expressions);
-
-								return group.children[property].getData(env.options);
-							};
-						});
-
-						if (ret !== undefined) {
-							return ret;
-						}
 					},
 
 					has: function has(data, property) {
@@ -4812,32 +4868,32 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						// First look in ancestors
 						var ret = _this3.walkUp(function (group) {
 							if (property in group.children) {
-								return true;
+								return group.children[property];
 							};
 						});
 
-						if (ret !== undefined) {
-							return ret;
+						if (ret === undefined) {
+							// Still not found, look in descendants
+							ret = _this3.find(property);
 						}
-
-						// Still not found, look in descendants
-						ret = _this3.find(property);
 
 						if (ret !== undefined) {
 							if (Array.isArray(ret)) {
 								ret = ret.map(function (item) {
-									return item.getData(env.options);
+									return item.getRelativeData(env.options);
 								}).filter(function (item) {
 									return item !== null;
 								});
-							} else {
-								ret = ret.getData(env.options);
+							} else if (ret instanceof Mavo.Node) {
+								ret = ret.getRelativeData(env.options);
 							}
 
 							data[property] = ret;
 
 							return true;
 						}
+
+						return false;
 					},
 
 					set: function set(data, property, value) {
@@ -5035,20 +5091,19 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
 		return Mavo.Node.get(el);
 	});
 
-	if (properties.length) {
-		// When the element is detached, datachange events from properties
-		// do not propagate up to the group so expressions do not recalculate.
-		// We must do this manually.
-		this.element.addEventListener("mavo:datachange", function (evt) {
-			// Cannot redispatch synchronously
-			requestAnimationFrame(function () {
-				if (!_this2.element.parentNode) {
-					// still out of the DOM?
-					_this2.group.element.dispatchEvent(evt);
-				}
-			});
+	// When the element is detached, datachange events from properties
+	// do not propagate up to the group so expressions do not recalculate.
+	// We must do this manually.
+	this.element.addEventListener("mavo:datachange", function (evt) {
+
+		// Cannot redispatch synchronously [why??]
+		requestAnimationFrame(function () {
+			if (!_this2.element.parentNode) {
+				// out of the DOM?
+				_this2.group.element.dispatchEvent(evt);
+			}
 		});
-	}
+	});
 
 	return properties;
 });

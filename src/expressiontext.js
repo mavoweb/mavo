@@ -67,7 +67,13 @@ var _ = Mavo.Expression.Text = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	update: function(data = this.data) {
+	dependsOn: function(...ids) {
+		for (let exp of this.parsed) {
+
+		}
+	},
+
+	update: function(data = this.data, evt) {
 		this.data = data;
 
 		var ret = {};
@@ -76,23 +82,28 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		ret.value = this.value = this.parsed.map(expr => {
 			if (expr instanceof Mavo.Expression) {
-				var env = {context: this, expr};
+				if (expr.changedBy(evt)) {
+					var env = {context: this, expr};
 
-				Mavo.hooks.run("expressiontext-update-beforeeval", env);
+					Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
-				env.value = env.expr.eval(data);
+					env.value = env.expr.eval(data);
 
-				Mavo.hooks.run("expressiontext-update-aftereval", env);
+					Mavo.hooks.run("expressiontext-update-aftereval", env);
 
-				if (env.value instanceof Error) {
-					return this.fallback !== undefined? this.fallback : env.expr.expression;
+					if (env.value instanceof Error) {
+						return this.fallback !== undefined? this.fallback : env.expr.expression;
+					}
+					if (env.value === undefined || env.value === null) {
+						// Don’t print things like "undefined" or "null"
+						return "";
+					}
+
+					return env.value;
 				}
-				if (env.value === undefined || env.value === null) {
-					// Don’t print things like "undefined" or "null"
-					return "";
+				else {
+					return expr.value;
 				}
-
-				return env.value;
 			}
 
 			return expr;

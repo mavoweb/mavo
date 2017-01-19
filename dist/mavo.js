@@ -220,7 +220,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Assign a unique (for the page) id to this mavo instance
-		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
+		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
 		this.element.setAttribute("mv-app", this.id);
 
 		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
@@ -737,6 +737,8 @@ var _ = self.Mavo = $.Class({
 	static: {
 		all: [],
 
+		allIds: [],
+
 		get: function(id) {
 			for (let mavo of _.all) {
 				if (mavo.id === id) {
@@ -861,6 +863,8 @@ var _ = $.extend(Mavo, {
 			arr.splice(index, 1);
 		}
 	},
+
+	hasIntersection: (arr1, arr2) => !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {
@@ -3651,6 +3655,7 @@ var _ = Mavo.Expression = $.Class({
 		try {
 			if (!this.function) {
 				this.function = _.compile(this.expression);
+				this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 			}
 
 			this.value = this.function(data);
@@ -3666,6 +3671,34 @@ var _ = Mavo.Expression = $.Class({
 
 	toString() {
 		return this.expression;
+	},
+
+	changedBy: function(evt) {
+		if (!this.identifiers || !evt) {
+			return true;
+		}
+
+		if (this.identifiers.indexOf(evt.property) > -1) {
+			return true;
+		}
+
+		if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+			if (this.identifiers.indexOf("$index") > -1) {
+				return true;
+			}
+
+			var collection = evt.node.collection || evt.node;
+
+			if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
+				return true;
+			}
+		}
+
+		if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
+			return true; // contains a Mavo id
+		}
+
+		return false;
 	},
 
 	live: {
@@ -3894,32 +3927,45 @@ var _ = Mavo.Expression.Text = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	update: function(data = this.data) {
+	dependsOn: function(...ids) {
+		for (let exp of this.parsed) {
+
+		}
+	},
+
+	update: function(data = this.data, evt) {
 		this.data = data;
 
 		var ret = {};
 
 		Mavo.hooks.run("expressiontext-update-start", this);
-
+if (this.expression == "[if(absolute, uppercase(type), type)] [arcFlags] [x] [y]") {
+	console.log(data, this.element.getAttribute("content"), this.group.element);
+}
 		ret.value = this.value = this.parsed.map(expr => {
 			if (expr instanceof Mavo.Expression) {
-				var env = {context: this, expr};
+				if (expr.changedBy(evt)) {
+					var env = {context: this, expr};
 
-				Mavo.hooks.run("expressiontext-update-beforeeval", env);
+					Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
-				env.value = env.expr.eval(data);
+					env.value = env.expr.eval(data);
 
-				Mavo.hooks.run("expressiontext-update-aftereval", env);
+					Mavo.hooks.run("expressiontext-update-aftereval", env);
 
-				if (env.value instanceof Error) {
-					return this.fallback !== undefined? this.fallback : env.expr.expression;
+					if (env.value instanceof Error) {
+						return this.fallback !== undefined? this.fallback : env.expr.expression;
+					}
+					if (env.value === undefined || env.value === null) {
+						// Don’t print things like "undefined" or "null"
+						return "";
+					}
+
+					return env.value;
 				}
-				if (env.value === undefined || env.value === null) {
-					// Don’t print things like "undefined" or "null"
-					return "";
+				else {
+					return expr.value;
 				}
-
-				return env.value;
 			}
 
 			return expr;
@@ -4058,13 +4104,13 @@ var _ = Mavo.Expressions = $.Class({
 		this.active = true;
 
 		// Watch changes and update value
-		this.group.element.addEventListener("mavo:datachange", evt => this.update());
+		this.group.element.addEventListener("mavo:datachange", evt => this.update(evt));
 	},
 
 	/**
 	 * Update all expressions in this group
 	 */
-	update: function callee() {
+	update: function callee(evt) {
 		if (!this.active || this.group.isDeleted() || this.all.length + this.dependents.size === 0) {
 			return;
 		}
@@ -4074,7 +4120,7 @@ var _ = Mavo.Expressions = $.Class({
 		Mavo.hooks.run("expressions-update-start", env);
 
 		for (let ref of this.all) {
-			ref.update(env.data);
+			ref.update(env.data, evt);
 		}
 
 		for (let exp of this.dependents) {
@@ -4147,19 +4193,6 @@ if (self.Proxy) {
 					if (property == this.mavo.id) {
 						return data;
 					}
-
-					// Look in ancestors
-					var ret = this.walkUp(group => {
-						if (property in group.children) {
-							group.expressions.dependents.add(this.expressions);
-
-							return group.children[property].getData(env.options);
-						};
-					});
-
-					if (ret !== undefined) {
-						return ret;
-					}
 				},
 
 				has: (data, property) => {
@@ -4176,30 +4209,30 @@ if (self.Proxy) {
 					// First look in ancestors
 					var ret = this.walkUp(group => {
 						if (property in group.children) {
-							return true;
+							return group.children[property];
 						};
 					});
 
-					if (ret !== undefined) {
-						return ret;
+					if (ret === undefined) {
+						// Still not found, look in descendants
+						ret = this.find(property);
 					}
-
-					// Still not found, look in descendants
-					ret = this.find(property);
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getData(env.options))
+							ret = ret.map(item => item.getRelativeData(env.options))
 									 .filter(item => item !== null);
 						}
-						else {
-							ret = ret.getData(env.options);
+						else if (ret instanceof Mavo.Node) {
+							ret = ret.getRelativeData(env.options);
 						}
 
 						data[property] = ret;
 
 						return true;
 					}
+
+					return false;
 				},
 
 				set: function(data, property, value) {
@@ -4349,20 +4382,20 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 					.filter(el => el.closest("[mv-if]") == this.element)
 					.map(el => Mavo.Node.get(el));
 
-	if (properties.length) {
-		// When the element is detached, datachange events from properties
-		// do not propagate up to the group so expressions do not recalculate.
-		// We must do this manually.
-		this.element.addEventListener("mavo:datachange", evt => {
-			// Cannot redispatch synchronously
-			requestAnimationFrame(() => {
-				if (!this.element.parentNode) { // still out of the DOM?
-					this.group.element.dispatchEvent(evt);
-				}
-			});
+	// When the element is detached, datachange events from properties
+	// do not propagate up to the group so expressions do not recalculate.
+	// We must do this manually.
+	this.element.addEventListener("mavo:datachange", evt => {
 
-		});
-	}
+			// Cannot redispatch synchronously [why??]
+			requestAnimationFrame(() => {
+				if (!this.element.parentNode) { // out of the DOM?
+				this.group.element.dispatchEvent(evt);
+			}
+			});
+		
+
+	});
 
 	return properties;
 });

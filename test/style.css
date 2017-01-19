@@ -1,6 +1,9 @@
 ::before {
   content: var(--prepend) " "; }
 
+::after {
+  content: " " var(--append); }
+
 :root {
   --ciel: #cceeff;
   --dark: #337799; }

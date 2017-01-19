@@ -91,20 +91,20 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 					.filter(el => el.closest("[mv-if]") == this.element)
 					.map(el => Mavo.Node.get(el));
 
-	if (properties.length) {
-		// When the element is detached, datachange events from properties
-		// do not propagate up to the group so expressions do not recalculate.
-		// We must do this manually.
-		this.element.addEventListener("mavo:datachange", evt => {
-			// Cannot redispatch synchronously
-			requestAnimationFrame(() => {
-				if (!this.element.parentNode) { // still out of the DOM?
-					this.group.element.dispatchEvent(evt);
-				}
-			});
+	// When the element is detached, datachange events from properties
+	// do not propagate up to the group so expressions do not recalculate.
+	// We must do this manually.
+	this.element.addEventListener("mavo:datachange", evt => {
 
-		});
-	}
+			// Cannot redispatch synchronously [why??]
+			requestAnimationFrame(() => {
+				if (!this.element.parentNode) { // out of the DOM?
+				this.group.element.dispatchEvent(evt);
+			}
+			});
+		
+
+	});
 
 	return properties;
 });
