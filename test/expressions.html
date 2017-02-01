@@ -359,7 +359,7 @@
 	<h1>mv-if</h1>
 
 	<table class="reftest">
-		<tr>
+		<!-- <tr>
 			<td>A<span mv-if="false">B</span>C</td>
 			<td>AC</td>
 		</tr>
@@ -370,12 +370,12 @@
 		<tr>
 			<td>A<span mv-if="true">B<span mv-if="true">C</span></span>D</td>
 			<td>ABCD</td>
-		</tr>
+		</tr> -->
 		<tr>
 			<td>A<span mv-if="true">B<span mv-if="false">C</span></span>D</td>
 			<td>ABD</td>
 		</tr>
-		<tr>
+		<!-- <tr>
 			<td>A<span mv-if="false">B<span mv-if="true">C</span></span>D</td>
 			<td>AD</td>
 		</tr>
@@ -386,7 +386,7 @@
 		<tr>
 			<td>A<span mv-if="false">B<span mv-if="true"><span property="prop2">C</span></span></span>[prop2]</td>
 			<td>A</td>
-		</tr>
+		</tr> -->
 	</table>
 </section>
 

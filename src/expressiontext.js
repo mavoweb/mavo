@@ -62,14 +62,18 @@ var _ = Mavo.Expression.Text = $.Class({
 			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
+		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
+
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	dependsOn: function(...ids) {
-		for (let exp of this.parsed) {
-
+	changedBy: function(evt) {
+		for (let expr of this.parsed) {
+			if (expr instanceof Mavo.Expression && expr.changedBy(evt)) {
+				return true;
+			}
 		}
 	},
 
@@ -80,8 +84,11 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		Mavo.hooks.run("expressiontext-update-start", this);
 
-		ret.value = this.value = this.parsed.map(expr => {
+		this.oldValue = this.value;
+
+		ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
+
 				if (expr.changedBy(evt)) {
 					var env = {context: this, expr};
 
@@ -102,7 +109,7 @@ var _ = Mavo.Expression.Text = $.Class({
 					return env.value;
 				}
 				else {
-					return expr.value;
+					return this.oldValue[i];
 				}
 			}
 

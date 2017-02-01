@@ -103,6 +103,7 @@ var _ = Mavo.Debug = {
 
 	time: function callee(objName, name) {
 		var obj = eval(objName);
+		console.log(`Benchmarking ${objName}.${name}(). Type ${objName}.${name}.timeTaken and ${objName}.${name}.calls at any time to see stats.`);
 		var callback = obj[name];
 
 		obj[name] = function callee() {
@@ -397,6 +398,6 @@ Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
 	}
 });
 
-// Mavo.Debug.time("Mavo.Expressions.prototype", "update");
+Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);

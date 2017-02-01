@@ -22,11 +22,11 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 		return;
 	}
 
+	var value = this.value[0];
+	var oldValue = this.oldValue[0];
+
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
 	this.group.mavo.treeBuilt.then(() => {
-		var value = this.value[0];
-		var oldValue = this.oldValue && this.oldValue[0];
-
 		if (this.parentIf) {
 			var parentValue = this.parentIf.value[0];
 			this.value[0] = value = value && parentValue;
@@ -66,8 +66,6 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				childIf.update();
 			}
 		}
-
-		this.oldValue = this.value;
 	});
 });
 
@@ -102,7 +100,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 				this.group.element.dispatchEvent(evt);
 			}
 			});
-		
+
 
 	});
 

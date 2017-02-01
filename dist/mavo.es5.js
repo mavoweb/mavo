@@ -4478,19 +4478,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.parsed = o.template ? o.template.parsed : this.syntax.tokenize(this.expression);
 			}
 
+			this.oldValue = this.value = this.parsed.map(function (x) {
+				return x instanceof Mavo.Expression ? x.expression : x;
+			});
+
 			Mavo.hooks.run("expressiontext-init-end", this);
 
 			_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 		},
 
-		dependsOn: function dependsOn() {
+		changedBy: function changedBy(evt) {
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
 
 			try {
 				for (var _iterator = this.parsed[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var exp = _step.value;
+					var expr = _step.value;
+
+					if (expr instanceof Mavo.Expression && expr.changedBy(evt)) {
+						return true;
+					}
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -4519,11 +4527,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var ret = {};
 
 			Mavo.hooks.run("expressiontext-update-start", this);
-			if (this.expression == "[if(absolute, uppercase(type), type)] [arcFlags] [x] [y]") {
-				console.log(data, this.element.getAttribute("content"), this.group.element);
-			}
-			ret.value = this.value = this.parsed.map(function (expr) {
+
+			this.oldValue = this.value;
+
+			ret.value = this.value = this.parsed.map(function (expr, i) {
 				if (expr instanceof Mavo.Expression) {
+
 					if (expr.changedBy(evt)) {
 						var env = { context: _this, expr: expr };
 
@@ -4543,7 +4552,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						return env.value;
 					} else {
-						return expr.value;
+						return _this.oldValue[i];
 					}
 				}
 
@@ -4732,7 +4741,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				for (var _iterator2 = this.all[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 					var ref = _step2.value;
 
-					ref.update(env.data, evt);
+					if (ref.changedBy(evt)) {
+						ref.update(env.data, evt);
+					}
 				}
 			} catch (err) {
 				_didIteratorError2 = true;
@@ -4977,11 +4988,11 @@ Mavo.hooks.add("expressiontext-update-end", function () {
 		return;
 	}
 
+	var value = this.value[0];
+	var oldValue = this.oldValue[0];
+
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
 	this.group.mavo.treeBuilt.then(function () {
-		var value = _this.value[0];
-		var oldValue = _this.oldValue && _this.oldValue[0];
-
 		if (_this.parentIf) {
 			var parentValue = _this.parentIf.value[0];
 			_this.value[0] = value = value && parentValue;
@@ -5062,8 +5073,6 @@ Mavo.hooks.add("expressiontext-update-end", function () {
 				}
 			}
 		}
-
-		_this.oldValue = _this.value;
 	});
 });
 
@@ -6105,6 +6114,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		time: function callee(objName, name) {
 			var obj = eval(objName);
+			console.log("Benchmarking " + objName + "." + name + "(). Type " + objName + "." + name + ".timeTaken and " + objName + "." + name + ".calls at any time to see stats.");
 			var callback = obj[name];
 
 			obj[name] = function callee() {
@@ -6402,7 +6412,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	// Mavo.Debug.time("Mavo.Expressions.prototype", "update");
+	Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 })(Bliss, Bliss.$);
 "use strict";
 

@@ -52,7 +52,9 @@ var _ = Mavo.Expressions = $.Class({
 		Mavo.hooks.run("expressions-update-start", env);
 
 		for (let ref of this.all) {
-			ref.update(env.data, evt);
+			if (ref.changedBy(evt)) {
+				ref.update(env.data, evt);
+			}
 		}
 
 		for (let exp of this.dependents) {

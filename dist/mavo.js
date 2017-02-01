@@ -3922,14 +3922,18 @@ var _ = Mavo.Expression.Text = $.Class({
 			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
+		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
+
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
-	dependsOn: function(...ids) {
-		for (let exp of this.parsed) {
-
+	changedBy: function(evt) {
+		for (let expr of this.parsed) {
+			if (expr instanceof Mavo.Expression && expr.changedBy(evt)) {
+				return true;
+			}
 		}
 	},
 
@@ -3939,11 +3943,12 @@ var _ = Mavo.Expression.Text = $.Class({
 		var ret = {};
 
 		Mavo.hooks.run("expressiontext-update-start", this);
-if (this.expression == "[if(absolute, uppercase(type), type)] [arcFlags] [x] [y]") {
-	console.log(data, this.element.getAttribute("content"), this.group.element);
-}
-		ret.value = this.value = this.parsed.map(expr => {
+
+		this.oldValue = this.value;
+
+		ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
+
 				if (expr.changedBy(evt)) {
 					var env = {context: this, expr};
 
@@ -3964,7 +3969,7 @@ if (this.expression == "[if(absolute, uppercase(type), type)] [arcFlags] [x] [y]
 					return env.value;
 				}
 				else {
-					return expr.value;
+					return this.oldValue[i];
 				}
 			}
 
@@ -4120,7 +4125,9 @@ var _ = Mavo.Expressions = $.Class({
 		Mavo.hooks.run("expressions-update-start", env);
 
 		for (let ref of this.all) {
-			ref.update(env.data, evt);
+			if (ref.changedBy(evt)) {
+				ref.update(env.data, evt);
+			}
 		}
 
 		for (let exp of this.dependents) {
@@ -4313,11 +4320,11 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 		return;
 	}
 
+	var value = this.value[0];
+	var oldValue = this.oldValue[0];
+
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
 	this.group.mavo.treeBuilt.then(() => {
-		var value = this.value[0];
-		var oldValue = this.oldValue && this.oldValue[0];
-
 		if (this.parentIf) {
 			var parentValue = this.parentIf.value[0];
 			this.value[0] = value = value && parentValue;
@@ -4357,8 +4364,6 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 				childIf.update();
 			}
 		}
-
-		this.oldValue = this.value;
 	});
 });
 
@@ -4393,7 +4398,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 				this.group.element.dispatchEvent(evt);
 			}
 			});
-		
+
 
 	});
 
@@ -5304,6 +5309,7 @@ var _ = Mavo.Debug = {
 
 	time: function callee(objName, name) {
 		var obj = eval(objName);
+		console.log(`Benchmarking ${objName}.${name}(). Type ${objName}.${name}.timeTaken and ${objName}.${name}.calls at any time to see stats.`);
 		var callback = obj[name];
 
 		obj[name] = function callee() {
@@ -5598,7 +5604,7 @@ Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
 	}
 });
 
-// Mavo.Debug.time("Mavo.Expressions.prototype", "update");
+Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);
 
