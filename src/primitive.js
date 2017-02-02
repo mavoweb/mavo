@@ -92,7 +92,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
 
-		this.setValue(this.initialValue, {silent: true});
+		this.setValue(this.initialValue, {silent: true, dataOnly: !this.closestCollection});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -435,11 +435,13 @@ var _ = Mavo.Primitive = $.Class({
 						presentational = this.editor.selectedOptions[0].textContent;
 					}
 
-					_.setValue(this.element, {value, presentational}, {
-						defaults: this.defaults,
-						attribute: this.attribute,
-						datatype: this.datatype
-					});
+					if (!o.dataOnly) {
+						_.setValue(this.element, {value, presentational}, {
+							defaults: this.defaults,
+							attribute: this.attribute,
+							datatype: this.datatype
+						});
+					}
 				}
 			}
 

@@ -343,7 +343,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			if (this.editing) { // TODO this logic should go to Node
+			if (this.editing) { // TODO this logic should go to Node, especially w/ editing granularity
 				this.done();
 				this.root.render(data);
 				this.edit();
@@ -355,6 +355,8 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.unsavedChanges = false;
+
+		_.hooks.run("render-end", {context: this, data});
 	},
 
 	clear: function() {

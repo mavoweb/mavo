@@ -37,27 +37,35 @@
 	<h1>Basic</h1>
 
 	<table class="reftest">
-		<tr>
+		<tr title="Simple math, prop1">
 			<td property="prop1">[40 + 2]</td>
 			<td>42</td>
 		</tr>
-		<tr>
+		<tr title="Syntax error">
 			<td>[40 +]</td>
 			<td>40 +</td>
 		</tr>
-		<tr>
-			<td><input value="[39 + 3]"></td>
+		<tr title="Expression in attribute, prop5">
+			<td><input property="prop5" value="[39 + 3]"></td>
 			<td><input value="42"></td>
 		</tr>
-		<tr>
+		<tr title="Expression in attribute, type=number">
+			<td><input type="number" value="[39 + 3]"></td>
+			<td><input type="number" value="42"></td>
+		</tr>
+		<tr title="Expression in attribute, type=number, prop6">
+			<td><input property="prop6" type="number" value="[prop5 + 1]"></td>
+			<td><input type="number" value="43"></td>
+		</tr>
+		<tr title="Math with property, prop2">
 			<td property="prop2">[prop1 + 1]</td>
 			<td>43</td>
 		</tr>
-		<tr>
+		<tr title="Math with computed property (2 steps), prop3">
 			<td property="prop3">[prop2 + 1]</td>
 			<td>44</td>
 		</tr>
-		<tr>
+		<tr title="Math with computed property (3 steps)">
 			<td>[prop3 + 1]</td>
 			<td>45</td>
 		</tr>
@@ -65,7 +73,7 @@
 			<td>[false]</td>
 			<td>false</td>
 		</tr>
-		<tr>
+		<tr title="Type inference, prop4">
 			<td>
 				a<span property="prop4">
 					[4 - 3]
@@ -359,7 +367,7 @@
 	<h1>mv-if</h1>
 
 	<table class="reftest">
-		<!-- <tr>
+		<tr>
 			<td>A<span mv-if="false">B</span>C</td>
 			<td>AC</td>
 		</tr>
@@ -370,12 +378,12 @@
 		<tr>
 			<td>A<span mv-if="true">B<span mv-if="true">C</span></span>D</td>
 			<td>ABCD</td>
-		</tr> -->
+		</tr>
 		<tr>
 			<td>A<span mv-if="true">B<span mv-if="false">C</span></span>D</td>
 			<td>ABD</td>
 		</tr>
-		<!-- <tr>
+		<tr>
 			<td>A<span mv-if="false">B<span mv-if="true">C</span></span>D</td>
 			<td>AD</td>
 		</tr>
@@ -386,7 +394,7 @@
 		<tr>
 			<td>A<span mv-if="false">B<span mv-if="true"><span property="prop2">C</span></span></span>[prop2]</td>
 			<td>A</td>
-		</tr> -->
+		</tr>
 	</table>
 </section>
 
@@ -432,7 +440,7 @@
 				<input type="number" property="prop3">
 				<input property="prop4" mv-default="[prop3 + 1]">
 			</td>
-			<td>[prop3] [prop3 + 1]</td>
+			<td>[prop3 + 0] [prop3 + 1]</td>
 		</tr>
 	</table>
 </section>

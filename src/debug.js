@@ -1,5 +1,7 @@
 (function($, $$) {
 
+return;
+
 var _ = Mavo.Debug = {
 	friendlyError: (e, expr) => {
 		var type = e.constructor.name.replace(/Error$/, "").toLowerCase();

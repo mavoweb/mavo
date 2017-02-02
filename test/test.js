@@ -146,7 +146,7 @@ requestAnimationFrame(() => {
 
 			compare();
 			new Mavo.Observer(td, null, compare);
-			$.events(td, "input change", compare);
+			$.events(td, "input change mavo:datachange", compare);
 		}
 	}
 });

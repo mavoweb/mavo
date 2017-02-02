@@ -64,17 +64,20 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
 
+		var mavoNode = Mavo.Node.get(this.element);
+		if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == this.attribute) {
+			this.primitive = mavoNode;
+			mavoNode.store = mavoNode.store || "none";
+			mavoNode.modes = "read";
+		}
+
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
 	changedBy: function(evt) {
-		for (let expr of this.parsed) {
-			if (expr instanceof Mavo.Expression && expr.changedBy(evt)) {
-				return true;
-			}
-		}
+		return !this.parsed.every(expr => !(expr instanceof Mavo.Expression) || !expr.changedBy(evt));
 	},
 
 	update: function(data = this.data, evt) {
