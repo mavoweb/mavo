@@ -665,57 +665,59 @@ Mavo.Node.prototype.getClosestCollection = function() {
 		   (this.parentGroup? this.parentGroup.closestCollection : null);
 };
 
-$.lazy(Mavo.Node.prototype, "closestCollection", function() {
-	return this.getClosestCollection();
-});
+(function($, $$) {
+	$.lazy(Mavo.Node.prototype, "closestCollection", function() {
+		return this.getClosestCollection();
+	});
 
-$.live(Mavo.Node.prototype, "deleted", function(value) {
-	this.element.classList.toggle("mv-deleted", value);
+	$.live(Mavo.Node.prototype, "deleted", function(value) {
+		this.element.classList.toggle("mv-deleted", value);
 
-	if (value) {
-		// Soft delete, store element contents in a fragment
-		// and replace them with an undo prompt.
-		this.elementContents = document.createDocumentFragment();
-		$$(this.element.childNodes).forEach(node => {
-			this.elementContents.appendChild(node);
-		});
+		if (value) {
+			// Soft delete, store element contents in a fragment
+			// and replace them with an undo prompt.
+			this.elementContents = document.createDocumentFragment();
+			$$(this.element.childNodes).forEach(node => {
+				this.elementContents.appendChild(node);
+			});
 
-		$.contents(this.element, [
-			{
-				tag: "button",
-				className: "mv-close mv-ui",
-				textContent: "×",
-				events: {
-					"click": function(evt) {
-						$.remove(this.parentNode);
+			$.contents(this.element, [
+				{
+					tag: "button",
+					className: "mv-close mv-ui",
+					textContent: "×",
+					events: {
+						"click": function(evt) {
+							$.remove(this.parentNode);
+						}
+					}
+				},
+				"Deleted " + this.name,
+				{
+					tag: "button",
+					className: "mv-undo mv-ui",
+					textContent: "Undo",
+					events: {
+						"click": evt => this.deleted = false
 					}
 				}
-			},
-			"Deleted " + this.name,
-			{
-				tag: "button",
-				className: "mv-undo mv-ui",
-				textContent: "Undo",
-				events: {
-					"click": evt => this.deleted = false
-				}
-			}
-		]);
+			]);
 
-		this.element.classList.remove("mv-highlight");
-	}
-	else if (this.deleted) {
-		// Undelete
-		this.element.textContent = "";
-		this.element.appendChild(this.elementContents);
+			this.element.classList.remove("mv-highlight");
+		}
+		else if (this.deleted) {
+			// Undelete
+			this.element.textContent = "";
+			this.element.appendChild(this.elementContents);
 
-		// otherwise expressions won't update because this will still seem as deleted
-		// Alternatively, we could fire datachange with a timeout.
-		this._deleted = false;
+			// otherwise expressions won't update because this will still seem as deleted
+			// Alternatively, we could fire datachange with a timeout.
+			this._deleted = false;
 
-		this.dataChanged("undelete");
-	}
-});
+			this.dataChanged("undelete");
+		}
+	});
+})(Bliss, Bliss.$);
 
 /**
  * Check if this unit is either deleted or inside a deleted group

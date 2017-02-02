@@ -75,36 +75,38 @@ Mavo.hooks.add("unit-isdatanull", function(env) {
 	env.result = env.result || (this.hidden && env.options.store == "*");
 });
 
-$.live(Mavo.Primitive.prototype, "hidden", function(value) {
-	if (this._hidden !== value) {
-		this._hidden = value;
-		this.dataChanged();
-	}
-});
+(function($, $$) {
+	$.live(Mavo.Primitive.prototype, "hidden", function(value) {
+		if (this._hidden !== value) {
+			this._hidden = value;
+			this.dataChanged();
+		}
+	});
 
-$.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
-	if (this.attribute != "mv-if") {
-		return;
-	}
+	$.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
+		if (this.attribute != "mv-if") {
+			return;
+		}
 
-	var properties = $$(Mavo.selectors.property, this.element)
-					.filter(el => el.closest("[mv-if]") == this.element)
-					.map(el => Mavo.Node.get(el));
+		var properties = $$(Mavo.selectors.property, this.element)
+						.filter(el => el.closest("[mv-if]") == this.element)
+						.map(el => Mavo.Node.get(el));
 
-	if (properties.length) {
-		// When the element is detached, datachange events from properties
-		// do not propagate up to the group so expressions do not recalculate.
-		// We must do this manually.
-		this.element.addEventListener("mavo:datachange", evt => {
-			// Cannot redispatch synchronously
-			requestAnimationFrame(() => {
-				if (!this.element.parentNode) { // still out of the DOM?
-					this.group.element.dispatchEvent(evt);
-				}
+		if (properties.length) {
+			// When the element is detached, datachange events from properties
+			// do not propagate up to the group so expressions do not recalculate.
+			// We must do this manually.
+			this.element.addEventListener("mavo:datachange", evt => {
+				// Cannot redispatch synchronously
+				requestAnimationFrame(() => {
+					if (!this.element.parentNode) { // still out of the DOM?
+						this.group.element.dispatchEvent(evt);
+					}
+				});
+
 			});
+		}
 
-		});
-	}
-
-	return properties;
-});
+		return properties;
+	});
+})(Bliss, Bliss.$);
