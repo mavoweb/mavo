@@ -42,7 +42,7 @@ var _ = Mavo.Expression = $.Class({
 			return true;
 		}
 
-		if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+		if (evt.action != "propertychange") {
 			if (this.identifiers.indexOf("$index") > -1) {
 				return true;
 			}

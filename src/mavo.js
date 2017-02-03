@@ -159,10 +159,6 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
-
-		// Is there any control that requires an edit button?
-		this.needsEdit = false;
-
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
 
@@ -170,6 +166,9 @@ var _ = self.Mavo = $.Class({
 		this.treeBuilt.resolve();
 
 		Mavo.hooks.run("init-tree-after", this);
+
+		// Is there any control that requires an edit button?
+		this.needsEdit = this.some(obj => obj.modes == "read edit" || obj.modes === undefined);
 
 		this.setUnsavedChanges(false);
 
@@ -343,15 +342,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			if (this.editing) { // TODO this logic should go to Node, especially w/ editing granularity
-				this.done();
-				this.root.render(data);
-				this.edit();
-			}
-			else {
-				this.root.render(data);
-			}
-
+			this.root.render(data);
 		}
 
 		this.unsavedChanges = false;
@@ -519,7 +510,22 @@ var _ = self.Mavo = $.Class({
 	},
 
 	walk: function(callback) {
-		this.root.walk(callback);
+		return this.root.walk(callback);
+	},
+
+	/**
+	 * Executes a test on every node. If ANY node passes (test returns true),
+	 * the function returns true. Otherwise, it returns false.
+	 * Similar semantics to Array.prototype.some().
+	 */
+	some: function(test) {
+		return !this.walk((obj, path) => {
+			var ret = test(obj, path);
+
+			if (ret === true) {
+				return false;
+			}
+		});
 	},
 
 	live: {

@@ -15,17 +15,43 @@ var _ = Mavo.Expressions = $.Class({
 
 		this.active = true;
 
+		this.scheduled = new Set();
+
 		// Watch changes and update value
-		this.mavo.element.addEventListener("mavo:datachange", evt => this.update(evt));
+		this.mavo.element.addEventListener("mavo:datachange", evt => {
+			if (evt.action == "propertychange") {
+				// Throttle propertychange events
+				if (!this.scheduled.has(evt.property)) {
+					setTimeout(() => {
+						this.scheduled.delete(evt.property);
+						this.update(evt);
+					}, _.PROPERTYCHANGE_THROTTLE);
+
+					this.scheduled.add(evt.property);
+				}
+			}
+			else {
+				this.update(evt);
+			}
+		});
 	},
 
 	/**
 	 * Update all expressions in this group
 	 */
 	update: function callee(evt) {
-		this.mavo.walk(obj => {
+		var data = this.mavo.root.getData({
+			relative: true,
+			store: "*",
+			null: true,
+			unhandled: this.mavo.unhandled
+		});
+
+
+
+		this.mavo.walk((obj, path) => {
 			if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-				let env = { context: this, data: obj.getRelativeData() };
+				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
 
@@ -87,7 +113,9 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	static: {
-		directives: []
+		directives: [],
+
+		PROPERTYCHANGE_THROTTLE: 50
 	}
 });
 
@@ -135,11 +163,11 @@ if (self.Proxy) {
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getRelativeData(env.options))
+							ret = ret.map(item => item.getData(env.options))
 									 .filter(item => item !== null);
 						}
 						else if (ret instanceof Mavo.Node) {
-							ret = ret.getRelativeData(env.options);
+							ret = ret.getData(env.options);
 						}
 
 						data[property] = ret;
@@ -157,15 +185,6 @@ if (self.Proxy) {
 		}
 	});
 }
-
-Mavo.Node.prototype.getRelativeData = function() {
-	return this.getData({
-		relative: true,
-		store: "*",
-		null: true,
-		unhandled: this.mavo.unhandled
-	});
-};
 
 Mavo.hooks.add("init-tree-after", function() {
 	this.expressions = new Mavo.Expressions(this);
@@ -188,22 +207,6 @@ Mavo.hooks.add("group-init-end", function() {
 Mavo.hooks.add("render-end", function() {
 	this.expressions.update();
 });
-
-// Disable expressions during rendering, for performance
-// Mavo.hooks.add("group-render-start", function() {
-// 	if (this.expressions) {
-// 		this.expressions.active = false;
-// 	}
-// });
-//
-// Mavo.hooks.add("group-render-end", function() {
-// 	if (this.expressions) {
-// 		requestAnimationFrame(() => {
-// 			this.expressions.active = true;
-// 			this.expressions.update();
-// 		});
-// 	}
-// });
 
 })(Bliss, Bliss.$);
 

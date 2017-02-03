@@ -34,10 +34,6 @@ var _ = Mavo.Primitive = $.Class({
 		 * Set up input widget
 		 */
 
-		if (!this.constant) {
-			this.mavo.needsEdit = true;
-		}
-
 		// Nested widgets
 		if (!this.editor && !this.attribute) {
 			this.editor = $$(this.element.children).filter(function (el) {
@@ -346,7 +342,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	render: function(data) {
+	dataRender: function(data) {
 		if (Array.isArray(data)) {
 			data = data[0]; // TODO what is gonna happen to the rest? Lost?
 		}
@@ -362,8 +358,6 @@ var _ = Mavo.Primitive = $.Class({
 		else {
 			this.value = data;
 		}
-
-		this.save();
 	},
 
 	find: function(property) {
@@ -454,7 +448,7 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => this.dataChanged("propertychange", {value}));
+				this.dataChanged("propertychange", {value});
 			}
 		});
 

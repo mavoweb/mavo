@@ -354,10 +354,6 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
-
-		// Is there any control that requires an edit button?
-		this.needsEdit = false;
-
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
 
@@ -365,6 +361,9 @@ var _ = self.Mavo = $.Class({
 		this.treeBuilt.resolve();
 
 		Mavo.hooks.run("init-tree-after", this);
+
+		// Is there any control that requires an edit button?
+		this.needsEdit = this.some(obj => obj.modes == "read edit" || obj.modes === undefined);
 
 		this.setUnsavedChanges(false);
 
@@ -538,15 +537,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", {context: this, data});
 
 		if (data) {
-			if (this.editing) { // TODO this logic should go to Node, especially w/ editing granularity
-				this.done();
-				this.root.render(data);
-				this.edit();
-			}
-			else {
-				this.root.render(data);
-			}
-
+			this.root.render(data);
 		}
 
 		this.unsavedChanges = false;
@@ -714,7 +705,22 @@ var _ = self.Mavo = $.Class({
 	},
 
 	walk: function(callback) {
-		this.root.walk(callback);
+		return this.root.walk(callback);
+	},
+
+	/**
+	 * Executes a test on every node. If ANY node passes (test returns true),
+	 * the function returns true. Otherwise, it returns false.
+	 * Similar semantics to Array.prototype.some().
+	 */
+	some: function(test) {
+		return !this.walk((obj, path) => {
+			var ret = test(obj, path);
+
+			if (ret === true) {
+				return false;
+			}
+		});
 	},
 
 	live: {
@@ -1520,6 +1526,12 @@ var _ = Mavo.Node = $.Class({
 		return this.store !== "none";
 	},
 
+	get path() {
+		var path = this.parentGroup? this.parentGroup.path : [];
+
+		return this.property? [...path, this.property] : path;
+	},
+
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
 			return null;
@@ -1545,16 +1557,33 @@ var _ = Mavo.Node = $.Class({
 		return env.result;
 	},
 
-	walk: function(callback) {
-		var walker = obj => {
-			var ret = callback(obj);
+	/**
+	 * Execute a callback on every node of the Mavo tree
+	 * If callback returns (strict) false, walk stops.
+	 * @return false if was stopped via a false return value, true otherwise
+	 */
+	walk: function(callback, path = this.path) {
+		var walker = (obj, path) => {
+			var ret = callback(obj, path);
 
 			if (ret !== false) {
-				obj.propagate && obj.propagate(walker);
+				for (let i in obj.children) {
+					let node = obj.children[i];
+
+					if (node instanceof Mavo.Node) {
+						var ret = walker.call(node, node, [...path, i]);
+
+						if (ret === false) {
+							return false;
+						}
+					}
+				}
 			}
+
+			return ret !== false;
 		};
 
-		walker(this);
+		return walker(this, path);
 	},
 
 	walkUp: function(callback) {
@@ -1615,13 +1644,36 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
+	render: function(data) {
+		Mavo.hooks.run("node-render-start", this);
+
+		this.rendering = true;
+
+		if (this.editing) {
+			this.done();
+			this.dataRender(data);
+			this.edit();
+		}
+		else {
+			this.dataRender(data);
+		}
+
+		this.save();
+
+		this.rendering = false;
+
+		Mavo.hooks.run("node-render-end", this);
+	},
+
 	dataChanged: function(action, o = {}) {
-		$.fire(o.element || this.element, "mavo:datachange", $.extend({
-			property: this.property,
-			action,
-			mavo: this.mavo,
-			node: this
-		}, o));
+		if (!this.rendering) {
+			$.fire(o.element || this.element, "mavo:datachange", $.extend({
+				property: this.property,
+				action,
+				mavo: this.mavo,
+				node: this
+			}, o));
+		}
 	},
 
 	toString: function() {
@@ -1852,13 +1904,11 @@ var _ = Mavo.Group = $.Class({
 
 	propagated: ["save", "import", "clear"],
 
-	// Inject data in this element
-	render: function(data) {
+	// Do not call directly, call this.render() instead
+	dataRender: function(data) {
 		if (!data) {
 			return;
 		}
-
-		Mavo.hooks.run("group-render-start", this);
 
 		// TODO retain dropped elements
 		data = Array.isArray(data)? data[0] : data;
@@ -1873,10 +1923,6 @@ var _ = Mavo.Group = $.Class({
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
-
-		this.save();
-
-		Mavo.hooks.run("group-render-end", this);
 	},
 
 	// Check if this group contains a property
@@ -1945,10 +1991,6 @@ var _ = Mavo.Primitive = $.Class({
 		/**
 		 * Set up input widget
 		 */
-
-		if (!this.constant) {
-			this.mavo.needsEdit = true;
-		}
 
 		// Nested widgets
 		if (!this.editor && !this.attribute) {
@@ -2258,7 +2300,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	render: function(data) {
+	dataRender: function(data) {
 		if (Array.isArray(data)) {
 			data = data[0]; // TODO what is gonna happen to the rest? Lost?
 		}
@@ -2274,8 +2316,6 @@ var _ = Mavo.Primitive = $.Class({
 		else {
 			this.value = data;
 		}
-
-		this.save();
 	},
 
 	find: function(property) {
@@ -2366,7 +2406,7 @@ var _ = Mavo.Primitive = $.Class({
 					this.unsavedChanges = this.mavo.unsavedChanges = true;
 				}
 
-				requestAnimationFrame(() => this.dataChanged("propertychange", {value}));
+				this.dataChanged("propertychange", {value});
 			}
 		});
 
@@ -3223,7 +3263,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	render: function(data) {
+	dataRender: function(data) {
 		this.unhandled = {before: [], after: []};
 
 		if (!data) {
@@ -3261,8 +3301,6 @@ var _ = Mavo.Collection = $.Class({
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
 		}
-
-		this.save();
 	},
 
 	find: function(property, o = {}) {
@@ -3292,8 +3330,6 @@ var _ = Mavo.Collection = $.Class({
 				// every time mutable changes, not just in the constructor
 				// (think multiple elements with the same property name, where only one has mv-multiple)
 				this._mutable = value;
-
-				this.mavo.needsEdit = true;
 
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = document.createComment("mv-marker");
@@ -3686,7 +3722,7 @@ var _ = Mavo.Expression = $.Class({
 			return true;
 		}
 
-		if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+		if (evt.action != "propertychange") {
 			if (this.identifiers.indexOf("$index") > -1) {
 				return true;
 			}
@@ -3899,6 +3935,9 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 			if (this.attribute) {
+				if (this.node.getAttribute(this.attribute) === null) {
+					console.log(this.node, this.attribute, o);
+				}
 				this.expression = this.node.getAttribute(this.attribute).trim();
 			}
 			else {
@@ -4068,7 +4107,7 @@ Mavo.hooks.add("collection-add-end", function(env) {
 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
 
 		if (et) {
-			et.group.expressions.all.push(new Mavo.Expression.Text({
+			et.group.expressions.push(new Mavo.Expression.Text({
 				node: env.item.element,
 				template: et
 			}));
@@ -4095,17 +4134,43 @@ var _ = Mavo.Expressions = $.Class({
 
 		this.active = true;
 
+		this.scheduled = new Set();
+
 		// Watch changes and update value
-		this.mavo.element.addEventListener("mavo:datachange", evt => this.update(evt));
+		this.mavo.element.addEventListener("mavo:datachange", evt => {
+			if (evt.action == "propertychange") {
+				// Throttle propertychange events
+				if (!this.scheduled.has(evt.property)) {
+					setTimeout(() => {
+						this.scheduled.delete(evt.property);
+						this.update(evt);
+					}, _.PROPERTYCHANGE_THROTTLE);
+
+					this.scheduled.add(evt.property);
+				}
+			}
+			else {
+				this.update(evt);
+			}
+		});
 	},
 
 	/**
 	 * Update all expressions in this group
 	 */
 	update: function callee(evt) {
-		this.mavo.walk(obj => {
+		var data = this.mavo.root.getData({
+			relative: true,
+			store: "*",
+			null: true,
+			unhandled: this.mavo.unhandled
+		});
+
+
+
+		this.mavo.walk((obj, path) => {
 			if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-				let env = { context: this, data: obj.getRelativeData() };
+				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
 
@@ -4167,7 +4232,9 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	static: {
-		directives: []
+		directives: [],
+
+		PROPERTYCHANGE_THROTTLE: 50
 	}
 });
 
@@ -4215,11 +4282,11 @@ if (self.Proxy) {
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
-							ret = ret.map(item => item.getRelativeData(env.options))
+							ret = ret.map(item => item.getData(env.options))
 									 .filter(item => item !== null);
 						}
 						else if (ret instanceof Mavo.Node) {
-							ret = ret.getRelativeData(env.options);
+							ret = ret.getData(env.options);
 						}
 
 						data[property] = ret;
@@ -4237,15 +4304,6 @@ if (self.Proxy) {
 		}
 	});
 }
-
-Mavo.Node.prototype.getRelativeData = function() {
-	return this.getData({
-		relative: true,
-		store: "*",
-		null: true,
-		unhandled: this.mavo.unhandled
-	});
-};
 
 Mavo.hooks.add("init-tree-after", function() {
 	this.expressions = new Mavo.Expressions(this);
@@ -4268,22 +4326,6 @@ Mavo.hooks.add("group-init-end", function() {
 Mavo.hooks.add("render-end", function() {
 	this.expressions.update();
 });
-
-// Disable expressions during rendering, for performance
-// Mavo.hooks.add("group-render-start", function() {
-// 	if (this.expressions) {
-// 		this.expressions.active = false;
-// 	}
-// });
-//
-// Mavo.hooks.add("group-render-end", function() {
-// 	if (this.expressions) {
-// 		requestAnimationFrame(() => {
-// 			this.expressions.active = true;
-// 			this.expressions.update();
-// 		});
-// 	}
-// });
 
 })(Bliss, Bliss.$);
 
@@ -5211,8 +5253,6 @@ var prettyPrint = (function() {
 
 (function($, $$) {
 
-return;
-
 var _ = Mavo.Debug = {
 	friendlyError: (e, expr) => {
 		var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
@@ -5316,7 +5356,7 @@ var _ = Mavo.Debug = {
 
 	time: function callee(objName, name) {
 		var obj = eval(objName);
-		console.log(`Benchmarking ${objName}.${name}(). Type ${objName}.${name}.timeTaken and ${objName}.${name}.calls at any time to see stats.`);
+		console.log(`Benchmarking ${objName}.${name}(). Run console.log(${objName}.${name}.timeTaken, ${objName}.${name}.calls) at any time to see stats.`);
 		var callback = obj[name];
 
 		obj[name] = function callee() {
@@ -5443,7 +5483,7 @@ Mavo.hooks.add("node-init-end", function() {
 });
 
 Mavo.hooks.add("expressions-init-start", function() {
-	this.debug = this.group.debug;
+	this.debug = this.mavo.debug;
 });
 
 Mavo.hooks.add("expression-eval-beforeeval", function() {
@@ -5611,7 +5651,7 @@ Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
 	}
 });
 
-Mavo.Debug.time("Mavo.Expressions.prototype", "update");
+//Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 
 })(Bliss, Bliss.$);
 

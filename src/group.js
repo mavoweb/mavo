@@ -147,13 +147,11 @@ var _ = Mavo.Group = $.Class({
 
 	propagated: ["save", "import", "clear"],
 
-	// Inject data in this element
-	render: function(data) {
+	// Do not call directly, call this.render() instead
+	dataRender: function(data) {
 		if (!data) {
 			return;
 		}
-
-		Mavo.hooks.run("group-render-start", this);
 
 		// TODO retain dropped elements
 		data = Array.isArray(data)? data[0] : data;
@@ -168,10 +166,6 @@ var _ = Mavo.Group = $.Class({
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
-
-		this.save();
-
-		Mavo.hooks.run("group-render-end", this);
 	},
 
 	// Check if this group contains a property

@@ -35,6 +35,9 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 			if (this.attribute) {
+				if (this.node.getAttribute(this.attribute) === null) {
+					console.log(this.node, this.attribute, o);
+				}
 				this.expression = this.node.getAttribute(this.attribute).trim();
 			}
 			else {
@@ -204,7 +207,7 @@ Mavo.hooks.add("collection-add-end", function(env) {
 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
 
 		if (et) {
-			et.group.expressions.all.push(new Mavo.Expression.Text({
+			et.group.expressions.push(new Mavo.Expression.Text({
 				node: env.item.element,
 				template: et
 			}));

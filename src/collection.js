@@ -322,7 +322,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	render: function(data) {
+	dataRender: function(data) {
 		this.unhandled = {before: [], after: []};
 
 		if (!data) {
@@ -360,8 +360,6 @@ var _ = Mavo.Collection = $.Class({
 
 			this.marker.parentNode.insertBefore(fragment, this.marker);
 		}
-
-		this.save();
 	},
 
 	find: function(property, o = {}) {
@@ -391,8 +389,6 @@ var _ = Mavo.Collection = $.Class({
 				// every time mutable changes, not just in the constructor
 				// (think multiple elements with the same property name, where only one has mv-multiple)
 				this._mutable = value;
-
-				this.mavo.needsEdit = true;
 
 				// Keep position of the template in the DOM, since we might remove it
 				this.marker = document.createComment("mv-marker");

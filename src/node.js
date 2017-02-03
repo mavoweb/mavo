@@ -71,6 +71,12 @@ var _ = Mavo.Node = $.Class({
 		return this.store !== "none";
 	},
 
+	get path() {
+		var path = this.parentGroup? this.parentGroup.path : [];
+
+		return this.property? [...path, this.property] : path;
+	},
+
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
 			return null;
@@ -96,16 +102,33 @@ var _ = Mavo.Node = $.Class({
 		return env.result;
 	},
 
-	walk: function(callback) {
-		var walker = obj => {
-			var ret = callback(obj);
+	/**
+	 * Execute a callback on every node of the Mavo tree
+	 * If callback returns (strict) false, walk stops.
+	 * @return false if was stopped via a false return value, true otherwise
+	 */
+	walk: function(callback, path = this.path) {
+		var walker = (obj, path) => {
+			var ret = callback(obj, path);
 
 			if (ret !== false) {
-				obj.propagate && obj.propagate(walker);
+				for (let i in obj.children) {
+					let node = obj.children[i];
+
+					if (node instanceof Mavo.Node) {
+						var ret = walker.call(node, node, [...path, i]);
+
+						if (ret === false) {
+							return false;
+						}
+					}
+				}
 			}
+
+			return ret !== false;
 		};
 
-		walker(this);
+		return walker(this, path);
 	},
 
 	walkUp: function(callback) {
@@ -166,13 +189,36 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
+	render: function(data) {
+		Mavo.hooks.run("node-render-start", this);
+
+		this.rendering = true;
+
+		if (this.editing) {
+			this.done();
+			this.dataRender(data);
+			this.edit();
+		}
+		else {
+			this.dataRender(data);
+		}
+
+		this.save();
+
+		this.rendering = false;
+
+		Mavo.hooks.run("node-render-end", this);
+	},
+
 	dataChanged: function(action, o = {}) {
-		$.fire(o.element || this.element, "mavo:datachange", $.extend({
-			property: this.property,
-			action,
-			mavo: this.mavo,
-			node: this
-		}, o));
+		if (!this.rendering) {
+			$.fire(o.element || this.element, "mavo:datachange", $.extend({
+				property: this.property,
+				action,
+				mavo: this.mavo,
+				node: this
+			}, o));
+		}
 	},
 
 	toString: function() {

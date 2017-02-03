@@ -402,9 +402,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			// Is there any control that requires an edit button?
-			this.needsEdit = false;
-
 			// Build mavo objects
 			Mavo.hooks.run("init-tree-before", this);
 
@@ -412,6 +409,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.treeBuilt.resolve();
 
 			Mavo.hooks.run("init-tree-after", this);
+
+			// Is there any control that requires an edit button?
+			this.needsEdit = this.some(function (obj) {
+				return obj.modes == "read edit" || obj.modes === undefined;
+			});
 
 			this.setUnsavedChanges(false);
 
@@ -618,14 +620,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.hooks.run("render-start", { context: this, data: data });
 
 			if (data) {
-				if (this.editing) {
-					// TODO this logic should go to Node, especially w/ editing granularity
-					this.done();
-					this.root.render(data);
-					this.edit();
-				} else {
-					this.root.render(data);
-				}
+				this.root.render(data);
 			}
 
 			this.unsavedChanges = false;
@@ -800,7 +795,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		walk: function walk(callback) {
-			this.root.walk(callback);
+			return this.root.walk(callback);
+		},
+
+		/**
+   * Executes a test on every node. If ANY node passes (test returns true),
+   * the function returns true. Otherwise, it returns false.
+   * Similar semantics to Array.prototype.some().
+   */
+		some: function some(test) {
+			return !this.walk(function (obj, path) {
+				var ret = test(obj, path);
+
+				if (ret === true) {
+					return false;
+				}
+			});
 		},
 
 		live: {
@@ -1771,6 +1781,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.store !== "none";
 		},
 
+		get path() {
+			var path = this.parentGroup ? this.parentGroup.path : [];
+
+			return this.property ? [].concat(_toConsumableArray(path), [this.property]) : path;
+		},
+
 		getData: function getData() {
 			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -1798,16 +1814,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return env.result;
 		},
 
+		/**
+   * Execute a callback on every node of the Mavo tree
+   * If callback returns (strict) false, walk stops.
+   * @return false if was stopped via a false return value, true otherwise
+   */
 		walk: function walk(callback) {
-			var walker = function walker(obj) {
-				var ret = callback(obj);
+			var path = arguments.length <= 1 || arguments[1] === undefined ? this.path : arguments[1];
+
+			var walker = function walker(obj, path) {
+				var ret = callback(obj, path);
 
 				if (ret !== false) {
-					obj.propagate && obj.propagate(walker);
+					for (var i in obj.children) {
+						var _node = obj.children[i];
+
+						if (_node instanceof Mavo.Node) {
+							var ret = walker.call(_node, _node, [].concat(_toConsumableArray(path), [i]));
+
+							if (ret === false) {
+								return false;
+							}
+						}
+					}
 				}
+
+				return ret !== false;
 			};
 
-			walker(this);
+			return walker(this, path);
 		},
 
 		walkUp: function walkUp(callback) {
@@ -1841,13 +1876,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		propagate: function propagate(callback) {
 			for (var i in this.children) {
-				var _node = this.children[i];
+				var _node2 = this.children[i];
 
-				if (_node instanceof Mavo.Node) {
+				if (_node2 instanceof Mavo.Node) {
 					if (typeof callback === "function") {
-						callback.call(_node, _node);
-					} else if (callback in _node) {
-						_node[callback]();
+						callback.call(_node2, _node2);
+					} else if (callback in _node2) {
+						_node2[callback]();
 					}
 				}
 			}
@@ -1892,15 +1927,37 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return !!this.template;
 		},
 
+		render: function render(data) {
+			Mavo.hooks.run("node-render-start", this);
+
+			this.rendering = true;
+
+			if (this.editing) {
+				this.done();
+				this.dataRender(data);
+				this.edit();
+			} else {
+				this.dataRender(data);
+			}
+
+			this.save();
+
+			this.rendering = false;
+
+			Mavo.hooks.run("node-render-end", this);
+		},
+
 		dataChanged: function dataChanged(action) {
 			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-			$.fire(o.element || this.element, "mavo:datachange", $.extend({
-				property: this.property,
-				action: action,
-				mavo: this.mavo,
-				node: this
-			}, o));
+			if (!this.rendering) {
+				$.fire(o.element || this.element, "mavo:datachange", $.extend({
+					property: this.property,
+					action: action,
+					mavo: this.mavo,
+					node: this
+				}, o));
+			}
 		},
 
 		toString: function toString() {
@@ -2143,15 +2200,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		propagated: ["save", "import", "clear"],
 
-		// Inject data in this element
-		render: function render(data) {
+		// Do not call directly, call this.render() instead
+		dataRender: function dataRender(data) {
 			var _this2 = this;
 
 			if (!data) {
 				return;
 			}
-
-			Mavo.hooks.run("group-render-start", this);
 
 			// TODO retain dropped elements
 			data = Array.isArray(data) ? data[0] : data;
@@ -2166,10 +2221,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.propagate(function (obj) {
 				obj.render(data[obj.property]);
 			});
-
-			this.save();
-
-			Mavo.hooks.run("group-render-end", this);
 		},
 
 		// Check if this group contains a property
@@ -2242,10 +2293,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			/**
     * Set up input widget
     */
-
-			if (!this.constant) {
-				this.mavo.needsEdit = true;
-			}
 
 			// Nested widgets
 			if (!this.editor && !this.attribute) {
@@ -2583,7 +2630,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		render: function render(data) {
+		dataRender: function dataRender(data) {
 			if (Array.isArray(data)) {
 				data = data[0]; // TODO what is gonna happen to the rest? Lost?
 			}
@@ -2598,8 +2645,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			} else {
 				this.value = data;
 			}
-
-			this.save();
 		},
 
 		find: function find(property) {
@@ -2693,9 +2738,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						_this5.unsavedChanges = _this5.mavo.unsavedChanges = true;
 					}
 
-					requestAnimationFrame(function () {
-						return _this5.dataChanged("propertychange", { value: value });
-					});
+					_this5.dataChanged("propertychange", { value: value });
 				}
 			});
 
@@ -3727,7 +3770,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		render: function render(data) {
+		dataRender: function dataRender(data) {
 			var _this4 = this;
 
 			this.unhandled = { before: [], after: [] };
@@ -3768,8 +3811,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.marker.parentNode.insertBefore(fragment, this.marker);
 			}
-
-			this.save();
 		},
 
 		find: function find(property) {
@@ -3803,8 +3844,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// every time mutable changes, not just in the constructor
 					// (think multiple elements with the same property name, where only one has mv-multiple)
 					this._mutable = value;
-
-					this.mavo.needsEdit = true;
 
 					// Keep position of the template in the DOM, since we might remove it
 					this.marker = document.createComment("mv-marker");
@@ -4218,7 +4257,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return true;
 			}
 
-			if (evt.node instanceof Mavo.Collection || evt.node.collection) {
+			if (evt.action != "propertychange") {
 				if (this.identifiers.indexOf("$index") > -1) {
 					return true;
 				}
@@ -4457,6 +4496,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				if (this.attribute) {
+					if (this.node.getAttribute(this.attribute) === null) {
+						console.log(this.node, this.attribute, o);
+					}
 					this.expression = this.node.getAttribute(this.attribute).trim();
 				} else {
 					// Move whitespace outside to prevent it from messing with types
@@ -4632,7 +4674,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
 
 			if (et) {
-				et.group.expressions.all.push(new Mavo.Expression.Text({
+				et.group.expressions.push(new Mavo.Expression.Text({
 					node: env.item.element,
 					template: et
 				}));
@@ -4643,6 +4685,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 (function ($, $$) {
 
@@ -4663,9 +4707,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.active = true;
 
+			this.scheduled = new Set();
+
 			// Watch changes and update value
 			this.mavo.element.addEventListener("mavo:datachange", function (evt) {
-				return _this.update(evt);
+				if (evt.action == "propertychange") {
+					// Throttle propertychange events
+					if (!_this.scheduled.has(evt.property)) {
+						setTimeout(function () {
+							_this.scheduled.delete(evt.property);
+							_this.update(evt);
+						}, _.PROPERTYCHANGE_THROTTLE);
+
+						_this.scheduled.add(evt.property);
+					}
+				} else {
+					_this.update(evt);
+				}
 			});
 		},
 
@@ -4675,9 +4733,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		update: function callee(evt) {
 			var _this2 = this;
 
-			this.mavo.walk(function (obj) {
+			var data = this.mavo.root.getData({
+				relative: true,
+				store: "*",
+				null: true,
+				unhandled: this.mavo.unhandled
+			});
+
+			this.mavo.walk(function (obj, path) {
 				if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-					var env = { context: _this2, data: obj.getRelativeData() };
+					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
 
 					Mavo.hooks.run("expressions-update-start", env);
 
@@ -4772,7 +4837,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		static: {
-			directives: []
+			directives: [],
+
+			PROPERTYCHANGE_THROTTLE: 50
 		}
 	});
 
@@ -4823,12 +4890,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						if (ret !== undefined) {
 							if (Array.isArray(ret)) {
 								ret = ret.map(function (item) {
-									return item.getRelativeData(env.options);
+									return item.getData(env.options);
 								}).filter(function (item) {
 									return item !== null;
 								});
 							} else if (ret instanceof Mavo.Node) {
-								ret = ret.getRelativeData(env.options);
+								ret = ret.getData(env.options);
 							}
 
 							data[property] = ret;
@@ -4846,15 +4913,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		});
 	}
-
-	Mavo.Node.prototype.getRelativeData = function () {
-		return this.getData({
-			relative: true,
-			store: "*",
-			null: true,
-			unhandled: this.mavo.unhandled
-		});
-	};
 
 	Mavo.hooks.add("init-tree-after", function () {
 		this.expressions = new Mavo.Expressions(this);
@@ -4881,22 +4939,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.hooks.add("render-end", function () {
 		this.expressions.update();
 	});
-
-	// Disable expressions during rendering, for performance
-	// Mavo.hooks.add("group-render-start", function() {
-	// 	if (this.expressions) {
-	// 		this.expressions.active = false;
-	// 	}
-	// });
-	//
-	// Mavo.hooks.add("group-render-end", function() {
-	// 	if (this.expressions) {
-	// 		requestAnimationFrame(() => {
-	// 			this.expressions.active = true;
-	// 			this.expressions.update();
-	// 		});
-	// 	}
-	// });
 })(Bliss, Bliss.$);
 
 // mv-value plugin
@@ -5972,8 +6014,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 (function ($, $$) {
 
-	return;
-
 	var _ = Mavo.Debug = {
 		friendlyError: function friendlyError(e, expr) {
 			var type = e.constructor.name.replace(/Error$/, "").toLowerCase();
@@ -6068,7 +6108,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		time: function callee(objName, name) {
 			var obj = eval(objName);
-			console.log("Benchmarking " + objName + "." + name + "(). Type " + objName + "." + name + ".timeTaken and " + objName + "." + name + ".calls at any time to see stats.");
+			console.log("Benchmarking " + objName + "." + name + "(). Run console.log(" + objName + "." + name + ".timeTaken, " + objName + "." + name + ".calls) at any time to see stats.");
 			var callback = obj[name];
 
 			obj[name] = function callee() {
@@ -6189,7 +6229,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	});
 
 	Mavo.hooks.add("expressions-init-start", function () {
-		this.debug = this.group.debug;
+		this.debug = this.mavo.debug;
 	});
 
 	Mavo.hooks.add("expression-eval-beforeeval", function () {
@@ -6366,7 +6406,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.Debug.time("Mavo.Expressions.prototype", "update");
+	//Mavo.Debug.time("Mavo.Expressions.prototype", "update");
 })(Bliss, Bliss.$);
 "use strict";
 
