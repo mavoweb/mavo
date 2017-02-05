@@ -1,5 +1,6 @@
 // mv-if plugin
 Mavo.Expressions.directives.push("mv-if");
+Mavo.attributes.push("mv-if");
 
 Mavo.hooks.add("expressiontext-init-start", function() {
 	if (this.attribute != "mv-if") {

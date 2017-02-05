@@ -2,6 +2,7 @@
 
 var _ = Mavo.Expression.Text = $.Class({
 	constructor: function(o = {}) {
+		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
 
 		for (let prop of ["group", "path", "syntax", "fallback", "attribute"]) {
@@ -35,9 +36,6 @@ var _ = Mavo.Expression.Text = $.Class({
 			}
 
 			if (this.attribute) {
-				if (this.node.getAttribute(this.attribute) === null) {
-					console.log(this.node, this.attribute, o);
-				}
 				this.expression = this.node.getAttribute(this.attribute).trim();
 			}
 			else {
@@ -66,13 +64,6 @@ var _ = Mavo.Expression.Text = $.Class({
 		}
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
-
-		var mavoNode = Mavo.Node.get(this.element);
-		if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == this.attribute) {
-			this.primitive = mavoNode;
-			mavoNode.store = mavoNode.store || "none";
-			mavoNode.modes = "read";
-		}
 
 		Mavo.hooks.run("expressiontext-init-end", this);
 
@@ -209,7 +200,8 @@ Mavo.hooks.add("collection-add-end", function(env) {
 		if (et) {
 			et.group.expressions.push(new Mavo.Expression.Text({
 				node: env.item.element,
-				template: et
+				template: et,
+				mavo: this.mavo
 			}));
 		}
 	}

@@ -878,6 +878,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			},
 
+			plugin: function plugin(o) {
+				for (var hook in o.hooks) {
+					_.hooks.add(hook, o.hooks[hook]);
+				}
+
+				for (var Class in o.extend) {
+					var members = o.extend[Class];
+
+					$.extend(Mavo[Class].prototype, members);
+				}
+			},
+
 			hooks: new $.Hooks(),
 
 			attributes: ["mv-app", "mv-storage", "mv-init", "mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions"]
@@ -4460,6 +4472,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		constructor: function constructor() {
 			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
+			this.mavo = o.mavo;
 			this.template = o.template && o.template.template || o.template;
 
 			var _arr = ["group", "path", "syntax", "fallback", "attribute"];
@@ -4496,9 +4509,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				if (this.attribute) {
-					if (this.node.getAttribute(this.attribute) === null) {
-						console.log(this.node, this.attribute, o);
-					}
 					this.expression = this.node.getAttribute(this.attribute).trim();
 				} else {
 					// Move whitespace outside to prevent it from messing with types
@@ -4527,13 +4537,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.oldValue = this.value = this.parsed.map(function (x) {
 				return x instanceof Mavo.Expression ? x.expression : x;
 			});
-
-			var mavoNode = Mavo.Node.get(this.element);
-			if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == this.attribute) {
-				this.primitive = mavoNode;
-				mavoNode.store = mavoNode.store || "none";
-				mavoNode.modes = "read";
-			}
 
 			Mavo.hooks.run("expressiontext-init-end", this);
 
@@ -4676,7 +4679,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (et) {
 				et.group.expressions.push(new Mavo.Expression.Text({
 					node: env.item.element,
-					template: et
+					template: et,
+					mavo: this.mavo
 				}));
 			}
 		}
@@ -4690,46 +4694,76 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 (function ($, $$) {
 
-	Mavo.attributes.push("mv-value", "mv-if");
-
 	var _ = Mavo.Expressions = $.Class({
 		constructor: function constructor(mavo) {
 			var _this = this;
 
 			this.mavo = mavo;
 
-			this.all = []; // all Expression.Text objects in this group
-
-			Mavo.hooks.run("expressions-init-start", this);
+			this.expressions = [];
 
 			var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
-			this.traverse(this.mavo.element, undefined, syntax, this.mavo.root);
-
-			this.active = true;
+			this.traverse(this.mavo.element, undefined, syntax);
 
 			this.scheduled = new Set();
 
 			// Watch changes and update value
-			this.mavo.element.addEventListener("mavo:datachange", function (evt) {
-				if (evt.action == "propertychange") {
-					// Throttle propertychange events
-					if (!_this.scheduled.has(evt.property)) {
-						setTimeout(function () {
-							_this.scheduled.delete(evt.property);
-							_this.update(evt);
-						}, _.PROPERTYCHANGE_THROTTLE);
+			this.mavo.treeBuilt.then(function () {
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
 
-						_this.scheduled.add(evt.property);
+				try {
+					for (var _iterator = _this.expressions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var et = _step.value;
+
+						et.group = Mavo.Node.get(et.element.closest(Mavo.selectors.group));
+						et.group.expressions = et.group.expressions || [];
+						et.group.expressions.push(et);
+
+						var mavoNode = Mavo.Node.get(et.element, true);
+
+						if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == _this.attribute) {
+							et.primitive = mavoNode;
+							mavoNode.store = mavoNode.store || "none";
+							mavoNode.modes = "read";
+						}
 					}
-				} else {
-					_this.update(evt);
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
 				}
+
+				_this.mavo.element.addEventListener("mavo:datachange", function (evt) {
+					if (evt.action == "propertychange") {
+						// Throttle propertychange events
+						if (!_this.scheduled.has(evt.property)) {
+							setTimeout(function () {
+								_this.scheduled.delete(evt.property);
+								_this.update(evt);
+							}, _.PROPERTYCHANGE_THROTTLE);
+
+							_this.scheduled.add(evt.property);
+						}
+					} else {
+						_this.update(evt);
+					}
+				});
+
+				_this.update();
 			});
 		},
 
-		/**
-   * Update all expressions in this group
-   */
 		update: function callee(evt) {
 			var _this2 = this;
 
@@ -4746,29 +4780,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					Mavo.hooks.run("expressions-update-start", env);
 
-					var _iteratorNormalCompletion = true;
-					var _didIteratorError = false;
-					var _iteratorError = undefined;
+					var _iteratorNormalCompletion2 = true;
+					var _didIteratorError2 = false;
+					var _iteratorError2 = undefined;
 
 					try {
-						for (var _iterator = obj.expressions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-							var et = _step.value;
+						for (var _iterator2 = obj.expressions[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+							var et = _step2.value;
 
 							if (et.changedBy(evt)) {
 								et.update(env.data, evt);
 							}
 						}
 					} catch (err) {
-						_didIteratorError = true;
-						_iteratorError = err;
+						_didIteratorError2 = true;
+						_iteratorError2 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion && _iterator.return) {
-								_iterator.return();
+							if (!_iteratorNormalCompletion2 && _iterator2.return) {
+								_iterator2.return();
 							}
 						} finally {
-							if (_didIteratorError) {
-								throw _iteratorError;
+							if (_didIteratorError2) {
+								throw _iteratorError2;
 							}
 						}
 					}
@@ -4776,31 +4810,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		extract: function extract(node, attribute, path, syntax, group) {
+		extract: function extract(node, attribute, path, syntax) {
 			if (attribute && attribute.name == "mv-expressions") {
 				return;
 			}
 
 			if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
-				group.expressions = group.expressions || [];
-				group.expressions.push(new Mavo.Expression.Text({
-					node: node, syntax: syntax, group: group,
+				this.expressions.push(new Mavo.Expression.Text({
+					node: node, syntax: syntax,
 					path: path ? path.slice(1).split("/").map(function (i) {
 						return +i;
 					}) : [],
-					attribute: attribute && attribute.name
+					attribute: attribute && attribute.name,
+					mavo: this.mavo
 				}));
 			}
 		},
 
 		// Traverse an element, including attribute nodes, text nodes and all descendants
 		traverse: function traverse(node) {
-			var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
-
 			var _this3 = this;
 
+			var path = arguments.length <= 1 || arguments[1] === undefined ? "" : arguments[1];
 			var syntax = arguments[2];
-			var group = arguments[3];
 
 			if (node.nodeType === 8) {
 				// We don't want expressions to be picked up from comments!
@@ -4811,29 +4843,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (node.nodeType === 3) {
 				// Text node
 				// Leaf node, extract references from content
-				this.extract(node, null, path, syntax, group);
-			}
-			// Traverse children and attributes as long as this is NOT the root of a child group
-			// (otherwise, it will be taken care of its own Expressions object)
-			else {
-					syntax = Mavo.Expression.Syntax.create(node) || syntax;
+				this.extract(node, null, path, syntax);
+			} else {
+				node.normalize();
 
-					if (syntax === Mavo.Expression.Syntax.ESCAPE) {
-						return;
-					}
+				syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
-					if (node != group.element && Mavo.is("group", node)) {
-						group = Mavo.Node.get(node);
-						path = "";
-					}
-
-					$$(node.attributes).forEach(function (attribute) {
-						return _this3.extract(node, attribute, path, syntax, group);
-					});
-					$$(node.childNodes).forEach(function (child, i) {
-						return _this3.traverse(child, path + "/" + i, syntax, group);
-					});
+				if (syntax === Mavo.Expression.Syntax.ESCAPE) {
+					return;
 				}
+
+				if (Mavo.is("group", node)) {
+					path = "";
+				}
+
+				$$(node.attributes).forEach(function (attribute) {
+					return _this3.extract(node, attribute, path, syntax);
+				});
+				$$(node.childNodes).forEach(function (child, i) {
+					return _this3.traverse(child, path + "/" + i, syntax);
+				});
+			}
 		},
 
 		static: {
@@ -4914,12 +4944,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	}
 
-	Mavo.hooks.add("init-tree-after", function () {
+	Mavo.hooks.add("init-tree-before", function () {
 		this.expressions = new Mavo.Expressions(this);
-		this.expressions.update();
 	});
 
-	Mavo.hooks.add("group-init-end", function () {
+	// Must be on start so that collections don't have a marker yet which messes up paths
+	Mavo.hooks.add("group-init-start", function () {
 		var _this5 = this;
 
 		var template = this.template;
@@ -4929,7 +4959,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.expressions = template.expressions.map(function (et) {
 				return new Mavo.Expression.Text({
 					template: et,
-					group: _this5
+					group: _this5,
+					mavo: _this5.mavo
 				});
 			});
 		}
@@ -4942,6 +4973,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 
 // mv-value plugin
+Mavo.attributes.push("mv-value");
 Mavo.Expressions.directives.push("mv-value");
 
 Mavo.hooks.add("expressiontext-init-start", function () {
@@ -4958,6 +4990,7 @@ Mavo.hooks.add("expressiontext-init-start", function () {
 
 // mv-if plugin
 Mavo.Expressions.directives.push("mv-if");
+Mavo.attributes.push("mv-if");
 
 Mavo.hooks.add("expressiontext-init-start", function () {
 	if (this.attribute != "mv-if") {
@@ -6228,10 +6261,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		}
 	});
 
-	Mavo.hooks.add("expressions-init-start", function () {
-		this.debug = this.mavo.debug;
-	});
-
 	Mavo.hooks.add("expression-eval-beforeeval", function () {
 		if (this.debug) {
 			this.debug.classList.remove("mv-error");
@@ -6303,7 +6332,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	Mavo.hooks.add("expressiontext-init-end", function () {
 		var _this = this;
 
-		if (this.group.debug) {
+		if (this.mavo.debug) {
 			this.debug = {};
 
 			this.parsed.forEach(function (expr) {

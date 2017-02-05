@@ -229,10 +229,6 @@ Mavo.hooks.add("node-init-end", function() {
 	}
 });
 
-Mavo.hooks.add("expressions-init-start", function() {
-	this.debug = this.mavo.debug;
-});
-
 Mavo.hooks.add("expression-eval-beforeeval", function() {
 	if (this.debug) {
 		this.debug.classList.remove("mv-error");
@@ -296,7 +292,7 @@ Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) 
 };
 
 Mavo.hooks.add("expressiontext-init-end", function() {
-	if (this.group.debug) {
+	if (this.mavo.debug) {
 		this.debug = {};
 
 		this.parsed.forEach(expr => {

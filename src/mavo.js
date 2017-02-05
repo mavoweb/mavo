@@ -570,6 +570,18 @@ var _ = self.Mavo = $.Class({
 				.map(element => new _(element));
 		},
 
+		plugin: function(o) {
+			for (let hook in o.hooks) {
+				_.hooks.add(hook, o.hooks[hook]);
+			}
+
+			for (let Class in o.extend) {
+				let members = o.extend[Class];
+
+				$.extend(Mavo[Class].prototype, members);
+			}
+		},
+
 		hooks: new $.Hooks(),
 
 		attributes: [
