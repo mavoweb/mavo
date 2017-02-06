@@ -88,7 +88,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
 
-		this.setValue(this.initialValue, {silent: true, dataOnly: !this.closestCollection});
+		this.setValue(this.initialValue, {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way

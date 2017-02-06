@@ -107,7 +107,7 @@ var _ = Mavo.Node = $.Class({
 	 * If callback returns (strict) false, walk stops.
 	 * @return false if was stopped via a false return value, true otherwise
 	 */
-	walk: function(callback, path = this.path) {
+	walk: function(callback, path = []) {
 		var walker = (obj, path) => {
 			var ret = callback(obj, path);
 

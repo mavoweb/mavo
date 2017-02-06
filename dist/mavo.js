@@ -1574,7 +1574,7 @@ var _ = Mavo.Node = $.Class({
 	 * If callback returns (strict) false, walk stops.
 	 * @return false if was stopped via a false return value, true otherwise
 	 */
-	walk: function(callback, path = this.path) {
+	walk: function(callback, path = []) {
 		var walker = (obj, path) => {
 			var ret = callback(obj, path);
 
@@ -2058,7 +2058,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
 
-		this.setValue(this.initialValue, {silent: true, dataOnly: !this.closestCollection});
+		this.setValue(this.initialValue, {silent: true});
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -3067,26 +3067,27 @@ var _ = Mavo.Collection = $.Class({
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
+		var env = {context: this, item};
+
+		env.previousIndex = item.index;
+
 		// Update internal data model
-		var changed = this.splice({
-			remove: item
+		env.changed = this.splice({
+			remove: env.item
 		}, {
 			index: index,
-			add: item
-		});
-
-		changed.forEach(item => {
-			if (!o.silent) {
-				item.dataChanged("move");
-				item.unsavedChanges = true;
-			}
+			add: env.item
 		});
 
 		if (!o.silent) {
+			env.changed.forEach(i => {
+				i.dataChanged(i == env.item && env.previousIndex === undefined? "add" : "move");
+				i.unsavedChanges = true;
+			});
+
 			this.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
-		var env = {context: this, item};
 		Mavo.hooks.run("collection-add-end", env);
 
 		return env.item;
@@ -4055,7 +4056,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		if (ret.presentational === ret.value) {
 			ret = ret.value;
 		}
-		
+
 		if (this.primitive) {
 			this.primitive.value = ret;
 		}
@@ -4171,17 +4172,28 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	update: function callee(evt) {
-		var data = this.mavo.root.getData({
+		var root = this.mavo.element;
+
+		if (evt instanceof Element) {
+			root = evt.closest(Mavo.selectors.group);
+			evt = null;
+		}
+
+		var rootGroup = Mavo.Node.get(root);
+
+		var data = rootGroup.getData({
 			relative: true,
 			store: "*",
 			null: true,
 			unhandled: this.mavo.unhandled
 		});
 
-		this.mavo.walk((obj, path) => {
+		rootGroup.walk((obj, path) => {
 			if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				let env = { context: this, data: $.value(data, ...path) };
-
+if (env.data === undefined) {
+	console.log(data, path, obj.property, rootGroup.property);
+}
 				Mavo.hooks.run("expressions-update-start", env);
 
 				for (let et of obj.expressions) {
@@ -4335,6 +4347,10 @@ Mavo.hooks.add("group-init-start", function() {
 // TODO what about granular rendering?
 Mavo.hooks.add("render-end", function() {
 	this.expressions.update();
+});
+
+Mavo.hooks.add("collection-add-end", function(env) {
+	this.mavo.expressions.update(env.item.element);
 });
 
 })(Bliss, Bliss.$);

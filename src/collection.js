@@ -114,26 +114,27 @@ var _ = Mavo.Collection = $.Class({
 			item.element._.before(nextItem && nextItem.element || this.marker);
 		}
 
+		var env = {context: this, item};
+
+		env.previousIndex = item.index;
+
 		// Update internal data model
-		var changed = this.splice({
-			remove: item
+		env.changed = this.splice({
+			remove: env.item
 		}, {
 			index: index,
-			add: item
-		});
-
-		changed.forEach(item => {
-			if (!o.silent) {
-				item.dataChanged("move");
-				item.unsavedChanges = true;
-			}
+			add: env.item
 		});
 
 		if (!o.silent) {
+			env.changed.forEach(i => {
+				i.dataChanged(i == env.item && env.previousIndex === undefined? "add" : "move");
+				i.unsavedChanges = true;
+			});
+
 			this.unsavedChanges = this.mavo.unsavedChanges = true;
 		}
 
-		var env = {context: this, item};
 		Mavo.hooks.run("collection-add-end", env);
 
 		return env.item;

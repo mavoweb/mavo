@@ -143,7 +143,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		if (ret.presentational === ret.value) {
 			ret = ret.value;
 		}
-		
+
 		if (this.primitive) {
 			this.primitive.value = ret;
 		}

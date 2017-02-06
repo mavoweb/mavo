@@ -1832,7 +1832,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return false if was stopped via a false return value, true otherwise
    */
 		walk: function walk(callback) {
-			var path = arguments.length <= 1 || arguments[1] === undefined ? this.path : arguments[1];
+			var path = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 
 			var walker = function walker(obj, path) {
 				var ret = callback(obj, path);
@@ -2382,7 +2382,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			this.initialValue = (!this.template && this.default === undefined ? this.templateValue : this.default) || this.emptyValue;
 
-			this.setValue(this.initialValue, { silent: true, dataOnly: !this.closestCollection });
+			this.setValue(this.initialValue, { silent: true });
 
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
@@ -3454,26 +3454,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				item.element._.before(nextItem && nextItem.element || this.marker);
 			}
 
+			var env = { context: this, item: item };
+
+			env.previousIndex = item.index;
+
 			// Update internal data model
-			var changed = this.splice({
-				remove: item
+			env.changed = this.splice({
+				remove: env.item
 			}, {
 				index: index,
-				add: item
-			});
-
-			changed.forEach(function (item) {
-				if (!o.silent) {
-					item.dataChanged("move");
-					item.unsavedChanges = true;
-				}
+				add: env.item
 			});
 
 			if (!o.silent) {
+				env.changed.forEach(function (i) {
+					i.dataChanged(i == env.item && env.previousIndex === undefined ? "add" : "move");
+					i.unsavedChanges = true;
+				});
+
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
 			}
 
-			var env = { context: this, item: item };
 			Mavo.hooks.run("collection-add-end", env);
 
 			return env.item;
@@ -4768,17 +4769,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		update: function callee(evt) {
 			var _this2 = this;
 
-			var data = this.mavo.root.getData({
+			var root = this.mavo.element;
+
+			if (evt instanceof Element) {
+				root = evt.closest(Mavo.selectors.group);
+				evt = null;
+			}
+
+			var rootGroup = Mavo.Node.get(root);
+
+			var data = rootGroup.getData({
 				relative: true,
 				store: "*",
 				null: true,
 				unhandled: this.mavo.unhandled
 			});
 
-			this.mavo.walk(function (obj, path) {
+			rootGroup.walk(function (obj, path) {
 				if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
-
+					if (env.data === undefined) {
+						console.log(data, path, obj.property, rootGroup.property);
+					}
 					Mavo.hooks.run("expressions-update-start", env);
 
 					var _iteratorNormalCompletion2 = true;
@@ -4970,6 +4982,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	// TODO what about granular rendering?
 	Mavo.hooks.add("render-end", function () {
 		this.expressions.update();
+	});
+
+	Mavo.hooks.add("collection-add-end", function (env) {
+		this.mavo.expressions.update(env.item.element);
 	});
 })(Bliss, Bliss.$);
 
