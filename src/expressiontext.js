@@ -85,7 +85,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-
 				if (expr.changedBy(evt)) {
 					var env = {context: this, expr};
 
@@ -144,7 +143,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		if (ret.presentational === ret.value) {
 			ret = ret.value;
 		}
-
+		
 		if (this.primitive) {
 			this.primitive.value = ret;
 		}

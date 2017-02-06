@@ -4565,7 +4565,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			ret.value = this.value = this.parsed.map(function (expr, i) {
 				if (expr instanceof Mavo.Expression) {
-
 					if (expr.changedBy(evt)) {
 						var env = { context: _this, expr: expr };
 
@@ -4723,7 +4722,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						var mavoNode = Mavo.Node.get(et.element, true);
 
-						if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == _this.attribute) {
+						if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == et.attribute) {
 							et.primitive = mavoNode;
 							mavoNode.store = mavoNode.store || "none";
 							mavoNode.modes = "read";
@@ -4745,8 +4744,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				_this.mavo.element.addEventListener("mavo:datachange", function (evt) {
-					if (evt.action == "propertychange") {
-						// Throttle propertychange events
+					if (evt.action == "propertychange" && evt.node.closestCollection) {
+						// Throttle propertychange events in collections
 						if (!_this.scheduled.has(evt.property)) {
 							setTimeout(function () {
 								_this.scheduled.delete(evt.property);
@@ -4756,7 +4755,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							_this.scheduled.add(evt.property);
 						}
 					} else {
-						_this.update(evt);
+						requestAnimationFrame(function () {
+							return _this.update(evt);
+						});
 					}
 				});
 

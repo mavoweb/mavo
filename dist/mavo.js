@@ -3997,7 +3997,6 @@ var _ = Mavo.Expression.Text = $.Class({
 
 		ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-
 				if (expr.changedBy(evt)) {
 					var env = {context: this, expr};
 
@@ -4056,7 +4055,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		if (ret.presentational === ret.value) {
 			ret = ret.value;
 		}
-
+		
 		if (this.primitive) {
 			this.primitive.value = ret;
 		}
@@ -4143,7 +4142,7 @@ var _ = Mavo.Expressions = $.Class({
 
 				var mavoNode = Mavo.Node.get(et.element, true);
 
-				if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == this.attribute) {
+				if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == et.attribute) {
 					et.primitive = mavoNode;
 					mavoNode.store = mavoNode.store || "none";
 					mavoNode.modes = "read";
@@ -4151,8 +4150,8 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			this.mavo.element.addEventListener("mavo:datachange", evt => {
-				if (evt.action == "propertychange") {
-					// Throttle propertychange events
+				if (evt.action == "propertychange" && evt.node.closestCollection) {
+					// Throttle propertychange events in collections
 					if (!this.scheduled.has(evt.property)) {
 						setTimeout(() => {
 							this.scheduled.delete(evt.property);
@@ -4163,7 +4162,7 @@ var _ = Mavo.Expressions = $.Class({
 					}
 				}
 				else {
-					this.update(evt);
+					requestAnimationFrame(() => this.update(evt));
 				}
 			});
 
