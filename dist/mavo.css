@@ -172,7 +172,6 @@ button.mv-close {
 
 [mv-app]:not([mv-mode="edit"]) .mv-empty,
 [mv-app]:not([mv-mode="edit"]) .mv-item-controls,
-[mv-app]:not([mv-mode="edit"]) button.mv-add,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-save,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-revert,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-clear {

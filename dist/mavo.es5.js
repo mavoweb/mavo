@@ -532,8 +532,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!this.needsEdit) {
-				this.permissions.off(["edit", "add", "delete"]);
-
 				// If there's no edit mode, we must save immediately when properties change
 				this.element.addEventListener("mavo:load", function (evt) {
 					var debouncedSave = _.debounce(function () {

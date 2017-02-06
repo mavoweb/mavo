@@ -266,8 +266,6 @@ var _ = self.Mavo = $.Class({
 		}
 
 		if (!this.needsEdit) {
-			this.permissions.off(["edit", "add", "delete"]);
-
 			// If there's no edit mode, we must save immediately when properties change
 			this.element.addEventListener("mavo:load", evt => {
 				var debouncedSave = _.debounce(() => {
