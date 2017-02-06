@@ -4786,9 +4786,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			rootGroup.walk(function (obj, path) {
 				if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
-					if (env.data === undefined) {
-						console.log(data, path, obj.property, rootGroup.property);
-					}
+
 					Mavo.hooks.run("expressions-update-start", env);
 
 					var _iteratorNormalCompletion2 = true;
