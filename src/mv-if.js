@@ -27,7 +27,7 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 	var oldValue = this.oldValue[0];
 
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-	this.group.mavo.treeBuilt.then(() => {
+	this.item.mavo.treeBuilt.then(() => {
 		if (this.parentIf) {
 			var parentValue = this.parentIf.value[0];
 			this.value[0] = value = value && parentValue;
@@ -98,7 +98,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 			// Cannot redispatch synchronously [why??]
 			requestAnimationFrame(() => {
 				if (!this.element.parentNode) { // out of the DOM?
-				this.group.element.dispatchEvent(evt);
+				this.item.element.dispatchEvent(evt);
 			}
 			});
 

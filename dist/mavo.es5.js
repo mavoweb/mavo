@@ -4474,7 +4474,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mavo = o.mavo;
 			this.template = o.template && o.template.template || o.template;
 
-			var _arr = ["group", "path", "syntax", "fallback", "attribute"];
+			var _arr = ["item", "path", "syntax", "fallback", "attribute"];
 			for (var _i = 0; _i < _arr.length; _i++) {
 				var prop = _arr[_i];
 				this[prop] = o[prop] === undefined && this.template ? this.template[prop] : o[prop];
@@ -4486,7 +4486,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// No node provided, figure it out from path
 				this.node = this.path.reduce(function (node, index) {
 					return node.childNodes[index];
-				}, this.group.element);
+				}, this.item.element);
 			}
 
 			this.element = this.node;
@@ -4670,23 +4670,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	// Fix expressions on primitive collections
-	Mavo.hooks.add("collection-add-end", function (env) {
-		if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
-			var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
-
-			if (et) {
-				et.group.expressions.push(new Mavo.Expression.Text({
-					node: env.item.element,
-					template: et,
-					mavo: this.mavo
-				}));
-			}
-		}
-	});
+	// Mavo.hooks.add("collection-add-end", function(env) {
+	// 	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+	// 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+	//
+	// 		if (et) {
+	// 			et.item.expressions.push(new Mavo.Expression.Text({
+	// 				node: env.item.element,
+	// 				template: et,
+	// 				mavo: this.mavo
+	// 			}));
+	// 		}
+	// 	}
+	// });
 })(Bliss);
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
@@ -4715,9 +4717,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					for (var _iterator = _this.expressions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 						var et = _step.value;
 
-						et.group = Mavo.Node.get(et.element.closest(Mavo.selectors.group));
-						et.group.expressions = et.group.expressions || [];
-						et.group.expressions.push(et);
+						et.item = Mavo.Node.get(et.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
+						et.item.expressions = et.item.expressions || [];
+						et.item.expressions.push(et);
 
 						var mavoNode = Mavo.Node.get(et.element, true);
 
@@ -4767,14 +4769,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		update: function callee(evt) {
 			var _this2 = this;
 
-			var root = this.mavo.element;
+			var root, rootGroup;
 
 			if (evt instanceof Element) {
 				root = evt.closest(Mavo.selectors.group);
 				evt = null;
 			}
 
-			var rootGroup = Mavo.Node.get(root);
+			root = root || this.mavo.element;
+			rootGroup = Mavo.Node.get(root);
 
 			var data = rootGroup.getData({
 				relative: true,
@@ -4784,7 +4787,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 
 			rootGroup.walk(function (obj, path) {
-				if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
 
 					Mavo.hooks.run("expressions-update-start", env);
@@ -4862,7 +4865,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return;
 				}
 
-				if (Mavo.is("group", node)) {
+				if (Mavo.is("multiple", node)) {
 					path = "";
 				}
 
@@ -4886,7 +4889,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		Mavo.hooks.add("node-getdata-end", function (env) {
 			var _this4 = this;
 
-			if (env.options.relative && env.data && _typeof(env.data) === "object") {
+			if (env.options.relative && (env.data && _typeof(env.data) === "object" || this.collection)) {
+				var data = env.data;
+
+				if (this instanceof Mavo.Primitive) {
+					var _env$data;
+
+					env.data = (_env$data = {}, _defineProperty(_env$data, Symbol.toPrimitive, function () {
+						return data;
+					}), _defineProperty(_env$data, this.property, data), _env$data);
+				}
+
 				env.data = new Proxy(env.data, {
 					get: function get(data, property, proxy) {
 						// Checking if property is in proxy might add it to the data
@@ -4957,8 +4970,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		this.expressions = new Mavo.Expressions(this);
 	});
 
-	// Must be on start so that collections don't have a marker yet which messes up paths
-	Mavo.hooks.add("group-init-start", function () {
+	// Must be at a hook that collections don't have a marker yet which messes up paths
+	Mavo.hooks.add("node-init-end", function () {
 		var _this5 = this;
 
 		var template = this.template;
@@ -4968,7 +4981,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.expressions = template.expressions.map(function (et) {
 				return new Mavo.Expression.Text({
 					template: et,
-					group: _this5,
+					item: _this5,
 					mavo: _this5.mavo
 				});
 			});
@@ -5032,7 +5045,7 @@ Mavo.hooks.add("expressiontext-update-end", function () {
 	var oldValue = this.oldValue[0];
 
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-	this.group.mavo.treeBuilt.then(function () {
+	this.item.mavo.treeBuilt.then(function () {
 		if (_this.parentIf) {
 			var parentValue = _this.parentIf.value[0];
 			_this.value[0] = value = value && parentValue;
@@ -5149,7 +5162,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
 		requestAnimationFrame(function () {
 			if (!_this2.element.parentNode) {
 				// out of the DOM?
-				_this2.group.element.dispatchEvent(evt);
+				_this2.item.element.dispatchEvent(evt);
 			}
 		});
 	});
@@ -5504,7 +5517,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				},
 				symbol: "-"
 			},
-
 			"lte": {
 				logical: true,
 				scalar: function scalar(a, b) {

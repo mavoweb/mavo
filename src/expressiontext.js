@@ -5,7 +5,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
 
-		for (let prop of ["group", "path", "syntax", "fallback", "attribute"]) {
+		for (let prop of ["item", "path", "syntax", "fallback", "attribute"]) {
 			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
 		}
 
@@ -15,7 +15,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			// No node provided, figure it out from path
 			this.node = this.path.reduce((node, index) => {
 				return node.childNodes[index];
-			}, this.group.element);
+			}, this.item.element);
 		}
 
 		this.element = this.node;
@@ -192,18 +192,18 @@ Mavo.hooks.add("primitive-init-start", function() {
 });
 
 // Fix expressions on primitive collections
-Mavo.hooks.add("collection-add-end", function(env) {
-	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
-		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
-
-		if (et) {
-			et.group.expressions.push(new Mavo.Expression.Text({
-				node: env.item.element,
-				template: et,
-				mavo: this.mavo
-			}));
-		}
-	}
-});
+// Mavo.hooks.add("collection-add-end", function(env) {
+// 	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+// 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+//
+// 		if (et) {
+// 			et.item.expressions.push(new Mavo.Expression.Text({
+// 				node: env.item.element,
+// 				template: et,
+// 				mavo: this.mavo
+// 			}));
+// 		}
+// 	}
+// });
 
 })(Bliss);

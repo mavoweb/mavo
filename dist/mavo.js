@@ -3916,7 +3916,7 @@ var _ = Mavo.Expression.Text = $.Class({
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
 
-		for (let prop of ["group", "path", "syntax", "fallback", "attribute"]) {
+		for (let prop of ["item", "path", "syntax", "fallback", "attribute"]) {
 			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
 		}
 
@@ -3926,7 +3926,7 @@ var _ = Mavo.Expression.Text = $.Class({
 			// No node provided, figure it out from path
 			this.node = this.path.reduce((node, index) => {
 				return node.childNodes[index];
-			}, this.group.element);
+			}, this.item.element);
 		}
 
 		this.element = this.node;
@@ -4103,19 +4103,19 @@ Mavo.hooks.add("primitive-init-start", function() {
 });
 
 // Fix expressions on primitive collections
-Mavo.hooks.add("collection-add-end", function(env) {
-	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
-		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
-
-		if (et) {
-			et.group.expressions.push(new Mavo.Expression.Text({
-				node: env.item.element,
-				template: et,
-				mavo: this.mavo
-			}));
-		}
-	}
-});
+// Mavo.hooks.add("collection-add-end", function(env) {
+// 	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
+// 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
+//
+// 		if (et) {
+// 			et.item.expressions.push(new Mavo.Expression.Text({
+// 				node: env.item.element,
+// 				template: et,
+// 				mavo: this.mavo
+// 			}));
+// 		}
+// 	}
+// });
 
 })(Bliss);
 
@@ -4135,9 +4135,9 @@ var _ = Mavo.Expressions = $.Class({
 		// Watch changes and update value
 		this.mavo.treeBuilt.then(() => {
 			for (let et of this.expressions) {
-				et.group = Mavo.Node.get(et.element.closest(Mavo.selectors.group));
-				et.group.expressions = et.group.expressions || [];
-				et.group.expressions.push(et);
+				et.item = Mavo.Node.get(et.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
+				et.item.expressions = et.item.expressions || [];
+				et.item.expressions.push(et);
 
 				var mavoNode = Mavo.Node.get(et.element, true);
 
@@ -4170,14 +4170,15 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	update: function callee(evt) {
-		var root = this.mavo.element;
+		var root, rootGroup;
 
 		if (evt instanceof Element) {
 			root = evt.closest(Mavo.selectors.group);
 			evt = null;
 		}
 
-		var rootGroup = Mavo.Node.get(root);
+		root = root || this.mavo.element;
+		rootGroup = Mavo.Node.get(root);
 
 		var data = rootGroup.getData({
 			relative: true,
@@ -4187,7 +4188,7 @@ var _ = Mavo.Expressions = $.Class({
 		});
 
 		rootGroup.walk((obj, path) => {
-			if (obj instanceof Mavo.Group && obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
@@ -4239,7 +4240,7 @@ var _ = Mavo.Expressions = $.Class({
 				return;
 			}
 
-			if (Mavo.is("group", node)) {
+			if (Mavo.is("multiple", node)) {
 				path = "";
 			}
 
@@ -4257,7 +4258,16 @@ var _ = Mavo.Expressions = $.Class({
 
 if (self.Proxy) {
 	Mavo.hooks.add("node-getdata-end", function(env) {
-		if (env.options.relative && env.data && typeof env.data === "object") {
+		if (env.options.relative && (env.data && typeof env.data === "object" || this.collection)) {
+			var data = env.data;
+
+			if (this instanceof Mavo.Primitive) {
+				env.data = {
+					[Symbol.toPrimitive]: () => data,
+					[this.property]: data
+				};
+			}
+
 			env.data = new Proxy(env.data, {
 				get: (data, property, proxy) => {
 					// Checking if property is in proxy might add it to the data
@@ -4326,15 +4336,15 @@ Mavo.hooks.add("init-tree-before", function() {
 	this.expressions = new Mavo.Expressions(this);
 });
 
-// Must be on start so that collections don't have a marker yet which messes up paths
-Mavo.hooks.add("group-init-start", function() {
+// Must be at a hook that collections don't have a marker yet which messes up paths
+Mavo.hooks.add("node-init-end", function() {
 	var template = this.template;
 
 	if (template && template.expressions) {
 		// We know which expressions we have, don't traverse again
 		this.expressions = template.expressions.map(et => new Mavo.Expression.Text({
 			template: et,
-			group: this,
+			item: this,
 			mavo: this.mavo
 		}));
 	}
@@ -4395,7 +4405,7 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 	var oldValue = this.oldValue[0];
 
 	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-	this.group.mavo.treeBuilt.then(() => {
+	this.item.mavo.treeBuilt.then(() => {
 		if (this.parentIf) {
 			var parentValue = this.parentIf.value[0];
 			this.value[0] = value = value && parentValue;
@@ -4466,7 +4476,7 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 			// Cannot redispatch synchronously [why??]
 			requestAnimationFrame(() => {
 				if (!this.element.parentNode) { // out of the DOM?
-				this.group.element.dispatchEvent(evt);
+				this.item.element.dispatchEvent(evt);
 			}
 			});
 
@@ -4734,7 +4744,6 @@ Mavo.Script = {
 			scalar: (a, b) => a - b,
 			symbol: "-"
 		},
-
 		"lte": {
 			logical: true,
 			scalar: (a, b) => {
