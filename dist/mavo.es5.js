@@ -4397,6 +4397,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		jsep.addBinaryOp("and", 2);
 		jsep.addBinaryOp("or", 2);
 		jsep.addBinaryOp("=", 6);
+		jsep.addBinaryOp("mod", 10);
 		jsep.removeBinaryOp("===");
 	}
 
@@ -5516,6 +5517,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return a - b;
 				},
 				symbol: "-"
+			},
+			"mod": {
+				scalar: function scalar(a, b) {
+					return a % b;
+				}
 			},
 			"lte": {
 				logical: true,

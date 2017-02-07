@@ -155,6 +155,7 @@ if (self.jsep) {
 	jsep.addBinaryOp("and", 2);
 	jsep.addBinaryOp("or", 2);
 	jsep.addBinaryOp("=", 6);
+	jsep.addBinaryOp("mod", 10);
 	jsep.removeBinaryOp("===");
 }
 

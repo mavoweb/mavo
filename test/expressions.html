@@ -433,6 +433,24 @@
 	</table>
 </section>
 
+<script type="application/json" id="numbers">{
+	"numbers": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+}</script>
+<section mv-app="mvifnumbers" mv-storage="#numbers">
+	<h1>mv-if on collection of primitives</h1>
+
+	<table class="reftest">
+		<tr>
+			<td>
+				<div property="numbers" mv-multiple mv-if="$index mod 2 > 0"></div>
+			</td>
+			<td>
+				<div>1</div><div>3</div><div>5</div><div>7</div><div>9</div>
+			</td>
+		</tr>
+	</table>
+</section>
+
 <section mv-app="mvdefault">
 	<h1>Dyamic mv-default</h1>
 	<table class="reftest">

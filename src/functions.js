@@ -256,6 +256,9 @@ Mavo.Script = {
 			scalar: (a, b) => a - b,
 			symbol: "-"
 		},
+		"mod": {
+			scalar: (a, b) => a % b
+		},
 		"lte": {
 			logical: true,
 			scalar: (a, b) => {
