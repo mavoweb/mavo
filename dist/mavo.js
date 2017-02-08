@@ -3712,6 +3712,7 @@ var _ = Mavo.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
+			console.log(exception);
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -4292,6 +4293,14 @@ if (self.Proxy) {
 						return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
 					}
 
+					if (property == "$next" || property == "$previous") {
+						if (this.closestCollection) {
+							return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
+						}
+
+						return data[property] = null;
+					}
+
 					if (property == this.mavo.id) {
 						return data[property] = this.mavo.root.getData(env.options);
 					}
@@ -4530,7 +4539,7 @@ var _ = Mavo.Functions = {
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
 	get: function(obj, property) {
-		return obj && property in obj? obj[property] : null;
+		return obj && obj[property] !== undefined? obj[property] : null;
 	},
 
 	/*********************

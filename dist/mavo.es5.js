@@ -4246,6 +4246,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				this.value = this.function(data);
 			} catch (exception) {
+				console.log(exception);
 				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
 
 				this.value = exception;
@@ -4924,6 +4925,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
 						}
 
+						if (property == "$next" || property == "$previous") {
+							if (_this4.closestCollection) {
+								return data[property] = _this4.closestCollection.getData(env.options)[_this4.index + (property == "$next" ? 1 : -1)];
+							}
+
+							return data[property] = null;
+						}
+
 						if (property == _this4.mavo.id) {
 							return data[property] = _this4.mavo.root.getData(env.options);
 						}
@@ -5244,7 +5253,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Get a property of an object. Used by the . operator to prevent TypeErrors
    */
 		get: function get(obj, property) {
-			return obj && property in obj ? obj[property] : null;
+			return obj && obj[property] !== undefined ? obj[property] : null;
 		},
 
 		/*********************

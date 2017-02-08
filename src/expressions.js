@@ -170,6 +170,14 @@ if (self.Proxy) {
 						return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
 					}
 
+					if (property == "$next" || property == "$previous") {
+						if (this.closestCollection) {
+							return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
+						}
+
+						return data[property] = null;
+					}
+
 					if (property == this.mavo.id) {
 						return data[property] = this.mavo.root.getData(env.options);
 					}

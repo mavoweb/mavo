@@ -21,6 +21,7 @@ var _ = Mavo.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
+			console.log(exception);
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
