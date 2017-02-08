@@ -153,14 +153,6 @@ if (self.Proxy) {
 					if (property in data || (property in proxy && property in data)) {
 						return data[property];
 					}
-
-					if (property == "$index") {
-						return this.index + 1;
-					}
-
-					if (property == this.mavo.id) {
-						return data;
-					}
 				},
 
 				has: (data, property) => {
@@ -170,8 +162,16 @@ if (self.Proxy) {
 
 					// Property does not exist, look for it elsewhere
 
-					if (property == "$index" || property == this.mavo.id) {
-						return true;
+					if (property == "$index") {
+						return data[property] = this.index + 1;
+					}
+
+					if (property == this.mavo.id) {
+						return data[property] = this.mavo.root.getData(env.options);
+					}
+
+					if (this instanceof Mavo.Group && property == this.property && this.collection) {
+						return data[property] = env.data;
 					}
 
 					// First look in ancestors

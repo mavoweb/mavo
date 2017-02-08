@@ -4907,14 +4907,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (property in data || property in proxy && property in data) {
 							return data[property];
 						}
-
-						if (property == "$index") {
-							return _this4.index + 1;
-						}
-
-						if (property == _this4.mavo.id) {
-							return data;
-						}
 					},
 
 					has: function has(data, property) {
@@ -4924,8 +4916,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						// Property does not exist, look for it elsewhere
 
-						if (property == "$index" || property == _this4.mavo.id) {
-							return true;
+						if (property == "$index") {
+							return data[property] = _this4.index + 1;
+						}
+
+						if (property == _this4.mavo.id) {
+							return data[property] = _this4.mavo.root.getData(env.options);
+						}
+
+						if (_this4 instanceof Mavo.Group && property == _this4.property && _this4.collection) {
+							return data[property] = env.data;
 						}
 
 						// First look in ancestors

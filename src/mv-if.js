@@ -37,8 +37,7 @@ Mavo.hooks.add("expressiontext-update-end", function() {
 			return;
 		}
 
-		if (parentValue !== false) {
-			// If parent if was false, it wouldn't matter whether this is in the DOM or not
+		if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
 			if (value) {
 				if (this.comment && this.comment.parentNode) {
 					// Is removed from the DOM and needs to get back
