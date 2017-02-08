@@ -1,4 +1,7 @@
 // mv-if plugin
+
+(function($, $$) {
+
 Mavo.Expressions.directives.push("mv-if");
 Mavo.attributes.push("mv-if");
 
@@ -106,3 +109,5 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 
 	return properties;
 });
+
+})(Bliss, Bliss.$);

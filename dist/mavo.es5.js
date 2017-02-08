@@ -5029,160 +5029,164 @@ Mavo.hooks.add("expressiontext-init-start", function () {
 "use strict";
 
 // mv-if plugin
-Mavo.Expressions.directives.push("mv-if");
-Mavo.attributes.push("mv-if");
 
-Mavo.hooks.add("expressiontext-init-start", function () {
-	if (this.attribute != "mv-if") {
-		return;
-	}
+(function ($, $$) {
 
-	this.expression = this.element.getAttribute("mv-if");
-	this.parsed = [new Mavo.Expression(this.expression)];
-	this.expression = this.syntax.start + this.expression + this.syntax.end;
+	Mavo.Expressions.directives.push("mv-if");
+	Mavo.attributes.push("mv-if");
 
-	this.parentIf = this.element.parentNode && Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
-
-	if (this.parentIf) {
-		this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
-	}
-});
-
-Mavo.hooks.add("expressiontext-update-end", function () {
-	var _this = this;
-
-	if (this.attribute != "mv-if") {
-		return;
-	}
-
-	var value = this.value[0];
-	var oldValue = this.oldValue[0];
-
-	// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-	this.item.mavo.treeBuilt.then(function () {
-		if (_this.parentIf) {
-			var parentValue = _this.parentIf.value[0];
-			_this.value[0] = value = value && parentValue;
-		}
-
-		if (value === oldValue) {
+	Mavo.hooks.add("expressiontext-init-start", function () {
+		if (this.attribute != "mv-if") {
 			return;
 		}
 
-		if (parentValue !== false) {
-			// If parent if was false, it wouldn't matter whether this is in the DOM or not
-			if (value) {
-				if (_this.comment && _this.comment.parentNode) {
-					// Is removed from the DOM and needs to get back
-					_this.comment.parentNode.replaceChild(_this.element, _this.comment);
-				}
-			} else if (_this.element.parentNode) {
-				// Is in the DOM and needs to be removed
-				if (!_this.comment) {
-					_this.comment = document.createComment("mv-if");
-				}
+		this.expression = this.element.getAttribute("mv-if");
+		this.parsed = [new Mavo.Expression(this.expression)];
+		this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-				_this.element.parentNode.replaceChild(_this.comment, _this.element);
-			}
-		}
+		this.parentIf = this.element.parentNode && Mavo.Expression.Text.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
-		// Mark any properties inside as hidden or not
-		if (_this.childProperties) {
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
-
-			try {
-				for (var _iterator = _this.childProperties[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var property = _step.value;
-
-					property.hidden = !value;
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-		}
-
-		if (_this.childIfs) {
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
-
-			try {
-				for (var _iterator2 = _this.childIfs[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var childIf = _step2.value;
-
-					childIf.update();
-				}
-			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
-					}
-				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
-					}
-				}
-			}
+		if (this.parentIf) {
+			this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 		}
 	});
-});
 
-Mavo.hooks.add("unit-isdatanull", function (env) {
-	env.result = env.result || this.hidden && env.options.store == "*";
-});
+	Mavo.hooks.add("expressiontext-update-end", function () {
+		var _this = this;
 
-$.live(Mavo.Primitive.prototype, "hidden", function (value) {
-	if (this._hidden !== value) {
-		this._hidden = value;
-		this.dataChanged();
-	}
-});
+		if (this.attribute != "mv-if") {
+			return;
+		}
 
-$.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
-	var _this2 = this;
+		var value = this.value[0];
+		var oldValue = this.oldValue[0];
 
-	if (this.attribute != "mv-if") {
-		return;
-	}
+		// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
+		this.item.mavo.treeBuilt.then(function () {
+			if (_this.parentIf) {
+				var parentValue = _this.parentIf.value[0];
+				_this.value[0] = value = value && parentValue;
+			}
 
-	var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
-		return el.closest("[mv-if]") == _this2.element;
-	}).map(function (el) {
-		return Mavo.Node.get(el);
-	});
+			if (value === oldValue) {
+				return;
+			}
 
-	// When the element is detached, datachange events from properties
-	// do not propagate up to the group so expressions do not recalculate.
-	// We must do this manually.
-	this.element.addEventListener("mavo:datachange", function (evt) {
+			if (parentValue !== false) {
+				// If parent if was false, it wouldn't matter whether this is in the DOM or not
+				if (value) {
+					if (_this.comment && _this.comment.parentNode) {
+						// Is removed from the DOM and needs to get back
+						_this.comment.parentNode.replaceChild(_this.element, _this.comment);
+					}
+				} else if (_this.element.parentNode) {
+					// Is in the DOM and needs to be removed
+					if (!_this.comment) {
+						_this.comment = document.createComment("mv-if");
+					}
 
-		// Cannot redispatch synchronously [why??]
-		requestAnimationFrame(function () {
-			if (!_this2.element.parentNode) {
-				// out of the DOM?
-				_this2.item.element.dispatchEvent(evt);
+					_this.element.parentNode.replaceChild(_this.comment, _this.element);
+				}
+			}
+
+			// Mark any properties inside as hidden or not
+			if (_this.childProperties) {
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = _this.childProperties[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var property = _step.value;
+
+						property.hidden = !value;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			}
+
+			if (_this.childIfs) {
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
+
+				try {
+					for (var _iterator2 = _this.childIfs[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var childIf = _step2.value;
+
+						childIf.update();
+					}
+				} catch (err) {
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
+						}
+					} finally {
+						if (_didIteratorError2) {
+							throw _iteratorError2;
+						}
+					}
+				}
 			}
 		});
 	});
 
-	return properties;
-});
+	Mavo.hooks.add("unit-isdatanull", function (env) {
+		env.result = env.result || this.hidden && env.options.store == "*";
+	});
+
+	$.live(Mavo.Primitive.prototype, "hidden", function (value) {
+		if (this._hidden !== value) {
+			this._hidden = value;
+			this.dataChanged();
+		}
+	});
+
+	$.lazy(Mavo.Expression.Text.prototype, "childProperties", function () {
+		var _this2 = this;
+
+		if (this.attribute != "mv-if") {
+			return;
+		}
+
+		var properties = $$(Mavo.selectors.property, this.element).filter(function (el) {
+			return el.closest("[mv-if]") == _this2.element;
+		}).map(function (el) {
+			return Mavo.Node.get(el);
+		});
+
+		// When the element is detached, datachange events from properties
+		// do not propagate up to the group so expressions do not recalculate.
+		// We must do this manually.
+		this.element.addEventListener("mavo:datachange", function (evt) {
+
+			// Cannot redispatch synchronously [why??]
+			requestAnimationFrame(function () {
+				if (!_this2.element.parentNode) {
+					// out of the DOM?
+					_this2.item.element.dispatchEvent(evt);
+				}
+			});
+		});
+
+		return properties;
+	});
+})(Bliss, Bliss.$);
 "use strict";
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();

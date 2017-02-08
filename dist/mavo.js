@@ -4391,6 +4391,9 @@ Mavo.hooks.add("expressiontext-init-start", function() {
 });
 
 // mv-if plugin
+
+(function($, $$) {
+
 Mavo.Expressions.directives.push("mv-if");
 Mavo.attributes.push("mv-if");
 
@@ -4498,6 +4501,8 @@ $.lazy(Mavo.Expression.Text.prototype, "childProperties", function() {
 
 	return properties;
 });
+
+})(Bliss, Bliss.$);
 
 /**
  * Functions available inside Mavo expressions
