@@ -34,6 +34,13 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
+	/**
+	 * Get a property of an object. Used by the . operator to prevent TypeErrors
+	 */
+	get: function(obj, property) {
+		return obj && property in obj? obj[property] : null;
+	},
+
 	/*********************
 	 * Number functions
 	 *********************/

@@ -66,6 +66,12 @@
 		<dt>foo & bar & baz</dt>
 		<dd>concatenate(foo, bar, baz)</dd>
 
+		<dt>foo.bar</dt>
+		<dd>get(foo, "bar")</dd>
+
+		<dt>foo["bar"]</dt>
+		<dd>get(foo, "bar")</dd>
+
 		<dt title="Pass-through to JS">foo.filter(a => a + 5)</dt>
 
 		<dt title="Pass-through to JS">/* js */ 5+5</dt>
@@ -185,6 +191,15 @@
 
 		<dt>filter([1, 2, 3], [true, true, false], [false, true, false])</dt>
 		<dd>[null, 2, null]</dd>
+
+		<dt>get({bar: 4}, "bar")</dt>
+		<dd>4</dd>
+
+		<dt>get({}, "bar")</dt>
+		<dd>null</dd>
+
+		<dt>get(null, "bar")</dt>
+		<dd>null</dd>
 	</dl>
 </section>
 

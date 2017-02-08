@@ -4313,7 +4313,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return _.serialize(node.test) + "? " + _.serialize(node.consequent) + " : " + _.serialize(node.alternate);
 				},
 				"MemberExpression": function MemberExpression(node) {
-					return _.serialize(node.object) + "[\"" + (node.property.name || node.property.value) + "\"]";
+					return "get(" + _.serialize(node.object) + ", \"" + (node.property.name || node.property.value) + "\")";
 				},
 				"ArrayExpression": function ArrayExpression(node) {
 					return "[" + node.elements.map(_.serialize).join(", ") + "]";
@@ -5238,6 +5238,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return null;
+		},
+
+		/**
+   * Get a property of an object. Used by the . operator to prevent TypeErrors
+   */
+		get: function get(obj, property) {
+			return obj && property in obj ? obj[property] : null;
 		},
 
 		/*********************

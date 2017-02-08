@@ -78,7 +78,7 @@ var _ = Mavo.Expression = $.Class({
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
 			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
 			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-			"MemberExpression": node => `${_.serialize(node.object)}["${node.property.name || node.property.value}"]`,
+			"MemberExpression": node => `get(${_.serialize(node.object)}, "${node.property.name || node.property.value}")`,
 			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
 			"Literal": node => node.raw,
 			"Identifier": node => node.name,
