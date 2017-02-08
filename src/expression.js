@@ -43,7 +43,7 @@ var _ = Mavo.Expression = $.Class({
 		}
 
 		if (evt.action != "propertychange") {
-			if (this.identifiers.indexOf("$index") > -1) {
+			if (Mavo.hasIntersection(["$index", "$all", "$previous", "$next"], this.identifiers)) {
 				return true;
 			}
 

@@ -3734,7 +3734,7 @@ var _ = Mavo.Expression = $.Class({
 		}
 
 		if (evt.action != "propertychange") {
-			if (this.identifiers.indexOf("$index") > -1) {
+			if (Mavo.hasIntersection(["$index", "$all", "$previous", "$next"], this.identifiers)) {
 				return true;
 			}
 
@@ -4285,7 +4285,11 @@ if (self.Proxy) {
 					// Property does not exist, look for it elsewhere
 
 					if (property == "$index") {
-						return data[property] = this.index + 1;
+						return data[property] = (this.index || 0) + 1;
+					}
+
+					if (property == "$all") {
+						return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
 					}
 
 					if (property == this.mavo.id) {

@@ -4269,7 +4269,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (evt.action != "propertychange") {
-				if (this.identifiers.indexOf("$index") > -1) {
+				if (Mavo.hasIntersection(["$index", "$all", "$previous", "$next"], this.identifiers)) {
 					return true;
 				}
 
@@ -4917,7 +4917,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// Property does not exist, look for it elsewhere
 
 						if (property == "$index") {
-							return data[property] = _this4.index + 1;
+							return data[property] = (_this4.index || 0) + 1;
+						}
+
+						if (property == "$all") {
+							return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
 						}
 
 						if (property == _this4.mavo.id) {
