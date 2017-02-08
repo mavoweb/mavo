@@ -1,6 +1,6 @@
 (function($) {
 
-var _ = Mavo.Expression.Text = $.Class({
+var _ = Mavo.ExpressionText = $.Class({
 	constructor: function(o = {}) {
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
@@ -158,11 +158,11 @@ var _ = Mavo.Expression.Text = $.Class({
 		elements: new WeakMap(),
 
 		/**
-		 * Search for Mavo.Expression.Text object(s) associated with a given element
+		 * Search for Mavo.ExpressionText object(s) associated with a given element
 		 * and optionally an attribute.
 		 *
-		 * @return If one argument, array of matching Expression.Text objects.
-		 *         If two arguments, the matching Expression.Text object or null
+		 * @return If one argument, array of matching ExpressionText objects.
+		 *         If two arguments, the matching ExpressionText object or null
 		 */
 		search: function(element, attribute) {
 			var all = _.elements.get(element) || [];
@@ -182,7 +182,7 @@ var _ = Mavo.Expression.Text = $.Class({
 
 // Link primitive with its expressionText object
 Mavo.hooks.add("primitive-init-start", function() {
-	this.expressionText = Mavo.Expression.Text.search(this.element, this.attribute);
+	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
 
 	if (this.expressionText) {
 		this.expressionText.primitive = this;
@@ -190,20 +190,5 @@ Mavo.hooks.add("primitive-init-start", function() {
 		this.modes = "read";
 	}
 });
-
-// Fix expressions on primitive collections
-// Mavo.hooks.add("collection-add-end", function(env) {
-// 	if (env.item instanceof Mavo.Primitive && this.itemTemplate) {
-// 		var et = Mavo.Expression.Text.search(this.itemTemplate.element)[0];
-//
-// 		if (et) {
-// 			et.item.expressions.push(new Mavo.Expression.Text({
-// 				node: env.item.element,
-// 				template: et,
-// 				mavo: this.mavo
-// 			}));
-// 		}
-// 	}
-// });
 
 })(Bliss);

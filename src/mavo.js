@@ -574,9 +574,7 @@ var _ = self.Mavo = $.Class({
 			}
 
 			for (let Class in o.extend) {
-				let members = o.extend[Class];
-
-				$.extend(Mavo[Class].prototype, members);
+				$.Class(Mavo[Class], o.extend[Class]);
 			}
 		},
 
