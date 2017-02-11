@@ -222,7 +222,6 @@ button.mv-close {
 
 	&:not([mv-mode="edit"]) {
 		.mv-empty,
-		.mv-item-controls,
 		&:not(.mv-unsaved-changes) .mv-save,
 		&:not(.mv-unsaved-changes) .mv-revert,
 		&:not(.mv-unsaved-changes) .mv-clear {

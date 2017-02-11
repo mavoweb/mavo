@@ -171,7 +171,6 @@ button.mv-close {
   box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
 
 [mv-app]:not([mv-mode="edit"]) .mv-empty,
-[mv-app]:not([mv-mode="edit"]) .mv-item-controls,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-save,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-revert,
 [mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-clear {
