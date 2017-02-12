@@ -359,14 +359,14 @@ var _ = self.Mavo = $.Class({
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
-				var item = evt.target.closest(_.selectors.item);
+				var item = evt.target.closest(_.selectors.multiple);
 				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
 			}
 
-			if (evt.target.matches(_.selectors.item)) {
+			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
 
-				var parent = evt.target.parentNode.closest(_.selectors.item);
+				var parent = evt.target.parentNode.closest(_.selectors.multiple);
 
 				if (parent) {
 					parent.classList.toggle("mv-has-hovered-item", evt.type == "mouseenter");
@@ -596,7 +596,6 @@ let s = _.selectors = {
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
 	multiple: "[mv-multiple], .mv-multiple",
 	formControl: "input, select, option, textarea",
-	item: ".mv-item",
 	ui: ".mv-ui",
 	container: {
 		// "li": "ul, ol",

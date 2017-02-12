@@ -554,14 +554,14 @@ var _ = self.Mavo = $.Class({
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
-				var item = evt.target.closest(_.selectors.item);
+				var item = evt.target.closest(_.selectors.multiple);
 				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
 			}
 
-			if (evt.target.matches(_.selectors.item)) {
+			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
 
-				var parent = evt.target.parentNode.closest(_.selectors.item);
+				var parent = evt.target.parentNode.closest(_.selectors.multiple);
 
 				if (parent) {
 					parent.classList.toggle("mv-has-hovered-item", evt.type == "mouseenter");
@@ -791,7 +791,6 @@ let s = _.selectors = {
 	group: "[typeof], [itemscope], [itemtype], .mv-group",
 	multiple: "[mv-multiple], .mv-multiple",
 	formControl: "input, select, option, textarea",
-	item: ".mv-item",
 	ui: ".mv-ui",
 	container: {
 		// "li": "ul, ol",
@@ -3344,8 +3343,6 @@ var _ = Mavo.Collection = $.Class({
 				this.marker = document.createComment("mv-marker");
 				Mavo.data(this.marker, "collection", this);
 				$.after(this.marker, this.templateElement);
-
-				this.templateElement.classList.add("mv-item");
 			}
 		}
 	},
@@ -3375,7 +3372,7 @@ var _ = Mavo.Collection = $.Class({
 				return false;
 			},
 			moves: (el, container, handle) => {
-				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
+				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.multiple) == el;
 			},
 			accepts: function(el, target, source, next) {
 				if (el.contains(target)) {
@@ -3450,7 +3447,7 @@ var _ = Mavo.Collection = $.Class({
 		closestCollection: function() {
 			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
-			return parent.closest(Mavo.selectors.item);
+			return parent.closest(Mavo.selectors.multiple);
 		},
 
 		addButton: function() {
@@ -3546,9 +3543,10 @@ Mavo.hooks.add("primitive-init-end", function() {
 
 Mavo.hooks.add("node-edit-end", function() {
 	if (this.collection) {
+
 		if (!this.itemControls) {
 			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.item) == this.element)[0];
+								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
 
 			this.itemControls = this.itemControls || $.create({
 				className: "mv-item-controls mv-ui"

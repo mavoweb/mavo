@@ -24,12 +24,12 @@
 	border-radius: 1em;
 	white-space: nowrap;
 
-	.mv-item:hover:not(.mv-has-hovered-item) > &,
-	.mv-item:not(:hover):not(.mv-has-hovered-item) .mv-item:focus > &,
-	.mv-item:not(:hover):not(.mv-has-hovered-item) .mv-item.mv-focus-within:not(:hover) > &,
+	[mv-multiple]:hover:not(.mv-has-hovered-item) > &,
+	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > &,
+	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > &,
 	&:hover,
-	.mv-item:not(:hover):not(.mv-has-hovered-item) > &:focus,
-	.mv-item:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
+	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &:focus,
+	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
 		transition: .4s opacity;
 		opacity: 1;
 		pointer-events: auto;
@@ -121,7 +121,7 @@
 	}
 }
 
-.mv-item {
+[mv-multiple] {
 	position: relative;
 
 	&.mv-highlight {  // basically &:has(> .mv-item-controls:hover)
@@ -206,7 +206,7 @@ button.mv-close {
 		}
 	}
 
-	&[mv-progress="Loading"] .mv-item {
+	&[mv-progress="Loading"] [mv-multiple] {
 		display: none;
 	}
 
@@ -235,7 +235,7 @@ button.mv-close {
 			opacity: .5;
 		}
 
-		.mv-item,
+		[mv-multiple],
 		.mv-editor {
 			&:focus {
 				outline: none;

@@ -395,8 +395,6 @@ var _ = Mavo.Collection = $.Class({
 				this.marker = document.createComment("mv-marker");
 				Mavo.data(this.marker, "collection", this);
 				$.after(this.marker, this.templateElement);
-
-				this.templateElement.classList.add("mv-item");
 			}
 		}
 	},
@@ -426,7 +424,7 @@ var _ = Mavo.Collection = $.Class({
 				return false;
 			},
 			moves: (el, container, handle) => {
-				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
+				return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.multiple) == el;
 			},
 			accepts: function(el, target, source, next) {
 				if (el.contains(target)) {
@@ -501,7 +499,7 @@ var _ = Mavo.Collection = $.Class({
 		closestCollection: function() {
 			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
 
-			return parent.closest(Mavo.selectors.item);
+			return parent.closest(Mavo.selectors.multiple);
 		},
 
 		addButton: function() {
@@ -597,9 +595,10 @@ Mavo.hooks.add("primitive-init-end", function() {
 
 Mavo.hooks.add("node-edit-end", function() {
 	if (this.collection) {
+
 		if (!this.itemControls) {
 			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.item) == this.element)[0];
+								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
 
 			this.itemControls = this.itemControls || $.create({
 				className: "mv-item-controls mv-ui"

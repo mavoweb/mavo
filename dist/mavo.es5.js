@@ -641,14 +641,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", function (evt) {
 				if (evt.target.matches(".mv-item-controls *")) {
-					var item = evt.target.closest(_.selectors.item);
+					var item = evt.target.closest(_.selectors.multiple);
 					item.classList.toggle("mv-highlight", evt.type == "mouseenter");
 				}
 
-				if (evt.target.matches(_.selectors.item)) {
+				if (evt.target.matches(_.selectors.multiple)) {
 					evt.target.classList.remove("mv-has-hovered-item");
 
-					var parent = evt.target.parentNode.closest(_.selectors.item);
+					var parent = evt.target.parentNode.closest(_.selectors.multiple);
 
 					if (parent) {
 						parent.classList.toggle("mv-has-hovered-item", evt.type == "mouseenter");
@@ -904,7 +904,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				group: "[typeof], [itemscope], [itemtype], .mv-group",
 				multiple: "[mv-multiple], .mv-multiple",
 				formControl: "input, select, option, textarea",
-				item: ".mv-item",
 				ui: ".mv-ui",
 				container: {
 					// "li": "ul, ol",
@@ -3858,8 +3857,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.marker = document.createComment("mv-marker");
 					Mavo.data(this.marker, "collection", this);
 					$.after(this.marker, this.templateElement);
-
-					this.templateElement.classList.add("mv-item");
 				}
 			}
 		},
@@ -3894,7 +3891,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return false;
 				},
 				moves: function moves(el, container, handle) {
-					return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.item) == el;
+					return handle.classList.contains("mv-drag-handle") && handle.closest(Mavo.selectors.multiple) == el;
 				},
 				accepts: function accepts(el, target, source, next) {
 					if (el.contains(target)) {
@@ -3969,7 +3966,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			closestCollection: function closestCollection() {
 				var parent = this.marker ? this.marker.parentNode : this.templateElement.parentNode;
 
-				return parent.closest(Mavo.selectors.item);
+				return parent.closest(Mavo.selectors.multiple);
 			},
 
 			addButton: function addButton() {
@@ -4081,9 +4078,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		var _this10 = this;
 
 		if (this.collection) {
+
 			if (!this.itemControls) {
 				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
-					return el.closest(Mavo.selectors.item) == _this10.element;
+					return el.closest(Mavo.selectors.multiple) == _this10.element;
 				})[0];
 
 				this.itemControls = this.itemControls || $.create({
