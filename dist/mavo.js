@@ -3075,13 +3075,16 @@ var _ = Mavo.Collection = $.Class({
 			this.adopt(item);
 		}
 
-		if (index === undefined) {
-			index = this.bottomUp? 0 : this.length;
-		}
-
 		if (this.mutable) {
 			// Add it to the DOM, or fix its place
-			$[this.bottomUp? "after" : "before"](item.element, this.marker);
+			if (index === undefined) {
+				$[this.bottomUp? "after" : "before"](item.element, this.marker);
+				index = this.bottomUp? 0 : this.length;
+			}
+			else {
+				var rel = this.children[index];
+				$[this.bottomUp? "after" : "before"](item.element, rel.element);
+			}
 		}
 
 		var env = {context: this, item};
