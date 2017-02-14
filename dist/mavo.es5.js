@@ -3389,10 +3389,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					item = _step.value;
 
-					if (!item.deleted) {
+					if (!item.deleted || o.null) {
 						var itemData = item.getData(env.options);
 
-						if (itemData) {
+						if (itemData || o.null) {
 							env.data.push(itemData);
 						}
 					}
@@ -3464,12 +3464,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.mutable) {
 				// Add it to the DOM, or fix its place
+				var rel = index === undefined ? this.marker : this.children[index];
+				$[this.bottomUp ? "after" : "before"](item.element, rel);
+
 				if (index === undefined) {
-					$[this.bottomUp ? "after" : "before"](item.element, this.marker);
 					index = this.bottomUp ? 0 : this.length;
-				} else {
-					var rel = this.children[index];
-					$[this.bottomUp ? "after" : "before"](item.element, rel.element);
 				}
 			}
 
@@ -4094,7 +4093,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		var _this10 = this;
 
 		if (this.collection) {
-
 			if (!this.itemControls) {
 				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
 					return el.closest(Mavo.selectors.multiple) == _this10.element;
@@ -4142,7 +4140,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!this.itemControls.parentNode) {
-				this.element.appendChild(this.itemControls);
+				if (this.itemControlsComment) {
+					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				} else {
+					this.element.appendChild(this.itemControls);
+				}
 			}
 		}
 	});
@@ -4150,7 +4152,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	Mavo.hooks.add("node-done-end", function () {
 		if (this.collection) {
 			if (this.itemControls) {
-				this.itemControls.remove();
+				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
+				this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
 			}
 		}
 	});
@@ -4789,7 +4792,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			rootGroup.walk(function (obj, path) {
 				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
-					// if (evt && evt.action == "delete") console.log(data, path, env.data, obj.element);
+
 					Mavo.hooks.run("expressions-update-start", env);
 
 					var _iteratorNormalCompletion2 = true;

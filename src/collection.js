@@ -47,10 +47,10 @@ var _ = Mavo.Collection = $.Class({
 		};
 
 		for (item of this.children) {
-			if (!item.deleted) {
+			if (!item.deleted || o.null) {
 				let itemData = item.getData(env.options);
 
-				if (itemData) {
+				if (itemData || o.null) {
 					env.data.push(itemData);
 				}
 			}
@@ -107,13 +107,11 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.mutable) {
 			// Add it to the DOM, or fix its place
+			var rel = index === undefined? this.marker : this.children[index];
+			$[this.bottomUp? "after" : "before"](item.element, rel);
+
 			if (index === undefined) {
-				$[this.bottomUp? "after" : "before"](item.element, this.marker);
 				index = this.bottomUp? 0 : this.length;
-			}
-			else {
-				var rel = this.children[index];
-				$[this.bottomUp? "after" : "before"](item.element, rel.element);
 			}
 		}
 
@@ -589,7 +587,6 @@ Mavo.hooks.add("primitive-init-end", function() {
 
 Mavo.hooks.add("node-edit-end", function() {
 	if (this.collection) {
-
 		if (!this.itemControls) {
 			this.itemControls = $$(".mv-item-controls", this.element)
 								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
@@ -636,7 +633,12 @@ Mavo.hooks.add("node-edit-end", function() {
 		}
 
 		if (!this.itemControls.parentNode) {
-			this.element.appendChild(this.itemControls);
+			if (this.itemControlsComment) {
+				this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+			}
+			else {
+				this.element.appendChild(this.itemControls);
+			}
 		}
 	}
 });
@@ -644,7 +646,8 @@ Mavo.hooks.add("node-edit-end", function() {
 Mavo.hooks.add("node-done-end", function() {
 	if (this.collection) {
 		if (this.itemControls) {
-			this.itemControls.remove();
+			this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
+			this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
 		}
 	}
 });
