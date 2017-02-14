@@ -76,7 +76,7 @@ var _ = Mavo.Primitive = $.Class({
 			this._default = this.templateValue;
 		}
 		else { // mv-default with value
-			new Mavo.Observer(this.element, "mv-default", record => {
+			this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
 				this.default = this.element.getAttribute("mv-default");
 			});
 		}
@@ -141,6 +141,13 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
+	},
+
+	destroy: function() {
+		this.super.destroy.call(this);
+
+		this.defaultObserver && this.defaultObserver.destroy();
+		this.observer && this.observer.destroy();
 	},
 
 	getData: function(o = {}) {

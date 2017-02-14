@@ -34,7 +34,6 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
 			this.mode = this.element.getAttribute("mv-mode");
 			this[this.mode == "edit"? "edit" : "done"]();
 		});
@@ -84,6 +83,10 @@ var _ = Mavo.Node = $.Class({
 		if (this.modes == "edit") {
 			this.edit();
 		}
+	},
+
+	destroy: function() {
+		this.modeObserver.destroy();
 	},
 
 	getData: function(o = {}) {
@@ -184,7 +187,7 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	propagated: ["save", "revert"],
+	propagated: ["save", "revert", "destroy"],
 
 	toJSON: Mavo.prototype.toJSON,
 

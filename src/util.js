@@ -157,16 +157,14 @@ var _ = $.extend(Mavo, {
 		},
 
 		stop: function() {
-			if (this.running) {
-				this.observer.disconnect();
-				this.running = false;
-			}
+			this.observer.disconnect();
+			this.running = false;
 
 			return this;
 		},
 
 		run: function() {
-			if (!this.running) {
+			if (this.observer) {
 				this.observer.observe(this.element, this.options);
 				this.running = true;
 			}
@@ -188,6 +186,11 @@ var _ = $.extend(Mavo, {
 			}
 
 			return ret;
+		},
+
+		destroy: function() {
+			this.observer.disconnect();
+			this.observer = this.element = null;
 		}
 	}),
 

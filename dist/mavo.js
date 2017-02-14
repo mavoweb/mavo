@@ -1001,16 +1001,14 @@ var _ = $.extend(Mavo, {
 		},
 
 		stop: function() {
-			if (this.running) {
-				this.observer.disconnect();
-				this.running = false;
-			}
+			this.observer.disconnect();
+			this.running = false;
 
 			return this;
 		},
 
 		run: function() {
-			if (!this.running) {
+			if (this.observer) {
 				this.observer.observe(this.element, this.options);
 				this.running = true;
 			}
@@ -1032,6 +1030,11 @@ var _ = $.extend(Mavo, {
 			}
 
 			return ret;
+		},
+
+		destroy: function() {
+			this.observer.disconnect();
+			this.observer = this.element = null;
 		}
 	}),
 
@@ -1505,7 +1508,6 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-			console.log("%cmutation observer on", "color:purple;", this.property, this.uid, this.template);
 			this.mode = this.element.getAttribute("mv-mode");
 			this[this.mode == "edit"? "edit" : "done"]();
 		});
@@ -1555,6 +1557,10 @@ var _ = Mavo.Node = $.Class({
 		if (this.modes == "edit") {
 			this.edit();
 		}
+	},
+
+	destroy: function() {
+		this.modeObserver.destroy();
 	},
 
 	getData: function(o = {}) {
@@ -1655,7 +1661,7 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	propagated: ["save", "revert"],
+	propagated: ["save", "revert", "destroy"],
 
 	toJSON: Mavo.prototype.toJSON,
 
@@ -2061,7 +2067,7 @@ var _ = Mavo.Primitive = $.Class({
 			this._default = this.templateValue;
 		}
 		else { // mv-default with value
-			new Mavo.Observer(this.element, "mv-default", record => {
+			this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
 				this.default = this.element.getAttribute("mv-default");
 			});
 		}
@@ -2126,6 +2132,13 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
+	},
+
+	destroy: function() {
+		this.super.destroy.call(this);
+
+		this.defaultObserver && this.defaultObserver.destroy();
+		this.observer && this.observer.destroy();
 	},
 
 	getData: function(o = {}) {
@@ -3184,6 +3197,7 @@ var _ = Mavo.Collection = $.Class({
 			// Hard delete
 			$.remove(item.element);
 			this.splice({remove: item});
+			item.destroy();
 			return;
 		}
 
@@ -3227,20 +3241,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	/**
-	 * Delete all items in the collection.
+	 * Delete all items in the collection. Not undoable.
 	 */
 	clear: function() {
 		if (this.mutable) {
 			this.propagate(item => {
-				if (item.element.remove) {
-					item.element.remove();
-				}
-				else {
-					// Document fragment, remove all children
-					for (let node of item.element.childNodes) {
-						node => node.remove();
-					}
-				}
+				item.element.remove();
+				item.destroy();
 			});
 
 			this.children = [];

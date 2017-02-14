@@ -214,6 +214,7 @@ var _ = Mavo.Collection = $.Class({
 			// Hard delete
 			$.remove(item.element);
 			this.splice({remove: item});
+			item.destroy();
 			return;
 		}
 
@@ -257,20 +258,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	/**
-	 * Delete all items in the collection.
+	 * Delete all items in the collection. Not undoable.
 	 */
 	clear: function() {
 		if (this.mutable) {
 			this.propagate(item => {
-				if (item.element.remove) {
-					item.element.remove();
-				}
-				else {
-					// Document fragment, remove all children
-					for (let node of item.element.childNodes) {
-						node => node.remove();
-					}
-				}
+				item.element.remove();
+				item.destroy();
 			});
 
 			this.children = [];

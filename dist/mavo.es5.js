@@ -1167,16 +1167,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			stop: function stop() {
-				if (this.running) {
-					this.observer.disconnect();
-					this.running = false;
-				}
+				this.observer.disconnect();
+				this.running = false;
 
 				return this;
 			},
 
 			run: function run() {
-				if (!this.running) {
+				if (this.observer) {
 					this.observer.observe(this.element, this.options);
 					this.running = true;
 				}
@@ -1201,6 +1199,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return ret;
+			},
+
+			destroy: function destroy() {
+				this.observer.disconnect();
+				this.observer = this.element = null;
 			}
 		}),
 
@@ -1760,7 +1763,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.modeObserver = new Mavo.Observer(this.element, "mv-mode", function (records) {
-				console.log("%cmutation observer on", "color:purple;", _this.property, _this.uid, _this.template);
 				_this.mode = _this.element.getAttribute("mv-mode");
 				_this[_this.mode == "edit" ? "edit" : "done"]();
 			});
@@ -1810,6 +1812,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.modes == "edit") {
 				this.edit();
 			}
+		},
+
+		destroy: function destroy() {
+			this.modeObserver.destroy();
 		},
 
 		getData: function getData() {
@@ -1913,7 +1919,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		propagated: ["save", "revert"],
+		propagated: ["save", "revert", "destroy"],
 
 		toJSON: Mavo.prototype.toJSON,
 
@@ -2385,7 +2391,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				this._default = this.templateValue;
 			} else {
 				// mv-default with value
-				new Mavo.Observer(this.element, "mv-default", function (record) {
+				this.defaultObserver = new Mavo.Observer(this.element, "mv-default", function (record) {
 					_this.default = _this.element.getAttribute("mv-default");
 				});
 			}
@@ -2449,6 +2455,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					}
 				}
 			}
+		},
+
+		destroy: function destroy() {
+			this.super.destroy.call(this);
+
+			this.defaultObserver && this.defaultObserver.destroy();
+			this.observer && this.observer.destroy();
 		},
 
 		getData: function getData() {
@@ -3626,6 +3639,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Hard delete
 				$.remove(item.element);
 				this.splice({ remove: item });
+				item.destroy();
 				return;
 			}
 
@@ -3671,42 +3685,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
-   * Delete all items in the collection.
+   * Delete all items in the collection. Not undoable.
    */
 		clear: function clear() {
 			if (this.mutable) {
 				this.propagate(function (item) {
-					if (item.element.remove) {
-						item.element.remove();
-					} else {
-						// Document fragment, remove all children
-						var _iteratorNormalCompletion4 = true;
-						var _didIteratorError4 = false;
-						var _iteratorError4 = undefined;
-
-						try {
-							for (var _iterator4 = item.element.childNodes[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-								var node = _step4.value;
-
-								(function (node) {
-									return node.remove();
-								});
-							}
-						} catch (err) {
-							_didIteratorError4 = true;
-							_iteratorError4 = err;
-						} finally {
-							try {
-								if (!_iteratorNormalCompletion4 && _iterator4.return) {
-									_iterator4.return();
-								}
-							} finally {
-								if (_didIteratorError4) {
-									throw _iteratorError4;
-								}
-							}
-						}
-					}
+					item.element.remove();
+					item.destroy();
 				});
 
 				this.children = [];
@@ -3723,13 +3708,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		save: function save() {
-			var _iteratorNormalCompletion5 = true;
-			var _didIteratorError5 = false;
-			var _iteratorError5 = undefined;
+			var _iteratorNormalCompletion4 = true;
+			var _didIteratorError4 = false;
+			var _iteratorError4 = undefined;
 
 			try {
-				for (var _iterator5 = this.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-					var _item2 = _step5.value;
+				for (var _iterator4 = this.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+					var _item2 = _step4.value;
 
 					if (_item2.deleted) {
 						this.delete(_item2, true);
@@ -3738,16 +3723,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 			} catch (err) {
-				_didIteratorError5 = true;
-				_iteratorError5 = err;
+				_didIteratorError4 = true;
+				_iteratorError4 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion5 && _iterator5.return) {
-						_iterator5.return();
+					if (!_iteratorNormalCompletion4 && _iterator4.return) {
+						_iterator4.return();
 					}
 				} finally {
-					if (_didIteratorError5) {
-						throw _iteratorError5;
+					if (_didIteratorError4) {
+						throw _iteratorError4;
 					}
 				}
 			}
@@ -3756,13 +3741,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		propagated: ["save"],
 
 		revert: function revert() {
-			var _iteratorNormalCompletion6 = true;
-			var _didIteratorError6 = false;
-			var _iteratorError6 = undefined;
+			var _iteratorNormalCompletion5 = true;
+			var _didIteratorError5 = false;
+			var _iteratorError5 = undefined;
 
 			try {
-				for (var _iterator6 = this.children[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-					var _item3 = _step6.value;
+				for (var _iterator5 = this.children[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+					var _item3 = _step5.value;
 
 					// Delete added items
 					if (_item3.unsavedChanges) {
@@ -3778,16 +3763,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 			} catch (err) {
-				_didIteratorError6 = true;
-				_iteratorError6 = err;
+				_didIteratorError5 = true;
+				_iteratorError5 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion6 && _iterator6.return) {
-						_iterator6.return();
+					if (!_iteratorNormalCompletion5 && _iterator5.return) {
+						_iterator5.return();
 					}
 				} finally {
-					if (_didIteratorError6) {
-						throw _iteratorError6;
+					if (_didIteratorError5) {
+						throw _iteratorError5;
 					}
 				}
 			}
