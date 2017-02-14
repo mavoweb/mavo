@@ -69,7 +69,7 @@ var _ = Mavo.Expressions = $.Class({
 		rootGroup.walk((obj, path) => {
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				let env = { context: this, data: $.value(data, ...path) };
-
+// if (evt && evt.action == "delete") console.log(data, path, env.data, obj.element);
 				Mavo.hooks.run("expressions-update-start", env);
 
 				for (let et of obj.expressions) {

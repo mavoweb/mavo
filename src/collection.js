@@ -111,9 +111,7 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.mutable) {
 			// Add it to the DOM, or fix its place
-			var nextItem = this.children[index];
-
-			item.element._.before(nextItem && nextItem.element || this.marker);
+			$[this.bottomUp? "after" : "before"](item.element, this.marker);
 		}
 
 		var env = {context: this, item};
@@ -234,19 +232,10 @@ var _ = Mavo.Collection = $.Class({
 		if (this.mutable) {
 			// Insert the add button if it's not already in the DOM
 			if (!this.addButton.parentNode) {
-				if (this.bottomUp) {
-					this.addButton._.before($.value(this.children[0], "element") || this.marker);
-				}
-				else {
-					var tag = this.element.tagName.toLowerCase();
-					var containerSelector = Mavo.selectors.container[tag];
-
-					if (containerSelector) {
-						var after = this.marker.parentNode.closest(containerSelector);
-					}
-
-					this.addButton._.after(after && after.parentNode? after : this.marker);
-				}
+				var tag = this.element.tagName.toLowerCase();
+				var containerSelector = Mavo.selectors.container[tag];
+				var rel = containerSelector? this.marker.parentNode.closest(containerSelector) : this.marker;
+				$[this.bottomUp? "before" : "after"](this.addButton, rel);
 			}
 
 			// Set up drag & drop
@@ -361,7 +350,7 @@ var _ = Mavo.Collection = $.Class({
 				Mavo.hooks.run("collection-add-end", env);
 			});
 
-			this.marker.parentNode.insertBefore(fragment, this.marker);
+			$[this.bottomUp? "after" : "before"](fragment, this.marker);
 		}
 	},
 

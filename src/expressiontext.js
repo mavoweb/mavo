@@ -148,6 +148,7 @@ var _ = Mavo.ExpressionText = $.Class({
 			this.primitive.value = ret;
 		}
 		else {
+			ret = ret.presentational || ret;
 			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
 		}
 

@@ -3081,9 +3081,7 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.mutable) {
 			// Add it to the DOM, or fix its place
-			var nextItem = this.children[index];
-
-			item.element._.before(nextItem && nextItem.element || this.marker);
+			$[this.bottomUp? "after" : "before"](item.element, this.marker);
 		}
 
 		var env = {context: this, item};
@@ -3204,19 +3202,10 @@ var _ = Mavo.Collection = $.Class({
 		if (this.mutable) {
 			// Insert the add button if it's not already in the DOM
 			if (!this.addButton.parentNode) {
-				if (this.bottomUp) {
-					this.addButton._.before($.value(this.children[0], "element") || this.marker);
-				}
-				else {
-					var tag = this.element.tagName.toLowerCase();
-					var containerSelector = Mavo.selectors.container[tag];
-
-					if (containerSelector) {
-						var after = this.marker.parentNode.closest(containerSelector);
-					}
-
-					this.addButton._.after(after && after.parentNode? after : this.marker);
-				}
+				var tag = this.element.tagName.toLowerCase();
+				var containerSelector = Mavo.selectors.container[tag];
+				var rel = containerSelector? this.marker.parentNode.closest(containerSelector) : this.marker;
+				$[this.bottomUp? "before" : "after"](this.addButton, rel);
 			}
 
 			// Set up drag & drop
@@ -3331,7 +3320,7 @@ var _ = Mavo.Collection = $.Class({
 				Mavo.hooks.run("collection-add-end", env);
 			});
 
-			this.marker.parentNode.insertBefore(fragment, this.marker);
+			$[this.bottomUp? "after" : "before"](fragment, this.marker);
 		}
 	},
 
@@ -4081,6 +4070,7 @@ var _ = Mavo.ExpressionText = $.Class({
 			this.primitive.value = ret;
 		}
 		else {
+			ret = ret.presentational || ret;
 			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
 		}
 
@@ -4197,7 +4187,7 @@ var _ = Mavo.Expressions = $.Class({
 		rootGroup.walk((obj, path) => {
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				let env = { context: this, data: $.value(data, ...path) };
-
+// if (evt && evt.action == "delete") console.log(data, path, env.data, obj.element);
 				Mavo.hooks.run("expressions-update-start", env);
 
 				for (let et of obj.expressions) {
