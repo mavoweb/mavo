@@ -99,6 +99,8 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
+		this.postInit();
+
 		Mavo.hooks.run("primitive-init-end", this);
 	},
 

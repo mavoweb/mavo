@@ -30,6 +30,8 @@ var _ = Mavo.Collection = $.Class({
 			this.itemTemplate = item.template || item;
 		}
 
+		this.postInit();
+
 		Mavo.hooks.run("collection-init-end", this);
 	},
 

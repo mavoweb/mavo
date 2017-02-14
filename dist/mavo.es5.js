@@ -1803,6 +1803,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.property ? [].concat(_toConsumableArray(path), [this.property]) : path;
 		},
 
+		/**
+   * Runs after the constructor is done (including the constructor of the inheriting class), synchronously
+   */
+		postInit: function postInit() {
+			if (this.modes == "edit") {
+				this.edit();
+			}
+		},
+
 		getData: function getData() {
 			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -2119,6 +2128,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var vocabElement = (this.isRoot ? this.element.closest("[vocab]") : null) || this.element;
 			this.vocab = vocabElement.getAttribute("vocab");
 
+			this.postInit();
+
 			Mavo.hooks.run("group-init-end", this);
 		},
 
@@ -2396,6 +2407,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this.value = _this.getValue();
 				}
 			});
+
+			this.postInit();
 
 			Mavo.hooks.run("primitive-init-end", this);
 		},
@@ -3349,6 +3362,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.add(item);
 				this.itemTemplate = item.template || item;
 			}
+
+			this.postInit();
 
 			Mavo.hooks.run("collection-init-end", this);
 		},

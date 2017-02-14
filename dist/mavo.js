@@ -1548,6 +1548,15 @@ var _ = Mavo.Node = $.Class({
 		return this.property? [...path, this.property] : path;
 	},
 
+	/**
+	 * Runs after the constructor is done (including the constructor of the inheriting class), synchronously
+	 */
+	postInit: function() {
+		if (this.modes == "edit") {
+			this.edit();
+		}
+	},
+
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
 			return null;
@@ -1826,6 +1835,8 @@ var _ = Mavo.Group = $.Class({
 		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
 		this.vocab = vocabElement.getAttribute("vocab");
 
+		this.postInit();
+
 		Mavo.hooks.run("group-init-end", this);
 	},
 
@@ -2072,6 +2083,8 @@ var _ = Mavo.Primitive = $.Class({
 				this.value = this.getValue();
 			}
 		});
+
+		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
 	},
@@ -2986,6 +2999,8 @@ var _ = Mavo.Collection = $.Class({
 			this.add(item);
 			this.itemTemplate = item.template || item;
 		}
+
+		this.postInit();
 
 		Mavo.hooks.run("collection-init-end", this);
 	},

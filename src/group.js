@@ -53,6 +53,8 @@ var _ = Mavo.Group = $.Class({
 		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
 		this.vocab = vocabElement.getAttribute("vocab");
 
+		this.postInit();
+
 		Mavo.hooks.run("group-init-end", this);
 	},
 

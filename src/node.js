@@ -77,6 +77,15 @@ var _ = Mavo.Node = $.Class({
 		return this.property? [...path, this.property] : path;
 	},
 
+	/**
+	 * Runs after the constructor is done (including the constructor of the inheriting class), synchronously
+	 */
+	postInit: function() {
+		if (this.modes == "edit") {
+			this.edit();
+		}
+	},
+
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
 			return null;
