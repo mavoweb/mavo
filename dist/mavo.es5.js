@@ -422,7 +422,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Is there any control that requires an edit button?
 			this.needsEdit = this.some(function (obj) {
-				return obj.modes == "read edit" || obj.modes === undefined;
+				return !obj.modes && obj.mode == "read";
 			});
 
 			this.setUnsavedChanges(false);
@@ -443,45 +443,45 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_this.element.setAttribute("mv-permissions", permissions.join(" "));
 			});
 
-			this.permissions.can(["edit", "add", "delete"], function () {
-				_this.ui.edit = $.create("button", {
-					className: "mv-edit",
-					textContent: "Edit",
-					onclick: function onclick(e) {
-						return _this.editing ? _this.done() : _this.edit();
-					},
-					inside: _this.ui.bar
-				});
+			if (this.needsEdit) {
+				this.permissions.can(["edit", "add", "delete"], function () {
+					_this.ui.edit = $.create("button", {
+						className: "mv-edit",
+						textContent: "Edit",
+						onclick: function onclick(e) {
+							return _this.editing ? _this.done() : _this.edit();
+						},
+						inside: _this.ui.bar
+					});
 
-				_this.needsEdit = _this.needsEdit;
+					if (_this.autoEdit) {
+						_this.ui.edit.click();
+					}
+				}, function () {
+					// cannot
+					$.remove(_this.ui.edit);
 
-				if (_this.autoEdit) {
-					_this.ui.edit.click();
-				}
-			}, function () {
-				// cannot
-				$.remove(_this.ui.edit);
-
-				if (_this.editing) {
-					_this.done();
-				}
-			});
-
-			this.permissions.can("delete", function () {
-				_this.ui.clear = $.create("button", {
-					className: "mv-clear",
-					textContent: "Clear",
-					onclick: function onclick(e) {
-						return _this.clear();
+					if (_this.editing) {
+						_this.done();
 					}
 				});
+			}
 
-				_this.ui.bar.appendChild(_this.ui.clear);
-			});
+			if (this.storage) {
+				this.permissions.can("delete", function () {
+					_this.ui.clear = $.create("button", {
+						className: "mv-clear",
+						textContent: "Clear",
+						onclick: function onclick(e) {
+							return _this.clear();
+						}
+					});
 
-			this.permissions.cannot(["delete", "edit"], function () {
-				$.remove(_this.ui.clear);
-			});
+					_this.ui.bar.appendChild(_this.ui.clear);
+				}, function () {
+					$.remove(_this.ui.clear);
+				});
+			}
 
 			if (this.storage || this.source) {
 				// Fetch existing data
@@ -842,7 +842,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			needsEdit: function needsEdit(value) {
-				$.toggleAttribute(this.ui.edit, "hidden", "", !value);
+				$.remove(this.ui.edit);
 			}
 		},
 
@@ -1761,6 +1761,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.mavo = mavo;
+			this.group = this.parentGroup = env.options.group;
 
 			if (!this.fromTemplate("property", "type", "modes")) {
 				this.property = _.getProperty(element);
@@ -1775,8 +1776,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 
 			this.mode = this.modes || "read";
-
-			this.group = this.parentGroup = env.options.group;
 
 			Mavo.hooks.run("node-init-end", env);
 		},

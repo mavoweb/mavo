@@ -373,7 +373,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-after", this);
 
 		// Is there any control that requires an edit button?
-		this.needsEdit = this.some(obj => obj.modes == "read edit" || obj.modes === undefined);
+		this.needsEdit = this.some(obj => !obj.modes && obj.mode == "read");
 
 		this.setUnsavedChanges(false);
 
@@ -388,40 +388,40 @@ var _ = self.Mavo = $.Class({
 			this.element.setAttribute("mv-permissions", permissions.join(" "));
 		});
 
-		this.permissions.can(["edit", "add", "delete"], () => {
-			this.ui.edit = $.create("button", {
-				className: "mv-edit",
-				textContent: "Edit",
-				onclick: e => this.editing? this.done() : this.edit(),
-				inside: this.ui.bar
+		if (this.needsEdit) {
+			this.permissions.can(["edit", "add", "delete"], () => {
+				this.ui.edit = $.create("button", {
+					className: "mv-edit",
+					textContent: "Edit",
+					onclick: e => this.editing? this.done() : this.edit(),
+					inside: this.ui.bar
+				});
+
+				if (this.autoEdit) {
+					this.ui.edit.click();
+				}
+			}, () => { // cannot
+				$.remove(this.ui.edit);
+
+				if (this.editing) {
+					this.done();
+				}
 			});
+		}
 
-			this.needsEdit = this.needsEdit;
+		if (this.storage) {
+			this.permissions.can("delete", () => {
+				this.ui.clear = $.create("button", {
+					className: "mv-clear",
+					textContent: "Clear",
+					onclick: e => this.clear()
+				});
 
-			if (this.autoEdit) {
-				this.ui.edit.click();
-			}
-		}, () => { // cannot
-			$.remove(this.ui.edit);
-
-			if (this.editing) {
-				this.done();
-			}
-		});
-
-		this.permissions.can("delete", () => {
-			this.ui.clear = $.create("button", {
-				className: "mv-clear",
-				textContent: "Clear",
-				onclick: e => this.clear()
+				this.ui.bar.appendChild(this.ui.clear);
+			}, () => {
+				$.remove(this.ui.clear);
 			});
-
-			this.ui.bar.appendChild(this.ui.clear);
-		});
-
-		this.permissions.cannot(["delete", "edit"], () => {
-			$.remove(this.ui.clear);
-		});
+		}
 
 		if (this.storage || this.source) {
 			// Fetch existing data
@@ -754,7 +754,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			$.toggleAttribute(this.ui.edit, "hidden", "", !value);
+			$.remove(this.ui.edit);
 		}
 	},
 
@@ -1508,6 +1508,7 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		this.mavo = mavo;
+		this.group = this.parentGroup = env.options.group;
 
 		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
@@ -1522,8 +1523,6 @@ var _ = Mavo.Node = $.Class({
 		});
 
 		this.mode = this.modes || "read";
-
-		this.group = this.parentGroup = env.options.group;
 
 		Mavo.hooks.run("node-init-end", env);
 	},
