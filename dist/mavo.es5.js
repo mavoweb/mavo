@@ -422,7 +422,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Is there any control that requires an edit button?
 			this.needsEdit = this.some(function (obj) {
-				return !obj.modes && obj.mode == "read";
+				return obj != _this.root && !obj.modes && obj.mode == "read";
 			});
 
 			this.setUnsavedChanges(false);

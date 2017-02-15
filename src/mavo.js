@@ -169,7 +169,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-tree-after", this);
 
 		// Is there any control that requires an edit button?
-		this.needsEdit = this.some(obj => !obj.modes && obj.mode == "read");
+		this.needsEdit = this.some(obj => obj != this.root && !obj.modes && obj.mode == "read");
 
 		this.setUnsavedChanges(false);
 
