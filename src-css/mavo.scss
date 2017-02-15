@@ -1,7 +1,7 @@
 @import 'defs';
 
 // Polyfill
-[hidden] {
+[mv-app] [hidden] {
 	display: none;
 }
 
@@ -221,10 +221,7 @@ button.mv-close {
 	}
 
 	&:not([mv-mode="edit"]) {
-		.mv-empty,
-		&:not(.mv-unsaved-changes) .mv-save,
-		&:not(.mv-unsaved-changes) .mv-revert,
-		&:not(.mv-unsaved-changes) .mv-clear {
+		.mv-empty {
 			display: none;
 		}
 	}

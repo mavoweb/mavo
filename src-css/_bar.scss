@@ -7,7 +7,6 @@
 	background: url("http://mavo.io/logo.svg") .5em 50% / auto 50% no-repeat,
 				linear-gradient(transparent, hsla(0,0%,15%,.5));
 	background-color: hsla(0,0%,25%,.9);
-	backdrop-filter: blur(3px);
 	font-family: inherit;
 	font-size: 1rem;
 	line-height: 1.5;
@@ -134,7 +133,7 @@
 
 	.mv-clear {
 		order: 9999;
-		
+
 		&::before {
 			@extend %rubbish-bin;
 			vertical-align: -.25em;
@@ -144,10 +143,6 @@
 
 		&:enabled:hover {
 			background: #b00;
-		}
-
-		[mv-app]:not([mv-mode="edit"]) & {
-			display: none;
 		}
 	}
 

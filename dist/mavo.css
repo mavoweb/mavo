@@ -19,7 +19,7 @@
   background-repeat: no-repeat;
   animation: loader .6s infinite; }
 
-[hidden] {
+[mv-app] [hidden] {
   display: none; }
 
 .mv-highlight {
@@ -170,10 +170,7 @@ button.mv-close {
 [mv-app].mv-highlight-unsaved .mv-unsaved-changes {
   box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
 
-[mv-app]:not([mv-mode="edit"]) .mv-empty,
-[mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-save,
-[mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-revert,
-[mv-app]:not([mv-mode="edit"]):not(.mv-unsaved-changes) .mv-clear {
+[mv-app]:not([mv-mode="edit"]) .mv-empty {
   display: none; }
 
 [mv-app][mv-mode="edit"] .mv-empty,
@@ -319,8 +316,6 @@ p.mv-error {
   padding: 0 .5em 0 6em;
   background: url("http://mavo.io/logo.svg") 0.5em 50%/auto 50% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
   background-color: rgba(64, 64, 64, 0.9);
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
   font-family: inherit;
   font-size: 1rem;
   line-height: 1.5; }
@@ -405,8 +400,6 @@ p.mv-error {
       filter: saturate(0) brightness(600%); }
     .mv-bar .mv-clear:enabled:hover {
       background: #b00; }
-    [mv-app]:not([mv-mode="edit"]) .mv-bar .mv-clear {
-      display: none; }
   .mv-bar .mv-status {
     -ms-flex: 1;
     flex: 1;
