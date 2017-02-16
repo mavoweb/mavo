@@ -106,7 +106,6 @@ gulp.task("watch", function() {
 	gulp.watch(dependencies, ["lib"]);
 	gulp.watch(["src/*.js", "lib/*.js"], ["concat"]);
 	gulp.watch(["dist/mavo.js"], ["transpile"]);
-	gulp.watch(["dist/mavo.es5.js"], ["minify"]);
 	gulp.watch(["**/*.scss"], ["sass"]);
 });
 
