@@ -1,4 +1,4 @@
-.mv-bar {
+.mv-bar.mv-ui {
 	all: initial;
 	visibility: inherit;
 	display: flex;
@@ -10,10 +10,6 @@
 	font-family: inherit;
 	font-size: 1rem;
 	line-height: 1.5;
-
-	&[hidden] {
-		display: none;
-	}
 
 	a {
 		text-decoration: none;
@@ -167,9 +163,5 @@
 				box-shadow: 0 1px .1em black inset;
 			}
 		}
-	}
-
-	.mv-status:empty {
-		content: "Not logged in";
 	}
 }

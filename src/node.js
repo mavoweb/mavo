@@ -25,6 +25,7 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		this.mavo = mavo;
+		this.group = this.parentGroup = env.options.group;
 
 		if (!this.fromTemplate("property", "type", "modes")) {
 			this.property = _.getProperty(element);
@@ -39,8 +40,6 @@ var _ = Mavo.Node = $.Class({
 		});
 
 		this.mode = this.modes || "read";
-
-		this.group = this.parentGroup = env.options.group;
 
 		Mavo.hooks.run("node-init-end", env);
 	},
