@@ -281,7 +281,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index);
 			this.element.setAttribute("mv-app", this.id);
 
-			this.unhandled = this.element.classList.contains("mv-keep-unhandled");
 			this.autoEdit = this.element.classList.contains("mv-autoedit");
 			this.autoSave = this.element.classList.contains("mv-autosave");
 
@@ -893,9 +892,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			plugin: function plugin(o) {
-				for (var hook in o.hooks) {
-					_.hooks.add(hook, o.hooks[hook]);
-				}
+				_.hooks.add(o.hooks);
 
 				for (var Class in o.extend) {
 					$.Class(Mavo[Class], o.extend[Class]);
@@ -1605,7 +1602,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getFile: function getFile() {
-			var data = this.mavo.getData({ unhandled: true });
+			var data = this.mavo.getData();
 
 			return {
 				data: data,
@@ -2174,9 +2171,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			if (env.options.unhandled) {
-				$.extend(env.data, this.unhandled);
-			}
+			$.extend(env.data, this.unhandled);
 
 			// JSON-LD stuff
 			if (this.type && this.type != _.DEFAULT_TYPE) {
@@ -3431,7 +3426,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			if (this.unhandled && env.options.unhandled) {
+			if (this.unhandled) {
 				env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 			}
 
@@ -4776,8 +4771,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var data = rootGroup.getData({
 				relative: true,
 				store: "*",
-				null: true,
-				unhandled: this.mavo.unhandled
+				null: true
 			});
 
 			rootGroup.walk(function (obj, path) {
@@ -4886,9 +4880,36 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	if (self.Proxy) {
-		Mavo.hooks.add("node-getdata-end", function (env) {
+	Mavo.hooks.add({
+		"init-tree-before": function initTreeBefore() {
+			this.expressions = new Mavo.Expressions(this);
+		},
+		// Must be at a hook that collections don't have a marker yet which messes up paths
+		"node-init-end": function nodeInitEnd() {
 			var _this4 = this;
+
+			var template = this.template;
+
+			if (template && template.expressions) {
+				// We know which expressions we have, don't traverse again
+				this.expressions = template.expressions.map(function (et) {
+					return new Mavo.ExpressionText({
+						template: et,
+						item: _this4,
+						mavo: _this4.mavo
+					});
+				});
+			}
+		},
+		// TODO what about granular rendering?
+		"render-end": function renderEnd() {
+			this.expressions.update();
+		},
+		"collection-add-end": function collectionAddEnd(env) {
+			this.mavo.expressions.update(env.item.element);
+		},
+		"node-getdata-end": self.Proxy && function (env) {
+			var _this5 = this;
 
 			if (env.options.relative && (env.data && _typeof(env.data) === "object" || this.collection)) {
 				var data = env.data;
@@ -4917,31 +4938,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// Property does not exist, look for it elsewhere
 
 						if (property == "$index") {
-							return data[property] = (_this4.index || 0) + 1;
+							return data[property] = (_this5.index || 0) + 1;
 						}
 
 						if (property == "$all") {
-							return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
+							return data[property] = _this5.closestCollection ? _this5.closestCollection.getData(env.options) : [env.data];
 						}
 
 						if (property == "$next" || property == "$previous") {
-							if (_this4.closestCollection) {
-								return data[property] = _this4.closestCollection.getData(env.options)[_this4.index + (property == "$next" ? 1 : -1)];
+							if (_this5.closestCollection) {
+								return data[property] = _this5.closestCollection.getData(env.options)[_this5.index + (property == "$next" ? 1 : -1)];
 							}
 
 							return data[property] = null;
 						}
 
-						if (property == _this4.mavo.id) {
-							return data[property] = _this4.mavo.root.getData(env.options);
+						if (property == _this5.mavo.id) {
+							return data[property] = _this5.mavo.root.getData(env.options);
 						}
 
-						if (_this4 instanceof Mavo.Group && property == _this4.property && _this4.collection) {
+						if (_this5 instanceof Mavo.Group && property == _this5.property && _this5.collection) {
 							return data[property] = env.data;
 						}
 
 						// First look in ancestors
-						var ret = _this4.walkUp(function (group) {
+						var ret = _this5.walkUp(function (group) {
 							if (property in group.children) {
 								return group.children[property];
 							};
@@ -4949,7 +4970,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (ret === undefined) {
 							// Still not found, look in descendants
-							ret = _this4.find(property);
+							ret = _this5.find(property);
 						}
 
 						if (ret !== undefined) {
@@ -4976,28 +4997,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				});
 			}
-		});
-	}
-
-	Mavo.hooks.add("init-tree-before", function () {
-		this.expressions = new Mavo.Expressions(this);
-	});
-
-	// Must be at a hook that collections don't have a marker yet which messes up paths
-	Mavo.hooks.add("node-init-end", function () {
-		var _this5 = this;
-
-		var template = this.template;
-
-		if (template && template.expressions) {
-			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(function (et) {
-				return new Mavo.ExpressionText({
-					template: et,
-					item: _this5,
-					mavo: _this5.mavo
-				});
-			});
 		}
 	});
 

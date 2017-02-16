@@ -62,8 +62,7 @@ var _ = Mavo.Expressions = $.Class({
 		var data = rootGroup.getData({
 			relative: true,
 			store: "*",
-			null: true,
-			unhandled: this.mavo.unhandled
+			null: true
 		});
 
 		rootGroup.walk((obj, path) => {

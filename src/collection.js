@@ -56,7 +56,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		if (this.unhandled && env.options.unhandled) {
+		if (this.unhandled) {
 			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 		}
 

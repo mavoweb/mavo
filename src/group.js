@@ -85,9 +85,7 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
-		if (env.options.unhandled) {
-			$.extend(env.data, this.unhandled);
-		}
+		$.extend(env.data, this.unhandled);
 
 		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {

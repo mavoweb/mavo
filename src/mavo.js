@@ -28,7 +28,6 @@ var _ = self.Mavo = $.Class({
 		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
 		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 		this.autoSave = this.element.classList.contains("mv-autosave");
 

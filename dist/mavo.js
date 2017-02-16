@@ -232,7 +232,6 @@ var _ = self.Mavo = $.Class({
 		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
 		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
@@ -1366,7 +1365,7 @@ var _ = Mavo.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	getFile: function() {
-		var data = this.mavo.getData({unhandled: true});
+		var data = this.mavo.getData();
 
 		return {
 			data,
@@ -1879,9 +1878,7 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
-		if (env.options.unhandled) {
-			$.extend(env.data, this.unhandled);
-		}
+		$.extend(env.data, this.unhandled);
 
 		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {
@@ -3045,7 +3042,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		if (this.unhandled && env.options.unhandled) {
+		if (this.unhandled) {
 			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 		}
 
@@ -4199,8 +4196,7 @@ var _ = Mavo.Expressions = $.Class({
 		var data = rootGroup.getData({
 			relative: true,
 			store: "*",
-			null: true,
-			unhandled: this.mavo.unhandled
+			null: true
 		});
 
 		rootGroup.walk((obj, path) => {
