@@ -782,9 +782,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		plugin: function(o) {
-			for (let hook in o.hooks) {
-				_.hooks.add(hook, o.hooks[hook]);
-			}
+			_.hooks.add(o.hooks);
 
 			for (let Class in o.extend) {
 				$.Class(Mavo[Class], o.extend[Class]);
@@ -4281,8 +4279,31 @@ var _ = Mavo.Expressions = $.Class({
 	}
 });
 
-if (self.Proxy) {
-	Mavo.hooks.add("node-getdata-end", function(env) {
+Mavo.hooks.add({
+	"init-tree-before": function() {
+		this.expressions = new Mavo.Expressions(this);
+	},
+	// Must be at a hook that collections don't have a marker yet which messes up paths
+	"node-init-end": function() {
+		var template = this.template;
+
+		if (template && template.expressions) {
+			// We know which expressions we have, don't traverse again
+			this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
+				template: et,
+				item: this,
+				mavo: this.mavo
+			}));
+		}
+	},
+	// TODO what about granular rendering?
+	"render-end": function() {
+		this.expressions.update();
+	},
+	"collection-add-end": function(env) {
+		this.mavo.expressions.update(env.item.element);
+	},
+	"node-getdata-end": self.Proxy && function(env) {
 		if (env.options.relative && (env.data && typeof env.data === "object" || this.collection)) {
 			var data = env.data;
 
@@ -4366,34 +4387,7 @@ if (self.Proxy) {
 				}
 			});
 		}
-	});
-}
-
-Mavo.hooks.add("init-tree-before", function() {
-	this.expressions = new Mavo.Expressions(this);
-});
-
-// Must be at a hook that collections don't have a marker yet which messes up paths
-Mavo.hooks.add("node-init-end", function() {
-	var template = this.template;
-
-	if (template && template.expressions) {
-		// We know which expressions we have, don't traverse again
-		this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
-			template: et,
-			item: this,
-			mavo: this.mavo
-		}));
 	}
-});
-
-// TODO what about granular rendering?
-Mavo.hooks.add("render-end", function() {
-	this.expressions.update();
-});
-
-Mavo.hooks.add("collection-add-end", function(env) {
-	this.mavo.expressions.update(env.item.element);
 });
 
 })(Bliss, Bliss.$);

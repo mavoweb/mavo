@@ -578,9 +578,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		plugin: function(o) {
-			for (let hook in o.hooks) {
-				_.hooks.add(hook, o.hooks[hook]);
-			}
+			_.hooks.add(o.hooks);
 
 			for (let Class in o.extend) {
 				$.Class(Mavo[Class], o.extend[Class]);
