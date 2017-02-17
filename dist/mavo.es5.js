@@ -2689,6 +2689,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if ((typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") {
+				console.log("obj", this.property, data);
 				data = data[this.property];
 			}
 
@@ -3809,26 +3810,36 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.unhandled.after = data.slice(this.length);
 				}
 			} else {
-				this.clear();
+				// First render on existing items
+				for (var i = 0; i < this.children.length; i++) {
+					if (i < data.length) {
+						this.children[i].render(data[i]);
+					} else {
+						this.delete(this.children[i], true);
+					}
+				}
 
-				// Using document fragments improved rendering performance by 60%
-				var fragment = document.createDocumentFragment();
+				if (data.length > i) {
+					// There are still remaining items
+					// Using document fragments improves performance by 60%
+					var fragment = document.createDocumentFragment();
 
-				data.forEach(function (datum, i) {
-					var item = _this4.createItem();
+					data.slice(i).forEach(function (datum, i) {
+						var item = _this4.createItem();
 
-					item.render(datum);
+						item.render(datum);
 
-					_this4.children.push(item);
-					item.index = i;
+						_this4.children.push(item);
+						item.index = i;
 
-					fragment.appendChild(item.element);
+						fragment.appendChild(item.element);
 
-					var env = { context: _this4, item: item };
-					Mavo.hooks.run("collection-add-end", env);
-				});
+						var env = { context: _this4, item: item };
+						Mavo.hooks.run("collection-add-end", env);
+					});
 
-				$[this.bottomUp ? "after" : "before"](fragment, this.marker);
+					$[this.bottomUp ? "after" : "before"](fragment, this.marker);
+				}
 			}
 		},
 
@@ -4707,7 +4718,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
 
 		if (this.expressionText) {
-			console.log("primitive", this, this.expressionText);
 			this.expressionText.primitive = this;
 			this.storage = this.storage || "none";
 			this.modes = "read";
@@ -4792,7 +4802,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
 
 					Mavo.hooks.run("expressions-update-start", env);
-					if (obj.expressions) console.log("rendering", obj);
 					var _iteratorNormalCompletion = true;
 					var _didIteratorError = false;
 					var _iteratorError = undefined;
@@ -5211,18 +5220,17 @@ Mavo.Expressions.directive("mv-value", {
 				return;
 			}
 
-			// if (this.mavoNode.collection) {
-			// 	this.element = null;
-			// 	this.mavoNode.collection.expressions = this.mavoNode.expressions;
-			// 	this.mavoNode.expressions = undefined;
-			// 	this.mavoNode = this.mavoNode.collection;
-			// 	console.log("node changed", this.mavoNode);
-			// }
+			if (this.mavoNode.collection) {
+				this.element = null;
+				this.mavoNode.collection.expressions = this.mavoNode.expressions;
+				this.mavoNode.expressions = undefined;
+				this.mavoNode = this.mavoNode.collection;
+			}
 
 			this.output = function (value) {
 				value = value.value || value;
 
-				(this.mavoNode.collection || this.mavoNode).render(value);
+				this.mavoNode.render(value);
 			};
 
 			this.changedBy = function (evt) {

@@ -63,7 +63,6 @@ var _ = Mavo.Expressions = $.Class({
 				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
-if (obj.expressions) console.log("rendering", obj);
 				for (let et of obj.expressions) {
 					if (et.changedBy(evt)) {
 						et.update(env.data, evt);

@@ -206,7 +206,6 @@ Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
 
 	if (this.expressionText) {
-		console.log("primitive", this, this.expressionText);
 		this.expressionText.primitive = this;
 		this.storage = this.storage || "none";
 		this.modes = "read";

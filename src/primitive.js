@@ -357,6 +357,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (typeof data === "object") {
+			console.log("obj", this.property, data);
 			data = data[this.property];
 		}
 
@@ -413,7 +414,7 @@ var _ = Mavo.Primitive = $.Class({
 				var presentational = value.presentational;
 				value = value.value;
 			}
-			
+
 			value = value || value === 0? value : "";
 			value = _.safeCast(value, this.datatype);
 

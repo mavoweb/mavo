@@ -2357,6 +2357,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (typeof data === "object") {
+			console.log("obj", this.property, data);
 			data = data[this.property];
 		}
 
@@ -2413,7 +2414,7 @@ var _ = Mavo.Primitive = $.Class({
 				var presentational = value.presentational;
 				value = value.value;
 			}
-			
+
 			value = value || value === 0? value : "";
 			value = _.safeCast(value, this.datatype);
 
@@ -3318,26 +3319,37 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 		else {
-			this.clear();
+			// First render on existing items
+			for (var i = 0; i < this.children.length; i++) {
+				if (i < data.length) {
+					this.children[i].render(data[i]);
+				}
+				else {
+					this.delete(this.children[i], true);
+				}
+			}
 
-			// Using document fragments improved rendering performance by 60%
-			var fragment = document.createDocumentFragment();
+			if (data.length > i) {
+				// There are still remaining items
+				// Using document fragments improves performance by 60%
+				var fragment = document.createDocumentFragment();
 
-			data.forEach((datum, i) => {
-				var item = this.createItem();
-				
-				item.render(datum);
+				data.slice(i).forEach((datum, i) => {
+					var item = this.createItem();
 
-				this.children.push(item);
-				item.index = i;
+					item.render(datum);
 
-				fragment.appendChild(item.element);
+					this.children.push(item);
+					item.index = i;
 
-				var env = {context: this, item};
-				Mavo.hooks.run("collection-add-end", env);
-			});
+					fragment.appendChild(item.element);
 
-			$[this.bottomUp? "after" : "before"](fragment, this.marker);
+					var env = {context: this, item};
+					Mavo.hooks.run("collection-add-end", env);
+				});
+
+				$[this.bottomUp? "after" : "before"](fragment, this.marker);
+			}
 		}
 	},
 
@@ -4158,7 +4170,6 @@ Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
 
 	if (this.expressionText) {
-		console.log("primitive", this, this.expressionText);
 		this.expressionText.primitive = this;
 		this.storage = this.storage || "none";
 		this.modes = "read";
@@ -4232,7 +4243,6 @@ var _ = Mavo.Expressions = $.Class({
 				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
-if (obj.expressions) console.log("rendering", obj);
 				for (let et of obj.expressions) {
 					if (et.changedBy(evt)) {
 						et.update(env.data, evt);
@@ -4560,18 +4570,17 @@ Mavo.Expressions.directive("mv-value", {
 				return;
 			}
 
-			// if (this.mavoNode.collection) {
-			// 	this.element = null;
-			// 	this.mavoNode.collection.expressions = this.mavoNode.expressions;
-			// 	this.mavoNode.expressions = undefined;
-			// 	this.mavoNode = this.mavoNode.collection;
-			// 	console.log("node changed", this.mavoNode);
-			// }
+			if (this.mavoNode.collection) {
+				this.element = null;
+				this.mavoNode.collection.expressions = this.mavoNode.expressions;
+				this.mavoNode.expressions = undefined;
+				this.mavoNode = this.mavoNode.collection;
+			}
 
 			this.output = function(value) {
 				value = value.value || value;
 
-				(this.mavoNode.collection || this.mavoNode).render(value);
+				this.mavoNode.render(value);
 			};
 
 			this.changedBy = evt => true;

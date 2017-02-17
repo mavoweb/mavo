@@ -21,18 +21,17 @@ Mavo.Expressions.directive("mv-value", {
 				return;
 			}
 
-			// if (this.mavoNode.collection) {
-			// 	this.element = null;
-			// 	this.mavoNode.collection.expressions = this.mavoNode.expressions;
-			// 	this.mavoNode.expressions = undefined;
-			// 	this.mavoNode = this.mavoNode.collection;
-			// 	console.log("node changed", this.mavoNode);
-			// }
+			if (this.mavoNode.collection) {
+				this.element = null;
+				this.mavoNode.collection.expressions = this.mavoNode.expressions;
+				this.mavoNode.expressions = undefined;
+				this.mavoNode = this.mavoNode.collection;
+			}
 
 			this.output = function(value) {
 				value = value.value || value;
 
-				(this.mavoNode.collection || this.mavoNode).render(value);
+				this.mavoNode.render(value);
 			};
 
 			this.changedBy = evt => true;

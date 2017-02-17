@@ -326,26 +326,37 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 		else {
-			this.clear();
+			// First render on existing items
+			for (var i = 0; i < this.children.length; i++) {
+				if (i < data.length) {
+					this.children[i].render(data[i]);
+				}
+				else {
+					this.delete(this.children[i], true);
+				}
+			}
 
-			// Using document fragments improved rendering performance by 60%
-			var fragment = document.createDocumentFragment();
+			if (data.length > i) {
+				// There are still remaining items
+				// Using document fragments improves performance by 60%
+				var fragment = document.createDocumentFragment();
 
-			data.forEach((datum, i) => {
-				var item = this.createItem();
-				
-				item.render(datum);
+				data.slice(i).forEach((datum, i) => {
+					var item = this.createItem();
 
-				this.children.push(item);
-				item.index = i;
+					item.render(datum);
 
-				fragment.appendChild(item.element);
+					this.children.push(item);
+					item.index = i;
 
-				var env = {context: this, item};
-				Mavo.hooks.run("collection-add-end", env);
-			});
+					fragment.appendChild(item.element);
 
-			$[this.bottomUp? "after" : "before"](fragment, this.marker);
+					var env = {context: this, item};
+					Mavo.hooks.run("collection-add-end", env);
+				});
+
+				$[this.bottomUp? "after" : "before"](fragment, this.marker);
+			}
 		}
 	},
 
