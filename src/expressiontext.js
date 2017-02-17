@@ -65,6 +65,19 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
 
+		this.mavo.treeBuilt.then(() => {
+			if (!this.template) {
+				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
+				this.item.expressions = this.item.expressions || [];
+				this.item.expressions.push(this);
+			}
+
+			// Is this expression on a Mavo node?
+			this.mavoNode = Mavo.Node.get(this.element, true);
+
+			Mavo.hooks.run("expressiontext-init-treebuilt", this);
+		});
+
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -74,19 +87,21 @@ var _ = Mavo.ExpressionText = $.Class({
 		return !this.parsed.every(expr => !(expr instanceof Mavo.Expression) || !expr.changedBy(evt));
 	},
 
-	update: function(data = this.data, evt) {
+	update: function(data = this.data, event) {
+		var env = {context: this, ret: {}, event};
+		var parentEnv = env;
 		this.data = data;
 
-		var ret = {};
+		env.ret = {};
 
-		Mavo.hooks.run("expressiontext-update-start", this);
+		Mavo.hooks.run("expressiontext-update-start", env);
 
 		this.oldValue = this.value;
 
-		ret.value = this.value = this.parsed.map((expr, i) => {
+		env.ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-				if (expr.changedBy(evt)) {
-					var env = {context: this, expr};
+				if (expr.changedBy(parentEnv.event)) {
+					var env = {context: this, expr, parentEnv};
 
 					Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
@@ -114,7 +129,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		if (!this.attribute) {
 			// Separate presentational & actual values only apply when content is variable
-			ret.presentational = this.value.map(value => {
+			env.ret.presentational = this.value.map(value => {
 				if (Array.isArray(value)) {
 					return value.join(", ");
 				}
@@ -126,33 +141,37 @@ var _ = Mavo.ExpressionText = $.Class({
 				return value;
 			});
 
-			ret.presentational = ret.presentational.length === 1? ret.presentational[0] : ret.presentational.join("");
+			env.ret.presentational = env.ret.presentational.length === 1? env.ret.presentational[0] : env.ret.presentational.join("");
 		}
 
-		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
+		env.ret.value = env.ret.value.length === 1? env.ret.value[0] : env.ret.value.join("");
 
 		if (this.primitive && this.parsed.length === 1) {
-			if (typeof ret.value === "number") {
+			if (typeof env.ret.value === "number") {
 				this.primitive.datatype = "number";
 			}
-			else if (typeof ret.value === "boolean") {
+			else if (typeof env.ret.value === "boolean") {
 				this.primitive.datatype = "boolean";
 			}
 		}
 
-		if (ret.presentational === ret.value) {
-			ret = ret.value;
+		if (env.ret.presentational === env.ret.value) {
+			ret = env.ret.value;
 		}
 
+		this.output(env.ret);
+
+		Mavo.hooks.run("expressiontext-update-end", env);
+	},
+
+	output: function(value) {
 		if (this.primitive) {
-			this.primitive.value = ret;
+			this.primitive.value = value;
 		}
 		else {
-			ret = ret.presentational || ret;
-			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
+			value = value.presentational || value;
+			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
 		}
-
-		Mavo.hooks.run("expressiontext-update-end", this);
 	},
 
 	static: {
@@ -182,12 +201,14 @@ var _ = Mavo.ExpressionText = $.Class({
 });
 
 // Link primitive with its expressionText object
+// We need to do it before its constructor runs, to avoid any editing UI being generated
 Mavo.hooks.add("primitive-init-start", function() {
 	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
 
 	if (this.expressionText) {
+		console.log("primitive", this, this.expressionText);
 		this.expressionText.primitive = this;
-		this.store = this.store || "none";
+		this.storage = this.storage || "none";
 		this.modes = "read";
 	}
 });

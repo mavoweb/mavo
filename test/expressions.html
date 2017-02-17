@@ -278,7 +278,7 @@
 	</table>
 </section>
 
-<section class="mv-app mv-keep-unhandled" mv-init="#countries">
+<section class="mv-app" mv-init="#countries">
 	<h1>Broad references</h1>
 
 	<table class="reftest">
@@ -352,7 +352,7 @@
 	</table>
 </section>
 
-<section class="mv-app">
+<section mv-app="mvvalue">
 	<h1>mv-value</h1>
 
 	<table class="reftest">
@@ -367,6 +367,42 @@
 		<tr>
 			<td><input mv-value="39 + 3" value="In attribute"></td>
 			<td><input value="42"></td>
+		</tr>
+		<tr title="Object">
+			<td>
+				<div property="group1" typeof mv-value="{foo: 1, bar: 2}">
+					[foo] + [bar] = [foo + bar]
+				</div>
+			</td>
+			<td>1 + 2 = 3</td>
+		</tr>
+		<tr title="Object with property">
+			<td>
+				<div property="group2" typeof mv-value="{foo: 1, bar: 2}">
+					<span property="bar">10</span>
+					<span property="prop1">3</span>
+					[foo + bar + prop1]
+				</div>
+			</td>
+			<td>2 3 6</td>
+		</tr>
+		<tr title="Collection">
+			<td>
+				<div property="collection1" mv-multiple typeof mv-value='[
+					{"number": 1},
+					{"number": 2},
+					{"number": 3}
+				]'>
+					#[number]
+				</div>
+			</td>
+			<td>#1<br>#2<br>#3</td>
+		</tr>
+		<tr title="Collection of primitives">
+			<td>
+				<span property="collection2" mv-multiple mv-value='[1, 2, 3]'></span>
+			</td>
+			<td>123</td>
 		</tr>
 	</table>
 </section>

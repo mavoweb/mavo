@@ -10,7 +10,8 @@
 
 body {
   max-width: 50em;
-  margin: auto; }
+  margin: auto;
+  counter-reset: failures; }
 
 a {
   color: var(--dark); }
@@ -139,6 +140,8 @@ table.reftest {
 table.reftest tr {
   margin: .4em 0;
   background: var(--color); }
+  table.reftest tr.fail {
+    counter-increment: failures; }
 
 table.reftest tr[title] {
   position: relative; }
@@ -155,5 +158,13 @@ table.reftest tr[title] {
     color: white;
     font: bold 75%/1 sans-serif;
     text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
+
+body::after {
+  content: counter(failures) " failure(s)";
+  position: fixed;
+  top: .6rem;
+  left: 1rem;
+  font: bold 200% Helvetica Neue, sans-serif;
+  color: #b00; }
 
 /*# sourceMappingURL=style.css.map */

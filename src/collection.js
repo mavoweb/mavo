@@ -333,7 +333,7 @@ var _ = Mavo.Collection = $.Class({
 
 			data.forEach((datum, i) => {
 				var item = this.createItem();
-
+				
 				item.render(datum);
 
 				this.children.push(item);

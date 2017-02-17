@@ -413,7 +413,7 @@ var _ = Mavo.Primitive = $.Class({
 				var presentational = value.presentational;
 				value = value.value;
 			}
-
+			
 			value = value || value === 0? value : "";
 			value = _.safeCast(value, this.datatype);
 

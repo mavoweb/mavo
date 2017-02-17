@@ -340,15 +340,17 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		_.hooks.run("render-start", {context: this, data});
+		var env = {context: this, data};
 
-		if (data) {
-			this.root.render(data);
+		_.hooks.run("render-start", env);
+
+		if (env.data) {
+			this.root.render(env.data);
 		}
 
 		this.unsavedChanges = false;
 
-		_.hooks.run("render-end", {context: this, data});
+		_.hooks.run("render-end", env);
 	},
 
 	clear: function() {
@@ -599,8 +601,8 @@ let s = _.selectors = {
 	init: ".mv-app, [mv-app], [data-mv-app], [mv-storage], [data-mv-storage]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[mv-multiple], .mv-multiple",
+	group: "[typeof], [itemscope], [itemtype], [mv-group]",
+	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	ui: ".mv-ui",
 	container: {

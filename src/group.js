@@ -159,13 +159,20 @@ var _ = Mavo.Group = $.Class({
 		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.children[this.property] with it
 
-		this.unhandled = $.extend({}, data, property => {
-			return !(property in this.children);
-		});
+		var oldUnhandled = this.unhandled;
+		this.unhandled = $.extend({}, data, property => !(property in this.children));
 
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
+
+		for (let property in this.unhandled) {
+			let value = this.unhandled[property];
+
+			if (typeof value != "object" && (!oldUnhandled || oldUnhandled[property] != value)) {
+				this.dataChanged("propertychange", {property});
+			}
+		}
 	},
 
 	// Check if this group contains a property
