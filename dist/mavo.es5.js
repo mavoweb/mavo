@@ -1750,6 +1750,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.nodeType = this.nodeType;
 			this.property = null;
 
+			$.extend(this, env.options);
+
 			_.all.set(element, [].concat(_toConsumableArray(_.all.get(this.element) || []), [this]));
 
 			this.element = element;
@@ -1771,6 +1773,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.store = this.element.getAttribute("mv-storage");
 				this.modes = this.element.getAttribute("mv-mode");
 			}
+
+			Mavo.hooks.run("node-init-start", env);
 
 			this.modeObserver = new Mavo.Observer(this.element, "mv-mode", function (records) {
 				_this.mode = _this.element.getAttribute("mv-mode");
@@ -4049,115 +4053,115 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	});
 
-	Mavo.hooks.add("primitive-init-end", function () {
-		var _this6 = this;
+	Mavo.hooks.add({
+		"primitive-init-end": function primitiveInitEnd() {
+			var _this6 = this;
 
-		if (this.collection && !this.attribute) {
-			// Collection of primitives, deal with setting textContent etc without the UI interfering.
-			var swapUI = function swapUI(callback) {
-				var ret;
+			if (this.collection && !this.attribute) {
+				// Collection of primitives, deal with setting textContent etc without the UI interfering.
+				var swapUI = function swapUI(callback) {
+					var ret;
 
-				_this6.sneak(function () {
-					var ui = $.remove($(".mv-item-controls", _this6.element));
+					_this6.sneak(function () {
+						var ui = $.remove($(".mv-item-controls", _this6.element));
 
-					ret = callback();
+						ret = callback();
 
-					$.inside(ui, _this6.element);
-				});
+						$.inside(ui, _this6.element);
+					});
 
-				return ret;
-			};
+					return ret;
+				};
 
-			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-			["textContent", "innerHTML"].forEach(function (property) {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+				// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+				["textContent", "innerHTML"].forEach(function (property) {
+					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-				Object.defineProperty(_this6.element, property, {
-					get: function get() {
-						var _this7 = this;
+					Object.defineProperty(_this6.element, property, {
+						get: function get() {
+							var _this7 = this;
 
-						return swapUI(function () {
-							return descriptor.get.call(_this7);
-						});
-					},
+							return swapUI(function () {
+								return descriptor.get.call(_this7);
+							});
+						},
 
-					set: function set(value) {
-						var _this8 = this;
+						set: function set(value) {
+							var _this8 = this;
 
-						swapUI(function () {
-							return descriptor.set.call(_this8, value);
-						});
-					}
-				});
-			});
-		}
-	});
-
-	Mavo.hooks.add("node-edit-end", function () {
-		var _this9 = this;
-
-		if (this.collection) {
-			if (!this.itemControls) {
-				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
-					return el.closest(Mavo.selectors.multiple) == _this9.element;
-				})[0];
-
-				this.itemControls = this.itemControls || $.create({
-					className: "mv-item-controls mv-ui"
-				});
-
-				$.set(this.itemControls, {
-					contents: [{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "mv-delete",
-						events: {
-							"click": function click(evt) {
-								return _this9.collection.delete(_this9);
-							}
+							swapUI(function () {
+								return descriptor.set.call(_this8, value);
+							});
 						}
-					}, {
-						tag: "button",
-						title: "Add new " + this.name.replace(/s$/i, "") + " " + (this.collection.bottomUp ? "after" : "before"),
-						className: "mv-add",
-						events: {
-							"click": function click(evt) {
-								var item = _this9.collection.add(null, _this9.index + _this9.collection.bottomUp);
-
-								if (evt[Mavo.superKey]) {
-									item.render(_this9.data);
-								}
-
-								if (!Mavo.inViewport(item.element)) {
-									item.element.scrollIntoView({ behavior: "smooth" });
-								}
-
-								return item.edit();
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + this.name,
-						className: "mv-drag-handle"
-					}]
+					});
 				});
 			}
+		},
+		"node-edit-end": function nodeEditEnd() {
+			var _this9 = this;
 
-			if (!this.itemControls.parentNode) {
-				if ($.value(this, "itemControlsComment", "parentNode")) {
-					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
-				} else {
-					this.element.appendChild(this.itemControls);
+			if (this.collection) {
+				if (!this.itemControls) {
+					this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
+						return el.closest(Mavo.selectors.multiple) == _this9.element;
+					})[0];
+
+					this.itemControls = this.itemControls || $.create({
+						className: "mv-item-controls mv-ui"
+					});
+
+					$.set(this.itemControls, {
+						contents: [{
+							tag: "button",
+							title: "Delete this " + this.name,
+							className: "mv-delete",
+							events: {
+								"click": function click(evt) {
+									return _this9.collection.delete(_this9);
+								}
+							}
+						}, {
+							tag: "button",
+							title: "Add new " + this.name.replace(/s$/i, "") + " " + (this.collection.bottomUp ? "after" : "before"),
+							className: "mv-add",
+							events: {
+								"click": function click(evt) {
+									var item = _this9.collection.add(null, _this9.index + _this9.collection.bottomUp);
+
+									if (evt[Mavo.superKey]) {
+										item.render(_this9.data);
+									}
+
+									if (!Mavo.inViewport(item.element)) {
+										item.element.scrollIntoView({ behavior: "smooth" });
+									}
+
+									return item.edit();
+								}
+							}
+						}, {
+							tag: "button",
+							title: "Drag to reorder " + this.name,
+							className: "mv-drag-handle"
+						}]
+					});
+				}
+
+				if (!this.itemControls.parentNode) {
+					if ($.value(this, "itemControlsComment", "parentNode")) {
+						this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+					} else {
+						this.element.appendChild(this.itemControls);
+					}
 				}
 			}
-		}
-	});
-
-	Mavo.hooks.add("node-done-end", function () {
-		if (this.collection) {
-			if (this.itemControls) {
-				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-				this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+		},
+		"node-done-end": function nodeDoneEnd() {
+			if (this.collection) {
+				if (this.itemControls) {
+					this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
+					this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+				}
 			}
 		}
 	});
@@ -4571,12 +4575,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mavo.treeBuilt.then(function () {
 				if (!_this.template) {
 					_this.item = Mavo.Node.get(_this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
-					_this.item.expressions = _this.item.expressions || [];
-					_this.item.expressions.push(_this);
+					_this.item.expressions = [].concat(_toConsumableArray(_this.item.expressions || []), [_this]);
 				}
-
-				// Is this expression on a Mavo node?
-				_this.mavoNode = Mavo.Node.get(_this.element, true);
 
 				Mavo.hooks.run("expressiontext-init-treebuilt", _this);
 			});
@@ -4710,12 +4710,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	// Link primitive with its expressionText object
-	// We need to do it before its constructor runs, to avoid any editing UI being generated
+	// We need to do it before its constructor runs, to prevent any editing UI from being generated
 	Mavo.hooks.add("primitive-init-start", function () {
-		this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
+		var et = Mavo.ExpressionText.search(this.element, this.attribute);
 
-		if (this.expressionText) {
-			this.expressionText.primitive = this;
+		if (et && !et.mavoNode) {
+			et.primitive = this;
 			this.storage = this.storage || "none";
 			this.modes = "read";
 		}
@@ -5195,9 +5195,33 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 // mv-value plugin
 Mavo.Expressions.directive("mv-value", {
 	hooks: {
+		"node-init-start": function nodeInitStart() {
+			if (!(this instanceof Mavo.Group || this.collection)) {
+				return;
+			}
+
+			var et = Mavo.ExpressionText.search(this.element).filter(function (et) {
+				return et.originalAttribute == "mv-value";
+			})[0];
+
+			if (!et) {
+				return;
+			}
+
+			et.mavoNode = this;
+			this.storage = this.storage || "none";
+			this.modes = "read";
+
+			if (this.collection) {
+				this.collection.expressions = [].concat(_toConsumableArray(this.collection.expressions || []), [et]);
+				et.mavoNode = this.collection;
+			}
+		},
 		"expressiontext-init-start": function expressiontextInitStart() {
 			if (this.attribute != "mv-value") {
 				return;
@@ -5213,15 +5237,12 @@ Mavo.Expressions.directive("mv-value", {
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
 		},
 		"expressiontext-init-treebuilt": function expressiontextInitTreebuilt() {
-			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
+			if (this.originalAttribute != "mv-value" || !this.mavoNode || !(this.mavoNode == this.item || this.mavoNode == this.item.collection)) {
 				return;
 			}
 
-			if (this.mavoNode.collection) {
-				this.element = null;
-				this.mavoNode.collection.expressions = this.mavoNode.expressions;
-				this.mavoNode.expressions = undefined;
-				this.mavoNode = this.mavoNode.collection;
+			if (this.mavoNode == this.item.collection) {
+				Mavo.delete(this.item.expressions, this);
 			}
 
 			this.output = function (value) {

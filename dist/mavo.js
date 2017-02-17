@@ -1496,6 +1496,8 @@ var _ = Mavo.Node = $.Class({
 		this.nodeType = this.nodeType;
 		this.property = null;
 
+		$.extend(this, env.options);
+
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
 		this.element = element;
@@ -1518,6 +1520,8 @@ var _ = Mavo.Node = $.Class({
 			this.store = this.element.getAttribute("mv-storage");
 			this.modes = this.element.getAttribute("mv-mode");
 		}
+
+		Mavo.hooks.run("node-init-start", env);
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			this.mode = this.element.getAttribute("mv-mode");
@@ -3548,103 +3552,103 @@ var _ = Mavo.Collection = $.Class({
 	}
 });
 
-Mavo.hooks.add("primitive-init-end", function() {
-	if (this.collection && !this.attribute) {
-		// Collection of primitives, deal with setting textContent etc without the UI interfering.
-		var swapUI = callback => {
-			var ret;
+Mavo.hooks.add({
+	"primitive-init-end": function() {
+		if (this.collection && !this.attribute) {
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
+			var swapUI = callback => {
+				var ret;
 
-			this.sneak(() => {
-				var ui = $.remove($(".mv-item-controls", this.element));
+				this.sneak(() => {
+					var ui = $.remove($(".mv-item-controls", this.element));
 
-				ret = callback();
+					ret = callback();
 
-				$.inside(ui, this.element);
-			});
+					$.inside(ui, this.element);
+				});
 
-			return ret;
-		};
+				return ret;
+			};
 
-		// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-		["textContent", "innerHTML"].forEach(property => {
-			var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+			["textContent", "innerHTML"].forEach(property => {
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-			Object.defineProperty(this.element, property, {
-				get: function() {
-					return swapUI(() => descriptor.get.call(this));
-				},
+				Object.defineProperty(this.element, property, {
+					get: function() {
+						return swapUI(() => descriptor.get.call(this));
+					},
 
-				set: function(value) {
-					swapUI(() => descriptor.set.call(this, value));
-				}
-			});
-		});
-	}
-});
-
-Mavo.hooks.add("node-edit-end", function() {
-	if (this.collection) {
-		if (!this.itemControls) {
-			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
-
-			this.itemControls = this.itemControls || $.create({
-				className: "mv-item-controls mv-ui"
-			});
-
-			$.set(this.itemControls, {
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => this.collection.delete(this)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => {
-								var item = this.collection.add(null, this.index + this.collection.bottomUp);
-
-								if (evt[Mavo.superKey]) {
-									item.render(this.data);
-								}
-
-								if (!Mavo.inViewport(item.element)) {
-									item.element.scrollIntoView({behavior: "smooth"});
-								}
-
-								return item.edit();
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + this.name,
-						className: "mv-drag-handle"
+					set: function(value) {
+						swapUI(() => descriptor.set.call(this, value));
 					}
-				]
+				});
 			});
 		}
+	},
+	"node-edit-end": function() {
+		if (this.collection) {
+			if (!this.itemControls) {
+				this.itemControls = $$(".mv-item-controls", this.element)
+									   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
 
-		if (!this.itemControls.parentNode) {
-			if ($.value(this, "itemControlsComment", "parentNode")) {
-				this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				this.itemControls = this.itemControls || $.create({
+					className: "mv-item-controls mv-ui"
+				});
+
+				$.set(this.itemControls, {
+					contents: [
+						{
+							tag: "button",
+							title: "Delete this " + this.name,
+							className: "mv-delete",
+							events: {
+								"click": evt => this.collection.delete(this)
+							}
+						}, {
+							tag: "button",
+							title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
+							className: "mv-add",
+							events: {
+								"click": evt => {
+									var item = this.collection.add(null, this.index + this.collection.bottomUp);
+
+									if (evt[Mavo.superKey]) {
+										item.render(this.data);
+									}
+
+									if (!Mavo.inViewport(item.element)) {
+										item.element.scrollIntoView({behavior: "smooth"});
+									}
+
+									return item.edit();
+								}
+							}
+						}, {
+							tag: "button",
+							title: "Drag to reorder " + this.name,
+							className: "mv-drag-handle"
+						}
+					]
+				});
 			}
-			else {
-				this.element.appendChild(this.itemControls);
+
+			if (!this.itemControls.parentNode) {
+				if ($.value(this, "itemControlsComment", "parentNode")) {
+					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				}
+				else {
+					this.element.appendChild(this.itemControls);
+				}
 			}
 		}
-	}
-});
-
-Mavo.hooks.add("node-done-end", function() {
-	if (this.collection) {
-		if (this.itemControls) {
-			this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-			this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+	},
+	"node-done-end": function() {
+		if (this.collection) {
+			if (this.itemControls) {
+				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
+				this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+			}
 		}
 	}
 });
@@ -4031,12 +4035,8 @@ var _ = Mavo.ExpressionText = $.Class({
 		this.mavo.treeBuilt.then(() => {
 			if (!this.template) {
 				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
-				this.item.expressions = this.item.expressions || [];
-				this.item.expressions.push(this);
+				this.item.expressions = [...(this.item.expressions || []), this];
 			}
-
-			// Is this expression on a Mavo node?
-			this.mavoNode = Mavo.Node.get(this.element, true);
 
 			Mavo.hooks.run("expressiontext-init-treebuilt", this);
 		});
@@ -4164,12 +4164,12 @@ var _ = Mavo.ExpressionText = $.Class({
 });
 
 // Link primitive with its expressionText object
-// We need to do it before its constructor runs, to avoid any editing UI being generated
+// We need to do it before its constructor runs, to prevent any editing UI from being generated
 Mavo.hooks.add("primitive-init-start", function() {
-	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
+	var et = Mavo.ExpressionText.search(this.element, this.attribute);
 
-	if (this.expressionText) {
-		this.expressionText.primitive = this;
+	if (et && !et.mavoNode) {
+		et.primitive = this;
 		this.storage = this.storage || "none";
 		this.modes = "read";
 	}
@@ -4549,6 +4549,26 @@ Mavo.Expressions.directive("mv-if", {
 // mv-value plugin
 Mavo.Expressions.directive("mv-value", {
 	hooks: {
+		"node-init-start": function() {
+			if (!(this instanceof Mavo.Group || this.collection)) {
+				return;
+			}
+
+			var et = Mavo.ExpressionText.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
+
+			if (!et) {
+				return;
+			}
+
+			et.mavoNode = this;
+			this.storage = this.storage || "none";
+			this.modes = "read";
+
+			if (this.collection) {
+				this.collection.expressions = [...(this.collection.expressions || []), et];
+				et.mavoNode = this.collection;
+			}
+		},
 		"expressiontext-init-start": function() {
 			if (this.attribute != "mv-value") {
 				return;
@@ -4562,18 +4582,16 @@ Mavo.Expressions.directive("mv-value", {
 
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
-
 		},
 		"expressiontext-init-treebuilt": function() {
-			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
+			if (this.originalAttribute != "mv-value" ||
+			   !this.mavoNode ||
+			   !(this.mavoNode == this.item || this.mavoNode == this.item.collection)) {
 				return;
 			}
 
-			if (this.mavoNode.collection) {
-				this.element = null;
-				this.mavoNode.collection.expressions = this.mavoNode.expressions;
-				this.mavoNode.expressions = undefined;
-				this.mavoNode = this.mavoNode.collection;
+			if (this.mavoNode == this.item.collection) {
+				Mavo.delete(this.item.expressions, this);
 			}
 
 			this.output = function(value) {

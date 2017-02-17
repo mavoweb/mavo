@@ -68,12 +68,8 @@ var _ = Mavo.ExpressionText = $.Class({
 		this.mavo.treeBuilt.then(() => {
 			if (!this.template) {
 				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
-				this.item.expressions = this.item.expressions || [];
-				this.item.expressions.push(this);
+				this.item.expressions = [...(this.item.expressions || []), this];
 			}
-
-			// Is this expression on a Mavo node?
-			this.mavoNode = Mavo.Node.get(this.element, true);
 
 			Mavo.hooks.run("expressiontext-init-treebuilt", this);
 		});
@@ -201,12 +197,12 @@ var _ = Mavo.ExpressionText = $.Class({
 });
 
 // Link primitive with its expressionText object
-// We need to do it before its constructor runs, to avoid any editing UI being generated
+// We need to do it before its constructor runs, to prevent any editing UI from being generated
 Mavo.hooks.add("primitive-init-start", function() {
-	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
+	var et = Mavo.ExpressionText.search(this.element, this.attribute);
 
-	if (this.expressionText) {
-		this.expressionText.primitive = this;
+	if (et && !et.mavoNode) {
+		et.primitive = this;
 		this.storage = this.storage || "none";
 		this.modes = "read";
 	}

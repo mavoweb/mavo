@@ -14,6 +14,8 @@ var _ = Mavo.Node = $.Class({
 		this.nodeType = this.nodeType;
 		this.property = null;
 
+		$.extend(this, env.options);
+
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
 		this.element = element;
@@ -36,6 +38,8 @@ var _ = Mavo.Node = $.Class({
 			this.store = this.element.getAttribute("mv-storage");
 			this.modes = this.element.getAttribute("mv-mode");
 		}
+
+		Mavo.hooks.run("node-init-start", env);
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			this.mode = this.element.getAttribute("mv-mode");

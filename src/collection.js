@@ -556,103 +556,103 @@ var _ = Mavo.Collection = $.Class({
 	}
 });
 
-Mavo.hooks.add("primitive-init-end", function() {
-	if (this.collection && !this.attribute) {
-		// Collection of primitives, deal with setting textContent etc without the UI interfering.
-		var swapUI = callback => {
-			var ret;
+Mavo.hooks.add({
+	"primitive-init-end": function() {
+		if (this.collection && !this.attribute) {
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
+			var swapUI = callback => {
+				var ret;
 
-			this.sneak(() => {
-				var ui = $.remove($(".mv-item-controls", this.element));
+				this.sneak(() => {
+					var ui = $.remove($(".mv-item-controls", this.element));
 
-				ret = callback();
+					ret = callback();
 
-				$.inside(ui, this.element);
-			});
+					$.inside(ui, this.element);
+				});
 
-			return ret;
-		};
+				return ret;
+			};
 
-		// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-		["textContent", "innerHTML"].forEach(property => {
-			var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+			["textContent", "innerHTML"].forEach(property => {
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-			Object.defineProperty(this.element, property, {
-				get: function() {
-					return swapUI(() => descriptor.get.call(this));
-				},
+				Object.defineProperty(this.element, property, {
+					get: function() {
+						return swapUI(() => descriptor.get.call(this));
+					},
 
-				set: function(value) {
-					swapUI(() => descriptor.set.call(this, value));
-				}
-			});
-		});
-	}
-});
-
-Mavo.hooks.add("node-edit-end", function() {
-	if (this.collection) {
-		if (!this.itemControls) {
-			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
-
-			this.itemControls = this.itemControls || $.create({
-				className: "mv-item-controls mv-ui"
-			});
-
-			$.set(this.itemControls, {
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => this.collection.delete(this)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => {
-								var item = this.collection.add(null, this.index + this.collection.bottomUp);
-
-								if (evt[Mavo.superKey]) {
-									item.render(this.data);
-								}
-
-								if (!Mavo.inViewport(item.element)) {
-									item.element.scrollIntoView({behavior: "smooth"});
-								}
-
-								return item.edit();
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + this.name,
-						className: "mv-drag-handle"
+					set: function(value) {
+						swapUI(() => descriptor.set.call(this, value));
 					}
-				]
+				});
 			});
 		}
+	},
+	"node-edit-end": function() {
+		if (this.collection) {
+			if (!this.itemControls) {
+				this.itemControls = $$(".mv-item-controls", this.element)
+									   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
 
-		if (!this.itemControls.parentNode) {
-			if ($.value(this, "itemControlsComment", "parentNode")) {
-				this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				this.itemControls = this.itemControls || $.create({
+					className: "mv-item-controls mv-ui"
+				});
+
+				$.set(this.itemControls, {
+					contents: [
+						{
+							tag: "button",
+							title: "Delete this " + this.name,
+							className: "mv-delete",
+							events: {
+								"click": evt => this.collection.delete(this)
+							}
+						}, {
+							tag: "button",
+							title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
+							className: "mv-add",
+							events: {
+								"click": evt => {
+									var item = this.collection.add(null, this.index + this.collection.bottomUp);
+
+									if (evt[Mavo.superKey]) {
+										item.render(this.data);
+									}
+
+									if (!Mavo.inViewport(item.element)) {
+										item.element.scrollIntoView({behavior: "smooth"});
+									}
+
+									return item.edit();
+								}
+							}
+						}, {
+							tag: "button",
+							title: "Drag to reorder " + this.name,
+							className: "mv-drag-handle"
+						}
+					]
+				});
 			}
-			else {
-				this.element.appendChild(this.itemControls);
+
+			if (!this.itemControls.parentNode) {
+				if ($.value(this, "itemControlsComment", "parentNode")) {
+					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				}
+				else {
+					this.element.appendChild(this.itemControls);
+				}
 			}
 		}
-	}
-});
-
-Mavo.hooks.add("node-done-end", function() {
-	if (this.collection) {
-		if (this.itemControls) {
-			this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-			this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+	},
+	"node-done-end": function() {
+		if (this.collection) {
+			if (this.itemControls) {
+				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
+				this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+			}
 		}
 	}
 });
