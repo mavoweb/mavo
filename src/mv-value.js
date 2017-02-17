@@ -19,6 +19,8 @@ Mavo.Expressions.directive("mv-value", {
 			if (this.collection) {
 				this.collection.expressions = [...(this.collection.expressions || []), et];
 				et.mavoNode = this.collection;
+				this.collection.storage = this.collection.storage || "none";
+				this.collection.modes = "read";
 			}
 		},
 		"expressiontext-init-start": function() {

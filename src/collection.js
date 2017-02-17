@@ -229,6 +229,10 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
+		if (this.modes == "read") {
+			return;
+		}
+
 		this.super.edit.call(this);
 
 		if (this.mutable) {
@@ -248,6 +252,10 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
+		if (this.modes == "edit") {
+			return;
+		}
+
 		this.super.done.call(this);
 
 		if (this.mutable) {
@@ -651,7 +659,10 @@ Mavo.hooks.add({
 		if (this.collection) {
 			if (this.itemControls) {
 				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-				this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+
+				if (this.itemControls.parentNode) {
+					this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+				}
 			}
 		}
 	}

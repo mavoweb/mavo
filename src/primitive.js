@@ -178,6 +178,10 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	done: function () {
+		if (this.modes == "edit") {
+			return;
+		}
+
 		this.super.done.call(this);
 
 		if ("preEdit" in this) {
@@ -272,7 +276,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.constant) {
+		if (this.modes == "read") {
 			return;
 		}
 

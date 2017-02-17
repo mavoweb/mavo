@@ -2511,6 +2511,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		done: function done() {
 			var _this2 = this;
 
+			if (this.modes == "edit") {
+				return;
+			}
+
 			this.super.done.call(this);
 
 			if ("preEdit" in this) {
@@ -2607,7 +2611,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		edit: function edit() {
 			var _this4 = this;
 
-			if (this.constant) {
+			if (this.modes == "read") {
 				return;
 			}
 
@@ -3671,6 +3675,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		edit: function edit() {
 			var _this3 = this;
 
+			if (this.modes == "read") {
+				return;
+			}
+
 			this.super.edit.call(this);
 
 			if (this.mutable) {
@@ -3690,6 +3698,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		done: function done() {
+			if (this.modes == "edit") {
+				return;
+			}
+
 			this.super.done.call(this);
 
 			if (this.mutable) {
@@ -4160,7 +4172,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.collection) {
 				if (this.itemControls) {
 					this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-					this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+
+					if (this.itemControls.parentNode) {
+						this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+					}
 				}
 			}
 		}
@@ -5220,6 +5235,8 @@ Mavo.Expressions.directive("mv-value", {
 			if (this.collection) {
 				this.collection.expressions = [].concat(_toConsumableArray(this.collection.expressions || []), [et]);
 				et.mavoNode = this.collection;
+				this.collection.storage = this.collection.storage || "none";
+				this.collection.modes = "read";
 			}
 		},
 		"expressiontext-init-start": function expressiontextInitStart() {
