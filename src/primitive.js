@@ -357,8 +357,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (typeof data === "object") {
-			console.log("obj", this.property, data);
-			data = data[this.property];
+			data = Symbol.toPrimitive in data? data[Symbol.toPrimitive]() : data[this.property];
 		}
 
 		if (data === undefined) {

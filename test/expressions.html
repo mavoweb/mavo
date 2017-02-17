@@ -404,12 +404,25 @@
 			</td>
 			<td>123</td>
 		</tr>
-		<!-- <tr title="Interactive">
+		<tr title="Interactive">
 			<td>
 				<span property="collection3" mv-multiple mv-mode="edit" mv-default="[$index]"></span>
-				<span property="collection4" mv-multiple mv-value="collection3"></span>
 			</td>
-		</tr> -->
+			<td>
+				<span property="collection4" mv-multiple mv-value="collection3"></span><button>Add collection3</button>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div property="group3" mv-value="{prop2: 1, group4: {prop3: 2}}">
+					<span property="prop2"></span>
+					<div property="group4">
+						<span property="prop3"></span>
+					</div>
+				</div>
+			</td>
+			<td>1 <br>2</td>
+		</tr>
 	</table>
 </section>
 
@@ -484,7 +497,7 @@
 	<table class="reftest">
 		<tr>
 			<td>
-				<div property="numbers" mv-multiple mv-if="$index mod 2 > 0"></div>
+				<div property="numbers" mv-multiple mv-if="$index mod 2 > 0" foo="[$index]"></div>
 			</td>
 			<td>
 				<div>1</div><div>3</div><div>5</div><div>7</div><div>9</div>

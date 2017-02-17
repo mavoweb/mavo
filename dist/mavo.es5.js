@@ -2689,8 +2689,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			if ((typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") {
-				console.log("obj", this.property, data);
-				data = data[this.property];
+				data = Symbol.toPrimitive in data ? data[Symbol.toPrimitive]() : data[this.property];
 			}
 
 			if (data === undefined) {
@@ -3791,8 +3790,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		dataRender: function dataRender(data) {
-			var _this4 = this;
-
 			this.unhandled = { before: [], after: [] };
 
 			if (!data) {
@@ -3824,19 +3821,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// Using document fragments improves performance by 60%
 					var fragment = document.createDocumentFragment();
 
-					data.slice(i).forEach(function (datum, i) {
-						var item = _this4.createItem();
+					for (var j = i; j < data.length; j++) {
+						var item = this.createItem();
 
-						item.render(datum);
+						item.render(data[j]);
 
-						_this4.children.push(item);
-						item.index = i;
+						this.children.push(item);
+						item.index = j;
 
 						fragment.appendChild(item.element);
 
-						var env = { context: _this4, item: item };
+						var env = { context: this, item: item };
 						Mavo.hooks.run("collection-add-end", env);
-					});
+					}
 
 					$[this.bottomUp ? "after" : "before"](fragment, this.marker);
 				}
@@ -3885,7 +3882,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this5 = this;
+			var _this4 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -3900,9 +3897,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this5.accepts.length) {
-						return Mavo.flatten(_this5.accepts.map(function (property) {
-							return _this5.mavo.root.find(property, { collections: true });
+					if (_this4.accepts.length) {
+						return Mavo.flatten(_this4.accepts.map(function (property) {
+							return _this4.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -3950,7 +3947,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this5.dragula.cancel(true);
+					return _this4.dragula.cancel(true);
 				}
 			});
 
@@ -3992,7 +3989,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this6 = this;
+				var _this5 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -4000,7 +3997,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this6.templateElement.contains(button);
+						return !_this5.templateElement.contains(button);
 					})[0];
 				}
 
@@ -4021,7 +4018,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this6.add().edit();
+					_this5.add().edit();
 				});
 
 				return button;
@@ -4053,19 +4050,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	Mavo.hooks.add("primitive-init-end", function () {
-		var _this7 = this;
+		var _this6 = this;
 
 		if (this.collection && !this.attribute) {
 			// Collection of primitives, deal with setting textContent etc without the UI interfering.
 			var swapUI = function swapUI(callback) {
 				var ret;
 
-				_this7.sneak(function () {
-					var ui = $.remove($(".mv-item-controls", _this7.element));
+				_this6.sneak(function () {
+					var ui = $.remove($(".mv-item-controls", _this6.element));
 
 					ret = callback();
 
-					$.inside(ui, _this7.element);
+					$.inside(ui, _this6.element);
 				});
 
 				return ret;
@@ -4075,20 +4072,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			["textContent", "innerHTML"].forEach(function (property) {
 				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-				Object.defineProperty(_this7.element, property, {
+				Object.defineProperty(_this6.element, property, {
 					get: function get() {
-						var _this8 = this;
+						var _this7 = this;
 
 						return swapUI(function () {
-							return descriptor.get.call(_this8);
+							return descriptor.get.call(_this7);
 						});
 					},
 
 					set: function set(value) {
-						var _this9 = this;
+						var _this8 = this;
 
 						swapUI(function () {
-							return descriptor.set.call(_this9, value);
+							return descriptor.set.call(_this8, value);
 						});
 					}
 				});
@@ -4097,12 +4094,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	Mavo.hooks.add("node-edit-end", function () {
-		var _this10 = this;
+		var _this9 = this;
 
 		if (this.collection) {
 			if (!this.itemControls) {
 				this.itemControls = $$(".mv-item-controls", this.element).filter(function (el) {
-					return el.closest(Mavo.selectors.multiple) == _this10.element;
+					return el.closest(Mavo.selectors.multiple) == _this9.element;
 				})[0];
 
 				this.itemControls = this.itemControls || $.create({
@@ -4116,7 +4113,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						className: "mv-delete",
 						events: {
 							"click": function click(evt) {
-								return _this10.collection.delete(_this10);
+								return _this9.collection.delete(_this9);
 							}
 						}
 					}, {
@@ -4125,10 +4122,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						className: "mv-add",
 						events: {
 							"click": function click(evt) {
-								var item = _this10.collection.add(null, _this10.index + _this10.collection.bottomUp);
+								var item = _this9.collection.add(null, _this9.index + _this9.collection.bottomUp);
 
 								if (evt[Mavo.superKey]) {
-									item.render(_this10.data);
+									item.render(_this9.data);
 								}
 
 								if (!Mavo.inViewport(item.element)) {
@@ -4147,7 +4144,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!this.itemControls.parentNode) {
-				if (this.itemControlsComment) {
+				if ($.value(this, "itemControlsComment", "parentNode")) {
 					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
 				} else {
 					this.element.appendChild(this.itemControls);
@@ -4174,7 +4171,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	$.live(Mavo.Node.prototype, "deleted", function (value) {
-		var _this11 = this;
+		var _this10 = this;
 
 		this.element.classList.toggle("mv-deleted", value);
 
@@ -4183,7 +4180,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// and replace them with an undo prompt.
 			this.elementContents = document.createDocumentFragment();
 			$$(this.element.childNodes).forEach(function (node) {
-				_this11.elementContents.appendChild(node);
+				_this10.elementContents.appendChild(node);
 			});
 
 			$.contents(this.element, [{
@@ -4201,7 +4198,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				textContent: "Undo",
 				events: {
 					"click": function click(evt) {
-						return _this11.deleted = false;
+						return _this10.deleted = false;
 					}
 				}
 			}]);

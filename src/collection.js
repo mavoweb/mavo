@@ -341,19 +341,19 @@ var _ = Mavo.Collection = $.Class({
 				// Using document fragments improves performance by 60%
 				var fragment = document.createDocumentFragment();
 
-				data.slice(i).forEach((datum, i) => {
+				for (var j = i; j < data.length; j++) {
 					var item = this.createItem();
 
-					item.render(datum);
+					item.render(data[j]);
 
 					this.children.push(item);
-					item.index = i;
+					item.index = j;
 
 					fragment.appendChild(item.element);
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
-				});
+				}
 
 				$[this.bottomUp? "after" : "before"](fragment, this.marker);
 			}
@@ -638,7 +638,7 @@ Mavo.hooks.add("node-edit-end", function() {
 		}
 
 		if (!this.itemControls.parentNode) {
-			if (this.itemControlsComment) {
+			if ($.value(this, "itemControlsComment", "parentNode")) {
 				this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
 			}
 			else {
