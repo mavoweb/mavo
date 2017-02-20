@@ -9,7 +9,12 @@ var _ = Mavo.Node = $.Class({
 
 		var env = {context: this, options};
 
+		// Set these first, for debug reasons
 		this.uid = ++_.maxId;
+		this.nodeType = this.nodeType;
+		this.property = null;
+
+		$.extend(this, env.options);
 
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
@@ -33,6 +38,8 @@ var _ = Mavo.Node = $.Class({
 			this.store = this.element.getAttribute("mv-storage");
 			this.modes = this.element.getAttribute("mv-mode");
 		}
+
+		Mavo.hooks.run("node-init-start", env);
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			this.mode = this.element.getAttribute("mv-mode");
@@ -203,8 +210,6 @@ var _ = Mavo.Node = $.Class({
 	render: function(data) {
 		Mavo.hooks.run("node-render-start", this);
 
-		this.rendering = true;
-
 		if (this.editing) {
 			this.done();
 			this.dataRender(data);
@@ -216,20 +221,16 @@ var _ = Mavo.Node = $.Class({
 
 		this.save();
 
-		this.rendering = false;
-
 		Mavo.hooks.run("node-render-end", this);
 	},
 
 	dataChanged: function(action, o = {}) {
-		if (!this.rendering) {
-			$.fire(o.element || this.element, "mavo:datachange", $.extend({
-				property: this.property,
-				action,
-				mavo: this.mavo,
-				node: this
-			}, o));
-		}
+		$.fire(o.element || this.element, "mavo:datachange", $.extend({
+			property: this.property,
+			action,
+			mavo: this.mavo,
+			node: this
+		}, o));
 	},
 
 	toString: function() {

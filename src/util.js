@@ -44,7 +44,7 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	hasIntersection: (arr1, arr2) => !arr1.every(el => arr2.indexOf(el) == -1),
+	hasIntersection: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {

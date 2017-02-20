@@ -1,4 +1,4 @@
-!function(){"use strict";function t(e,n,s){return n=void 0===n?1:n,s=s||n+1,1>=s-n?function(){if(arguments.length<=n||"string"===r.type(arguments[n]))return e.apply(this,arguments);var t,s=arguments[n];for(var i in s){var o=Array.from(arguments);o.splice(n,1,i,s[i]),t=e.apply(this,o)}return t}:t(t(e,n+1,s),n,s-1)}function e(t,r,s){var i=n(s);if("string"===i){var o=Object.getOwnPropertyDescriptor(r,s);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[s]=r[s]:(delete t[s],Object.defineProperty(t,s,o))}else if("array"===i)s.forEach(function(n){n in r&&e(t,r,n)});else for(var a in r)s&&("regexp"===i&&!s.test(a)||"function"===i&&!s.call(r,a))||e(t,r,a);return t}function n(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e}var r=self.Bliss=e(function(t,e){return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(r,{extend:e,overload:t,type:n,property:r.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[]},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?r.set(t,e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t,t=e.tag,e=r.extend({},e,function(t){return"tag"!==t}))),r.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e,n=["constructor","extends","abstract","static"].concat(Object.keys(r.classProps)),s=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0],t=arguments[1]):(e=function(){if(this.constructor.__abstract&&this.constructor===e)throw new Error("Abstract classes cannot be directly instantiated.");e["super"]&&e["super"].apply(this,arguments),s.apply(this,arguments)},e["super"]=t["extends"]||null,e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object),{constructor:e}),e.prototype["super"]=e["super"]?e["super"].prototype:null,e.__abstract=!!t["abstract"]);var i=function(t){return this.hasOwnProperty(t)&&-1===n.indexOf(t)};if(t["static"]){r.extend(e,t["static"],i);for(var o in r.classProps)o in t["static"]&&r.classProps[o](e,t["static"][o])}r.extend(e.prototype,t,i);for(var o in r.classProps)o in t&&r.classProps[o](e.prototype,t[o]);return e},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,n){return"function"===r.type(n)&&(n={set:n}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],r=n.get&&n.get.call(this,t);return void 0!==r?r:t},set:function(t){var r=this["_"+e],s=n.set&&n.set.call(this,t,r);this["_"+e]=void 0!==s?s:t},configurable:n.configurable,enumerable:n.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,n=document.createElement("script");return e?Promise.resolve():new Promise(function(e,s){r.set(n,{async:!0,onload:function(){e(),r.remove(n)},onerror:function(){s()},src:t,inside:document.head})})},fetch:function(t,n){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var s=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},n);s.method=s.method.toUpperCase(),r.hooks.run("fetch-args",s),"GET"===s.method&&s.data&&(s.url.search+=s.data),document.body.setAttribute("data-loading",s.url),s.xhr.open(s.method,s.url.href,s.async!==!1,s.user,s.password);for(var i in n)if(i in s.xhr)try{s.xhr[i]=n[i]}catch(o){self.console&&console.error(o)}"GET"===s.method||s.headers["Content-type"]||s.headers["Content-Type"]||s.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in s.headers)s.xhr.setRequestHeader(a,s.headers[a]);return new Promise(function(t,e){s.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===s.xhr.status||s.xhr.status>=200&&s.xhr.status<300||304===s.xhr.status?t(s.xhr):e(r.extend(Error(s.xhr.statusText),{xhr:s.xhr,get status(){return this.xhr.status}}))},s.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Error"),{xhr:s.xhr}))},s.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Timeout"),{xhr:s.xhr}))},s.xhr.send("GET"===s.method?null:s.data)})},value:function(t){var e="string"!==r.type(t);return r.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),r.Hooks=new r.Class({add:function(t,e,n){(Array.isArray(t)?t:[t]).forEach(function(t){this[t]=this[t]||[],this[t][n?"unshift":"push"](e)},this)},run:function(t,e){this[t]=this[t]||[],this[t].forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),r.hooks=new r.Hooks;var s=r.property;r.Element=function(t){this.subject=t,this.data={},this.bliss={}},r.Element.prototype={set:t(function(t,e){t in r.setProps?r.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(n,s){if("transition"in this.style){var i=r.extend({},this.style,/^transition(Duration|Property)$/);r.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),r.once(this,"transitionend",function(){clearTimeout(o),r.style(this,i),n(this)});var o=setTimeout(n,e+50,this);r.style(this,t)}else r.style(this,t),n(this)}.bind(this))},fire:function(t,e){var n=document.createEvent("HTMLEvents");return n.initEvent(t,!0,!0),this.dispatchEvent(r.extend(n,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(s in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var r=this[s].bliss.listeners=this[s].bliss.listeners||{};for(var i in r)if(!t||i===t)for(var o,a=0;o=r[i][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener(i,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},r.setProps={style:function(t){r.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){r.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[s]&&t[s].bliss){var n=t[s].bliss.listeners;for(var i in n)n[i].forEach(function(t){e.addEventListener(i,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===r.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)r.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&r.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},r.Array=function(t){this.subject=t},r.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},r.add=t(function(t,e,n,s){n=r.extend({$:!0,element:!0,array:!0},n),"function"==r.type(e)&&(!n.element||t in r.Element.prototype&&s||(r.Element.prototype[t]=function(){return this.subject&&r.defined(e.apply(this.subject,arguments),this.subject)}),!n.array||t in r.Array.prototype&&s||(r.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(n){return n&&r.defined(e.apply(n,t),n)})}),n.$&&(r.sources[t]=r[t]=e,(n.array||n.element)&&(r[t]=function(){var e=[].slice.apply(arguments),s=e.shift(),i=n.array&&Array.isArray(s)?"Array":"Element";return r[i].prototype[t].apply({subject:s},e)})))},0),r.add(r.Array.prototype,{element:!1}),r.add(r.Element.prototype),r.add(r.setProps),r.add(r.classProps,{element:!1,array:!1});var i=document.createElement("_");r.add(r.extend({},HTMLElement.prototype,function(t){return"function"===r.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,s){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,s=function(t,e,n){return n.callback===t&&n.capture==e},i=function(){return!s.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,i){if(this&&this[e]&&this[e].bliss&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(s.bind(null,r,i)).length&&o[t].push({callback:r,capture:i,className:a})}return n.call(this,t,r,i)},EventTarget.prototype.removeEventListener=function(t,n,s){if(this&&this[e]&&this[e].bliss&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(i.bind(null,n,s)))}return r.call(this,t,n,s)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
+!function(){"use strict";function t(e,n,s){return n=void 0===n?1:n,s=s||n+1,1>=s-n?function(){if(arguments.length<=n||"string"===r.type(arguments[n]))return e.apply(this,arguments);var t,s=arguments[n];for(var i in s){var o=Array.from(arguments);o.splice(n,1,i,s[i]),t=e.apply(this,o)}return t}:t(t(e,n+1,s),n,s-1)}function e(t,r,s){var i=n(s);if("string"===i){var o=Object.getOwnPropertyDescriptor(r,s);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[s]=r[s]:(delete t[s],Object.defineProperty(t,s,o))}else if("array"===i)s.forEach(function(n){n in r&&e(t,r,n)});else for(var a in r)s&&("regexp"===i&&!s.test(a)||"function"===i&&!s.call(r,a))||e(t,r,a);return t}function n(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e}var r=self.Bliss=e(function(t,e){return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(r,{extend:e,overload:t,type:n,property:r.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.from("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[]},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?r.set(t,e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t,t=e.tag,e=r.extend({},e,function(t){return"tag"!==t}))),r.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t){return t=t||document,new Promise(function(e,n){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e,n=["constructor","extends","abstract","static"].concat(Object.keys(r.classProps)),s=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0],t=arguments[1]):(e=function(){if(this.constructor.__abstract&&this.constructor===e)throw new Error("Abstract classes cannot be directly instantiated.");e["super"]&&e["super"].apply(this,arguments),s.apply(this,arguments)},e["super"]=t["extends"]||null,e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object),{constructor:e}),e.prototype["super"]=e["super"]?e["super"].prototype:null,e.__abstract=!!t["abstract"]);var i=function(t){return this.hasOwnProperty(t)&&-1===n.indexOf(t)};if(t["static"]){r.extend(e,t["static"],i);for(var o in r.classProps)o in t["static"]&&r.classProps[o](e,t["static"][o])}r.extend(e.prototype,t,i);for(var o in r.classProps)o in t&&r.classProps[o](e.prototype,t[o]);return e},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,n){return"function"===r.type(n)&&(n={set:n}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],r=n.get&&n.get.call(this,t);return void 0!==r?r:t},set:function(t){var r=this["_"+e],s=n.set&&n.set.call(this,t,r);this["_"+e]=void 0!==s?s:t},configurable:n.configurable,enumerable:n.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length?arguments[0]:!1,n=document.createElement("script");return e?Promise.resolve():new Promise(function(e,s){r.set(n,{async:!0,onload:function(){e(),r.remove(n)},onerror:function(){s()},src:t,inside:document.head})})},fetch:function(t,n){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var s=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},n);s.method=s.method.toUpperCase(),r.hooks.run("fetch-args",s),"GET"===s.method&&s.data&&(s.url.search+=s.data),document.body.setAttribute("data-loading",s.url),s.xhr.open(s.method,s.url.href,s.async!==!1,s.user,s.password);for(var i in n)if(i in s.xhr)try{s.xhr[i]=n[i]}catch(o){self.console&&console.error(o)}"GET"===s.method||s.headers["Content-type"]||s.headers["Content-Type"]||s.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in s.headers)s.xhr.setRequestHeader(a,s.headers[a]);return new Promise(function(t,e){s.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===s.xhr.status||s.xhr.status>=200&&s.xhr.status<300||304===s.xhr.status?t(s.xhr):e(r.extend(Error(s.xhr.statusText),{xhr:s.xhr,get status(){return this.xhr.status}}))},s.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Error"),{xhr:s.xhr}))},s.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Timeout"),{xhr:s.xhr}))},s.xhr.send("GET"===s.method?null:s.data)})},value:function(t){var e="string"!==r.type(t);return r.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),r.Hooks=new r.Class({add:function(t,e,n){if("string"==typeof arguments[0])(Array.isArray(t)?t:[t]).forEach(function(t){this[t]=this[t]||[],e&&this[t][n?"unshift":"push"](e)},this);else for(var t in arguments[0])this.add(t,arguments[0][t],arguments[1])},run:function(t,e){this[t]=this[t]||[],this[t].forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),r.hooks=new r.Hooks;var s=r.property;r.Element=function(t){this.subject=t,this.data={},this.bliss={}},r.Element.prototype={set:t(function(t,e){t in r.setProps?r.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(n,s){if("transition"in this.style){var i=r.extend({},this.style,/^transition(Duration|Property)$/);r.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),r.once(this,"transitionend",function(){clearTimeout(o),r.style(this,i),n(this)});var o=setTimeout(n,e+50,this);r.style(this,t)}else r.style(this,t),n(this)}.bind(this))},fire:function(t,e){var n=document.createEvent("HTMLEvents");return n.initEvent(t,!0,!0),this.dispatchEvent(r.extend(n,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(s in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var n=t[1];t=t[0];var r=this[s].bliss.listeners=this[s].bliss.listeners||{};for(var i in r)if(!t||i===t)for(var o,a=0;o=r[i][a];a++)n&&n!==o.className||e&&e!==o.callback||(this.removeEventListener(i,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},r.setProps={style:function(t){r.extend(this.style,t)},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){r.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[s]&&t[s].bliss){var n=t[s].bliss.listeners;for(var i in n)n[i].forEach(function(t){e.addEventListener(i,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===r.type(t)){var a=arguments[1],u=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,u)},this)}else for(var c in t)r.events(this,c,t[c])},once:t(function(t,e){t=t.split(/\s+/);var n=this,r=function(){return t.forEach(function(t){n.removeEventListener(t,r)}),e.apply(n,arguments)};t.forEach(function(t){n.addEventListener(t,r)})},0),delegate:t(function(t,e,n){this.addEventListener(t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&r.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},r.Array=function(t){this.subject=t},r.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},r.add=t(function(t,e,n,s){n=r.extend({$:!0,element:!0,array:!0},n),"function"==r.type(e)&&(!n.element||t in r.Element.prototype&&s||(r.Element.prototype[t]=function(){return this.subject&&r.defined(e.apply(this.subject,arguments),this.subject)}),!n.array||t in r.Array.prototype&&s||(r.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(n){return n&&r.defined(e.apply(n,t),n)})}),n.$&&(r.sources[t]=r[t]=e,(n.array||n.element)&&(r[t]=function(){var e=[].slice.apply(arguments),s=e.shift(),i=n.array&&Array.isArray(s)?"Array":"Element";return r[i].prototype[t].apply({subject:s},e)})))},0),r.add(r.Array.prototype,{element:!1}),r.add(r.Element.prototype),r.add(r.setProps),r.add(r.classProps,{element:!1,array:!1});var i=document.createElement("_");r.add(r.extend({},HTMLElement.prototype,function(t){return"function"===r.type(i[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),n=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,r,s){t.events(n[r],e),n[r]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var n=EventTarget.prototype.addEventListener,r=EventTarget.prototype.removeEventListener,s=function(t,e,n){return n.callback===t&&n.capture==e},i=function(){return!s.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,r,i){if(this&&this[e]&&this[e].bliss&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(s.bind(null,r,i)).length&&o[t].push({callback:r,capture:i,className:a})}return n.call(this,t,r,i)},EventTarget.prototype.removeEventListener=function(t,n,s){if(this&&this[e]&&this[e].bliss&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(i.bind(null,n,s)))}return r.call(this,t,n,s)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
 /* jsep v0.3.1 (http://jsep.from.so/) */
 !function(a){"use strict";var b="Compound",c="Identifier",d="MemberExpression",e="Literal",f="ThisExpression",g="CallExpression",h="UnaryExpression",i="BinaryExpression",j="LogicalExpression",k="ConditionalExpression",l="ArrayExpression",m=46,n=44,o=39,p=34,q=40,r=41,s=91,t=93,u=63,v=59,w=58,x=function(a,b){var c=new Error(a+" at character "+b);throw c.index=b,c.description=a,c},y=!0,z={"-":y,"!":y,"~":y,"+":y},A={"||":1,"&&":2,"|":3,"^":4,"&":5,"==":6,"!=":6,"===":6,"!==":6,"<":7,">":7,"<=":7,">=":7,"<<":8,">>":8,">>>":8,"+":9,"-":9,"*":10,"/":10,"%":10},B=function(a){var b,c=0;for(var d in a)(b=d.length)>c&&a.hasOwnProperty(d)&&(c=b);return c},C=B(z),D=B(A),E={"true":!0,"false":!1,"null":null},F="this",G=function(a){return A[a]||0},H=function(a,b,c){var d="||"===a||"&&"===a?j:i;return{type:d,operator:a,left:b,right:c}},I=function(a){return a>=48&&a<=57},J=function(a){return 36===a||95===a||a>=65&&a<=90||a>=97&&a<=122||a>=128&&!A[String.fromCharCode(a)]},K=function(a){return 36===a||95===a||a>=65&&a<=90||a>=97&&a<=122||a>=48&&a<=57||a>=128&&!A[String.fromCharCode(a)]},L=function(a){for(var i,j,y=0,B=a.charAt,L=a.charCodeAt,M=function(b){return B.call(a,b)},N=function(b){return L.call(a,b)},O=a.length,P=function(){for(var a=N(y);32===a||9===a;)a=N(++y)},Q=function(){var a,b,c=S();return P(),N(y)!==u?c:(y++,a=Q(),a||x("Expected expression",y),P(),N(y)===w?(y++,b=Q(),b||x("Expected expression",y),{type:k,test:c,consequent:a,alternate:b}):void x("Expected :",y))},R=function(){P();for(var b=a.substr(y,D),c=b.length;c>0;){if(A.hasOwnProperty(b))return y+=c,b;b=b.substr(0,--c)}return!1},S=function(){var a,b,c,d,e,f,g,h;if(f=T(),b=R(),!b)return f;for(e={value:b,prec:G(b)},g=T(),g||x("Expected expression after "+b,y),d=[f,e,g];(b=R())&&(c=G(b),0!==c);){for(e={value:b,prec:c};d.length>2&&c<=d[d.length-2].prec;)g=d.pop(),b=d.pop().value,f=d.pop(),a=H(b,f,g),d.push(a);a=T(),a||x("Expected expression after "+b,y),d.push(e,a)}for(h=d.length-1,a=d[h];h>1;)a=H(d[h-1].value,d[h-2],a),h-=2;return a},T=function(){var b,c,d;if(P(),b=N(y),I(b)||b===m)return U();if(b===o||b===p)return V();if(J(b)||b===q)return Y();if(b===s)return $();for(c=a.substr(y,C),d=c.length;d>0;){if(z.hasOwnProperty(c))return y+=d,{type:h,operator:c,argument:T(),prefix:!0};c=c.substr(0,--d)}return!1},U=function(){for(var a,b,c="";I(N(y));)c+=M(y++);if(N(y)===m)for(c+=M(y++);I(N(y));)c+=M(y++);if(a=M(y),"e"===a||"E"===a){for(c+=M(y++),a=M(y),"+"!==a&&"-"!==a||(c+=M(y++));I(N(y));)c+=M(y++);I(N(y-1))||x("Expected exponent ("+c+M(y)+")",y)}return b=N(y),J(b)?x("Variable names cannot start with a number ("+c+M(y)+")",y):b===m&&x("Unexpected period",y),{type:e,value:parseFloat(c),raw:c}},V=function(){for(var a,b="",c=M(y++),d=!1;y<O;){if(a=M(y++),a===c){d=!0;break}if("\\"===a)switch(a=M(y++)){case"n":b+="\n";break;case"r":b+="\r";break;case"t":b+="\t";break;case"b":b+="\b";break;case"f":b+="\f";break;case"v":b+="\x0B";break;default:b+="\\"+a}else b+=a}return d||x('Unclosed quote after "'+b+'"',y),{type:e,value:b,raw:c+b+c}},W=function(){var b,d=N(y),g=y;for(J(d)?y++:x("Unexpected "+M(y),y);y<O&&(d=N(y),K(d));)y++;return b=a.slice(g,y),E.hasOwnProperty(b)?{type:e,value:E[b],raw:b}:b===F?{type:f}:{type:c,name:b}},X=function(a){for(var c,d,e=[],f=!1;y<O;){if(P(),c=N(y),c===a){f=!0,y++;break}c===n?y++:(d=Q(),d&&d.type!==b||x("Expected comma",y),e.push(d))}return f||x("Expected "+String.fromCharCode(a),y),e},Y=function(){var a,b;for(a=N(y),b=a===q?Z():W(),P(),a=N(y);a===m||a===s||a===q;)y++,a===m?(P(),b={type:d,computed:!1,object:b,property:W()}):a===s?(b={type:d,computed:!0,object:b,property:Q()},P(),a=N(y),a!==t&&x("Unclosed [",y),y++):a===q&&(b={type:g,arguments:X(r),callee:b}),P(),a=N(y);return b},Z=function(){y++;var a=Q();return P(),N(y)===r?(y++,a):void x("Unclosed (",y)},$=function(){return y++,{type:l,elements:X(t)}},_=[];y<O;)i=N(y),i===v||i===n?y++:(j=Q())?_.push(j):y<O&&x('Unexpected "'+M(y)+'"',y);return 1===_.length?_[0]:{type:b,body:_}};if(L.version="0.3.1",L.toString=function(){return"JavaScript Expression Parser (JSEP) v"+L.version},L.addUnaryOp=function(a){return C=Math.max(a.length,C),z[a]=y,this},L.addBinaryOp=function(a,b){return D=Math.max(a.length,D),A[a]=b,this},L.addLiteral=function(a,b){return E[a]=b,this},L.removeUnaryOp=function(a){return delete z[a],a.length===C&&(C=B(z)),this},L.removeBinaryOp=function(a){return delete A[a],a.length===D&&(D=B(A)),this},L.removeLiteral=function(a){return delete E[a],this},"undefined"==typeof exports){var M=a.jsep;a.jsep=L,L.noConflict=function(){return a.jsep===L&&(a.jsep=M),L}}else"undefined"!=typeof module&&module.exports?exports=module.exports=L:exports.parse=L}(this);
 //# sourceMappingURL=jsep.min.js.map
@@ -232,7 +232,6 @@ var _ = self.Mavo = $.Class({
 		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
 		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
@@ -545,15 +544,17 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		_.hooks.run("render-start", {context: this, data});
+		var env = {context: this, data};
 
-		if (data) {
-			this.root.render(data);
+		_.hooks.run("render-start", env);
+
+		if (env.data) {
+			this.root.render(env.data);
 		}
 
 		this.unsavedChanges = false;
 
-		_.hooks.run("render-end", {context: this, data});
+		_.hooks.run("render-end", env);
 	},
 
 	clear: function() {
@@ -782,9 +783,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		plugin: function(o) {
-			for (let hook in o.hooks) {
-				_.hooks.add(hook, o.hooks[hook]);
-			}
+			_.hooks.add(o.hooks);
 
 			for (let Class in o.extend) {
 				$.Class(Mavo[Class], o.extend[Class]);
@@ -806,8 +805,8 @@ let s = _.selectors = {
 	init: ".mv-app, [mv-app], [data-mv-app], [mv-storage], [data-mv-storage]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[mv-multiple], .mv-multiple",
+	group: "[typeof], [itemscope], [itemtype], [mv-group]",
+	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	ui: ".mv-ui",
 	container: {
@@ -897,7 +896,7 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	hasIntersection: (arr1, arr2) => !arr1.every(el => arr2.indexOf(el) == -1),
+	hasIntersection: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {
@@ -1368,7 +1367,7 @@ var _ = Mavo.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	getFile: function() {
-		var data = this.mavo.getData({unhandled: true});
+		var data = this.mavo.getData();
 
 		return {
 			data,
@@ -1492,7 +1491,12 @@ var _ = Mavo.Node = $.Class({
 
 		var env = {context: this, options};
 
+		// Set these first, for debug reasons
 		this.uid = ++_.maxId;
+		this.nodeType = this.nodeType;
+		this.property = null;
+
+		$.extend(this, env.options);
 
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
@@ -1516,6 +1520,8 @@ var _ = Mavo.Node = $.Class({
 			this.store = this.element.getAttribute("mv-storage");
 			this.modes = this.element.getAttribute("mv-mode");
 		}
+
+		Mavo.hooks.run("node-init-start", env);
 
 		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
 			this.mode = this.element.getAttribute("mv-mode");
@@ -1686,8 +1692,6 @@ var _ = Mavo.Node = $.Class({
 	render: function(data) {
 		Mavo.hooks.run("node-render-start", this);
 
-		this.rendering = true;
-
 		if (this.editing) {
 			this.done();
 			this.dataRender(data);
@@ -1699,20 +1703,16 @@ var _ = Mavo.Node = $.Class({
 
 		this.save();
 
-		this.rendering = false;
-
 		Mavo.hooks.run("node-render-end", this);
 	},
 
 	dataChanged: function(action, o = {}) {
-		if (!this.rendering) {
-			$.fire(o.element || this.element, "mavo:datachange", $.extend({
-				property: this.property,
-				action,
-				mavo: this.mavo,
-				node: this
-			}, o));
-		}
+		$.fire(o.element || this.element, "mavo:datachange", $.extend({
+			property: this.property,
+			action,
+			mavo: this.mavo,
+			node: this
+		}, o));
 	},
 
 	toString: function() {
@@ -1881,9 +1881,7 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
-		if (env.options.unhandled) {
-			$.extend(env.data, this.unhandled);
-		}
+		$.extend(env.data, this.unhandled);
 
 		// JSON-LD stuff
 		if (this.type && this.type != _.DEFAULT_TYPE) {
@@ -1957,13 +1955,20 @@ var _ = Mavo.Group = $.Class({
 		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.children[this.property] with it
 
-		this.unhandled = $.extend({}, data, property => {
-			return !(property in this.children);
-		});
+		var oldUnhandled = this.unhandled;
+		this.unhandled = $.extend({}, data, property => !(property in this.children));
 
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
+
+		for (let property in this.unhandled) {
+			let value = this.unhandled[property];
+
+			if (typeof value != "object" && (!oldUnhandled || oldUnhandled[property] != value)) {
+				this.dataChanged("propertychange", {property});
+			}
+		}
 	},
 
 	// Check if this group contains a property
@@ -2177,6 +2182,10 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	done: function () {
+		if (this.modes == "edit") {
+			return;
+		}
+
 		this.super.done.call(this);
 
 		if ("preEdit" in this) {
@@ -2271,7 +2280,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.constant) {
+		if (this.modes == "read") {
 			return;
 		}
 
@@ -2356,7 +2365,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (typeof data === "object") {
-			data = data[this.property];
+			data = Symbol.toPrimitive in data? data[Symbol.toPrimitive]() : data[this.property];
 		}
 
 		if (data === undefined) {
@@ -3047,7 +3056,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		if (this.unhandled && env.options.unhandled) {
+		if (this.unhandled) {
 			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 		}
 
@@ -3220,6 +3229,10 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
+		if (this.modes == "read") {
+			return;
+		}
+
 		this.super.edit.call(this);
 
 		if (this.mutable) {
@@ -3239,6 +3252,10 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
+		if (this.modes == "edit") {
+			return;
+		}
+
 		this.super.done.call(this);
 
 		if (this.mutable) {
@@ -3317,26 +3334,37 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 		else {
-			this.clear();
+			// First render on existing items
+			for (var i = 0; i < this.children.length; i++) {
+				if (i < data.length) {
+					this.children[i].render(data[i]);
+				}
+				else {
+					this.delete(this.children[i], true);
+				}
+			}
 
-			// Using document fragments improved rendering performance by 60%
-			var fragment = document.createDocumentFragment();
+			if (data.length > i) {
+				// There are still remaining items
+				// Using document fragments improves performance by 60%
+				var fragment = document.createDocumentFragment();
 
-			data.forEach((datum, i) => {
-				var item = this.createItem();
+				for (var j = i; j < data.length; j++) {
+					var item = this.createItem();
 
-				item.render(datum);
+					item.render(data[j]);
 
-				this.children.push(item);
-				item.index = i;
+					this.children.push(item);
+					item.index = j;
 
-				fragment.appendChild(item.element);
+					fragment.appendChild(item.element);
 
-				var env = {context: this, item};
-				Mavo.hooks.run("collection-add-end", env);
-			});
+					var env = {context: this, item};
+					Mavo.hooks.run("collection-add-end", env);
+				}
 
-			$[this.bottomUp? "after" : "before"](fragment, this.marker);
+				$[this.bottomUp? "after" : "before"](fragment, this.marker);
+			}
 		}
 	},
 
@@ -3536,103 +3564,106 @@ var _ = Mavo.Collection = $.Class({
 	}
 });
 
-Mavo.hooks.add("primitive-init-end", function() {
-	if (this.collection && !this.attribute) {
-		// Collection of primitives, deal with setting textContent etc without the UI interfering.
-		var swapUI = callback => {
-			var ret;
+Mavo.hooks.add({
+	"primitive-init-end": function() {
+		if (this.collection && !this.attribute) {
+			// Collection of primitives, deal with setting textContent etc without the UI interfering.
+			var swapUI = callback => {
+				var ret;
 
-			this.sneak(() => {
-				var ui = $.remove($(".mv-item-controls", this.element));
+				this.sneak(() => {
+					var ui = $.remove($(".mv-item-controls", this.element));
 
-				ret = callback();
+					ret = callback();
 
-				$.inside(ui, this.element);
-			});
+					$.inside(ui, this.element);
+				});
 
-			return ret;
-		};
+				return ret;
+			};
 
-		// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-		["textContent", "innerHTML"].forEach(property => {
-			var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
+			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
+			["textContent", "innerHTML"].forEach(property => {
+				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-			Object.defineProperty(this.element, property, {
-				get: function() {
-					return swapUI(() => descriptor.get.call(this));
-				},
+				Object.defineProperty(this.element, property, {
+					get: function() {
+						return swapUI(() => descriptor.get.call(this));
+					},
 
-				set: function(value) {
-					swapUI(() => descriptor.set.call(this, value));
-				}
-			});
-		});
-	}
-});
-
-Mavo.hooks.add("node-edit-end", function() {
-	if (this.collection) {
-		if (!this.itemControls) {
-			this.itemControls = $$(".mv-item-controls", this.element)
-								   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
-
-			this.itemControls = this.itemControls || $.create({
-				className: "mv-item-controls mv-ui"
-			});
-
-			$.set(this.itemControls, {
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + this.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => this.collection.delete(this)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => {
-								var item = this.collection.add(null, this.index + this.collection.bottomUp);
-
-								if (evt[Mavo.superKey]) {
-									item.render(this.data);
-								}
-
-								if (!Mavo.inViewport(item.element)) {
-									item.element.scrollIntoView({behavior: "smooth"});
-								}
-
-								return item.edit();
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + this.name,
-						className: "mv-drag-handle"
+					set: function(value) {
+						swapUI(() => descriptor.set.call(this, value));
 					}
-				]
+				});
 			});
 		}
+	},
+	"node-edit-end": function() {
+		if (this.collection) {
+			if (!this.itemControls) {
+				this.itemControls = $$(".mv-item-controls", this.element)
+									   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
 
-		if (!this.itemControls.parentNode) {
-			if (this.itemControlsComment) {
-				this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				this.itemControls = this.itemControls || $.create({
+					className: "mv-item-controls mv-ui"
+				});
+
+				$.set(this.itemControls, {
+					contents: [
+						{
+							tag: "button",
+							title: "Delete this " + this.name,
+							className: "mv-delete",
+							events: {
+								"click": evt => this.collection.delete(this)
+							}
+						}, {
+							tag: "button",
+							title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
+							className: "mv-add",
+							events: {
+								"click": evt => {
+									var item = this.collection.add(null, this.index + this.collection.bottomUp);
+
+									if (evt[Mavo.superKey]) {
+										item.render(this.data);
+									}
+
+									if (!Mavo.inViewport(item.element)) {
+										item.element.scrollIntoView({behavior: "smooth"});
+									}
+
+									return item.edit();
+								}
+							}
+						}, {
+							tag: "button",
+							title: "Drag to reorder " + this.name,
+							className: "mv-drag-handle"
+						}
+					]
+				});
 			}
-			else {
-				this.element.appendChild(this.itemControls);
+
+			if (!this.itemControls.parentNode) {
+				if ($.value(this, "itemControlsComment", "parentNode")) {
+					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
+				}
+				else {
+					this.element.appendChild(this.itemControls);
+				}
 			}
 		}
-	}
-});
+	},
+	"node-done-end": function() {
+		if (this.collection) {
+			if (this.itemControls) {
+				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
 
-Mavo.hooks.add("node-done-end", function() {
-	if (this.collection) {
-		if (this.itemControls) {
-			this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-			this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+				if (this.itemControls.parentNode) {
+					this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
+				}
+			}
 		}
 	}
 });
@@ -3742,7 +3773,7 @@ var _ = Mavo.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
-			console.log(exception);
+			//console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -3756,11 +3787,19 @@ var _ = Mavo.Expression = $.Class({
 	},
 
 	changedBy: function(evt) {
-		if (!this.identifiers || !evt) {
+		if (!evt) {
 			return true;
 		}
 
+		if (!this.identifiers) {
+			return false;
+		}
+
 		if (this.identifiers.indexOf(evt.property) > -1) {
+			return true;
+		}
+
+		if (Mavo.hasIntersection(evt.properties, this.identifiers)) {
 			return true;
 		}
 
@@ -4008,6 +4047,15 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
 
+		this.mavo.treeBuilt.then(() => {
+			if (!this.template) {
+				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
+				this.item.expressions = [...(this.item.expressions || []), this];
+			}
+
+			Mavo.hooks.run("expressiontext-init-treebuilt", this);
+		});
+
 		Mavo.hooks.run("expressiontext-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
@@ -4017,19 +4065,21 @@ var _ = Mavo.ExpressionText = $.Class({
 		return !this.parsed.every(expr => !(expr instanceof Mavo.Expression) || !expr.changedBy(evt));
 	},
 
-	update: function(data = this.data, evt) {
+	update: function(data = this.data, event) {
+		var env = {context: this, ret: {}, event};
+		var parentEnv = env;
 		this.data = data;
 
-		var ret = {};
+		env.ret = {};
 
-		Mavo.hooks.run("expressiontext-update-start", this);
+		Mavo.hooks.run("expressiontext-update-start", env);
 
 		this.oldValue = this.value;
 
-		ret.value = this.value = this.parsed.map((expr, i) => {
+		env.ret.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-				if (expr.changedBy(evt)) {
-					var env = {context: this, expr};
+				if (expr.changedBy(parentEnv.event)) {
+					var env = {context: this, expr, parentEnv};
 
 					Mavo.hooks.run("expressiontext-update-beforeeval", env);
 
@@ -4057,7 +4107,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		if (!this.attribute) {
 			// Separate presentational & actual values only apply when content is variable
-			ret.presentational = this.value.map(value => {
+			env.ret.presentational = this.value.map(value => {
 				if (Array.isArray(value)) {
 					return value.join(", ");
 				}
@@ -4069,33 +4119,37 @@ var _ = Mavo.ExpressionText = $.Class({
 				return value;
 			});
 
-			ret.presentational = ret.presentational.length === 1? ret.presentational[0] : ret.presentational.join("");
+			env.ret.presentational = env.ret.presentational.length === 1? env.ret.presentational[0] : env.ret.presentational.join("");
 		}
 
-		ret.value = ret.value.length === 1? ret.value[0] : ret.value.join("");
+		env.ret.value = env.ret.value.length === 1? env.ret.value[0] : env.ret.value.join("");
 
 		if (this.primitive && this.parsed.length === 1) {
-			if (typeof ret.value === "number") {
+			if (typeof env.ret.value === "number") {
 				this.primitive.datatype = "number";
 			}
-			else if (typeof ret.value === "boolean") {
+			else if (typeof env.ret.value === "boolean") {
 				this.primitive.datatype = "boolean";
 			}
 		}
 
-		if (ret.presentational === ret.value) {
-			ret = ret.value;
+		if (env.ret.presentational === env.ret.value) {
+			ret = env.ret.value;
 		}
 
+		this.output(env.ret);
+
+		Mavo.hooks.run("expressiontext-update-end", env);
+	},
+
+	output: function(value) {
 		if (this.primitive) {
-			this.primitive.value = ret;
+			this.primitive.value = value;
 		}
 		else {
-			ret = ret.presentational || ret;
-			Mavo.Primitive.setValue(this.node, ret, {attribute: this.attribute});
+			value = value.presentational || value;
+			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
 		}
-
-		Mavo.hooks.run("expressiontext-update-end", this);
 	},
 
 	static: {
@@ -4125,12 +4179,13 @@ var _ = Mavo.ExpressionText = $.Class({
 });
 
 // Link primitive with its expressionText object
+// We need to do it before its constructor runs, to prevent any editing UI from being generated
 Mavo.hooks.add("primitive-init-start", function() {
-	this.expressionText = Mavo.ExpressionText.search(this.element, this.attribute);
+	var et = Mavo.ExpressionText.search(this.element, this.attribute);
 
-	if (this.expressionText) {
-		this.expressionText.primitive = this;
-		this.store = this.store || "none";
+	if (et && !et.mavoNode) {
+		et.primitive = this;
+		this.storage = this.storage || "none";
 		this.modes = "read";
 	}
 });
@@ -4142,6 +4197,7 @@ Mavo.hooks.add("primitive-init-start", function() {
 var _ = Mavo.Expressions = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
+		this.active = true;
 
 		this.expressions = [];
 
@@ -4150,23 +4206,15 @@ var _ = Mavo.Expressions = $.Class({
 
 		this.scheduled = new Set();
 
-		// Watch changes and update value
 		this.mavo.treeBuilt.then(() => {
-			for (let et of this.expressions) {
-				et.item = Mavo.Node.get(et.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
-				et.item.expressions = et.item.expressions || [];
-				et.item.expressions.push(et);
+			this.expressions = [];
 
-				var mavoNode = Mavo.Node.get(et.element, true);
-
-				if (mavoNode && mavoNode instanceof Mavo.Primitive && mavoNode.attribute == et.attribute) {
-					et.primitive = mavoNode;
-					mavoNode.store = mavoNode.store || "none";
-					mavoNode.modes = "read";
-				}
-			}
-
+			// Watch changes and update value
 			this.mavo.element.addEventListener("mavo:datachange", evt => {
+				if (!this.active) {
+					return;
+				}
+
 				if (evt.action == "propertychange" && evt.node.closestCollection) {
 					// Throttle propertychange events in collections
 					if (!this.scheduled.has(evt.property)) {
@@ -4187,7 +4235,7 @@ var _ = Mavo.Expressions = $.Class({
 		});
 	},
 
-	update: function callee(evt) {
+	update: function(evt) {
 		var root, rootGroup;
 
 		if (evt instanceof Element) {
@@ -4201,8 +4249,7 @@ var _ = Mavo.Expressions = $.Class({
 		var data = rootGroup.getData({
 			relative: true,
 			store: "*",
-			null: true,
-			unhandled: this.mavo.unhandled
+			null: true
 		});
 
 		rootGroup.walk((obj, path) => {
@@ -4210,7 +4257,6 @@ var _ = Mavo.Expressions = $.Class({
 				let env = { context: this, data: $.value(data, ...path) };
 
 				Mavo.hooks.run("expressions-update-start", env);
-
 				for (let et of obj.expressions) {
 					if (et.changedBy(evt)) {
 						et.update(env.data, evt);
@@ -4281,8 +4327,35 @@ var _ = Mavo.Expressions = $.Class({
 	}
 });
 
-if (self.Proxy) {
-	Mavo.hooks.add("node-getdata-end", function(env) {
+Mavo.hooks.add({
+	"init-tree-before": function() {
+		this.expressions = new Mavo.Expressions(this);
+	},
+	// Must be at a hook that collections don't have a marker yet which messes up paths
+	"node-init-end": function() {
+		var template = this.template;
+
+		if (template && template.expressions) {
+			// We know which expressions we have, don't traverse again
+			this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
+				template: et,
+				item: this,
+				mavo: this.mavo
+			}));
+		}
+	},
+	// TODO what about granular rendering?
+	"render-start": function() {
+		this.expressions.active = false;
+	},
+	"render-end": function() {
+		this.expressions.active = true;
+		this.expressions.update();
+	},
+	"collection-add-end": function(env) {
+		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
+	},
+	"node-getdata-end": self.Proxy && function(env) {
 		if (env.options.relative && (env.data && typeof env.data === "object" || this.collection)) {
 			var data = env.data;
 
@@ -4366,53 +4439,10 @@ if (self.Proxy) {
 				}
 			});
 		}
-	});
-}
-
-Mavo.hooks.add("init-tree-before", function() {
-	this.expressions = new Mavo.Expressions(this);
-});
-
-// Must be at a hook that collections don't have a marker yet which messes up paths
-Mavo.hooks.add("node-init-end", function() {
-	var template = this.template;
-
-	if (template && template.expressions) {
-		// We know which expressions we have, don't traverse again
-		this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
-			template: et,
-			item: this,
-			mavo: this.mavo
-		}));
 	}
-});
-
-// TODO what about granular rendering?
-Mavo.hooks.add("render-end", function() {
-	this.expressions.update();
-});
-
-Mavo.hooks.add("collection-add-end", function(env) {
-	this.mavo.expressions.update(env.item.element);
 });
 
 })(Bliss, Bliss.$);
-
-// mv-value plugin
-Mavo.Expressions.directive("mv-value", {
-	hooks: {
-		"expressiontext-init-start": function() {
-			if (this.attribute == "mv-value") {
-				this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-				this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-				this.expression = this.element.getAttribute("mv-value");
-
-				this.parsed = [new Mavo.Expression(this.expression)];
-				this.expression = this.syntax.start + this.expression + this.syntax.end;
-			}
-		}
-	}
-});
 
 // mv-if plugin
 (function($, $$) {
@@ -4530,6 +4560,72 @@ Mavo.Expressions.directive("mv-if", {
 });
 
 })(Bliss, Bliss.$);
+
+// mv-value plugin
+Mavo.Expressions.directive("mv-value", {
+	hooks: {
+		"node-init-start": function() {
+			if (!(this instanceof Mavo.Group || this.collection)) {
+				return;
+			}
+
+			var et = Mavo.ExpressionText.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
+
+			if (!et) {
+				return;
+			}
+
+			et.mavoNode = this;
+			this.storage = this.storage || "none";
+			this.modes = "read";
+
+			if (this.collection) {
+				this.collection.expressions = [...(this.collection.expressions || []), et];
+				et.mavoNode = this.collection;
+				this.collection.storage = this.collection.storage || "none";
+				this.collection.modes = "read";
+			}
+		},
+		"expressiontext-init-start": function() {
+			if (this.attribute != "mv-value") {
+				return;
+			}
+
+			this.originalAttribute = "mv-value";
+			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
+			this.expression = this.element.getAttribute("mv-value");
+			this.element.removeAttribute("mv-value");
+
+			this.parsed = [new Mavo.Expression(this.expression)];
+			this.expression = this.syntax.start + this.expression + this.syntax.end;
+		},
+		"expressiontext-init-treebuilt": function() {
+			if (this.originalAttribute != "mv-value" ||
+			   !this.mavoNode ||
+			   !(this.mavoNode == this.item || this.mavoNode == this.item.collection)) {
+				return;
+			}
+
+			if (this.mavoNode == this.item.collection) {
+				Mavo.delete(this.item.expressions, this);
+			}
+
+			this.output = function(value) {
+				value = value.value || value;
+
+				this.mavoNode.render(value);
+			};
+
+			this.changedBy = evt => true;
+		},
+		"expressiontext-update-start": function() {
+			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
+				return;
+			}
+		}
+	}
+});
 
 /**
  * Functions available inside Mavo expressions

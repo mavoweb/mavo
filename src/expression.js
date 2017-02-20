@@ -21,7 +21,7 @@ var _ = Mavo.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
-			console.log(exception);
+			//console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -35,11 +35,19 @@ var _ = Mavo.Expression = $.Class({
 	},
 
 	changedBy: function(evt) {
-		if (!this.identifiers || !evt) {
+		if (!evt) {
 			return true;
 		}
 
+		if (!this.identifiers) {
+			return false;
+		}
+
 		if (this.identifiers.indexOf(evt.property) > -1) {
+			return true;
+		}
+
+		if (Mavo.hasIntersection(evt.properties, this.identifiers)) {
 			return true;
 		}
 

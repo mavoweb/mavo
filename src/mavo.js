@@ -28,7 +28,6 @@ var _ = self.Mavo = $.Class({
 		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
 		this.element.setAttribute("mv-app", this.id);
 
-		this.unhandled = this.element.classList.contains("mv-keep-unhandled");
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
@@ -341,15 +340,17 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		_.hooks.run("render-start", {context: this, data});
+		var env = {context: this, data};
 
-		if (data) {
-			this.root.render(data);
+		_.hooks.run("render-start", env);
+
+		if (env.data) {
+			this.root.render(env.data);
 		}
 
 		this.unsavedChanges = false;
 
-		_.hooks.run("render-end", {context: this, data});
+		_.hooks.run("render-end", env);
 	},
 
 	clear: function() {
@@ -578,9 +579,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		plugin: function(o) {
-			for (let hook in o.hooks) {
-				_.hooks.add(hook, o.hooks[hook]);
-			}
+			_.hooks.add(o.hooks);
 
 			for (let Class in o.extend) {
 				$.Class(Mavo[Class], o.extend[Class]);
@@ -602,8 +601,8 @@ let s = _.selectors = {
 	init: ".mv-app, [mv-app], [data-mv-app], [mv-storage], [data-mv-storage]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-	group: "[typeof], [itemscope], [itemtype], .mv-group",
-	multiple: "[mv-multiple], .mv-multiple",
+	group: "[typeof], [itemscope], [itemtype], [mv-group]",
+	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	ui: ".mv-ui",
 	container: {

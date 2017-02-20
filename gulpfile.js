@@ -15,7 +15,7 @@ var notify = require("gulp-notify");
 var merge = require("merge2");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
-var mavo = "mavo util permissions backend node group primitive elements collection expression expressiontext expressions mv-if functions prettyprint debug backend.dropbox backend.github"
+var mavo = "mavo util permissions backend node group primitive elements collection expression expressiontext expressions mv-if mv-value functions prettyprint debug backend.dropbox backend.github"
 			.split(" ").map(path => `src/${path}.js`);
 
 gulp.task("concat", function() {
@@ -106,7 +106,6 @@ gulp.task("watch", function() {
 	gulp.watch(dependencies, ["lib"]);
 	gulp.watch(["src/*.js", "lib/*.js"], ["concat"]);
 	gulp.watch(["dist/mavo.js"], ["transpile"]);
-	gulp.watch(["dist/mavo.es5.js"], ["minify"]);
 	gulp.watch(["**/*.scss"], ["sass"]);
 });
 

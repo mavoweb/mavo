@@ -25,7 +25,7 @@ var _ = Mavo.Backend = $.Class({
 	logout: () => Promise.resolve(),
 
 	getFile: function() {
-		var data = this.mavo.getData({unhandled: true});
+		var data = this.mavo.getData();
 
 		return {
 			data,
