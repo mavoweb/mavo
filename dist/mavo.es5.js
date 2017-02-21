@@ -3496,7 +3496,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.mutable) {
 				// Add it to the DOM, or fix its place
-				var rel = index === undefined ? this.marker : this.children[index];
+				var rel = this.children[index] ? this.children[index].element : this.marker;
 				$[this.bottomUp ? "after" : "before"](item.element, rel);
 
 				if (index === undefined) {
