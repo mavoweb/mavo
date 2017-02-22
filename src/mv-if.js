@@ -13,7 +13,7 @@ Mavo.Expressions.directive("mv-if", {
 				}
 			}
 		},
-		"ExpressionText": {
+		"DOMExpression": {
 			lazy: {
 				"childProperties": function() {
 					if (this.attribute != "mv-if") {
@@ -42,7 +42,7 @@ Mavo.Expressions.directive("mv-if", {
 		}
 	},
 	hooks: {
-		"expressiontext-init-start": function() {
+		"domexpression-init-start": function() {
 			if (this.attribute != "mv-if") {
 				return;
 			}
@@ -51,13 +51,13 @@ Mavo.Expressions.directive("mv-if", {
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-			this.parentIf = this.element.parentNode && Mavo.ExpressionText.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
+			this.parentIf = this.element.parentNode && Mavo.DOMExpression.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 			if (this.parentIf) {
 				this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 			}
 		},
-		"expressiontext-update-end": function() {
+		"domexpression-update-end": function() {
 			if (this.attribute != "mv-if") {
 				return;
 			}

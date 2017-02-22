@@ -80,7 +80,7 @@ var _ = Mavo.Expressions = $.Class({
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
-			this.expressions.push(new Mavo.ExpressionText({
+			this.expressions.push(new Mavo.DOMExpression({
 				node, syntax,
 				path: path? path.slice(1).split("/").map(i => +i) : [],
 				attribute: attribute && attribute.name,
@@ -143,7 +143,7 @@ Mavo.hooks.add({
 
 		if (template && template.expressions) {
 			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
+			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
 				template: et,
 				item: this,
 				mavo: this.mavo

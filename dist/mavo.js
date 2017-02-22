@@ -3773,7 +3773,7 @@ var _ = Mavo.Expression = $.Class({
 			this.value = this.function(data);
 		}
 		catch (exception) {
-			//console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
+			console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -3982,7 +3982,7 @@ _.Syntax.default = new _.Syntax("[", "]");
 
 (function($) {
 
-var _ = Mavo.ExpressionText = $.Class({
+var _ = Mavo.DOMExpression = $.Class({
 	constructor: function(o = {}) {
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
@@ -4003,7 +4003,7 @@ var _ = Mavo.ExpressionText = $.Class({
 		this.element = this.node;
 		this.attribute = this.attribute || null;
 
-		Mavo.hooks.run("expressiontext-init-start", this);
+		Mavo.hooks.run("domexpression-init-start", this);
 
 		if (!this.expression) { // Still unhandled?
 			if (this.node.nodeType === 3) {
@@ -4053,10 +4053,10 @@ var _ = Mavo.ExpressionText = $.Class({
 				this.item.expressions = [...(this.item.expressions || []), this];
 			}
 
-			Mavo.hooks.run("expressiontext-init-treebuilt", this);
+			Mavo.hooks.run("domexpression-init-treebuilt", this);
 		});
 
-		Mavo.hooks.run("expressiontext-init-end", this);
+		Mavo.hooks.run("domexpression-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -4072,7 +4072,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		env.ret = {};
 
-		Mavo.hooks.run("expressiontext-update-start", env);
+		Mavo.hooks.run("domexpression-update-start", env);
 
 		this.oldValue = this.value;
 
@@ -4081,11 +4081,11 @@ var _ = Mavo.ExpressionText = $.Class({
 				if (expr.changedBy(parentEnv.event)) {
 					var env = {context: this, expr, parentEnv};
 
-					Mavo.hooks.run("expressiontext-update-beforeeval", env);
+					Mavo.hooks.run("domexpression-update-beforeeval", env);
 
 					env.value = env.expr.eval(data);
 
-					Mavo.hooks.run("expressiontext-update-aftereval", env);
+					Mavo.hooks.run("domexpression-update-aftereval", env);
 
 					if (env.value instanceof Error) {
 						return this.fallback !== undefined? this.fallback : env.expr.expression;
@@ -4139,7 +4139,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		this.output(env.ret);
 
-		Mavo.hooks.run("expressiontext-update-end", env);
+		Mavo.hooks.run("domexpression-update-end", env);
 	},
 
 	output: function(value) {
@@ -4156,11 +4156,11 @@ var _ = Mavo.ExpressionText = $.Class({
 		elements: new WeakMap(),
 
 		/**
-		 * Search for Mavo.ExpressionText object(s) associated with a given element
+		 * Search for Mavo.DOMExpression object(s) associated with a given element
 		 * and optionally an attribute.
 		 *
-		 * @return If one argument, array of matching ExpressionText objects.
-		 *         If two arguments, the matching ExpressionText object or null
+		 * @return If one argument, array of matching DOMExpression objects.
+		 *         If two arguments, the matching DOMExpression object or null
 		 */
 		search: function(element, attribute) {
 			var all = _.elements.get(element) || [];
@@ -4181,7 +4181,7 @@ var _ = Mavo.ExpressionText = $.Class({
 // Link primitive with its expressionText object
 // We need to do it before its constructor runs, to prevent any editing UI from being generated
 Mavo.hooks.add("primitive-init-start", function() {
-	var et = Mavo.ExpressionText.search(this.element, this.attribute);
+	var et = Mavo.DOMExpression.search(this.element, this.attribute);
 
 	if (et && !et.mavoNode) {
 		et.primitive = this;
@@ -4274,7 +4274,7 @@ var _ = Mavo.Expressions = $.Class({
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
-			this.expressions.push(new Mavo.ExpressionText({
+			this.expressions.push(new Mavo.DOMExpression({
 				node, syntax,
 				path: path? path.slice(1).split("/").map(i => +i) : [],
 				attribute: attribute && attribute.name,
@@ -4337,7 +4337,7 @@ Mavo.hooks.add({
 
 		if (template && template.expressions) {
 			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(et => new Mavo.ExpressionText({
+			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
 				template: et,
 				item: this,
 				mavo: this.mavo
@@ -4459,7 +4459,7 @@ Mavo.Expressions.directive("mv-if", {
 				}
 			}
 		},
-		"ExpressionText": {
+		"DOMExpression": {
 			lazy: {
 				"childProperties": function() {
 					if (this.attribute != "mv-if") {
@@ -4488,7 +4488,7 @@ Mavo.Expressions.directive("mv-if", {
 		}
 	},
 	hooks: {
-		"expressiontext-init-start": function() {
+		"domexpression-init-start": function() {
 			if (this.attribute != "mv-if") {
 				return;
 			}
@@ -4497,13 +4497,13 @@ Mavo.Expressions.directive("mv-if", {
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
 
-			this.parentIf = this.element.parentNode && Mavo.ExpressionText.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
+			this.parentIf = this.element.parentNode && Mavo.DOMExpression.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 
 			if (this.parentIf) {
 				this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 			}
 		},
-		"expressiontext-update-end": function() {
+		"domexpression-update-end": function() {
 			if (this.attribute != "mv-if") {
 				return;
 			}
@@ -4569,7 +4569,7 @@ Mavo.Expressions.directive("mv-value", {
 				return;
 			}
 
-			var et = Mavo.ExpressionText.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
+			var et = Mavo.DOMExpression.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
 
 			if (!et) {
 				return;
@@ -4586,7 +4586,7 @@ Mavo.Expressions.directive("mv-value", {
 				this.collection.modes = "read";
 			}
 		},
-		"expressiontext-init-start": function() {
+		"domexpression-init-start": function() {
 			if (this.attribute != "mv-value") {
 				return;
 			}
@@ -4600,7 +4600,7 @@ Mavo.Expressions.directive("mv-value", {
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
 		},
-		"expressiontext-init-treebuilt": function() {
+		"domexpression-init-treebuilt": function() {
 			if (this.originalAttribute != "mv-value" ||
 			   !this.mavoNode ||
 			   !(this.mavoNode == this.item || this.mavoNode == this.item.collection)) {
@@ -4619,7 +4619,7 @@ Mavo.Expressions.directive("mv-value", {
 
 			this.changedBy = evt => true;
 		},
-		"expressiontext-update-start": function() {
+		"domexpression-update-start": function() {
 			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
 				return;
 			}
@@ -5728,7 +5728,7 @@ Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) 
 	});
 };
 
-Mavo.hooks.add("expressiontext-init-end", function() {
+Mavo.hooks.add("domexpression-init-end", function() {
 	if (this.mavo.debug) {
 		this.debug = {};
 
@@ -5814,7 +5814,7 @@ Mavo.hooks.add("group-init-end", function() {
 	}
 });
 
-Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
+Mavo.hooks.add("domexpression-update-beforeeval", function(env) {
 	if (this.debug) {
 		env.td = env.expr.debug;
 
@@ -5824,7 +5824,7 @@ Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 	}
 });
 
-Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
+Mavo.hooks.add("domexpression-update-aftereval", function(env) {
 	if (env.td && !env.td.classList.contains("mv-error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;

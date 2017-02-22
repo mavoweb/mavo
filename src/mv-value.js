@@ -6,7 +6,7 @@ Mavo.Expressions.directive("mv-value", {
 				return;
 			}
 
-			var et = Mavo.ExpressionText.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
+			var et = Mavo.DOMExpression.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
 
 			if (!et) {
 				return;
@@ -23,7 +23,7 @@ Mavo.Expressions.directive("mv-value", {
 				this.collection.modes = "read";
 			}
 		},
-		"expressiontext-init-start": function() {
+		"domexpression-init-start": function() {
 			if (this.attribute != "mv-value") {
 				return;
 			}
@@ -37,7 +37,7 @@ Mavo.Expressions.directive("mv-value", {
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
 		},
-		"expressiontext-init-treebuilt": function() {
+		"domexpression-init-treebuilt": function() {
 			if (this.originalAttribute != "mv-value" ||
 			   !this.mavoNode ||
 			   !(this.mavoNode == this.item || this.mavoNode == this.item.collection)) {
@@ -56,7 +56,7 @@ Mavo.Expressions.directive("mv-value", {
 
 			this.changedBy = evt => true;
 		},
-		"expressiontext-update-start": function() {
+		"domexpression-update-start": function() {
 			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
 				return;
 			}

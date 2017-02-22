@@ -291,7 +291,7 @@ Mavo.Group.prototype.debugRow = function({element, attribute = null, tds = []}) 
 	});
 };
 
-Mavo.hooks.add("expressiontext-init-end", function() {
+Mavo.hooks.add("domexpression-init-end", function() {
 	if (this.mavo.debug) {
 		this.debug = {};
 
@@ -377,7 +377,7 @@ Mavo.hooks.add("group-init-end", function() {
 	}
 });
 
-Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
+Mavo.hooks.add("domexpression-update-beforeeval", function(env) {
 	if (this.debug) {
 		env.td = env.expr.debug;
 
@@ -387,7 +387,7 @@ Mavo.hooks.add("expressiontext-update-beforeeval", function(env) {
 	}
 });
 
-Mavo.hooks.add("expressiontext-update-aftereval", function(env) {
+Mavo.hooks.add("domexpression-update-aftereval", function(env) {
 	if (env.td && !env.td.classList.contains("mv-error")) {
 		var value = _.printValue(env.value);
 		env.td.textContent = env.td.title = value;

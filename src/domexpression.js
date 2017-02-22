@@ -1,6 +1,6 @@
 (function($) {
 
-var _ = Mavo.ExpressionText = $.Class({
+var _ = Mavo.DOMExpression = $.Class({
 	constructor: function(o = {}) {
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
@@ -21,7 +21,7 @@ var _ = Mavo.ExpressionText = $.Class({
 		this.element = this.node;
 		this.attribute = this.attribute || null;
 
-		Mavo.hooks.run("expressiontext-init-start", this);
+		Mavo.hooks.run("domexpression-init-start", this);
 
 		if (!this.expression) { // Still unhandled?
 			if (this.node.nodeType === 3) {
@@ -71,10 +71,10 @@ var _ = Mavo.ExpressionText = $.Class({
 				this.item.expressions = [...(this.item.expressions || []), this];
 			}
 
-			Mavo.hooks.run("expressiontext-init-treebuilt", this);
+			Mavo.hooks.run("domexpression-init-treebuilt", this);
 		});
 
-		Mavo.hooks.run("expressiontext-init-end", this);
+		Mavo.hooks.run("domexpression-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
@@ -90,7 +90,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		env.ret = {};
 
-		Mavo.hooks.run("expressiontext-update-start", env);
+		Mavo.hooks.run("domexpression-update-start", env);
 
 		this.oldValue = this.value;
 
@@ -99,11 +99,11 @@ var _ = Mavo.ExpressionText = $.Class({
 				if (expr.changedBy(parentEnv.event)) {
 					var env = {context: this, expr, parentEnv};
 
-					Mavo.hooks.run("expressiontext-update-beforeeval", env);
+					Mavo.hooks.run("domexpression-update-beforeeval", env);
 
 					env.value = env.expr.eval(data);
 
-					Mavo.hooks.run("expressiontext-update-aftereval", env);
+					Mavo.hooks.run("domexpression-update-aftereval", env);
 
 					if (env.value instanceof Error) {
 						return this.fallback !== undefined? this.fallback : env.expr.expression;
@@ -157,7 +157,7 @@ var _ = Mavo.ExpressionText = $.Class({
 
 		this.output(env.ret);
 
-		Mavo.hooks.run("expressiontext-update-end", env);
+		Mavo.hooks.run("domexpression-update-end", env);
 	},
 
 	output: function(value) {
@@ -174,11 +174,11 @@ var _ = Mavo.ExpressionText = $.Class({
 		elements: new WeakMap(),
 
 		/**
-		 * Search for Mavo.ExpressionText object(s) associated with a given element
+		 * Search for Mavo.DOMExpression object(s) associated with a given element
 		 * and optionally an attribute.
 		 *
-		 * @return If one argument, array of matching ExpressionText objects.
-		 *         If two arguments, the matching ExpressionText object or null
+		 * @return If one argument, array of matching DOMExpression objects.
+		 *         If two arguments, the matching DOMExpression object or null
 		 */
 		search: function(element, attribute) {
 			var all = _.elements.get(element) || [];
@@ -199,7 +199,7 @@ var _ = Mavo.ExpressionText = $.Class({
 // Link primitive with its expressionText object
 // We need to do it before its constructor runs, to prevent any editing UI from being generated
 Mavo.hooks.add("primitive-init-start", function() {
-	var et = Mavo.ExpressionText.search(this.element, this.attribute);
+	var et = Mavo.DOMExpression.search(this.element, this.attribute);
 
 	if (et && !et.mavoNode) {
 		et.primitive = this;
