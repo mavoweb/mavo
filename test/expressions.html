@@ -397,6 +397,15 @@
 			</td>
 			<td>1 <br>2</td>
 		</tr>
+		<tr title="Reference collision">
+			<td>
+				<span property="prop4">1</span>
+				<div property="group4" mv-value="{prop4: 2}">
+					[prop4]
+				</div>
+			</td>
+			<td>1 <div>2</div></td>
+		</tr>
 		<tr title="Collection">
 			<td>
 				<div property="collection1" mv-multiple typeof mv-value='[
@@ -415,7 +424,7 @@
 			</td>
 			<td>123</td>
 		</tr>
-		<tr title="Collection, interactive">
+		<tr title="Collection of primitives, interactive">
 			<td>
 				<span property="collection3" mv-multiple mv-mode="edit" mv-default="[$index]"></span>
 			</td>
