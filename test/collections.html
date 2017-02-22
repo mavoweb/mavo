@@ -201,6 +201,20 @@
 	</ul>
 </section>
 
+<section mv-app mv-storage="#countries" class="mv-autoedit">
+    <h1>Order in collection with add button</h1>
+
+    <p>
+    The order below should be 1, 2, 3. The button should appear below the list.
+    I am afraid this test fails at random. There may be some race condition that is hard to track.
+    </p>
+
+    <table property="country" mv-multiple>
+      <tr><th>[$index]</th><td property="code"></td><td property="name"></td></tr>
+    </table>
+    <button class="mv-add-country">Another country</button>
+</section>
+
 <script src="../dist/mavo.js"></script>
 <script src="test.js"></script>
 
