@@ -201,18 +201,31 @@
 	</ul>
 </section>
 
-<section mv-app mv-storage="#countries" class="mv-autoedit">
+<script type="application/json" id="list-of-countries">{
+  "country": ["us", "gb", "ch"]
+}</script>
+<section>
     <h1>Order in collection with add button</h1>
 
     <p>
-    The order below should be 1, 2, 3. The button should appear below the list.
+    The order of the elements below should match that of the collection. The button should appear after the elements.
     I am afraid this test fails at random. There may be some race condition that is hard to track.
     </p>
 
-    <table property="country" mv-multiple>
-      <tr><th>[$index]</th><td property="code"></td><td property="name"></td></tr>
-    </table>
-    <button class="mv-add-country">Another country</button>
+    <div mv-app mv-storage="#countries" class="mv-autoedit">
+        <p>Collection: 1. "", "Online"; 2. "us", "United States"; 3. "gb", "United Kingdom".</p> 
+
+        <table property="country" mv-multiple>
+            <tr><th>[$index]</th><td property="code"></td><td property="name"></td></tr>
+        </table>
+        <button class="mv-add-country">Another country</button>
+    </div>
+
+    <div mv-app mv-storage="#list-of-countries" class="mv-autoedit">
+        <p>Collection: <span>[</span>"us", "gb", "ch"]</p>
+        <input type="text" property="country" mv-multiple>
+        <button class="mv-ui mv-add mv-add-country">Founded</button>
+    </div>    
 </section>
 
 <script src="../dist/mavo.js"></script>
