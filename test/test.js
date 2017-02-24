@@ -1,4 +1,4 @@
-var page = location.pathname.match(/\/([a-z]+)\.html/)[1];
+var page = location.pathname.match(/\/([a-z]+)(?:\.html|\/$)/)[1];
 
 if (typeof self["test_" + page] == "function") {
 	self["test_" + page]();
@@ -95,22 +95,24 @@ requestAnimationFrame(() => {
 			});
 		}
 
-		$.create("thead", {
-			contents: [
-				{
-					tag: "tr",
-					contents: [
-						{ tag: "th", textContent: "Actual" },
-						{ tag: "th", textContent: "Expected" }
-					]
-				}
-			],
-			start: table
-		});
+		if (!$("thead", table)) {
+			$.create("thead", {
+				contents: [
+					{
+						tag: "tr",
+						contents: [
+							{ tag: "th", textContent: "Actual" },
+							{ tag: "th", textContent: "Expected" }
+						]
+					}
+				],
+				start: table
+			});
+		}
 
-		for (let td of $$("tr td:first-child", table)) {
+		for (let td of $$("tr td:nth-last-of-type(2)", table)) {
 			let tr = td.parentNode;
-			let ref = tr.cells[1];
+			let ref = tr.cells[tr.cells.length - 1];
 
 			if (!ref) {
 				return;
