@@ -228,6 +228,26 @@
     </div>    
 </section>
 
+<script type="application/json" id="teams">{
+  "team": [
+      {"name": ["A"], "isBest": false, "wins": [true, true, false]},
+      {"name": ["B"], "isBest": true,  "wins": [true, true, true]},
+      {"name": ["C"], "isBest": false, "wins": [false, true, false]}
+  ]
+}</script>
+<section mv-app="bools" mv-storage="#teams">
+    <h1>Collections containing Boolean values</h1>
+
+    <div>
+        <div property="team" mv-multiple>
+            <b property="name"></b>
+            <i property="isBest"></i>
+            <ul><li property="wins" mv-multiple></li></ul>
+        </div>
+    </div>
+</section>
+
+
 <script src="../dist/mavo.js"></script>
 <script src="test.js"></script>
 
