@@ -51,14 +51,6 @@ var _ = self.Mavo = $.Class({
 
 		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
-		// Ctrl + S or Cmd + S to save
-		this.element.addEventListener("keydown", evt => {
-			if (evt.keyCode == 83 && evt[_.superKey]) {
-				evt.preventDefault();
-				this.save();
-			}
-		});
-
 		this.element.setAttribute("typeof", "");
 
 		// Apply heuristic for groups
@@ -188,7 +180,6 @@ var _ = self.Mavo = $.Class({
 				this.ui.edit = $.create("button", {
 					className: "mv-edit",
 					textContent: "Edit",
-					onclick: e => this.editing? this.done() : this.edit(),
 					inside: this.ui.bar
 				});
 
@@ -208,8 +199,7 @@ var _ = self.Mavo = $.Class({
 			this.permissions.can("delete", () => {
 				this.ui.clear = $.create("button", {
 					className: "mv-clear",
-					textContent: "Clear",
-					onclick: e => this.clear()
+					textContent: "Clear"
 				});
 
 				this.ui.bar.appendChild(this.ui.clear);
@@ -237,13 +227,6 @@ var _ = self.Mavo = $.Class({
 			this.ui.save = $.create("button", {
 				className: "mv-save",
 				textContent: "Save",
-				events: {
-					click: e => this.save(),
-					"mouseenter focus": e => {
-						this.element.classList.add("mv-highlight-unsaved");
-					},
-					"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
-				},
 				inside: this.ui.bar
 			});
 
@@ -274,21 +257,54 @@ var _ = self.Mavo = $.Class({
 					className: "mv-revert",
 					textContent: "Revert",
 					disabled: true,
-					events: {
-						click: e => this.revert(),
-						"mouseenter focus": e => {
-							this.element.classList.add("mv-highlight-unsaved");
-						},
-						"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
-					},
 					inside: this.ui.bar
 				});
 			}
 
+			$.events([this.ui.save, this.ui.revert], {
+				"mouseenter focus": e => {
+					this.element.classList.add("mv-highlight-unsaved");
+				},
+				"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
+			});
 		}, () => {
 			$.remove([this.ui.save, this.ui.revert]);
 			this.ui.save = this.ui.revert = null;
-			this.element.removeEventListener(".mavo:autosave")
+			this.element.removeEventListener(".mavo:autosave");
+		});
+
+		$.delegate(this.element, "click", {
+			".mv-save": evt => {
+				if (this.permissions.save) {
+					this.save();
+				}
+			},
+			".mv-revert": evt => {
+				if (this.permissions.save) {
+					this.revert();
+				}
+			},
+			".mv-edit": evt => {
+				if (this.editing || !this.permissions.edit) {
+					this.done();
+				}
+				else {
+					this.edit();
+				}
+			},
+			".mv-clear": evt => {
+				if (this.permissions.delete) {
+					this.clear();
+				}
+			}
+		});
+
+		// Ctrl + S or Cmd + S to save
+		this.element.addEventListener("keydown", evt => {
+			if (evt.keyCode == 83 && evt[_.superKey]) {
+				evt.preventDefault();
+				this.save();
+			}
 		});
 
 		Mavo.hooks.run("init-end", this);

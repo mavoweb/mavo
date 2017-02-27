@@ -304,14 +304,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
-			// Ctrl + S or Cmd + S to save
-			this.element.addEventListener("keydown", function (evt) {
-				if (evt.keyCode == 83 && evt[_.superKey]) {
-					evt.preventDefault();
-					_this.save();
-				}
-			});
-
 			this.element.setAttribute("typeof", "");
 
 			// Apply heuristic for groups
@@ -447,9 +439,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					_this.ui.edit = $.create("button", {
 						className: "mv-edit",
 						textContent: "Edit",
-						onclick: function onclick(e) {
-							return _this.editing ? _this.done() : _this.edit();
-						},
 						inside: _this.ui.bar
 					});
 
@@ -470,10 +459,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.permissions.can("delete", function () {
 					_this.ui.clear = $.create("button", {
 						className: "mv-clear",
-						textContent: "Clear",
-						onclick: function onclick(e) {
-							return _this.clear();
-						}
+						textContent: "Clear"
 					});
 
 					_this.ui.bar.appendChild(_this.ui.clear);
@@ -504,17 +490,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_this.ui.save = $.create("button", {
 					className: "mv-save",
 					textContent: "Save",
-					events: {
-						click: function click(e) {
-							return _this.save();
-						},
-						"mouseenter focus": function mouseenterFocus(e) {
-							_this.element.classList.add("mv-highlight-unsaved");
-						},
-						"mouseleave blur": function mouseleaveBlur(e) {
-							return _this.element.classList.remove("mv-highlight-unsaved");
-						}
-					},
 					inside: _this.ui.bar
 				});
 
@@ -544,24 +519,55 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						className: "mv-revert",
 						textContent: "Revert",
 						disabled: true,
-						events: {
-							click: function click(e) {
-								return _this.revert();
-							},
-							"mouseenter focus": function mouseenterFocus(e) {
-								_this.element.classList.add("mv-highlight-unsaved");
-							},
-							"mouseleave blur": function mouseleaveBlur(e) {
-								return _this.element.classList.remove("mv-highlight-unsaved");
-							}
-						},
 						inside: _this.ui.bar
 					});
 				}
+
+				$.events([_this.ui.save, _this.ui.revert], {
+					"mouseenter focus": function mouseenterFocus(e) {
+						_this.element.classList.add("mv-highlight-unsaved");
+					},
+					"mouseleave blur": function mouseleaveBlur(e) {
+						return _this.element.classList.remove("mv-highlight-unsaved");
+					}
+				});
 			}, function () {
 				$.remove([_this.ui.save, _this.ui.revert]);
 				_this.ui.save = _this.ui.revert = null;
 				_this.element.removeEventListener(".mavo:autosave");
+			});
+
+			$.delegate(this.element, "click", {
+				".mv-save": function mvSave(evt) {
+					if (_this.permissions.save) {
+						_this.save();
+					}
+				},
+				".mv-revert": function mvRevert(evt) {
+					if (_this.permissions.save) {
+						_this.revert();
+					}
+				},
+				".mv-edit": function mvEdit(evt) {
+					if (_this.editing || !_this.permissions.edit) {
+						_this.done();
+					} else {
+						_this.edit();
+					}
+				},
+				".mv-clear": function mvClear(evt) {
+					if (_this.permissions.delete) {
+						_this.clear();
+					}
+				}
+			});
+
+			// Ctrl + S or Cmd + S to save
+			this.element.addEventListener("keydown", function (evt) {
+				if (evt.keyCode == 83 && evt[_.superKey]) {
+					evt.preventDefault();
+					_this.save();
+				}
 			});
 
 			Mavo.hooks.run("init-end", this);
