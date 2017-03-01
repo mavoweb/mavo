@@ -209,31 +209,22 @@
 	</ul>
 </section>
 
-<script type="application/json" id="list-of-countries">{
-  "country": ["us", "gb", "ch"]
-}</script>
-<section>
-    <h1>Order in collection with add button</h1>
+<section mv-app="customadd" mv-storage="#indexes" class="mv-autoedit">
+	<h1>Custom add button before collection</h1>
 
-    <p>
-    The order of the elements below should match that of the collection. The button should appear after the elements.
-    I am afraid this test fails at random. There may be some race condition that is hard to track.
-    </p>
+	<button class="mv-add-number">Another number</button>
+	<div property="number" mv-multiple title="[$index]" mv-order="desc">
+		<span property="value"></span>
+	</div>
+</section>
 
-    <div mv-app mv-storage="#countries" class="mv-autoedit">
-        <p>Collection: 1. "", "Online"; 2. "us", "United States"; 3. "gb", "United Kingdom".</p>
+<section mv-app="custom-add" mv-storage="#indexes" class="mv-autoedit">
+	<h1>Custom add button after collection</h1>
 
-        <table property="country" mv-multiple>
-            <tr><th>[$index]</th><td property="code"></td><td property="name"></td></tr>
-        </table>
-        <button class="mv-add-country">Another country</button>
-    </div>
-
-    <div mv-app mv-storage="#list-of-countries" class="mv-autoedit">
-        <p>Collection: <span>[</span>"us", "gb", "ch"]</p>
-        <input type="text" property="country" mv-multiple>
-        <button class="mv-ui mv-add mv-add-country">Founded</button>
-    </div>
+	<div property="number" mv-multiple title="[$index]" mv-order="desc">
+		<span property="value"></span>
+	</div>
+	<button class="mv-add-number">Another number</button>
 </section>
 
 <script type="application/json" id="teams">{
