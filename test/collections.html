@@ -157,6 +157,14 @@
 	</div>
 </section>
 
+<section mv-app="bottomup" mv-storage="#indexes" class="mv-autoedit">
+	<h1>Bottom-up collections</h1>
+
+	<div property="number" mv-multiple title="[$index]" mv-order="desc">
+		<span property="value"></span>
+	</div>
+</section>
+
 <script type="application/json" id="countries">{
 	"country": [
 		{
@@ -213,7 +221,7 @@
     </p>
 
     <div mv-app mv-storage="#countries" class="mv-autoedit">
-        <p>Collection: 1. "", "Online"; 2. "us", "United States"; 3. "gb", "United Kingdom".</p> 
+        <p>Collection: 1. "", "Online"; 2. "us", "United States"; 3. "gb", "United Kingdom".</p>
 
         <table property="country" mv-multiple>
             <tr><th>[$index]</th><td property="code"></td><td property="name"></td></tr>
@@ -225,7 +233,7 @@
         <p>Collection: <span>[</span>"us", "gb", "ch"]</p>
         <input type="text" property="country" mv-multiple>
         <button class="mv-ui mv-add mv-add-country">Founded</button>
-    </div>    
+    </div>
 </section>
 
 <script type="application/json" id="teams">{

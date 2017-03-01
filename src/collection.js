@@ -263,11 +263,11 @@ var _ = Mavo.Collection = $.Class({
 								}
 							}, {
 								tag: "button",
-								title: `Add new ${item.name.replace(/s$/i, "")} ${item.collection.bottomUp? "after" : "before"}`,
+								title: `Add new ${item.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
 								className: "mv-add",
 								events: {
 									"click": evt => {
-										var newItem = this.add(null, item.index + this.bottomUp);
+										var newItem = this.add(null, item.index);
 
 										if (evt[Mavo.superKey]) {
 											newItem.render(item.data);
@@ -426,7 +426,12 @@ var _ = Mavo.Collection = $.Class({
 					Mavo.hooks.run("collection-add-end", env);
 				}
 
-				$[this.bottomUp? "after" : "before"](fragment, this.marker);
+				if (this.bottomUp) {
+					$.after(fragment, i > 0? this.children[i-1].element : this.marker);
+				}
+				else {
+					$.before(fragment, this.marker);
+				}
 			}
 		}
 	},
