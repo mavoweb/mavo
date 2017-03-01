@@ -634,7 +634,7 @@ Mavo.hooks.add({
 			var swapUI = callback => {
 				var ret;
 
-				this.sneak(() => {
+				Mavo.Observer.sneak(this.observer, () => {
 					var ui = $.remove($(".mv-item-controls", this.element));
 
 					ret = callback();
