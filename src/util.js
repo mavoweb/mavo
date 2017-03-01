@@ -65,6 +65,11 @@ var _ = $.extend(Mavo, {
 		return false;
 	},
 
+	/**
+	 * Get the current value of a CSS property on an element
+	 */
+	getStyle: (element, property) => element && getComputedStyle(element).getPropertyValue(property).trim(),
+
 	data: (element, name, value) => {
 		if (value === undefined) {
 			return $.value(element, "_", "data", "mavo", name);
@@ -123,7 +128,7 @@ var _ = $.extend(Mavo, {
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
 
 	Observer: $.Class({
-		constructor: function(element, attribute, callback, oldValue) {
+		constructor: function(element, attribute, callback, o = {}) {
 			if (callback instanceof MutationObserver) {
 				this.observer = callback;
 			}
@@ -132,15 +137,14 @@ var _ = $.extend(Mavo, {
 			this.element = element;
 			this.callback = callback;
 			this.attribute = attribute;
-			this.oldValue = oldValue;
 
-			this.options = {};
+			this.options = $.extend({}, o);
 
 			if (attribute) {
 				$.extend(this.options, {
 					attributes: true,
 					attributeFilter: this.attribute == "all"? undefined : [this.attribute],
-					attributeOldValue: !!this.oldValue
+					attributeOldValue: !!o.oldValue
 				});
 			}
 
@@ -149,7 +153,7 @@ var _ = $.extend(Mavo, {
 					characterData: true,
 					childList: true,
 					subtree: true,
-					characterDataOldValue: !!this.oldValue
+					characterDataOldValue: !!o.oldValue
 				});
 			}
 
@@ -179,7 +183,7 @@ var _ = $.extend(Mavo, {
 			if (this.running) {
 				this.stop();
 				var ret = callback();
-				requestAnimationFrame(() => this.run());
+				this.run();
 			}
 			else {
 				var ret = callback();
@@ -191,6 +195,12 @@ var _ = $.extend(Mavo, {
 		destroy: function() {
 			this.observer.disconnect();
 			this.observer = this.element = null;
+		},
+
+		static: {
+			sneak: function(observer, callback) {
+				return observer? observer.sneak(callback) : callback();
+			}
 		}
 	}),
 

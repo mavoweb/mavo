@@ -41,6 +41,10 @@ var _ = Mavo.Functions = {
 		return obj && obj[property] !== undefined? obj[property] : null;
 	},
 
+	unique: function(arr) {
+		return [...new Set(arr)];
+	},
+
 	/*********************
 	 * Number functions
 	 *********************/

@@ -232,13 +232,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			try {
 				for (var _iterator = $$(dataMv.join(", "), this.element).concat(this.element)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var _element = _step.value;
-					var _iteratorNormalCompletion2 = true;
-					var _didIteratorError2 = false;
-					var _iteratorError2 = undefined;
+					var _iteratorNormalCompletion4 = true;
+					var _didIteratorError4 = false;
+					var _iteratorError4 = undefined;
 
 					try {
-						for (var _iterator2 = _.attributes[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-							var attribute = _step2.value;
+						for (var _iterator4 = _.attributes[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+							var attribute = _step4.value;
 
 							var value = _element.getAttribute("data-" + attribute);
 
@@ -247,16 +247,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					} catch (err) {
-						_didIteratorError2 = true;
-						_iteratorError2 = err;
+						_didIteratorError4 = true;
+						_iteratorError4 = err;
 					} finally {
 						try {
-							if (!_iteratorNormalCompletion2 && _iterator2.return) {
-								_iterator2.return();
+							if (!_iteratorNormalCompletion4 && _iterator4.return) {
+								_iterator4.return();
 							}
 						} finally {
-							if (_didIteratorError2) {
-								throw _iteratorError2;
+							if (_didIteratorError4) {
+								throw _iteratorError4;
 							}
 						}
 					}
@@ -442,6 +442,73 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						inside: _this.ui.bar
 					});
 
+					var mvMode = function mvMode(element) {
+						var _iteratorNormalCompletion2 = true;
+						var _didIteratorError2 = false;
+						var _iteratorError2 = undefined;
+
+						try {
+							for (var _iterator2 = _.Node.children(element)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+								var node = _step2.value;
+
+								console.log("mutation", node.property, mode, node.nodeType, node.element);
+								node.mode = _.getStyle(node.element, "--mv-mode");
+								if (!mode) {
+									node.modes = null;
+									return;
+								}
+
+								node.mode = node.modes = mode;
+
+								if (mode == "read") {
+									node.done();
+								} else if (mode == "edit") {
+									node.edit();
+								}
+							}
+						} catch (err) {
+							_didIteratorError2 = true;
+							_iteratorError2 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion2 && _iterator2.return) {
+									_iterator2.return();
+								}
+							} finally {
+								if (_didIteratorError2) {
+									throw _iteratorError2;
+								}
+							}
+						}
+					};
+
+					_this.modeObserver = new Mavo.Observer(_this.element, "mv-mode", function (records) {
+						var _iteratorNormalCompletion3 = true;
+						var _didIteratorError3 = false;
+						var _iteratorError3 = undefined;
+
+						try {
+							for (var _iterator3 = records[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+								var record = _step3.value;
+
+								mvMode(record.target);
+							}
+						} catch (err) {
+							_didIteratorError3 = true;
+							_iteratorError3 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion3 && _iterator3.return) {
+									_iterator3.return();
+								}
+							} finally {
+								if (_didIteratorError3) {
+									throw _iteratorError3;
+								}
+							}
+						}
+					}, { subtree: true });
+
 					if (_this.autoEdit) {
 						_this.ui.edit.click();
 					}
@@ -452,6 +519,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (_this.editing) {
 						_this.done();
 					}
+
+					_this.modeObserver && _this.modeObserver.destroy();
 				});
 			}
 
@@ -859,29 +928,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			allIds: [],
 
 			get: function get(id) {
-				var _iteratorNormalCompletion3 = true;
-				var _didIteratorError3 = false;
-				var _iteratorError3 = undefined;
+				var _iteratorNormalCompletion5 = true;
+				var _didIteratorError5 = false;
+				var _iteratorError5 = undefined;
 
 				try {
-					for (var _iterator3 = _.all[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-						var mavo = _step3.value;
+					for (var _iterator5 = _.all[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+						var mavo = _step5.value;
 
 						if (mavo.id === id) {
 							return mavo;
 						}
 					}
 				} catch (err) {
-					_didIteratorError3 = true;
-					_iteratorError3 = err;
+					_didIteratorError5 = true;
+					_iteratorError5 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion3 && _iterator3.return) {
-							_iterator3.return();
+						if (!_iteratorNormalCompletion5 && _iterator5.return) {
+							_iterator5.return();
 						}
 					} finally {
-						if (_didIteratorError3) {
-							throw _iteratorError3;
+						if (_didIteratorError5) {
+							throw _iteratorError5;
 						}
 					}
 				}
@@ -1080,6 +1149,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return false;
 		},
 
+		/**
+   * Get the current value of a CSS property on an element
+   */
+		getStyle: function getStyle(element, property) {
+			return getComputedStyle(element).getPropertyValue(property);
+		},
+
 		data: function data(element, name, value) {
 			if (value === undefined) {
 				return $.value(element, "_", "data", "mavo", name);
@@ -1145,7 +1221,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		Observer: $.Class({
-			constructor: function constructor(element, attribute, callback, oldValue) {
+			constructor: function constructor(element, attribute, callback) {
+				var o = arguments.length <= 3 || arguments[3] === undefined ? {} : arguments[3];
+
 				if (callback instanceof MutationObserver) {
 					this.observer = callback;
 				}
@@ -1154,15 +1232,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element = element;
 				this.callback = callback;
 				this.attribute = attribute;
-				this.oldValue = oldValue;
 
-				this.options = {};
+				this.options = $.extend({}, o);
 
 				if (attribute) {
 					$.extend(this.options, {
 						attributes: true,
 						attributeFilter: this.attribute == "all" ? undefined : [this.attribute],
-						attributeOldValue: !!this.oldValue
+						attributeOldValue: !!o.oldValue
 					});
 				}
 
@@ -1171,7 +1248,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						characterData: true,
 						childList: true,
 						subtree: true,
-						characterDataOldValue: !!this.oldValue
+						characterDataOldValue: !!o.oldValue
 					});
 				}
 
@@ -1198,14 +1275,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     * Disconnect an observer, run some code, then observe again
     */
 			sneak: function sneak(callback) {
-				var _this = this;
-
 				if (this.running) {
 					this.stop();
 					var ret = callback();
-					requestAnimationFrame(function () {
-						return _this.run();
-					});
+					this.run();
 				} else {
 					var ret = callback();
 				}
@@ -1216,6 +1289,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			destroy: function destroy() {
 				this.observer.disconnect();
 				this.observer = this.element = null;
+			},
+
+			static: {
+				sneak: function sneak(observer, callback) {
+					return observer ? observer.sneak(callback) : callback();
+				}
 			}
 		}),
 
@@ -1741,8 +1820,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var _ = Mavo.Node = $.Class({
 		abstract: true,
 		constructor: function constructor(element, mavo) {
-			var _this = this;
-
 			var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
 			if (!element || !mavo) {
@@ -1782,12 +1859,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			Mavo.hooks.run("node-init-start", env);
 
-			this.modeObserver = new Mavo.Observer(this.element, "mv-mode", function (records) {
-				_this.mode = _this.element.getAttribute("mv-mode");
-				_this[_this.mode == "edit" ? "edit" : "done"]();
-			});
-
-			this.mode = this.modes || "read";
+			this.mode = getComputedStyle(this.element).getPropertyValue("--mv-mode") || "read";
 
 			Mavo.hooks.run("node-init-end", env);
 		},
@@ -1832,9 +1904,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		destroy: function destroy() {
-			this.modeObserver.destroy();
-		},
+		destroy: function destroy() {},
 
 		getData: function getData() {
 			var o = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -2023,17 +2093,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			mode: function mode(value) {
-				var _this2 = this;
+				var _this = this;
 
 				if (this._mode != value) {
 					// If we don't do this, calling setAttribute below will
 					// result in infinite recursion
 					this._mode = value;
+					var set = this.modes || this.mode == "edit";
 
-					this.modeObserver.sneak(function () {
-						var set = _this2.modes || _this2.mode == "edit";
-						$.toggleAttribute(_this2.element, "mv-mode", value, set);
+					Mavo.Observer.sneak(this.mavo.modeObserver, function () {
+						$.toggleAttribute(_this.element, "mv-mode", value, set);
 					});
+				}
+			},
+
+			modes: function modes(value) {
+				if (value && value != "read" && value != "edit") {
+					return null;
 				}
 			}
 		},
@@ -2082,6 +2158,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (nodes[0] instanceof Mavo.Group) {
 					return node[1];
 				}
+			},
+
+			/**
+    * Get all properties that are inside an element but not nested into other properties
+    */
+			children: function children(element) {
+				var ret = Mavo.Node.get(element);
+
+				if (ret) {
+					// element is a Mavo node
+					return [ret];
+				}
+
+				ret = $$(Mavo.selectors.property, element).map(function (e) {
+					return Mavo.Node.get(e);
+				}).filter(function (e) {
+					return !element.contains(e.parentGroup.element);
+				}) // drop nested properties
+				.map(function (e) {
+					return e.collection || e;
+				});
+
+				return Mavo.Functions.unique(ret);
 			}
 		}
 	});
@@ -2327,8 +2426,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 
 			this.datatype = this.defaults.datatype;
-			this.modes = this.modes || this.defaults.modes;
-			this.mode = this.modes || "read";
+
+			if ("modes" in this.defaults) {
+				this.modes = this.modes || this.defaults.modes;
+				this.mode = this.modes || "read";
+			}
 
 			Mavo.hooks.run("primitive-init-start", this);
 
@@ -2560,7 +2662,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		sneak: function sneak(callback) {
-			this.observer ? this.observer.sneak(callback) : callback();
+			Mavo.Observer.sneak(this.observer, callback);
 		},
 
 		// Called only the first time this primitive is edited
@@ -5356,6 +5458,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    */
 		get: function get(obj, property) {
 			return obj && obj[property] !== undefined ? obj[property] : null;
+		},
+
+		unique: function unique(arr) {
+			return [].concat(_toConsumableArray(new Set(arr)));
 		},
 
 		/*********************

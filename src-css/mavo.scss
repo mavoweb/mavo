@@ -141,7 +141,7 @@
 		}
 	}
 
-	[mv-app]:not([mv-mode="edit"]) &.mv-deleted {
+	.mv-deleted:not([mv-mode="edit"]) {
 		display: none;
 	}
 
@@ -200,8 +200,7 @@ button.mv-close {
 	}
 
 	&:not([mv-permissions~="edit"]) {
-		.mv-edit,
-		[mv-mode="edit"], .mv-add {
+		.mv-edit {
 			display: none;
 		}
 	}
@@ -246,8 +245,13 @@ button.mv-close {
 	}
 }
 
+// CSS Variables make it easier to track inherited attributes
+[mv-mode="read"] { --mv-mode: read; }
+[mv-mode="edit"] { --mv-mode: edit; }
+[mv-mode=""]     { --mv-mode: initial; }
+
 // Primitives
-[property][mv-mode="edit"]:not([typeof]) {
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) {
 	& input.mv-editor,
 	& select.mv-editor,
 	& textarea.mv-editor {

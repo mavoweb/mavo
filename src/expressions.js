@@ -188,7 +188,8 @@ Mavo.hooks.add({
 					// Property does not exist, look for it elsewhere
 
 					if (property == "$index") {
-						return data[property] = (this.index || 0) + 1;
+						data[property] = this.index || 0;
+						return true; // if index is 0 it's falsy and has would return false!
 					}
 
 					if (property == "$all") {
@@ -200,7 +201,8 @@ Mavo.hooks.add({
 							return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
 						}
 
-						return data[property] = null;
+						data[property] = null;
+						return null;
 					}
 
 					if (property == this.mavo.id) {

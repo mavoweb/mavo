@@ -32,21 +32,17 @@ var _ = Mavo.Node = $.Class({
 		this.mavo = mavo;
 		this.group = this.parentGroup = env.options.group;
 
-		if (!this.fromTemplate("property", "type", "modes")) {
+		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.store = this.element.getAttribute("mv-storage");
-			this.modes = this.element.getAttribute("mv-mode");
 		}
+
+		this.modes = this.element.getAttribute("mv-mode");
 
 		Mavo.hooks.run("node-init-start", env);
 
-		this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-			this.mode = this.element.getAttribute("mv-mode");
-			this[this.mode == "edit"? "edit" : "done"]();
-		});
-
-		this.mode = this.modes || "read";
+		this.mode = Mavo.getStyle(this.element, "--mv-mode") || "read";
 
 		Mavo.hooks.run("node-init-end", env);
 	},
@@ -92,7 +88,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	destroy: function() {
-		this.modeObserver.destroy();
+
 	},
 
 	getData: function(o = {}) {
@@ -164,13 +160,22 @@ var _ = Mavo.Node = $.Class({
 	edit: function() {
 		this.mode = "edit";
 
+		if (this.mode != "edit") {
+			return false;
+		}
+
 		this.propagate("edit");
 
 		Mavo.hooks.run("node-edit-end", this);
 	},
 
 	done: function() {
-		this.mode = "read";
+		this.mode = Mavo.getStyle(this.element.parentNode, "--mv-mode") || "read";
+
+		if (this.mode != "read") {
+			return false;
+		}
+
 		$.unbind(this.element, ".mavo:edit");
 
 		this.propagate("done");
@@ -254,16 +259,38 @@ var _ = Mavo.Node = $.Class({
 
 		mode: function (value) {
 			if (this._mode != value) {
-				// If we don't do this, calling setAttribute below will
+				// Is it allowed?
+				if (this.modes && value != this.modes) {
+					value = this.modes;
+				}
+
+				// If we don't do this, setting the attribute below will
 				// result in infinite recursion
 				this._mode = value;
 
-				this.modeObserver.sneak(() => {
-					var set = this.modes || this.mode == "edit";
-					$.toggleAttribute(this.element, "mv-mode", value, set);
-				});
+				if (!(this instanceof Mavo.Collection) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
+					// If attribute is not one of the recognized values, leave it alone
+					var set = this.modes || value == "edit";
+					Mavo.Observer.sneak(this.mavo.modeObserver, () => {
+						$.toggleAttribute(this.element, "mv-mode", value, set);
+					});
+				}
+
+				return value;
 			}
 		},
+
+		modes: function(value) {
+			if (value && value != "read" && value != "edit") {
+				return null;
+			}
+
+			this._modes = value;
+
+			if (value && this.mode != value) {
+				this.mode = value;
+			}
+		}
 	},
 
 	static: {
@@ -306,6 +333,25 @@ var _ = Mavo.Node = $.Class({
 			if (nodes[0] instanceof Mavo.Group) {
 				return node[1];
 			}
+		},
+
+		/**
+		 * Get all properties that are inside an element but not nested into other properties
+		 */
+		children: function(element) {
+			var ret = Mavo.Node.get(element);
+
+			if (ret) {
+				// element is a Mavo node
+				return [ret];
+			}
+
+			ret = $$(Mavo.selectors.property, element)
+				.map(e => Mavo.Node.get(e))
+				.filter(e => !element.contains(e.parentGroup.element)) // drop nested properties
+				.map(e => e.collection || e);
+
+			return Mavo.Functions.unique(ret);
 		}
 	}
 });

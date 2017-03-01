@@ -159,6 +159,24 @@ table.reftest tr[title] {
     font: bold 75%/1 sans-serif;
     text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
 
+body > section > div {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.06);
+  padding: .5em;
+  margin: .5em; }
+  body > section > div[title] {
+    position: relative; }
+    body > section > div[title]::before {
+      content: attr(title);
+      display: block;
+      padding: .4em;
+      margin: -.66em;
+      margin-bottom: .8em;
+      background: linear-gradient(to right, rgba(0, 0, 0, 0.4), transparent);
+      color: white;
+      font: bold 75%/1 sans-serif;
+      text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
+
 body::after {
   content: counter(failures) " failure(s)";
   position: fixed;

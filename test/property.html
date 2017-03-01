@@ -84,10 +84,31 @@
 
 <section mv-app="mvmode" mv-storage="local" class="mv-debug-saving">
 	<h1>mv-mode</h1>
-	<div property="MyConstant" mv-mode="read">Constant, this must be saved but not be editable.</div>
-	<div property="NormalProperty">Normal property, must be editable and saveable.</div>
-	<div property="alwaysEdited" mv-mode="edit">Always edited property.</div>
-	<div property="WithExpression" mv-mode="[if(true, 'read', 'edit')]">This is also constant.</div>
+	<div property="normalProperty">Edited on edit mode only</div>
+	<div title='mv-mode="read"' property="constant" mv-mode="read">Never edited</div>
+	<div title='mv-mode="edit"' property="alwaysEdited" mv-mode="edit">Always edited</div>
+	<div title='mv-mode="read" via expression' property="dynamicConstant" mv-mode="[if(true, read, edit)]">Never edited</div>
+	<div title='mv-mode="edit" via expression' property="dynamicEdited" mv-mode="[if(false, read, edit)]">Always edited</div>
+	<div title="Inherited mv-mode" mv-mode="edit">
+		<div property="inheritEdit">Always edited</div>
+	</div>
+	<div title="Interactive mv-mode">
+		<input type="checkbox" property="checkbox1">
+		<span property="interactiveEdit" mv-mode="[if(checkbox1, edit, read)]">Edited when checkbox is checked</span>
+	</div>
+	<div title="Inherited interactive mv-mode" mv-mode="[if(checkbox2, edit, read)]">
+		<input type="checkbox" property="checkbox2">
+		<span property="inheritInteractiveEdit">Edited when checkbox is checked</span>
+	</div>
+	<div title="Inherited from group interactive mv-mode" property="group1" mv-mode="[if(checkbox2, edit, read)]">
+		<input type="checkbox" property="checkbox2">
+		<span property="inheritGroupInteractiveEdit">Edited when checkbox is checked</span>
+	</div>
+	<div property="collection1" mv-multiple mv-mode="[if($index = 0, edit, read)]" foo="[if($index = 0, edit, read)]"
+	     title="Editing the first item of a collection but not the collection (testcase for #131)">
+		<span property="firstItemEdit">Edited when it’s the first item</span>
+	</div>
+
 </section>
 
 

@@ -13,8 +13,13 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.datatype = this.defaults.datatype;
-		this.modes = this.modes || this.defaults.modes;
-		this.mode = this.modes || "read";
+
+		if ("modes" in this.defaults) {
+			// If modes are related to element type, this overrides everything
+			// because it means the other mode makes no sense for that element
+			this.modes = this.defaults.modes;
+			this.element.setAttribute("mv-mode", this.defaults.modes);
+		}
 
 		Mavo.hooks.run("primitive-init-start", this);
 
@@ -177,41 +182,6 @@ var _ = Mavo.Primitive = $.Class({
 		this.unsavedChanges = false;
 	},
 
-	done: function () {
-		if (this.modes == "edit") {
-			return;
-		}
-
-		this.super.done.call(this);
-
-		if ("preEdit" in this) {
-			$.unbind(this.element, ".mavo:preedit .mavo:edit");
-		}
-
-		this.sneak(() => {
-			if (this.defaults.done) {
-				this.defaults.done.call(this);
-				return;
-			}
-
-			if (this.popup) {
-				this.popup.close();
-			}
-			else if (!this.attribute && this.editor) {
-				$.remove(this.editor);
-				this.element.textContent = this.editorValue;
-			}
-		});
-
-		// Revert tabIndex
-		if (this.element._.data.prevTabindex !== null) {
-			this.element.tabIndex = this.element._.data.prevTabindex;
-		}
-		else {
-			this.element.removeAttribute("tabindex");
-		}
-	},
-
 	revert: function() {
 		if (this.unsavedChanges && this.savedValue !== undefined) {
 			// FIXME if we have a collection of properties (not groups), this will cause
@@ -220,10 +190,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.value = this.savedValue;
 			this.unsavedChanges = false;
 		}
-	},
-
-	sneak: function(callback) {
-		this.observer? this.observer.sneak(callback) : callback();
 	},
 
 	// Called only the first time this primitive is edited
@@ -276,11 +242,9 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function () {
-		if (this.modes == "read") {
-			return;
+		if (this.super.edit.call(this) === false) {
+			return false;
 		}
-
-		this.super.edit.call(this);
 
 		// Make element focusable, so it can actually receive focus
 		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
@@ -349,6 +313,39 @@ var _ = Mavo.Primitive = $.Class({
 		});
 	}, // edit
 
+	done: function () {
+		if (this.super.done.call(this) === false) {
+			return false;
+		}
+
+		if ("preEdit" in this) {
+			$.unbind(this.element, ".mavo:preedit .mavo:edit");
+		}
+
+		Mavo.Observer.sneak(this.observer, () => {
+			if (this.defaults.done) {
+				this.defaults.done.call(this);
+				return;
+			}
+
+			if (this.popup) {
+				this.popup.close();
+			}
+			else if (!this.attribute && this.editor) {
+				$.remove(this.editor);
+				this.element.textContent = this.editorValue;
+			}
+		});
+
+		// Revert tabIndex
+		if (this.element._.data.prevTabindex !== null) {
+			this.element.tabIndex = this.element._.data.prevTabindex;
+		}
+		else {
+			this.element.removeAttribute("tabindex");
+		}
+	},
+
 	clear: function() {
 		if (!this.constant) {
 			this.value = this.emptyValue;
@@ -412,7 +409,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	setValue: function (value, o = {}) {
-		this.sneak(() => {
+		Mavo.Observer.sneak(this.observer, () => {
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;

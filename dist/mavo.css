@@ -111,7 +111,7 @@
     [mv-multiple].mv-deleted button {
       display: inline-block;
       margin-left: .4em; }
-  [mv-app]:not([mv-mode="edit"]) [mv-multiple].mv-deleted {
+  [mv-multiple] .mv-deleted:not([mv-mode="edit"]) {
     display: none; }
   [mv-multiple].gu-mirror {
     position: fixed !important;
@@ -156,8 +156,7 @@ button.mv-close {
 [mv-app]:not([mv-permissions~="add"]) button.mv-add {
   display: none; }
 
-[mv-app]:not([mv-permissions~="edit"]) .mv-edit,
-[mv-app]:not([mv-permissions~="edit"]) [mv-mode="edit"], [mv-app]:not([mv-permissions~="edit"]) .mv-add {
+[mv-app]:not([mv-permissions~="edit"]) .mv-edit {
   display: none; }
 
 [mv-app][mv-progress="Loading"] [mv-multiple] {
@@ -187,21 +186,30 @@ button.mv-close {
 [mv-app] [mv-mode="edit"] .mv-editor:focus {
   box-shadow: 0 0 0 1px rgba(133, 160, 173, 0.5), 1px 1px 0.5em 1px rgba(0, 0, 0, 0.3) !important; }
 
-[property][mv-mode="edit"]:not([typeof]) input.mv-editor,
-[property][mv-mode="edit"]:not([typeof]) select.mv-editor,
-[property][mv-mode="edit"]:not([typeof]) textarea.mv-editor {
+[mv-mode="read"] {
+  --mv-mode: read; }
+
+[mv-mode="edit"] {
+  --mv-mode: edit; }
+
+[mv-mode=""] {
+  --mv-mode: initial; }
+
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) input.mv-editor,
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) select.mv-editor,
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) textarea.mv-editor {
   all: unset;
   cursor: auto; }
 
-[property][mv-mode="edit"]:not([typeof]):hover {
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]):hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
-[property][mv-mode="edit"]:not([typeof]) textarea.mv-editor {
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) textarea.mv-editor {
   display: block;
   box-sizing: border-box;
   width: 100%; }
 
-[property][mv-mode="edit"]:not([typeof]) input.mv-editor {
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) input.mv-editor {
   max-width: 100%; }
 
 meta[property][mv-mode="edit"] {

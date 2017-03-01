@@ -229,11 +229,9 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	edit: function() {
-		if (this.modes == "read") {
-			return;
+		if (this.super.edit.call(this) === false) {
+			return false;
 		}
-
-		this.super.edit.call(this);
 
 		if (this.mutable) {
 			// Insert the add button if it's not already in the DOM
@@ -244,6 +242,63 @@ var _ = Mavo.Collection = $.Class({
 				$[this.bottomUp? "before" : "after"](this.addButton, rel);
 			}
 
+			// Insert item controls
+			this.propagate(item => {
+				if (!item.itemControls) {
+					item.itemControls = $$(".mv-item-controls", item.element)
+										   .filter(el => el.closest(Mavo.selectors.multiple) == item.element)[0];
+
+					item.itemControls = item.itemControls || $.create({
+						className: "mv-item-controls mv-ui"
+					});
+
+					$.set(item.itemControls, {
+						contents: [
+							{
+								tag: "button",
+								title: "Delete this " + item.name,
+								className: "mv-delete",
+								events: {
+									"click": evt => item.collection.delete(item)
+								}
+							}, {
+								tag: "button",
+								title: `Add new ${item.name.replace(/s$/i, "")} ${item.collection.bottomUp? "after" : "before"}`,
+								className: "mv-add",
+								events: {
+									"click": evt => {
+										var newItem = this.add(null, item.index + this.bottomUp);
+
+										if (evt[Mavo.superKey]) {
+											newItem.render(item.data);
+										}
+
+										if (!Mavo.inViewport(newItem.element)) {
+											newItem.element.scrollIntoView({behavior: "smooth"});
+										}
+
+										return newItem.edit();
+									}
+								}
+							}, {
+								tag: "button",
+								title: "Drag to reorder " + item.name,
+								className: "mv-drag-handle"
+							}
+						]
+					});
+				}
+
+				if (!item.itemControls.parentNode) {
+					if ($.value(item, "itemControlsComment", "parentNode")) {
+						item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
+					}
+					else {
+						item.element.appendChild(item.itemControls);
+					}
+				}
+			});
+
 			// Set up drag & drop
 			_.dragula.then(() => {
 				this.getDragula();
@@ -252,16 +307,24 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	done: function() {
-		if (this.modes == "edit") {
-			return;
+		if (this.super.done.call(this) === false) {
+			return false;
 		}
-
-		this.super.done.call(this);
 
 		if (this.mutable) {
 			if (this.addButton.parentNode) {
 				this.addButton.remove();
 			}
+
+			this.propagate(item => {
+				if (item.itemControls) {
+					item.itemControlsComment = item.itemControlsComment || document.createComment("item controls");
+
+					if (item.itemControls.parentNode) {
+						item.itemControls.parentNode.replaceChild(item.itemControlsComment, item.itemControls);
+					}
+				}
+			});
 		}
 	},
 
@@ -596,74 +659,6 @@ Mavo.hooks.add({
 					}
 				});
 			});
-		}
-	},
-	"node-edit-end": function() {
-		if (this.collection) {
-			if (!this.itemControls) {
-				this.itemControls = $$(".mv-item-controls", this.element)
-									   .filter(el => el.closest(Mavo.selectors.multiple) == this.element)[0];
-
-				this.itemControls = this.itemControls || $.create({
-					className: "mv-item-controls mv-ui"
-				});
-
-				$.set(this.itemControls, {
-					contents: [
-						{
-							tag: "button",
-							title: "Delete this " + this.name,
-							className: "mv-delete",
-							events: {
-								"click": evt => this.collection.delete(this)
-							}
-						}, {
-							tag: "button",
-							title: `Add new ${this.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-							className: "mv-add",
-							events: {
-								"click": evt => {
-									var item = this.collection.add(null, this.index + this.collection.bottomUp);
-
-									if (evt[Mavo.superKey]) {
-										item.render(this.data);
-									}
-
-									if (!Mavo.inViewport(item.element)) {
-										item.element.scrollIntoView({behavior: "smooth"});
-									}
-
-									return item.edit();
-								}
-							}
-						}, {
-							tag: "button",
-							title: "Drag to reorder " + this.name,
-							className: "mv-drag-handle"
-						}
-					]
-				});
-			}
-
-			if (!this.itemControls.parentNode) {
-				if ($.value(this, "itemControlsComment", "parentNode")) {
-					this.itemControlsComment.parentNode.replaceChild(this.itemControls, this.itemControlsComment);
-				}
-				else {
-					this.element.appendChild(this.itemControls);
-				}
-			}
-		}
-	},
-	"node-done-end": function() {
-		if (this.collection) {
-			if (this.itemControls) {
-				this.itemControlsComment = this.itemControlsComment || document.createComment("item controls");
-
-				if (this.itemControls.parentNode) {
-					this.itemControls.parentNode.replaceChild(this.itemControlsComment, this.itemControls);
-				}
-			}
 		}
 	}
 });

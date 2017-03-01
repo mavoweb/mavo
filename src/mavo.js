@@ -183,6 +183,39 @@ var _ = self.Mavo = $.Class({
 					inside: this.ui.bar
 				});
 
+				// Observe entire tree for mv-mode changes
+				this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
+					for (let record of records) {
+						let element = record.target;
+
+						nodeloop: for (let node of _.Node.children(element)) {
+							let previousMode = node.mode, mode;
+
+							if (node.element == element) {
+								// If attribute set directly on a Mavo node, then it forces it into that mode
+								// otherwise, descendant nodes still inherit, unless they are also mode-restricted
+								mode = node.element.getAttribute("mv-mode");
+								node.modes = mode;
+							}
+							else {
+								// Inherited
+								if (node.modes) {
+									// Mode-restricted, we cannot change to the other mode
+									continue nodeloop;
+								}
+
+								mode = _.getStyle(node.element.parentNode, "--mv-mode");
+							}
+
+							node.mode = mode;
+
+							if (previousMode != node.mode) {
+								node[node.mode == "edit"? "edit" : "done"]();
+							}
+						}
+					}
+				}, {subtree: true});
+
 				if (this.autoEdit) {
 					this.ui.edit.click();
 				}
@@ -192,6 +225,8 @@ var _ = self.Mavo = $.Class({
 				if (this.editing) {
 					this.done();
 				}
+
+				this.modeObserver && this.modeObserver.destroy();
 			});
 		}
 
