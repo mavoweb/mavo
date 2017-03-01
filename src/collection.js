@@ -566,7 +566,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			// If add button is already in the DOM and *before* our template, then we default to prepending
-			return !!(this.addButton.compareDocumentPosition(this.templateElement) & Node.DOCUMENT_POSITION_FOLLOWING);
+			return !!(this.addButton.compareDocumentPosition(this.marker) & Node.DOCUMENT_POSITION_FOLLOWING);
 		},
 
 		closestCollection: function() {
