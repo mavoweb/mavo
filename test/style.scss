@@ -177,6 +177,11 @@ table.reftest {
 
 	tbody > tr {
 		border: 1px solid hsla(0, 0%, 0%, .1);
+
+		&:not([class]) {
+			--color: rgba(0,0,0,.06);
+			--dark-color: rgba(0,0,0,.3);
+		}
 	}
 
 	td, th {
@@ -195,9 +200,7 @@ table.reftest {
 	td:not(:last-child) {
 		border-right: 1px solid hsla(0, 0%, 0%, .1);
 	}
-}
 
-table.reftest {
 	tr {
 		margin: .4em 0;
 		background: var(--color);

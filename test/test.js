@@ -85,72 +85,113 @@ var hashchanged = evt => {
 hashchanged();
 onhashchange = hashchanged;
 
-requestAnimationFrame(() => {
+var _ = self.RefTest = $.Class({
+	constructor: function(table) {
+		this.table = table;
+		this.compare = self[table.getAttribute("data-test")] || _.defaultCompare;
+		this.setup();
+		this.test();
+	},
 
-	for (let table of $$("table.reftest")) {
-		if (!$("p", table.parentNode)) {
+	setup: function() {
+		if (!$("p", this.table.parentNode) && this.compare === _.defaultCompare) {
 			$.create("p", {
 				textContent: "First column must be the same as the second.",
-				before: table
+				before: this.table
 			});
 		}
 
-		if (!$("thead", table)) {
+		var cells = [...this.table.rows[0].cells];
+
+		if (!$("thead", this.table) && cells.length > 1) {
+			cells = cells.map(td => {
+				return {tag: "th"};
+			});
+
+			cells[cells.length - 2].textContent = "Actual";
+			cells[cells.length - 1].textContent = "Expected";
+
 			$.create("thead", {
 				contents: [
 					{
 						tag: "tr",
-						contents: [
-							{ tag: "th", textContent: "Actual" },
-							{ tag: "th", textContent: "Expected" }
-						]
+						contents:  cells
 					}
 				],
-				start: table
+				start: this.table
 			});
 		}
 
-		for (let td of $$("tr td:nth-last-of-type(2)", table)) {
-			let tr = td.parentNode;
-			let ref = tr.cells[tr.cells.length - 1];
+		var test = () => this.test();
+		this.observer = new MutationObserver(test);
+		this.observer.observe(this.table, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			characterData: true,
+			attributeFilter: ["mv-mode"]
+		});
 
-			if (!ref) {
-				return;
-			}
+		$.events(this.table, "input change mavo:datachange", test);
+		$.events(this.table.closest("[mv-app]"), "mavo:load", test);
+	},
 
-			let compare = () => {
-				var pass = Test.content(td) == Test.content(ref);
+	test: function() {
+		for (let tr of this.table.tBodies[0].rows) {
+			this.testRow(tr);
+		}
+	},
 
-				if (pass) {
-					let child = td.firstElementChild;
-					let refChild = ref.firstElementChild;
+	testRow: function(tr) {
+		var cells = tr.cells;
+		var compare = self[tr.getAttribute("data-test")] || this.compare;
 
-					if (child && child == td.lastElementChild && refChild) {
-						if (child.matches("input")) {
-							// Compare values
-							pass = pass && child.value == refChild.value;
-						}
-						else if (child.matches("select")) {
-							// Compare select options
-							$$(child.options).forEach((option, i) => {
-								var refOption = refChild.options[i];
-								var same = option.textContent == refOption.textContent &&
-								           option.value == refOption.value;
-								pass = pass && same;
-							});
-						}
+		if (cells.length) {
+
+			tr.classList.remove("pass", "fail");
+			tr.classList.add(compare(...cells)? "pass" : "fail");
+		}
+	},
+
+	static: {
+		defaultCompare: (...cells) => {
+			var td = cells[cells.length - 2] || cells[cells.length - 1];
+			var ref = cells[cells.length - 1];
+
+			var pass = Test.content(td) == Test.content(ref);
+
+			if (pass) {
+				let child = td.firstElementChild;
+				let refChild = ref.firstElementChild;
+
+				if (child && child == td.lastElementChild && refChild) {
+					if (child.matches("input")) {
+						// Compare values
+						pass = pass && child.value == refChild.value;
+					}
+					else if (child.matches("select")) {
+						// Compare select options
+						$$(child.options).forEach((option, i) => {
+							var refOption = refChild.options[i];
+							var same = option.textContent == refOption.textContent &&
+									   option.value == refOption.value;
+							pass = pass && same;
+						});
 					}
 				}
+			}
 
-				tr.classList.remove("pass", "fail");
-				tr.classList.add(pass? "pass" : "fail");
-			};
-
-			compare();
-			new Mavo.Observer(td, null, compare);
-			$.events(td, "input change mavo:datachange", compare);
+			return pass;
 		}
 	}
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+	requestAnimationFrame(() => {
+		for (let table of $$("table.reftest")) {
+			new RefTest(table);
+		}
+	});
 });
 
 function equals(a, b) {

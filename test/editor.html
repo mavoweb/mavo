@@ -30,63 +30,149 @@
 <section mv-app="elementtypes" class="mv-autoedit">
 	<h1>Different element types</h1>
 
-	<div>
-		<span property="span">Just a span</span>
-	</div>
-	<div>
-		<div property="block">Block element</div>
-	</div>
-	<div>
-		<meter property="meter" value="50" max="100"></meter> [meter]
-	</div>
-	<div title="Meter with no default">
-		<meter property="meterNoDefault"></meter> [meterNoDefault]</span>
-	</div>
-	<div>
-		<progress property="progress" value=".5"></progress>
-	</div>
-
-	<div>
-		<img src="http://mavo.io/logo.svg" style="width: 100px" property="picture">
-	</div>
-	<div>
-		<time property="emptyDate">Empty time</time>
-	</div>
-	<div>
-		<time property="date" datetime="1986-06-13">13 Jun 1986</time>
-	</div>
-	<div>
-		<meta property="meta" content="Foo">
-	</div>
+	<table class="reftest" data-test="checkAttribute" mv-expressions="{ }">
+		<tr>
+			<td>
+				<span property="span" data-test-attribute="null">Just a span</span>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<div property="block" data-test-attribute="null">Block element</div>
+			</td>
+		</tr>
+		<tr>
+			<td><meter property="meter" value="50" max="100" data-test-attribute="value"></meter> {meter}</td>
+		</tr>
+		<tr title="Meter with no default">
+			<td>
+				<meter property="meterNoDefault" data-test-attribute="value"></meter> {meterNoDefault}</span>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<progress property="progress" value=".5" data-test-attribute="value"></progress>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<img src="http://mavo.io/logo.svg" style="width: 100px" property="picture" data-test-attribute="src">
+			</td>
+		</tr>
+		<tr title="Empty &lt;time>">
+			<td>
+				<time property="date1" data-test-attribute="datetime"></time>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<time property="date2" datetime="1986-06-13" data-test-attribute="datetime" data-test-editor="input[type=date]">13 Jun 1986</time>
+			</td>
+		</tr>
+		<tr title="Time">
+			<td>
+				<time property="time" datetime="13:00" data-test-attribute="datetime" data-test-editor="input[type=time]">13:00</time>
+			</td>
+		</tr>
+		<tr title="&lt;meta>">
+			<td>
+				<meta property="meta" content="Foo" data-test-attribute="content">
+			</td>
+		</tr>
+	</table>
 </section>
+<script>
+var attributeTests = {
+	attribute: (node, ref) => node.attribute + "" === ref,
+	type: (node, ref) => node.datatype === ref || node.datatype === undefined,
+	editor: (node, ref) => {
+		node.initEdit && node.initEdit();
+		return !node.editor || node.editor.matches(ref)
+	}
+}
+
+function checkAttribute(td) {
+	var selector = Object.keys(attributeTests).map(id => `[property][data-test-${id}]`).join(", ");
+	var pass = true;
+
+	for (el of $$(selector, td)) {
+		var node = Mavo.Node.get(el);
+
+
+		for (var id in attributeTests) {
+			var ref = el.getAttribute(`data-test-${id}`);
+
+			if (ref) {
+				pass = pass && attributeTests[id](node, ref);
+
+				if (!pass) {
+					return false;
+				}
+			}
+		}
+	}
+
+	return pass;
+}
+</script>
 
 <section mv-app="mvattribute">
 	<h1>mv-attribute</h1>
-	<div>
-		<span property="title" mv-attribute="title">Foo bar</span>
-	</div>
-	<div>
-		<input property="disabled" mv-attribute="disabled"></input>
-	</div>
+	<table class="reftest" data-test="checkAttribute">
+		<tr>
+			<td>
+				<span property="title" mv-attribute="title" data-test-attribute="title">Foo bar</span>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<input property="disabled" mv-attribute="disabled" data-test-type="boolean" />
+			</td>
+		</tr>
+	</table>
 </section>
 
 <section mv-app="svg" class="mv-autoedit">
 	<h1>SVG elements</h1>
-	<div title="SVG circle, no mv-attribute">
-		<svg width="300" height="100">
-			<circle cx="50" cy="50" r="50" property="circle1" id="circle"></circle>
-		</svg>
-	</div>
-	<div title="SVG circle, mv-attribute=r">
-		<svg width="300" height="100">
-			<circle cx="50" cy="50" r="50" property="circle2" mv-attribute="r" id="circle"></circle>
-		</svg>
-	</div>
-	<div title="SVG &lt;use> element">
-		<svg width="300" height="100">
-			<use xlink:href="#circle1" property="circleCopy" mv-attribute="fill" fill="orange" />
-		</svg>
-	</div>
+
+	<p>The automated tests check correctness of attribute and datatype</p>
+	<table class="reftest" data-test="checkAttribute">
+		<tr title="rectangle, no mv-attribute">
+			<td>
+				<svg width="300" height="100">
+					<rect width="100" height="100" property="rect" data-test-attribute="x" data-test-type="number"></rect>
+				</svg>
+			</td>
+		</tr>
+		<tr title="circle, no mv-attribute">
+			<td>
+				<svg width="300" height="100">
+					<circle cx="50" cy="50" r="50" property="circle1" id="circle" data-test-attribute="r" data-test-type="number"></circle>
+				</svg>
+			</td>
+		</tr>
+		<tr title="circle, mv-attribute=cx">
+			<td>
+				<svg width="300" height="100">
+					<circle cx="50" cy="50" r="50" property="circle2" mv-attribute="cx" data-test-attribute="cx" id="circle" data-test-type="number"></circle>
+				</svg>
+			</td>
+		</tr>
+		<tr title="&lt;use> element">
+			<td>
+				<svg width="300" height="100">
+					<use xlink:href="#circle" property="circleCopy" mv-attribute="fill" data-test-attribute="fill" fill="orange" />
+				</svg>
+			</td>
+		</tr>
+		<tr title="&lt;text> element">
+			<td>
+				<svg width="300" height="100">
+					<text y="50" property="text" data-test-attribute="null">Some text</text>
+				</svg>
+			</td>
+		</tr>
+	</table>
 </section>
 
 <section mv-app="nested" class="mv-autoedit">

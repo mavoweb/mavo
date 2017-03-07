@@ -126,6 +126,9 @@ table.reftest {
     display: flex; }
   table.reftest tbody > tr {
     border: 1px solid rgba(0, 0, 0, 0.1); }
+    table.reftest tbody > tr:not([class]) {
+      --color: rgba(0, 0, 0, 0.06);
+      --dark-color: rgba(0, 0, 0, 0.3); }
   table.reftest td, table.reftest th {
     -ms-flex: 1;
     flex: 1; }
@@ -136,28 +139,26 @@ table.reftest {
     padding: .4em; }
   table.reftest td:not(:last-child) {
     border-right: 1px solid rgba(0, 0, 0, 0.1); }
-
-table.reftest tr {
-  margin: .4em 0;
-  background: var(--color); }
-  table.reftest tr.fail {
-    counter-increment: failures; }
-
-table.reftest tr[title] {
-  position: relative; }
-  table.reftest tr[title] td {
-    padding-top: 1.5em; }
-  table.reftest tr[title]::before {
-    content: attr(title);
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    padding: .4em;
-    background: linear-gradient(to right, var(--dark-color), transparent);
-    color: white;
-    font: bold 75%/1 sans-serif;
-    text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
+  table.reftest tr {
+    margin: .4em 0;
+    background: var(--color); }
+    table.reftest tr.fail {
+      counter-increment: failures; }
+  table.reftest tr[title] {
+    position: relative; }
+    table.reftest tr[title] td {
+      padding-top: 1.5em; }
+    table.reftest tr[title]::before {
+      content: attr(title);
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: .4em;
+      background: linear-gradient(to right, var(--dark-color), transparent);
+      color: white;
+      font: bold 75%/1 sans-serif;
+      text-shadow: 0 0 1px rgba(0, 0, 0, 0.5); }
 
 body > section > div {
   border: 1px solid rgba(0, 0, 0, 0.15);
