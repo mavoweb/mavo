@@ -11,25 +11,67 @@ self.Test = {
 	},
 
 	// Get content of a td for reftest
+	// content: function(node) {
+	// 	var content = Test.pseudo(node, "before");
+	// 	var treeWalker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+	//
+	// 	while (treeWalker.nextNode()) {
+	// 		let node = treeWalker.currentNode;
+	//
+	// 		if (node.nodeType == 3) {
+	// 			content += node.textContent;
+	// 		}
+	// 		else if (node.matches("input, textarea")) {
+	// 			content += node.value;
+	// 		}
+	// 	}
+	//
+	// 	content += Test.pseudo(node, "after");
+	//
+	// 	return content.replace(/\s+/g, " ").trim();
+	// },
+
 	content: function(node) {
-		var content = Test.pseudo(node, "before");
-		var treeWalker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+		var ret = "";
 
-		while (treeWalker.nextNode()) {
-			let node = treeWalker.currentNode;
+		if (node.nodeType == 1) {
+			ret += Test.pseudo(node, "before");
+			var special = false;
 
-			if (node.nodeType == 3) {
-				content += node.textContent;
+			for (let selector of Test.contentIgnore) {
+				if (node.matches(selector)) {
+					return "";
+				}
 			}
-			else if (node.matches("input, textarea")) {
-				content += node.value;
+
+			for (let selector in Test.contentSpecial) {
+				if (node.matches(selector)) {
+					ret += Test.contentSpecial[selector](node);
+					special = true;
+					break;
+				}
 			}
+
+			if (!special) {
+				for (let child of node.childNodes) {
+					ret += Test.content(child);
+				}
+			}
+
+			ret += Test.pseudo(node, "after");
+		}
+		else if (node.nodeType == 3) {
+			ret += node.textContent;
 		}
 
-		content += Test.pseudo(node, "after");
+		return ret.replace(/\s+/g, " ");
+	},
 
-		return content.replace(/\s+/g, " ").trim();
-	}
+	contentSpecial: {
+		"input, textarea": e => e.value
+	},
+
+	contentIgnore: [".mv-ui"]
 };
 
 for (let h1 of $$("body > section > h1")) {
@@ -94,6 +136,10 @@ var _ = self.RefTest = $.Class({
 	},
 
 	setup: function() {
+		// Remove any <script> elements to prevent them messing up the contents. They've already been processed anyway.
+		$.remove($$("script", this.table));
+
+		// Add instruction text if not present
 		if (!$("p", this.table.parentNode) && this.compare === _.defaultCompare) {
 			$.create("p", {
 				textContent: "First column must be the same as the second.",
@@ -101,6 +147,7 @@ var _ = self.RefTest = $.Class({
 			});
 		}
 
+		// Add table header if not present
 		var cells = [...this.table.rows[0].cells];
 
 		if (!$("thead", this.table) && cells.length > 1) {
@@ -171,7 +218,7 @@ var _ = self.RefTest = $.Class({
 			var td = cells[cells.length - 2] || cells[cells.length - 1];
 			var ref = cells[cells.length - 1];
 
-			var pass = Test.content(td) == Test.content(ref);
+			var pass = Test.content(td).trim() == Test.content(ref).trim();
 
 			if (pass) {
 				let child = td.firstElementChild;

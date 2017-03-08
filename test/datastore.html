@@ -2,103 +2,209 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>mv-storage and mv-init tests</title>
+	<title>Tests related to mv-storage, mv-source, and mv-init</title>
 	<link rel="stylesheet" href="../dist/mavo.css" />
 	<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h1>mv-storage and mv-init tests</h1>
+<h1>Tests related to mv-storage, mv-source, and mv-init</h1>
 
 <section class="mv-app">
-	<h1>None</h1>
+	<h1>No storage</h1>
 
-	<a href="?store=local&amp;source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
+	<a href="?storage=local&amp;source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>
+						Code Name
+					</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
+<script>
+localStorage.localstoretest = `{
+	"country": [
+		{
+			"code": "el",
+			"name": "Greece"
+		}
+	]
+}`;
+</script>
 <section mv-storage="local" id="localstoretest">
 	<h1>Local</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>
+						el
+						Greece
+					</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section mv-storage="local" id="localnoedit">
+<section mv-storage="local" id="localnoedit" class="mv-autosave">
 	<h1>Local with no edit</h1>
 
-	<input property="prop1" value="Edit this text and refresh">
-	<textarea property="prop2">Edit this text and refresh</textarea>
+	<p>Make changes, then refresh. The two columns must match.</p>
+	<table class="reftest">
+		<tr>
+			<td>
+				<input property="prop1" value="Edit this text and refresh">
+			</td>
+			<td>
+				<script>document.write(`<input value="${JSON.parse(localStorage.localnoedit).prop1}">`);</script>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<textarea property="prop2">Edit this text and refresh</textarea>
+			</td>
+			<td>
+				<script>document.write(`<textarea>${JSON.parse(localStorage.localnoedit).prop2}</textarea>`);</script>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section mv-storage="http://mavo.io/demos/talks/countries.json">
+<section mv-storage="countries.json">
 	<h1>Remote</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online</li>
+					<li>us United States</li>
+					<li>gb United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
 <script type="application/json" id="countries">{
 	"country": [
 		{
-			"code": "",
-			"name": "Online"
-		},
-		{
 			"code": "us",
 			"name": "United States"
 		},
 		{
-			"code": "gb",
-			"name": "United Kingdom"
+			"code": "jp",
+			"name": "Japan"
+		},
+		{
+			"code": "es",
+			"name": "Spain"
 		}
 	]
 }</script>
 <section mv-app mv-init="#countries">
-	<h1>No store, element source</h1>
+	<h1>No store, mv-init=element</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code"></span> [code]
-			<span property="name"></span> [name]
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>us United States</li>
+					<li>jp Japan</li>
+					<li>es Spain</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section mv-app mv-init="http://mavo.io/demos/talks/countries.json">
-	<h1>No store, remote source</h1>
+<section mv-app mv-source="http://mavo.io/demos/talks/countries.json">
+	<h1>No store, mv-source=remote</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code"></span> [code]
-			<span property="name"></span> [name]
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online</li>
+					<li>us United States</li>
+					<li>gb United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section mv-storage="local" mv-init="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
-	<h1>Local store, remote source</h1>
+<section mv-storage="local" mv-source="http://mavo.io/demos/talks/countries.json" id="dualstoretest">
+	<h1>mv-storage=local, mv-source=remote</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online</li>
+					<li>us United States</li>
+					<li>gb United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
 <section mv-app="githubtest" mv-storage="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">

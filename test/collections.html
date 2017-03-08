@@ -111,7 +111,7 @@
 	<table class="reftest">
 		<tr>
 			<td>
-				<div property="numbers" mv-multiple style="--prepend: '[numbers]'; --append: '[$index]'"></div>
+				<div property="numbers" mv-multiple style="--prepend: '[numbers]'; --append: '[$index + 1]'"></div>
 			</td>
 			<td>
 				<div mv-multiple="" style="--prepend: '1'; --append: '1'">1</div><!--
@@ -193,9 +193,9 @@
 				</div>
 			</td>
 			<td>
-				<div><div class="mv-item-controls">A</div> Online</div>
-				<div><div class="mv-item-controls">A</div> us United States</div>
-				<div><div class="mv-item-controls">A</div> gb United Kingdom </div><button class="mv-add">Add country</button>
+				<div mv-multiple><div class="mv-item-controls">A</div> Online</div>
+				<div mv-multiple><div class="mv-item-controls">A</div> us United States</div>
+				<div mv-multiple><div class="mv-item-controls">A</div> gb United Kingdom </div>
 			</td>
 		</tr>
 	</table>
