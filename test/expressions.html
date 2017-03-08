@@ -545,8 +545,9 @@
 
 <section mv-app="booleanattr">
 	<h1>Boolean attributes</h1>
+
 	<table class="reftest">
-		<tr>
+		<tr data-test="compareChecked">
 			<td>
 				<input type="checkbox" property="prop1" checked>
 				<input type="checkbox" checked="[prop1]">
@@ -556,7 +557,7 @@
 				<input type="checkbox" checked>
 			</td>
 		</tr>
-		<tr>
+		<tr data-test="compareChecked">
 			<td>
 				<input type="checkbox" property="prop2">
 				<input type="checkbox" checked="[prop2]">
@@ -566,7 +567,7 @@
 				<input type="checkbox">
 			</td>
 		</tr>
-		<tr>
+		<tr data-test="compareDisabled">
 			<td>
 				<input type="checkbox" property="prop3" checked>
 				<input type="checkbox" disabled="[prop3]">
@@ -576,7 +577,7 @@
 				<input type="checkbox" disabled>
 			</td>
 		</tr>
-        <tr>
+        <tr data-test="compareDisabled">
             <td>
 				<input type="checkbox" disabled="[0 < 1]">
             </td>
@@ -584,20 +585,10 @@
 				<input type="checkbox" disabled>
             </td>
         </tr>
-        <tr>
+        <tr data-test='var i = $$("input", td); return i[1].disabled == i[0].value > 1' mv-expressions="{ }">
             <td>
 				<input type="number" property="prop4" value="1">
-				<input type="checkbox" disabled="[prop4 > 1]">
-				<input type="checkbox" disabled="[prop4 < 1]">
-				<input type="text" disabled="[prop4 > 1]">
-				<input type="number" disabled="[prop4 > 1]">
-            </td>
-            <td>
-				<input type="number" value="1">
-				<input type="checkbox">
-				<input type="checkbox">
-				<input type="text">
-				<input type="number">
+				<input type="text" disabled="{prop4 > 1}">
             </td>
         </tr>
 	</table>
@@ -605,6 +596,10 @@
 
 <script src="../dist/mavo.js"></script>
 <script src="test.js"></script>
+<script>
+	var compareChecked = RefTest.compareAttribute.bind(null, "checked");
+	var compareDisabled = RefTest.compareAttribute.bind(null, "disabled");
+</script>
 
 </body>
 </html>

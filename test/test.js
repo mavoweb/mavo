@@ -122,7 +122,9 @@ var _ = self.RefTest = $.Class({
 			});
 		}
 
-		var test = () => this.test();
+		var test = () => {
+			requestAnimationFrame(() => this.test());
+		};
 		this.observer = new MutationObserver(test);
 		this.observer.observe(this.table, {
 			subtree: true,
@@ -144,12 +146,23 @@ var _ = self.RefTest = $.Class({
 
 	testRow: function(tr) {
 		var cells = tr.cells;
-		var compare = self[tr.getAttribute("data-test")] || this.compare;
+
+		if (!tr.compare) {
+			var customTest = tr.getAttribute("data-test");
+			var compare = self[customTest];
+
+			if (customTest && !compare) {
+				// No such function exists, maybe it's code?
+				compare = new Function("td", "ref", customTest);
+			}
+
+			tr.compare = compare || this.compare;
+		}
 
 		if (cells.length) {
 
 			tr.classList.remove("pass", "fail");
-			tr.classList.add(compare(...cells)? "pass" : "fail");
+			tr.classList.add(tr.compare(...cells)? "pass" : "fail");
 		}
 	},
 
@@ -182,6 +195,16 @@ var _ = self.RefTest = $.Class({
 			}
 
 			return pass;
+		},
+
+		compareAttribute: function(attribute, td, ref) {
+			var actual = $$("*", td).map(el => el[attribute]);
+			var expected = $$("*", ref).map(el => el[attribute]);
+
+			return actual.length === expected.length && actual.every((v, i) => {
+				return v === expected[i];
+
+			});
 		}
 	}
 });
@@ -189,7 +212,7 @@ var _ = self.RefTest = $.Class({
 document.addEventListener("DOMContentLoaded", () => {
 	requestAnimationFrame(() => {
 		for (let table of $$("table.reftest")) {
-			new RefTest(table);
+			table.reftest = new RefTest(table);
 		}
 	});
 });
