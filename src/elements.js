@@ -9,37 +9,150 @@
  * - edit
  * - done
  * - observe
+ * - default: If there is no attribute, can we use that rule to pick one?
  * @
  */
 (function($, $$) {
 
-Mavo.Elements = {
-	"*": {
-		editor: {
-			tag: "input"
+var _ = Mavo.Elements = {};
+
+Object.defineProperties(_, {
+	"register": {
+		value: function(selector, o) {
+			if (typeof arguments[0] === "object") {
+				for (let s in arguments[0]) {
+					_.register(s, arguments[0][s]);
+				}
+
+				return;
+			}
+
+			var all = Mavo.toArray(arguments[1]);
+
+			for (config of all) {
+				config.attribute = Mavo.toArray(config.attribute || null);
+
+				for (attribute of config.attribute) {
+					let o = $.extend({}, config);
+					o.attribute = attribute;
+					_[selector] = _[selector] || [];
+					_[selector].push(o);
+				}
+			}
+
+			return _;
+		}
+	},
+	"search": {
+		value: function(element, attribute, datatype) {
+			var matches = _.matches(element, attribute, datatype);
+
+			return matches[matches.length - 1] || { attribute };
+		}
+	},
+	"matches": {
+		value: function(element, attribute, datatype) {
+			var matches = [];
+
+			selectorloop: for (var selector in _) {
+				if (element.matches(selector)) {
+					var all = _[selector];
+
+					for (var o of all) {
+						// Passes attribute test?
+						var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
+
+						if (!attributeMatches) {
+							continue;
+						}
+
+						// Passes datatype test?
+						if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+							continue;
+						}
+
+						// Passes arbitrary test?
+						if (o.test && !o.test(element, attribute, datatype)) {
+							continue;
+						}
+
+						// All tests have passed
+						matches.push(o);
+					}
+				}
+			}
+
+			return matches;
 		}
 	},
 
+	isSVG: {
+		value: e => e.namespaceURI == "http://www.w3.org/2000/svg"
+	},
+
+	defaultEditors: {
+		value: {
+			"string":  { tag: "input" },
+			"number":  { tag: "input", type: "number" },
+			"boolean": { tag: "input", type: "checkbox" }
+		}
+	}
+});
+
+_.register({
+	"*": [
+		{
+			test: (e, a) => a == "hidden",
+			attribute: "hidden",
+			datatype: "boolean"
+		},
+		{
+			test: _.isSVG,
+			attribute: "y",
+			datatype: "number"
+		},
+		{
+			default: true,
+			test: _.isSVG,
+			attribute: "x",
+			datatype: "number"
+		},
+	],
+
 	"img, video, audio": {
+		default: true,
 		attribute: "src",
 		editor: {
 			"tag": "input",
 			"type": "url",
-			"placeholder": "http://"
+			"placeholder": "http://example.com"
 		}
 	},
 
+	"video, audio": {
+		attribute: ["autoplay", "buffered", "loop"],
+		datatype: "boolean"
+	},
+
 	"a, link": {
+		default: true,
 		attribute: "href"
+	},
+
+	"input, select, button, textarea": {
+		attribute: "disabled",
+		datatype: "boolean"
 	},
 
 	"select, input": {
 		attribute: "value",
+		default: true,
 		modes: "read",
 		changeEvents: "input change"
 	},
 
 	"textarea": {
+		default: true,
 		modes: "read",
 		changeEvents: "input",
 		getValue: element => element.value,
@@ -47,13 +160,23 @@ Mavo.Elements = {
 	},
 
 	"input[type=range], input[type=number]": {
+		default: true,
 		attribute: "value",
 		datatype: "number",
 		modes: "read",
 		changeEvents: "input change"
 	},
 
+	"input[type=checkbox]": {
+		default: true,
+		attribute: "checked",
+		datatype: "boolean",
+		modes: "read",
+		changeEvents: "click"
+	},
+
 	"button, .counter": {
+		default: true,
 		attribute: "mv-clicked",
 		datatype: "number",
 		modes: "read",
@@ -69,14 +192,8 @@ Mavo.Elements = {
 		}
 	},
 
-	"input[type=checkbox]": {
-		attribute: "checked",
-		datatype: "boolean",
-		modes: "read",
-		changeEvents: "click"
-	},
-
 	"meter, progress": {
+		default: true,
 		attribute: "value",
 		datatype: "number",
 		edit: function() {
@@ -125,10 +242,12 @@ Mavo.Elements = {
 	},
 
 	"meta": {
+		default: true,
 		attribute: "content"
 	},
 
 	"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address": {
+		default: true,
 		editor: function() {
 			var display = getComputedStyle(this.element).display;
 			var tag = display.indexOf("inline") === 0? "input" : "textarea";
@@ -171,6 +290,7 @@ Mavo.Elements = {
 
 	"time": {
 		attribute: "datetime",
+		default: true,
 		editor: function() {
 			var types = {
 				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
@@ -210,7 +330,23 @@ Mavo.Elements = {
 
 			return date.toLocaleString("en-GB", format);
 		}
+	},
+
+	"circle": [
+		{
+			default: true,
+			attribute: "r",
+			datatype: "number"
+		}, {
+			attribute: ["cx", "cy"],
+			datatype: "number"
+		}
+	],
+
+	"text": {
+		default: true,
+		popup: true
 	}
-};
+});
 
 })(Bliss, Bliss.$);

@@ -285,11 +285,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.autoSave = this.element.classList.contains("mv-autosave");
 
 			if (this.index == 1) {
-				this.storage = _.Functions.urlOption("store");
+				this.storage = _.Functions.urlOption("storage");
 				this.source = _.Functions.urlOption("source");
 			}
 
-			this.storage = this.storage || _.Functions.urlOption(this.id + "_store") || this.element.getAttribute("mv-storage") || null;
+			this.storage = this.storage || _.Functions.urlOption(this.id + "_storage") || this.element.getAttribute("mv-storage") || null;
 			this.source = this.source || _.Functions.urlOption(this.id + "_source") || this.element.getAttribute("mv-init") || null;
 
 			if (this.storage) {
@@ -311,10 +311,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var hasChildren = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element);
 
 				if (hasChildren) {
-					var defaults = Mavo.Primitive.getDefaults(element);
+					var config = Mavo.Primitive.getConfig(element);
 					var isCollection = Mavo.is("multiple", element);
 
-					if (isCollection || !Mavo.Primitive.getValueAttribute(element, defaults) && !defaults.hasChildren) {
+					if (isCollection || !config.attribute && !config.hasChildren) {
 						element.setAttribute("typeof", "");
 					}
 				}
@@ -518,7 +518,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}, { subtree: true });
 
 					if (_this.autoEdit) {
-						_this.ui.edit.click();
+						_this.edit();
 					}
 				}, function () {
 					// cannot
@@ -1877,11 +1877,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.mode == "edit";
 		},
 
-		get constant() {
-			// Is a "constant" if only allowed mode is read
-			return this.modes == "read";
-		},
-
 		get isRoot() {
 			return !this.property;
 		},
@@ -2451,31 +2446,31 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		constructor: function constructor(element, mavo, o) {
 			var _this = this;
 
-			if (!this.fromTemplate("defaults", "attribute", "templateValue")) {
-				this.defaults = _.getDefaults(element);
+			if (!this.fromTemplate("config", "attribute", "templateValue")) {
+				this.config = _.getConfig(element);
 
 				// Which attribute holds the data, if any?
 				// "null" or null for none (i.e. data is in content).
-				this.attribute = _.getValueAttribute(this.element, this.defaults);
+				this.attribute = this.config.attribute;
 			}
 
-			this.datatype = this.defaults.datatype;
+			this.datatype = this.config.datatype;
 
-			if ("modes" in this.defaults) {
+			if ("modes" in this.config) {
 				// If modes are related to element type, this overrides everything
 				// because it means the other mode makes no sense for that element
-				this.modes = this.defaults.modes;
-				this.element.setAttribute("mv-mode", this.defaults.modes);
+				this.modes = this.config.modes;
+				this.element.setAttribute("mv-mode", this.config.modes);
 			}
 
 			Mavo.hooks.run("primitive-init-start", this);
 
-			if (this.defaults.init) {
-				this.defaults.init.call(this, this.element);
+			if (this.config.init) {
+				this.config.init.call(this, this.element);
 			}
 
-			if (this.defaults.changeEvents) {
-				$.events(this.element, this.defaults.changeEvents, function (evt) {
+			if (this.config.changeEvents) {
+				$.events(this.element, this.config.changeEvents, function (evt) {
 					if (evt.target === _this.element) {
 						_this.value = _this.getValue();
 					}
@@ -2544,7 +2539,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			if (this.default === null) {
 				// no mv-default
-				this._default = this.constant ? this.templateValue : this.editor ? this.editorValue : undefined;
+				this._default = this.modes === "read" ? this.templateValue : this.editor ? this.editorValue : undefined;
 			} else if (this.default === "") {
 				// mv-default exists, no value, default is template value
 				this._default = this.templateValue;
@@ -2554,11 +2549,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this.default = _this.element.getAttribute("mv-default");
 				});
 			}
-
-			// if (!this.constant) {
-			// 	this.setValue(this.templateValue, {silent: true});
-			// }
-
 
 			this.initialValue = (!this.template && this.default === undefined ? this.templateValue : this.default) || this.emptyValue;
 
@@ -2579,8 +2569,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		get editorValue() {
-			if (this.defaults.getEditorValue) {
-				return this.defaults.getEditorValue.call(this);
+			if (this.config.getEditorValue) {
+				return this.config.getEditorValue.call(this);
 			}
 
 			if (this.editor) {
@@ -2598,13 +2588,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		set editorValue(value) {
-			if (this.defaults.setEditorValue) {
-				return this.defaults.setEditorValue.call(this, value);
+			if (this.config.setEditorValue) {
+				return this.config.setEditorValue.call(this, value);
 			}
 
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
-					_.setValue(this.editor, value, { defaults: this.editorDefaults });
+					_.setValue(this.editor, value, { config: this.editorDefaults });
 				} else {
 					// if we're here, this.editor is an entire HTML structure
 					var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
@@ -2647,6 +2637,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			return env.data;
 		},
 
+		sneak: function sneak(callback) {
+			return Mavo.Observer.sneak(this.observer, callback);
+		},
+
 		save: function save() {
 			this.savedValue = this.value;
 			this.unsavedChanges = false;
@@ -2669,7 +2663,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var editor = this.defaults.editor || Mavo.Elements["*"].editor;
+				var editor = this.config.editor || Mavo.Elements.defaultEditors[this.datatype] || Mavo.Elements.defaultEditors.string;
 
 				this.editor = $.create($.type(editor) === "function" ? editor.call(this) : editor);
 				this.editorValue = this.value;
@@ -2702,7 +2696,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			}, this);
 
-			if (this.attribute) {
+			if (this.attribute || this.config.popup) {
 				this.popup = new _.Popup(this);
 			}
 
@@ -2758,8 +2752,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 			});
 
-			if (this.defaults.edit) {
-				this.defaults.edit.call(this);
+			if (this.config.edit) {
+				this.config.edit.call(this);
 				return;
 			}
 
@@ -2777,7 +2771,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this3.editor.focus();
 				}
 
-				if (!_this3.attribute) {
+				if (!_this3.attribute && !_this3.popup) {
 					if (_this3.editor.parentNode != _this3.element) {
 						_this3.editorValue = _this3.value;
 						_this3.element.textContent = "";
@@ -2799,9 +2793,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				$.unbind(this.element, ".mavo:preedit .mavo:edit");
 			}
 
-			Mavo.Observer.sneak(this.observer, function () {
-				if (_this4.defaults.done) {
-					_this4.defaults.done.call(_this4);
+			this.sneak(function () {
+				if (_this4.config.done) {
+					_this4.config.done.call(_this4);
 					return;
 				}
 
@@ -2822,7 +2816,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		clear: function clear() {
-			if (!this.constant) {
+			if (this.modes != "read") {
 				this.value = this.emptyValue;
 			}
 		},
@@ -2855,7 +2849,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
    */
 		getValue: function getValue(o) {
 			return _.getValue(this.element, {
-				defaults: this.defaults,
+				config: this.config,
 				attribute: this.attribute,
 				datatype: this.datatype
 			});
@@ -2878,7 +2872,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			editorDefaults: function editorDefaults() {
-				return this.editor && _.getDefaults(this.editor);
+				return this.editor && _.getConfig(this.editor);
 			}
 		},
 
@@ -2887,7 +2881,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			var o = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-			Mavo.Observer.sneak(this.observer, function () {
+			this.sneak(function () {
 				if ($.type(value) == "object" && "value" in value) {
 					var presentational = value.presentational;
 					value = value.value;
@@ -2904,13 +2898,13 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					_this5.editorValue = value;
 				}
 
-				if (_this5.defaults.humanReadable && _this5.attribute) {
-					presentational = _this5.defaults.humanReadable.call(_this5, value);
+				if (_this5.config.humanReadable && _this5.attribute) {
+					presentational = _this5.config.humanReadable.call(_this5, value);
 				}
 
-				if (!_this5.editing || _this5.attribute || !_this5.editor) {
-					if (_this5.defaults.setValue) {
-						_this5.defaults.setValue.call(_this5, _this5.element, value);
+				if (!_this5.editing || _this5.popup || !_this5.editor) {
+					if (_this5.config.setValue) {
+						_this5.config.setValue.call(_this5, _this5.element, value);
 					} else {
 						if (_this5.editor && _this5.editor.matches("select") && _this5.editor.selectedOptions[0]) {
 							presentational = _this5.editor.selectedOptions[0].textContent;
@@ -2918,7 +2912,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 						if (!o.dataOnly) {
 							_.setValue(_this5.element, { value: value, presentational: presentational }, {
-								defaults: _this5.defaults,
+								config: _this5.config,
 								attribute: _this5.attribute,
 								datatype: _this5.datatype
 							});
@@ -2963,32 +2957,21 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			empty: function empty(value) {
 				var hide = value && // is empty
-				!this.constant && // and editable
+				!this.modes && // and supports both modes
+				this.config.default && // and using the default settings
 				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
-				this.element.classList.toggle("mv-empty", hide);
+				this.element.classList.toggle("mv-empty", !!hide);
 			}
 		},
 
 		static: {
 			all: new WeakMap(),
 
-			getDefaults: function getDefaults(element) {
-				var ret = null;
-
-				for (var selector in Mavo.Elements) {
-					if (element.matches(selector)) {
-						ret = Mavo.Elements[selector];
-					}
-				}
-
-				return ret;
-			},
-
 			getValueAttribute: function getValueAttribute(element) {
-				var defaults = arguments.length <= 1 || arguments[1] === undefined ? _.getDefaults(element) : arguments[1];
+				var config = arguments.length <= 1 || arguments[1] === undefined ? Mavo.Elements.search(element) : arguments[1];
 
-				var ret = element.getAttribute("mv-attribute") || defaults.attribute;
+				var ret = element.getAttribute("mv-attribute") || config.attribute;
 
 				if (!ret || ret === "null") {
 					ret = null;
@@ -3048,15 +3031,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			},
 
 			getValue: function getValue(element, _ref) {
-				var _ref$defaults = _ref.defaults;
-				var defaults = _ref$defaults === undefined ? _.getDefaults(element) : _ref$defaults;
-				var _ref$attribute = _ref.attribute;
-				var attribute = _ref$attribute === undefined ? _.getValueAttribute(element, defaults) : _ref$attribute;
-				var _ref$datatype = _ref.datatype;
-				var datatype = _ref$datatype === undefined ? defaults.datatype : _ref$datatype;
+				var config = _ref.config;
+				var attribute = _ref.attribute;
+				var datatype = _ref.datatype;
 
-				if (defaults.getValue && attribute == defaults.attribute) {
-					return defaults.getValue(element);
+				if (!config) {
+					config = _.getConfig(element, attribute);
+				}
+
+				attribute = config.attribute;
+				datatype = config.datatype;
+
+				if (config.getValue && attribute == config.attribute) {
+					return config.getValue(element);
 				}
 
 				var ret;
@@ -3074,8 +3061,26 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				return _.safeCast(ret, datatype);
 			},
 
+			getConfig: function getConfig(element, attribute) {
+				if (attribute === undefined) {
+					attribute = element.getAttribute("mv-attribute") || undefined;
+				}
+
+				if (attribute == "null" || attribute == "none") {
+					attribute = null;
+				}
+
+				var config = Mavo.Elements.search(element, attribute);
+
+				if (config.attribute === undefined) {
+					config.attribute = attribute || null;
+				}
+
+				return config;
+			},
+
 			setValue: function setValue(element, value, _ref2) {
-				var defaults = _ref2.defaults;
+				var config = _ref2.config;
 				var attribute = _ref2.attribute;
 				var datatype = _ref2.datatype;
 
@@ -3085,12 +3090,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				}
 
 				if (element.nodeType === 1) {
-					defaults = defaults || _.getDefaults(element);
-					attribute = attribute !== undefined ? attribute : _.getValueAttribute(element, defaults);
-					datatype = datatype !== undefined ? datatype : defaults.datatype;
+					if (!config) {
+						config = _.getConfig(element, attribute);
+					}
 
-					if (defaults.setValue && attribute == defaults.attribute) {
-						return defaults.setValue(element, value);
+					attribute = config.attribute;
+
+					datatype = datatype !== undefined ? datatype : config.datatype;
+
+					if (config.setValue && attribute == config.attribute) {
+						return config.setValue(element, value);
 					}
 				}
 
@@ -3268,6 +3277,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 })(Bliss, Bliss.$);
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 /**
  * Configuration for different types of elements. Options:
  * - attribute {String}
@@ -3279,37 +3290,213 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
  * - edit
  * - done
  * - observe
+ * - default: If there is no attribute, can we use that rule to pick one?
  * @
  */
 (function ($, $$) {
 
-	Mavo.Elements = {
-		"*": {
-			editor: {
-				tag: "input"
+	var _ = Mavo.Elements = {};
+
+	Object.defineProperties(_, {
+		"register": {
+			value: function value(selector, o) {
+				if (_typeof(arguments[0]) === "object") {
+					for (var s in arguments[0]) {
+						_.register(s, arguments[0][s]);
+					}
+
+					return;
+				}
+
+				var all = Mavo.toArray(arguments[1]);
+
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						config = _step.value;
+
+						config.attribute = Mavo.toArray(config.attribute || null);
+
+						var _iteratorNormalCompletion2 = true;
+						var _didIteratorError2 = false;
+						var _iteratorError2 = undefined;
+
+						try {
+							for (var _iterator2 = config.attribute[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+								attribute = _step2.value;
+
+								var _o = $.extend({}, config);
+								_o.attribute = attribute;
+								_[selector] = _[selector] || [];
+								_[selector].push(_o);
+							}
+						} catch (err) {
+							_didIteratorError2 = true;
+							_iteratorError2 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion2 && _iterator2.return) {
+									_iterator2.return();
+								}
+							} finally {
+								if (_didIteratorError2) {
+									throw _iteratorError2;
+								}
+							}
+						}
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+
+				return _;
+			}
+		},
+		"search": {
+			value: function value(element, attribute, datatype) {
+				var matches = _.matches(element, attribute, datatype);
+
+				return matches[matches.length - 1] || { attribute: attribute };
+			}
+		},
+		"matches": {
+			value: function value(element, attribute, datatype) {
+				var matches = [];
+
+				selectorloop: for (var selector in _) {
+					if (element.matches(selector)) {
+						var all = _[selector];
+
+						var _iteratorNormalCompletion3 = true;
+						var _didIteratorError3 = false;
+						var _iteratorError3 = undefined;
+
+						try {
+							for (var _iterator3 = all[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+								var o = _step3.value;
+
+								// Passes attribute test?
+								var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
+
+								if (!attributeMatches) {
+									continue;
+								}
+
+								// Passes datatype test?
+								if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+									continue;
+								}
+
+								// Passes arbitrary test?
+								if (o.test && !o.test(element, attribute, datatype)) {
+									continue;
+								}
+
+								// All tests have passed
+								matches.push(o);
+							}
+						} catch (err) {
+							_didIteratorError3 = true;
+							_iteratorError3 = err;
+						} finally {
+							try {
+								if (!_iteratorNormalCompletion3 && _iterator3.return) {
+									_iterator3.return();
+								}
+							} finally {
+								if (_didIteratorError3) {
+									throw _iteratorError3;
+								}
+							}
+						}
+					}
+				}
+
+				return matches;
 			}
 		},
 
+		isSVG: {
+			value: function value(e) {
+				return e.namespaceURI == "http://www.w3.org/2000/svg";
+			}
+		},
+
+		defaultEditors: {
+			value: {
+				"string": { tag: "input" },
+				"number": { tag: "input", type: "number" },
+				"boolean": { tag: "input", type: "checkbox" }
+			}
+		}
+	});
+
+	_.register({
+		"*": [{
+			test: function test(e, a) {
+				return a == "hidden";
+			},
+			attribute: "hidden",
+			datatype: "boolean"
+		}, {
+			test: _.isSVG,
+			attribute: "y",
+			datatype: "number"
+		}, {
+			default: true,
+			test: _.isSVG,
+			attribute: "x",
+			datatype: "number"
+		}],
+
 		"img, video, audio": {
+			default: true,
 			attribute: "src",
 			editor: {
 				"tag": "input",
 				"type": "url",
-				"placeholder": "http://"
+				"placeholder": "http://example.com"
 			}
 		},
 
+		"video, audio": {
+			attribute: ["autoplay", "buffered", "loop"],
+			datatype: "boolean"
+		},
+
 		"a, link": {
+			default: true,
 			attribute: "href"
+		},
+
+		"input, select, button, textarea": {
+			attribute: "disabled",
+			datatype: "boolean"
 		},
 
 		"select, input": {
 			attribute: "value",
+			default: true,
 			modes: "read",
 			changeEvents: "input change"
 		},
 
 		"textarea": {
+			default: true,
 			modes: "read",
 			changeEvents: "input",
 			getValue: function getValue(element) {
@@ -3321,13 +3508,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		"input[type=range], input[type=number]": {
+			default: true,
 			attribute: "value",
 			datatype: "number",
 			modes: "read",
 			changeEvents: "input change"
 		},
 
+		"input[type=checkbox]": {
+			default: true,
+			attribute: "checked",
+			datatype: "boolean",
+			modes: "read",
+			changeEvents: "click"
+		},
+
 		"button, .counter": {
+			default: true,
 			attribute: "mv-clicked",
 			datatype: "number",
 			modes: "read",
@@ -3345,14 +3542,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		"input[type=checkbox]": {
-			attribute: "checked",
-			datatype: "boolean",
-			modes: "read",
-			changeEvents: "click"
-		},
-
 		"meter, progress": {
+			default: true,
 			attribute: "value",
 			datatype: "number",
 			edit: function edit() {
@@ -3407,10 +3598,12 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		"meta": {
+			default: true,
 			attribute: "content"
 		},
 
 		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address": {
+			default: true,
 			editor: function editor() {
 				var display = getComputedStyle(this.element).display;
 				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";
@@ -3453,6 +3646,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 		"time": {
 			attribute: "datetime",
+			default: true,
 			editor: function editor() {
 				var types = {
 					"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
@@ -3492,8 +3686,22 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				return date.toLocaleString("en-GB", format);
 			}
+		},
+
+		"circle": [{
+			default: true,
+			attribute: "r",
+			datatype: "number"
+		}, {
+			attribute: ["cx", "cy"],
+			datatype: "number"
+		}],
+
+		"text": {
+			default: true,
+			popup: true
 		}
-	};
+	});
 })(Bliss, Bliss.$);
 "use strict";
 

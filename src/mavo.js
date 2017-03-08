@@ -32,11 +32,11 @@ var _ = self.Mavo = $.Class({
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
 		if (this.index == 1) {
-			this.storage = _.Functions.urlOption("store");
+			this.storage = _.Functions.urlOption("storage");
 			this.source = _.Functions.urlOption("source");
 		}
 
-		this.storage = this.storage || _.Functions.urlOption(`${this.id}_store`) || this.element.getAttribute("mv-storage") || null;
+		this.storage = this.storage || _.Functions.urlOption(`${this.id}_storage`) || this.element.getAttribute("mv-storage") || null;
 		this.source = this.source || _.Functions.urlOption(`${this.id}_source`) || this.element.getAttribute("mv-init") || null;
 
 		if (this.storage) {
@@ -58,10 +58,10 @@ var _ = self.Mavo = $.Class({
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
-				var defaults = Mavo.Primitive.getDefaults(element);
+				var config = Mavo.Primitive.getConfig(element);
 				var isCollection = Mavo.is("multiple", element);
 
-				if (isCollection || !Mavo.Primitive.getValueAttribute(element, defaults) && !defaults.hasChildren) {
+				if (isCollection || !config.attribute && !config.hasChildren) {
 					element.setAttribute("typeof", "");
 				}
 			}
@@ -217,7 +217,7 @@ var _ = self.Mavo = $.Class({
 				}, {subtree: true});
 
 				if (this.autoEdit) {
-					this.ui.edit.click();
+					this.edit();
 				}
 			}, () => { // cannot
 				$.remove(this.ui.edit);

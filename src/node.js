@@ -51,11 +51,6 @@ var _ = Mavo.Node = $.Class({
 		return this.mode == "edit";
 	},
 
-	get constant() {
-		// Is a "constant" if only allowed mode is read
-		return this.modes == "read";
-	},
-
 	get isRoot() {
 		return !this.property;
 	},
