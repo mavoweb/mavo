@@ -208,7 +208,7 @@ var _ = Mavo.Backend.register($.Class({
 	static: {
 		test: function(url) {
 			url = new URL(url, location);
-			return /\bgithub.(com|io)|raw.githubusercontent.com/.test(url.host);
+			return /\bgithub.com|raw.githubusercontent.com/.test(url.host);
 		},
 
 		/**
@@ -221,27 +221,7 @@ var _ = Mavo.Backend.register($.Class({
 
 			var path = url.pathname.slice(1).split("/");
 
-			if (/github.io$/.test(url.host)) {
-				ret.username = url.host.match(/([\w-]+)\.github\.io$/)[1];
-
-				if (path.length == 1) {
-					// Heuristic to tell apart username.github.io repos from
-					// other gh-pages repos. This is impossible to figure out without a request.
-					// E.g. username.github.io/foo/bar.json could be either repo = username.github.io, path = foo/bar.json
-					// or repo = foo, path = bar.json
-					ret.repo = url.host;
-					ret.path = path[0];
-					ret.branch = "master";
-					return ret;
-				}
-				else {
-					ret.branch = "gh-pages";
-				}
-			}
-			else {
-				ret.username = path.shift();
-			}
-
+			ret.username = path.shift();
 			ret.repo = path.shift();
 
 			if (/raw.githubusercontent.com$/.test(url.host)) {
