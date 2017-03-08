@@ -228,6 +228,64 @@ var _ = Mavo.Collection = $.Class({
 		});
 	},
 
+	editItem: function(item) {
+		if (!item.itemControls) {
+			item.itemControls = $$(".mv-item-controls", item.element)
+								   .filter(el => el.closest(Mavo.selectors.multiple) == item.element)[0];
+
+			item.itemControls = item.itemControls || $.create({
+				className: "mv-item-controls mv-ui"
+			});
+
+			$.set(item.itemControls, {
+				contents: [
+					{
+						tag: "button",
+						title: "Delete this " + item.name,
+						className: "mv-delete",
+						events: {
+							"click": evt => item.collection.delete(item)
+						}
+					}, {
+						tag: "button",
+						title: `Add new ${item.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
+						className: "mv-add",
+						events: {
+							"click": evt => {
+								var newItem = this.add(null, item.index);
+
+								if (evt[Mavo.superKey]) {
+									newItem.render(item.data);
+								}
+
+								if (!Mavo.inViewport(newItem.element)) {
+									newItem.element.scrollIntoView({behavior: "smooth"});
+								}
+
+								return this.editItem(newItem);
+							}
+						}
+					}, {
+						tag: "button",
+						title: "Drag to reorder " + item.name,
+						className: "mv-drag-handle"
+					}
+				]
+			});
+		}
+
+		if (!item.itemControls.parentNode) {
+			if ($.value(item, "itemControlsComment", "parentNode")) {
+				item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
+			}
+			else {
+				item.element.appendChild(item.itemControls);
+			}
+		}
+
+		item.edit();
+	},
+
 	edit: function() {
 		if (this.super.edit.call(this) === false) {
 			return false;
@@ -244,59 +302,7 @@ var _ = Mavo.Collection = $.Class({
 
 			// Insert item controls
 			this.propagate(item => {
-				if (!item.itemControls) {
-					item.itemControls = $$(".mv-item-controls", item.element)
-										   .filter(el => el.closest(Mavo.selectors.multiple) == item.element)[0];
-
-					item.itemControls = item.itemControls || $.create({
-						className: "mv-item-controls mv-ui"
-					});
-
-					$.set(item.itemControls, {
-						contents: [
-							{
-								tag: "button",
-								title: "Delete this " + item.name,
-								className: "mv-delete",
-								events: {
-									"click": evt => item.collection.delete(item)
-								}
-							}, {
-								tag: "button",
-								title: `Add new ${item.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-								className: "mv-add",
-								events: {
-									"click": evt => {
-										var newItem = this.add(null, item.index);
-
-										if (evt[Mavo.superKey]) {
-											newItem.render(item.data);
-										}
-
-										if (!Mavo.inViewport(newItem.element)) {
-											newItem.element.scrollIntoView({behavior: "smooth"});
-										}
-
-										return newItem.edit();
-									}
-								}
-							}, {
-								tag: "button",
-								title: "Drag to reorder " + item.name,
-								className: "mv-drag-handle"
-							}
-						]
-					});
-				}
-
-				if (!item.itemControls.parentNode) {
-					if ($.value(item, "itemControlsComment", "parentNode")) {
-						item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
-					}
-					else {
-						item.element.appendChild(item.itemControls);
-					}
-				}
+				this.editItem(item);
 			});
 
 			// Set up drag & drop
@@ -603,7 +609,7 @@ var _ = Mavo.Collection = $.Class({
 			button.addEventListener("click", evt => {
 				evt.preventDefault();
 
-				this.add().edit();
+				this.editItem(this.add());
 			});
 
 			return button;

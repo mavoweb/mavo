@@ -4016,8 +4016,68 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		edit: function edit() {
+		editItem: function editItem(item) {
 			var _this3 = this;
+
+			if (!item.itemControls) {
+				item.itemControls = $$(".mv-item-controls", item.element).filter(function (el) {
+					return el.closest(Mavo.selectors.multiple) == item.element;
+				})[0];
+
+				item.itemControls = item.itemControls || $.create({
+					className: "mv-item-controls mv-ui"
+				});
+
+				$.set(item.itemControls, {
+					contents: [{
+						tag: "button",
+						title: "Delete this " + item.name,
+						className: "mv-delete",
+						events: {
+							"click": function click(evt) {
+								return item.collection.delete(item);
+							}
+						}
+					}, {
+						tag: "button",
+						title: "Add new " + item.name.replace(/s$/i, "") + " " + (this.bottomUp ? "after" : "before"),
+						className: "mv-add",
+						events: {
+							"click": function click(evt) {
+								var newItem = _this3.add(null, item.index);
+
+								if (evt[Mavo.superKey]) {
+									newItem.render(item.data);
+								}
+
+								if (!Mavo.inViewport(newItem.element)) {
+									newItem.element.scrollIntoView({ behavior: "smooth" });
+								}
+
+								return _this3.editItem(newItem);
+							}
+						}
+					}, {
+						tag: "button",
+						title: "Drag to reorder " + item.name,
+						className: "mv-drag-handle"
+					}]
+				});
+			}
+
+			if (!item.itemControls.parentNode) {
+				if ($.value(item, "itemControlsComment", "parentNode")) {
+					item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
+				} else {
+					item.element.appendChild(item.itemControls);
+				}
+			}
+
+			item.edit();
+		},
+
+		edit: function edit() {
+			var _this4 = this;
 
 			if (this.super.edit.call(this) === false) {
 				return false;
@@ -4034,64 +4094,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				// Insert item controls
 				this.propagate(function (item) {
-					if (!item.itemControls) {
-						item.itemControls = $$(".mv-item-controls", item.element).filter(function (el) {
-							return el.closest(Mavo.selectors.multiple) == item.element;
-						})[0];
-
-						item.itemControls = item.itemControls || $.create({
-							className: "mv-item-controls mv-ui"
-						});
-
-						$.set(item.itemControls, {
-							contents: [{
-								tag: "button",
-								title: "Delete this " + item.name,
-								className: "mv-delete",
-								events: {
-									"click": function click(evt) {
-										return item.collection.delete(item);
-									}
-								}
-							}, {
-								tag: "button",
-								title: "Add new " + item.name.replace(/s$/i, "") + " " + (_this3.bottomUp ? "after" : "before"),
-								className: "mv-add",
-								events: {
-									"click": function click(evt) {
-										var newItem = _this3.add(null, item.index);
-
-										if (evt[Mavo.superKey]) {
-											newItem.render(item.data);
-										}
-
-										if (!Mavo.inViewport(newItem.element)) {
-											newItem.element.scrollIntoView({ behavior: "smooth" });
-										}
-
-										return newItem.edit();
-									}
-								}
-							}, {
-								tag: "button",
-								title: "Drag to reorder " + item.name,
-								className: "mv-drag-handle"
-							}]
-						});
-					}
-
-					if (!item.itemControls.parentNode) {
-						if ($.value(item, "itemControlsComment", "parentNode")) {
-							item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
-						} else {
-							item.element.appendChild(item.itemControls);
-						}
-					}
+					_this4.editItem(item);
 				});
 
 				// Set up drag & drop
 				_.dragula.then(function () {
-					_this3.getDragula();
+					_this4.getDragula();
 				});
 			}
 		},
@@ -4309,7 +4317,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this4 = this;
+			var _this5 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -4324,9 +4332,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this4.accepts.length) {
-						return Mavo.flatten(_this4.accepts.map(function (property) {
-							return _this4.mavo.root.find(property, { collections: true });
+					if (_this5.accepts.length) {
+						return Mavo.flatten(_this5.accepts.map(function (property) {
+							return _this5.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -4374,7 +4382,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this4.dragula.cancel(true);
+					return _this5.dragula.cancel(true);
 				}
 			});
 
@@ -4416,7 +4424,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this5 = this;
+				var _this6 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -4424,7 +4432,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this5.templateElement.contains(button);
+						return !_this6.templateElement.contains(button);
 					})[0];
 				}
 
@@ -4445,7 +4453,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this5.add().edit();
+					_this6.editItem(_this6.add());
 				});
 
 				return button;
@@ -4478,19 +4486,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	Mavo.hooks.add({
 		"primitive-init-end": function primitiveInitEnd() {
-			var _this6 = this;
+			var _this7 = this;
 
 			if (this.collection && !this.attribute) {
 				// Collection of primitives, deal with setting textContent etc without the UI interfering.
 				var swapUI = function swapUI(callback) {
 					var ret;
 
-					Mavo.Observer.sneak(_this6.observer, function () {
-						var ui = $.remove($(".mv-item-controls", _this6.element));
+					Mavo.Observer.sneak(_this7.observer, function () {
+						var ui = $.remove($(".mv-item-controls", _this7.element));
 
 						ret = callback();
 
-						$.inside(ui, _this6.element);
+						$.inside(ui, _this7.element);
 					});
 
 					return ret;
@@ -4500,20 +4508,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				["textContent", "innerHTML"].forEach(function (property) {
 					var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
 
-					Object.defineProperty(_this6.element, property, {
+					Object.defineProperty(_this7.element, property, {
 						get: function get() {
-							var _this7 = this;
+							var _this8 = this;
 
 							return swapUI(function () {
-								return descriptor.get.call(_this7);
+								return descriptor.get.call(_this8);
 							});
 						},
 
 						set: function set(value) {
-							var _this8 = this;
+							var _this9 = this;
 
 							swapUI(function () {
-								return descriptor.set.call(_this8, value);
+								return descriptor.set.call(_this9, value);
 							});
 						}
 					});
@@ -4531,7 +4539,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	});
 
 	$.live(Mavo.Node.prototype, "deleted", function (value) {
-		var _this9 = this;
+		var _this10 = this;
 
 		this.element.classList.toggle("mv-deleted", value);
 
@@ -4540,7 +4548,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// and replace them with an undo prompt.
 			this.elementContents = document.createDocumentFragment();
 			$$(this.element.childNodes).forEach(function (node) {
-				_this9.elementContents.appendChild(node);
+				_this10.elementContents.appendChild(node);
 			});
 
 			$.contents(this.element, [{
@@ -4558,7 +4566,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				textContent: "Undo",
 				events: {
 					"click": function click(evt) {
-						return _this9.deleted = false;
+						return _this10.deleted = false;
 					}
 				}
 			}]);
