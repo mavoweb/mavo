@@ -86,6 +86,8 @@
 	}
 
 	.mv-save {
+		position: relative;
+
 		&::before {
 			content: "✓";
 		}

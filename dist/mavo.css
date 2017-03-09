@@ -375,23 +375,25 @@ p.mv-error {
     box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset; }
     [mv-app][mv-mode="edit"] .mv-bar.mv-ui .mv-edit::after {
       content: "ing"; }
-  .mv-bar.mv-ui .mv-save::before {
-    content: "✓"; }
-  [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save {
-    color: rgba(255, 255, 255, 0.2); }
-    [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::before {
-      opacity: .2; }
-    [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      color: white; }
-  .mv-bar.mv-ui .mv-save.mv-unsaved-changes {
-    text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
-  .mv-bar.mv-ui .mv-save:hover {
-    background: #40bfbf; }
+  .mv-bar.mv-ui .mv-save {
+    position: relative; }
+    .mv-bar.mv-ui .mv-save::before {
+      content: "✓"; }
+    [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save {
+      color: rgba(255, 255, 255, 0.2); }
+      [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::before {
+        opacity: .2; }
+      [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: white; }
+    .mv-bar.mv-ui .mv-save.mv-unsaved-changes {
+      text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
+    .mv-bar.mv-ui .mv-save:hover {
+      background: #40bfbf; }
   .mv-bar.mv-ui .mv-revert::before {
     content: "✘"; }
   .mv-bar.mv-ui .mv-revert:enabled:hover {
