@@ -13,8 +13,6 @@
 <section class="mv-app">
 	<h1>No storage</h1>
 
-	<a href="?storage=local&amp;source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
-
 	<table class="reftest">
 		<tr>
 			<td>
@@ -207,67 +205,106 @@ localStorage.localstoretest = `{
 	</table>
 </section>
 
-<section mv-app="githubtest" mv-storage="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
+<section mv-app="githubtest" mv-storage="https://github.com/LeaVerou/mavo/blob/master/test/countries.json">
 	<h1>Github</h1>
-	<a href="?githubtest_store=local&amp;githubtest_source=../demos/talks/countries.json">Click here to make this local store, remote source</a>
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+
+	<p>Need to login to Github and have access to the Mavo repo for this test to pass.</p>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online</li>
+					<li>us United States</li>
+					<li>gb United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section mv-storage="local" mv-init="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-	<h1>Local store, Github source</h1>
+<section mv-app="urltest" mv-storage="">
+	<h1>mv-storage=Github, mv-source=Element, via URL</h1>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<p><a href="?urltest_storage=https://github.com/LeaVerou/mavo/blob/master/test/countries.json&urltest_source=%23countries">Click here first for this test to pass.</a></p>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>us United States</li>
+					<li>jp Japan</li>
+					<li>es Spain</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<section class="mv-app" mv-init="https://github.com/LeaVerou/leaverou.github.io/blob/master/countries.json">
-	<h1>No store, Github source</h1>
+<section mv-storage="https://github.com/LeaVerou/mavo/blob/master/test/countries.json" mv-source="#countries">
+	<h1>mv-storage=Github, mv-source=element</h1>
+
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>us United States</li>
+					<li>jp Japan</li>
+					<li>es Spain</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
+</section>
+
+<section class="mv-app" mv-source="https://github.com/LeaVerou/mavo/blob/master/test/countries.json">
+	<h1>No storage, mv-source=Github</h1>
 	<p>Should display data but no editing controls</p>
 
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
+	<table class="reftest">
+		<tr>
+			<td>
+				<ul>
+					<li property="country" mv-multiple>
+						<span property="code">Code</span>
+						<span property="name">Name</span>
+					</li>
+				</ul>
+			</td>
+			<td>
+				<ul>
+					<li>Online</li>
+					<li>us United States</li>
+					<li>gb United Kingdom</li>
+				</ul>
+			</td>
+		</tr>
+	</table>
 </section>
 
-<script type="application/json" id="country-data">
-	{
-		"country": [
-			{
-				"code": "gr",
-				"name": "Greece"
-			},
-			{
-				"code": "pl",
-				"name": "Poland"
-			}
-		]
-	}
-</script>
-<section mv-storage="local" mv-init="#country-data">
-	<h1>Local store, Element source</h1>
 
-	<p>Should display Greece and Poland if no data</p>
-
-	<ul>
-		<li property="country" mv-multiple>
-			<span property="code">Code</span>
-			<span property="name">Name</span>
-		</li>
-	</ul>
-
-</section>
 
 
 <script src="../dist/mavo.js"></script>

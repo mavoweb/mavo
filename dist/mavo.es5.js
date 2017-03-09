@@ -281,25 +281,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index);
 			this.element.setAttribute("mv-app", this.id);
 
+			// Should we start in edit mode?
 			this.autoEdit = this.element.classList.contains("mv-autoedit");
+
+			// Should we save automatically?
 			this.autoSave = this.element.classList.contains("mv-autosave");
 
-			if (this.index == 1) {
-				this.storage = _.Functions.urlOption("storage");
-				this.source = _.Functions.urlOption("source");
+			// Figure out backends for storage, data reads, and initialization respectively
+			var _arr = ["storage", "source", "init"];
+			for (var _i = 0; _i < _arr.length; _i++) {
+				var role = _arr[_i];
+				if (this.index == 1) {
+					this[role] = _.Functions.urlOption(role);
+				}
+
+				if (!this[role]) {
+					this[role] = _.Functions.urlOption(this.id + "_" + role) || this.element.getAttribute("mv-" + role) || null;
+				}
+
+				if (this[role]) {
+					// We have a string, convert to a backend object
+					this[role] = this[role].trim();
+					this[role] = this[role] == "none" ? null : _.Backend.create(this[role], this);
+				}
 			}
 
-			this.storage = this.storage || _.Functions.urlOption(this.id + "_storage") || this.element.getAttribute("mv-storage") || null;
-			this.source = this.source || _.Functions.urlOption(this.id + "_source") || this.element.getAttribute("mv-init") || null;
-
-			if (this.storage) {
-				this.storage = this.storage.trim();
-
-				this.storage = this.storage == "none" ? null : _.Backend.create(this.storage, this);
-			}
-
-			if (this.source) {
-				this.source = _.Backend.create(this.source, this);
+			if (!this.storage && !this.source && this.init) {
+				// If init is present with no storage and no source, init is equivalent to source
+				this.source = this.init;
+				this.init = null;
 			}
 
 			this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
@@ -548,9 +558,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.storage || this.source) {
 				// Fetch existing data
 				if (!this.storage) {
-					this.source.permissions.can("read", function () {
-						return _this.permissions.read = true;
-					});
+
+					if (this.source) {
+						this.source.permissions.can("read", function () {
+							return _this.permissions.read = true;
+						});
+					}
 				}
 
 				this.permissions.can("read", function () {
@@ -798,15 +811,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.inProgress = "Loading";
 
-			var backend = this.storage || this.source;
+			var backend = this.source || this.storage;
 
 			return backend.ready.then(function () {
 				return backend.get();
 			}).catch(function (err) {
-				// Try again with source
-				if (_this3.source && backend !== _this3.source) {
-					return _this3.source.ready.then(function () {
-						return _this3.source.get();
+				// Try again with init
+				if (_this3.init && _this3.init != backend) {
+					return _this3.init.ready.then(function () {
+						return _this3.init.get();
 					});
 				}
 
