@@ -48,6 +48,8 @@
 	& > .mv-button {
 		padding: .3em .6em .4em;
 		border: 0;
+		white-space: nowrap;
+		text-align: center;
 
 		&::before {
 			display: inline-block;
@@ -110,7 +112,8 @@
 			}
 		}
 
-		&.mv-unsaved-changes {
+		&.mv-unsaved-changes,
+		&.mv-unsaved-changes::before {
 			text-shadow: 0 0 .2em hsl(200, 100%, 70%), 0 0 .3em hsl(200, 100%, 70%);
 		}
 
@@ -164,6 +167,21 @@
 				background: transparent;
 				box-shadow: 0 1px .1em black inset;
 			}
+		}
+	}
+
+	// Displaying mv-bar in small spaces
+	&.mv-compact {
+		& > button,
+		& > .mv-button {
+			// Hide text
+			width: 1em;
+			letter-spacing: -.5em;
+			color: transparent;
+		}
+
+		.mv-save.mv-unsaved-changes {
+			text-shadow: none;
 		}
 	}
 }

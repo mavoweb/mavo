@@ -351,7 +351,9 @@ p.mv-error {
   .mv-bar.mv-ui > button,
   .mv-bar.mv-ui > .mv-button {
     padding: .3em .6em .4em;
-    border: 0; }
+    border: 0;
+    white-space: nowrap;
+    text-align: center; }
     .mv-bar.mv-ui > button::before,
     .mv-bar.mv-ui > .mv-button::before {
       display: inline-block;
@@ -390,7 +392,7 @@ p.mv-error {
         top: 50%;
         transform: translate(-50%, -50%);
         color: white; }
-    .mv-bar.mv-ui .mv-save.mv-unsaved-changes {
+    .mv-bar.mv-ui .mv-save.mv-unsaved-changes, .mv-bar.mv-ui .mv-save.mv-unsaved-changes::before {
       text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
     .mv-bar.mv-ui .mv-save:hover {
       background: #40bfbf; }
@@ -426,6 +428,13 @@ p.mv-error {
       .mv-bar.mv-ui .mv-status .mv-logout:active {
         background: transparent;
         box-shadow: 0 1px .1em black inset; }
+  .mv-bar.mv-ui.mv-compact > button,
+  .mv-bar.mv-ui.mv-compact > .mv-button {
+    width: 1em;
+    letter-spacing: -.5em;
+    color: transparent; }
+  .mv-bar.mv-ui.mv-compact .mv-save.mv-unsaved-changes {
+    text-shadow: none; }
 
 .mv-debuginfo {
   all: initial;

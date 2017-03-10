@@ -288,6 +288,8 @@ var _ = self.Mavo = $.Class({
 			})
 		};
 
+		this.ui.bar.classList.toggle("mv-compact", this.ui.bar.offsetWidth < 400);
+
 		this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
 			className: "mv-status",
 			inside: this.ui.bar
@@ -306,6 +308,7 @@ var _ = self.Mavo = $.Class({
 					tag: "a",
 					href: this.loginHash,
 					textContent: "Login",
+					title: "Login",
 					className: "mv-login mv-button",
 					events: {
 						click: evt => {
@@ -399,6 +402,7 @@ var _ = self.Mavo = $.Class({
 				this.ui.edit = $.create("button", {
 					className: "mv-edit",
 					textContent: "Edit",
+					title: "Edit",
 					inside: this.ui.bar
 				});
 
@@ -453,7 +457,8 @@ var _ = self.Mavo = $.Class({
 			this.permissions.can("delete", () => {
 				this.ui.clear = $.create("button", {
 					className: "mv-clear",
-					textContent: "Clear"
+					textContent: "Clear",
+					title: "Clear"
 				});
 
 				this.ui.bar.appendChild(this.ui.clear);
@@ -484,6 +489,7 @@ var _ = self.Mavo = $.Class({
 			this.ui.save = $.create("button", {
 				className: "mv-save",
 				textContent: "Save",
+				title: "Save",
 				inside: this.ui.bar
 			});
 
@@ -513,6 +519,7 @@ var _ = self.Mavo = $.Class({
 				this.ui.revert = $.create("button", {
 					className: "mv-revert",
 					textContent: "Revert",
+					title: "Revert",
 					disabled: true,
 					inside: this.ui.bar
 				});
