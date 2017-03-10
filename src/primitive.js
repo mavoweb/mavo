@@ -414,7 +414,14 @@ var _ = Mavo.Primitive = $.Class({
 				value = value.value;
 			}
 
+			// Convert nulls and undefineds to empty string
 			value = value || value === 0? value : "";
+
+			// If there's no datatype, adopt that of the value
+			if (!this.datatype && (typeof value == "number" || typeof value == "boolean")) {
+				this.datatype = typeof value;
+			}
+
 			value = _.safeCast(value, this.datatype);
 
 			if (value == this._value && !o.force) {

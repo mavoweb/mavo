@@ -721,6 +721,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		render: function render(data) {
+			this.path = (this.element.getAttribute("mv-path") || "").split("/");
+			this.savedData = data;
+
+			if (this.path) {
+				data = $.value(this.savedData, [].concat(_toConsumableArray(this.path)));
+			}
+
 			var env = { context: this, data: data };
 
 			_.hooks.run("render-start", env);
@@ -999,7 +1006,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			hooks: new $.Hooks(),
 
-			attributes: ["mv-app", "mv-storage", "mv-init", "mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions"]
+			attributes: ["mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions"]
 		}
 	});
 
