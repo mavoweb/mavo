@@ -144,6 +144,11 @@ var _ = self.Mavo = $.Class({
 							},
 						}
 					]);
+
+					// If last time we rendered we got nothing, maybe now we'll have better luck?
+					if (this._data === null && !this.unsavedChanges) {
+						this.load();
+					}
 				}
 			});
 
@@ -402,7 +407,7 @@ var _ = self.Mavo = $.Class({
 	render: function(data) {
 		this.data = data;
 
-		if (this.path.length) {
+		if (this.data && this.path.length) {
 			data = $.value(this._data, ...this.path);
 		}
 
@@ -517,8 +522,9 @@ var _ = self.Mavo = $.Class({
 		.catch(err => {
 			if (err) {
 				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
+
 				if (xhr && xhr.status == 404) {
-					this.render("");
+					this.render(null);
 				}
 				else {
 					this.error("The data could not be loaded.", err);
