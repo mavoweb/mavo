@@ -6308,12 +6308,20 @@ var _ = Mavo.Backend.register($.Class({
 
 		// Extract info for username, repo, branch, filepath from URL
 		this.url = new URL(this.url, location);
-		$.extend(this, _.parseURL(this.url));
-		this.repo = this.repo || "mv-data";
-		this.branch = this.branch || "master";
-		this.path = this.path || `${this.mavo.id}.json`;
+		var parsedURL = _.parseURL(this.url);
 
-		this.permissions.on("read"); // TODO check if file actually is publicly readable
+		if (parsedURL.username) {
+			$.extend(this, parsedURL);
+			this.repo = this.repo || "mv-data";
+			this.branch = this.branch || "master";
+			this.path = this.path || `${this.mavo.id}.json`;
+			this.apiCall = `repos/${this.username}/${this.repo}/contents/${this.path}`;
+		}
+		else {
+			this.apiCall = this.url.pathname.slice(1);
+		}
+
+		this.permissions.on("read");
 
 		this.login(true);
 	},
@@ -6340,7 +6348,7 @@ var _ = Mavo.Backend.register($.Class({
 			};
 		}
 
-		return $.fetch("https://api.github.com/" + call, request)
+		return $.fetch(_.apiDomain + call, request)
 		.catch(err => {
 			if (err && err.xhr) {
 				return Promise.reject(err.xhr);
@@ -6353,8 +6361,8 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	get: function() {
-		return this.req(`repos/${this.username}/${this.repo}/contents/${this.path}`)
-		       .then(response => Promise.resolve(_.atob(response.content)));
+		return this.req(this.apiCall)
+		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
 	/**
@@ -6363,7 +6371,7 @@ var _ = Mavo.Backend.register($.Class({
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
 	put: function(file = this.getFile()) {
-		var fileCall = `repos/${this.username}/${this.repo}/contents/${file.path}`;
+		var fileCall = file.path? `repos/${this.username}/${this.repo}/contents/${file.path}` : this.apiCall;
 
 		return Promise.resolve(this.repoInfo || this.req("user/repos", {
 			name: this.repo
@@ -6450,23 +6458,25 @@ var _ = Mavo.Backend.register($.Class({
 				if (this.user) {
 					this.permissions.on("logout");
 
-					return this.req(`repos/${this.username}/${this.repo}`)
-						.then(repoInfo => {
-							this.repoInfo = repoInfo;
+					if (this.repo) {
+						return this.req(`repos/${this.username}/${this.repo}`)
+							.then(repoInfo => {
+								this.repoInfo = repoInfo;
 
-							if (repoInfo.permissions.push) {
-								this.permissions.on(["edit", "save"]);
-							}
-						})
-						.catch(xhr => {
-							if (xhr.status == 404) {
-								// Repo does not exist so we can't check permissions
-								// Just check if authenticated user is the same as our URL username
-								if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+								if (repoInfo.permissions.push) {
 									this.permissions.on(["edit", "save"]);
 								}
-							}
-						});
+							})
+							.catch(xhr => {
+								if (xhr.status == 404) {
+									// Repo does not exist so we can't check permissions
+									// Just check if authenticated user is the same as our URL username
+									if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+										this.permissions.on(["edit", "save"]);
+									}
+								}
+							});
+					}
 				}
 			});
 		});
@@ -6500,6 +6510,8 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	static: {
+		apiDomain: "https://api.github.com/",
+
 		test: function(url) {
 			url = new URL(url, location);
 			return /\bgithub.com|raw.githubusercontent.com/.test(url.host);
@@ -6520,6 +6532,10 @@ var _ = Mavo.Backend.register($.Class({
 
 			if (/raw.githubusercontent.com$/.test(url.host)) {
 				ret.branch = path.shift();
+			}
+			else if (/api.github.com$/.test(url.host)) {
+				// raw API call, stop parsing and just return
+				return {};
 			}
 			else if (/github.com$/.test(url.host) && path[0] == "blob") {
 				path.shift();
