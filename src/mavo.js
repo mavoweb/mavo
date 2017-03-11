@@ -33,9 +33,6 @@ var _ = self.Mavo = $.Class({
 		// Should we save automatically?
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
-		// Are were only rendering and editing a subset of the data?
-		this.path = (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
-
 		// Figure out backends for storage, data reads, and initialization respectively
 		for (let role of ["storage", "source", "init"]) {
 			if (this.index == 1) {
@@ -149,7 +146,7 @@ var _ = self.Mavo = $.Class({
 					]);
 
 					// If last time we rendered we got nothing, maybe now we'll have better luck?
-					if (this._data === null && !this.unsavedChanges) {
+					if (!this.root.data && !this.unsavedChanges) {
 						this.load();
 					}
 				}
@@ -375,10 +372,10 @@ var _ = self.Mavo = $.Class({
 	},
 
 	getData: function() {
-		return this.data;
+		return this.root.getData();
 	},
 
-	toJSON: function(data = this.data) {
+	toJSON: function(data = this.getData()) {
 		return _.toJSON(data);
 	},
 
@@ -412,12 +409,6 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		this.data = data;
-
-		if (this.data && this.path.length) {
-			data = $.value(this._data, ...this.path);
-		}
-
 		var env = {context: this, data};
 
 		_.hooks.run("render-start", env);
@@ -612,20 +603,6 @@ var _ = self.Mavo = $.Class({
 	},
 
 	live: {
-		data: {
-			get: function() {
-				var data = this.root.getData();
-
-				if (this.path.length) {
-					var parent = $.value(this._data, ...this.path.slice(0, -1));
-					parent[this.path[this.path.length - 1]] = data;
-					return this._data;
-				}
-
-				return data;
-			}
-		},
-
 		inProgress: function(value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);
 		},

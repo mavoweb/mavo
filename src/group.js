@@ -103,6 +103,10 @@ var _ = Mavo.Group = $.Class({
 			};
 		}
 
+		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
+			env.data = Mavo.subset(this.data, this.inPath, env.data);
+		}
+
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
@@ -152,9 +156,6 @@ var _ = Mavo.Group = $.Class({
 		if (!data) {
 			return;
 		}
-
-		// TODO retain dropped elements
-		data = Array.isArray(data)? data[0] : data;
 
 		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.children[this.property] with it

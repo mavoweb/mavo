@@ -31,11 +31,17 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 		this.group = this.parentGroup = env.options.group;
+		this.inPath = [];
 
-		if (!this.fromTemplate("property", "type")) {
+		if (!this.fromTemplate("property", "type", "inPath")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
-			this.store = this.element.getAttribute("mv-storage");
+			this.store = this.element.getAttribute("mv-storage"); // TODO rename to storage
+
+			// Are were only rendering and editing a subset of the data?
+			if (this.nodeType != "Collection") {
+				this.inPath = (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
+			}
 		}
 
 		this.modes = this.element.getAttribute("mv-mode");
@@ -64,10 +70,6 @@ var _ = Mavo.Node = $.Class({
 
 	get name() {
 		return Mavo.readable(this.property || this.type).toLowerCase();
-	},
-
-	get data() {
-		return this.getData();
 	},
 
 	get saved() {
@@ -99,11 +101,11 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		// Check if any of the parent groups doesn't return data
-		this.walkUp(group => {
-			if (group.isDataNull(o)) {
-				return null;
-			}
-		});
+		// this.walkUp(group => {
+		// 	if (group.isDataNull(o)) {
+		// 		return null;
+		// 	}
+		// });
 	},
 
 	isDataNull: function(o) {
@@ -215,20 +217,31 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	render: function(data) {
-		Mavo.hooks.run("node-render-start", this);
+		this.data = data;
+
+		data = Mavo.subset(data, this.inPath);
+
+		var env = {context: this, data};
+
+		Mavo.hooks.run("node-render-start", env);
+
+		if (this.nodeType != "Collection" && Array.isArray(data)) {
+			this.inPath.push("0");
+			env.data = env.data[0];
+		}
 
 		if (this.editing) {
 			this.done();
-			this.dataRender(data);
+			this.dataRender(env.data);
 			this.edit();
 		}
 		else {
-			this.dataRender(data);
+			this.dataRender(env.data);
 		}
 
 		this.save();
 
-		Mavo.hooks.run("node-render-end", this);
+		Mavo.hooks.run("node-render-end", env);
 	},
 
 	dataChanged: function(action, o = {}) {

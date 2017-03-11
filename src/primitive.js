@@ -199,6 +199,10 @@ var _ = Mavo.Primitive = $.Class({
 			env.data = null;
 		}
 
+		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
+			env.data = Mavo.subset(this.data, this.inPath, env.data);
+		}
+
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
@@ -384,12 +388,20 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	dataRender: function(data) {
-		if (Array.isArray(data)) {
-			data = data[0]; // TODO what is gonna happen to the rest? Lost?
-		}
-
 		if (typeof data === "object") {
-			data = Symbol.toPrimitive in data? data[Symbol.toPrimitive]() : data[this.property];
+			if (Symbol.toPrimitive in data) {
+				data = data[Symbol.toPrimitive]();
+			}
+			else {
+				// Candidate properties to get a value from
+				for (let property of [this.property, "value", ...Object.keys(data)]) {
+					if (property in data) {
+						data = data[property];
+						this.inPath.push(property);
+						break;
+					}
+				}
+			}
 		}
 
 		if (data === undefined) {

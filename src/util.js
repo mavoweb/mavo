@@ -93,6 +93,23 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	subset: function(obj, path, value) {
+		if (arguments.length == 3) {
+			// Put
+			if (path.length) {
+				var parent = $.value(obj, ...path.slice(0, -1));
+				parent[path[path.length - 1]] = value;
+				return obj;
+			}
+
+			return value;
+		}
+		else {
+			// Get
+			return typeof obj == "object" && path && path.length? $.value(obj, ...path) : obj;
+		}
+	},
+
 	/**
 	 * Get the value of an attribute, with fallback attributes in priority order.
 	 */
