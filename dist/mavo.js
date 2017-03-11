@@ -1806,8 +1806,19 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-render-start", env);
 
 		if (this.nodeType != "Collection" && Array.isArray(data)) {
-			this.inPath.push("0");
-			env.data = env.data[0];
+			// We are rendering an array on a singleton, what to do?
+			var properties = Object.keys(this.children);
+			if (this.isRoot && properties.length === 1 && this.children[properties[0]].nodeType === "Collection") {
+				// If it's root with only one collection property, render on that property
+				env.data = {
+					[properties[0]]: env.data
+				};
+			}
+			else {
+				// Otherwise, render first item
+				this.inPath.push("0");
+				env.data = env.data[0];
+			}
 		}
 
 		if (this.editing) {
