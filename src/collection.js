@@ -228,6 +228,23 @@ var _ = Mavo.Collection = $.Class({
 		});
 	},
 
+	/**
+	 * Move existing item to a new position. Wraps around if position is out of bounds.
+	 * @offset relative position
+	 */
+	move: function(item, offset) {
+		index = item.index + offset + (offset > 0);
+
+		if (index < 0) {
+			index = this.children.length;
+		}
+		else if (index > this.children.length) {
+			index = 0;
+		}
+
+		this.add(item, index);
+	},
+
 	editItem: function(item) {
 		if (!item.itemControls) {
 			item.itemControls = $$(".mv-item-controls", item.element)
@@ -268,7 +285,20 @@ var _ = Mavo.Collection = $.Class({
 					}, {
 						tag: "button",
 						title: "Drag to reorder " + item.name,
-						className: "mv-drag-handle"
+						className: "mv-drag-handle",
+						events: {
+							click: evt => evt.target.focus(),
+							keydown: evt => {
+								if (evt.keyCode >= 37 && evt.keyCode <= 40) {
+									// Arrow keys
+									this.move(item, evt.keyCode <= 38? -1 : 1);
+
+									evt.stopPropagation();
+									evt.preventDefault();
+									evt.target.focus();
+								}
+							}
+						}
 					}
 				]
 			});

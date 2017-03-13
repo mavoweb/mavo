@@ -75,27 +75,29 @@
     color: #c80000; }
     .mv-item-controls.mv-ui .mv-delete::before {
       display: block; }
-    .mv-item-controls.mv-ui .mv-delete:hover {
+    .mv-item-controls.mv-ui .mv-delete:hover, .mv-item-controls.mv-ui .mv-delete:focus {
       background-color: #c80000;
       color: white; }
-      .mv-item-controls.mv-ui .mv-delete:hover::before {
+      .mv-item-controls.mv-ui .mv-delete:hover::before, .mv-item-controls.mv-ui .mv-delete:focus::before {
         -webkit-filter: saturate(0) brightness(600%);
         filter: saturate(0) brightness(600%); }
   .mv-item-controls.mv-ui .mv-add {
     color: #81b814; }
     .mv-item-controls.mv-ui .mv-add::before {
       content: "✚"; }
-    .mv-item-controls.mv-ui .mv-add:hover {
+    .mv-item-controls.mv-ui .mv-add:hover, .mv-item-controls.mv-ui .mv-add:focus {
       background-color: #81b814;
       color: white; }
   .mv-item-controls.mv-ui .mv-drag-handle {
-    cursor: -webkit-grab;
-    cursor: grab; }
-    .mv-item-controls.mv-ui .mv-drag-handle:active {
+    cursor: move; }
+    .mv-item-controls.mv-ui .mv-drag-handle:active, .mv-item-controls.mv-ui .mv-drag-handle:focus {
       cursor: -webkit-grabbing;
       cursor: grabbing; }
     .mv-item-controls.mv-ui .mv-drag-handle::before {
       content: "≡"; }
+    .mv-item-controls.mv-ui .mv-drag-handle:hover, .mv-item-controls.mv-ui .mv-drag-handle:focus {
+      background-color: #4d4d4d;
+      color: white; }
   [mv-app]:not([mv-permissions~="delete"]) .mv-item-controls.mv-ui .mv-delete,
   [mv-app]:not([mv-permissions~="add"]) .mv-item-controls.mv-ui .mv-add {
     display: none; }

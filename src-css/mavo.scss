@@ -79,7 +79,7 @@
 			display: block;
 		}
 
-		&:hover {
+		&:hover, &:focus {
 			background-color: $color;
 			color: white;
 
@@ -97,21 +97,27 @@
 			content: "✚";
 		}
 
-		&:hover {
+		&:hover, &:focus {
 			background-color: $color;
 			color: white;
 		}
 	}
 
 	.mv-drag-handle {
-		cursor: grab;
+		$color: hsl(0, 0%, 30%);
+		cursor: move;
 
-		&:active {
+		&:active, &:focus {
 			cursor: grabbing;
 		}
 
 		&::before {
 			content: "≡";
+		}
+
+		&:hover, &:focus {
+			background-color: $color;
+			color: white;
 		}
 	}
 
