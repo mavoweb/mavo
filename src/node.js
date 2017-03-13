@@ -69,7 +69,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get name() {
-		return Mavo.readable(this.property || this.type).toLowerCase();
+		return Mavo.Functions.readable(this.property || this.type).toLowerCase();
 	},
 
 	get saved() {
@@ -227,8 +227,8 @@ var _ = Mavo.Node = $.Class({
 
 		if (this.nodeType != "Collection" && Array.isArray(data)) {
 			// We are rendering an array on a singleton, what to do?
-			var properties = Object.keys(this.children);
-			if (this.isRoot && properties.length === 1 && this.children[properties[0]].nodeType === "Collection") {
+			var properties;
+			if (this.isRoot && (properties = Object.keys(this.children)).length === 1 && this.children[properties[0]].nodeType === "Collection") {
 				// If it's root with only one collection property, render on that property
 				env.data = {
 					[properties[0]]: env.data

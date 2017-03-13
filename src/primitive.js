@@ -333,9 +333,6 @@ var _ = Mavo.Primitive = $.Class({
 			if (this.popup) {
 				this.popup.show();
 			}
-			else {
-				this.editor.focus();
-			}
 
 			if (!this.attribute && !this.popup) {
 				if (this.editor.parentNode != this.element) {
@@ -388,7 +385,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	dataRender: function(data) {
-		if (typeof data === "object") {
+		if (data && typeof data === "object") {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]();
 			}
@@ -432,7 +429,7 @@ var _ = Mavo.Primitive = $.Class({
 
 	lazy: {
 		label: function() {
-			return Mavo.readable(this.property);
+			return Mavo.Functions.readable(this.property);
 		},
 
 		emptyValue: function() {

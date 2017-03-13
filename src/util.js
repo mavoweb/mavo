@@ -14,15 +14,6 @@ var _ = $.extend(Mavo, {
 		return JSON.stringify(data, null, "\t");
 	},
 
-	// Convert an identifier to readable text that can be used as a label
-	readable: function (identifier) {
-		// Is it camelCase?
-		return identifier && identifier
-				 .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
-				 .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
-	},
-
 	queryJSON: function(data, path) {
 		if (!path || !data) {
 			return data;

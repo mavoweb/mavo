@@ -436,6 +436,9 @@ p.mv-error {
   .mv-bar.mv-ui.mv-compact .mv-save.mv-unsaved-changes {
     text-shadow: none; }
 
+[mv-app][mv-bar="none"] .mv-bar {
+  display: none; }
+
 .mv-debuginfo {
   all: initial;
   font: 80% "Helvetica Neue", sans-serif;
