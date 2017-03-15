@@ -275,9 +275,7 @@ var _ = Mavo.Collection = $.Class({
 									newItem.render(item.data);
 								}
 
-								if (!Mavo.inViewport(newItem.element)) {
-									newItem.element.scrollIntoView({behavior: "smooth"});
-								}
+								Mavo.scrollIntoViewIfNeeded(newItem.element);
 
 								return this.editItem(newItem);
 							}

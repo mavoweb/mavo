@@ -33,31 +33,6 @@ var _ = self.Mavo = $.Class({
 		// Should we save automatically?
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
-		// Figure out backends for storage, data reads, and initialization respectively
-		for (let role of ["storage", "source", "init"]) {
-			if (this.index == 1) {
-				this[role] = _.Functions.urlOption(role);
-			}
-
-			if (!this[role]) {
-				this[role] =  _.Functions.urlOption(`${this.id}_${role}`) || this.element.getAttribute("mv-" + role) || null;
-			}
-
-			if (this[role]) {
-				// We have a string, convert to a backend object
-				this[role] = this[role].trim();
-				this[role] = this[role] == "none"? null : _.Backend.create(this[role], this);
-			}
-		}
-
-		if (!this.storage && !this.source && this.init) {
-			// If init is present with no storage and no source, init is equivalent to source
-			this.source = this.init;
-			this.init = null;
-		}
-
-		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
-
 		this.element.setAttribute("typeof", "");
 
 		// Apply heuristic for groups
@@ -74,6 +49,14 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
+		// Build mavo objects
+		Mavo.hooks.run("init-tree-before", this);
+
+		this.root = new Mavo.Group(this.element, this);
+		this.treeBuilt.resolve();
+
+		Mavo.hooks.run("init-tree-after", this);
+
 		this.ui = {
 			bar: $(".mv-bar", this.element) || $.create({
 				className: "mv-bar mv-ui",
@@ -87,6 +70,34 @@ var _ = self.Mavo = $.Class({
 			className: "mv-status",
 			inside: this.ui.bar
 		});
+
+		// Figure out backends for storage, data reads, and initialization respectively
+		for (let role of ["storage", "source", "init"]) {
+			if (this.index == 1) {
+				this[role] = _.Functions.urlOption(role);
+			}
+
+			if (!this[role]) {
+				this[role] =  _.Functions.urlOption(`${this.id}_${role}`) || this.element.getAttribute("mv-" + role) || null;
+			}
+
+			if (this[role]) {
+				// We have a string, convert to a backend object
+				this[role] = this[role].trim();
+				this[role] = this[role] == "none"? null : _.Backend.create(this[role], {
+					mavo: this,
+					format: this.element.getAttribute("mv-format-" + role) || this.element.getAttribute("mv-format")
+				});
+			}
+		}
+
+		if (!this.storage && !this.source && this.init) {
+			// If init is present with no storage and no source, init is equivalent to source
+			this.source = this.init;
+			this.init = null;
+		}
+
+		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
 		if (this.storage) {
 			// Reflect backend permissions in global permissions
@@ -165,14 +176,6 @@ var _ = self.Mavo = $.Class({
 				}
 			});
 		}
-
-		// Build mavo objects
-		Mavo.hooks.run("init-tree-before", this);
-
-		this.root = new Mavo.Group(this.element, this);
-		this.treeBuilt.resolve();
-
-		Mavo.hooks.run("init-tree-after", this);
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = this.some(obj => obj != this.root && !obj.modes && obj.mode == "read");
@@ -375,8 +378,8 @@ var _ = self.Mavo = $.Class({
 		return this.root.getData();
 	},
 
-	toJSON: function(data = this.getData()) {
-		return _.toJSON(data);
+	toJSON: function() {
+		return _.toJSON(this.getData());
 	},
 
 	error: function(message, ...log) {
@@ -397,14 +400,15 @@ var _ = self.Mavo = $.Class({
 			],
 			events: {
 				mouseenter: e => clearTimeout(closeTimeout),
-				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000))
+				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000)),
+				click: e => this.element.scrollIntoView({behavior: "smooth"})
 			},
 			start: this.element
 		});
 
 		// Log more info for programmers
 		if (log.length > 0) {
-			console.log("%c" + message, "color: red; font-weight: bold", ...log);
+			console.log(`%c${this.id}: ${message}`, "color: red; font-weight: bold", ...log);
 		}
 	},
 
@@ -495,28 +499,22 @@ var _ = self.Mavo = $.Class({
 
 		var backend = this.source || this.storage;
 
-		return backend.ready.then(() => backend.get())
+		return backend.ready.then(() => backend.load())
 		.catch(err => {
 			// Try again with init
 			if (this.init && this.init != backend) {
-				return this.init.ready.then(() => this.init.get());
+				backend = this.init;
+				return this.init.ready.then(() => this.init.load());
 			}
 
+			// No init, propagate error
 			return Promise.reject(err);
 		})
-		.then(response => {
-			if (response && $.type(response) == "string") {
-				try {
-					response = JSON.parse(response);
-				}
-				catch (e) {
-					this.error("The data is corrupted.", e, response);
-					response = "";
-				}
-			}
-
-			this.render(response);
+		.catch(err => {
+			this.error("The data is corrupted.", err);
+			return null;
 		})
+		.then(data => this.render(data))
 		.catch(err => {
 			if (err) {
 				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
@@ -543,34 +541,30 @@ var _ = self.Mavo = $.Class({
 		this.inProgress = "Saving";
 
 		return this.storage.login()
-		.then(() => this.storage.put())
-		.then(file => {
-			this.inProgress = false;
-			return file;
-		})
-		.catch(err => {
-			if (err) {
-				var message = "Problem saving data";
+			.then(() => this.storage.store(this.getData()))
+			.catch(err => {
+				if (err) {
+					var message = "Problem saving data";
 
-				if (err.status && err.statusText) {
-					message += ` (HTTP ${err.status}: ${err.statusText})`;
+					if (err instanceof XMLHttpRequest) {
+						message += xhr.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+					}
+
+					this.error(message, err);
 				}
 
-				this.error(message, err);
-			}
-
-			this.inProgress = false;
-			return Promise.reject(err);
-		});
+				return null;
+			})
+			.then(saved => {
+				this.inProgress = false;
+				return saved;
+			});
 	},
 
 	save: function() {
-		return this.store().then(file => {
-			if (file) {
-				$.fire(this.element, "mavo:save", {
-					data: file.data,
-					dataString: file.dataString
-				});
+		return this.store().then(saved => {
+			if (saved) {
+				$.fire(this.element, "mavo:save", saved);
 
 				this.lastSaved = Date.now();
 				this.root.save();

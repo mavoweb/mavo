@@ -78,6 +78,12 @@ var _ = $.extend(Mavo, {
 		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
 	},
 
+	scrollIntoViewIfNeeded: element => {
+		if (!Mavo.inViewport(element)) {
+			element.scrollIntoView({behavior: "smooth"});
+		}
+	},
+
 	pushUnique: (arr, item) => {
 		if (arr.indexOf(item) === -1) {
 			arr.push(item);

@@ -13,7 +13,6 @@ var _ = Mavo.Backend.register($.Class({
 		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
-		this.url = new URL(this.url, location);
 		var parsedURL = _.parseURL(this.url);
 
 		if (parsedURL.username) {
@@ -73,11 +72,12 @@ var _ = Mavo.Backend.register($.Class({
 
 	/**
 	 * Saves a file to the backend.
-	 * @param {Object} file - An object with name & data keys
+	 * @param {String} file - Serialized data
+	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file = this.getFile()) {
-		var fileCall = file.path? `repos/${this.username}/${this.repo}/contents/${file.path}` : this.apiCall;
+	put: function(serialized, path) {
+		var fileCall = path? `repos/${this.username}/${this.repo}/contents/${path}` : this.apiCall;
 
 		return Promise.resolve(this.repoInfo || this.req("user/repos", {
 			name: this.repo
@@ -89,27 +89,22 @@ var _ = Mavo.Backend.register($.Class({
 				ref: this.branch
 			});
 		})
-		.then(fileInfo => {
-			return this.req(fileCall, {
-				message: `Updated ${file.name || "file"}`,
-				content: _.btoa(file.dataString),
-				branch: this.branch,
-				sha: fileInfo.sha
-			}, "PUT").then(data => file);
-		}, xhr => {
+		.then(fileInfo => this.req(fileCall, {
+			message: `Updated ${fileInfo.name || "file"}`,
+			content: _.btoa(serialized),
+			branch: this.branch,
+			sha: fileInfo.sha
+		}, "PUT"), xhr => {
 			if (xhr.status == 404) {
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: _.btoa(file.dataString),
+					content: _.btoa(serialized),
 					branch: this.branch
 				}, "PUT");
 			}
-			else {
-				this.mavo.error(xhr.status? `HTTP error ${xhr.status}` : "Can’t connect to the Internet", xhr);
-			}
 
-			return null;
+			return xhr;
 		});
 	},
 

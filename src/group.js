@@ -62,6 +62,10 @@ var _ = Mavo.Group = $.Class({
 		return !this.property;
 	},
 
+	getNames: function(type = "Node") {
+		return Object.keys(this.children).filter(p => this.children[p] instanceof Mavo[type]);
+	},
+
 	getData: function(o = {}) {
 		var env = {
 			context: this,

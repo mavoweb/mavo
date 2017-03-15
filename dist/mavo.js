@@ -237,31 +237,6 @@ var _ = self.Mavo = $.Class({
 		// Should we save automatically?
 		this.autoSave = this.element.classList.contains("mv-autosave");
 
-		// Figure out backends for storage, data reads, and initialization respectively
-		for (let role of ["storage", "source", "init"]) {
-			if (this.index == 1) {
-				this[role] = _.Functions.urlOption(role);
-			}
-
-			if (!this[role]) {
-				this[role] =  _.Functions.urlOption(`${this.id}_${role}`) || this.element.getAttribute("mv-" + role) || null;
-			}
-
-			if (this[role]) {
-				// We have a string, convert to a backend object
-				this[role] = this[role].trim();
-				this[role] = this[role] == "none"? null : _.Backend.create(this[role], this);
-			}
-		}
-
-		if (!this.storage && !this.source && this.init) {
-			// If init is present with no storage and no source, init is equivalent to source
-			this.source = this.init;
-			this.init = null;
-		}
-
-		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
-
 		this.element.setAttribute("typeof", "");
 
 		// Apply heuristic for groups
@@ -278,6 +253,14 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
+		// Build mavo objects
+		Mavo.hooks.run("init-tree-before", this);
+
+		this.root = new Mavo.Group(this.element, this);
+		this.treeBuilt.resolve();
+
+		Mavo.hooks.run("init-tree-after", this);
+
 		this.ui = {
 			bar: $(".mv-bar", this.element) || $.create({
 				className: "mv-bar mv-ui",
@@ -291,6 +274,34 @@ var _ = self.Mavo = $.Class({
 			className: "mv-status",
 			inside: this.ui.bar
 		});
+
+		// Figure out backends for storage, data reads, and initialization respectively
+		for (let role of ["storage", "source", "init"]) {
+			if (this.index == 1) {
+				this[role] = _.Functions.urlOption(role);
+			}
+
+			if (!this[role]) {
+				this[role] =  _.Functions.urlOption(`${this.id}_${role}`) || this.element.getAttribute("mv-" + role) || null;
+			}
+
+			if (this[role]) {
+				// We have a string, convert to a backend object
+				this[role] = this[role].trim();
+				this[role] = this[role] == "none"? null : _.Backend.create(this[role], {
+					mavo: this,
+					format: this.element.getAttribute("mv-format-" + role) || this.element.getAttribute("mv-format")
+				});
+			}
+		}
+
+		if (!this.storage && !this.source && this.init) {
+			// If init is present with no storage and no source, init is equivalent to source
+			this.source = this.init;
+			this.init = null;
+		}
+
+		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
 
 		if (this.storage) {
 			// Reflect backend permissions in global permissions
@@ -369,14 +380,6 @@ var _ = self.Mavo = $.Class({
 				}
 			});
 		}
-
-		// Build mavo objects
-		Mavo.hooks.run("init-tree-before", this);
-
-		this.root = new Mavo.Group(this.element, this);
-		this.treeBuilt.resolve();
-
-		Mavo.hooks.run("init-tree-after", this);
 
 		// Is there any control that requires an edit button?
 		this.needsEdit = this.some(obj => obj != this.root && !obj.modes && obj.mode == "read");
@@ -579,8 +582,8 @@ var _ = self.Mavo = $.Class({
 		return this.root.getData();
 	},
 
-	toJSON: function(data = this.getData()) {
-		return _.toJSON(data);
+	toJSON: function() {
+		return _.toJSON(this.getData());
 	},
 
 	error: function(message, ...log) {
@@ -601,14 +604,15 @@ var _ = self.Mavo = $.Class({
 			],
 			events: {
 				mouseenter: e => clearTimeout(closeTimeout),
-				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000))
+				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000)),
+				click: e => this.element.scrollIntoView({behavior: "smooth"})
 			},
 			start: this.element
 		});
 
 		// Log more info for programmers
 		if (log.length > 0) {
-			console.log("%c" + message, "color: red; font-weight: bold", ...log);
+			console.log(`%c${this.id}: ${message}`, "color: red; font-weight: bold", ...log);
 		}
 	},
 
@@ -699,28 +703,22 @@ var _ = self.Mavo = $.Class({
 
 		var backend = this.source || this.storage;
 
-		return backend.ready.then(() => backend.get())
+		return backend.ready.then(() => backend.load())
 		.catch(err => {
 			// Try again with init
 			if (this.init && this.init != backend) {
-				return this.init.ready.then(() => this.init.get());
+				backend = this.init;
+				return this.init.ready.then(() => this.init.load());
 			}
 
+			// No init, propagate error
 			return Promise.reject(err);
 		})
-		.then(response => {
-			if (response && $.type(response) == "string") {
-				try {
-					response = JSON.parse(response);
-				}
-				catch (e) {
-					this.error("The data is corrupted.", e, response);
-					response = "";
-				}
-			}
-
-			this.render(response);
+		.catch(err => {
+			this.error("The data is corrupted.", err);
+			return null;
 		})
+		.then(data => this.render(data))
 		.catch(err => {
 			if (err) {
 				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
@@ -747,34 +745,30 @@ var _ = self.Mavo = $.Class({
 		this.inProgress = "Saving";
 
 		return this.storage.login()
-		.then(() => this.storage.put())
-		.then(file => {
-			this.inProgress = false;
-			return file;
-		})
-		.catch(err => {
-			if (err) {
-				var message = "Problem saving data";
+			.then(() => this.storage.store(this.getData()))
+			.catch(err => {
+				if (err) {
+					var message = "Problem saving data";
 
-				if (err.status && err.statusText) {
-					message += ` (HTTP ${err.status}: ${err.statusText})`;
+					if (err instanceof XMLHttpRequest) {
+						message += xhr.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+					}
+
+					this.error(message, err);
 				}
 
-				this.error(message, err);
-			}
-
-			this.inProgress = false;
-			return Promise.reject(err);
-		});
+				return null;
+			})
+			.then(saved => {
+				this.inProgress = false;
+				return saved;
+			});
 	},
 
 	save: function() {
-		return this.store().then(file => {
-			if (file) {
-				$.fire(this.element, "mavo:save", {
-					data: file.data,
-					dataString: file.dataString
-				});
+		return this.store().then(saved => {
+			if (saved) {
+				$.fire(this.element, "mavo:save", saved);
 
 				this.lastSaved = Date.now();
 				this.root.save();
@@ -999,6 +993,12 @@ var _ = $.extend(Mavo, {
 
 		return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
 		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+	},
+
+	scrollIntoViewIfNeeded: element => {
+		if (!Mavo.inViewport(element)) {
+			element.scrollIntoView({behavior: "smooth"});
+		}
 	},
 
 	pushUnique: (arr, item) => {
@@ -1435,19 +1435,42 @@ _.register(["add", "delete"], function(can) {
  * Base class for all backends
  */
 var _ = Mavo.Backend = $.Class({
-	constructor: function(url, mavo) {
-		this.url = url;
-		this.mavo = mavo;
+	constructor: function(url, o = {}) {
+		this.raw = url;
+		this.url = new URL(this.raw, location);
+		this.mavo = o.mavo;
+		this.format = Mavo.Formats.create(o.format, this);
 
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
 	},
 
 	get: function() {
-		return $.fetch(this.url.href, {
-			responseType: "json"
-		})
-		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
+		return $.fetch(this.url.href)
+		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+	},
+
+	load: async function() {
+		await this.ready;
+		var response = await this.get();
+
+		if (typeof response != "string") {
+			// Backend did the parsing, we're done here
+			return response;
+		}
+
+		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
+
+		return this.format.parse(response);
+	},
+
+	store: async function(data, {path, format = this.format} = {}) {
+		await this.ready;
+		var serialized = typeof data === "string"? data : await format.stringify(data);
+
+		return this.put(serialized, path).then(() => {
+				return {data, serialized};
+			});
 	},
 
 	// To be be overriden by subclasses
@@ -1455,30 +1478,17 @@ var _ = Mavo.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
-	getFile: function() {
-		var data = this.mavo.getData();
-
-		return {
-			data,
-			dataString: Mavo.toJSON(data),
-			path: this.path || ""
-		};
-	},
-
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
 
 	static: {
 		// Return the appropriate backend(s) for this url
-		create: function(url, mavo) {
-			if (!url.indexOf) {
-				console.log(url);
-			}
+		create: function(url, o) {
 			if (url) {
 				var Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
 
-				return new Backend(url, mavo);
+				return new Backend(url, o);
 			}
 
 			return null;
@@ -1503,20 +1513,19 @@ _.register($.Class({
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
 
-		this.element = $(this.url) || $.create("script", {
+		this.element = $(this.raw) || $.create("script", {
 			type: "application/json",
-			id: this.url.slice(1),
+			id: this.raw.slice(1),
 			inside: document.body
 		});
 	},
 
-	get: function() {
-		return Promise.resolve(this.element.textContent);
+	get: async function() {
+		return this.element.textContent;
 	},
 
-	put: function(file = this.getFile()) {
-		this.element.textContent = file.dataString;
-		return Promise.resolve(file);
+	put: async function(serialized) {
+		return this.element.textContent = serialized;
 	},
 
 	static: {
@@ -1530,7 +1539,6 @@ _.register($.Class({
 	extends: _,
 	constructor: function() {
 		this.permissions.on("read");
-		this.url = new URL(this.url, location);
 	},
 
 	static: {
@@ -1551,15 +1559,15 @@ _.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: function(file = this.getFile()) {
-		if (file.data === null) {
+	put: async function(serialized) {
+		if (!serialized) {
 			delete localStorage[this.key];
 		}
 		else {
-			localStorage[this.key] = file.dataString;
+			localStorage[this.key] = serialized;
 		}
 
-		return Promise.resolve(file);
+		return serialized;
 	},
 
 	static: {
@@ -1568,6 +1576,153 @@ _.register($.Class({
 }));
 
 })(Bliss);
+
+(function($, $$) {
+
+var _ = Mavo.Formats = {};
+
+var base = _.Base = $.Class({
+	abstract: true,
+	constructor: function(backend) {
+		this.backend = backend;
+	},
+	proxy: {
+		"mavo": "backend"
+	},
+
+	// So that child classes can only override the static methods if they don't
+	// need access to any instance variables.
+	parse: function(content) {
+		return this.constructor.parse(content, this);
+	},
+	stringify: function(data) {
+		return this.constructor.stringify(data, this);
+	},
+
+	static: {
+		parse: async x => x,
+		stringify: async x => x,
+		extensions: [],
+		dependencies: [],
+		ready: function() {
+			return Promise.all(this.dependencies.map(d => $.include(d.test, d.url)));
+		}
+	}
+});
+
+var json = _.JSON = $.Class({
+	extends: _.Base,
+	static: {
+		parse: async response => JSON.parse(response),
+		stringify: async data => Mavo.toJSON(data),
+		extensions: [".json", ".jsonld"]
+	}
+});
+
+var text = _.Text = $.Class({
+	extends: _.Base,
+	constructor: function(backend) {
+		this.property = this.mavo.root.getNames("Primitive")[0];
+	},
+
+	parse: async function(content) {
+		return {[this.property]: content};
+	},
+
+	stringify: async data => data[this.property],
+
+	static: {
+		extensions: [".txt", ".md", ".markdown"],
+		parse: function(content, format) {
+			return {[format? format.property : "content"]: content};
+		},
+		stringify: (data, format) => data[format? format.property : "content"]
+	}
+});
+
+var csv = _.CSV = $.Class({
+	extends: _.Base,
+	constructor: function(backend) {
+		this.property = this.mavo.root.getNames("Collection")[0];
+		this.options = $.extend({}, _.CSV.defaultOptions);
+	},
+
+	parse: async function(content) {
+		await csv.ready();
+		
+		var data = Papa.parse(content, csv.defaultOptions);
+
+		// Get delimiter & linebreak for serialization
+		this.options.delimiter = data.meta.delimiter;
+		this.options.linebreak = data.meta.linebreak;
+
+		if (data.meta.aborted) {
+			throw data.meta.errors.pop();
+		}
+
+		return {
+			[this.property]: data.data
+		};
+	},
+
+	stringify: async function(data) {
+		await csv.ready();
+		return Papa.unparse(data[this.property], this.options);
+	},
+
+	static: {
+		extensions: [".csv", ".tsv"],
+		defaultOptions: {
+			header: true,
+			dynamicTyping: true,
+			skipEmptyLines: true
+		},
+		dependencies: [{
+			test: self.Papa,
+			url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
+		}],
+		ready: base.ready
+	}
+});
+
+Object.defineProperty(_, "create", {
+	value: function(format, backend) {
+		if (format && typeof format === "object") {
+			return format;
+		}
+
+		if (typeof format === "string") {
+			// Search by id
+			format = format.toLowerCase();
+
+			for (var id in _) {
+				var Format = _[id];
+
+				if (id.toLowerCase() == format) {
+					return new Format(backend);
+				}
+			}
+		}
+
+		if (!format) {
+			var url = backend.url? backend.url.pathname : backend.raw;
+			var extension = (url.match(/\.\w+$/) || [])[0] || ".json";
+			var Format = _.JSON;
+
+			for (var id in _) {
+				if (_[id].extensions.indexOf(extension) > -1) {
+					// Do not return match, as we may find another match later
+					// and last match wins
+					Format = _[id];
+				}
+			}
+
+			return new Format(backend);
+		}
+	}
+});
+
+})(Bliss, Bliss.$);
 
 (function($, $$) {
 
@@ -2090,6 +2245,10 @@ var _ = Mavo.Group = $.Class({
 
 	get isRoot() {
 		return !this.property;
+	},
+
+	getNames: function(type = "Node") {
+		return Object.keys(this.children).filter(p => this.children[p] instanceof Mavo[type]);
 	},
 
 	getData: function(o = {}) {
@@ -3704,9 +3863,7 @@ var _ = Mavo.Collection = $.Class({
 									newItem.render(item.data);
 								}
 
-								if (!Mavo.inViewport(newItem.element)) {
-									newItem.element.scrollIntoView({behavior: "smooth"});
-								}
+								Mavo.scrollIntoViewIfNeeded(newItem.element);
 
 								return this.editItem(newItem);
 							}
@@ -6346,7 +6503,6 @@ var _ = Mavo.Backend.register($.Class({
 		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
-		this.url = new URL(this.url, location);
 		var parsedURL = _.parseURL(this.url);
 
 		if (parsedURL.username) {
@@ -6406,11 +6562,12 @@ var _ = Mavo.Backend.register($.Class({
 
 	/**
 	 * Saves a file to the backend.
-	 * @param {Object} file - An object with name & data keys
+	 * @param {String} file - Serialized data
+	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file = this.getFile()) {
-		var fileCall = file.path? `repos/${this.username}/${this.repo}/contents/${file.path}` : this.apiCall;
+	put: function(serialized, path) {
+		var fileCall = path? `repos/${this.username}/${this.repo}/contents/${path}` : this.apiCall;
 
 		return Promise.resolve(this.repoInfo || this.req("user/repos", {
 			name: this.repo
@@ -6422,27 +6579,22 @@ var _ = Mavo.Backend.register($.Class({
 				ref: this.branch
 			});
 		})
-		.then(fileInfo => {
-			return this.req(fileCall, {
-				message: `Updated ${file.name || "file"}`,
-				content: _.btoa(file.dataString),
-				branch: this.branch,
-				sha: fileInfo.sha
-			}, "PUT").then(data => file);
-		}, xhr => {
+		.then(fileInfo => this.req(fileCall, {
+			message: `Updated ${fileInfo.name || "file"}`,
+			content: _.btoa(serialized),
+			branch: this.branch,
+			sha: fileInfo.sha
+		}, "PUT"), xhr => {
 			if (xhr.status == 404) {
 				// File does not exist, create it
 				return this.req(fileCall, {
 					message: "Created file",
-					content: _.btoa(file.dataString),
+					content: _.btoa(serialized),
 					branch: this.branch
 				}, "PUT");
 			}
-			else {
-				this.mavo.error(xhr.status? `HTTP error ${xhr.status}` : "Can’t connect to the Internet", xhr);
-			}
 
-			return null;
+			return xhr;
 		});
 	},
 

@@ -301,7 +301,8 @@ p.mv-error {
   color: #660000;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
   font-size: 120%;
-  animation: error-appear .5s backwards; }
+  animation: error-appear .5s backwards;
+  cursor: pointer; }
 
 @keyframes error-appear {
   from {

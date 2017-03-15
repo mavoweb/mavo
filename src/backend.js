@@ -4,19 +4,42 @@
  * Base class for all backends
  */
 var _ = Mavo.Backend = $.Class({
-	constructor: function(url, mavo) {
-		this.url = url;
-		this.mavo = mavo;
+	constructor: function(url, o = {}) {
+		this.raw = url;
+		this.url = new URL(this.raw, location);
+		this.mavo = o.mavo;
+		this.format = Mavo.Formats.create(o.format, this);
 
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
 	},
 
 	get: function() {
-		return $.fetch(this.url.href, {
-			responseType: "json"
-		})
-		.then(xhr => Promise.resolve(xhr.response), () => Promise.resolve(null));
+		return $.fetch(this.url.href)
+		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+	},
+
+	load: async function() {
+		await this.ready;
+		var response = await this.get();
+
+		if (typeof response != "string") {
+			// Backend did the parsing, we're done here
+			return response;
+		}
+
+		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
+
+		return this.format.parse(response);
+	},
+
+	store: async function(data, {path, format = this.format} = {}) {
+		await this.ready;
+		var serialized = typeof data === "string"? data : await format.stringify(data);
+
+		return this.put(serialized, path).then(() => {
+				return {data, serialized};
+			});
 	},
 
 	// To be be overriden by subclasses
@@ -24,30 +47,17 @@ var _ = Mavo.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
-	getFile: function() {
-		var data = this.mavo.getData();
-
-		return {
-			data,
-			dataString: Mavo.toJSON(data),
-			path: this.path || ""
-		};
-	},
-
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
 
 	static: {
 		// Return the appropriate backend(s) for this url
-		create: function(url, mavo) {
-			if (!url.indexOf) {
-				console.log(url);
-			}
+		create: function(url, o) {
 			if (url) {
 				var Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
 
-				return new Backend(url, mavo);
+				return new Backend(url, o);
 			}
 
 			return null;
@@ -72,20 +82,19 @@ _.register($.Class({
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
 
-		this.element = $(this.url) || $.create("script", {
+		this.element = $(this.raw) || $.create("script", {
 			type: "application/json",
-			id: this.url.slice(1),
+			id: this.raw.slice(1),
 			inside: document.body
 		});
 	},
 
-	get: function() {
-		return Promise.resolve(this.element.textContent);
+	get: async function() {
+		return this.element.textContent;
 	},
 
-	put: function(file = this.getFile()) {
-		this.element.textContent = file.dataString;
-		return Promise.resolve(file);
+	put: async function(serialized) {
+		return this.element.textContent = serialized;
 	},
 
 	static: {
@@ -99,7 +108,6 @@ _.register($.Class({
 	extends: _,
 	constructor: function() {
 		this.permissions.on("read");
-		this.url = new URL(this.url, location);
 	},
 
 	static: {
@@ -120,15 +128,15 @@ _.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: function(file = this.getFile()) {
-		if (file.data === null) {
+	put: async function(serialized) {
+		if (!serialized) {
 			delete localStorage[this.key];
 		}
 		else {
-			localStorage[this.key] = file.dataString;
+			localStorage[this.key] = serialized;
 		}
 
-		return Promise.resolve(file);
+		return serialized;
 	},
 
 	static: {
