@@ -1767,17 +1767,11 @@ var _ = Mavo.Node = $.Class({
 
 		this.mavo = mavo;
 		this.group = this.parentGroup = env.options.group;
-		this.inPath = [];
 
-		if (!this.fromTemplate("property", "type", "inPath")) {
+		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.store = this.element.getAttribute("mv-storage"); // TODO rename to storage
-
-			// Are were only rendering and editing a subset of the data?
-			if (this.nodeType != "Collection") {
-				this.inPath = (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
-			}
 		}
 
 		this.modes = this.element.getAttribute("mv-mode");
@@ -2026,6 +2020,15 @@ var _ = Mavo.Node = $.Class({
 	lazy: {
 		closestCollection: function() {
 			return this.getClosestCollection();
+		},
+
+		// Are were only rendering and editing a subset of the data?
+		inPath: function() {
+			if (this.nodeType != "Collection") {
+				return (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
+			}
+
+			return [];
 		}
 	},
 
