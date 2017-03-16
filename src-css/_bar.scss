@@ -72,6 +72,12 @@
 		max-height: 1em;
 	}
 
+	.mv-login {
+		&::after {
+			content: " to " var(--mv-backend);
+		}
+	}
+
 	.mv-edit {
 		&::before {
 			content: "✎";
@@ -170,10 +176,27 @@
 		}
 	}
 
+	[mv-permissions~="logout"] & {
+		// Logged in styles
+		.mv-status::before {
+			content: "Logged in to " var(--mv-backend) " as ";
+		}
+	}
+
 	// Displaying mv-bar in small spaces
 	&.mv-compact {
+		.mv-status {
+			&::before {
+				content: "";
+			},
+
+			.mv-logout::after {
+				content: " from " var(--mv-backend);
+			}
+		}
+
 		& > button,
-		& > .mv-button {
+		& > .mv-button:not(.mv-login) {
 			// Hide text
 			width: 1em;
 			letter-spacing: -.5em;
@@ -182,6 +205,16 @@
 
 		.mv-save.mv-unsaved-changes {
 			text-shadow: none;
+		}
+	}
+
+	&.mv-tiny {
+		padding: 0 .5em;
+		background-image: linear-gradient(transparent, hsla(0,0%,15%,.5));
+		background-size: auto;
+
+		.mv-status .mv-logout::after {
+			content: initial;
 		}
 	}
 }

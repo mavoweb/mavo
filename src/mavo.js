@@ -65,6 +65,7 @@ var _ = self.Mavo = $.Class({
 		};
 
 		this.ui.bar.classList.toggle("mv-compact", this.ui.bar.offsetWidth < 400);
+		this.ui.bar.classList.toggle("mv-tiny", this.ui.bar.offsetWidth < 250);
 
 		this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
 			className: "mv-status",
@@ -97,11 +98,23 @@ var _ = self.Mavo = $.Class({
 			this.init = null;
 		}
 
-		this.permissions = this.storage ? this.storage.permissions : new Mavo.Permissions();
+		for (let role of ["storage", "source", "init"]) {
+			if (this[role]) {
+				this.primaryBackend = this[role];
+				this.permissions = this[role].permissions;
+				break;
+			}
+		}
 
-		if (this.storage) {
+		this.permissions = this.permissions || new Mavo.Permissions();
+
+		if (this.primaryBackend)  {
 			// Reflect backend permissions in global permissions
 			this.authControls = {};
+
+			$.style(this.ui.bar, {
+				"--mv-backend": `"${this.primaryBackend.id}"`
+			});
 
 			this.permissions.can("login", () => {
 				// #login authenticates if only 1 mavo on the page, or if the first.
@@ -117,7 +130,7 @@ var _ = self.Mavo = $.Class({
 					events: {
 						click: evt => {
 							evt.preventDefault();
-							this.storage.login();
+							this.primaryBackend.login();
 						}
 					},
 					after: $(".mv-status", this.ui.bar)
@@ -129,7 +142,7 @@ var _ = self.Mavo = $.Class({
 					if (location.hash === this.loginHash) {
 						// This just does location.hash = "" without getting a pointless # at the end of the URL
 						history.replaceState(null, document.title, new URL("", location) + "");
-						this.storage.login();
+						this.primaryBackend.login();
 					}
 				})();
 				window.addEventListener("hashchange.mavo", login);
@@ -140,21 +153,22 @@ var _ = self.Mavo = $.Class({
 
 			// Update login status
 			this.element.addEventListener("mavo:login.mavo", evt => {
-				if (evt.backend == this.storage) { // ignore logins from source backend
+				if (evt.backend == this.primaryBackend) { // ignore logins from secondary backends
 					var status = $(".mv-status", this.ui.bar);
 					status.innerHTML = "";
-					status._.contents([
-						"Logged in to " + evt.backend.id + " as ",
-						{tag: "strong", innerHTML: evt.name},
-						{
-							tag: "button",
-							textContent: "Logout",
-							className: "mv-logout",
-							events: {
-								click: e => evt.backend.logout()
-							},
-						}
-					]);
+					$.set(status, {
+						contents: [
+							{tag: "strong", innerHTML: evt.name},
+							{
+								tag: "button",
+								textContent: "Logout",
+								className: "mv-logout",
+								events: {
+									click: e => evt.backend.logout()
+								},
+							}
+						]
+					});
 
 					// If last time we rendered we got nothing, maybe now we'll have better luck?
 					if (!this.root.data && !this.unsavedChanges) {
@@ -265,13 +279,6 @@ var _ = self.Mavo = $.Class({
 
 		if (this.storage || this.source) {
 			// Fetch existing data
-			if (!this.storage) {
-
-				if (this.source) {
-					this.source.permissions.can("read", () => this.permissions.read = true);
-				}
-			}
-
 			this.permissions.can("read", () => this.load());
 		}
 		else {
@@ -511,11 +518,6 @@ var _ = self.Mavo = $.Class({
 			return Promise.reject(err);
 		})
 		.catch(err => {
-			this.error("The data is corrupted.", err);
-			return null;
-		})
-		.then(data => this.render(data))
-		.catch(err => {
 			if (err) {
 				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
 
@@ -523,10 +525,18 @@ var _ = self.Mavo = $.Class({
 					this.render(null);
 				}
 				else {
-					this.error("The data could not be loaded.", err);
+					var message = "Problem loading data";
+
+					if (xhr) {
+						message += xhr.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+					}
+
+					this.error(message, err);
 				}
 			}
+			return null;
 		})
+		.then(data => this.render(data))
 		.then(() => {
 			this.inProgress = false;
 			$.fire(this.element, "mavo:load");

@@ -373,6 +373,8 @@ p.mv-error {
     display: inline-block;
     vertical-align: -.1em;
     max-height: 1em; }
+  .mv-bar.mv-ui .mv-login::after {
+    content: " to " var(--mv-backend); }
   .mv-bar.mv-ui .mv-edit::before {
     content: "✎"; }
   [mv-app][mv-mode="edit"] .mv-bar.mv-ui .mv-edit {
@@ -431,13 +433,26 @@ p.mv-error {
       .mv-bar.mv-ui .mv-status .mv-logout:active {
         background: transparent;
         box-shadow: 0 1px .1em black inset; }
+  [mv-permissions~="logout"] .mv-bar.mv-ui .mv-status::before {
+    content: "Logged in to " var(--mv-backend) " as "; }
+  .mv-bar.mv-ui.mv-compact .mv-status::before {
+    content: ""; }
+  .mv-bar.mv-ui.mv-compact .mv-status,
+  .mv-bar.mv-ui.mv-compact .mv-status .mv-logout::after {
+    content: " from " var(--mv-backend); }
   .mv-bar.mv-ui.mv-compact > button,
-  .mv-bar.mv-ui.mv-compact > .mv-button {
+  .mv-bar.mv-ui.mv-compact > .mv-button:not(.mv-login) {
     width: 1em;
     letter-spacing: -.5em;
     color: transparent; }
   .mv-bar.mv-ui.mv-compact .mv-save.mv-unsaved-changes {
     text-shadow: none; }
+  .mv-bar.mv-ui.mv-tiny {
+    padding: 0 .5em;
+    background-image: linear-gradient(transparent, rgba(38, 38, 38, 0.5));
+    background-size: auto; }
+    .mv-bar.mv-ui.mv-tiny .mv-status .mv-logout::after {
+      content: initial; }
 
 [mv-app][mv-bar="none"] .mv-bar {
   display: none; }
