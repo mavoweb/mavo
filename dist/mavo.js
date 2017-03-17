@@ -493,17 +493,10 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.permissions.can("save", () => {
-			this.ui.save = $.create("button", {
-				className: "mv-save",
-				textContent: "Save",
-				title: "Save",
-				inside: this.ui.bar
-			});
-
 			if (this.autoSave) {
+				var delay = (this.element.getAttribute("mv-autosave") || 3) * 1000;
 
 				this.element.addEventListener("mavo:load.mavo:autosave", evt => {
-					var delay = (this.element.getAttribute("mv-autosave") || 3) * 1000;
 					var debouncedSave = _.debounce(() => {
 						this.save();
 					}, delay);
@@ -530,6 +523,16 @@ var _ = self.Mavo = $.Class({
 					textContent: "Revert",
 					title: "Revert",
 					disabled: true,
+					inside: this.ui.bar
+				});
+			}
+console.log(this.autoSave, delay);
+			if (!this.autoSave || delay > 0) {
+				// If throttling is disabled, the Save button is pointless
+				this.ui.save = $.create("button", {
+					className: "mv-save",
+					textContent: "Save",
+					title: "Save",
 					inside: this.ui.bar
 				});
 			}
