@@ -31,7 +31,7 @@ var _ = self.Mavo = $.Class({
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
 		// Should we save automatically?
-		this.autoSave = this.element.classList.contains("mv-autosave");
+		this.autoSave = this.element.hasAttribute("mv-autosave");
 
 		this.element.setAttribute("typeof", "");
 
@@ -297,10 +297,12 @@ var _ = self.Mavo = $.Class({
 			});
 
 			if (this.autoSave) {
+
 				this.element.addEventListener("mavo:load.mavo:autosave", evt => {
+					var delay = (this.element.getAttribute("mv-autosave") || 3) * 1000;
 					var debouncedSave = _.debounce(() => {
 						this.save();
-					}, 3000);
+					}, delay);
 
 					var callback = evt => {
 						if (evt.node.saved) {

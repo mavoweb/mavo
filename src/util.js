@@ -124,6 +124,11 @@ var _ = $.extend(Mavo, {
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 	debounce: function (fn, delay) {
+		if (!delay) {
+			// No throttling
+			return fn;
+		}
+		
 		var timer = null, code;
 
 		return function () {
