@@ -72,7 +72,7 @@ var _ = Mavo.Backend.register($.Class({
 
 	/**
 	 * Saves a file to the backend.
-	 * @param {String} file - Serialized data
+	 * @param {String} serialized - Serialized data
 	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */

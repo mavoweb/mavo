@@ -34,7 +34,7 @@ var base = _.Base = $.Class({
 var json = _.JSON = $.Class({
 	extends: _.Base,
 	static: {
-		parse: async response => JSON.parse(response),
+		parse: async serialized => serialized? JSON.parse(serialized) : null,
 		stringify: async data => Mavo.toJSON(data),
 		extensions: [".json", ".jsonld"]
 	}
@@ -54,8 +54,8 @@ var text = _.Text = $.Class({
 
 	static: {
 		extensions: [".txt", ".md", ".markdown"],
-		parse: function(content, format) {
-			return {[format? format.property : "content"]: content};
+		parse: function(serialized, format) {
+			return {[format? format.property : "content"]: serialized};
 		},
 		stringify: (data, format) => data[format? format.property : "content"]
 	}
@@ -68,10 +68,10 @@ var csv = _.CSV = $.Class({
 		this.options = $.extend({}, _.CSV.defaultOptions);
 	},
 
-	parse: async function(content) {
+	parse: async function(serialized) {
 		await csv.ready();
-		
-		var data = Papa.parse(content, csv.defaultOptions);
+
+		var data = Papa.parse(serialized, csv.defaultOptions);
 
 		// Get delimiter & linebreak for serialization
 		this.options.delimiter = data.meta.delimiter;
