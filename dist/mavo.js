@@ -268,8 +268,8 @@ var _ = self.Mavo = $.Class({
 			})
 		};
 
-		this.ui.bar.classList.toggle("mv-compact", this.ui.bar.offsetWidth < 400);
-		this.ui.bar.classList.toggle("mv-tiny", this.ui.bar.offsetWidth < 250);
+		this.ui.bar.classList.toggle("mv-compact", this.ui.bar.parentNode.offsetWidth < 400);
+		this.ui.bar.classList.toggle("mv-tiny", this.ui.bar.parentNode.offsetWidth < 250);
 
 		this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
 			className: "mv-status",
