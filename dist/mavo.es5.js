@@ -215,7 +215,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var _this = this;
 
 			this.treeBuilt = Mavo.defer();
-
+			console.trace();
 			this.element = element;
 
 			// Index among other mavos in the page, 1 is first

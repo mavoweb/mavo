@@ -12,9 +12,6 @@
 .mv-item-controls.mv-ui {
 	all: initial;
 	position: absolute;
-	bottom: 100%;
-	bottom: calc(100% - 1.1em);
-	right: .1em;
 	z-index: 10;
 	filter: drop-shadow(0 .1em .1em rgba(0,0,0,.2));
 	opacity: 0;
@@ -24,15 +21,38 @@
 	border-radius: 1em;
 	white-space: nowrap;
 
-	[mv-multiple]:hover:not(.mv-has-hovered-item) > &,
-	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > &,
-	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > &,
-	&:hover,
-	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &:focus,
-	[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
+	@mixin show-item-controls {
 		transition: .4s opacity;
 		opacity: 1;
 		pointer-events: auto;
+	}
+
+	&:hover,
+	&.mv-focus-within {
+		@include show-item-controls;
+	}
+
+	&:not(.mv-adjacent) {
+		bottom: 100%;
+		bottom: calc(100% - 1.1em);
+		right: .1em;
+
+		[mv-multiple]:hover:not(.mv-has-hovered-item) > &,
+		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > &,
+		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > &,
+		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &:focus,
+		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
+			@include show-item-controls;
+		}
+	}
+
+	&.mv-adjacent {
+		margin: -.45em;
+
+		[mv-multiple]:hover + &,
+		[mv-multiple].mv-focus-within + & {
+			@include show-item-controls;
+		}
 	}
 
 	button {

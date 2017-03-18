@@ -638,8 +638,8 @@ var _ = self.Mavo = $.Class({
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
-				var item = evt.target.closest(_.selectors.multiple);
-				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
+				var item = Mavo.data(evt.target.closest(".mv-item-controls"), "item");
+				item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
 			}
 
 			if (evt.target.matches(_.selectors.multiple)) {
@@ -2492,38 +2492,6 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
-		if (this.collection && !this.attribute) {
-			// Collection of primitives, deal with setting textContent etc without the UI interfering.
-			var swapUI = callback => {
-				var ret;
-
-				Mavo.Observer.sneak(this.observer, () => {
-					var ui = $.remove($(".mv-item-controls", this.element));
-
-					ret = callback();
-
-					$.inside(ui, this.element);
-				});
-
-				return ret;
-			};
-
-			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-			["textContent", "innerHTML"].forEach(property => {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
-
-				Object.defineProperty(this.element, property, {
-					get: function() {
-						return swapUI(() => descriptor.get.call(this));
-					},
-
-					set: function(value) {
-						swapUI(() => descriptor.set.call(this, value));
-					}
-				});
-			});
-		}
-
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
@@ -3821,11 +3789,16 @@ var _ = Mavo.Collection = $.Class({
 	editItem: function(item) {
 		if (!item.itemControls) {
 			item.itemControls = $$(".mv-item-controls", item.element)
-								   .filter(el => el.closest(Mavo.selectors.multiple) == item.element)[0];
+								   .filter(el => {
+									   // Remove item controls meant for other collections
+									   return el.closest(Mavo.selectors.multiple) == item.element && !Mavo.data(el, "item");
+								   })[0];
 
 			item.itemControls = item.itemControls || $.create({
 				className: "mv-item-controls mv-ui"
 			});
+
+			Mavo.data(item.itemControls, "item", item);
 
 			$.set(item.itemControls, {
 				contents: [
@@ -3880,7 +3853,13 @@ var _ = Mavo.Collection = $.Class({
 				item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
 			}
 			else {
-				item.element.appendChild(item.itemControls);
+				if (item instanceof Mavo.Primitive && !item.attribute) {
+					item.itemControls.classList.add("mv-adjacent");
+					$.after(item.itemControls, item.element);
+				}
+				else {
+					item.element.appendChild(item.itemControls);
+				}
 			}
 		}
 

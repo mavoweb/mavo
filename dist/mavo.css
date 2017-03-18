@@ -28,9 +28,6 @@
 .mv-item-controls.mv-ui {
   all: initial;
   position: absolute;
-  bottom: 100%;
-  bottom: calc(100% - 1.1em);
-  right: .1em;
   z-index: 10;
   -webkit-filter: drop-shadow(0 0.1em 0.1em rgba(0, 0, 0, 0.2));
   filter: drop-shadow(0 0.1em 0.1em rgba(0, 0, 0, 0.2));
@@ -40,14 +37,29 @@
   border-width: .4em .5em .8em .5em;
   border-radius: 1em;
   white-space: nowrap; }
-  [mv-multiple]:hover:not(.mv-has-hovered-item) > .mv-item-controls.mv-ui,
-  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > .mv-item-controls.mv-ui,
-  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > .mv-item-controls.mv-ui, .mv-item-controls.mv-ui:hover,
-  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:focus,
-  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui.mv-focus-within {
+  .mv-item-controls.mv-ui:hover, .mv-item-controls.mv-ui.mv-focus-within {
     transition: .4s opacity;
     opacity: 1;
     pointer-events: auto; }
+  .mv-item-controls.mv-ui:not(.mv-adjacent) {
+    bottom: 100%;
+    bottom: calc(100% - 1.1em);
+    right: .1em; }
+    [mv-multiple]:hover:not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent),
+    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > .mv-item-controls.mv-ui:not(.mv-adjacent),
+    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > .mv-item-controls.mv-ui:not(.mv-adjacent),
+    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent):focus,
+    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent).mv-focus-within {
+      transition: .4s opacity;
+      opacity: 1;
+      pointer-events: auto; }
+  .mv-item-controls.mv-ui.mv-adjacent {
+    margin: -.45em; }
+    [mv-multiple]:hover + .mv-item-controls.mv-ui.mv-adjacent,
+    [mv-multiple].mv-focus-within + .mv-item-controls.mv-ui.mv-adjacent {
+      transition: .4s opacity;
+      opacity: 1;
+      pointer-events: auto; }
   .mv-item-controls.mv-ui button {
     all: unset;
     display: inline-block;

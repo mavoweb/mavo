@@ -248,11 +248,16 @@ var _ = Mavo.Collection = $.Class({
 	editItem: function(item) {
 		if (!item.itemControls) {
 			item.itemControls = $$(".mv-item-controls", item.element)
-								   .filter(el => el.closest(Mavo.selectors.multiple) == item.element)[0];
+								   .filter(el => {
+									   // Remove item controls meant for other collections
+									   return el.closest(Mavo.selectors.multiple) == item.element && !Mavo.data(el, "item");
+								   })[0];
 
 			item.itemControls = item.itemControls || $.create({
 				className: "mv-item-controls mv-ui"
 			});
+
+			Mavo.data(item.itemControls, "item", item);
 
 			$.set(item.itemControls, {
 				contents: [
@@ -307,7 +312,13 @@ var _ = Mavo.Collection = $.Class({
 				item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
 			}
 			else {
-				item.element.appendChild(item.itemControls);
+				if (item instanceof Mavo.Primitive && !item.attribute) {
+					item.itemControls.classList.add("mv-adjacent");
+					$.after(item.itemControls, item.element);
+				}
+				else {
+					item.element.appendChild(item.itemControls);
+				}
 			}
 		}
 

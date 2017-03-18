@@ -99,38 +99,6 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
-		if (this.collection && !this.attribute) {
-			// Collection of primitives, deal with setting textContent etc without the UI interfering.
-			var swapUI = callback => {
-				var ret;
-
-				Mavo.Observer.sneak(this.observer, () => {
-					var ui = $.remove($(".mv-item-controls", this.element));
-
-					ret = callback();
-
-					$.inside(ui, this.element);
-				});
-
-				return ret;
-			};
-
-			// Intercept certain properties so that any Mavo UI inside this primitive will not be destroyed
-			["textContent", "innerHTML"].forEach(property => {
-				var descriptor = Object.getOwnPropertyDescriptor(Node.prototype, property);
-
-				Object.defineProperty(this.element, property, {
-					get: function() {
-						return swapUI(() => descriptor.get.call(this));
-					},
-
-					set: function(value) {
-						swapUI(() => descriptor.set.call(this, value));
-					}
-				});
-			});
-		}
-
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);

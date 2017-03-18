@@ -434,8 +434,8 @@ var _ = self.Mavo = $.Class({
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
-				var item = evt.target.closest(_.selectors.multiple);
-				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
+				var item = Mavo.data(evt.target.closest(".mv-item-controls"), "item");
+				item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
 			}
 
 			if (evt.target.matches(_.selectors.multiple)) {
