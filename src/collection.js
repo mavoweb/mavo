@@ -396,24 +396,6 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
-	revert: function() {
-		for (let item of this.children) {
-			// Delete added items
-			if (item.unsavedChanges) {
-				this.delete(item, true);
-			}
-			else {
-				// Bring back deleted items
-				if (item.deleted) {
-					item.deleted = false;
-				}
-
-				// Revert all properties
-				item.revert();
-			}
-		}
-	},
-
 	dataRender: function(data) {
 		this.unhandled = {before: [], after: []};
 

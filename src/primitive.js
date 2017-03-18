@@ -217,16 +217,6 @@ var _ = Mavo.Primitive = $.Class({
 		this.unsavedChanges = false;
 	},
 
-	revert: function() {
-		if (this.unsavedChanges && this.savedValue !== undefined) {
-			// FIXME if we have a collection of properties (not groups), this will cause
-			// cancel to not remove new unsaved items
-			// This should be fixed by handling this on the collection level.
-			this.value = this.savedValue;
-			this.unsavedChanges = false;
-		}
-	},
-
 	// Called only the first time this primitive is edited
 	initEdit: function () {
 		if (!this.editor) {

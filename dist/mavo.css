@@ -397,14 +397,11 @@ p.mv-error {
         top: 50%;
         transform: translate(-50%, -50%);
         color: white; }
-    .mv-bar.mv-ui .mv-save.mv-unsaved-changes, .mv-bar.mv-ui .mv-save.mv-unsaved-changes::before {
+    [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save,
+    [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save::before {
       text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
     .mv-bar.mv-ui .mv-save:hover {
       background: #40bfbf; }
-  .mv-bar.mv-ui .mv-revert::before {
-    content: "✘"; }
-  .mv-bar.mv-ui .mv-revert:enabled:hover {
-    background: #c50; }
   .mv-bar.mv-ui .mv-clear {
     -ms-flex-order: 9999;
     order: 9999; }
@@ -440,12 +437,11 @@ p.mv-error {
   .mv-bar.mv-ui.mv-compact .mv-status,
   .mv-bar.mv-ui.mv-compact .mv-status .mv-logout::after {
     content: " from " var(--mv-backend); }
-  .mv-bar.mv-ui.mv-compact > button,
+  .mv-bar.mv-ui.mv-compact > button:not(.mv-login):not(.enough-specificity),
   .mv-bar.mv-ui.mv-compact > .mv-button:not(.mv-login) {
     width: 1em;
     letter-spacing: -.5em;
-    color: transparent; }
-  .mv-bar.mv-ui.mv-compact .mv-save.mv-unsaved-changes {
+    color: transparent;
     text-shadow: none; }
   .mv-bar.mv-ui.mv-tiny {
     padding: 0 .5em;

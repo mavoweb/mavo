@@ -516,17 +516,7 @@ var _ = self.Mavo = $.Class({
 					});
 				});
 			}
-			else {
-				// Revert is pointless if autosaving, there's not enough time between saves to click it
-				this.ui.revert = $.create("button", {
-					className: "mv-revert",
-					textContent: "Revert",
-					title: "Revert",
-					disabled: true,
-					inside: this.ui.bar
-				});
-			}
-console.log(this.autoSave, delay);
+
 			if (!this.autoSave || delay > 0) {
 				// If throttling is disabled, the Save button is pointless
 				this.ui.save = $.create("button", {
@@ -537,15 +527,15 @@ console.log(this.autoSave, delay);
 				});
 			}
 
-			$.events([this.ui.save, this.ui.revert], {
+			$.events(this.ui.save, {
 				"mouseenter focus": e => {
 					this.element.classList.add("mv-highlight-unsaved");
 				},
 				"mouseleave blur": e => this.element.classList.remove("mv-highlight-unsaved")
 			});
 		}, () => {
-			$.remove([this.ui.save, this.ui.revert]);
-			this.ui.save = this.ui.revert = null;
+			$.remove(this.ui.save);
+			this.ui.save = null;
 			this.element.removeEventListener(".mavo:autosave");
 		});
 
@@ -553,11 +543,6 @@ console.log(this.autoSave, delay);
 			".mv-save": evt => {
 				if (this.permissions.save) {
 					this.save();
-				}
-			},
-			".mv-revert": evt => {
-				if (this.permissions.save) {
-					this.revert();
 				}
 			},
 			".mv-edit": evt => {
@@ -792,10 +777,6 @@ console.log(this.autoSave, delay);
 		});
 	},
 
-	revert: function() {
-		this.root.revert();
-	},
-
 	walk: function(callback) {
 		return this.root.walk(callback);
 	},
@@ -822,16 +803,6 @@ console.log(this.autoSave, delay);
 
 		unsavedChanges: function(value) {
 			this.element.classList.toggle("mv-unsaved-changes", value);
-
-			if (this.ui) {
-				if (this.ui.save) {
-					this.ui.save.classList.toggle("mv-unsaved-changes", value);
-				}
-
-				if (this.ui.revert) {
-					this.ui.revert.disabled = !value;
-				}
-			}
 		},
 
 		needsEdit: function(value) {
@@ -866,14 +837,15 @@ console.log(this.autoSave, delay);
 			_.hooks.add(o.hooks);
 
 			for (let Class in o.extend) {
-				$.Class(Mavo[Class], o.extend[Class]);
+				let def = Class == "Mavo"? _ : _[Class];
+				$.Class(def, o.extend[Class]);
 			}
 		},
 
 		hooks: new $.Hooks(),
 
 		attributes: [
-			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path",
+			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
 			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions"
 		]
 	}
@@ -1942,7 +1914,7 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	propagated: ["save", "revert", "destroy"],
+	propagated: ["save", "destroy"],
 
 	toJSON: Mavo.prototype.toJSON,
 
@@ -2636,16 +2608,6 @@ var _ = Mavo.Primitive = $.Class({
 	save: function() {
 		this.savedValue = this.value;
 		this.unsavedChanges = false;
-	},
-
-	revert: function() {
-		if (this.unsavedChanges && this.savedValue !== undefined) {
-			// FIXME if we have a collection of properties (not groups), this will cause
-			// cancel to not remove new unsaved items
-			// This should be fixed by handling this on the collection level.
-			this.value = this.savedValue;
-			this.unsavedChanges = false;
-		}
 	},
 
 	// Called only the first time this primitive is edited
@@ -4006,24 +3968,6 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	propagated: ["save"],
-
-	revert: function() {
-		for (let item of this.children) {
-			// Delete added items
-			if (item.unsavedChanges) {
-				this.delete(item, true);
-			}
-			else {
-				// Bring back deleted items
-				if (item.deleted) {
-					item.deleted = false;
-				}
-
-				// Revert all properties
-				item.revert();
-			}
-		}
-	},
 
 	dataRender: function(data) {
 		this.unhandled = {before: [], after: []};

@@ -118,23 +118,13 @@
 			}
 		}
 
-		&.mv-unsaved-changes,
-		&.mv-unsaved-changes::before {
+		[mv-app].mv-unsaved-changes &,
+		[mv-app].mv-unsaved-changes &::before {
 			text-shadow: 0 0 .2em hsl(200, 100%, 70%), 0 0 .3em hsl(200, 100%, 70%);
 		}
 
 		&:hover {
 			background: hsl(180, 50%, 50%);
-		}
-	}
-
-	.mv-revert {
-		&::before {
-			content: "✘";
-		}
-
-		&:enabled:hover {
-			background: #c50;
 		}
 	}
 
@@ -195,15 +185,12 @@
 			}
 		}
 
-		& > button,
+		& > button:not(.mv-login):not(.enough-specificity),
 		& > .mv-button:not(.mv-login) {
 			// Hide text
 			width: 1em;
 			letter-spacing: -.5em;
 			color: transparent;
-		}
-
-		.mv-save.mv-unsaved-changes {
 			text-shadow: none;
 		}
 	}

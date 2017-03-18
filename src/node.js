@@ -196,7 +196,7 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	propagated: ["save", "revert", "destroy"],
+	propagated: ["save", "destroy"],
 
 	toJSON: Mavo.prototype.toJSON,
 
