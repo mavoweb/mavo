@@ -19,27 +19,29 @@ var _ = Mavo.Backend = $.Class({
 		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
 
-	load: async function() {
-		await this.ready;
-		var response = await this.get();
+	load: function() {
+		return this.ready
+			.then(() => this.get())
+			.then(response => {
+			if (typeof response != "string") {
+				// Backend did the parsing, we're done here
+				return response;
+			}
 
-		if (typeof response != "string") {
-			// Backend did the parsing, we're done here
-			return response;
-		}
+			response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
 
-		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
-
-		return this.format.parse(response);
+			return this.format.parse(response);
+		});
 	},
 
-	store: async function(data, {path, format = this.format} = {}) {
-		await this.ready;
-		var serialized = typeof data === "string"? data : await format.stringify(data);
+	store: function(data, {path, format = this.format} = {}) {
+		return this.ready.then(() => {
+			var serialize = typeof data === "string"? Promise.resolve(data) : format.stringify(data);
 
-		return this.put(serialized, path).then(() => {
+			return serialize.then(serialized => this.put(serialized, path).then(() => {
 				return {data, serialized};
-			});
+			}));
+		});
 	},
 
 	// To be be overriden by subclasses
@@ -89,12 +91,12 @@ _.register($.Class({
 		});
 	},
 
-	get: async function() {
-		return this.element.textContent;
+	get: function() {
+		return Promise.resolve(this.element.textContent);
 	},
 
-	put: async function(serialized) {
-		return this.element.textContent = serialized;
+	put: function(serialized) {
+		return Promise.resolve(this.element.textContent = serialized);
 	},
 
 	static: {
@@ -128,7 +130,7 @@ _.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: async function(serialized) {
+	put: function(serialized) {
 		if (!serialized) {
 			delete localStorage[this.key];
 		}
@@ -136,7 +138,7 @@ _.register($.Class({
 			localStorage[this.key] = serialized;
 		}
 
-		return serialized;
+		return Promise.resolve(serialized);
 	},
 
 	static: {

@@ -639,7 +639,7 @@ var _ = self.Mavo = $.Class({
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
 				var item = Mavo.data(evt.target.closest(".mv-item-controls"), "item");
-				item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
+				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
 			}
 
 			if (evt.target.matches(_.selectors.multiple)) {
@@ -1442,27 +1442,29 @@ var _ = Mavo.Backend = $.Class({
 		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
 
-	load: async function() {
-		await this.ready;
-		var response = await this.get();
+	load: function() {
+		return this.ready
+			.then(() => this.get())
+			.then(response => {
+			if (typeof response != "string") {
+				// Backend did the parsing, we're done here
+				return response;
+			}
 
-		if (typeof response != "string") {
-			// Backend did the parsing, we're done here
-			return response;
-		}
+			response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
 
-		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
-
-		return this.format.parse(response);
+			return this.format.parse(response);
+		});
 	},
 
-	store: async function(data, {path, format = this.format} = {}) {
-		await this.ready;
-		var serialized = typeof data === "string"? data : await format.stringify(data);
+	store: function(data, {path, format = this.format} = {}) {
+		return this.ready.then(() => {
+			var serialize = typeof data === "string"? Promise.resolve(data) : format.stringify(data);
 
-		return this.put(serialized, path).then(() => {
+			return serialize.then(serialized => this.put(serialized, path).then(() => {
 				return {data, serialized};
-			});
+			}));
+		});
 	},
 
 	// To be be overriden by subclasses
@@ -1512,12 +1514,12 @@ _.register($.Class({
 		});
 	},
 
-	get: async function() {
-		return this.element.textContent;
+	get: function() {
+		return Promise.resolve(this.element.textContent);
 	},
 
-	put: async function(serialized) {
-		return this.element.textContent = serialized;
+	put: function(serialized) {
+		return Promise.resolve(this.element.textContent = serialized);
 	},
 
 	static: {
@@ -1551,7 +1553,7 @@ _.register($.Class({
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
 	},
 
-	put: async function(serialized) {
+	put: function(serialized) {
 		if (!serialized) {
 			delete localStorage[this.key];
 		}
@@ -1559,7 +1561,7 @@ _.register($.Class({
 			localStorage[this.key] = serialized;
 		}
 
-		return serialized;
+		return Promise.resolve(serialized);
 	},
 
 	static: {
@@ -1592,8 +1594,8 @@ var base = _.Base = $.Class({
 	},
 
 	static: {
-		parse: async x => x,
-		stringify: async x => x,
+		parse: serialized => Promise.resolve(serialized),
+		stringify: data => Promise.resolve(data),
 		extensions: [],
 		dependencies: [],
 		ready: function() {
@@ -1605,8 +1607,8 @@ var base = _.Base = $.Class({
 var json = _.JSON = $.Class({
 	extends: _.Base,
 	static: {
-		parse: async serialized => serialized? JSON.parse(serialized) : null,
-		stringify: async data => Mavo.toJSON(data),
+		parse: serialized => Promise.resolve(serialized? JSON.parse(serialized) : null),
+		stringify: data => Promise.resolve(Mavo.toJSON(data)),
 		extensions: [".json", ".jsonld"]
 	}
 });
@@ -1617,18 +1619,10 @@ var text = _.Text = $.Class({
 		this.property = this.mavo.root.getNames("Primitive")[0];
 	},
 
-	parse: async function(content) {
-		return {[this.property]: content};
-	},
-
-	stringify: async data => data[this.property],
-
 	static: {
 		extensions: [".txt", ".md", ".markdown"],
-		parse: function(serialized, format) {
-			return {[format? format.property : "content"]: serialized};
-		},
-		stringify: (data, format) => data[format? format.property : "content"]
+		parse: (serialized, me) => Promise.resolve({[me? me.property : "content"]: serialized}),
+		stringify: (data, me) => Promise.resolve(data[me? me.property : "content"])
 	}
 });
 
@@ -1637,29 +1631,6 @@ var csv = _.CSV = $.Class({
 	constructor: function(backend) {
 		this.property = this.mavo.root.getNames("Collection")[0];
 		this.options = $.extend({}, _.CSV.defaultOptions);
-	},
-
-	parse: async function(serialized) {
-		await csv.ready();
-
-		var data = Papa.parse(serialized, csv.defaultOptions);
-
-		// Get delimiter & linebreak for serialization
-		this.options.delimiter = data.meta.delimiter;
-		this.options.linebreak = data.meta.linebreak;
-
-		if (data.meta.aborted) {
-			throw data.meta.errors.pop();
-		}
-
-		return {
-			[this.property]: data.data
-		};
-	},
-
-	stringify: async function(data) {
-		await csv.ready();
-		return Papa.unparse(data[this.property], this.options);
 	},
 
 	static: {
@@ -1673,7 +1644,31 @@ var csv = _.CSV = $.Class({
 			test: self.Papa,
 			url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
 		}],
-		ready: base.ready
+		ready: base.ready,
+		parse: (serialized, me) => csv.ready(() => {
+			var data = Papa.parse(serialized, csv.defaultOptions);
+			var property = me? me.property : "content";
+
+			if (me) {
+				// Get delimiter & linebreak for serialization
+				me.options.delimiter = data.meta.delimiter;
+				me.options.linebreak = data.meta.linebreak;
+			}
+
+			if (data.meta.aborted) {
+				throw data.meta.errors.pop();
+			}
+
+			return {
+				[property]: data.data
+			};
+		}),
+		
+		stringify: (serialized, me) => csv.ready(() => {
+			var property = me? me.property : "content";
+			var options = me? me.options : csv.defaultOptions;
+			return Papa.unparse(data[property], options);
+		})
 	}
 });
 

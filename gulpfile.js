@@ -63,7 +63,14 @@ gulp.task("sass", function() {
 var transpileStream = () => gulp.src(mavo)
 	.pipe(sourcemaps.init())
 	.pipe(babel({
-		"presets": ["ES2015"],
+		"presets": [
+			["env", {
+				"targets": {
+					"browsers": ["last 4 versions"]
+				}
+			}
+			]
+		],
 		compact: false
 	}))
 	.on("error", function(error) {
