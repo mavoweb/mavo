@@ -308,10 +308,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		if (!item.itemControls.parentNode) {
-			if ($.value(item, "itemControlsComment", "parentNode")) {
-				item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
-			}
-			else {
+			if (!Mavo.revocably.add(item.itemControls)) {
 				if (item instanceof Mavo.Primitive && !item.attribute) {
 					item.itemControls.classList.add("mv-adjacent");
 					$.after(item.itemControls, item.element);
@@ -361,15 +358,7 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => {
-				if (item.itemControls) {
-					item.itemControlsComment = item.itemControlsComment || document.createComment("item controls");
-
-					if (item.itemControls.parentNode) {
-						item.itemControls.parentNode.replaceChild(item.itemControlsComment, item.itemControls);
-					}
-				}
-			});
+			this.propagate(item => Mavo.revocably.remove(item.itemControls, "item controls"));
 		}
 	},
 

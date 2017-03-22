@@ -78,18 +78,12 @@ Mavo.Expressions.directive("mv-if", {
 
 				if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
 					if (value) {
-						if (this.comment && this.comment.parentNode) {
-							// Is removed from the DOM and needs to get back
-							this.comment.parentNode.replaceChild(this.element, this.comment);
-						}
+						// Is removed from the DOM and needs to get back
+						Mavo.revocably.add(this.element);
 					}
 					else if (this.element.parentNode) {
 						// Is in the DOM and needs to be removed
-						if (!this.comment) {
-							this.comment = document.createComment("mv-if");
-						}
-
-						this.element.parentNode.replaceChild(this.comment, this.element);
+						Mavo.revocably.remove(this.element, "mv-if");
 					}
 				}
 

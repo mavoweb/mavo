@@ -231,7 +231,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator = $$(dataMv.join(", "), this.element).concat(this.element)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var _element2 = _step.value;
+					var _element = _step.value;
 					var _iteratorNormalCompletion4 = true;
 					var _didIteratorError4 = false;
 					var _iteratorError4 = undefined;
@@ -240,10 +240,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						for (var _iterator4 = _.attributes[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
 							var attribute = _step4.value;
 
-							var value = _element2.getAttribute("data-" + attribute);
+							var value = _element.getAttribute("data-" + attribute);
 
 							if (value !== null) {
-								_element2.setAttribute(attribute, value);
+								_element.setAttribute(attribute, value);
 							}
 						}
 					} catch (err) {
@@ -491,20 +491,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							for (var _iterator2 = records[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
 								var record = _step2.value;
 
-								var _element = record.target;
+								var _element2 = record.target;
 
 								var _iteratorNormalCompletion3 = true;
 								var _didIteratorError3 = false;
 								var _iteratorError3 = undefined;
 
 								try {
-									nodeloop: for (var _iterator3 = _.Node.children(_element)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+									nodeloop: for (var _iterator3 = _.Node.children(_element2)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
 										var node = _step3.value;
 
 										var previousMode = node.mode,
 										    mode = void 0;
 
-										if (node.element == _element) {
+										if (node.element == _element2) {
 											// If attribute set directly on a Mavo node, then it forces it into that mode
 											// otherwise, descendant nodes still inherit, unless they are also mode-restricted
 											mode = node.element.getAttribute("mv-mode");
@@ -762,8 +762,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", function (evt) {
 				if (evt.target.matches(".mv-item-controls *")) {
-					var item = Mavo.data(evt.target.closest(".mv-item-controls"), "item");
-					item.classList.toggle("mv-highlight", evt.type == "mouseenter");
+					var itemControls = evt.target.closest(".mv-item-controls");
+					var item = Mavo.data(itemControls, "item");
+
+					if (item && item.element) {
+						item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
+					}
 				}
 
 				if (evt.target.matches(_.selectors.multiple)) {
@@ -1165,12 +1169,64 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return element && getComputedStyle(element).getPropertyValue(property).trim();
 		},
 
+		/**
+   * Get/set data on an element
+   */
 		data: function data(element, name, value) {
-			if (value === undefined) {
+			if (arguments.length == 2) {
 				return $.value(element, "_", "data", "mavo", name);
 			} else {
-				element._.data.mavo = element._.mavo || {};
-				element._.data.mavo[name] = value;
+				element._.data.mavo = element._.data.mavo || {};
+				return element._.data.mavo[name] = value;
+			}
+		},
+
+		/**
+   * Revocably add/remove elements from the DOM
+   */
+		revocably: {
+			add: function add(element) {
+				var comment = _.revocably.isRemoved(element);
+
+				if (comment) {
+					comment.parentNode.replaceChild(element, comment);
+				}
+
+				return comment;
+			},
+
+			remove: function remove(element, commentText) {
+				if (!element) {
+					return;
+				}
+
+				var comment = _.data(element, "commentstub");
+
+				if (!comment) {
+					commentText = commentText || element.id || element.className || element.nodeName;
+					comment = _.data(element, "commentstub", document.createComment(commentText));
+				}
+
+				if (element.parentNode) {
+					// In DOM, remove
+					element.parentNode.replaceChild(comment, element);
+				}
+
+				return comment;
+			},
+
+			isRemoved: function isRemoved(element) {
+				if (!element || element.parentNode) {
+					return false;
+				}
+
+				var comment = _.data(element, "commentstub");
+
+				if (comment && comment.parentNode) {
+					return comment;
+				}
+
+				return false;
 			}
 		},
 
@@ -4466,9 +4522,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!item.itemControls.parentNode) {
-				if ($.value(item, "itemControlsComment", "parentNode")) {
-					item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
-				} else {
+				if (!Mavo.revocably.add(item.itemControls)) {
 					if (item instanceof Mavo.Primitive && !item.attribute) {
 						item.itemControls.classList.add("mv-adjacent");
 						$.after(item.itemControls, item.element);
@@ -4520,13 +4574,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				this.propagate(function (item) {
-					if (item.itemControls) {
-						item.itemControlsComment = item.itemControlsComment || document.createComment("item controls");
-
-						if (item.itemControls.parentNode) {
-							item.itemControls.parentNode.replaceChild(item.itemControlsComment, item.itemControls);
-						}
-					}
+					return Mavo.revocably.remove(item.itemControls, "item controls");
 				});
 			}
 		},
@@ -5727,17 +5775,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (parentValue !== false) {
 						// If parent if was false, it wouldn't matter whether this is in the DOM or not
 						if (value) {
-							if (_this2.comment && _this2.comment.parentNode) {
-								// Is removed from the DOM and needs to get back
-								_this2.comment.parentNode.replaceChild(_this2.element, _this2.comment);
-							}
+							// Is removed from the DOM and needs to get back
+							Mavo.revocably.add(_this2.element);
 						} else if (_this2.element.parentNode) {
 							// Is in the DOM and needs to be removed
-							if (!_this2.comment) {
-								_this2.comment = document.createComment("mv-if");
-							}
-
-							_this2.element.parentNode.replaceChild(_this2.comment, _this2.element);
+							Mavo.revocably.remove(_this2.element, "mv-if");
 						}
 					}
 

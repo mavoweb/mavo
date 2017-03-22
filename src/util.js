@@ -61,13 +61,65 @@ var _ = $.extend(Mavo, {
 	 */
 	getStyle: (element, property) => element && getComputedStyle(element).getPropertyValue(property).trim(),
 
-	data: (element, name, value) => {
-		if (value === undefined) {
+	/**
+	 * Get/set data on an element
+	 */
+	data: function(element, name, value) {
+		if (arguments.length == 2) {
 			return $.value(element, "_", "data", "mavo", name);
 		}
 		else {
-			element._.data.mavo = element._.mavo || {};
-			element._.data.mavo[name] = value;
+			element._.data.mavo = element._.data.mavo || {};
+			return element._.data.mavo[name] = value;
+		}
+	},
+
+	/**
+	 * Revocably add/remove elements from the DOM
+	 */
+	revocably: {
+		add: function(element) {
+			var comment = _.revocably.isRemoved(element);
+
+			if (comment) {
+				comment.parentNode.replaceChild(element, comment);
+			}
+
+			return comment;
+		},
+
+		remove: function(element, commentText) {
+			if (!element) {
+				return;
+			}
+
+			var comment = _.data(element, "commentstub");
+
+			if (!comment) {
+				commentText = commentText || element.id || element.className || element.nodeName;
+				comment = _.data(element, "commentstub", document.createComment(commentText));
+			}
+
+			if (element.parentNode) {
+				// In DOM, remove
+				element.parentNode.replaceChild(comment, element);
+			}
+
+			return comment;
+		},
+
+		isRemoved: function(element) {
+			if (!element || element.parentNode) {
+				return false;
+			}
+
+			var comment = _.data(element, "commentstub");
+
+			if (comment && comment.parentNode) {
+				return comment;
+			}
+
+			return false;
 		}
 	},
 
@@ -128,7 +180,7 @@ var _ = $.extend(Mavo, {
 			// No throttling
 			return fn;
 		}
-		
+
 		var timer = null, code;
 
 		return function () {

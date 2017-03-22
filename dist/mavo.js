@@ -638,8 +638,12 @@ var _ = self.Mavo = $.Class({
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(".mv-item-controls *")) {
-				var item = Mavo.data(evt.target.closest(".mv-item-controls"), "item");
-				item.classList.toggle("mv-highlight", evt.type == "mouseenter");
+				var itemControls = evt.target.closest(".mv-item-controls");
+				var item = Mavo.data(itemControls, "item");
+
+				if (item && item.element) {
+					item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
+				}
 			}
 
 			if (evt.target.matches(_.selectors.multiple)) {
@@ -965,13 +969,65 @@ var _ = $.extend(Mavo, {
 	 */
 	getStyle: (element, property) => element && getComputedStyle(element).getPropertyValue(property).trim(),
 
-	data: (element, name, value) => {
-		if (value === undefined) {
+	/**
+	 * Get/set data on an element
+	 */
+	data: function(element, name, value) {
+		if (arguments.length == 2) {
 			return $.value(element, "_", "data", "mavo", name);
 		}
 		else {
-			element._.data.mavo = element._.mavo || {};
-			element._.data.mavo[name] = value;
+			element._.data.mavo = element._.data.mavo || {};
+			return element._.data.mavo[name] = value;
+		}
+	},
+
+	/**
+	 * Revocably add/remove elements from the DOM
+	 */
+	revocably: {
+		add: function(element) {
+			var comment = _.revocably.isRemoved(element);
+
+			if (comment) {
+				comment.parentNode.replaceChild(element, comment);
+			}
+
+			return comment;
+		},
+
+		remove: function(element, commentText) {
+			if (!element) {
+				return;
+			}
+
+			var comment = _.data(element, "commentstub");
+
+			if (!comment) {
+				commentText = commentText || element.id || element.className || element.nodeName;
+				comment = _.data(element, "commentstub", document.createComment(commentText));
+			}
+
+			if (element.parentNode) {
+				// In DOM, remove
+				element.parentNode.replaceChild(comment, element);
+			}
+
+			return comment;
+		},
+
+		isRemoved: function(element) {
+			if (!element || element.parentNode) {
+				return false;
+			}
+
+			var comment = _.data(element, "commentstub");
+
+			if (comment && comment.parentNode) {
+				return comment;
+			}
+
+			return false;
 		}
 	},
 
@@ -1032,7 +1088,7 @@ var _ = $.extend(Mavo, {
 			// No throttling
 			return fn;
 		}
-		
+
 		var timer = null, code;
 
 		return function () {
@@ -3874,10 +3930,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		if (!item.itemControls.parentNode) {
-			if ($.value(item, "itemControlsComment", "parentNode")) {
-				item.itemControlsComment.parentNode.replaceChild(item.itemControls, item.itemControlsComment);
-			}
-			else {
+			if (!Mavo.revocably.add(item.itemControls)) {
 				if (item instanceof Mavo.Primitive && !item.attribute) {
 					item.itemControls.classList.add("mv-adjacent");
 					$.after(item.itemControls, item.element);
@@ -3927,15 +3980,7 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => {
-				if (item.itemControls) {
-					item.itemControlsComment = item.itemControlsComment || document.createComment("item controls");
-
-					if (item.itemControls.parentNode) {
-						item.itemControls.parentNode.replaceChild(item.itemControlsComment, item.itemControls);
-					}
-				}
-			});
+			this.propagate(item => Mavo.revocably.remove(item.itemControls, "item controls"));
 		}
 	},
 
@@ -5003,18 +5048,12 @@ Mavo.Expressions.directive("mv-if", {
 
 				if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
 					if (value) {
-						if (this.comment && this.comment.parentNode) {
-							// Is removed from the DOM and needs to get back
-							this.comment.parentNode.replaceChild(this.element, this.comment);
-						}
+						// Is removed from the DOM and needs to get back
+						Mavo.revocably.add(this.element);
 					}
 					else if (this.element.parentNode) {
 						// Is in the DOM and needs to be removed
-						if (!this.comment) {
-							this.comment = document.createComment("mv-if");
-						}
-
-						this.element.parentNode.replaceChild(this.comment, this.element);
+						Mavo.revocably.remove(this.element, "mv-if");
 					}
 				}
 
