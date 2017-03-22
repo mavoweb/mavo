@@ -4,7 +4,6 @@ npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps g
 */
 // grab our gulp packages
 var gulp  = require("gulp");
-var uglify = require("gulp-uglify");
 var rename = require("gulp-rename");
 var concat = require("gulp-concat");
 var sass = require("gulp-sass");
@@ -90,17 +89,18 @@ gulp.task("transpile", function() {
 });
 
 gulp.task("minify", function() {
-	var u = uglify({output: {
-		max_line_len  : 1000 // to prevent merge conflicts
-	}});
-
-	u.on("error", function(error) {
-		console.error(error);
-		u.end();
-	});
-
-	return merge(gulp.src(dependencies), transpileStream().pipe(u))
-		.pipe(concat("mavo.min.js"))
+	return gulp.src(["dist/mavo.js", "dist/mavo.es5.js"])
+		.pipe(sourcemaps.init())
+		.pipe(babel({
+			"presets": [
+				["babili"]
+			]
+		}))
+		.on("error", function(error) {
+			console.error(error.message, error.loc);
+			this.emit("end");
+		})
+		.pipe(rename({ extname: ".min.js" }))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
 });
