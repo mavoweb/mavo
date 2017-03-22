@@ -175,6 +175,36 @@ _.register({
 		changeEvents: "click"
 	},
 
+	"input[type=radio]": {
+		default: true,
+		attribute: "checked",
+		modes: "read",
+		getValue: element => {
+			if (element.form) {
+				return element.form[element.name].value;
+			}
+
+			var checked = $(`input[type=radio][name="${element.name}"]:checked`);
+			return checked && checked.value;
+		},
+		setValue: (element, value) => {
+			if (element.form) {
+				element.form[element.name].value = value;
+				return;
+			}
+
+			var toCheck = $(`input[type=radio][name="${element.name}"][value="${value}"]`);
+			$.properties(toCheck, {checked: true});
+		},
+		init: function(element) {
+			this.mavo.element.addEventListener("change", evt => {
+				if (evt.target.name == element.name) {
+					this.value = this.getValue();
+				}
+			});
+		}
+	},
+
 	"button, .counter": {
 		default: true,
 		attribute: "mv-clicked",

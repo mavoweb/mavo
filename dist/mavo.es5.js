@@ -3859,20 +3859,52 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			changeEvents: "click"
 		},
 
+		"input[type=radio]": {
+			default: true,
+			attribute: "checked",
+			modes: "read",
+			getValue: function getValue(element) {
+				if (element.form) {
+					return element.form[element.name].value;
+				}
+
+				var checked = $("input[type=radio][name=\"" + element.name + "\"]:checked");
+				return checked && checked.value;
+			},
+			setValue: function setValue(element, value) {
+				if (element.form) {
+					element.form[element.name].value = value;
+					return;
+				}
+
+				var toCheck = $("input[type=radio][name=\"" + element.name + "\"][value=\"" + value + "\"]");
+				$.properties(toCheck, { checked: true });
+			},
+			init: function init(element) {
+				var _this = this;
+
+				this.mavo.element.addEventListener("change", function (evt) {
+					if (evt.target.name == element.name) {
+						_this.value = _this.getValue();
+					}
+				});
+			}
+		},
+
 		"button, .counter": {
 			default: true,
 			attribute: "mv-clicked",
 			datatype: "number",
 			modes: "read",
 			init: function init(element) {
-				var _this = this;
+				var _this2 = this;
 
 				if (this.attribute === "mv-clicked") {
 					element.setAttribute("mv-clicked", "0");
 
 					element.addEventListener("click", function (evt) {
 						var clicked = +element.getAttribute("mv-clicked") || 0;
-						_this.value = ++clicked;
+						_this2.value = ++clicked;
 					});
 				}
 			}
@@ -3883,7 +3915,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "value",
 			datatype: "number",
 			edit: function edit() {
-				var _this2 = this;
+				var _this3 = this;
 
 				var min = +this.element.getAttribute("min") || 0;
 				var max = +this.element.getAttribute("max") || 1;
@@ -3892,39 +3924,39 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				this.element.addEventListener("mousemove.mavo:edit", function (evt) {
 					// Change property as mouse moves
-					var left = _this2.element.getBoundingClientRect().left;
-					var offset = Math.max(0, (evt.clientX - left) / _this2.element.offsetWidth);
+					var left = _this3.element.getBoundingClientRect().left;
+					var offset = Math.max(0, (evt.clientX - left) / _this3.element.offsetWidth);
 					var newValue = min + range * offset;
 					var mod = newValue % step;
 
 					newValue += mod > step / 2 ? step - mod : -mod;
 					newValue = Math.max(min, Math.min(newValue, max));
 
-					_this2.sneak(function () {
-						return _this2.element.setAttribute("value", newValue);
+					_this3.sneak(function () {
+						return _this3.element.setAttribute("value", newValue);
 					});
 				});
 
 				this.element.addEventListener("mouseleave.mavo:edit", function (evt) {
 					// Return to actual value
-					_this2.sneak(function () {
-						return _this2.element.setAttribute("value", _this2.value);
+					_this3.sneak(function () {
+						return _this3.element.setAttribute("value", _this3.value);
 					});
 				});
 
 				this.element.addEventListener("click.mavo:edit", function (evt) {
 					// Register change
-					_this2.value = _this2.getValue();
+					_this3.value = _this3.getValue();
 				});
 
 				this.element.addEventListener("keydown.mavo:edit", function (evt) {
 					// Edit with arrow keys
-					if (evt.target == _this2.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+					if (evt.target == _this3.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
 						var increment = step * (evt.keyCode == 39 ? 1 : -1) * (evt.shiftKey ? 10 : 1);
-						var newValue = _this2.value + increment;
+						var newValue = _this3.value + increment;
 						newValue = Math.max(min, Math.min(newValue, max));
 
-						_this2.element.setAttribute("value", newValue);
+						_this3.element.setAttribute("value", newValue);
 					}
 				});
 			},
