@@ -63,10 +63,6 @@ var _ = Mavo.Expression = $.Class({
 			}
 		}
 
-		if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
-			return true; // contains a Mavo id
-		}
-
 		return false;
 	},
 

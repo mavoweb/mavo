@@ -26,7 +26,7 @@ var base = _.Base = $.Class({
 		extensions: [],
 		dependencies: [],
 		ready: function() {
-			return Promise.all(this.dependencies.map(d => $.include(d.test, d.url)));
+			return Promise.all(this.dependencies.map(d => $.include(d.test(), d.url)));
 		}
 	}
 });
@@ -68,11 +68,11 @@ var csv = _.CSV = $.Class({
 			skipEmptyLines: true
 		},
 		dependencies: [{
-			test: self.Papa,
+			test: () => self.Papa,
 			url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
 		}],
 		ready: base.ready,
-		parse: (serialized, me) => csv.ready(() => {
+		parse: (serialized, me) => csv.ready().then(() => {
 			var data = Papa.parse(serialized, csv.defaultOptions);
 			var property = me? me.property : "content";
 
@@ -90,8 +90,8 @@ var csv = _.CSV = $.Class({
 				[property]: data.data
 			};
 		}),
-		
-		stringify: (serialized, me) => csv.ready(() => {
+
+		stringify: (serialized, me) => csv.ready().then(() => {
 			var property = me? me.property : "content";
 			var options = me? me.options : csv.defaultOptions;
 			return Papa.unparse(data[property], options);

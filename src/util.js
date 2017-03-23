@@ -214,7 +214,7 @@ var _ = $.extend(Mavo, {
 			if (attribute) {
 				$.extend(this.options, {
 					attributes: true,
-					attributeFilter: this.attribute == "all"? undefined : [this.attribute],
+					attributeFilter: this.attribute == "all"? undefined : Mavo.toArray(this.attribute),
 					attributeOldValue: !!o.oldValue
 				});
 			}

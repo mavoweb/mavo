@@ -9,7 +9,8 @@ var _ = self.Mavo = $.Class({
 		this.element = element;
 
 		// Index among other mavos in the page, 1 is first
-		this.index = _.all.push(this);
+		this.index = _.length + 1;
+		Object.defineProperty(_.all, this.index - 1, {value: this});
 
 		// Convert any data-mv-* attributes to mv-*
 		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
@@ -24,7 +25,8 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Assign a unique (for the page) id to this mavo instance
-		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
+		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
+		_.all[this.id] = this;
 		this.element.setAttribute("mv-app", this.id);
 
 		// Should we start in edit mode?
@@ -263,19 +265,17 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
-		if (this.storage) {
-			this.permissions.can("delete", () => {
-				this.ui.clear = $.create("button", {
-					className: "mv-clear",
-					textContent: "Clear",
-					title: "Clear"
-				});
-
-				this.ui.bar.appendChild(this.ui.clear);
-			}, () => {
-				$.remove(this.ui.clear);
+		this.permissions.can("delete", () => {
+			this.ui.clear = $.create("button", {
+				className: "mv-clear",
+				textContent: "Clear",
+				title: "Clear"
 			});
-		}
+
+			this.ui.bar.appendChild(this.ui.clear);
+		}, () => {
+			$.remove(this.ui.clear);
+		});
 
 		if (this.storage || this.source) {
 			// Fetch existing data
@@ -611,18 +611,16 @@ var _ = self.Mavo = $.Class({
 	},
 
 	static: {
-		all: [],
+		all: {},
 
-		allIds: [],
+		get length() {
+			return Object.keys(_.all).length;
+		},
 
 		get: function(id) {
-			for (let mavo of _.all) {
-				if (mavo.id === id) {
-					return mavo;
-				}
-			}
+			var name = typeof id === "number"? Object.keys(_.all)[id] : id;
 
-			return null;
+			return _.all[name] || null;
 		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",

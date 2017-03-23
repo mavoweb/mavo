@@ -144,12 +144,14 @@ var _ = Mavo.Permissions = $.Class({
 				return;
 			}
 
-			$.live(_.prototype, action, function(able, previous) {
-				if (setter) {
-					setter.call(this, able, previous);
-				}
+			$.live(_.prototype, action, {
+				set: function(able, previous) {
+					if (setter) {
+						setter.call(this, able, previous);
+					}
 
-				this.changed(action, able, previous);
+					this.changed(action, able, previous);
+				}
 			});
 
 			_.actions.push(action);

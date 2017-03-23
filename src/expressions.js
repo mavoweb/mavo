@@ -16,13 +16,13 @@ var _ = Mavo.Expressions = $.Class({
 			this.expressions = [];
 
 			// Watch changes and update value
-			this.mavo.element.addEventListener("mavo:datachange", evt => {
+			document.documentElement.addEventListener("mavo:datachange", evt => {
 				if (!this.active) {
 					return;
 				}
 
 				if (evt.action == "propertychange" && evt.node.closestCollection) {
-					// Throttle propertychange events in collections
+					// Throttle propertychange events in collections and events from other Mavos
 					if (!this.scheduled.has(evt.property)) {
 						setTimeout(() => {
 							this.scheduled.delete(evt.property);
@@ -205,10 +205,6 @@ Mavo.hooks.add({
 						return null;
 					}
 
-					if (property == this.mavo.id) {
-						return data[property] = this.mavo.root.getData(env.options);
-					}
-
 					if (this instanceof Mavo.Group && property == this.property && this.collection) {
 						return data[property] = env.data;
 					}
@@ -237,6 +233,11 @@ Mavo.hooks.add({
 						data[property] = ret;
 
 						return true;
+					}
+
+					// Does it reference another Mavo?
+					if (property in Mavo.all) {
+						return data[property] = Mavo.all[property].root.getData(env.options);
 					}
 
 					return false;

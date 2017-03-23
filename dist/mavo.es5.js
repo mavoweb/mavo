@@ -219,7 +219,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.element = element;
 
 			// Index among other mavos in the page, 1 is first
-			this.index = _.all.push(this);
+			this.index = _.length + 1;
+			Object.defineProperty(_.all, this.index - 1, { value: this });
 
 			// Convert any data-mv-* attributes to mv-*
 			var dataMv = _.attributes.map(function (attribute) {
@@ -278,7 +279,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index);
+			this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index;
+			_.all[this.id] = this;
 			this.element.setAttribute("mv-app", this.id);
 
 			// Should we start in edit mode?
@@ -571,19 +573,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			if (this.storage) {
-				this.permissions.can("delete", function () {
-					_this.ui.clear = $.create("button", {
-						className: "mv-clear",
-						textContent: "Clear",
-						title: "Clear"
-					});
-
-					_this.ui.bar.appendChild(_this.ui.clear);
-				}, function () {
-					$.remove(_this.ui.clear);
+			this.permissions.can("delete", function () {
+				_this.ui.clear = $.create("button", {
+					className: "mv-clear",
+					textContent: "Clear",
+					title: "Clear"
 				});
-			}
+
+				_this.ui.bar.appendChild(_this.ui.clear);
+			}, function () {
+				$.remove(_this.ui.clear);
+			});
 
 			if (this.storage || this.source) {
 				// Fetch existing data
@@ -945,39 +945,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		static: {
-			all: [],
+			all: {},
 
-			allIds: [],
+			get length() {
+				return Object.keys(_.all).length;
+			},
 
 			get: function get(id) {
-				var _iteratorNormalCompletion5 = true;
-				var _didIteratorError5 = false;
-				var _iteratorError5 = undefined;
+				var name = typeof id === "number" ? Object.keys(_.all)[id] : id;
 
-				try {
-					for (var _iterator5 = _.all[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-						var mavo = _step5.value;
-
-						if (mavo.id === id) {
-							return mavo;
-						}
-					}
-				} catch (err) {
-					_didIteratorError5 = true;
-					_iteratorError5 = err;
-				} finally {
-					try {
-						if (!_iteratorNormalCompletion5 && _iterator5.return) {
-							_iterator5.return();
-						}
-					} finally {
-						if (_didIteratorError5) {
-							throw _iteratorError5;
-						}
-					}
-				}
-
-				return null;
+				return _.all[name] || null;
 			},
 
 			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
@@ -1330,7 +1307,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (attribute) {
 					$.extend(this.options, {
 						attributes: true,
-						attributeFilter: this.attribute == "all" ? undefined : [this.attribute],
+						attributeFilter: this.attribute == "all" ? undefined : Mavo.toArray(this.attribute),
 						attributeOldValue: !!o.oldValue
 					});
 				}
@@ -1706,12 +1683,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return;
 				}
 
-				$.live(_.prototype, action, function (able, previous) {
-					if (setter) {
-						setter.call(this, able, previous);
-					}
+				$.live(_.prototype, action, {
+					set: function set(able, previous) {
+						if (setter) {
+							setter.call(this, able, previous);
+						}
 
-					this.changed(action, able, previous);
+						this.changed(action, able, previous);
+					}
 				});
 
 				_.actions.push(action);
@@ -1961,7 +1940,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			dependencies: [],
 			ready: function ready() {
 				return Promise.all(this.dependencies.map(function (d) {
-					return $.include(d.test, d.url);
+					return $.include(d.test(), d.url);
 				}));
 			}
 		}
@@ -2012,12 +1991,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				skipEmptyLines: true
 			},
 			dependencies: [{
-				test: self.Papa,
+				test: function test() {
+					return self.Papa;
+				},
 				url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
 			}],
 			ready: base.ready,
 			parse: function parse(serialized, me) {
-				return csv.ready(function () {
+				return csv.ready().then(function () {
 					var data = Papa.parse(serialized, csv.defaultOptions);
 					var property = me ? me.property : "content";
 
@@ -2036,7 +2017,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			},
 
 			stringify: function stringify(serialized, me) {
-				return csv.ready(function () {
+				return csv.ready().then(function () {
 					var property = me ? me.property : "content";
 					var options = me ? me.options : csv.defaultOptions;
 					return Papa.unparse(data[property], options);
@@ -4574,7 +4555,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				this.propagate(function (item) {
-					return Mavo.revocably.remove(item.itemControls, "item controls");
+					return Mavo.revocably.remove(item.itemControls);
 				});
 			}
 		},
@@ -4966,10 +4947,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
 					return true;
 				}
-			}
-
-			if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
-				return true; // contains a Mavo id
 			}
 
 			return false;
@@ -5405,13 +5382,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_this.expressions = [];
 
 				// Watch changes and update value
-				_this.mavo.element.addEventListener("mavo:datachange", function (evt) {
+				document.documentElement.addEventListener("mavo:datachange", function (evt) {
 					if (!_this.active) {
 						return;
 					}
 
 					if (evt.action == "propertychange" && evt.node.closestCollection) {
-						// Throttle propertychange events in collections
+						// Throttle propertychange events in collections and events from other Mavos
 						if (!_this.scheduled.has(evt.property)) {
 							setTimeout(function () {
 								_this.scheduled.delete(evt.property);
@@ -5638,10 +5615,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							return null;
 						}
 
-						if (property == _this6.mavo.id) {
-							return data[property] = _this6.mavo.root.getData(env.options);
-						}
-
 						if (_this6 instanceof Mavo.Group && property == _this6.property && _this6.collection) {
 							return data[property] = env.data;
 						}
@@ -5672,6 +5645,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							data[property] = ret;
 
 							return true;
+						}
+
+						// Does it reference another Mavo?
+						if (property in Mavo.all) {
+							return data[property] = Mavo.all[property].root.getData(env.options);
 						}
 
 						return false;

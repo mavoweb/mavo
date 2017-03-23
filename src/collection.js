@@ -358,7 +358,7 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => Mavo.revocably.remove(item.itemControls, "item controls"));
+			this.propagate(item => Mavo.revocably.remove(item.itemControls));
 		}
 	},
 

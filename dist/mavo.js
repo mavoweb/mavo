@@ -213,7 +213,8 @@ var _ = self.Mavo = $.Class({
 		this.element = element;
 
 		// Index among other mavos in the page, 1 is first
-		this.index = _.all.push(this);
+		this.index = _.length + 1;
+		Object.defineProperty(_.all, this.index - 1, {value: this});
 
 		// Convert any data-mv-* attributes to mv-*
 		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
@@ -228,7 +229,8 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Assign a unique (for the page) id to this mavo instance
-		_.allIds.push(this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`);
+		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
+		_.all[this.id] = this;
 		this.element.setAttribute("mv-app", this.id);
 
 		// Should we start in edit mode?
@@ -467,19 +469,17 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
-		if (this.storage) {
-			this.permissions.can("delete", () => {
-				this.ui.clear = $.create("button", {
-					className: "mv-clear",
-					textContent: "Clear",
-					title: "Clear"
-				});
-
-				this.ui.bar.appendChild(this.ui.clear);
-			}, () => {
-				$.remove(this.ui.clear);
+		this.permissions.can("delete", () => {
+			this.ui.clear = $.create("button", {
+				className: "mv-clear",
+				textContent: "Clear",
+				title: "Clear"
 			});
-		}
+
+			this.ui.bar.appendChild(this.ui.clear);
+		}, () => {
+			$.remove(this.ui.clear);
+		});
 
 		if (this.storage || this.source) {
 			// Fetch existing data
@@ -815,18 +815,16 @@ var _ = self.Mavo = $.Class({
 	},
 
 	static: {
-		all: [],
+		all: {},
 
-		allIds: [],
+		get length() {
+			return Object.keys(_.all).length;
+		},
 
 		get: function(id) {
-			for (let mavo of _.all) {
-				if (mavo.id === id) {
-					return mavo;
-				}
-			}
+			var name = typeof id === "number"? Object.keys(_.all)[id] : id;
 
-			return null;
+			return _.all[name] || null;
 		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
@@ -1122,7 +1120,7 @@ var _ = $.extend(Mavo, {
 			if (attribute) {
 				$.extend(this.options, {
 					attributes: true,
-					attributeFilter: this.attribute == "all"? undefined : [this.attribute],
+					attributeFilter: this.attribute == "all"? undefined : Mavo.toArray(this.attribute),
 					attributeOldValue: !!o.oldValue
 				});
 			}
@@ -1436,12 +1434,14 @@ var _ = Mavo.Permissions = $.Class({
 				return;
 			}
 
-			$.live(_.prototype, action, function(able, previous) {
-				if (setter) {
-					setter.call(this, able, previous);
-				}
+			$.live(_.prototype, action, {
+				set: function(able, previous) {
+					if (setter) {
+						setter.call(this, able, previous);
+					}
 
-				this.changed(action, able, previous);
+					this.changed(action, able, previous);
+				}
 			});
 
 			_.actions.push(action);
@@ -1655,7 +1655,7 @@ var base = _.Base = $.Class({
 		extensions: [],
 		dependencies: [],
 		ready: function() {
-			return Promise.all(this.dependencies.map(d => $.include(d.test, d.url)));
+			return Promise.all(this.dependencies.map(d => $.include(d.test(), d.url)));
 		}
 	}
 });
@@ -1697,11 +1697,11 @@ var csv = _.CSV = $.Class({
 			skipEmptyLines: true
 		},
 		dependencies: [{
-			test: self.Papa,
+			test: () => self.Papa,
 			url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
 		}],
 		ready: base.ready,
-		parse: (serialized, me) => csv.ready(() => {
+		parse: (serialized, me) => csv.ready().then(() => {
 			var data = Papa.parse(serialized, csv.defaultOptions);
 			var property = me? me.property : "content";
 
@@ -1719,8 +1719,8 @@ var csv = _.CSV = $.Class({
 				[property]: data.data
 			};
 		}),
-		
-		stringify: (serialized, me) => csv.ready(() => {
+
+		stringify: (serialized, me) => csv.ready().then(() => {
 			var property = me? me.property : "content";
 			var options = me? me.options : csv.defaultOptions;
 			return Papa.unparse(data[property], options);
@@ -3980,7 +3980,7 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => Mavo.revocably.remove(item.itemControls, "item controls"));
+			this.propagate(item => Mavo.revocably.remove(item.itemControls));
 		}
 	},
 
@@ -4335,10 +4335,6 @@ var _ = Mavo.Expression = $.Class({
 			if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
 				return true;
 			}
-		}
-
-		if (Mavo.hasIntersection(Mavo.allIds, this.identifiers)) {
-			return true; // contains a Mavo id
 		}
 
 		return false;
@@ -4732,13 +4728,13 @@ var _ = Mavo.Expressions = $.Class({
 			this.expressions = [];
 
 			// Watch changes and update value
-			this.mavo.element.addEventListener("mavo:datachange", evt => {
+			document.documentElement.addEventListener("mavo:datachange", evt => {
 				if (!this.active) {
 					return;
 				}
 
 				if (evt.action == "propertychange" && evt.node.closestCollection) {
-					// Throttle propertychange events in collections
+					// Throttle propertychange events in collections and events from other Mavos
 					if (!this.scheduled.has(evt.property)) {
 						setTimeout(() => {
 							this.scheduled.delete(evt.property);
@@ -4921,10 +4917,6 @@ Mavo.hooks.add({
 						return null;
 					}
 
-					if (property == this.mavo.id) {
-						return data[property] = this.mavo.root.getData(env.options);
-					}
-
 					if (this instanceof Mavo.Group && property == this.property && this.collection) {
 						return data[property] = env.data;
 					}
@@ -4953,6 +4945,11 @@ Mavo.hooks.add({
 						data[property] = ret;
 
 						return true;
+					}
+
+					// Does it reference another Mavo?
+					if (property in Mavo.all) {
+						return data[property] = Mavo.all[property].root.getData(env.options);
 					}
 
 					return false;
