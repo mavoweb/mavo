@@ -4,6 +4,9 @@ var _ = Mavo.Permissions = $.Class({
 	constructor: function(o) {
 		this.triggers = [];
 
+		// If we don’t do this, there is no way to retrieve this from inside parentChanged
+		this.parentChanged = _.prototype.parentChanged.bind(this);
+
 		this.set(o);
 
 		this.hooks = new $.Hooks();
@@ -48,14 +51,6 @@ var _ = Mavo.Permissions = $.Class({
 		this.observe(actions, false, callback);
 	},
 
-	// Like this.can(), but returns a promise
-	// Useful for things that you want to do only once
-	when: function(actions) {
-		return new Promise((resolve, reject) => {
-			this.can(actions, resolve, reject);
-		});
-	},
-
 	// Schedule a callback for when a set of permissions changes value
 	observe: function(actions, value, callback) {
 		actions = Mavo.toArray(actions);
@@ -92,6 +87,24 @@ var _ = Mavo.Permissions = $.Class({
 		}
 	},
 
+	parentChanged: function(o = {}) {
+		var localValue = this["_" + o.action];
+
+		if (localValue !== undefined) {
+			// We have a local value so we don’t care about parent changes
+			return;
+		}
+
+		if (o.from == o.value || o.value === localValue) {
+			// Nothing changed
+			return;
+		}
+
+		this.fireTriggers(o.action);
+
+		this.hooks.run("change", $.extend({permissions: this, o}));
+	},
+
 	// A single permission changed value
 	changed: function(action, value, from) {
 		from = !!from;
@@ -106,8 +119,13 @@ var _ = Mavo.Permissions = $.Class({
 		// need to set it manually, otherwise it still has its previous value
 		this["_" + action] = value;
 
-		// TODO add classes to element
-		this.triggers.forEach(trigger => {
+		this.fireTriggers(action);
+
+		this.hooks.run("change", {action, value, from, permissions: this});
+	},
+
+	fireTriggers: function(action) {
+		for (let trigger of this.triggers) {
 			var match = this.is(trigger.actions, trigger.value);
 
 			if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
@@ -121,9 +139,7 @@ var _ = Mavo.Permissions = $.Class({
 				// if a and b are set to true one after the other
 				trigger.active = true;
 			}
-		});
-
-		this.hooks.run("change", {action, value, permissions: this});
+		}
 	},
 
 	or: function(permissions) {
@@ -132,6 +148,18 @@ var _ = Mavo.Permissions = $.Class({
 		}
 
 		return this;
+	},
+
+	live: {
+		parent: function(parent) {
+			// Remove previous trigger, if any
+			if (this._parent) {
+				Mavo.delete(this._parent.hooks.change, this.parentChanged);
+			}
+
+			// Add new trigger
+			parent.onchange(this.parentChanged);
+		}
 	},
 
 	static: {
@@ -145,6 +173,15 @@ var _ = Mavo.Permissions = $.Class({
 			}
 
 			$.live(_.prototype, action, {
+				get: function() {
+					var ret = this["_" + action];
+
+					if (ret === undefined && this.parent) {
+						return this.parent[action];
+					}
+
+					return ret;
+				},
 				set: function(able, previous) {
 					if (setter) {
 						setter.call(this, able, previous);

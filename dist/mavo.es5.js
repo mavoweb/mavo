@@ -328,6 +328,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				inside: this.ui.bar
 			});
 
+			this.permissions = new Mavo.Permissions();
+
 			// Figure out backends for storage, data reads, and initialization respectively
 			var _arr = ["storage", "source", "init"];
 			for (var _i = 0; _i < _arr.length; _i++) {
@@ -361,12 +363,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var _role = _arr2[_i2];
 				if (this[_role]) {
 					this.primaryBackend = this[_role];
-					this.permissions = this[_role].permissions;
+					this.permissions.parent = this[_role].permissions;
 					break;
 				}
 			}
-
-			this.permissions = this.permissions || new Mavo.Permissions();
 
 			if (this.primaryBackend) {
 				// Reflect backend permissions in global permissions
@@ -1079,12 +1079,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return arr === undefined ? [] : Array.isArray(arr) ? arr : [arr];
 		},
 
-		delete: function _delete(arr, element) {
-			var index = arr && arr.indexOf(element);
+		/**
+   * Delete one or more elements from an array
+   * @param arr {Array}
+   * @param et {Function|*} If function, it’s used as a test for deleting multiple elements.
+   *                        Otherwise, it’s asssumed to be the element to delete.
+   * @return {Array} Deleted elements
+   */
+		delete: function _delete(arr) {
+			var ret = [];
 
-			if (index > -1) {
-				arr.splice(index, 1);
+			if ($.type(arguments[1]) == "function") {
+				for (var i = 0; i < arr.length; i++) {
+					if (arguments[1](arr[i])) {
+						ret.push(arr[i]);
+						arr.splice(i, 1);
+						i--;
+					}
+				}
+			} else {
+				var index = arr && arr.indexOf(arguments[1]);
+
+				if (index > -1) {
+					ret.push(arr[index]);
+					arr.splice(index, 1);
+				}
 			}
+
+			return ret;
 		},
 
 		hasIntersection: function hasIntersection(arr1, arr2) {
@@ -1623,7 +1645,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// need to set it manually, otherwise it still has its previous value
 			this["_" + action] = value;
 
-			// TODO add classes to element
 			this.triggers.forEach(function (trigger) {
 				var match = _this5.is(trigger.actions, trigger.value);
 
@@ -1639,7 +1660,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			this.hooks.run("change", { action: action, value: value, permissions: this });
+			this.hooks.run("change", { action: action, value: value, from: from, permissions: this });
 		},
 
 		or: function or(permissions) {
@@ -1671,6 +1692,39 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this;
 		},
 
+		live: {
+			parent: function parent(_parent) {
+				var _this6 = this;
+
+				var callback = function callback(_ref) {
+					var action = _ref.action,
+					    value = _ref.value,
+					    from = _ref.from;
+
+					_this6.changed(action, value, from);
+				};
+
+				callback.inheritanceTrigger = this;
+
+				// Remove previous trigger, if any
+				if (this._parent) {
+					var r = Mavo.delete(this._parent.hooks.change, function (f) {
+						return f.inheritanceTrigger === _this6;
+					});
+					console.log(r, this._parent.hooks.change[0]);
+				}
+
+				// Add new trigger
+				_parent.onchange(function (_ref2) {
+					var action = _ref2.action,
+					    value = _ref2.value,
+					    from = _ref2.from;
+
+					_this6.changed(action, value, from);
+				});
+			}
+		},
+
 		static: {
 			actions: [],
 
@@ -1684,6 +1738,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				$.live(_.prototype, action, {
+					get: function get() {
+						var ret = this["_" + action];
+
+						if (ret === undefined && this.parent) {
+							return this.parent[action];
+						}
+
+						return ret;
+					},
 					set: function set(able, previous) {
 						if (setter) {
 							setter.call(this, able, previous);

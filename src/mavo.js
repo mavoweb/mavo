@@ -74,6 +74,8 @@ var _ = self.Mavo = $.Class({
 			inside: this.ui.bar
 		});
 
+		this.permissions = new Mavo.Permissions();
+
 		// Figure out backends for storage, data reads, and initialization respectively
 		for (let role of ["storage", "source", "init"]) {
 			if (this.index == 1) {
@@ -103,12 +105,10 @@ var _ = self.Mavo = $.Class({
 		for (let role of ["storage", "source", "init"]) {
 			if (this[role]) {
 				this.primaryBackend = this[role];
-				this.permissions = this[role].permissions;
+				this.permissions.parent = this[role].permissions;
 				break;
 			}
 		}
-
-		this.permissions = this.permissions || new Mavo.Permissions();
 
 		if (this.primaryBackend)  {
 			// Reflect backend permissions in global permissions
