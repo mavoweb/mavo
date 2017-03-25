@@ -102,17 +102,12 @@ var _ = self.Mavo = $.Class({
 			this.init = null;
 		}
 
-		for (let role of ["storage", "source", "init"]) {
-			if (this[role]) {
-				this.primaryBackend = this[role];
-				this.permissions.parent = this[role].permissions;
-				break;
-			}
-		}
+		this.primaryBackend = this.storage || this.source || this.init;
+
+		this.authControls = {};
 
 		if (this.primaryBackend)  {
-			// Reflect backend permissions in global permissions
-			this.authControls = {};
+			this.permissions.parent = this.primaryBackend.permissions;
 
 			$.style(this.ui.bar, {
 				"--mv-backend": `"${this.primaryBackend.id}"`

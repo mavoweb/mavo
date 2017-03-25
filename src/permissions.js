@@ -3,13 +3,12 @@
 var _ = Mavo.Permissions = $.Class({
 	constructor: function(o) {
 		this.triggers = [];
+		this.hooks = new $.Hooks();
 
 		// If we don’t do this, there is no way to retrieve this from inside parentChanged
 		this.parentChanged = _.prototype.parentChanged.bind(this);
 
 		this.set(o);
-
-		this.hooks = new $.Hooks();
 	},
 
 	// Set multiple permissions at once
@@ -90,19 +89,14 @@ var _ = Mavo.Permissions = $.Class({
 	parentChanged: function(o = {}) {
 		var localValue = this["_" + o.action];
 
-		if (localValue !== undefined) {
-			// We have a local value so we don’t care about parent changes
-			return;
-		}
-
-		if (o.from == o.value || o.value === localValue) {
-			// Nothing changed
+		if (localValue !== undefined || o.from == o.value) {
+			// We have a local value so we don’t care about parent changes OR nothing changed
 			return;
 		}
 
 		this.fireTriggers(o.action);
 
-		this.hooks.run("change", $.extend({permissions: this, o}));
+		this.hooks.run("change", $.extend({context: this, o}));
 	},
 
 	// A single permission changed value
@@ -121,7 +115,7 @@ var _ = Mavo.Permissions = $.Class({
 
 		this.fireTriggers(action);
 
-		this.hooks.run("change", {action, value, from, permissions: this});
+		this.hooks.run("change", {action, value, from, context: this});
 	},
 
 	fireTriggers: function(action) {
@@ -152,13 +146,34 @@ var _ = Mavo.Permissions = $.Class({
 
 	live: {
 		parent: function(parent) {
-			// Remove previous trigger, if any
-			if (this._parent) {
-				Mavo.delete(this._parent.hooks.change, this.parentChanged);
+			var oldParent = this._parent;
+
+			if (oldParent == parent) {
+				return;
 			}
 
-			// Add new trigger
-			parent.onchange(this.parentChanged);
+			this._parent = parent;
+
+			// Remove previous trigger, if any
+			if (oldParent) {
+				Mavo.delete(oldParent.hooks.change, this.parentChanged);
+			}
+
+			if (parent) {
+				// What changes does this cause? Fire triggers for them
+				oldParent = oldParent || {};
+
+				for (let action of _.actions) {
+					this.parentChanged({
+						action,
+						value: parent[action],
+						from: oldParent[action]
+					});
+				}
+
+				// Add new trigger
+				parent.onchange(this.parentChanged);
+			}
 		}
 	},
 
