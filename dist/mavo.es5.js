@@ -4456,6 +4456,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (index === undefined) {
 					index = this.bottomUp ? 0 : this.length;
 				}
+			} else {
+				index = this.length;
 			}
 
 			var env = { context: this, item: item };

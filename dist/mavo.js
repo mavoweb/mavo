@@ -3877,6 +3877,9 @@ var _ = Mavo.Collection = $.Class({
 				index = this.bottomUp? 0 : this.length;
 			}
 		}
+		else {
+			index = this.length;
+		}
 
 		var env = {context: this, item};
 
