@@ -2922,9 +2922,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	clear: function() {
-		if (this.modes != "read") {
-			this.value = this.emptyValue;
-		}
+		this.value = this.modes == "read"? this.templateValue : this.emptyValue;
 	},
 
 	dataRender: function(data) {
@@ -4132,15 +4130,17 @@ var _ = Mavo.Collection = $.Class({
 	 */
 	clear: function() {
 		if (this.mutable) {
-			this.propagate(item => {
+			for (var i = 1, item; item = this.children[i]; i++) {
 				item.element.remove();
 				item.destroy();
-			});
+			}
 
-			this.children = [];
+			this.children = this.children.slice(0, 1);
 
 			this.dataChanged("clear");
 		}
+
+		this.propagate("clear");
 	},
 
 	dataChanged: function(action, o = {}) {

@@ -367,15 +367,17 @@ var _ = Mavo.Collection = $.Class({
 	 */
 	clear: function() {
 		if (this.mutable) {
-			this.propagate(item => {
+			for (var i = 1, item; item = this.children[i]; i++) {
 				item.element.remove();
 				item.destroy();
-			});
+			}
 
-			this.children = [];
+			this.children = this.children.slice(0, 1);
 
 			this.dataChanged("clear");
 		}
+
+		this.propagate("clear");
 	},
 
 	dataChanged: function(action, o = {}) {

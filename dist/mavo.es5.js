@@ -3377,9 +3377,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		clear: function clear() {
-			if (this.modes != "read") {
-				this.value = this.emptyValue;
-			}
+			this.value = this.modes == "read" ? this.templateValue : this.emptyValue;
 		},
 
 		dataRender: function dataRender(data) {
@@ -4772,15 +4770,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    */
 		clear: function clear() {
 			if (this.mutable) {
-				this.propagate(function (item) {
+				for (var i = 1, item; item = this.children[i]; i++) {
 					item.element.remove();
 					item.destroy();
-				});
+				}
 
-				this.children = [];
+				this.children = this.children.slice(0, 1);
 
 				this.dataChanged("clear");
 			}
+
+			this.propagate("clear");
 		},
 
 		dataChanged: function dataChanged(action) {
