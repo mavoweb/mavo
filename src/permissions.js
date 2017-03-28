@@ -75,14 +75,12 @@ var _ = Mavo.Permissions = $.Class({
 
 	// Monitor all changes
 	onchange: function(callback) {
+		// Future changes
 		this.hooks.add("change", callback);
 
+		// Fire for current values
 		for (let action of _.actions) {
-			callback.call(this, {
-				action,
-				value: this[action],
-				permissions: this
-			});
+			callback.call(this, {action, value: this[action]});
 		}
 	},
 
@@ -96,7 +94,7 @@ var _ = Mavo.Permissions = $.Class({
 
 		this.fireTriggers(o.action);
 
-		this.hooks.run("change", $.extend({context: this, o}));
+		this.hooks.run("change", $.extend({context: this}, o));
 	},
 
 	// A single permission changed value
@@ -159,18 +157,16 @@ var _ = Mavo.Permissions = $.Class({
 				Mavo.delete(oldParent.hooks.change, this.parentChanged);
 			}
 
+			// What changes does this cause? Fire triggers for them
+			for (let action of _.actions) {
+				this.parentChanged({
+					action,
+					value: parent? parent[action] : undefined,
+					from: oldParent? oldParent[action] : undefined
+				});
+			}
+
 			if (parent) {
-				// What changes does this cause? Fire triggers for them
-				oldParent = oldParent || {};
-
-				for (let action of _.actions) {
-					this.parentChanged({
-						action,
-						value: parent[action],
-						from: oldParent[action]
-					});
-				}
-
 				// Add new trigger
 				parent.onchange(this.parentChanged);
 			}

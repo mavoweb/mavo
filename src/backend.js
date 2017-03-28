@@ -5,8 +5,8 @@
  */
 var _ = Mavo.Backend = $.Class({
 	constructor: function(url, o = {}) {
-		this.raw = url;
-		this.url = new URL(this.raw, location);
+		this.source = url;
+		this.url = new URL(this.source, location);
 		this.mavo = o.mavo;
 		this.format = Mavo.Formats.create(o.format, this);
 
@@ -53,6 +53,10 @@ var _ = Mavo.Backend = $.Class({
 		return `${this.id} (${this.url})`;
 	},
 
+	equals: function(backend) {
+		return backend === this || (backend && this.id == backend.id && this.source == backend.source);
+	},
+
 	static: {
 		// Return the appropriate backend(s) for this url
 		create: function(url, o) {
@@ -84,9 +88,9 @@ _.register($.Class({
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
 
-		this.element = $(this.raw) || $.create("script", {
+		this.element = $(this.source) || $.create("script", {
 			type: "application/json",
-			id: this.raw.slice(1),
+			id: this.source.slice(1),
 			inside: document.body
 		});
 	},

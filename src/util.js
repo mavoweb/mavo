@@ -131,7 +131,7 @@ var _ = $.extend(Mavo, {
 	},
 
 	scrollIntoViewIfNeeded: element => {
-		if (!Mavo.inViewport(element)) {
+		if (element && !Mavo.inViewport(element)) {
 			element.scrollIntoView({behavior: "smooth"});
 		}
 	},

@@ -119,7 +119,7 @@ Object.defineProperty(_, "create", {
 		}
 
 		if (!format) {
-			var url = backend.url? backend.url.pathname : backend.raw;
+			var url = backend.url? backend.url.pathname : backend.source;
 			var extension = (url.match(/\.\w+$/) || [])[0] || ".json";
 			var Format = _.JSON;
 
