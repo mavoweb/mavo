@@ -208,8 +208,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 (function ($, $$) {
 
-	"use strict";
-
 	var _ = self.Mavo = $.Class({
 		constructor: function constructor(element) {
 			var _this = this;
@@ -295,6 +293,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Should we save automatically?
 			this.autoSave = this.element.hasAttribute("mv-autosave");
+			this.autoSaveDelay = (this.element.getAttribute("mv-autosave") || 3) * 1000;
 
 			this.element.setAttribute("typeof", "");
 
@@ -319,21 +318,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.treeBuilt.resolve();
 
 			Mavo.hooks.run("init-tree-after", this);
-
-			this.ui = {
-				bar: $(".mv-bar", this.element) || $.create({
-					className: "mv-bar mv-ui",
-					start: this.element
-				})
-			};
-
-			this.ui.bar.classList.toggle("mv-compact", this.ui.bar.parentNode.offsetWidth < 400);
-			this.ui.bar.classList.toggle("mv-tiny", this.ui.bar.parentNode.offsetWidth < 250);
-
-			this.ui.status = $(".mv-status", this.ui.bar) || $.create("span", {
-				className: "mv-status",
-				inside: this.ui.bar
-			});
 
 			this.permissions = new Mavo.Permissions();
 
@@ -391,52 +375,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 
 			this.permissions.can("login", function () {
-				// #login authenticates if only 1 mavo on the page, or if the first.
-				// Otherwise, we have to generate a slightly more complex hash
-				_this.loginHash = "#login" + (Mavo.all[0] === _this ? "" : "-" + _this.id);
-
-				_this.authControls.login = $.create({
-					tag: "a",
-					href: _this.loginHash,
-					textContent: "Login",
-					title: "Login",
-					className: "mv-login mv-button",
-					events: {
-						click: function click(evt) {
-							evt.preventDefault();
-							_this.primaryBackend.login();
-						}
-					},
-					after: $(".mv-status", _this.ui.bar)
-				});
-
 				// We also support a URL param to trigger login, in case the user doesn't want visible login UI
-				if (Mavo.Functions.urlOption("login") !== null) {
+				if (Mavo.Functions.urlOption("login") !== null && _this.index == 1 || Mavo.Functions.urlOption(_this.id + "-login") !== null) {
 					_this.primaryBackend.login();
 				}
-			}, function () {
-				$.remove(_this.authControls.login);
 			});
 
 			// Update login status
 			this.element.addEventListener("mavo:login.mavo", function (evt) {
-				if (evt.backend == _this.primaryBackend) {
-					// ignore logins from secondary backends
-					var status = $(".mv-status", _this.ui.bar);
-					status.innerHTML = "";
-					$.set(status, {
-						contents: [{ tag: "strong", innerHTML: evt.name }, {
-							tag: "button",
-							textContent: "Logout",
-							className: "mv-logout",
-							events: {
-								click: function click(e) {
-									return evt.backend.logout();
-								}
-							}
-						}]
-					});
-
+				if (evt.backend == (_this.source || _this.storage)) {
 					// If last time we rendered we got nothing, maybe now we'll have better luck?
 					if (!_this.root.data && !_this.unsavedChanges) {
 						_this.load();
@@ -444,12 +391,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			this.element.addEventListener("mavo:logout.mavo", function (evt) {
-				if (evt.backend == _this.primaryBackend) {
-					// ignore logouts from secondary backends
-					$(".mv-status", _this.ui.bar).textContent = "";
-				}
-			});
+			this.bar = new Mavo.UI.Bar(this);
 
 			// Prevent editing properties inside <summary> to open and close the summary (fix bug #82)
 			if ($("summary [property]:not([typeof])")) {
@@ -471,9 +413,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var action = _ref.action,
 				    value = _ref.value;
 
-				if (action === undefined) {
-					console.trace();
-				}
 				var permissions = _this.element.getAttribute("mv-permissions") || "";
 				permissions = permissions.trim().split(/\s+/).filter(function (a) {
 					return a != action;
@@ -488,13 +427,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.needsEdit) {
 				this.permissions.can(["edit", "add", "delete"], function () {
-					_this.ui.edit = $.create("button", {
-						className: "mv-edit",
-						textContent: "Edit",
-						title: "Edit",
-						inside: _this.ui.bar
-					});
-
 					// Observe entire tree for mv-mode changes
 					_this.modeObserver = new Mavo.Observer(_this.element, "mv-mode", function (records) {
 						var _iteratorNormalCompletion3 = true;
@@ -575,27 +507,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}, function () {
 					// cannot
-					$.remove(_this.ui.edit);
-
-					if (_this.editing) {
-						_this.done();
-					}
-
 					_this.modeObserver && _this.modeObserver.destroy();
 				});
 			}
-
-			this.permissions.can("delete", function () {
-				_this.ui.clear = $.create("button", {
-					className: "mv-clear",
-					textContent: "Clear",
-					title: "Clear"
-				});
-
-				_this.ui.bar.appendChild(_this.ui.clear);
-			}, function () {
-				$.remove(_this.ui.clear);
-			});
 
 			if (this.storage || this.source) {
 				// Fetch existing data
@@ -609,12 +523,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions.can("save", function () {
 				if (_this.autoSave) {
-					var delay = (_this.element.getAttribute("mv-autosave") || 3) * 1000;
-
 					_this.element.addEventListener("mavo:load.mavo:autosave", function (evt) {
 						var debouncedSave = _.debounce(function () {
 							_this.save();
-						}, delay);
+						}, _this.autoSaveDelay);
 
 						var callback = function callback(evt) {
 							if (evt.node.saved) {
@@ -631,49 +543,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						});
 					});
 				}
-
-				if (!_this.autoSave || delay > 0) {
-					// If throttling is disabled, the Save button is pointless
-					_this.ui.save = $.create("button", {
-						className: "mv-save",
-						textContent: "Save",
-						title: "Save",
-						inside: _this.ui.bar
-					});
-				}
-
-				$.events(_this.ui.save, {
-					"mouseenter focus": function mouseenterFocus(e) {
-						_this.element.classList.add("mv-highlight-unsaved");
-					},
-					"mouseleave blur": function mouseleaveBlur(e) {
-						return _this.element.classList.remove("mv-highlight-unsaved");
-					}
-				});
 			}, function () {
-				$.remove(_this.ui.save);
-				_this.ui.save = null;
 				_this.element.removeEventListener(".mavo:autosave");
-			});
-
-			$.delegate(this.element, "click", {
-				".mv-save": function mvSave(evt) {
-					if (_this.permissions.save) {
-						_this.save();
-					}
-				},
-				".mv-edit": function mvEdit(evt) {
-					if (_this.editing || !_this.permissions.edit) {
-						_this.done();
-					} else {
-						_this.edit();
-					}
-				},
-				".mv-clear": function mvClear(evt) {
-					if (_this.permissions.delete) {
-						_this.clear();
-					}
-				}
 			});
 
 			// Ctrl + S or Cmd + S to save
@@ -894,7 +765,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var backend = this.source || this.storage;
 
 			if (!backend) {
-				return;
+				return Promise.resolve();
 			}
 
 			this.inProgress = "Loading";
@@ -941,7 +812,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var _this5 = this;
 
 			if (!this.storage) {
-				return;
+				return Promise.resolve();
 			}
 
 			this.inProgress = "Saving";
@@ -1009,7 +880,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			needsEdit: function needsEdit(value) {
-				$.remove(this.ui.edit);
+				this.bar.toggle("edit", value);
 			},
 
 			storage: function storage(value) {
@@ -1025,9 +896,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (value != this._primaryBackend) {
 					if (value) {
-						this.ui.bar.style.setProperty("--mv-backend", "\"" + value.id + "\"");
+						this.element.style.setProperty("--mv-backend", "\"" + value.id + "\"");
 					} else {
-						this.ui.bar.style.removeProperty("--mv-backend");
+						this.element.style.removeProperty("--mv-backend");
 					}
 
 					return value;
@@ -1073,6 +944,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return new _(element);
 				});
 			},
+
+			UI: {},
 
 			plugins: {},
 
@@ -1275,11 +1148,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Revocably add/remove elements from the DOM
    */
 		revocably: {
-			add: function add(element) {
+			add: function add(element, parent) {
 				var comment = _.revocably.isRemoved(element);
 
-				if (comment) {
+				if (comment && comment.parentNode) {
 					comment.parentNode.replaceChild(element, comment);
+				} else if (element && parent && !element.parentNode) {
+					// Has not been revocably removed because it has never even been added
+					parent.appendChild(element);
 				}
 
 				return comment;
@@ -1590,6 +1466,265 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
+(function ($, $$) {
+
+	Mavo.attributes.push("mv-bar");
+
+	var _ = Mavo.UI.Bar = $.Class({
+		constructor: function constructor(mavo) {
+			var _this = this;
+
+			this.mavo = mavo;
+
+			this.element = $(".mv-bar", this.mavo.element) || $.create({
+				className: "mv-bar mv-ui",
+				start: this.mavo.element,
+				innerHTML: "<button>&nbsp;</button>"
+			});
+
+			this.order = this.mavo.element.getAttribute("mv-bar");
+
+			if (this.order) {
+				this.order = this.order == "none" ? [] : this.order.split(/\s+/);
+			} else {
+				this.order = Object.keys(_.controls);
+			}
+
+			this.order = this.order.filter(function (id) {
+				return _.controls[id];
+			});
+
+			if (this.order.length) {
+				// Measure height of 1 row
+				this.targetHeight = this.element.offsetHeight;
+			}
+
+			this.element.innerHTML = "";
+
+			var _loop = function _loop(id) {
+				var o = _.controls[id];
+
+				if (o.create) {
+					_this[id] = o.create.call(_this.mavo);
+				} else {
+					label = o.label || Mavo.Functions.readable(id);
+
+
+					_this[id] = $.create("button", {
+						className: "mv-" + id,
+						textContent: label,
+						title: label
+					});
+				}
+
+				// We initially add all of them to retain order,
+				// then we remove revocably when/if needed
+				_this.add(id);
+
+				if (o.permission) {
+					_this.permissions.can(o.permission, function () {
+						_this.toggle(id, !o.condition || o.condition.call(_this.mavo));
+					}, function () {
+						_this.remove(id);
+					});
+				} else if (o.condition && !o.condition.call(_this.mavo)) {
+					_this.remove(id);
+				}
+
+				for (events in o.events) {
+					$.events(_this[id], events, o.events[events].bind(_this.mavo));
+				}
+
+				if (o.action) {
+					$.delegate(_this.element, "click", ".mv-" + id, function () {
+						if (!o.permission || _this.permissions.is(o.permission)) {
+							o.action.call(_this.mavo);
+						}
+					});
+				}
+			};
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = this.order[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var id = _step.value;
+					var label;
+					var events;
+
+					_loop(id);
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			if (this.order.length) {
+				this.resize();
+
+				if (self.ResizeObserver) {
+					var previousRect = null;
+
+					this.resizeObserver = new ResizeObserver(function (entries) {
+						var contentRect = entries[entries.length - 1].contentRect;
+
+						if (previousRect && previousRect.width == contentRect.width && previousRect.height == contentRect.height) {
+							return;
+						}
+
+						_this.resizeObserver.disconnect();
+
+						_this.resize();
+
+						previousRect = contentRect;
+
+						_this.resizeObserver.observe(_this.element);
+					});
+
+					this.resizeObserver.observe(this.element);
+				}
+			}
+		},
+
+		resize: function resize() {
+			this.element.classList.remove("mv-compact", "mv-tiny");
+
+			// Exceeded single row?
+			if (this.element.offsetHeight > this.targetHeight * 1.2) {
+				this.element.classList.add("mv-compact");
+
+				if (this.element.offsetHeight > this.targetHeight * 1.2) {
+					// Still too tall
+					this.element.classList.add("mv-tiny");
+				}
+			}
+		},
+
+		add: function add(id) {
+			var o = _.controls[id];
+
+			Mavo.revocably.add(this[id], this.element);
+		},
+
+		remove: function remove(id) {
+			var o = _.controls[id];
+
+			Mavo.revocably.remove(this[id], "mv-" + id);
+
+			if (o.cleanup) {
+				o.cleanup.call(this.mavo);
+			}
+		},
+
+		toggle: function toggle(id, add) {
+			return this[add ? "add" : "remove"](id);
+		},
+
+		proxy: {
+			"permissions": "mavo"
+		},
+
+		static: {
+			controls: {
+				status: {
+					create: function create() {
+						var _this2 = this;
+
+						var status = $.create({
+							className: "mv-status"
+						});
+
+						// Update login status
+						this.element.addEventListener("mavo:login.mavo", function (evt) {
+							if (evt.backend == _this2.primaryBackend) {
+								// ignore logins from secondary backends
+								_this2.bar.status.innerHTML = evt.name;
+							}
+						});
+
+						this.element.addEventListener("mavo:logout.mavo", function (evt) {
+							if (evt.backend == _this2.primaryBackend) {
+								// ignore logouts from secondary backends
+								_this2.bar.status.textContent = "";
+							}
+						});
+
+						return status;
+					}
+				},
+
+				edit: {
+					action: function action() {
+						if (this.editing) {
+							this.done();
+						} else {
+							this.edit();
+						}
+					},
+					permission: ["edit", "add", "delete"],
+					cleanup: function cleanup() {
+						if (this.editing) {
+							this.done();
+						}
+					}
+				},
+
+				save: {
+					action: function action() {
+						this.save();
+					},
+					events: {
+						"mouseenter focus": function mouseenterFocus() {
+							this.element.classList.add("mv-highlight-unsaved");
+						},
+						"mouseleave blur": function mouseleaveBlur() {
+							this.element.classList.remove("mv-highlight-unsaved");
+						}
+					},
+					permission: "save",
+					condition: function condition() {
+						return !this.autoSave || this.autoSaveDelay > 0;
+					}
+				},
+
+				clear: {
+					action: function action() {
+						this.clear();
+					},
+					permission: "delete"
+				},
+
+				login: {
+					action: function action() {
+						this.primaryBackend.login();
+					},
+					permission: "login"
+				},
+
+				logout: {
+					action: function action() {
+						this.primaryBackend.logout();
+					},
+					permission: "logout"
+				}
+			}
+		}
+	});
+})(Bliss, Bliss.$);
+"use strict";
+
 (function ($) {
 
 	var _ = Mavo.Permissions = $.Class({
@@ -1666,10 +1801,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		// Compare a set of permissions with true or false
 		// If comparing with true, we want at least one to be true, i.e. OR
 		// If comparing with false, we want ALL to be false, i.e. NOR
-		is: function is(actions, able) {
+		is: function is(actions) {
 			var _this3 = this;
 
-			var or = actions.map(function (action) {
+			var able = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+			var or = Mavo.toArray(actions).map(function (action) {
 				return !!_this3[action];
 			}).reduce(function (prev, current) {
 				return prev || current;

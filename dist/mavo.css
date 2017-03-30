@@ -385,6 +385,11 @@ p.mv-error {
     display: inline-block;
     vertical-align: -.1em;
     max-height: 1em; }
+  .mv-bar.mv-ui .mv-login::before {
+    content: "🔑 ";
+    -webkit-filter: brightness(160%) grayscale(100%);
+    filter: brightness(160%) grayscale(100%);
+    white-space: pre; }
   .mv-bar.mv-ui .mv-login::after {
     content: " to " var(--mv-backend); }
   .mv-bar.mv-ui .mv-edit::before {
@@ -414,53 +419,33 @@ p.mv-error {
       text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
     .mv-bar.mv-ui .mv-save:hover {
       background: #40bfbf; }
-  .mv-bar.mv-ui .mv-clear {
-    -ms-flex-order: 9999;
-    order: 9999; }
-    .mv-bar.mv-ui .mv-clear::before {
-      vertical-align: -.25em;
-      width: .9em;
-      -webkit-filter: saturate(0) brightness(600%);
-      filter: saturate(0) brightness(600%); }
-    .mv-bar.mv-ui .mv-clear:enabled:hover {
-      background: #b00; }
+  .mv-bar.mv-ui .mv-clear::before {
+    vertical-align: -.25em;
+    width: .9em;
+    -webkit-filter: saturate(0) brightness(600%);
+    filter: saturate(0) brightness(600%); }
+  .mv-bar.mv-ui .mv-clear:enabled:hover {
+    background: #b00; }
+  .mv-bar.mv-ui .mv-logout::before {
+    content: "↪"; }
   .mv-bar.mv-ui .mv-status {
     -ms-flex: 1;
     flex: 1;
     line-height: 2.4;
     margin-top: auto;
     margin-bottom: auto; }
-    .mv-bar.mv-ui .mv-status .mv-logout {
-      vertical-align: .2em;
-      border: 1px solid rgba(0, 0, 0, 0.4);
-      border-radius: .3em;
-      box-shadow: 0 1px rgba(255, 255, 255, 0.4) inset, 0 0.1em 0.1em rgba(0, 0, 0, 0.3);
-      padding: .1em .4em;
-      margin: 0 0 0 .6em;
-      font-size: 80%;
-      line-height: 1.5; }
-      .mv-bar.mv-ui .mv-status .mv-logout:active {
-        background: transparent;
-        box-shadow: 0 1px .1em black inset; }
-  [mv-permissions~="logout"] .mv-bar.mv-ui .mv-status::before {
+  [mv-permissions~="logout"] .mv-bar.mv-ui:not(.mv-compact) .mv-status::before {
     content: "Logged in to " var(--mv-backend) " as "; }
-  .mv-bar.mv-ui.mv-compact .mv-status::before {
-    content: ""; }
-  .mv-bar.mv-ui.mv-compact .mv-status,
-  .mv-bar.mv-ui.mv-compact .mv-status .mv-logout::after {
-    content: " from " var(--mv-backend); }
-  .mv-bar.mv-ui.mv-compact > button:not(.mv-login):not(.enough-specificity),
-  .mv-bar.mv-ui.mv-compact > .mv-button:not(.mv-login) {
+  .mv-bar.mv-ui.mv-compact {
+    padding: 0 .5em 0 .7em;
+    background-image: linear-gradient(transparent, rgba(38, 38, 38, 0.5));
+    background-size: auto; }
+  .mv-bar.mv-ui.mv-tiny > button:not(.mv-login),
+  .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login) {
     width: 1em;
     letter-spacing: -.5em;
     color: transparent;
     text-shadow: none; }
-  .mv-bar.mv-ui.mv-tiny {
-    padding: 0 .5em;
-    background-image: linear-gradient(transparent, rgba(38, 38, 38, 0.5));
-    background-size: auto; }
-    .mv-bar.mv-ui.mv-tiny .mv-status .mv-logout::after {
-      content: initial; }
 
 [mv-app][mv-bar="none"] .mv-bar {
   display: none; }

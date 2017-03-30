@@ -66,8 +66,8 @@ var _ = Mavo.Permissions = $.Class({
 	// Compare a set of permissions with true or false
 	// If comparing with true, we want at least one to be true, i.e. OR
 	// If comparing with false, we want ALL to be false, i.e. NOR
-	is: function(actions, able) {
-		var or = actions.map(action => !!this[action])
+	is: function(actions, able = true) {
+		var or = Mavo.toArray(actions).map(action => !!this[action])
 		                .reduce((prev, current) => prev || current);
 
 		return able? or : !or;
