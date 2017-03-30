@@ -278,8 +278,6 @@ var _ = self.Mavo = $.Class({
 			this.updateBackend(role);
 		}
 
-		this.authControls = {};
-
 		this.backendObserver = new Mavo.Observer(this.element, backendTypes.map(role => "mv-" + role), records => {
 			var changed = {};
 
@@ -1347,13 +1345,9 @@ var _ = Mavo.UI.Bar = $.Class({
 						return;
 					}
 
-					this.resizeObserver.disconnect();
-
 					this.resize();
 
 					previousRect = contentRect;
-
-					this.resizeObserver.observe(this.element);
 				});
 
 				this.resizeObserver.observe(this.element);
@@ -1362,6 +1356,8 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	resize: function() {
+		this.resizeObserver && this.resizeObserver.disconnect();
+
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
 		// Exceeded single row?
@@ -1373,10 +1369,16 @@ var _ = Mavo.UI.Bar = $.Class({
 				this.element.classList.add("mv-tiny");
 			}
 		}
+
+		this.resizeObserver && this.resizeObserver.observe(this.element);
 	},
 
 	add: function(id) {
 		var o =_.controls[id];
+
+		if (o.prepare) {
+			o.prepare.call(this.mavo);
+		}
 
 		Mavo.revocably.add(this[id], this.element);
 	},
@@ -1407,21 +1409,27 @@ var _ = Mavo.UI.Bar = $.Class({
 						className: "mv-status"
 					});
 
-					// Update login status
-					this.element.addEventListener("mavo:login.mavo", evt => {
-						if (evt.backend == this.primaryBackend) { // ignore logins from secondary backends
-							this.bar.status.innerHTML = evt.name;
-						}
-					});
-
-					this.element.addEventListener("mavo:logout.mavo", evt => {
-						if (evt.backend == this.primaryBackend) { // ignore logouts from secondary backends
-							this.bar.status.textContent = "";
-						}
-					});
-
 					return status;
-				}
+				},
+				prepare: function() {
+					var backend = this.primaryBackend;
+
+					if (backend && this.permissions.parent == backend.permissions && backend.user) {
+						var user = backend.user;
+						var html = user.name || "";
+
+						if (user.avatar) {
+							html = `<img class="mv-avatar" src="${user.avatar}" /> ${html}`;
+						}
+
+						if (user.url) {
+							html = `<a href="${user.url}" target="_blank">${html}</a>`;
+						}
+
+						this.bar.status.innerHTML = html;
+					}
+				},
+				permission: "logout"
 			},
 
 			edit: {
@@ -6137,7 +6145,7 @@ var _ = Mavo.Backend.register($.Class({
 								if (xhr.status == 404) {
 									// Repo does not exist so we can't check permissions
 									// Just check if authenticated user is the same as our URL username
-									if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+									if (this.user.username.toLowerCase() == this.username.toLowerCase()) {
 										this.permissions.on(["edit", "save"]);
 									}
 								}
@@ -6162,16 +6170,16 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	getUser: function() {
-		return this.req("user").then(accountInfo => {
-			this.user = accountInfo;
+		return this.req("user").then(info => {
+			this.user = {
+				username: info.login,
+				name: info.name || info.login,
+				avatar: info.avatar_url,
+				url: "https://github.com/" + info.login,
+				info
+			};
 
-			var name = accountInfo.name || accountInfo.login;
-			$.fire(this.mavo.element, "mavo:login", {
-				backend: this,
-				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
-							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}
-						</a>`
-			});
+			$.fire(this.mavo.element, "mavo:login", { backend: this });
 		});
 	},
 

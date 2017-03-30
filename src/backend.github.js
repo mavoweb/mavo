@@ -172,7 +172,7 @@ var _ = Mavo.Backend.register($.Class({
 								if (xhr.status == 404) {
 									// Repo does not exist so we can't check permissions
 									// Just check if authenticated user is the same as our URL username
-									if (this.user.login.toLowerCase() == this.username.toLowerCase()) {
+									if (this.user.username.toLowerCase() == this.username.toLowerCase()) {
 										this.permissions.on(["edit", "save"]);
 									}
 								}
@@ -197,16 +197,16 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	getUser: function() {
-		return this.req("user").then(accountInfo => {
-			this.user = accountInfo;
+		return this.req("user").then(info => {
+			this.user = {
+				username: info.login,
+				name: info.name || info.login,
+				avatar: info.avatar_url,
+				url: "https://github.com/" + info.login,
+				info
+			};
 
-			var name = accountInfo.name || accountInfo.login;
-			$.fire(this.mavo.element, "mavo:login", {
-				backend: this,
-				name: `<a href="https://github.com/${accountInfo.login}" target="_blank">
-							<img class="mv-avatar" src="${accountInfo.avatar_url}" /> ${name}
-						</a>`
-			});
+			$.fire(this.mavo.element, "mavo:login", { backend: this });
 		});
 	},
 

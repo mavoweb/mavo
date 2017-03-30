@@ -369,6 +369,9 @@ p.mv-error {
     border: 0;
     white-space: nowrap;
     text-align: center; }
+    .mv-bar.mv-ui > button:first-child,
+    .mv-bar.mv-ui > .mv-button:first-child {
+      margin-left: auto; }
     .mv-bar.mv-ui > button::before,
     .mv-bar.mv-ui > .mv-button::before {
       display: inline-block;
@@ -447,7 +450,8 @@ p.mv-error {
     color: transparent;
     text-shadow: none; }
 
-[mv-app][mv-bar="none"] .mv-bar {
+[mv-app][mv-bar="none"] .mv-bar,
+.mv-bar:empty {
   display: none; }
 
 /*# sourceMappingURL=maps/mavo.css.map */

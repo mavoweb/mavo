@@ -51,6 +51,10 @@
 		white-space: nowrap;
 		text-align: center;
 
+		&:first-child {
+			margin-left: auto;
+		}
+
 		&::before {
 			display: inline-block;
 			vertical-align: -.1em;
@@ -186,6 +190,7 @@
 	}
 }
 
-[mv-app][mv-bar="none"] .mv-bar {
+[mv-app][mv-bar="none"] .mv-bar,
+.mv-bar:empty {
 	display: none;
 }

@@ -349,8 +349,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			this.authControls = {};
-
 			this.backendObserver = new Mavo.Observer(this.element, backendTypes.map(function (role) {
 				return "mv-" + role;
 			}), function (records) {
@@ -1584,13 +1582,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							return;
 						}
 
-						_this.resizeObserver.disconnect();
-
 						_this.resize();
 
 						previousRect = contentRect;
-
-						_this.resizeObserver.observe(_this.element);
 					});
 
 					this.resizeObserver.observe(this.element);
@@ -1599,6 +1593,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		resize: function resize() {
+			this.resizeObserver && this.resizeObserver.disconnect();
+
 			this.element.classList.remove("mv-compact", "mv-tiny");
 
 			// Exceeded single row?
@@ -1610,10 +1606,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.element.classList.add("mv-tiny");
 				}
 			}
+
+			this.resizeObserver && this.resizeObserver.observe(this.element);
 		},
 
 		add: function add(id) {
 			var o = _.controls[id];
+
+			if (o.prepare) {
+				o.prepare.call(this.mavo);
+			}
 
 			Mavo.revocably.add(this[id], this.element);
 		},
@@ -1640,29 +1642,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			controls: {
 				status: {
 					create: function create() {
-						var _this2 = this;
-
 						var status = $.create({
 							className: "mv-status"
 						});
 
-						// Update login status
-						this.element.addEventListener("mavo:login.mavo", function (evt) {
-							if (evt.backend == _this2.primaryBackend) {
-								// ignore logins from secondary backends
-								_this2.bar.status.innerHTML = evt.name;
-							}
-						});
-
-						this.element.addEventListener("mavo:logout.mavo", function (evt) {
-							if (evt.backend == _this2.primaryBackend) {
-								// ignore logouts from secondary backends
-								_this2.bar.status.textContent = "";
-							}
-						});
-
 						return status;
-					}
+					},
+					prepare: function prepare() {
+						var backend = this.primaryBackend;
+
+						if (backend && this.permissions.parent == backend.permissions && backend.user) {
+							var user = backend.user;
+							var html = user.name || "";
+
+							if (user.avatar) {
+								html = "<img class=\"mv-avatar\" src=\"" + user.avatar + "\" /> " + html;
+							}
+
+							if (user.url) {
+								html = "<a href=\"" + user.url + "\" target=\"_blank\">" + html + "</a>";
+							}
+
+							this.bar.status.innerHTML = html;
+						}
+					},
+					permission: "logout"
 				},
 
 				edit: {
@@ -7147,7 +7151,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								if (xhr.status == 404) {
 									// Repo does not exist so we can't check permissions
 									// Just check if authenticated user is the same as our URL username
-									if (_this4.user.login.toLowerCase() == _this4.username.toLowerCase()) {
+									if (_this4.user.username.toLowerCase() == _this4.username.toLowerCase()) {
 										_this4.permissions.on(["edit", "save"]);
 									}
 								}
@@ -7174,14 +7178,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		getUser: function getUser() {
 			var _this5 = this;
 
-			return this.req("user").then(function (accountInfo) {
-				_this5.user = accountInfo;
+			return this.req("user").then(function (info) {
+				_this5.user = {
+					username: info.login,
+					name: info.name || info.login,
+					avatar: info.avatar_url,
+					url: "https://github.com/" + info.login,
+					info: info
+				};
 
-				var name = accountInfo.name || accountInfo.login;
-				$.fire(_this5.mavo.element, "mavo:login", {
-					backend: _this5,
-					name: "<a href=\"https://github.com/" + accountInfo.login + "\" target=\"_blank\">\n\t\t\t\t\t\t\t<img class=\"mv-avatar\" src=\"" + accountInfo.avatar_url + "\" /> " + name + "\n\t\t\t\t\t\t</a>"
-				});
+				$.fire(_this5.mavo.element, "mavo:login", { backend: _this5 });
 			});
 		},
 

@@ -89,13 +89,9 @@ var _ = Mavo.UI.Bar = $.Class({
 						return;
 					}
 
-					this.resizeObserver.disconnect();
-
 					this.resize();
 
 					previousRect = contentRect;
-
-					this.resizeObserver.observe(this.element);
 				});
 
 				this.resizeObserver.observe(this.element);
@@ -104,6 +100,8 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	resize: function() {
+		this.resizeObserver && this.resizeObserver.disconnect();
+
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
 		// Exceeded single row?
@@ -115,10 +113,16 @@ var _ = Mavo.UI.Bar = $.Class({
 				this.element.classList.add("mv-tiny");
 			}
 		}
+
+		this.resizeObserver && this.resizeObserver.observe(this.element);
 	},
 
 	add: function(id) {
 		var o =_.controls[id];
+
+		if (o.prepare) {
+			o.prepare.call(this.mavo);
+		}
 
 		Mavo.revocably.add(this[id], this.element);
 	},
@@ -149,21 +153,27 @@ var _ = Mavo.UI.Bar = $.Class({
 						className: "mv-status"
 					});
 
-					// Update login status
-					this.element.addEventListener("mavo:login.mavo", evt => {
-						if (evt.backend == this.primaryBackend) { // ignore logins from secondary backends
-							this.bar.status.innerHTML = evt.name;
-						}
-					});
-
-					this.element.addEventListener("mavo:logout.mavo", evt => {
-						if (evt.backend == this.primaryBackend) { // ignore logouts from secondary backends
-							this.bar.status.textContent = "";
-						}
-					});
-
 					return status;
-				}
+				},
+				prepare: function() {
+					var backend = this.primaryBackend;
+
+					if (backend && this.permissions.parent == backend.permissions && backend.user) {
+						var user = backend.user;
+						var html = user.name || "";
+
+						if (user.avatar) {
+							html = `<img class="mv-avatar" src="${user.avatar}" /> ${html}`;
+						}
+
+						if (user.url) {
+							html = `<a href="${user.url}" target="_blank">${html}</a>`;
+						}
+
+						this.bar.status.innerHTML = html;
+					}
+				},
+				permission: "logout"
 			},
 
 			edit: {

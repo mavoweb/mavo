@@ -74,8 +74,6 @@ var _ = self.Mavo = $.Class({
 			this.updateBackend(role);
 		}
 
-		this.authControls = {};
-
 		this.backendObserver = new Mavo.Observer(this.element, backendTypes.map(role => "mv-" + role), records => {
 			var changed = {};
 
