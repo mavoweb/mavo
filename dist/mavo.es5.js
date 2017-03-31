@@ -1223,9 +1223,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return value;
-			} else {
+			} else if ((typeof obj === "undefined" ? "undefined" : _typeof(obj)) == "object" && path && path.length) {
 				// Get
-				return (typeof obj === "undefined" ? "undefined" : _typeof(obj)) == "object" && path && path.length ? $.value.apply($, [obj].concat(_toConsumableArray(path))) : obj;
+				return path.reduce(function (obj, property, i) {
+					if (obj && property in obj) {
+						return obj[property];
+					}
+
+					if (Array.isArray(obj) && isNaN(property)) {
+						// Non-numeric property on array, try getting by id
+						for (var j = 0; j < obj.length; j++) {
+							if (obj[j] && obj[j].id == property) {
+								path[i] = j;
+								return obj[j];
+							}
+						}
+					}
+
+					return obj;
+				}, obj);
+			} else {
+				return obj;
 			}
 		},
 

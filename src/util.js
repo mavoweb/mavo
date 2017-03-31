@@ -157,9 +157,28 @@ var _ = $.extend(Mavo, {
 
 			return value;
 		}
+		else if (typeof obj == "object" && path && path.length) { // Get
+			return path.reduce((obj, property, i) => {
+				if (obj && property in obj) {
+					return obj[property];
+				}
+
+				if (Array.isArray(obj) && isNaN(property)) {
+					// Non-numeric property on array, try getting by id
+					for (var j=0; j<obj.length; j++) {
+						if (obj[j] && obj[j].id == property) {
+							path[i] = j;
+							return obj[j];
+						}
+					}
+				}
+
+				return obj;
+
+			}, obj);
+		}
 		else {
-			// Get
-			return typeof obj == "object" && path && path.length? $.value(obj, ...path) : obj;
+			return obj;
 		}
 	},
 
