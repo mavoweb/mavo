@@ -6756,7 +6756,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				symbol: "&",
 				identity: "",
 				scalar: function scalar(a, b) {
-					return "" + a + b;
+					return "" + (a || "") + (b || "");
 				}
 			},
 			"filter": {

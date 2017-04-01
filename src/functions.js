@@ -355,7 +355,7 @@ Mavo.Script = {
 		"concatenate": {
 			symbol: "&",
 			identity: "",
-			scalar: (a, b) => "" + a + b
+			scalar: (a, b) => "" + (a || "") + (b || "")
 		},
 		"filter": {
 			scalar: (a, b) => b? a : null
