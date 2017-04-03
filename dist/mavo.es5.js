@@ -3536,7 +3536,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		clear: function clear() {
-			this.value = this.modes == "read" ? this.templateValue : this.emptyValue;
+			this.value = this.templateValue;
 		},
 
 		dataRender: function dataRender(data) {

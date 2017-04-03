@@ -337,7 +337,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	clear: function() {
-		this.value = this.modes == "read"? this.templateValue : this.emptyValue;
+		this.value = this.templateValue;
 	},
 
 	dataRender: function(data) {
