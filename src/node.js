@@ -13,12 +13,12 @@ var _ = Mavo.Node = $.Class({
 		this.uid = ++_.maxId;
 		this.nodeType = this.nodeType;
 		this.property = null;
+		this.element = element;
 
 		$.extend(this, env.options);
 
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
-		this.element = element;
 		this.template = env.options.template;
 
 		if (this.template) {

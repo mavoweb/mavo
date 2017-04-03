@@ -2450,12 +2450,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.uid = ++_.maxId;
 			this.nodeType = this.nodeType;
 			this.property = null;
+			this.element = element;
 
 			$.extend(this, env.options);
 
 			_.all.set(element, [].concat(_toConsumableArray(_.all.get(this.element) || []), [this]));
 
-			this.element = element;
 			this.template = env.options.template;
 
 			if (this.template) {
@@ -2952,8 +2952,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, { group: this });
 			}
 
-			// Create Mavo objects for all properties in this group (primitives orgroups),
-			// but not properties in descendantgroups (they will be handled by their group)
+			// Create Mavo objects for all properties in this group (primitives or groups),
+			// but not properties in descendant groups (they will be handled by their group)
 			$$(Mavo.selectors.property, this.element).forEach(function (element) {
 				var property = Mavo.Node.getProperty(element);
 
@@ -4526,6 +4526,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				data: []
 			};
 
+			var count = 0; // count of non-null items
+
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -4539,6 +4541,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (itemData || o.null) {
 							env.data.push(itemData);
+							count += !!itemData;
 						}
 					}
 				}
@@ -4561,9 +4564,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 			}
 
-			if (!this.mutable && env.data.length == 1) {
+			if (!this.mutable && count == 1) {
 				// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-				env.data = env.data[0];
+				env.data = env.data.filter(function (d) {
+					return !!d;
+				})[0];
 			}
 
 			Mavo.hooks.run("node-getdata-end", env);

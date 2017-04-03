@@ -15,8 +15,8 @@ var _ = Mavo.Group = $.Class({
 			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
 		}
 
-		// Create Mavo objects for all properties in this group (primitives orgroups),
-		// but not properties in descendantgroups (they will be handled by their group)
+		// Create Mavo objects for all properties in this group (primitives or groups),
+		// but not properties in descendant groups (they will be handled by their group)
 		$$(Mavo.selectors.property, this.element).forEach(element => {
 			var property = Mavo.Node.getProperty(element);
 

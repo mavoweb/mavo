@@ -46,12 +46,15 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
+		var count = 0; // count of non-null items
+
 		for (item of this.children) {
 			if (!item.deleted || o.null) {
 				let itemData = item.getData(env.options);
 
 				if (itemData || o.null) {
 					env.data.push(itemData);
+					count += !!itemData;
 				}
 			}
 		}
@@ -60,9 +63,9 @@ var _ = Mavo.Collection = $.Class({
 			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
 		}
 
-		if (!this.mutable && env.data.length == 1) {
+		if (!this.mutable && count == 1) {
 			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-			env.data = env.data[0];
+			env.data = env.data.filter(d => !!d)[0];
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
