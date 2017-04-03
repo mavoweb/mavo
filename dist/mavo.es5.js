@@ -4392,7 +4392,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 			setEditorValue: function setEditorValue(value) {
 				if (this.datatype && this.datatype != "string") {
-					return;
+					value = value + "";
 				}
 
 				var cs = getComputedStyle(this.element);

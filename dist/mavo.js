@@ -3812,7 +3812,7 @@ _.register({
 
 		setEditorValue: function(value) {
 			if (this.datatype && this.datatype != "string") {
-				return;
+				value = value + "";
 			}
 
 			var cs = getComputedStyle(this.element);
