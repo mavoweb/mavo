@@ -49,12 +49,123 @@ var _ = Mavo.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
+	isAuthenticated: function() {
+		return !!this.accessToken;
+	},
+
+	// Any extra params to be passed to the oAuth URL.
+	oAuthParams: () => "",
+
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
 
 	equals: function(backend) {
 		return backend === this || (backend && this.id == backend.id && this.source == backend.source);
+	},
+
+	/**
+	 * Helper for making OAuth requests with JSON-based APIs.
+	 */
+	request: function(call, data, method = "GET", req = {}) {
+		if (data) {
+			req.data = typeof data != "string"? JSON.stringify(data) : data;
+		}
+
+		req.method = req.method || method;
+		req.responseType = req.responseType || "json";
+		req.headers = req.headers || {};
+		req.headers["Content-Type"] = req.headers["Content-Type"] || "application/json; charset=utf-8";
+
+		if (this.isAuthenticated()) {
+			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
+		}
+
+		call = new URL(call, this.constructor.apiDomain);
+
+		return $.fetch(call, req)
+			.catch(err => {
+				if (err && err.xhr) {
+					return Promise.reject(err.xhr);
+				}
+				else {
+					this.mavo.error("Something went wrong while connecting to " + this.id, err);
+				}
+			})
+			.then(xhr => Promise.resolve(xhr.response));
+	},
+
+	/**
+	 * Helper method for authenticating in OAuth APIs
+	 */
+	oAuthenticate: function(passive) {
+		return this.ready.then(() => {
+			if (this.isAuthenticated()) {
+				return Promise.resolve();
+			}
+
+			return new Promise((resolve, reject) => {
+				var id = this.id.toLowerCase();
+
+				if (passive) {
+					this.accessToken = localStorage[`mavo:${id}token`];
+
+					if (this.accessToken) {
+						resolve(this.accessToken);
+					}
+				}
+				else {
+					// Show window
+					var popup = {
+						width: Math.min(1000, innerWidth - 100),
+						height: Math.min(800, innerHeight - 100)
+					};
+
+					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
+					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
+
+					var state = {
+						url: location.href,
+						backend: this.id
+					};
+
+					this.authPopup = open(`${this.constructor.oAuth}?client_id=${this.key}&state=${encodeURIComponent(JSON.stringify(state))}` + this.oAuthParams(),
+						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
+
+					addEventListener("message", evt => {
+						if (evt.source === this.authPopup) {
+							if (evt.data.backend == this.id) {
+								this.accessToken = localStorage[`mavo:${id}token`] = evt.data.token;
+							}
+
+							if (!this.accessToken) {
+								reject(Error("Authentication error"));
+							}
+
+							resolve(this.accessToken);
+						}
+					});
+				}
+			});
+		});
+	},
+
+	/**
+	 * oAuth logout helper
+	 */
+	oAuthLogout: function() {
+		if (this.isAuthenticated()) {
+			var id = this.id.toLowerCase();
+
+			localStorage.removeItem(`mavo:${id}token`);
+			delete this.accessToken;
+
+			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
+
+			this.mavo.element._.fire("mavo:logout", {backend: this});
+		}
+
+		return Promise.resolve();
 	},
 
 	static: {

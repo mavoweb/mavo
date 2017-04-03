@@ -1,14 +1,10 @@
 (function($) {
 
-if (!self.Mavo) {
-	return;
-}
-
 var _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
 	id: "Github",
 	constructor: function() {
-		this.permissions.on("login");
+		this.permissions.on(["login", "read"]);
 
 		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
@@ -26,47 +22,11 @@ var _ = Mavo.Backend.register($.Class({
 			this.apiCall = this.url.pathname.slice(1);
 		}
 
-		this.permissions.on("read");
-
 		this.login(true);
 	},
 
-	get authenticated () {
-		return !!this.accessToken;
-	},
-
-	/**
-	 * Helper method to make a request with the Github API
-	 */
-	req: function(call, data, method = "GET", o = {method: method}) {
-		if (data) {
-			o.data =  JSON.stringify(data);
-		}
-
-		var request = $.extend(o, {
-			responseType: "json"
-		});
-
-		if (this.authenticated) {
-			request.headers = {
-				"Authorization": `token ${this.accessToken}`
-			};
-		}
-
-		return $.fetch(_.apiDomain + call, request)
-		.catch(err => {
-			if (err && err.xhr) {
-				return Promise.reject(err.xhr);
-			}
-			else {
-				this.mavo.error("Something went wrong while connecting to Github", err);
-			}
-		})
-		.then(xhr => Promise.resolve(xhr.response));
-	},
-
 	get: function() {
-		return this.req(this.apiCall)
+		return this.request(this.apiCall)
 		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
@@ -79,17 +39,17 @@ var _ = Mavo.Backend.register($.Class({
 	put: function(serialized, path) {
 		var fileCall = path? `repos/${this.username}/${this.repo}/contents/${path}` : this.apiCall;
 
-		return Promise.resolve(this.repoInfo || this.req("user/repos", {
+		return Promise.resolve(this.repoInfo || this.request("user/repos", {
 			name: this.repo
 		}, "POST"))
 		.then(repoInfo => {
 			this.repoInfo = repoInfo;
 
-			return this.req(fileCall, {
+			return this.request(fileCall, {
 				ref: this.branch
 			});
 		})
-		.then(fileInfo => this.req(fileCall, {
+		.then(fileInfo => this.request(fileCall, {
 			message: `Updated ${fileInfo.name || "file"}`,
 			content: _.btoa(serialized),
 			branch: this.branch,
@@ -97,7 +57,7 @@ var _ = Mavo.Backend.register($.Class({
 		}, "PUT"), xhr => {
 			if (xhr.status == 404) {
 				// File does not exist, create it
-				return this.req(fileCall, {
+				return this.request(fileCall, {
 					message: "Created file",
 					content: _.btoa(serialized),
 					branch: this.branch
@@ -109,45 +69,7 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	login: function(passive) {
-		return this.ready.then(() => {
-			if (this.authenticated) {
-				return Promise.resolve();
-			}
-
-			return (new Promise((resolve, reject) => {
-				if (passive) {
-					this.accessToken = localStorage["mavo:githubtoken"];
-
-					if (this.accessToken) {
-						resolve(this.accessToken);
-					}
-				}
-				else {
-					// Show window
-					var popup = {
-						width: Math.min(1000, innerWidth - 100),
-						height: Math.min(800, innerHeight - 100)
-					};
-
-					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
-					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
-
-					this.authPopup = open(`https://github.com/login/oauth/authorize?client_id=${this.key}&scope=repo,gist&state=${location.href}`,
-						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
-
-					addEventListener("message", evt => {
-						if (evt.source === this.authPopup) {
-							this.accessToken = localStorage["mavo:githubtoken"] = evt.data;
-
-							if (!this.accessToken) {
-								reject(Error("Authentication error"));
-							}
-
-							resolve(this.accessToken);
-						}
-					});
-				}
-			}))
+		return this.oAuthenticate(passive)
 			.then(() => this.getUser())
 			.catch(xhr => {
 				if (xhr.status == 401) {
@@ -160,7 +82,7 @@ var _ = Mavo.Backend.register($.Class({
 					this.permissions.on("logout");
 
 					if (this.repo) {
-						return this.req(`repos/${this.username}/${this.repo}`)
+						return this.request(`repos/${this.username}/${this.repo}`)
 							.then(repoInfo => {
 								this.repoInfo = repoInfo;
 
@@ -180,24 +102,23 @@ var _ = Mavo.Backend.register($.Class({
 					}
 				}
 			});
+
+	},
+
+	oAuthParams: () => "&scope=repo,gist",
+
+	logout: function() {
+		return this.oAuthLogout().then(() => {
+			this.user = null;
 		});
 	},
 
-	logout: function() {
-		if (this.authenticated) {
-			localStorage.removeItem("mavo:githubtoken");
-			delete this.accessToken;
-
-			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
-
-			this.mavo.element._.fire("mavo:logout", {backend: this});
+	getUser: function() {
+		if (this.user) {
+			return Promise.resolve(this.user);
 		}
 
-		return Promise.resolve();
-	},
-
-	getUser: function() {
-		return this.req("user").then(info => {
+		return this.request("user").then(info => {
 			this.user = {
 				username: info.login,
 				name: info.name || info.login,
@@ -212,6 +133,7 @@ var _ = Mavo.Backend.register($.Class({
 
 	static: {
 		apiDomain: "https://api.github.com/",
+		oAuth: "https://github.com/login/oauth/authorize",
 
 		test: function(url) {
 			url = new URL(url, location);

@@ -1800,12 +1800,123 @@ var _ = Mavo.Backend = $.Class({
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
 
+	isAuthenticated: function() {
+		return !!this.accessToken;
+	},
+
+	// Any extra params to be passed to the oAuth URL.
+	oAuthParams: () => "",
+
 	toString: function() {
 		return `${this.id} (${this.url})`;
 	},
 
 	equals: function(backend) {
 		return backend === this || (backend && this.id == backend.id && this.source == backend.source);
+	},
+
+	/**
+	 * Helper for making OAuth requests with JSON-based APIs.
+	 */
+	request: function(call, data, method = "GET", req = {}) {
+		if (data) {
+			req.data = typeof data != "string"? JSON.stringify(data) : data;
+		}
+
+		req.method = req.method || method;
+		req.responseType = req.responseType || "json";
+		req.headers = req.headers || {};
+		req.headers["Content-Type"] = req.headers["Content-Type"] || "application/json; charset=utf-8";
+
+		if (this.isAuthenticated()) {
+			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
+		}
+
+		call = new URL(call, this.constructor.apiDomain);
+
+		return $.fetch(call, req)
+			.catch(err => {
+				if (err && err.xhr) {
+					return Promise.reject(err.xhr);
+				}
+				else {
+					this.mavo.error("Something went wrong while connecting to " + this.id, err);
+				}
+			})
+			.then(xhr => Promise.resolve(xhr.response));
+	},
+
+	/**
+	 * Helper method for authenticating in OAuth APIs
+	 */
+	oAuthenticate: function(passive) {
+		return this.ready.then(() => {
+			if (this.isAuthenticated()) {
+				return Promise.resolve();
+			}
+
+			return new Promise((resolve, reject) => {
+				var id = this.id.toLowerCase();
+
+				if (passive) {
+					this.accessToken = localStorage[`mavo:${id}token`];
+
+					if (this.accessToken) {
+						resolve(this.accessToken);
+					}
+				}
+				else {
+					// Show window
+					var popup = {
+						width: Math.min(1000, innerWidth - 100),
+						height: Math.min(800, innerHeight - 100)
+					};
+
+					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
+					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
+
+					var state = {
+						url: location.href,
+						backend: this.id
+					};
+
+					this.authPopup = open(`${this.constructor.oAuth}?client_id=${this.key}&state=${encodeURIComponent(JSON.stringify(state))}` + this.oAuthParams(),
+						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
+
+					addEventListener("message", evt => {
+						if (evt.source === this.authPopup) {
+							if (evt.data.backend == this.id) {
+								this.accessToken = localStorage[`mavo:${id}token`] = evt.data.token;
+							}
+
+							if (!this.accessToken) {
+								reject(Error("Authentication error"));
+							}
+
+							resolve(this.accessToken);
+						}
+					});
+				}
+			});
+		});
+	},
+
+	/**
+	 * oAuth logout helper
+	 */
+	oAuthLogout: function() {
+		if (this.isAuthenticated()) {
+			var id = this.id.toLowerCase();
+
+			localStorage.removeItem(`mavo:${id}token`);
+			delete this.accessToken;
+
+			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
+
+			this.mavo.element._.fire("mavo:logout", {backend: this});
+		}
+
+		return Promise.resolve();
 	},
 
 	static: {
@@ -5875,46 +5986,21 @@ function numbers(array, args) {
 
 (function($) {
 
-if (!self.Mavo) {
-	return;
-}
-
-var dropboxURL = "//cdnjs.cloudflare.com/ajax/libs/dropbox.js/0.10.2/dropbox.min.js";
-
-Mavo.Backend.register($.Class({
+var _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
 	id: "Dropbox",
 	constructor: function() {
+		this.permissions.on(["login", "read"]);
+
+		this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
+
 		// Transform the dropbox shared URL into something raw and CORS-enabled
 		this.url = new URL(this.url, location);
 
-		if (this.url.protocol != "dropbox:") {
-			this.url.hostname = "dl.dropboxusercontent.com";
-			this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
-			this.permissions.on("read"); // TODO check if file actually is publicly readable
-		}
+		this.url.hostname = "dl.dropboxusercontent.com";
+		this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
 
-		this.permissions.on("login");
-
-		this.ready = $.include(self.Dropbox, dropboxURL).then((() => {
-			var referrer = new URL(document.referrer, location);
-
-			if (referrer.hostname === "www.dropbox.com" && location.hash.indexOf("#access_token=") === 0) {
-				// We’re in an OAuth response popup, do what you need then close this
-				Dropbox.AuthDriver.Popup.oauthReceiver();
-				$.fire(window, "load"); // hack because dropbox.js didn't foresee use cases like ours :/
-				close();
-				return;
-			}
-
-			this.path = (this.mavo.element.getAttribute("mv-dropbox-path") || "") + (new URL(this.url)).pathname.match(/[^/]*$/)[0];
-
-			this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "fle6gsc61w5v79j";
-
-			this.client = new Dropbox.Client({ key: this.key });
-		})).then(() => {
-			this.login(true);
-		});
+		this.login(true);
 	},
 
 	/**
@@ -5922,71 +6008,65 @@ Mavo.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(file = this.getFile()) {
-		return new Promise((resolve, reject) => {
-			this.client.writeFile(file.name, file.dataString, function(error, stat) {
-				if (error) {
-					return reject(Error(error));
-				}
-
-				console.log("File saved as revision " + stat.versionTag);
-				resolve(file);
-			});
+	put: function(serialized, path) {
+		return this.request("https://content.dropboxapi.com/2/files/upload", serialized, "POST", {
+			headers: {
+				"Dropbox-API-Arg": JSON.stringify({
+					path: this.path,
+					mode: "overwrite"
+				}),
+				"Content-Type": "application/octet-stream"
+			}
 		});
+	},
+
+	oAuthParams: () => `&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=code`,
+
+	getUser: function() {
+		if (this.user) {
+			return Promise.resolve(this.user);
+		}
+
+		return this.request("users/get_current_account", "null", "POST")
+			.then(info => {
+				this.user = {
+					username: info.email,
+					name: info.name.display_name,
+					avatar: info.profile_photo_url,
+					info
+				};
+			});
 	},
 
 	login: function(passive) {
-		return this.ready.then(() => {
-			return this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
-				this.client.authDriver(new Dropbox.AuthDriver.Popup({
-				    receiverUrl: new URL(location) + ""
-				}));
+		return this.oAuthenticate(passive)
+			.then(() => this.getUser())
+			.then(u => {
+				if (this.user) {
+					this.permissions.logout = true;
 
-				this.client.authenticate({interactive: !passive}, (error, client) => {
-
-					if (error) {
-						reject(Error(error));
-					}
-
-					if (this.client.isAuthenticated()) {
-						// TODO check if can actually edit the file
-						this.permissions.on(["logout", "edit"]);
-
-						resolve();
-					}
-					else {
-						this.permissions.off(["logout", "edit", "add", "delete"]);
-
-						reject();
-					}
-				});
-			});
-		}).then(() => {
-			// Not returning a promise here, since processes depending on login don't need to wait for this
-			this.client.getAccountInfo((error, accountInfo) => {
-				if (!error) {
-					$.fire(this.mavo.element, "mavo:login", $.extend({backend: this}, accountInfo));
+					// Check if can actually edit the file
+					this.request("sharing/get_shared_link_metadata", {
+						"url": this.source
+					}, "POST").then(info => {
+						this.path = info.path_lower;
+						this.permissions.on(["edit", "save"]);
+					});
 				}
 			});
-		}).catch(() => {});
 	},
 
 	logout: function() {
-		return !this.client.isAuthenticated()? Promise.resolve() : new Promise((resolve, reject) => {
-			this.client.signOut(null, () => {
-				this.permissions.off(["edit", "add", "delete"]).on("login");
-
-				this.mavo.element._.fire("mavo:logout", {backend: this});
-				resolve();
-			});
-		});
-
+		return this.oAuthLogout();
 	},
 
 	static: {
+		apiDomain: "https://api.dropboxapi.com/2/",
+		oAuth: "https://www.dropbox.com/oauth2/authorize",
+
 		test: function(url) {
 			url = new URL(url, location);
-			return /dropbox.com/.test(url.host) || url.protocol === "dropbox:";
+			return /dropbox.com/.test(url.host);
 		}
 	}
 }));
@@ -5995,15 +6075,11 @@ Mavo.Backend.register($.Class({
 
 (function($) {
 
-if (!self.Mavo) {
-	return;
-}
-
 var _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
 	id: "Github",
 	constructor: function() {
-		this.permissions.on("login");
+		this.permissions.on(["login", "read"]);
 
 		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
@@ -6021,47 +6097,11 @@ var _ = Mavo.Backend.register($.Class({
 			this.apiCall = this.url.pathname.slice(1);
 		}
 
-		this.permissions.on("read");
-
 		this.login(true);
 	},
 
-	get authenticated () {
-		return !!this.accessToken;
-	},
-
-	/**
-	 * Helper method to make a request with the Github API
-	 */
-	req: function(call, data, method = "GET", o = {method: method}) {
-		if (data) {
-			o.data =  JSON.stringify(data);
-		}
-
-		var request = $.extend(o, {
-			responseType: "json"
-		});
-
-		if (this.authenticated) {
-			request.headers = {
-				"Authorization": `token ${this.accessToken}`
-			};
-		}
-
-		return $.fetch(_.apiDomain + call, request)
-		.catch(err => {
-			if (err && err.xhr) {
-				return Promise.reject(err.xhr);
-			}
-			else {
-				this.mavo.error("Something went wrong while connecting to Github", err);
-			}
-		})
-		.then(xhr => Promise.resolve(xhr.response));
-	},
-
 	get: function() {
-		return this.req(this.apiCall)
+		return this.request(this.apiCall)
 		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
@@ -6074,17 +6114,17 @@ var _ = Mavo.Backend.register($.Class({
 	put: function(serialized, path) {
 		var fileCall = path? `repos/${this.username}/${this.repo}/contents/${path}` : this.apiCall;
 
-		return Promise.resolve(this.repoInfo || this.req("user/repos", {
+		return Promise.resolve(this.repoInfo || this.request("user/repos", {
 			name: this.repo
 		}, "POST"))
 		.then(repoInfo => {
 			this.repoInfo = repoInfo;
 
-			return this.req(fileCall, {
+			return this.request(fileCall, {
 				ref: this.branch
 			});
 		})
-		.then(fileInfo => this.req(fileCall, {
+		.then(fileInfo => this.request(fileCall, {
 			message: `Updated ${fileInfo.name || "file"}`,
 			content: _.btoa(serialized),
 			branch: this.branch,
@@ -6092,7 +6132,7 @@ var _ = Mavo.Backend.register($.Class({
 		}, "PUT"), xhr => {
 			if (xhr.status == 404) {
 				// File does not exist, create it
-				return this.req(fileCall, {
+				return this.request(fileCall, {
 					message: "Created file",
 					content: _.btoa(serialized),
 					branch: this.branch
@@ -6104,45 +6144,7 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	login: function(passive) {
-		return this.ready.then(() => {
-			if (this.authenticated) {
-				return Promise.resolve();
-			}
-
-			return (new Promise((resolve, reject) => {
-				if (passive) {
-					this.accessToken = localStorage["mavo:githubtoken"];
-
-					if (this.accessToken) {
-						resolve(this.accessToken);
-					}
-				}
-				else {
-					// Show window
-					var popup = {
-						width: Math.min(1000, innerWidth - 100),
-						height: Math.min(800, innerHeight - 100)
-					};
-
-					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
-					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
-
-					this.authPopup = open(`https://github.com/login/oauth/authorize?client_id=${this.key}&scope=repo,gist&state=${location.href}`,
-						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
-
-					addEventListener("message", evt => {
-						if (evt.source === this.authPopup) {
-							this.accessToken = localStorage["mavo:githubtoken"] = evt.data;
-
-							if (!this.accessToken) {
-								reject(Error("Authentication error"));
-							}
-
-							resolve(this.accessToken);
-						}
-					});
-				}
-			}))
+		return this.oAuthenticate(passive)
 			.then(() => this.getUser())
 			.catch(xhr => {
 				if (xhr.status == 401) {
@@ -6155,7 +6157,7 @@ var _ = Mavo.Backend.register($.Class({
 					this.permissions.on("logout");
 
 					if (this.repo) {
-						return this.req(`repos/${this.username}/${this.repo}`)
+						return this.request(`repos/${this.username}/${this.repo}`)
 							.then(repoInfo => {
 								this.repoInfo = repoInfo;
 
@@ -6175,24 +6177,23 @@ var _ = Mavo.Backend.register($.Class({
 					}
 				}
 			});
+
+	},
+
+	oAuthParams: () => "&scope=repo,gist",
+
+	logout: function() {
+		return this.oAuthLogout().then(() => {
+			this.user = null;
 		});
 	},
 
-	logout: function() {
-		if (this.authenticated) {
-			localStorage.removeItem("mavo:githubtoken");
-			delete this.accessToken;
-
-			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
-
-			this.mavo.element._.fire("mavo:logout", {backend: this});
+	getUser: function() {
+		if (this.user) {
+			return Promise.resolve(this.user);
 		}
 
-		return Promise.resolve();
-	},
-
-	getUser: function() {
-		return this.req("user").then(info => {
+		return this.request("user").then(info => {
 			this.user = {
 				username: info.login,
 				name: info.name || info.login,
@@ -6207,6 +6208,7 @@ var _ = Mavo.Backend.register($.Class({
 
 	static: {
 		apiDomain: "https://api.github.com/",
+		oAuth: "https://github.com/login/oauth/authorize",
 
 		test: function(url) {
 			url = new URL(url, location);
