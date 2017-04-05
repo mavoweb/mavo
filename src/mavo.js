@@ -97,7 +97,7 @@ var _ = self.Mavo = $.Class({
 
 		this.permissions.can("login", () => {
 			// We also support a URL param to trigger login, in case the user doesn't want visible login UI
-			if (Mavo.Functions.urlOption("login") !== null && this.index == 1 || Mavo.Functions.urlOption(this.id + "-login") !== null) {
+			if ("login" in Mavo.Functions.$url && this.index == 1 || this.id + "-login" in Mavo.Functions.$url) {
 				this.primaryBackend.login();
 			}
 		});
@@ -240,28 +240,14 @@ var _ = self.Mavo = $.Class({
 		return _.toJSON(this.getData());
 	},
 
+	message: function(message, options) {
+		return new _.UI.Message(this, message, options);
+	},
+
 	error: function(message, ...log) {
-		var close = () => $.transition(error, {opacity: 0}).then($.remove);
-		var closeTimeout;
-		var error = $.create("p", {
-			className: "mv-error mv-ui",
-			contents: [
-				message,
-				{
-					tag: "button",
-					className: "mv-close mv-ui",
-					textContent: "×",
-					events: {
-						"click": close
-					}
-				}
-			],
-			events: {
-				mouseenter: e => clearTimeout(closeTimeout),
-				mouseleave: _.rr(e => closeTimeout = setTimeout(close, 5000)),
-				click: e => this.element.scrollIntoView({behavior: "smooth"})
-			},
-			start: this.element
+		this.message(message, {
+			classes: "mv-error",
+			dismiss: ["button", "timeout"]
 		});
 
 		// Log more info for programmers
@@ -359,11 +345,11 @@ var _ = self.Mavo = $.Class({
 		var previous = this[role], backend;
 
 		if (this.index == 1) {
-			backend = _.Functions.urlOption(role);
+			backend = _.Functions.$url[role];
 		}
 
 		if (!backend) {
-			backend =  _.Functions.urlOption(`${this.id}-${role}`) || this.element.getAttribute("mv-" + role) || null;
+			backend =  _.Functions.$url[`${this.id}-${role}`] || this.element.getAttribute("mv-" + role) || null;
 		}
 
 		if (backend) {
@@ -471,7 +457,7 @@ var _ = self.Mavo = $.Class({
 					var message = "Problem saving data";
 
 					if (err instanceof XMLHttpRequest) {
-						message += xhr.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+						message += err.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
 					}
 
 					this.error(message, err);
@@ -658,6 +644,6 @@ $.extend(_.selectors, {
 // Init mavo. Async to give other scripts a chance to modify stuff.
 requestAnimationFrame(() => _.ready.catch(console.error).then(() => Mavo.init()));
 
-Stretchy.selectors.filter = ".mv-editor:not([property])";
+Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
 })(Bliss, Bliss.$);

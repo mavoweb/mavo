@@ -13,26 +13,21 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
-	urlOption: function(...names) {
-		var searchParams = "searchParams" in URL.prototype? new URL(location).searchParams : null;
-		var value = null;
+	// Read-only syntactic sugar for URL stuff
+	$url: (function() {
+		var ret = {};
+		var url = new URL(location);
 
-		for (let name of names) {
-			if (searchParams) {
-				value = searchParams.get(name);
-			}
-			else {
-				var match = location.search.match(RegExp(`[?&]${name}(?:=([^&]+))?(?=&|$)`, "i"));
-				value = match && (match[1] || "");
-			}
-
-			if (value !== null) {
-				return value;
-			}
+		for (let pair of url.searchParams) {
+			ret[pair[0]] = pair[1];
 		}
 
-		return null;
-	},
+		Object.defineProperty(ret, "toString", {
+			value: () => new URL(location)
+		});
+
+		return ret;
+	})(),
 
 	/**
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors

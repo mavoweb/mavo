@@ -68,17 +68,23 @@ var _ = Mavo.Backend = $.Class({
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
 	request: function(call, data, method = "GET", req = {}) {
-		if (data) {
-			req.data = typeof data != "string"? JSON.stringify(data) : data;
-		}
-
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
 		req.headers = req.headers || {};
 		req.headers["Content-Type"] = req.headers["Content-Type"] || "application/json; charset=utf-8";
+		req.data = data;
 
 		if (this.isAuthenticated()) {
 			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
+		}
+
+		if (typeof req.data === "object") {
+			if (req.method == "GET") {
+				req.data = Object.keys(req.data).map(p => p + "=" + encodeURIComponent(req.data[p])).join("&");
+			}
+			else {
+				req.data = JSON.stringify(req.data);
+			}
 		}
 
 		call = new URL(call, this.constructor.apiDomain);
@@ -92,7 +98,7 @@ var _ = Mavo.Backend = $.Class({
 					this.mavo.error("Something went wrong while connecting to " + this.id, err);
 				}
 			})
-			.then(xhr => Promise.resolve(xhr.response));
+			.then(xhr => req.method == "HEAD"? xhr : xhr.response);
 	},
 
 	/**

@@ -5,6 +5,11 @@
 	display: none;
 }
 
+.mv-danger:enabled:hover {
+	box-shadow: 0 0 10em #b00 inset;
+	color: white;
+}
+
 .mv-highlight {
 	@include highlight(hsla(58, 100%, 50%, .5));
 }
@@ -20,6 +25,9 @@
 	border-width: .4em .5em .8em .5em;
 	border-radius: 1em;
 	white-space: nowrap;
+	bottom: 100%;
+	bottom: calc(100% - 1.1em);
+	right: .1em;
 
 	@mixin show-item-controls {
 		transition: .4s opacity;
@@ -33,10 +41,6 @@
 	}
 
 	&:not(.mv-adjacent) {
-		bottom: 100%;
-		bottom: calc(100% - 1.1em);
-		right: .1em;
-
 		[mv-multiple]:hover:not(.mv-has-hovered-item) > &,
 		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > &,
 		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > &,
@@ -48,6 +52,8 @@
 
 	&.mv-adjacent {
 		margin: -.45em;
+		bottom: auto;
+		right: auto;
 
 		[mv-multiple]:hover + &,
 		[mv-multiple].mv-focus-within + & {
@@ -408,42 +414,108 @@ meter, progress {
 	}
 }
 
-p.mv-error {
-	position: fixed;
-	top: 1em;
-	left: 50%;
+.mv-message {
+	position: relative;
 	z-index: 2;
-	transform: translateX(-50%);
 	padding: .5em 1em;
 	border-radius: .3em;
 	margin: 0;
-	box-shadow: 0 .2em .2em rgba(0,0,0,.2);
-	background: hsla(0,100%,85%,.9);
-	color: hsl(0,100%,20%);
+	background: #cef;
+	--dark-color: #379;
+	color: black;
 	text-shadow: 0 1px 1px hsla(0,0%,100%,.5);
-	font-size: 120%;
-	animation: error-appear .5s backwards;
 	cursor: pointer;
 
-	@keyframes error-appear {
+	&::before {
+		content: "Notice: ";
+		text-transform: uppercase;
+		font-size: 85%;
+		font-weight: bold;
+		color: var(--dark-color);
+	}
+
+	.mv-close {
+		background: var(--dark-color);
+	}
+
+	@keyframes message-appear {
 		from {
 			transform: translateX(-50%) translateY(-10vh);
 			opacity: 0;
 		}
 	}
 
-	&::before {
-		content: "😳 Oh noes! ";
-		color: hsl(0,50%,50%);
-		text-transform: uppercase;
-		font-size: 85%;
-		font-weight: bold;
+	&:not(.mv-inline) {
+		position: fixed;
+		top: 1em;
+		left: 50%;
+		transform: translateX(-50%);
+		box-shadow: 0 .2em .2em rgba(0,0,0,.2);
+		animation: message-appear .5s backwards;
+		font-size: 120%;
+
+		& + & {
+			top: 4em;
+			animation-delay: .5s;
+		}
+
+		& + & + & {
+			top: 7em;
+			animation-delay: 1s;
+		}
 	}
 
-	& + .mv-error {
-		top: 4em;
-		animation-delay: .5s;
+	@keyframes inline-message-appear {
+		from {
+			transform: scaleY(0);
+			opacity: 0;
+		}
+	}
+
+	&.mv-inline {
+		margin-bottom: 1em;
+		transform-origin: top;
+		animation: inline-message-appear .5s backwards;
+	}
+
+	form {
+		margin: .5em 0;
+
+		input, textarea, select, button {
+			font: inherit;
+			box-sizing: border-box;
+		}
+
+		textarea {
+			width: 100%;
+			height: 1.8em;
+		}
+
+		button {
+			display: block;
+			margin: auto;
+		}
+	}
+
+	&.mv-warning {
+		background: hsla(50, 100%, 85%, .9);
+
+		&::before {
+			content: "⚠️ Warning: ";
+		}
+	}
+
+	&.mv-error {
+		background: hsla(0,100%,85%,.9);
+		color: hsl(0,100%,20%);
+		--dark-color: hsl(0,50%,50%);
+
+		&::before {
+			content: "😳 Oh noes! ";
+		}
 	}
 }
+
+
 
 @import 'bar';

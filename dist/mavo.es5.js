@@ -374,7 +374,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.permissions.can("login", function () {
 				// We also support a URL param to trigger login, in case the user doesn't want visible login UI
-				if (Mavo.Functions.urlOption("login") !== null && _this.index == 1 || Mavo.Functions.urlOption(_this.id + "-login") !== null) {
+				if ("login" in Mavo.Functions.$url && _this.index == 1 || _this.id + "-login" in Mavo.Functions.$url) {
 					_this.primaryBackend.login();
 				}
 			});
@@ -568,35 +568,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return _.toJSON(this.getData());
 		},
 
-		error: function error(message) {
-			var _this2 = this;
+		message: function message(_message, options) {
+			return new _.UI.Message(this, _message, options);
+		},
 
-			var close = function close() {
-				return $.transition(error, { opacity: 0 }).then($.remove);
-			};
-			var closeTimeout;
-			var error = $.create("p", {
-				className: "mv-error mv-ui",
-				contents: [message, {
-					tag: "button",
-					className: "mv-close mv-ui",
-					textContent: "×",
-					events: {
-						"click": close
-					}
-				}],
-				events: {
-					mouseenter: function mouseenter(e) {
-						return clearTimeout(closeTimeout);
-					},
-					mouseleave: _.rr(function (e) {
-						return closeTimeout = setTimeout(close, 5000);
-					}),
-					click: function click(e) {
-						return _this2.element.scrollIntoView({ behavior: "smooth" });
-					}
-				},
-				start: this.element
+		error: function error(message) {
+			this.message(message, {
+				classes: "mv-error",
+				dismiss: ["button", "timeout"]
 			});
 
 			// Log more info for programmers
@@ -627,11 +606,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		clear: function clear() {
-			var _this3 = this;
+			var _this2 = this;
 
 			if (confirm("This will delete all your data. Are you sure?")) {
 				this.store(null).then(function () {
-					return _this3.root.clear();
+					return _this2.root.clear();
 				});
 			}
 		},
@@ -706,11 +685,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			    backend;
 
 			if (this.index == 1) {
-				backend = _.Functions.urlOption(role);
+				backend = _.Functions.$url[role];
 			}
 
 			if (!backend) {
-				backend = _.Functions.urlOption(this.id + "-" + role) || this.element.getAttribute("mv-" + role) || null;
+				backend = _.Functions.$url[this.id + "-" + role] || this.element.getAttribute("mv-" + role) || null;
 			}
 
 			if (backend) {
@@ -758,7 +737,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Promise}  A promise that resolves when the data is loaded.
    */
 		load: function load() {
-			var _this4 = this;
+			var _this3 = this;
 
 			var backend = this.source || this.storage;
 
@@ -772,10 +751,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return backend.load();
 			}).catch(function (err) {
 				// Try again with init
-				if (_this4.init && _this4.init != backend) {
-					backend = _this4.init;
-					return _this4.init.ready.then(function () {
-						return _this4.init.load();
+				if (_this3.init && _this3.init != backend) {
+					backend = _this3.init;
+					return _this3.init.ready.then(function () {
+						return _this3.init.load();
 					});
 				}
 
@@ -786,7 +765,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var xhr = err instanceof XMLHttpRequest ? err : err.xhr;
 
 					if (xhr && xhr.status == 404) {
-						_this4.render(null);
+						_this3.render(null);
 					} else {
 						var message = "Problem loading data";
 
@@ -794,20 +773,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							message += xhr.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
 						}
 
-						_this4.error(message, err);
+						_this3.error(message, err);
 					}
 				}
 				return null;
 			}).then(function (data) {
-				return _this4.render(data);
+				return _this3.render(data);
 			}).then(function () {
-				_this4.inProgress = false;
-				$.fire(_this4.element, "mavo:load");
+				_this3.inProgress = false;
+				$.fire(_this3.element, "mavo:load");
 			});
 		},
 
 		store: function store() {
-			var _this5 = this;
+			var _this4 = this;
 
 			if (!this.storage) {
 				return Promise.resolve();
@@ -816,35 +795,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.inProgress = "Saving";
 
 			return this.storage.login().then(function () {
-				return _this5.storage.store(_this5.getData());
+				return _this4.storage.store(_this4.getData());
 			}).catch(function (err) {
 				if (err) {
 					var message = "Problem saving data";
 
 					if (err instanceof XMLHttpRequest) {
-						message += xhr.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
+						message += err.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
 					}
 
-					_this5.error(message, err);
+					_this4.error(message, err);
 				}
 
 				return null;
 			}).then(function (saved) {
-				_this5.inProgress = false;
+				_this4.inProgress = false;
 				return saved;
 			});
 		},
 
 		save: function save() {
-			var _this6 = this;
+			var _this5 = this;
 
 			return this.store().then(function (saved) {
 				if (saved) {
-					$.fire(_this6.element, "mavo:save", saved);
+					$.fire(_this5.element, "mavo:save", saved);
 
-					_this6.lastSaved = Date.now();
-					_this6.root.save();
-					_this6.unsavedChanges = false;
+					_this5.lastSaved = Date.now();
+					_this5.root.save();
+					_this5.unsavedChanges = false;
 				}
 			});
 		},
@@ -1026,7 +1005,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	});
 
-	Stretchy.selectors.filter = ".mv-editor:not([property])";
+	Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 })(Bliss, Bliss.$);
 "use strict";
 
@@ -1747,6 +1726,112 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
+(function ($, $$) {
+
+	var _ = Mavo.UI.Message = $.Class({
+		constructor: function constructor(mavo, message, o) {
+			var _this = this;
+
+			this.mavo = mavo;
+			this.message = message;
+			this.closed = Mavo.defer();
+
+			this.element = $.create({
+				className: "mv-ui mv-message",
+				innerHTML: this.message,
+				events: {
+					click: function click(e) {
+						return Mavo.scrollIntoViewIfNeeded(_this.mavo.element);
+					}
+				},
+				after: this.mavo.bar.element
+			});
+
+			if (o.classes) {
+				this.element.classList.add(o.classes);
+			}
+
+			o.dismiss = o.dismiss || {};
+
+			if (typeof o.dismiss == "string" || Array.isArray(o.dismiss)) {
+				var dismiss = {};
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = Mavo.toArray(o.dismiss)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var prop = _step.value;
+
+						dismiss[prop] = true;
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+
+				o.dismiss = dismiss;
+			}
+
+			if (o.dismiss.button) {
+				$.create("button", {
+					className: "mv-close mv-ui",
+					textContent: "×",
+					events: {
+						"click": function click(evt) {
+							return _this.close();
+						}
+					},
+					start: this.element
+				});
+			}
+
+			if (o.dismiss.timeout) {
+				var timeout = typeof o.dismiss.timeout === "number" ? o.dismiss.timeout : 5000;
+				var closeTimeout;
+
+				$.events(this.element, {
+					mouseenter: function mouseenter(e) {
+						return clearTimeout(closeTimeout);
+					},
+					mouseleave: Mavo.rr(function (e) {
+						return closeTimeout = setTimeout(function () {
+							return _this.close();
+						}, timeout);
+					})
+				});
+			}
+
+			if (o.dismiss.submit) {
+				this.element.addEventListener("submit", function (evt) {
+					evt.preventDefault();
+					_this.close(evt.target);
+				});
+			}
+		},
+
+		close: function close(resolve) {
+			var _this2 = this;
+
+			$.transition(this.element, { opacity: 0 }).then(function () {
+				$.remove(_this2.element);
+				_this2.closed.resolve(resolve);
+			});
+		}
+	});
+})(Bliss, Bliss.$);
+"use strict";
+
 (function ($) {
 
 	var _ = Mavo.Permissions = $.Class({
@@ -2086,6 +2171,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss);
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 (function ($) {
 
 	/**
@@ -2183,17 +2270,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var method = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "GET";
 			var req = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
-			if (data) {
-				req.data = typeof data != "string" ? JSON.stringify(data) : data;
-			}
-
 			req.method = req.method || method;
 			req.responseType = req.responseType || "json";
 			req.headers = req.headers || {};
 			req.headers["Content-Type"] = req.headers["Content-Type"] || "application/json; charset=utf-8";
+			req.data = data;
 
 			if (this.isAuthenticated()) {
 				req.headers["Authorization"] = req.headers["Authorization"] || "Bearer " + this.accessToken;
+			}
+
+			if (_typeof(req.data) === "object") {
+				if (req.method == "GET") {
+					req.data = Object.keys(req.data).map(function (p) {
+						return p + "=" + encodeURIComponent(req.data[p]);
+					}).join("&");
+				} else {
+					req.data = JSON.stringify(req.data);
+				}
 			}
 
 			call = new URL(call, this.constructor.apiDomain);
@@ -2205,7 +2299,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					_this3.mavo.error("Something went wrong while connecting to " + _this3.id, err);
 				}
 			}).then(function (xhr) {
-				return Promise.resolve(xhr.response);
+				return req.method == "HEAD" ? xhr : xhr.response;
 			});
 		},
 
@@ -6405,32 +6499,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return new Date();
 		},
 
-		urlOption: function urlOption() {
-			var searchParams = "searchParams" in URL.prototype ? new URL(location).searchParams : null;
-			var value = null;
-
-			for (var _len = arguments.length, names = Array(_len), _key = 0; _key < _len; _key++) {
-				names[_key] = arguments[_key];
-			}
+		// Read-only syntactic sugar for URL stuff
+		$url: function () {
+			var ret = {};
+			var url = new URL(location);
 
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
 
 			try {
-				for (var _iterator = names[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var name = _step.value;
+				for (var _iterator = url.searchParams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var pair = _step.value;
 
-					if (searchParams) {
-						value = searchParams.get(name);
-					} else {
-						var match = location.search.match(RegExp("[?&]" + name + "(?:=([^&]+))?(?=&|$)", "i"));
-						value = match && (match[1] || "");
-					}
-
-					if (value !== null) {
-						return value;
-					}
+					ret[pair[0]] = pair[1];
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -6447,8 +6529,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			return null;
-		},
+			Object.defineProperty(ret, "toString", {
+				value: function value() {
+					return new URL(location);
+				}
+			});
+
+			return ret;
+		}(),
 
 		/**
    * Get a property of an object. Used by the . operator to prevent TypeErrors
@@ -6658,8 +6746,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			o.identity = o.identity === undefined ? 0 : o.identity;
 
 			return _[name] = o.code || function () {
-				for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-					operands[_key2] = arguments[_key2];
+				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
+					operands[_key] = arguments[_key];
 				}
 
 				if (operands.length === 1) {
@@ -7094,7 +7182,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (parsedURL.username) {
 				$.extend(this, parsedURL);
 				this.repo = this.repo || "mv-data";
-				this.branch = this.branch || "master";
 				this.path = this.path || this.mavo.id + ".json";
 				this.apiCall = "repos/" + this.username + "/" + this.repo + "/contents/" + this.path;
 			} else {
@@ -7118,73 +7205,181 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @param {String} path - Optional file path
    * @return {Promise} A promise that resolves when the file is saved.
    */
-		put: function put(serialized, path) {
+		put: function put(serialized) {
 			var _this2 = this;
 
-			var fileCall = path ? "repos/" + this.username + "/" + this.repo + "/contents/" + path : this.apiCall;
+			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.path;
 
-			return Promise.resolve(this.repoInfo || this.request("user/repos", {
-				name: this.repo
-			}, "POST")).then(function (repoInfo) {
-				_this2.repoInfo = repoInfo;
+			if (!path) {
+				// Raw API calls are read-only for now
+				return;
+			}
 
-				return _this2.request(fileCall, {
-					ref: _this2.branch
-				});
-			}).then(function (fileInfo) {
-				return _this2.request(fileCall, {
-					message: "Updated " + (fileInfo.name || "file"),
-					content: _.btoa(serialized),
-					branch: _this2.branch,
-					sha: fileInfo.sha
-				}, "PUT");
-			}, function (xhr) {
-				if (xhr.status == 404) {
-					// File does not exist, create it
-					return _this2.request(fileCall, {
-						message: "Created file",
-						content: _.btoa(serialized),
-						branch: _this2.branch
-					}, "PUT");
+			var repoCall = "repos/" + this.username + "/" + this.repo;
+			var fileCall = repoCall + "/contents/" + path;
+
+			// Create repo if it doesn’t exist
+			var repoInfo = this.repoInfo || this.request("user/repos", { name: this.repo }, "POST").then(function (repoInfo) {
+				return _this2.repoInfo = repoInfo;
+			});
+
+			return Promise.resolve(repoInfo).then(function (repoInfo) {
+				if (!_this2.canPush()) {
+					// Does not have permission to commit, create a fork
+					return _this2.request(repoCall + "/forks", { name: _this2.repo }, "POST").then(function (forkInfo) {
+						fileCall = "repos/" + forkInfo.full_name + "/contents/" + path;
+						return _this2.forkInfo = forkInfo;
+					}).then(function (forkInfo) {
+						// Ensure that fork is created (they take a while)
+						var timeout;
+						var test = function test(resolve, reject) {
+							clearTimeout(timeout);
+							_this2.request("repos/" + forkInfo.full_name + "/commits", { until: "1970-01-01T00:00:00Z" }, "HEAD").then(function (x) {
+								resolve(forkInfo);
+							}).catch(function (x) {
+								// Try again after 1 second
+								timeout = setTimeout(test, 1000);
+							});
+						};
+
+						return new Promise(test);
+					});
 				}
 
-				return xhr;
+				return repoInfo;
+			}).then(function (repoInfo) {
+				return _this2.request(fileCall, {
+					ref: _this2.branch
+				}).then(function (fileInfo) {
+					return _this2.request(fileCall, {
+						message: "Updated " + (fileInfo.name || "file"),
+						content: _.btoa(serialized),
+						branch: _this2.branch,
+						sha: fileInfo.sha
+					}, "PUT");
+				}, function (xhr) {
+					if (xhr.status == 404) {
+						// File does not exist, create it
+						return _this2.request(fileCall, {
+							message: "Created file",
+							content: _.btoa(serialized),
+							branch: _this2.branch
+						}, "PUT");
+					}
+
+					return xhr;
+				});
+			}).then(function (fileInfo) {
+				if (_this2.forkInfo) {
+					// We saved in a fork, do we have a pull request?
+					_this2.request("repos/" + _this2.username + "/" + _this2.repo + "/pulls", {
+						head: _this2.user.username + ":" + _this2.branch,
+						base: _this2.branch
+					}).then(function (prs) {
+						_this2.pullRequest(prs[0]);
+					});
+				}
 			});
 		},
 
-		login: function login(passive) {
+		pullRequest: function pullRequest(existing) {
 			var _this3 = this;
 
+			var previewURL = new URL(location);
+			previewURL.searchParams.set(this.mavo.id + "-storage", "https://github.com/" + this.forkInfo.full_name + "/" + this.path);
+			var message = "Your edits are saved to <a href=\"" + previewURL + "\" target=\"_blank\">your own profile</a>, because you are not allowed to edit this page.";
+
+			if (this.notice) {
+				this.notice.close();
+			}
+
+			if (existing) {
+				// We already have a pull request, ask about closing it
+				this.notice = this.mavo.message(message + "\n\t\t\t\tYou have selected to suggest your edits to the page admins. Your suggestions have not been reviewed yet.\n\t\t\t\t<form onsubmit=\"return false\">\n\t\t\t\t\t<button class=\"mv-danger\">Revoke edit suggestion</button>\n\t\t\t\t</form>", {
+					classes: "mv-inline",
+					dismiss: ["button", "submit"]
+				});
+
+				this.notice.closed.then(function (form) {
+					if (!form) {
+						return;
+					}
+
+					// Close PR
+					_this3.request("repos/" + _this3.username + "/" + _this3.repo + "/pulls/" + existing.number, {
+						state: "closed"
+					}, "POST").then(function (prInfo) {
+						new Mavo.UI.Message(_this3.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion cancelled successfully!</a>", {
+							dismiss: ["button", "timeout"]
+						});
+
+						_this3.pullRequest();
+					});
+				});
+			} else {
+				// Ask about creating a PR
+				this.notice = this.mavo.message(message + "\n\t\t\t\tWrite a short description of your edits below to suggest them to the page admins:\n\t\t\t\t<form onsubmit=\"return false\">\n\t\t\t\t\t<textarea name=\"edits\" class=\"mv-autosize\" placeholder=\"I added / corrected / deleted ...\"></textarea>\n\t\t\t\t\t<button>Send edit suggestion</button>\n\t\t\t\t</form>", {
+					classes: "mv-inline",
+					dismiss: ["button", "submit"]
+				});
+
+				this.notice.closed.then(function (form) {
+					if (!form) {
+						return;
+					}
+
+					// We want to send a pull request
+					_this3.request("repos/" + _this3.username + "/" + _this3.repo + "/pulls", {
+						title: "Suggested edits to data",
+						body: "Hello there! I used Mavo to suggest the following edits:\n" + form.elements.edits.value + "\nPreview my changes here: " + previewURL,
+						head: _this3.user.username + ":" + _this3.branch,
+						base: _this3.branch
+					}, "POST").then(function (prInfo) {
+						new Mavo.UI.Message(_this3.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion sent successfully!</a>", {
+							dismiss: ["button", "timeout"]
+						});
+
+						_this3.pullRequest(prInfo);
+					});
+				});
+			}
+		},
+
+		login: function login(passive) {
+			var _this4 = this;
+
 			return this.oAuthenticate(passive).then(function () {
-				return _this3.getUser();
+				return _this4.getUser();
 			}).catch(function (xhr) {
 				if (xhr.status == 401) {
 					// Unauthorized. Access token we have is invalid, discard it
-					_this3.logout();
+					_this4.logout();
 				}
 			}).then(function (u) {
-				if (_this3.user) {
-					_this3.permissions.on("logout");
+				if (_this4.user) {
+					_this4.permissions.on(["edit", "save", "logout"]);
 
-					if (_this3.repo) {
-						return _this3.request("repos/" + _this3.username + "/" + _this3.repo).then(function (repoInfo) {
-							_this3.repoInfo = repoInfo;
+					if (_this4.repo) {
+						return _this4.request("repos/" + _this4.username + "/" + _this4.repo).then(function (repoInfo) {
+							if (_this4.branch === undefined) {
+								_this4.branch = repoInfo.default_branch;
+							}
 
-							if (repoInfo.permissions.push) {
-								_this3.permissions.on(["edit", "save"]);
-							}
-						}).catch(function (xhr) {
-							if (xhr.status == 404) {
-								// Repo does not exist so we can't check permissions
-								// Just check if authenticated user is the same as our URL username
-								if (_this3.user.username.toLowerCase() == _this3.username.toLowerCase()) {
-									_this3.permissions.on(["edit", "save"]);
-								}
-							}
+							return _this4.repoInfo = repoInfo;
 						});
 					}
 				}
 			});
+		},
+
+		canPush: function canPush() {
+			if (this.repoInfo) {
+				return this.repoInfo.permissions.push;
+			}
+
+			// Repo does not exist so we can't check permissions
+			// Just check if authenticated user is the same as our URL username
+			return this.user && this.user.username.toLowerCase() == this.username.toLowerCase();
 		},
 
 		oAuthParams: function oAuthParams() {
@@ -7192,22 +7387,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		logout: function logout() {
-			var _this4 = this;
+			var _this5 = this;
 
 			return this.oAuthLogout().then(function () {
-				_this4.user = null;
+				_this5.user = null;
 			});
 		},
 
 		getUser: function getUser() {
-			var _this5 = this;
+			var _this6 = this;
 
 			if (this.user) {
 				return Promise.resolve(this.user);
 			}
 
 			return this.request("user").then(function (info) {
-				_this5.user = {
+				_this6.user = {
 					username: info.login,
 					name: info.name || info.login,
 					avatar: info.avatar_url,
@@ -7215,7 +7410,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					info: info
 				};
 
-				$.fire(_this5.mavo.element, "mavo:login", { backend: _this5 });
+				$.fire(_this6.mavo.element, "mavo:login", { backend: _this6 });
 			});
 		},
 
@@ -7259,7 +7454,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Fix atob() and btoa() so they can handle Unicode
 			btoa: function (_btoa) {
-				function btoa(_x) {
+				function btoa(_x2) {
 					return _btoa.apply(this, arguments);
 				}
 

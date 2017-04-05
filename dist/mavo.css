@@ -22,6 +22,10 @@
 [mv-app] [hidden] {
   display: none; }
 
+.mv-danger:enabled:hover {
+  box-shadow: 0 0 10em #b00 inset;
+  color: white; }
+
 .mv-highlight {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.5) inset ; }
 
@@ -36,25 +40,26 @@
   border: solid transparent;
   border-width: .4em .5em .8em .5em;
   border-radius: 1em;
-  white-space: nowrap; }
+  white-space: nowrap;
+  bottom: 100%;
+  bottom: calc(100% - 1.1em);
+  right: .1em; }
   .mv-item-controls.mv-ui:hover, .mv-item-controls.mv-ui.mv-focus-within {
     transition: .4s opacity;
     opacity: 1;
     pointer-events: auto; }
-  .mv-item-controls.mv-ui:not(.mv-adjacent) {
-    bottom: 100%;
-    bottom: calc(100% - 1.1em);
-    right: .1em; }
-    [mv-multiple]:hover:not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent),
-    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > .mv-item-controls.mv-ui:not(.mv-adjacent),
-    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > .mv-item-controls.mv-ui:not(.mv-adjacent),
-    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent):focus,
-    [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent).mv-focus-within {
-      transition: .4s opacity;
-      opacity: 1;
-      pointer-events: auto; }
+  [mv-multiple]:hover:not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent),
+  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > .mv-item-controls.mv-ui:not(.mv-adjacent),
+  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > .mv-item-controls.mv-ui:not(.mv-adjacent),
+  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent):focus,
+  [mv-multiple]:not(:hover):not(.mv-has-hovered-item) > .mv-item-controls.mv-ui:not(.mv-adjacent).mv-focus-within {
+    transition: .4s opacity;
+    opacity: 1;
+    pointer-events: auto; }
   .mv-item-controls.mv-ui.mv-adjacent {
-    margin: -.45em; }
+    margin: -.45em;
+    bottom: auto;
+    right: auto; }
     [mv-multiple]:hover + .mv-item-controls.mv-ui.mv-adjacent,
     [mv-multiple].mv-focus-within + .mv-item-controls.mv-ui.mv-adjacent {
       transition: .4s opacity;
@@ -299,36 +304,74 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   .mv-ui {
     display: none !important; } }
 
-p.mv-error {
-  position: fixed;
-  top: 1em;
-  left: 50%;
+.mv-message {
+  position: relative;
   z-index: 2;
-  transform: translateX(-50%);
   padding: .5em 1em;
   border-radius: .3em;
   margin: 0;
-  box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
-  background: rgba(255, 179, 179, 0.9);
-  color: #660000;
+  background: #cef;
+  --dark-color: #379;
+  color: black;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
-  font-size: 120%;
-  animation: error-appear .5s backwards;
   cursor: pointer; }
+  .mv-message::before {
+    content: "Notice: ";
+    text-transform: uppercase;
+    font-size: 85%;
+    font-weight: bold;
+    color: var(--dark-color); }
+  .mv-message .mv-close {
+    background: var(--dark-color); }
 
-@keyframes error-appear {
+@keyframes message-appear {
   from {
     transform: translateX(-50%) translateY(-10vh);
     opacity: 0; } }
-  p.mv-error::before {
-    content: "😳 Oh noes! ";
-    color: #bf4040;
-    text-transform: uppercase;
-    font-size: 85%;
-    font-weight: bold; }
-  p.mv-error + .mv-error {
-    top: 4em;
-    animation-delay: .5s; }
+  .mv-message:not(.mv-inline) {
+    position: fixed;
+    top: 1em;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0.2em 0.2em rgba(0, 0, 0, 0.2);
+    animation: message-appear .5s backwards;
+    font-size: 120%; }
+    .mv-message:not(.mv-inline) + .mv-message:not(.mv-inline) {
+      top: 4em;
+      animation-delay: .5s; }
+    .mv-message:not(.mv-inline) + .mv-message:not(.mv-inline) + .mv-message:not(.mv-inline) {
+      top: 7em;
+      animation-delay: 1s; }
+
+@keyframes inline-message-appear {
+  from {
+    transform: scaleY(0);
+    opacity: 0; } }
+  .mv-message.mv-inline {
+    margin-bottom: 1em;
+    transform-origin: top;
+    animation: inline-message-appear .5s backwards; }
+  .mv-message form {
+    margin: .5em 0; }
+    .mv-message form input, .mv-message form textarea, .mv-message form select, .mv-message form button {
+      font: inherit;
+      box-sizing: border-box; }
+    .mv-message form textarea {
+      width: 100%;
+      height: 1.8em; }
+    .mv-message form button {
+      display: block;
+      margin: auto; }
+  .mv-message.mv-warning {
+    background: rgba(255, 242, 179, 0.9); }
+    .mv-message.mv-warning::before {
+      content: "⚠️ Warning: "; }
+  .mv-message.mv-error {
+    background: rgba(255, 179, 179, 0.9);
+    color: #660000;
+    --dark-color: #bf4040; }
+    .mv-message.mv-error::before {
+      content: "😳 Oh noes! "; }
 
 .mv-bar.mv-ui {
   all: initial;
