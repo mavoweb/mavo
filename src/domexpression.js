@@ -196,16 +196,4 @@ var _ = Mavo.DOMExpression = $.Class({
 	}
 });
 
-// Link primitive with its expressionText object
-// We need to do it before its constructor runs, to prevent any editing UI from being generated
-Mavo.hooks.add("primitive-init-start", function() {
-	var et = Mavo.DOMExpression.search(this.element, this.attribute);
-
-	if (et && !et.mavoNode) {
-		et.primitive = this;
-		this.storage = this.storage || "none";
-		this.modes = "read";
-	}
-});
-
 })(Bliss);

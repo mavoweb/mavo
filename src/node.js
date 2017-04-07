@@ -51,6 +51,18 @@ var _ = Mavo.Node = $.Class({
 			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 
+		// Must run before collections have a marker which messes up paths
+		var template = this.template;
+
+		if (template && template.expressions) {
+			// We know which expressions we have, don't traverse again
+			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
+				template: et,
+				item: this,
+				mavo: this.mavo
+			}));
+		}
+
 		Mavo.hooks.run("node-init-end", env);
 	},
 
@@ -93,13 +105,6 @@ var _ = Mavo.Node = $.Class({
 		if (this.isDataNull(o)) {
 			return null;
 		}
-
-		// Check if any of the parent groups doesn't return data
-		// this.walkUp(group => {
-		// 	if (group.isDataNull(o)) {
-		// 		return null;
-		// 	}
-		// });
 	},
 
 	isDataNull: function(o) {

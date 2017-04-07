@@ -102,7 +102,7 @@ Mavo.Expressions.directive("mv-if", {
 			});
 		},
 		"unit-isdatanull": function(env) {
-			env.result = env.result || (this.hidden && env.options.store == "*");
+			env.result = env.result || (this.hidden && env.options.live);
 		}
 	}
 });

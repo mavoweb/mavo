@@ -43,8 +43,10 @@ var _ = self.Mavo = $.Class({
 
 		this.element.setAttribute("typeof", "");
 
+		Mavo.hooks.run("init-start", this);
+
 		// Apply heuristic for groups
-		$$(_.selectors.primitive, element).forEach(element => {
+		for (let element of $$(_.selectors.primitive, this.element)) {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
@@ -55,7 +57,9 @@ var _ = self.Mavo = $.Class({
 					element.setAttribute("typeof", "");
 				}
 			}
-		});
+		}
+
+		this.expressions = new Mavo.Expressions(this);
 
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
@@ -257,8 +261,9 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		var env = {context: this, data};
+		this.expressions.active = false;
 
+		var env = {context: this, data};
 		_.hooks.run("render-start", env);
 
 		if (env.data) {
@@ -266,6 +271,9 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.unsavedChanges = false;
+
+		this.expressions.active = true;
+		this.expressions.update();
 
 		_.hooks.run("render-end", env);
 	},

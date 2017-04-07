@@ -80,10 +80,10 @@ var _ = Mavo.Group = $.Class({
 		env.data = {};
 
 		this.propagate(obj => {
-			if ((obj.saved || o.store == "*") && !(obj.property in env.data)) {
+			if ((obj.saved || env.options.live) && !(obj.property in env.data)) {
 				var data = obj.getData(o);
 
-				if (data !== null || env.options.null) {
+				if (data !== null || env.options.live) {
 					env.data[obj.property] = data;
 				}
 			}
@@ -91,23 +91,16 @@ var _ = Mavo.Group = $.Class({
 
 		$.extend(env.data, this.unhandled);
 
-		// JSON-LD stuff
-		if (this.type && this.type != _.DEFAULT_TYPE) {
-			env.data["@type"] = this.type;
-		}
+		if (!env.options.live) {
+			// JSON-LD stuff
+			if (this.type && this.type != _.DEFAULT_TYPE) {
+				env.data["@type"] = this.type;
+			}
 
-		if (this.vocab) {
-			env.data["@context"] = this.vocab;
-		}
+			if (this.vocab) {
+				env.data["@context"] = this.vocab;
+			}
 
-		// Special summary property works like toString
-		if (env.data.summary) {
-			env.data.toString = function() {
-				return this.summary;
-			};
-		}
-
-		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 

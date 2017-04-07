@@ -52,11 +52,7 @@ var _ = Mavo.Expressions = $.Class({
 		root = root || this.mavo.element;
 		rootGroup = Mavo.Node.get(root);
 
-		var data = rootGroup.getData({
-			relative: true,
-			store: "*",
-			null: true
-		});
+		var data = rootGroup.getData({live: true});
 
 		rootGroup.walk((obj, path) => {
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
@@ -127,42 +123,15 @@ var _ = Mavo.Expressions = $.Class({
 		directive: function(name, o) {
 			_.directives.push(name);
 			Mavo.attributes.push(name);
-
+			o.name = name;
 			Mavo.Plugins.register(o);
 		}
 	}
 });
 
-Mavo.hooks.add({
-	"init-tree-before": function() {
-		this.expressions = new Mavo.Expressions(this);
-	},
-	// Must be at a hook that collections don't have a marker yet which messes up paths
-	"node-init-end": function() {
-		var template = this.template;
-
-		if (template && template.expressions) {
-			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
-				template: et,
-				item: this,
-				mavo: this.mavo
-			}));
-		}
-	},
-	// TODO what about granular rendering?
-	"render-start": function() {
-		this.expressions.active = false;
-	},
-	"render-end": function() {
-		this.expressions.active = true;
-		this.expressions.update();
-	},
-	"collection-add-end": function(env) {
-		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
-	},
-	"node-getdata-end": self.Proxy && function(env) {
-		if (env.options.relative && (env.data && typeof env.data === "object" || this.collection)) {
+if (self.Proxy) {
+	Mavo.hooks.add("node-getdata-end", function(env) {
+		if (env.options.live && (env.data && typeof env.data === "object" || this.collection)) {
 			var data = env.data;
 
 			if (this instanceof Mavo.Primitive) {
@@ -248,7 +217,7 @@ Mavo.hooks.add({
 				}
 			});
 		}
-	}
-});
+	});
+}
 
 })(Bliss, Bliss.$);

@@ -23,6 +23,16 @@ var _ = Mavo.Primitive = $.Class({
 
 		Mavo.hooks.run("primitive-init-start", this);
 
+		// Link primitive with its expressionText object
+		// We need to do this before any editing UI is generated
+		this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
+
+		if (this.expressionText && !this.expressionText.mavoNode) {
+			this.expressionText.primitive = this;
+			this.storage = this.storage || "none";
+			this.modes = "read";
+		}
+
 		if (this.config.init) {
 			this.config.init.call(this, this.element);
 		}
@@ -167,7 +177,7 @@ var _ = Mavo.Primitive = $.Class({
 			env.data = null;
 		}
 
-		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
+		if (!o.live && this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
@@ -273,7 +283,7 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			}
-		});
+		}).then(() => $.unbind(this.element, ".mavo:preedit"));
 
 		if (this.config.edit) {
 			this.config.edit.call(this);
@@ -282,8 +292,6 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.preEdit.then(() => {
 			// Actual edit
-			$.unbind(this.element, ".mavo:preedit");
-
 			if (this.initEdit) {
 				this.initEdit();
 			}

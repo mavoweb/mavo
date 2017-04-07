@@ -247,8 +247,10 @@ var _ = self.Mavo = $.Class({
 
 		this.element.setAttribute("typeof", "");
 
+		Mavo.hooks.run("init-start", this);
+
 		// Apply heuristic for groups
-		$$(_.selectors.primitive, element).forEach(element => {
+		for (let element of $$(_.selectors.primitive, this.element)) {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
@@ -259,7 +261,9 @@ var _ = self.Mavo = $.Class({
 					element.setAttribute("typeof", "");
 				}
 			}
-		});
+		}
+
+		this.expressions = new Mavo.Expressions(this);
 
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
@@ -461,8 +465,9 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		var env = {context: this, data};
+		this.expressions.active = false;
 
+		var env = {context: this, data};
 		_.hooks.run("render-start", env);
 
 		if (env.data) {
@@ -470,6 +475,9 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.unsavedChanges = false;
+
+		this.expressions.active = true;
+		this.expressions.update();
 
 		_.hooks.run("render-end", env);
 	},
@@ -2403,6 +2411,18 @@ var _ = Mavo.Node = $.Class({
 			this.group = this.parentGroup = this.collection.parentGroup;
 		}
 
+		// Must run before collections have a marker which messes up paths
+		var template = this.template;
+
+		if (template && template.expressions) {
+			// We know which expressions we have, don't traverse again
+			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
+				template: et,
+				item: this,
+				mavo: this.mavo
+			}));
+		}
+
 		Mavo.hooks.run("node-init-end", env);
 	},
 
@@ -2445,13 +2465,6 @@ var _ = Mavo.Node = $.Class({
 		if (this.isDataNull(o)) {
 			return null;
 		}
-
-		// Check if any of the parent groups doesn't return data
-		// this.walkUp(group => {
-		// 	if (group.isDataNull(o)) {
-		// 		return null;
-		// 	}
-		// });
 	},
 
 	isDataNull: function(o) {
@@ -2894,10 +2907,10 @@ var _ = Mavo.Group = $.Class({
 		env.data = {};
 
 		this.propagate(obj => {
-			if ((obj.saved || o.store == "*") && !(obj.property in env.data)) {
+			if ((obj.saved || env.options.live) && !(obj.property in env.data)) {
 				var data = obj.getData(o);
 
-				if (data !== null || env.options.null) {
+				if (data !== null || env.options.live) {
 					env.data[obj.property] = data;
 				}
 			}
@@ -2905,23 +2918,16 @@ var _ = Mavo.Group = $.Class({
 
 		$.extend(env.data, this.unhandled);
 
-		// JSON-LD stuff
-		if (this.type && this.type != _.DEFAULT_TYPE) {
-			env.data["@type"] = this.type;
-		}
+		if (!env.options.live) {
+			// JSON-LD stuff
+			if (this.type && this.type != _.DEFAULT_TYPE) {
+				env.data["@type"] = this.type;
+			}
 
-		if (this.vocab) {
-			env.data["@context"] = this.vocab;
-		}
+			if (this.vocab) {
+				env.data["@context"] = this.vocab;
+			}
 
-		// Special summary property works like toString
-		if (env.data.summary) {
-			env.data.toString = function() {
-				return this.summary;
-			};
-		}
-
-		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
@@ -3049,6 +3055,16 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		Mavo.hooks.run("primitive-init-start", this);
+
+		// Link primitive with its expressionText object
+		// We need to do this before any editing UI is generated
+		this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
+
+		if (this.expressionText && !this.expressionText.mavoNode) {
+			this.expressionText.primitive = this;
+			this.storage = this.storage || "none";
+			this.modes = "read";
+		}
 
 		if (this.config.init) {
 			this.config.init.call(this, this.element);
@@ -3194,7 +3210,7 @@ var _ = Mavo.Primitive = $.Class({
 			env.data = null;
 		}
 
-		if (o.store != "*" && this.inPath.length) { // we don't want this in expressions
+		if (!o.live && this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
@@ -3300,7 +3316,7 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			}
-		});
+		}).then(() => $.unbind(this.element, ".mavo:preedit"));
 
 		if (this.config.edit) {
 			this.config.edit.call(this);
@@ -3309,8 +3325,6 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.preEdit.then(() => {
 			// Actual edit
-			$.unbind(this.element, ".mavo:preedit");
-
 			if (this.initEdit) {
 				this.initEdit();
 			}
@@ -3842,6 +3856,7 @@ Object.defineProperties(_, {
 	"register": {
 		value: function(selector, o) {
 			if (typeof arguments[0] === "object") {
+				// Multiple definitions
 				for (let s in arguments[0]) {
 					_.register(s, arguments[0][s]);
 				}
@@ -3876,31 +3891,33 @@ Object.defineProperties(_, {
 		value: function(element, attribute, datatype) {
 			var matches = [];
 
-			selectorloop: for (var selector in _) {
-				if (element.matches(selector)) {
-					var all = _[selector];
+			selectorloop: for (var id in _) {
+				for (var o of _[id]) {
+					// Passes attribute test?
+					var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
 
-					for (var o of all) {
-						// Passes attribute test?
-						var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
-
-						if (!attributeMatches) {
-							continue;
-						}
-
-						// Passes datatype test?
-						if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
-							continue;
-						}
-
-						// Passes arbitrary test?
-						if (o.test && !o.test(element, attribute, datatype)) {
-							continue;
-						}
-
-						// All tests have passed
-						matches.push(o);
+					if (!attributeMatches) {
+						continue;
 					}
+
+					// Passes datatype test?
+					if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+						continue;
+					}
+
+					// Passes selector test?
+					var selector = o.selector || id;
+					if (!element.matches(selector)) {
+						continue;
+					}
+
+					// Passes arbitrary test?
+					if (o.test && !o.test(element, attribute, datatype)) {
+						continue;
+					}
+
+					// All tests have passed
+					matches.push(o);
 				}
 			}
 
@@ -4349,6 +4366,8 @@ var _ = Mavo.Collection = $.Class({
 
 		Mavo.hooks.run("collection-add-end", env);
 
+		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
+
 		return env.item;
 	},
 
@@ -4653,6 +4672,8 @@ var _ = Mavo.Collection = $.Class({
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
+
+					this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
 				}
 
 				if (this.bottomUp) {
@@ -5287,18 +5308,6 @@ var _ = Mavo.DOMExpression = $.Class({
 	}
 });
 
-// Link primitive with its expressionText object
-// We need to do it before its constructor runs, to prevent any editing UI from being generated
-Mavo.hooks.add("primitive-init-start", function() {
-	var et = Mavo.DOMExpression.search(this.element, this.attribute);
-
-	if (et && !et.mavoNode) {
-		et.primitive = this;
-		this.storage = this.storage || "none";
-		this.modes = "read";
-	}
-});
-
 })(Bliss);
 
 (function($, $$) {
@@ -5355,11 +5364,7 @@ var _ = Mavo.Expressions = $.Class({
 		root = root || this.mavo.element;
 		rootGroup = Mavo.Node.get(root);
 
-		var data = rootGroup.getData({
-			relative: true,
-			store: "*",
-			null: true
-		});
+		var data = rootGroup.getData({live: true});
 
 		rootGroup.walk((obj, path) => {
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
@@ -5430,42 +5435,15 @@ var _ = Mavo.Expressions = $.Class({
 		directive: function(name, o) {
 			_.directives.push(name);
 			Mavo.attributes.push(name);
-
+			o.name = name;
 			Mavo.Plugins.register(o);
 		}
 	}
 });
 
-Mavo.hooks.add({
-	"init-tree-before": function() {
-		this.expressions = new Mavo.Expressions(this);
-	},
-	// Must be at a hook that collections don't have a marker yet which messes up paths
-	"node-init-end": function() {
-		var template = this.template;
-
-		if (template && template.expressions) {
-			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
-				template: et,
-				item: this,
-				mavo: this.mavo
-			}));
-		}
-	},
-	// TODO what about granular rendering?
-	"render-start": function() {
-		this.expressions.active = false;
-	},
-	"render-end": function() {
-		this.expressions.active = true;
-		this.expressions.update();
-	},
-	"collection-add-end": function(env) {
-		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
-	},
-	"node-getdata-end": self.Proxy && function(env) {
-		if (env.options.relative && (env.data && typeof env.data === "object" || this.collection)) {
+if (self.Proxy) {
+	Mavo.hooks.add("node-getdata-end", function(env) {
+		if (env.options.live && (env.data && typeof env.data === "object" || this.collection)) {
 			var data = env.data;
 
 			if (this instanceof Mavo.Primitive) {
@@ -5551,8 +5529,8 @@ Mavo.hooks.add({
 				}
 			});
 		}
-	}
-});
+	});
+}
 
 })(Bliss, Bliss.$);
 
@@ -5660,7 +5638,7 @@ Mavo.Expressions.directive("mv-if", {
 			});
 		},
 		"unit-isdatanull": function(env) {
-			env.result = env.result || (this.hidden && env.options.store == "*");
+			env.result = env.result || (this.hidden && env.options.live);
 		}
 	}
 });

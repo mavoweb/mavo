@@ -144,6 +144,8 @@ var _ = Mavo.Collection = $.Class({
 
 		Mavo.hooks.run("collection-add-end", env);
 
+		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
+
 		return env.item;
 	},
 
@@ -448,6 +450,8 @@ var _ = Mavo.Collection = $.Class({
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
+
+					this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
 				}
 
 				if (this.bottomUp) {
