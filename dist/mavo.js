@@ -1363,18 +1363,28 @@ var _ = Mavo.Plugins = {
 			}
 		}
 
+		var ready = [];
+
 		if (o.ready) {
-			Mavo.dependencies.push(o.ready);
+			ready.push(o.ready);
 		}
 
 		if (o.dependencies) {
 			var base = document.currentScript? document.currentScript.src : location;
-			var ready = o.dependencies.map(url => Mavo.load(url, base));
+			var dependencies = o.dependencies.map(url => Mavo.load(url, base));
+			ready.push(...dependencies);
+		}
+
+		if (ready.length) {
 			Mavo.dependencies.push(...ready);
 		}
 
 		if (o.name) {
 			_.loaded[o.name] = o;
+		}
+
+		if (o.init) {
+			Promise.all(ready).then(() => o.init());
 		}
 	},
 

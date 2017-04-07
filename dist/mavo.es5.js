@@ -1629,22 +1629,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
+			var ready = [];
+
 			if (o.ready) {
-				Mavo.dependencies.push(o.ready);
+				ready.push(o.ready);
 			}
 
 			if (o.dependencies) {
-				var _Mavo$dependencies;
-
 				var base = document.currentScript ? document.currentScript.src : location;
-				var ready = o.dependencies.map(function (url) {
+				var dependencies = o.dependencies.map(function (url) {
 					return Mavo.load(url, base);
 				});
-				(_Mavo$dependencies = Mavo.dependencies).push.apply(_Mavo$dependencies, _toConsumableArray(ready));
+				ready.push.apply(ready, _toConsumableArray(dependencies));
+			}
+
+			if (ready.length) {
+				var _Mavo$dependencies;
+
+				(_Mavo$dependencies = Mavo.dependencies).push.apply(_Mavo$dependencies, ready);
 			}
 
 			if (o.name) {
 				_.loaded[o.name] = o;
+			}
+
+			if (o.init) {
+				Promise.all(ready).then(function () {
+					return o.init();
+				});
 			}
 		},
 
