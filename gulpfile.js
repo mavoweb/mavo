@@ -14,8 +14,10 @@ var notify = require("gulp-notify");
 var merge = require("merge2");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
-var mavo = "mavo util ui.bar ui.message permissions backend formats node group primitive elements collection expression domexpression expressions mv-if mv-value functions backend.dropbox backend.github"
-			.split(" ").map(path => `src/${path}.js`);
+var mavo = `mavo util plugins ui.bar ui.message permissions backend formats node group primitive elements collection
+			expression domexpression expressions mv-if mv-value functions
+			backend.dropbox backend.github`
+			.split(/\s+/).map(path => `src/${path}.js`);
 
 gulp.task("concat", function() {
 	var files = ["lib/*.js", ...mavo];

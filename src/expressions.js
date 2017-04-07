@@ -128,7 +128,7 @@ var _ = Mavo.Expressions = $.Class({
 			_.directives.push(name);
 			Mavo.attributes.push(name);
 
-			Mavo.plugin(o);
+			Mavo.Plugins.register(o);
 		}
 	}
 });

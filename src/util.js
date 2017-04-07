@@ -1,6 +1,34 @@
 (function ($, $$) {
 
 var _ = $.extend(Mavo, {
+	/**
+	 * Load a file, only once
+	 */
+	load: (url, base = document.currentScript? document.currentScript.src : location) => {
+		_.loaded = _.loaded || new Set();
+
+		if (_.loaded.has(url + "")) {
+			return;
+		}
+
+		url = new URL(url, base);
+
+		if (/\.css$/.test(url.pathname)) {
+			// CSS file
+			$.create("link", {
+				"href": url,
+				"rel": "stylesheet",
+				"inside": document.head
+			});
+
+			// No need to wait for stylesheets
+			return Promise.resolve();
+		}
+
+		// JS file
+		return $.include(url);
+	},
+
 	toJSON: data => {
 		if (data === null) {
 			return "";
@@ -12,14 +40,6 @@ var _ = $.extend(Mavo, {
 		}
 
 		return JSON.stringify(data, null, "\t");
-	},
-
-	queryJSON: function(data, path) {
-		if (!path || !data) {
-			return data;
-		}
-
-		return $.value.apply($, [data].concat(path.split("/")));
 	},
 
 	// If the passed value is not an array, convert to an array
@@ -321,6 +341,31 @@ var _ = $.extend(Mavo, {
 		};
 
 		return promise;
+	},
+
+	/**
+	 * Similar to Promise.all() but can handle post-hoc additions
+	 * and does not reject if one promise rejects.
+	 */
+	all: function(iterable) {
+		// Turn rejected promises into resolved ones
+		for (let promise of iterable) {
+			if ($.type(promise) == "promise") {
+				promise = promise.catch(err => err);
+			}
+		}
+
+		return Promise.all(iterable).then(resolved => {
+			if (iterable.length != resolved.length) {
+				// The list of promises or values changed. Return a new Promise.
+				// The original promise won't resolve until the new one does.
+				return _.all(iterable);
+			}
+
+			// The list of promises or values stayed the same.
+			// Return results immediately.
+			return resolved;
+		});
 	},
 
 	/**

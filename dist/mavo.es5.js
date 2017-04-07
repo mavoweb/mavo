@@ -908,8 +908,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
-
-			ready: Promise.all([$.ready(), $.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")]),
+			dependencies: [],
 
 			init: function init() {
 				var container = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
@@ -923,21 +922,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			UI: {},
-
-			plugins: {},
-
-			plugin: function plugin(o) {
-				_.hooks.add(o.hooks);
-
-				for (var Class in o.extend) {
-					var def = Class == "Mavo" ? _ : _[Class];
-					$.Class(def, o.extend[Class]);
-				}
-
-				if (o.name) {
-					_.plugins[o.name] = o;
-				}
-			},
 
 			hooks: new $.Hooks(),
 
@@ -1000,7 +984,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// Init mavo. Async to give other scripts a chance to modify stuff.
 	requestAnimationFrame(function () {
-		return _.ready.catch(console.error).then(function () {
+		var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest;
+
+		_.dependencies.push($.ready(), _.Plugins.load(), $.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en"));
+
+		_.ready = _.all(_.dependencies);
+		_.inited = _.ready.catch(console.error).then(function () {
 			return Mavo.init();
 		});
 	});
@@ -1016,6 +1005,36 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 (function ($, $$) {
 
 	var _ = $.extend(Mavo, {
+		/**
+   * Load a file, only once
+   */
+		load: function load(url) {
+			var base = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : document.currentScript ? document.currentScript.src : location;
+
+			_.loaded = _.loaded || new Set();
+
+			if (_.loaded.has(url + "")) {
+				return;
+			}
+
+			url = new URL(url, base);
+
+			if (/\.css$/.test(url.pathname)) {
+				// CSS file
+				$.create("link", {
+					"href": url,
+					"rel": "stylesheet",
+					"inside": document.head
+				});
+
+				// No need to wait for stylesheets
+				return Promise.resolve();
+			}
+
+			// JS file
+			return $.include(url);
+		},
+
 		toJSON: function toJSON(data) {
 			if (data === null) {
 				return "";
@@ -1027,14 +1046,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			return JSON.stringify(data, null, "\t");
-		},
-
-		queryJSON: function queryJSON(data, path) {
-			if (!path || !data) {
-				return data;
-			}
-
-			return $.value.apply($, [data].concat(path.split("/")));
 		},
 
 		// If the passed value is not an array, convert to an array
@@ -1377,6 +1388,54 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
+   * Similar to Promise.all() but can handle post-hoc additions
+   * and does not reject if one promise rejects.
+   */
+		all: function all(iterable) {
+			// Turn rejected promises into resolved ones
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = iterable[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var promise = _step2.value;
+
+					if ($.type(promise) == "promise") {
+						promise = promise.catch(function (err) {
+							return err;
+						});
+					}
+				}
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			return Promise.all(iterable).then(function (resolved) {
+				if (iterable.length != resolved.length) {
+					// The list of promises or values changed. Return a new Promise.
+					// The original promise won't resolve until the new one does.
+					return _.all(iterable);
+				}
+
+				// The list of promises or values stayed the same.
+				// Return results immediately.
+				return resolved;
+			});
+		},
+
+		/**
    * Run & Return a function
    */
 		rr: function rr(f) {
@@ -1459,6 +1518,139 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	updateWithin("focus", document.activeElement !== document.body ? document.activeElement : null);
 })(Bliss, Bliss.$);
+"use strict";
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+(function ($) {
+
+	Mavo.attributes.push("mv-plugins");
+
+	var _ = Mavo.Plugins = {
+		loaded: {},
+
+		load: function load() {
+			_.plugins = new Set();
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = $$("[mv-plugins]")[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var element = _step.value;
+
+					var plugins = element.getAttribute("mv-plugins").trim().split(/\s+/);
+
+					var _iteratorNormalCompletion2 = true;
+					var _didIteratorError2 = false;
+					var _iteratorError2 = undefined;
+
+					try {
+						for (var _iterator2 = plugins[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+							var plugin = _step2.value;
+
+							_.plugins.add(plugin);
+						}
+					} catch (err) {
+						_didIteratorError2 = true;
+						_iteratorError2 = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion2 && _iterator2.return) {
+								_iterator2.return();
+							}
+						} finally {
+							if (_didIteratorError2) {
+								throw _iteratorError2;
+							}
+						}
+					}
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+
+			if (!_.plugins.size) {
+				return Promise.resolve();
+			}
+
+			// Fetch plugin index
+			return $.fetch(_.url + "/plugins.json", {
+				responseType: "json"
+			}).then(function (xhr) {
+				// Fetch plugins
+				return Mavo.all(xhr.response.plugin.filter(function (plugin) {
+					return _.plugins.has(plugin.id);
+				}).map(function (plugin) {
+					// Load plugin
+
+					if (plugin.repo) {
+						// Plugin hosted in a separate repo
+						var base = "https://raw.githubusercontent.com/" + plugin.repo + "/";
+					} else {
+						// Plugin hosted in the mavo-plugins repo
+						var base = _.url + "/" + plugin.id + "/";
+					}
+
+					var url = base + "mavo-" + plugin.id + ".js";
+
+					return $.include(_.loaded[plugin.id], url);
+				}));
+			});
+		},
+
+		register: function register(o) {
+			if (o.name && _.loaded[o.name]) {
+				// Do not register same plugin twice
+				return;
+			}
+
+			Mavo.hooks.add(o.hooks);
+
+			for (var Class in o.extend) {
+				var existing = Class == "Mavo" ? Mavo : Mavo[Class];
+
+				if ($.type(existing) === "function") {
+					$.Class(existing, o.extend[Class]);
+				} else {
+					$.extend(existing, o.extend[Class]);
+				}
+			}
+
+			if (o.ready) {
+				Mavo.dependencies.push(o.ready);
+			}
+
+			if (o.dependencies) {
+				var _Mavo$dependencies;
+
+				var base = document.currentScript ? document.currentScript.src : location;
+				var ready = o.dependencies.map(function (url) {
+					return Mavo.load(url, base);
+				});
+				(_Mavo$dependencies = Mavo.dependencies).push.apply(_Mavo$dependencies, _toConsumableArray(ready));
+			}
+
+			if (o.name) {
+				_.loaded[o.name] = o;
+			}
+		},
+
+		url: "https://plugins.mavo.io/"
+	};
+})(Bliss);
 "use strict";
 
 (function ($, $$) {
@@ -6111,7 +6303,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				_.directives.push(name);
 				Mavo.attributes.push(name);
 
-				Mavo.plugin(o);
+				Mavo.Plugins.register(o);
 			}
 		}
 	});

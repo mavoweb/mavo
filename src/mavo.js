@@ -564,11 +564,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
-
-		ready: Promise.all([
-			$.ready(),
-			$.include(Array.from && window.Intl && document.documentElement.closest, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
-		]),
+		dependencies: [],
 
 		init: function(container = document) {
 			return $$(_.selectors.init, container)
@@ -577,21 +573,6 @@ var _ = self.Mavo = $.Class({
 		},
 
 		UI: {},
-
-		plugins: {},
-
-		plugin: function(o) {
-			_.hooks.add(o.hooks);
-
-			for (let Class in o.extend) {
-				let def = Class == "Mavo"? _ : _[Class];
-				$.Class(def, o.extend[Class]);
-			}
-
-			if (o.name) {
-				_.plugins[o.name] = o;
-			}
-		},
 
 		hooks: new $.Hooks(),
 
@@ -642,7 +623,18 @@ $.extend(_.selectors, {
 }
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
-requestAnimationFrame(() => _.ready.catch(console.error).then(() => Mavo.init()));
+requestAnimationFrame(() => {
+	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest;
+
+	_.dependencies.push(
+		$.ready(),
+		_.Plugins.load(),
+		$.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+	);
+
+	_.ready = _.all(_.dependencies);
+	_.inited = _.ready.catch(console.error).then(() => Mavo.init());
+});
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
