@@ -1503,12 +1503,18 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	resize: function() {
+		if (!this.targetHeight) {
+			// We don't have a correct measurement for target height, abort
+			this.targetHeight = this.element.offsetHeight;
+			return;
+		}
+
 		this.resizeObserver && this.resizeObserver.disconnect();
 
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
 		// Exceeded single row?
-		if (this.element.offsetHeight > this.targetHeight * 1.2) {
+		if (this.element.offsetHeight > this.targetHeight * 1.5) {
 			this.element.classList.add("mv-compact");
 
 			if (this.element.offsetHeight > this.targetHeight * 1.2) {

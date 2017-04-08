@@ -26,15 +26,11 @@ gulp.task("concat", function() {
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.js"))
 		.pipe(sourcemaps.write("maps"))
-		.pipe(gulp.dest("dist"))
-		.pipe(notify({
-			message: "Concat done!",
-			onLast: true
-		}));
+		.pipe(gulp.dest("dist"));
 });
 
 gulp.task("sass", function() {
-	gulp.src(["src-css/*.scss", "!**/_*.scss"])
+	return gulp.src(["src-css/*.scss", "!**/_*.scss"])
 		.pipe(sourcemaps.init())
 		.pipe(sass().on("error", sass.logError))
 		.pipe(autoprefixer({
@@ -43,18 +39,7 @@ gulp.task("sass", function() {
 		}))
 		.pipe(rename({ extname: ".css" }))
 		.pipe(sourcemaps.write("maps"))
-		.pipe(gulp.dest("dist"));
-
-	return gulp.src(["**/*.scss", "!node_modules/**", "!src-css/*.scss"])
-		.pipe(sourcemaps.init())
-		.pipe(sass().on("error", sass.logError))
-		.pipe(autoprefixer({
-			browsers: ["last 2 versions"],
-			cascade: false
-		}))
-		.pipe(rename({ extname: ".css" }))
-		.pipe(sourcemaps.write("."))
-		.pipe(gulp.dest("."))
+		.pipe(gulp.dest("dist"))
 		.pipe(notify({
 			message: "Sass done!",
 			onLast: true
@@ -83,11 +68,7 @@ gulp.task("transpile", function() {
 	return merge(gulp.src(dependencies), transpileStream())
 		.pipe(concat("mavo.es5.js"))
 		.pipe(sourcemaps.write("maps"))
-		.pipe(gulp.dest("dist"))
-		.pipe(notify({
-			message: "Babel done!",
-			onLast: true
-		}));
+		.pipe(gulp.dest("dist"));
 });
 
 gulp.task("minify", function() {

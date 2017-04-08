@@ -48,7 +48,6 @@
 	& > .mv-button {
 		padding: .3em .6em .4em;
 		border: 0;
-		white-space: nowrap;
 		text-align: center;
 
 		&:first-child {
@@ -80,7 +79,6 @@
 		&::before {
 			content: "🔑 ";
 			filter: brightness(160%) grayscale(100%);
-			white-space: pre;
 		}
 
 		&::after {
@@ -160,6 +158,7 @@
 	.mv-status {
 		flex: 1;
 		line-height: 2.4;
+		padding-right: .4em;
 		margin-top: auto;
 		margin-bottom: auto;
 	}
@@ -183,9 +182,17 @@
 		& > .mv-button:not(.mv-login) {
 			// Hide text
 			width: 1em;
-			letter-spacing: -.5em;
-			color: transparent;
-			text-shadow: none;
+			position: relative;
+			overflow: hidden;
+			text-indent: -999em;
+
+			&::before {
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				text-indent: 0;
+			}
 		}
 	}
 }

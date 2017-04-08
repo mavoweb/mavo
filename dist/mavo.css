@@ -410,7 +410,6 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   .mv-bar.mv-ui > .mv-button {
     padding: .3em .6em .4em;
     border: 0;
-    white-space: nowrap;
     text-align: center; }
     .mv-bar.mv-ui > button:first-child,
     .mv-bar.mv-ui > .mv-button:first-child {
@@ -434,8 +433,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   .mv-bar.mv-ui .mv-login::before {
     content: "🔑 ";
     -webkit-filter: brightness(160%) grayscale(100%);
-    filter: brightness(160%) grayscale(100%);
-    white-space: pre; }
+    filter: brightness(160%) grayscale(100%); }
   .mv-bar.mv-ui .mv-login::after {
     content: " to " var(--mv-backend); }
   .mv-bar.mv-ui .mv-edit::before {
@@ -478,6 +476,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     -ms-flex: 1;
     flex: 1;
     line-height: 2.4;
+    padding-right: .4em;
     margin-top: auto;
     margin-bottom: auto; }
   [mv-permissions~="logout"] .mv-bar.mv-ui:not(.mv-compact) .mv-status::before {
@@ -489,9 +488,16 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   .mv-bar.mv-ui.mv-tiny > button:not(.mv-login),
   .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login) {
     width: 1em;
-    letter-spacing: -.5em;
-    color: transparent;
-    text-shadow: none; }
+    position: relative;
+    overflow: hidden;
+    text-indent: -999em; }
+    .mv-bar.mv-ui.mv-tiny > button:not(.mv-login)::before,
+    .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login)::before {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-indent: 0; }
 
 [mv-app][mv-bar="none"] .mv-bar,
 .mv-bar:empty {
