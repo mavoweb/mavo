@@ -2774,7 +2774,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		},
 
 		static: {
-			extensions: [".txt", ".md", ".markdown"],
+			extensions: [".txt"],
 			parse: function parse(serialized, me) {
 				return Promise.resolve(_defineProperty({}, me ? me.property : "content", serialized));
 			},
@@ -4490,7 +4490,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	Object.defineProperties(_, {
 		"register": {
-			value: function value(selector, o) {
+			value: function value(id, o) {
 				if (_typeof(arguments[0]) === "object") {
 					// Multiple definitions
 					for (var s in arguments[0]) {
@@ -4522,8 +4522,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 								var _o = $.extend({}, config);
 								_o.attribute = attribute;
-								_[selector] = _[selector] || [];
-								_[selector].push(_o);
+								_o.selector = _o.selector || id;
+								_o.id = id;
+
+								_[id] = _[id] || [];
+								_[id].push(_o);
 							}
 						} catch (err) {
 							_didIteratorError2 = true;
@@ -4657,8 +4660,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			datatype: "number"
 		}],
 
-		"img, video, audio": {
+		"media": {
 			default: true,
+			selector: "img, video, audio",
 			attribute: "src",
 			editor: {
 				"tag": "input",
@@ -4683,8 +4687,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		"select, input": {
-			attribute: "value",
 			default: true,
+			attribute: "value",
 			modes: "read",
 			changeEvents: "input change"
 		},
@@ -4828,8 +4832,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "content"
 		},
 
-		"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address": {
+		"block": {
 			default: true,
+			selector: "p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address",
 			editor: function editor() {
 				var display = getComputedStyle(this.element).display;
 				var tag = display.indexOf("inline") === 0 ? "input" : "textarea";

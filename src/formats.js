@@ -47,7 +47,7 @@ var text = _.Text = $.Class({
 	},
 
 	static: {
-		extensions: [".txt", ".md", ".markdown"],
+		extensions: [".txt"],
 		parse: (serialized, me) => Promise.resolve({[me? me.property : "content"]: serialized}),
 		stringify: (data, me) => Promise.resolve(data[me? me.property : "content"])
 	}

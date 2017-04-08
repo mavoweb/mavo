@@ -18,7 +18,7 @@ var _ = Mavo.Elements = {};
 
 Object.defineProperties(_, {
 	"register": {
-		value: function(selector, o) {
+		value: function(id, o) {
 			if (typeof arguments[0] === "object") {
 				// Multiple definitions
 				for (let s in arguments[0]) {
@@ -36,8 +36,11 @@ Object.defineProperties(_, {
 				for (attribute of config.attribute) {
 					let o = $.extend({}, config);
 					o.attribute = attribute;
-					_[selector] = _[selector] || [];
-					_[selector].push(o);
+					o.selector = o.selector || id;
+					o.id = id;
+
+					_[id] = _[id] || [];
+					_[id].push(o);
 				}
 			}
 
@@ -122,8 +125,9 @@ _.register({
 		},
 	],
 
-	"img, video, audio": {
+	"media": {
 		default: true,
+		selector: "img, video, audio",
 		attribute: "src",
 		editor: {
 			"tag": "input",
@@ -148,8 +152,8 @@ _.register({
 	},
 
 	"select, input": {
-		attribute: "value",
 		default: true,
+		attribute: "value",
 		modes: "read",
 		changeEvents: "input change"
 	},
@@ -279,8 +283,9 @@ _.register({
 		attribute: "content"
 	},
 
-	"p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address": {
+	"block": {
 		default: true,
+		selector: "p, div, li, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address",
 		editor: function() {
 			var display = getComputedStyle(this.element).display;
 			var tag = display.indexOf("inline") === 0? "input" : "textarea";
