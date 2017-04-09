@@ -1799,7 +1799,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			if (this.order.length) {
+			if (this.order.length && !this.element.classList.contains("mv-compact")) {
 				this.resize();
 
 				if (self.ResizeObserver) {
@@ -1887,7 +1887,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					prepare: function prepare() {
 						var backend = this.primaryBackend;
 
-						if (backend && this.permissions.parent == backend.permissions && backend.user) {
+						if (backend && backend.user) {
 							var user = backend.user;
 							var html = user.name || "";
 

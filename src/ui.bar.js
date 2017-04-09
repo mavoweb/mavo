@@ -74,7 +74,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 		}
 
-		if (this.order.length) {
+		if (this.order.length && !this.element.classList.contains("mv-compact")) {
 			this.resize();
 
 			if (self.ResizeObserver) {
@@ -164,7 +164,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				prepare: function() {
 					var backend = this.primaryBackend;
 
-					if (backend && this.permissions.parent == backend.permissions && backend.user) {
+					if (backend && backend.user) {
 						var user = backend.user;
 						var html = user.name || "";
 
