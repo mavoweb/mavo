@@ -42,6 +42,10 @@ var _ = $.extend(Mavo, {
 		return JSON.stringify(data, null, "\t");
 	},
 
+	/**
+	 * Array utlities
+	 */
+
 	// If the passed value is not an array, convert to an array
 	toArray: arr => {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
@@ -55,6 +59,10 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	/**
+	 * Do two arrays have a non-empty intersection?
+	 * @return {Boolean}
+	 */
 	hasIntersection: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
@@ -65,6 +73,17 @@ var _ = $.extend(Mavo, {
 
 		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 	},
+
+	// Push an item to an array iff it's not already in there
+	pushUnique: (arr, item) => {
+		if (arr.indexOf(item) === -1) {
+			arr.push(item);
+		}
+	},
+
+	/**
+	 * DOM element utilities
+	 */
 
 	is: function(thing, ...elements) {
 		for (let element of elements) {
@@ -160,11 +179,24 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	pushUnique: (arr, item) => {
-		if (arr.indexOf(item) === -1) {
-			arr.push(item);
+	/**
+	 * Get the value of an attribute, with fallback attributes in priority order.
+	 */
+	getAttribute: function(element, ...attributes) {
+		for (let i=0, attribute; attribute = attributes[i]; i++) {
+			let value = element.getAttribute(attribute);
+
+			if (value) {
+				return value;
+			}
 		}
+
+		return null;
 	},
+
+	/**
+	 * Object utilities
+	 */
 
 	subset: function(obj, path, value) {
 		if (arguments.length == 3) {
@@ -203,18 +235,28 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
-	 * Get the value of an attribute, with fallback attributes in priority order.
+	 * Deep clone an object. Only supports object literals, arrays, and primitives
 	 */
-	getAttribute: function(element, ...attributes) {
-		for (let i=0, attribute; attribute = attributes[i]; i++) {
-			let value = element.getAttribute(attribute);
+	clone: function(o) {
+		if (typeof o !== "object" || o === null) {
+			// Primitive
+			return o;
+		}
 
-			if (value) {
-				return value;
+		if (Array.isArray(o)) {
+			return o.slice().map(_.clone);
+		}
+
+		// Object
+		var clone = {};
+
+		for (let property in o) {
+			if (o.hasOwnProperty(property)) {
+				clone[property] = _.clone(o[property]);
 			}
 		}
 
-		return null;
+		return clone;
 	},
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls

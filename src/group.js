@@ -74,25 +74,26 @@ var _ = Mavo.Group = $.Class({
 		};
 
 		if (env.data !== undefined) {
+			// Super method returned something
 			return env.data;
 		}
 
-		env.data = {};
+		env.data = this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
 
-		this.propagate(obj => {
-			if ((obj.saved || env.options.live) && !(obj.property in env.data)) {
-				var data = obj.getData(o);
+		for (let property in this.children) {
+			let obj = this.children[property];
+
+			if (obj.saved || env.options.live) {
+				let data = obj.getData(o);
 
 				if (data !== null || env.options.live) {
 					env.data[obj.property] = data;
 				}
 			}
-		});
-
-		$.extend(env.data, this.unhandled);
+		}
 
 		if (!env.options.live) {
-			// JSON-LD stuff
+			// Add JSON-LD stuff to stored data
 			if (this.type && this.type != _.DEFAULT_TYPE) {
 				env.data["@type"] = this.type;
 			}
@@ -101,6 +102,7 @@ var _ = Mavo.Group = $.Class({
 				env.data["@context"] = this.vocab;
 			}
 
+			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
@@ -157,18 +159,21 @@ var _ = Mavo.Group = $.Class({
 		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.children[this.property] with it
 
-		var oldUnhandled = this.unhandled;
-		this.unhandled = $.extend({}, data, property => !(property in this.children));
-
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
 
-		for (let property in this.unhandled) {
-			let value = this.unhandled[property];
+		// Fire datachange events for properties not in the template,
+		// since nothing else will and they can still be referenced in expressions
+		var oldData = Mavo.subset(this.oldData, this.inPath);
 
-			if (typeof value != "object" && (!oldUnhandled || oldUnhandled[property] != value)) {
-				this.dataChanged("propertychange", {property});
+		for (let property in data) {
+			if (!(property in this.children)) {
+				let value = data[property];
+
+				if (typeof value != "object" && (!oldData || oldData[property] != value)) {
+					this.dataChanged("propertychange", {property});
+				}
 			}
 		}
 	},

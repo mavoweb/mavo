@@ -216,6 +216,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	render: function(data) {
+		this.oldData = this.data;
 		this.data = data;
 
 		data = Mavo.subset(data, this.inPath);

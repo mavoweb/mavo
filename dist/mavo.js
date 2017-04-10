@@ -896,6 +896,10 @@ var _ = $.extend(Mavo, {
 		return JSON.stringify(data, null, "\t");
 	},
 
+	/**
+	 * Array utlities
+	 */
+
 	// If the passed value is not an array, convert to an array
 	toArray: arr => {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
@@ -909,6 +913,10 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	/**
+	 * Do two arrays have a non-empty intersection?
+	 * @return {Boolean}
+	 */
 	hasIntersection: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
@@ -919,6 +927,17 @@ var _ = $.extend(Mavo, {
 
 		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
 	},
+
+	// Push an item to an array iff it's not already in there
+	pushUnique: (arr, item) => {
+		if (arr.indexOf(item) === -1) {
+			arr.push(item);
+		}
+	},
+
+	/**
+	 * DOM element utilities
+	 */
 
 	is: function(thing, ...elements) {
 		for (let element of elements) {
@@ -1014,11 +1033,24 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	pushUnique: (arr, item) => {
-		if (arr.indexOf(item) === -1) {
-			arr.push(item);
+	/**
+	 * Get the value of an attribute, with fallback attributes in priority order.
+	 */
+	getAttribute: function(element, ...attributes) {
+		for (let i=0, attribute; attribute = attributes[i]; i++) {
+			let value = element.getAttribute(attribute);
+
+			if (value) {
+				return value;
+			}
 		}
+
+		return null;
 	},
+
+	/**
+	 * Object utilities
+	 */
 
 	subset: function(obj, path, value) {
 		if (arguments.length == 3) {
@@ -1057,18 +1089,28 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
-	 * Get the value of an attribute, with fallback attributes in priority order.
+	 * Deep clone an object. Only supports object literals, arrays, and primitives
 	 */
-	getAttribute: function(element, ...attributes) {
-		for (let i=0, attribute; attribute = attributes[i]; i++) {
-			let value = element.getAttribute(attribute);
+	clone: function(o) {
+		if (typeof o !== "object" || o === null) {
+			// Primitive
+			return o;
+		}
 
-			if (value) {
-				return value;
+		if (Array.isArray(o)) {
+			return o.slice().map(_.clone);
+		}
+
+		// Object
+		var clone = {};
+
+		for (let property in o) {
+			if (o.hasOwnProperty(property)) {
+				clone[property] = _.clone(o[property]);
 			}
 		}
 
-		return null;
+		return clone;
 	},
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
@@ -2582,6 +2624,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	render: function(data) {
+		this.oldData = this.data;
 		this.data = data;
 
 		data = Mavo.subset(data, this.inPath);
@@ -2907,25 +2950,26 @@ var _ = Mavo.Group = $.Class({
 		};
 
 		if (env.data !== undefined) {
+			// Super method returned something
 			return env.data;
 		}
 
-		env.data = {};
+		env.data = this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
 
-		this.propagate(obj => {
-			if ((obj.saved || env.options.live) && !(obj.property in env.data)) {
-				var data = obj.getData(o);
+		for (let property in this.children) {
+			let obj = this.children[property];
+
+			if (obj.saved || env.options.live) {
+				let data = obj.getData(o);
 
 				if (data !== null || env.options.live) {
 					env.data[obj.property] = data;
 				}
 			}
-		});
-
-		$.extend(env.data, this.unhandled);
+		}
 
 		if (!env.options.live) {
-			// JSON-LD stuff
+			// Add JSON-LD stuff to stored data
 			if (this.type && this.type != _.DEFAULT_TYPE) {
 				env.data["@type"] = this.type;
 			}
@@ -2934,6 +2978,7 @@ var _ = Mavo.Group = $.Class({
 				env.data["@context"] = this.vocab;
 			}
 
+			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
@@ -2990,18 +3035,21 @@ var _ = Mavo.Group = $.Class({
 		// TODO what if it was a primitive and now it's a group?
 		// In that case, render the this.children[this.property] with it
 
-		var oldUnhandled = this.unhandled;
-		this.unhandled = $.extend({}, data, property => !(property in this.children));
-
 		this.propagate(obj => {
 			obj.render(data[obj.property]);
 		});
 
-		for (let property in this.unhandled) {
-			let value = this.unhandled[property];
+		// Fire datachange events for properties not in the template,
+		// since nothing else will and they can still be referenced in expressions
+		var oldData = Mavo.subset(this.oldData, this.inPath);
 
-			if (typeof value != "object" && (!oldUnhandled || oldUnhandled[property] != value)) {
-				this.dataChanged("propertychange", {property});
+		for (let property in data) {
+			if (!(property in this.children)) {
+				let value = data[property];
+
+				if (typeof value != "object" && (!oldData || oldData[property] != value)) {
+					this.dataChanged("propertychange", {property});
+				}
 			}
 		}
 	},
@@ -4279,26 +4327,30 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		var count = 0; // count of non-null items
-
 		for (item of this.children) {
-			if (!item.deleted || o.null) {
+			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 
-				if (itemData || o.null) {
+				if (itemData || env.options.live) {
 					env.data.push(itemData);
-					count += !!itemData;
 				}
 			}
 		}
 
-		if (this.unhandled) {
-			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
-		}
+		if (!this.mutable) {
+			// If immutable, drop nulls
 
-		if (!this.mutable && count == 1) {
-			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-			env.data = env.data.filter(d => !!d)[0];
+			env.data = env.data.filter(item => item !== null);
+
+			if (env.options.live && env.data.length === 1) {
+				// If immutable with only 1 item, return the item
+				// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
+				env.data = env.data[0];
+			}
+			else if (this.data && !env.options.live) {
+				var rendered = Mavo.subset(this.data, this.inPath);
+				env.data = env.data.concat(rendered.slice(env.data.length));
+			}
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
@@ -4640,8 +4692,6 @@ var _ = Mavo.Collection = $.Class({
 	propagated: ["save"],
 
 	dataRender: function(data) {
-		this.unhandled = {before: [], after: []};
-
 		if (!data) {
 			return;
 		}
@@ -4650,10 +4700,6 @@ var _ = Mavo.Collection = $.Class({
 
 		if (!this.mutable) {
 			this.children.forEach((item, i) => item.render(data && data[i]));
-
-			if (data) {
-				this.unhandled.after = data.slice(this.length);
-			}
 		}
 		else {
 			// First render on existing items

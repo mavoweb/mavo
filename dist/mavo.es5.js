@@ -1077,6 +1077,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return JSON.stringify(data, null, "\t");
 		},
 
+		/**
+   * Array utlities
+   */
+
 		// If the passed value is not an array, convert to an array
 		toArray: function toArray(arr) {
 			return arr === undefined ? [] : Array.isArray(arr) ? arr : [arr];
@@ -1090,6 +1094,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
+		/**
+   * Do two arrays have a non-empty intersection?
+   * @return {Boolean}
+   */
 		hasIntersection: function hasIntersection(arr1, arr2) {
 			return arr1 && arr2 && !arr1.every(function (el) {
 				return arr2.indexOf(el) == -1;
@@ -1106,6 +1114,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return _.toArray(prev).concat(_.flatten(c));
 			}, []);
 		},
+
+		// Push an item to an array iff it's not already in there
+		pushUnique: function pushUnique(arr, item) {
+			if (arr.indexOf(item) === -1) {
+				arr.push(item);
+			}
+		},
+
+		/**
+   * DOM element utilities
+   */
 
 		is: function is(thing) {
 			for (var _len = arguments.length, elements = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
@@ -1226,11 +1245,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		pushUnique: function pushUnique(arr, item) {
-			if (arr.indexOf(item) === -1) {
-				arr.push(item);
+		/**
+   * Get the value of an attribute, with fallback attributes in priority order.
+   */
+		getAttribute: function getAttribute(element) {
+			for (var _len2 = arguments.length, attributes = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+				attributes[_key2 - 1] = arguments[_key2];
 			}
+
+			for (var i = 0, attribute; attribute = attributes[i]; i++) {
+				var value = element.getAttribute(attribute);
+
+				if (value) {
+					return value;
+				}
+			}
+
+			return null;
 		},
+
+		/**
+   * Object utilities
+   */
 
 		subset: function subset(obj, path, value) {
 			if (arguments.length == 3) {
@@ -1267,22 +1303,28 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
-   * Get the value of an attribute, with fallback attributes in priority order.
+   * Deep clone an object. Only supports object literals, arrays, and primitives
    */
-		getAttribute: function getAttribute(element) {
-			for (var _len2 = arguments.length, attributes = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-				attributes[_key2 - 1] = arguments[_key2];
+		clone: function clone(o) {
+			if ((typeof o === "undefined" ? "undefined" : _typeof(o)) !== "object" || o === null) {
+				// Primitive
+				return o;
 			}
 
-			for (var i = 0, attribute; attribute = attributes[i]; i++) {
-				var value = element.getAttribute(attribute);
+			if (Array.isArray(o)) {
+				return o.slice().map(_.clone);
+			}
 
-				if (value) {
-					return value;
+			// Object
+			var clone = {};
+
+			for (var property in o) {
+				if (o.hasOwnProperty(property)) {
+					clone[property] = _.clone(o[property]);
 				}
 			}
 
-			return null;
+			return clone;
 		},
 
 		// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
@@ -3132,6 +3174,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		render: function render(data) {
+			this.oldData = this.data;
 			this.data = data;
 
 			data = Mavo.subset(data, this.inPath);
@@ -3477,25 +3520,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			};
 
 			if (env.data !== undefined) {
+				// Super method returned something
 				return env.data;
 			}
 
-			env.data = {};
+			env.data = this.data ? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
 
-			this.propagate(function (obj) {
-				if ((obj.saved || env.options.live) && !(obj.property in env.data)) {
+			for (var property in this.children) {
+				var obj = this.children[property];
+
+				if (obj.saved || env.options.live) {
 					var data = obj.getData(o);
 
 					if (data !== null || env.options.live) {
 						env.data[obj.property] = data;
 					}
 				}
-			});
-
-			$.extend(env.data, this.unhandled);
+			}
 
 			if (!env.options.live) {
-				// JSON-LD stuff
+				// Add JSON-LD stuff to stored data
 				if (this.type && this.type != _.DEFAULT_TYPE) {
 					env.data["@type"] = this.type;
 				}
@@ -3504,6 +3548,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					env.data["@context"] = this.vocab;
 				}
 
+				// If storing, use the rendered data too
 				env.data = Mavo.subset(this.data, this.inPath, env.data);
 			}
 
@@ -3554,8 +3599,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Do not call directly, call this.render() instead
 		dataRender: function dataRender(data) {
-			var _this3 = this;
-
 			if (!data) {
 				return;
 			}
@@ -3563,20 +3606,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// TODO what if it was a primitive and now it's a group?
 			// In that case, render the this.children[this.property] with it
 
-			var oldUnhandled = this.unhandled;
-			this.unhandled = $.extend({}, data, function (property) {
-				return !(property in _this3.children);
-			});
-
 			this.propagate(function (obj) {
 				obj.render(data[obj.property]);
 			});
 
-			for (var property in this.unhandled) {
-				var value = this.unhandled[property];
+			// Fire datachange events for properties not in the template,
+			// since nothing else will and they can still be referenced in expressions
+			var oldData = Mavo.subset(this.oldData, this.inPath);
 
-				if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldUnhandled || oldUnhandled[property] != value)) {
-					this.dataChanged("propertychange", { property: property });
+			for (var property in data) {
+				if (!(property in this.children)) {
+					var value = data[property];
+
+					if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldData || oldData[property] != value)) {
+						this.dataChanged("propertychange", { property: property });
+					}
 				}
 			}
 		},
@@ -4994,8 +5038,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				data: []
 			};
 
-			var count = 0; // count of non-null items
-
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -5004,12 +5046,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					item = _step.value;
 
-					if (!item.deleted || o.null) {
+					if (!item.deleted || env.options.live) {
 						var itemData = item.getData(env.options);
 
-						if (itemData || o.null) {
+						if (itemData || env.options.live) {
 							env.data.push(itemData);
-							count += !!itemData;
 						}
 					}
 				}
@@ -5028,15 +5069,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			if (this.unhandled) {
-				env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
-			}
+			if (!this.mutable) {
+				// If immutable, drop nulls
 
-			if (!this.mutable && count == 1) {
-				// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-				env.data = env.data.filter(function (d) {
-					return !!d;
-				})[0];
+				env.data = env.data.filter(function (item) {
+					return item !== null;
+				});
+
+				if (env.options.live && env.data.length === 1) {
+					// If immutable with only 1 item, return the item
+					// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
+					env.data = env.data[0];
+				} else if (this.data && !env.options.live) {
+					var rendered = Mavo.subset(this.data, this.inPath);
+					env.data = env.data.concat(rendered.slice(env.data.length));
+				}
 			}
 
 			Mavo.hooks.run("node-getdata-end", env);
@@ -5466,8 +5513,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		dataRender: function dataRender(data) {
 			var _this6 = this;
 
-			this.unhandled = { before: [], after: [] };
-
 			if (!data) {
 				return;
 			}
@@ -5478,10 +5523,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.children.forEach(function (item, i) {
 					return item.render(data && data[i]);
 				});
-
-				if (data) {
-					this.unhandled.after = data.slice(this.length);
-				}
 			} else {
 				// First render on existing items
 				for (var i = 0; i < this.children.length; i++) {

@@ -46,26 +46,30 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		var count = 0; // count of non-null items
-
 		for (item of this.children) {
-			if (!item.deleted || o.null) {
+			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 
-				if (itemData || o.null) {
+				if (itemData || env.options.live) {
 					env.data.push(itemData);
-					count += !!itemData;
 				}
 			}
 		}
 
-		if (this.unhandled) {
-			env.data = this.unhandled.before.concat(env.data, this.unhandled.after);
-		}
+		if (!this.mutable) {
+			// If immutable, drop nulls
 
-		if (!this.mutable && count == 1) {
-			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-			env.data = env.data.filter(d => !!d)[0];
+			env.data = env.data.filter(item => item !== null);
+
+			if (env.options.live && env.data.length === 1) {
+				// If immutable with only 1 item, return the item
+				// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
+				env.data = env.data[0];
+			}
+			else if (this.data && !env.options.live) {
+				var rendered = Mavo.subset(this.data, this.inPath);
+				env.data = env.data.concat(rendered.slice(env.data.length));
+			}
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
@@ -407,8 +411,6 @@ var _ = Mavo.Collection = $.Class({
 	propagated: ["save"],
 
 	dataRender: function(data) {
-		this.unhandled = {before: [], after: []};
-
 		if (!data) {
 			return;
 		}
@@ -417,10 +419,6 @@ var _ = Mavo.Collection = $.Class({
 
 		if (!this.mutable) {
 			this.children.forEach((item, i) => item.render(data && data[i]));
-
-			if (data) {
-				this.unhandled.after = data.slice(this.length);
-			}
 		}
 		else {
 			// First render on existing items
