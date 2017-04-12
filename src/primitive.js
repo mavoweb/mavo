@@ -564,7 +564,7 @@ var _ = Mavo.Primitive = $.Class({
 			return value;
 		},
 
-		getValue: function (element, { config, attribute, datatype }) {
+		getValue: function (element, {config, attribute, datatype} = {}) {
 			if (!config) {
 				config = _.getConfig(element, attribute);
 			}
@@ -611,7 +611,7 @@ var _ = Mavo.Primitive = $.Class({
 			return config;
 		},
 
-		setValue: function (element, value, {config, attribute, datatype}) {
+		setValue: function (element, value, {config, attribute, datatype} = {}) {
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;

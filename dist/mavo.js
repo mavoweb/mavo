@@ -829,7 +829,7 @@ let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2))
 $.extend(_.selectors, {
 	primitive: andNot(s.property, s.group),
 	rootGroup: andNot(s.group, s.property),
-	output: or(s.specificProperty("output"), ".mv-output, .mv-value")
+	output: or(s.specificProperty("output"), ".mv-output")
 });
 
 }
@@ -3653,7 +3653,7 @@ var _ = Mavo.Primitive = $.Class({
 			return value;
 		},
 
-		getValue: function (element, { config, attribute, datatype }) {
+		getValue: function (element, {config, attribute, datatype} = {}) {
 			if (!config) {
 				config = _.getConfig(element, attribute);
 			}
@@ -3700,7 +3700,7 @@ var _ = Mavo.Primitive = $.Class({
 			return config;
 		},
 
-		setValue: function (element, value, {config, attribute, datatype}) {
+		setValue: function (element, value, {config, attribute, datatype} = {}) {
 			if ($.type(value) == "object" && "value" in value) {
 				var presentational = value.presentational;
 				value = value.value;
@@ -4021,10 +4021,59 @@ _.register({
 		default: true,
 		selector: "img, video, audio",
 		attribute: "src",
-		editor: {
-			"tag": "input",
-			"type": "url",
-			"placeholder": "http://example.com"
+		editor: function() {
+			var uploadBackend = this.mavo.storage && this.mavo.storage.upload? this.mavo.storage : this.uploadBackend;
+			var path = this.element.getAttribute("mv-uploads") || "images";
+
+			if (uploadBackend) {
+				var mainInput = $.create("input", {
+					"type": "url",
+					"placeholder": "http://example.com",
+					"className": "mv-output"
+				});
+
+				return $.create({
+					className: "mv-upload-popup",
+					contents: [
+						mainInput,
+						{
+							tag: "input",
+							type: "file",
+							accept: "image/*",
+							events: {
+								change: evt => {
+									var file = evt.target.files[0];
+
+									if (!file) {
+										return;
+									}
+
+									// Read file
+									var reader = new FileReader();
+									reader.onload = f => {
+										uploadBackend.upload(reader.result, path + "/" + file.name)
+											.then(url => {
+												mainInput.value = url;
+												this.mavo.inProgress = false;
+												$.fire(mainInput, "input");
+											});
+									};
+
+									this.mavo.inProgress = "Uploading";
+									reader.readAsDataURL(file);
+								}
+							}
+						}
+					]
+				});
+			}
+			else {
+				return {
+					"tag": "input",
+					"type": "url",
+					"placeholder": "http://example.com"
+				};
+			}
 		}
 	},
 
@@ -6424,13 +6473,25 @@ var _ = Mavo.Backend.register($.Class({
 		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
+	upload: function(dataURL, path = this.path) {
+		var serialized = dataURL.slice(5); // remove data:
+		var media = serialized.match(/^\w+\/[\w+]+/)[0];
+		serialized = serialized.replace(RegExp(`^${media}(;base64)?,`), "");
+
+		return this.put(serialized, path, {isEncoded: dataURL.indexOf("base64") > -1})
+			.then(fileInfo => {
+				console.log(fileInfo.commit.sha);
+				return this.getURL(path, fileInfo.commit.sha);
+			});
+	},
+
 	/**
 	 * Saves a file to the backend.
 	 * @param {String} serialized - Serialized data
 	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(serialized, path = this.path) {
+	put: function(serialized, path = this.path, o = {}) {
 		if (!path) {
 			// Raw API calls are read-only for now
 			return;
@@ -6441,6 +6502,8 @@ var _ = Mavo.Backend.register($.Class({
 
 		// Create repo if it doesn’t exist
 		var repoInfo = this.repoInfo || this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
+
+		serialized = o.isEncoded? serialized : _.btoa(serialized);
 
 		return Promise.resolve(repoInfo)
 			.then(repoInfo => {
@@ -6477,7 +6540,7 @@ var _ = Mavo.Backend.register($.Class({
 					ref: this.branch
 				}).then(fileInfo => this.request(fileCall, {
 					message: `Updated ${fileInfo.name || "file"}`,
-					content: _.btoa(serialized),
+					content: serialized,
 					branch: this.branch,
 					sha: fileInfo.sha
 				}, "PUT"), xhr => {
@@ -6485,7 +6548,7 @@ var _ = Mavo.Backend.register($.Class({
 						// File does not exist, create it
 						return this.request(fileCall, {
 							message: "Created file",
-							content: _.btoa(serialized),
+							content: serialized,
 							branch: this.branch
 						}, "PUT");
 					}
@@ -6503,6 +6566,8 @@ var _ = Mavo.Backend.register($.Class({
 						this.pullRequest(prs[0]);
 					});
 				}
+
+				return fileInfo;
 			});
 	},
 
@@ -6598,7 +6663,7 @@ Preview my changes here: ${previewURL}`,
 								if (this.branch === undefined) {
 									this.branch = repoInfo.default_branch;
 								}
-								
+
 								return this.repoInfo = repoInfo;
 							});
 					}
@@ -6639,6 +6704,27 @@ Preview my changes here: ${previewURL}`,
 			};
 
 			$.fire(this.mavo.element, "mavo:login", { backend: this });
+		});
+	},
+
+	getURL: function(path = this.path, sha) {
+		var repo = `${this.username}/${this.repo}`;
+		path = path.replace(/ /g, "%20");
+
+		return this.request(`repos/${repo}/pages`, {}, "GET", {
+			headers: {
+				"Accept": "application/vnd.github.mister-fantastic-preview+json"
+			}
+		})
+		.then(pagesInfo => pagesInfo.html_url + path)
+		.catch(xhr => {
+			// No Github Pages, return rawgit URL
+			if (sha) {
+				return `https://cdn.rawgit.com/${repo}/${sha}/${path}`;
+			}
+			else {
+				return `https://rawgit.com/${repo}/${this.branch}/${path}`;
+			}
 		});
 	},
 

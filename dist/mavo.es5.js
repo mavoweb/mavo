@@ -1007,7 +1007,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		$.extend(_.selectors, {
 			primitive: andNot(s.property, s.group),
 			rootGroup: andNot(s.group, s.property),
-			output: or(s.specificProperty("output"), ".mv-output, .mv-value")
+			output: or(s.specificProperty("output"), ".mv-output")
 		});
 	}
 
@@ -4274,8 +4274,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return value;
 			},
 
-			getValue: function getValue(element, _ref) {
-				var config = _ref.config,
+			getValue: function getValue(element) {
+				var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+				    config = _ref.config,
 				    attribute = _ref.attribute,
 				    datatype = _ref.datatype;
 
@@ -4323,8 +4324,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return config;
 			},
 
-			setValue: function setValue(element, value, _ref2) {
-				var config = _ref2.config,
+			setValue: function setValue(element, value) {
+				var _ref2 = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {},
+				    config = _ref2.config,
 				    attribute = _ref2.attribute,
 				    datatype = _ref2.datatype;
 
@@ -4717,10 +4719,56 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			default: true,
 			selector: "img, video, audio",
 			attribute: "src",
-			editor: {
-				"tag": "input",
-				"type": "url",
-				"placeholder": "http://example.com"
+			editor: function editor() {
+				var _this = this;
+
+				var uploadBackend = this.mavo.storage && this.mavo.storage.upload ? this.mavo.storage : this.uploadBackend;
+				var path = this.element.getAttribute("mv-uploads") || "images";
+
+				if (uploadBackend) {
+					var mainInput = $.create("input", {
+						"type": "url",
+						"placeholder": "http://example.com",
+						"className": "mv-output"
+					});
+
+					return $.create({
+						className: "mv-upload-popup",
+						contents: [mainInput, {
+							tag: "input",
+							type: "file",
+							accept: "image/*",
+							events: {
+								change: function change(evt) {
+									var file = evt.target.files[0];
+
+									if (!file) {
+										return;
+									}
+
+									// Read file
+									var reader = new FileReader();
+									reader.onload = function (f) {
+										uploadBackend.upload(reader.result, path + "/" + file.name).then(function (url) {
+											mainInput.value = url;
+											_this.mavo.inProgress = false;
+											$.fire(mainInput, "input");
+										});
+									};
+
+									_this.mavo.inProgress = "Uploading";
+									reader.readAsDataURL(file);
+								}
+							}
+						}]
+					});
+				} else {
+					return {
+						"tag": "input",
+						"type": "url",
+						"placeholder": "http://example.com"
+					};
+				}
 			}
 		},
 
@@ -4796,11 +4844,11 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				$.properties(toCheck, { checked: true });
 			},
 			init: function init(element) {
-				var _this = this;
+				var _this2 = this;
 
 				this.mavo.element.addEventListener("change", function (evt) {
 					if (evt.target.name == element.name) {
-						_this.value = _this.getValue();
+						_this2.value = _this2.getValue();
 					}
 				});
 			}
@@ -4812,14 +4860,14 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			datatype: "number",
 			modes: "read",
 			init: function init(element) {
-				var _this2 = this;
+				var _this3 = this;
 
 				if (this.attribute === "mv-clicked") {
 					element.setAttribute("mv-clicked", "0");
 
 					element.addEventListener("click", function (evt) {
 						var clicked = +element.getAttribute("mv-clicked") || 0;
-						_this2.value = ++clicked;
+						_this3.value = ++clicked;
 					});
 				}
 			}
@@ -4830,7 +4878,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "value",
 			datatype: "number",
 			edit: function edit() {
-				var _this3 = this;
+				var _this4 = this;
 
 				var min = +this.element.getAttribute("min") || 0;
 				var max = +this.element.getAttribute("max") || 1;
@@ -4839,39 +4887,39 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				this.element.addEventListener("mousemove.mavo:edit", function (evt) {
 					// Change property as mouse moves
-					var left = _this3.element.getBoundingClientRect().left;
-					var offset = Math.max(0, (evt.clientX - left) / _this3.element.offsetWidth);
+					var left = _this4.element.getBoundingClientRect().left;
+					var offset = Math.max(0, (evt.clientX - left) / _this4.element.offsetWidth);
 					var newValue = min + range * offset;
 					var mod = newValue % step;
 
 					newValue += mod > step / 2 ? step - mod : -mod;
 					newValue = Math.max(min, Math.min(newValue, max));
 
-					_this3.sneak(function () {
-						return _this3.element.setAttribute("value", newValue);
+					_this4.sneak(function () {
+						return _this4.element.setAttribute("value", newValue);
 					});
 				});
 
 				this.element.addEventListener("mouseleave.mavo:edit", function (evt) {
 					// Return to actual value
-					_this3.sneak(function () {
-						return _this3.element.setAttribute("value", _this3.value);
+					_this4.sneak(function () {
+						return _this4.element.setAttribute("value", _this4.value);
 					});
 				});
 
 				this.element.addEventListener("click.mavo:edit", function (evt) {
 					// Register change
-					_this3.value = _this3.getValue();
+					_this4.value = _this4.getValue();
 				});
 
 				this.element.addEventListener("keydown.mavo:edit", function (evt) {
 					// Edit with arrow keys
-					if (evt.target == _this3.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+					if (evt.target == _this4.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
 						var increment = step * (evt.keyCode == 39 ? 1 : -1) * (evt.shiftKey ? 10 : 1);
-						var newValue = _this3.value + increment;
+						var newValue = _this4.value + increment;
 						newValue = Math.max(min, Math.min(newValue, max));
 
-						_this3.element.setAttribute("value", newValue);
+						_this4.element.setAttribute("value", newValue);
 					}
 				});
 			},
@@ -7569,6 +7617,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
+		upload: function upload(dataURL) {
+			var _this2 = this;
+
+			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.path;
+
+			var serialized = dataURL.slice(5); // remove data:
+			var media = serialized.match(/^\w+\/[\w+]+/)[0];
+			serialized = serialized.replace(RegExp("^" + media + "(;base64)?,"), "");
+
+			return this.put(serialized, path, { isEncoded: dataURL.indexOf("base64") > -1 }).then(function (fileInfo) {
+				console.log(fileInfo.commit.sha);
+				return _this2.getURL(path, fileInfo.commit.sha);
+			});
+		},
+
 		/**
    * Saves a file to the backend.
    * @param {String} serialized - Serialized data
@@ -7576,9 +7639,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Promise} A promise that resolves when the file is saved.
    */
 		put: function put(serialized) {
-			var _this2 = this;
+			var _this3 = this;
 
 			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.path;
+			var o = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 			if (!path) {
 				// Raw API calls are read-only for now
@@ -7590,21 +7654,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Create repo if it doesn’t exist
 			var repoInfo = this.repoInfo || this.request("user/repos", { name: this.repo }, "POST").then(function (repoInfo) {
-				return _this2.repoInfo = repoInfo;
+				return _this3.repoInfo = repoInfo;
 			});
 
+			serialized = o.isEncoded ? serialized : _.btoa(serialized);
+
 			return Promise.resolve(repoInfo).then(function (repoInfo) {
-				if (!_this2.canPush()) {
+				if (!_this3.canPush()) {
 					// Does not have permission to commit, create a fork
-					return _this2.request(repoCall + "/forks", { name: _this2.repo }, "POST").then(function (forkInfo) {
+					return _this3.request(repoCall + "/forks", { name: _this3.repo }, "POST").then(function (forkInfo) {
 						fileCall = "repos/" + forkInfo.full_name + "/contents/" + path;
-						return _this2.forkInfo = forkInfo;
+						return _this3.forkInfo = forkInfo;
 					}).then(function (forkInfo) {
 						// Ensure that fork is created (they take a while)
 						var timeout;
 						var test = function test(resolve, reject) {
 							clearTimeout(timeout);
-							_this2.request("repos/" + forkInfo.full_name + "/commits", { until: "1970-01-01T00:00:00Z" }, "HEAD").then(function (x) {
+							_this3.request("repos/" + forkInfo.full_name + "/commits", { until: "1970-01-01T00:00:00Z" }, "HEAD").then(function (x) {
 								resolve(forkInfo);
 							}).catch(function (x) {
 								// Try again after 1 second
@@ -7618,42 +7684,44 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				return repoInfo;
 			}).then(function (repoInfo) {
-				return _this2.request(fileCall, {
-					ref: _this2.branch
+				return _this3.request(fileCall, {
+					ref: _this3.branch
 				}).then(function (fileInfo) {
-					return _this2.request(fileCall, {
+					return _this3.request(fileCall, {
 						message: "Updated " + (fileInfo.name || "file"),
-						content: _.btoa(serialized),
-						branch: _this2.branch,
+						content: serialized,
+						branch: _this3.branch,
 						sha: fileInfo.sha
 					}, "PUT");
 				}, function (xhr) {
 					if (xhr.status == 404) {
 						// File does not exist, create it
-						return _this2.request(fileCall, {
+						return _this3.request(fileCall, {
 							message: "Created file",
-							content: _.btoa(serialized),
-							branch: _this2.branch
+							content: serialized,
+							branch: _this3.branch
 						}, "PUT");
 					}
 
 					return xhr;
 				});
 			}).then(function (fileInfo) {
-				if (_this2.forkInfo) {
+				if (_this3.forkInfo) {
 					// We saved in a fork, do we have a pull request?
-					_this2.request("repos/" + _this2.username + "/" + _this2.repo + "/pulls", {
-						head: _this2.user.username + ":" + _this2.branch,
-						base: _this2.branch
+					_this3.request("repos/" + _this3.username + "/" + _this3.repo + "/pulls", {
+						head: _this3.user.username + ":" + _this3.branch,
+						base: _this3.branch
 					}).then(function (prs) {
-						_this2.pullRequest(prs[0]);
+						_this3.pullRequest(prs[0]);
 					});
 				}
+
+				return fileInfo;
 			});
 		},
 
 		pullRequest: function pullRequest(existing) {
-			var _this3 = this;
+			var _this4 = this;
 
 			var previewURL = new URL(location);
 			previewURL.searchParams.set(this.mavo.id + "-storage", "https://github.com/" + this.forkInfo.full_name + "/" + this.path);
@@ -7676,14 +7744,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// Close PR
-					_this3.request("repos/" + _this3.username + "/" + _this3.repo + "/pulls/" + existing.number, {
+					_this4.request("repos/" + _this4.username + "/" + _this4.repo + "/pulls/" + existing.number, {
 						state: "closed"
 					}, "POST").then(function (prInfo) {
-						new Mavo.UI.Message(_this3.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion cancelled successfully!</a>", {
+						new Mavo.UI.Message(_this4.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion cancelled successfully!</a>", {
 							dismiss: ["button", "timeout"]
 						});
 
-						_this3.pullRequest();
+						_this4.pullRequest();
 					});
 				});
 			} else {
@@ -7699,43 +7767,43 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// We want to send a pull request
-					_this3.request("repos/" + _this3.username + "/" + _this3.repo + "/pulls", {
+					_this4.request("repos/" + _this4.username + "/" + _this4.repo + "/pulls", {
 						title: "Suggested edits to data",
 						body: "Hello there! I used Mavo to suggest the following edits:\n" + form.elements.edits.value + "\nPreview my changes here: " + previewURL,
-						head: _this3.user.username + ":" + _this3.branch,
-						base: _this3.branch
+						head: _this4.user.username + ":" + _this4.branch,
+						base: _this4.branch
 					}, "POST").then(function (prInfo) {
-						new Mavo.UI.Message(_this3.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion sent successfully!</a>", {
+						new Mavo.UI.Message(_this4.mavo, "<a href=\"" + prInfo.html_url + "\">Edit suggestion sent successfully!</a>", {
 							dismiss: ["button", "timeout"]
 						});
 
-						_this3.pullRequest(prInfo);
+						_this4.pullRequest(prInfo);
 					});
 				});
 			}
 		},
 
 		login: function login(passive) {
-			var _this4 = this;
+			var _this5 = this;
 
 			return this.oAuthenticate(passive).then(function () {
-				return _this4.getUser();
+				return _this5.getUser();
 			}).catch(function (xhr) {
 				if (xhr.status == 401) {
 					// Unauthorized. Access token we have is invalid, discard it
-					_this4.logout();
+					_this5.logout();
 				}
 			}).then(function (u) {
-				if (_this4.user) {
-					_this4.permissions.on(["edit", "save", "logout"]);
+				if (_this5.user) {
+					_this5.permissions.on(["edit", "save", "logout"]);
 
-					if (_this4.repo) {
-						return _this4.request("repos/" + _this4.username + "/" + _this4.repo).then(function (repoInfo) {
-							if (_this4.branch === undefined) {
-								_this4.branch = repoInfo.default_branch;
+					if (_this5.repo) {
+						return _this5.request("repos/" + _this5.username + "/" + _this5.repo).then(function (repoInfo) {
+							if (_this5.branch === undefined) {
+								_this5.branch = repoInfo.default_branch;
 							}
 
-							return _this4.repoInfo = repoInfo;
+							return _this5.repoInfo = repoInfo;
 						});
 					}
 				}
@@ -7757,22 +7825,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		logout: function logout() {
-			var _this5 = this;
+			var _this6 = this;
 
 			return this.oAuthLogout().then(function () {
-				_this5.user = null;
+				_this6.user = null;
 			});
 		},
 
 		getUser: function getUser() {
-			var _this6 = this;
+			var _this7 = this;
 
 			if (this.user) {
 				return Promise.resolve(this.user);
 			}
 
 			return this.request("user").then(function (info) {
-				_this6.user = {
+				_this7.user = {
 					username: info.login,
 					name: info.name || info.login,
 					avatar: info.avatar_url,
@@ -7780,7 +7848,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					info: info
 				};
 
-				$.fire(_this6.mavo.element, "mavo:login", { backend: _this6 });
+				$.fire(_this7.mavo.element, "mavo:login", { backend: _this7 });
+			});
+		},
+
+		getURL: function getURL() {
+			var _this8 = this;
+
+			var path = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.path;
+			var sha = arguments[1];
+
+			var repo = this.username + "/" + this.repo;
+			path = path.replace(/ /g, "%20");
+
+			return this.request("repos/" + repo + "/pages", {}, "GET", {
+				headers: {
+					"Accept": "application/vnd.github.mister-fantastic-preview+json"
+				}
+			}).then(function (pagesInfo) {
+				return pagesInfo.html_url + path;
+			}).catch(function (xhr) {
+				// No Github Pages, return rawgit URL
+				if (sha) {
+					return "https://cdn.rawgit.com/" + repo + "/" + sha + "/" + path;
+				} else {
+					return "https://rawgit.com/" + repo + "/" + _this8.branch + "/" + path;
+				}
 			});
 		},
 
@@ -7824,7 +7917,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Fix atob() and btoa() so they can handle Unicode
 			btoa: function (_btoa) {
-				function btoa(_x2) {
+				function btoa(_x5) {
 					return _btoa.apply(this, arguments);
 				}
 

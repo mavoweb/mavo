@@ -379,33 +379,9 @@ meter, progress {
 		border: 1px solid rgba(0,0,0,.2);
 	}
 
-	.mv-image-popup {
-		.mv-image-preview {
-			position: relative;
-			display: inline-block;
-
-			progress {
-				position: absolute;
-				left: 0;
-				right: 0;
-				bottom: 1em;
-				width: 100%;
-
-				&[value="0"],
-				&[value="100"] {
-					display: none;
-				}
-			}
-
-			img {
-				display: block;
-				max-width: 100%;
-			}
-		}
-
-		.mv-upload {
-			display: block;
-			margin: .8em 0;
+	.mv-upload-popup {
+		input[type=file] {
+			margin-top: .5em;
 		}
 
 		.mv-tip {

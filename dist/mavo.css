@@ -297,24 +297,9 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     min-width: 100%; }
   .mv-popup select[size] {
     border: 1px solid rgba(0, 0, 0, 0.2); }
-  .mv-popup .mv-image-popup .mv-image-preview {
-    position: relative;
-    display: inline-block; }
-    .mv-popup .mv-image-popup .mv-image-preview progress {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 1em;
-      width: 100%; }
-      .mv-popup .mv-image-popup .mv-image-preview progress[value="0"], .mv-popup .mv-image-popup .mv-image-preview progress[value="100"] {
-        display: none; }
-    .mv-popup .mv-image-popup .mv-image-preview img {
-      display: block;
-      max-width: 100%; }
-  .mv-popup .mv-image-popup .mv-upload {
-    display: block;
-    margin: .8em 0; }
-  .mv-popup .mv-image-popup .mv-tip {
+  .mv-popup .mv-upload-popup input[type=file] {
+    margin-top: .5em; }
+  .mv-popup .mv-upload-popup .mv-tip {
     font-size: 70%;
     color: gray; }
 

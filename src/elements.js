@@ -129,10 +129,59 @@ _.register({
 		default: true,
 		selector: "img, video, audio",
 		attribute: "src",
-		editor: {
-			"tag": "input",
-			"type": "url",
-			"placeholder": "http://example.com"
+		editor: function() {
+			var uploadBackend = this.mavo.storage && this.mavo.storage.upload? this.mavo.storage : this.uploadBackend;
+			var path = this.element.getAttribute("mv-uploads") || "images";
+
+			if (uploadBackend) {
+				var mainInput = $.create("input", {
+					"type": "url",
+					"placeholder": "http://example.com",
+					"className": "mv-output"
+				});
+
+				return $.create({
+					className: "mv-upload-popup",
+					contents: [
+						mainInput,
+						{
+							tag: "input",
+							type: "file",
+							accept: "image/*",
+							events: {
+								change: evt => {
+									var file = evt.target.files[0];
+
+									if (!file) {
+										return;
+									}
+
+									// Read file
+									var reader = new FileReader();
+									reader.onload = f => {
+										uploadBackend.upload(reader.result, path + "/" + file.name)
+											.then(url => {
+												mainInput.value = url;
+												this.mavo.inProgress = false;
+												$.fire(mainInput, "input");
+											});
+									};
+
+									this.mavo.inProgress = "Uploading";
+									reader.readAsDataURL(file);
+								}
+							}
+						}
+					]
+				});
+			}
+			else {
+				return {
+					"tag": "input",
+					"type": "url",
+					"placeholder": "http://example.com"
+				};
+			}
 		}
 	},
 
