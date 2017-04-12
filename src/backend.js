@@ -15,8 +15,10 @@ var _ = Mavo.Backend = $.Class({
 	},
 
 	get: function() {
-		return $.fetch(this.url.href)
-		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+		var url = new URL(this.url);
+		url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
+
+		return $.fetch(this.url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
 
 	load: function() {

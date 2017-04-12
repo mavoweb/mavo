@@ -2012,8 +2012,10 @@ var _ = Mavo.Backend = $.Class({
 	},
 
 	get: function() {
-		return $.fetch(this.url.href)
-		        .then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+		var url = new URL(this.url);
+		url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
+
+		return $.fetch(this.url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
 
 	load: function() {
@@ -5779,10 +5781,6 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
-	get $now() {
-		return new Date();
-	},
-
 	// Read-only syntactic sugar for URL stuff
 	$url: (function() {
 		var ret = {};
@@ -5934,6 +5932,37 @@ var _ = Mavo.Functions = {
 
 	uppercase: str => (str + "").toUpperCase(),
 	lowercase: str => (str + "").toLowerCase(),
+
+	/*********************
+	 * Date functions
+	 *********************/
+
+	get $now() {
+		return new Date();
+	},
+
+	year: getDateComponent("year"),
+	month: getDateComponent("month"),
+	day: getDateComponent("day"),
+	weekday: getDateComponent("weekday"),
+	hour: getDateComponent("hour"),
+	hour12: getDateComponent("hour", "numeric", {hour12:true}),
+	minute: getDateComponent("minute"),
+	second: getDateComponent("second"),
+
+	date: date => {
+		return `${_.year(date)}-${_.month(date).twodigit}-${_.day(date).twodigit}`;
+	},
+	time: date => {
+		return `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}`;
+	},
+
+	minutes: seconds => Math.round(seconds / 60),
+	hours: seconds => Math.round(seconds / 3600),
+	days: seconds => Math.round(seconds / 86400),
+	weeks: seconds => Math.round(seconds / 604800),
+	months: seconds => Math.round(seconds / (30.4368 * 86400)),
+	years: seconds => Math.round(seconds / (30.4368 * 86400 * 12)),
 };
 
 Mavo.Script = {
@@ -5986,18 +6015,11 @@ Mavo.Script = {
 						result = b.map(n => o.scalar(a, n));
 					}
 				}
+				else if (Array.isArray(a)) {
+					result = a.map(n => o.scalar(n, b));
+				}
 				else {
-					// Operand is scalar
-					if (typeof o.identity == "number") {
-						b = +b;
-					}
-
-					if (Array.isArray(a)) {
-						result = a.map(n => o.scalar(n, b));
-					}
-					else {
-						result = o.scalar(a, b);
-					}
+					result = o.scalar(a, b);
 				}
 
 				if (o.reduce) {
@@ -6050,7 +6072,17 @@ Mavo.Script = {
 			symbol: "+"
 		},
 		"subtract": {
-			scalar: (a, b) => a - b,
+			scalar: (a, b) => {
+				if (isNaN(a) || isNaN(b)) {
+					var dateA = toDate(a), dateB = toDate(b);
+
+					if (dateA && dateB) {
+						return (dateA - dateB)/1000;
+					}
+				}
+
+				return a - b;
+			},
 			symbol: "-"
 		},
 		"mod": {
@@ -6130,9 +6162,9 @@ Mavo.Script = {
 	getNumericalOperands: function(a, b) {
 		if (isNaN(a) || isNaN(b)) {
 			// Try comparing as dates
-			var da = new Date(a), db = new Date(b);
+			var da = toDate(a), db = toDate(b);
 
-			if (!isNaN(da) && !isNaN(db)) {
+			if (da && db) {
 				// Both valid dates
 				return [da, db];
 			}
@@ -6206,6 +6238,68 @@ function numbers(array, args) {
 	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 	return array.filter(number => !isNaN(number) && number !== "").map(n => +n);
+}
+
+function toDate(date) {
+	if (!date) {
+		return null;
+	}
+
+	if ($.type(date) === "string" && date.indexOf(":") === -1) {
+		// Dates without a time are parsed as UTC, we want local timezone
+		date += " 00:00:00";
+	}
+
+	date = new Date(date);
+
+	if (isNaN(date)) {
+		return null;
+	}
+
+	return date;
+}
+
+function getDateComponent(component, option = "numeric", o) {
+	var locale = document.documentElement.lang || "en-GB";
+
+	return function(date, format = option) {
+		date = toDate(date);
+
+		if (!date) {
+			return "";
+		}
+
+		var options = $.extend({
+			[component]: format,
+			hour12: false
+		}, o);
+
+		if (component == "weekday" && format == "numeric") {
+			ret = date.getDay() || 7;
+		}
+		else {
+			var ret = date.toLocaleString(locale, options);
+		}
+
+		if (format == "numeric" && !isNaN(ret)) {
+			ret = new Number(ret);
+
+			if (component == "month" || component == "weekday") {
+				options[component] = "long";
+				ret.name = date.toLocaleString(locale, options);
+
+				options[component] = "short";
+				ret.shortname = date.toLocaleString(locale, options);
+			}
+
+			if (component != "weekday") {
+				options[component] = "2-digit";
+				ret.twodigit = date.toLocaleString(locale, options);
+			}
+		}
+
+		return ret;
+	};
 }
 
 })();
