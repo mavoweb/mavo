@@ -241,10 +241,21 @@ button.mv-close {
 		display: none;
 	}
 
-	&[mv-progress]::after {
-		content: "";
-		display: inline-block;
-		@extend %progress;
+	&[mv-progress] {
+		&::after {
+			content: attr(mv-progress) "…";
+			@include progress(1.5em);
+			position: fixed;
+			border: 1em solid transparent;
+			border-bottom-width: .8em;
+			padding-top: 2em;
+			border-radius: .5em;
+			background-color: rgba(0,0,0,.4);
+			background-position-y: calc(50% - 1em);
+			background-origin: padding-box;
+			color: white;
+			font-weight: bold;
+		}
 	}
 
 	&.mv-highlight-unsaved .mv-unsaved-changes {

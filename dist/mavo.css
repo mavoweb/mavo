@@ -11,14 +11,6 @@
     background-size: .5em .5em, .5em .5em, 1em 1em;
     background-position: .25em 50%, 1.25em 50%, 2em 50%; } }
 
-[mv-app][mv-progress]::after, [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::after {
-  width: 3em;
-  height: 1em;
-  background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 0 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 1.25em 50%, radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 2.25em 50%;
-  background-size: 1em 1em, .5em .5em, .5em .5em;
-  background-repeat: no-repeat;
-  animation: loader .6s infinite; }
-
 [mv-app] [hidden] {
   display: none; }
 
@@ -182,8 +174,37 @@ button.mv-close {
   display: none; }
 
 [mv-app][mv-progress]::after {
-  content: "";
-  display: inline-block; }
+  content: attr(mv-progress) "…";
+  width: 4.5em;
+  height: 1.5em;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent), radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent), radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent);
+  background-size: 1.5em 1.5em, 0.75em 0.75em, 0.75em 0.75em;
+  background-repeat: no-repeat;
+  background-position-x: 0, 1.875em, 3.375em;
+  background-position-y: 50%;
+  animation: loader-150em 0.6s infinite;
+  position: fixed;
+  border: 1em solid transparent;
+  border-bottom-width: .8em;
+  padding-top: 2em;
+  border-radius: .5em;
+  background-color: rgba(0, 0, 0, 0.4);
+  background-position-y: calc(50% - 1em);
+  background-origin: padding-box;
+  color: white;
+  font-weight: bold; }
+
+@keyframes loader-150em {
+  33% {
+    background-size: 0.75em 0.75em, 1.5em 1.5em, 0.75em 0.75em;
+    background-position-x: 0.375em, 1.5em, 3.375em; }
+  66% {
+    background-size: 0.75em 0.75em, 0.75em 0.75em, 1.5em 1.5em;
+    background-position-x: 0.375em, 1.875em, 3em; } }
 
 [mv-app].mv-highlight-unsaved .mv-unsaved-changes {
   box-shadow: 0 0 0 50vmax rgba(64, 191, 191, 0.25) inset !important; }
@@ -453,11 +474,27 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
         opacity: .2; }
       [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save::after {
         content: "";
+        color: white;
+        width: 3em;
+        height: 1em;
         position: absolute;
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
-        color: white; }
+        background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent), radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent), radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent);
+        background-size: 1em 1em, 0.5em 0.5em, 0.5em 0.5em;
+        background-repeat: no-repeat;
+        background-position-x: 0, 1.25em, 2.25em;
+        background-position-y: 50%;
+        animation: loader-100em 0.6s infinite; }
+
+@keyframes loader-100em {
+  33% {
+    background-size: 0.5em 0.5em, 1em 1em, 0.5em 0.5em;
+    background-position-x: 0.25em, 1em, 2.25em; }
+  66% {
+    background-size: 0.5em 0.5em, 0.5em 0.5em, 1em 1em;
+    background-position-x: 0.25em, 1.25em, 2em; } }
     [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save,
     [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save::before {
       text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }

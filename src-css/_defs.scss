@@ -29,12 +29,34 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-%progress {
-	width: 3em; height: 1em;
-	background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 0 50%,
-				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 1.25em 50%,
-				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent) 2.25em 50%;
-	background-size: 1em 1em, .5em .5em, .5em .5em;
+@mixin progress($size: 1em) {
+	$double: $size $size;
+	$doublehalf: $size/2 $size/2;
+
+	@keyframes loader-#{$size * 100} {
+		33% {
+			background-size: $doublehalf, $double, $doublehalf;
+			background-position-x: $size * .25, $size, $size * 2.25;
+		}
+
+		66% {
+			background-size: $doublehalf, $doublehalf, $double;
+			background-position-x: $size * .25, $size * 1.25, $size * 2;
+		}
+	}
+
+	width: $size * 3;
+	height: $size;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent),
+				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent),
+				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent);
+	background-size: $double, $doublehalf, $doublehalf;
 	background-repeat: no-repeat;
-	animation: loader .6s infinite;
+	background-position-x: 0, $size * 1.25, $size * 2.25;
+	background-position-y: 50%;
+	animation: loader-#{$size * 100} .6s infinite;
 }
