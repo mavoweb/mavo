@@ -6985,22 +6985,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		minutes: function minutes(seconds) {
-			return Math.round(seconds / 60);
+			return Math.floor(Math.abs(seconds) / 60);
 		},
 		hours: function hours(seconds) {
-			return Math.round(seconds / 3600);
+			return Math.floor(Math.abs(seconds) / 3600);
 		},
 		days: function days(seconds) {
-			return Math.round(seconds / 86400);
+			return Math.floor(Math.abs(seconds) / 86400);
 		},
 		weeks: function weeks(seconds) {
-			return Math.round(seconds / 604800);
+			return Math.floor(Math.abs(seconds) / 604800);
 		},
 		months: function months(seconds) {
-			return Math.round(seconds / (30.4368 * 86400));
+			return Math.floor(Math.abs(seconds) / (30.4368 * 86400));
 		},
 		years: function years(seconds) {
-			return Math.round(seconds / (30.4368 * 86400 * 12));
+			return Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12));
 		}
 	};
 

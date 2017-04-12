@@ -5957,12 +5957,12 @@ var _ = Mavo.Functions = {
 		return `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}`;
 	},
 
-	minutes: seconds => Math.round(seconds / 60),
-	hours: seconds => Math.round(seconds / 3600),
-	days: seconds => Math.round(seconds / 86400),
-	weeks: seconds => Math.round(seconds / 604800),
-	months: seconds => Math.round(seconds / (30.4368 * 86400)),
-	years: seconds => Math.round(seconds / (30.4368 * 86400 * 12)),
+	minutes: seconds => Math.floor(Math.abs(seconds) / 60),
+	hours: seconds => Math.floor(Math.abs(seconds) / 3600),
+	days: seconds => Math.floor(Math.abs(seconds) / 86400),
+	weeks: seconds => Math.floor(Math.abs(seconds) / 604800),
+	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
+	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
 };
 
 Mavo.Script = {
