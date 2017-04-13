@@ -349,8 +349,10 @@ meter, progress {
 	box-shadow: 0 .1em .3em rgba(0,0,0,.3);
 	background: white;
 	transform-origin: 1.4em -0.45em; // Magic numbers. No idea why.
-	transition: .3s transform;
+	transition: .3s;
+	transition-property: transform, top, left;
 
+	// tip
 	&::before {
 		content: "";
 		position: absolute;
@@ -362,6 +364,15 @@ meter, progress {
 		border-bottom-width: 0;
 		background: inherit;
 		transform: rotate(45deg)
+	}
+
+	& > fieldset {
+		border: none;
+		padding: 0;
+
+		legend {
+
+		}
 	}
 
 	&[hidden] {
@@ -380,15 +391,33 @@ meter, progress {
 	}
 
 	.mv-upload-popup {
+		border: 2px dashed rgba(0,0,0,.1);
+		padding: 1em;
+		margin-top: .5em;
+
+		&.mv-dragover {
+			background: #cef;
+		}
+
 		input[type=file] {
-			margin-top: .5em;
+			margin-top: .8em;
 		}
 
 		.mv-tip {
-			font-size: 70%;
-			color: gray;
+			color: rgba(0,0,0,.5);
+			margin-top: .8em;
+			font-size: 85%;
+
+			&::before {
+				content: "💡 ";
+			}
 		}
 	}
+}
+
+.mv-dragover {
+	outline: 2px dashed rgba(0, 0, 0, .3);
+	outline-offset: -2px;
 }
 
 .mv-ui {

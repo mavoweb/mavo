@@ -843,16 +843,42 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		save: function save() {
+		upload: function upload(file) {
 			var _this5 = this;
+
+			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "images/" + file.name;
+
+			if (!this.uploadBackend) {
+				return Promise.reject();
+			}
+
+			var reader = new FileReader();
+
+			return new Promise(function (resolve, reject) {
+				reader.onload = function (f) {
+					resolve(_this5.uploadBackend.upload(reader.result, path).then(function (url) {
+						_this5.inProgress = false;
+						return url;
+					}));
+				};
+
+				reader.onerror = reader.onabort = reject;
+
+				_this5.inProgress = "Uploading";
+				reader.readAsDataURL(file);
+			});
+		},
+
+		save: function save() {
+			var _this6 = this;
 
 			return this.store().then(function (saved) {
 				if (saved) {
-					$.fire(_this5.element, "mavo:save", saved);
+					$.fire(_this6.element, "mavo:save", saved);
 
-					_this5.lastSaved = Date.now();
-					_this5.root.save();
-					_this5.unsavedChanges = false;
+					_this6.lastSaved = Date.now();
+					_this6.root.save();
+					_this6.unsavedChanges = false;
 				}
 			});
 		},
@@ -908,6 +934,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					return value;
+				}
+			},
+
+			uploadBackend: {
+				get: function get() {
+					if (this.storage && this.storage.upload) {
+						// Prioritize storage
+						return this.storage;
+					}
 				}
 			}
 		},
@@ -3926,7 +3961,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}, this);
 
 			if (this.attribute || this.config.popup) {
-				this.popup = new _.Popup(this);
+				this.popup = new Mavo.UI.Popup(this);
 			}
 
 			if (!this.popup) {
@@ -3962,10 +3997,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				var timer;
 
-				$.events(_this3.element, {
-					"click.mavo:preedit": resolve,
-					"focus.mavo:preedit": resolve
-				});
+				var events = "click focus dragover dragenter".split(" ").map(function (e) {
+					return e + ".mavo:preedit";
+				}).join(" ");
+				$.events(_this3.element, events, resolve);
 
 				if (!_this3.attribute) {
 					// Hovering over the element for over 150ms will trigger edit
@@ -4419,28 +4454,57 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		}
 	});
+})(Bliss, Bliss.$);
+"use strict";
 
-	_.Popup = $.Class({
+(function ($, $$) {
+
+	var _ = Mavo.UI.Popup = $.Class({
 		constructor: function constructor(primitive) {
-			var _this6 = this;
+			var _this = this;
 
 			this.primitive = primitive;
+
+			// Need to be defined here so that this is what expected
+			this.position = function (evt) {
+				var bounds = _this.element.getBoundingClientRect();
+				var x = bounds.left;
+				var y = bounds.bottom;
+
+				if (_this.popup.offsetHeight) {
+					// Is in the DOM, check if it fits
+					var popupBounds = _this.popup.getBoundingClientRect();
+
+					if (popupBounds.height + y > innerHeight) {
+						y = innerHeight - popupBounds.height - 20;
+					}
+				}
+
+				$.style(_this.popup, { top: y + "px", left: x + "px" });
+			};
 
 			this.popup = $.create("div", {
 				className: "mv-popup",
 				hidden: true,
-				contents: [this.primitive.label + ":", this.editor],
+				contents: {
+					tag: "fieldset",
+					contents: [{
+						tag: "legend",
+						textContent: this.primitive.label + ":"
+					}, this.editor]
+				},
 				events: {
 					keyup: function keyup(evt) {
 						if (evt.keyCode == 13 || evt.keyCode == 27) {
-							if (_this6.popup.contains(document.activeElement)) {
-								_this6.element.focus();
+							if (_this.popup.contains(document.activeElement)) {
+								_this.element.focus();
 							}
 
 							evt.stopPropagation();
-							_this6.hide();
+							_this.hide();
 						}
-					}
+					},
+					transitionend: this.position
 				}
 			});
 
@@ -4451,25 +4515,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		show: function show() {
-			var _this7 = this;
+			var _this2 = this;
 
 			$.unbind([this.element, this.popup], ".mavo:showpopup");
 
 			this.shown = true;
 
 			this.hideCallback = function (evt) {
-				if (!_this7.popup.contains(evt.target) && !_this7.element.contains(evt.target)) {
-					_this7.hide();
+				if (!_this2.popup.contains(evt.target) && !_this2.element.contains(evt.target)) {
+					_this2.hide();
 				}
-			};
-
-			this.position = function (evt) {
-				var bounds = _this7.element.getBoundingClientRect();
-				var x = bounds.left;
-				var y = bounds.bottom;
-
-				// TODO what if it doesn’t fit?
-				$.style(_this7.popup, { top: y + "px", left: x + "px" });
 			};
 
 			this.position();
@@ -4477,7 +4532,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			document.body.appendChild(this.popup);
 
 			requestAnimationFrame(function (e) {
-				return _this7.popup.removeAttribute("hidden");
+				return _this2.popup.removeAttribute("hidden");
 			}); // trigger transition
 
 			$.events(document, "focus click", this.hideCallback, true);
@@ -4485,7 +4540,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		hide: function hide() {
-			var _this8 = this;
+			var _this3 = this;
 
 			$.unbind(document, "focus click", this.hideCallback, true);
 			window.removeEventListener("scroll", this.position);
@@ -4493,18 +4548,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.shown = false;
 
 			setTimeout(function () {
-				$.remove(_this8.popup);
+				$.remove(_this3.popup);
 			}, parseFloat(getComputedStyle(this.popup).transitionDuration) * 1000 || 400); // TODO transition-duration could override this
 
 			$.events(this.element, {
 				"click.mavo:showpopup": function clickMavoShowpopup(evt) {
-					_this8.show();
+					_this3.show();
 				},
 				"keyup.mavo:showpopup": function keyupMavoShowpopup(evt) {
 					if ([13, 113].indexOf(evt.keyCode) > -1) {
 						// Enter or F2
-						_this8.show();
-						_this8.editor.focus();
+						_this3.show();
+						_this3.editor.focus();
 					}
 				}
 			});
@@ -4723,21 +4778,68 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var _this = this;
 
 				var uploadBackend = this.mavo.storage && this.mavo.storage.upload ? this.mavo.storage : this.uploadBackend;
-				var path = this.element.getAttribute("mv-uploads") || "images";
 
-				if (uploadBackend) {
-					var mainInput = $.create("input", {
-						"type": "url",
-						"placeholder": "http://example.com",
-						"className": "mv-output"
-					});
+				var mainInput = $.create("input", {
+					"type": "url",
+					"placeholder": "http://example.com/image.png",
+					"className": "mv-output",
+					"aria-label": "URL to image"
+				});
 
-					return $.create({
+				if (uploadBackend && self.FileReader) {
+					var popup;
+					var type = this.element.nodeName.toLowerCase();
+					type = type == "img" ? "image" : type;
+					var path = this.element.getAttribute("mv-uploads") || type + "s";
+
+					var upload = function upload(file) {
+						var name = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : file.name;
+
+						if (file && file.type.indexOf(type + "/") === 0) {
+							_this.mavo.upload(file, path + "/" + name).then(function (url) {
+								mainInput.value = url;
+								$.fire(mainInput, "input");
+							});
+						}
+					};
+
+					var uploadEvents = {
+						"paste": function paste(evt) {
+							var item = evt.clipboardData.items[0];
+
+							if (item.kind == "file" && item.type.indexOf(type + "/") === 0) {
+								// Is a file of the correct type, upload!
+								var name = "pasted-" + type + "-" + Date.now() + "." + item.type.slice(6); // image, video, audio are all 5 chars
+								upload(item.getAsFile(), name);
+								evt.preventDefault();
+							}
+						},
+						"drag dragstart dragend dragover dragenter dragleave drop": function dragDragstartDragendDragoverDragenterDragleaveDrop(evt) {
+							evt.preventDefault();
+							evt.stopPropagation();
+						},
+						"dragover dragenter": function dragoverDragenter(evt) {
+							popup.classList.add("mv-dragover");
+							_this.element.classList.add("mv-dragover");
+						},
+						"dragleave dragend drop": function dragleaveDragendDrop(evt) {
+							popup.classList.remove("mv-dragover");
+							_this.element.classList.remove("mv-dragover");
+						},
+						"drop": function drop(evt) {
+							upload(evt.dataTransfer.files[0]);
+						}
+					};
+
+					$.events(this.element, uploadEvents);
+
+					return popup = $.create({
 						className: "mv-upload-popup",
 						contents: [mainInput, {
 							tag: "input",
 							type: "file",
-							accept: "image/*",
+							"aria-label": "Upload image",
+							accept: type + "/*",
 							events: {
 								change: function change(evt) {
 									var file = evt.target.files[0];
@@ -4746,28 +4848,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 										return;
 									}
 
-									// Read file
-									var reader = new FileReader();
-									reader.onload = function (f) {
-										uploadBackend.upload(reader.result, path + "/" + file.name).then(function (url) {
-											mainInput.value = url;
-											_this.mavo.inProgress = false;
-											$.fire(mainInput, "input");
-										});
-									};
-
-									_this.mavo.inProgress = "Uploading";
-									reader.readAsDataURL(file);
+									upload(file);
 								}
 							}
-						}]
+						}, {
+							className: "mv-tip",
+							innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
+						}],
+						events: uploadEvents
 					});
 				} else {
-					return {
-						"tag": "input",
-						"type": "url",
-						"placeholder": "http://example.com"
-					};
+					return mainInput;
 				}
 			}
 		},
@@ -7627,7 +7718,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			serialized = serialized.replace(RegExp("^" + media + "(;base64)?,"), "");
 
 			return this.put(serialized, path, { isEncoded: dataURL.indexOf("base64") > -1 }).then(function (fileInfo) {
-				console.log(fileInfo.commit.sha);
 				return _this2.getURL(path, fileInfo.commit.sha);
 			});
 		},

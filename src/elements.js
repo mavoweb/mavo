@@ -131,23 +131,67 @@ _.register({
 		attribute: "src",
 		editor: function() {
 			var uploadBackend = this.mavo.storage && this.mavo.storage.upload? this.mavo.storage : this.uploadBackend;
-			var path = this.element.getAttribute("mv-uploads") || "images";
 
-			if (uploadBackend) {
-				var mainInput = $.create("input", {
-					"type": "url",
-					"placeholder": "http://example.com",
-					"className": "mv-output"
-				});
+			var mainInput = $.create("input", {
+				"type": "url",
+				"placeholder": "http://example.com/image.png",
+				"className": "mv-output",
+				"aria-label": "URL to image"
+			});
 
-				return $.create({
+			if (uploadBackend && self.FileReader) {
+				var popup;
+				var type = this.element.nodeName.toLowerCase();
+				type = type == "img"? "image" : type;
+				var path = this.element.getAttribute("mv-uploads") || type + "s";
+
+				var upload = (file, name = file.name) => {
+					if (file && file.type.indexOf(type + "/") === 0) {
+						this.mavo.upload(file, path + "/" + name).then(url => {
+							mainInput.value = url;
+							$.fire(mainInput, "input");
+						});
+					}
+				};
+
+				var uploadEvents = {
+					"paste": evt => {
+						var item = evt.clipboardData.items[0];
+
+						if (item.kind == "file" && item.type.indexOf(type + "/") === 0) {
+							// Is a file of the correct type, upload!
+							var name = `pasted-${type}-${Date.now()}.${item.type.slice(6)}`; // image, video, audio are all 5 chars
+							upload(item.getAsFile(), name);
+							evt.preventDefault();
+						}
+					},
+					"drag dragstart dragend dragover dragenter dragleave drop": evt => {
+						evt.preventDefault();
+						evt.stopPropagation();
+					},
+					"dragover dragenter": evt => {
+						popup.classList.add("mv-dragover");
+						this.element.classList.add("mv-dragover");
+					},
+					"dragleave dragend drop": evt => {
+						popup.classList.remove("mv-dragover");
+						this.element.classList.remove("mv-dragover");
+					},
+					"drop": evt => {
+						upload(evt.dataTransfer.files[0]);
+					}
+				};
+
+				$.events(this.element, uploadEvents);
+
+				return popup = $.create({
 					className: "mv-upload-popup",
 					contents: [
-						mainInput,
-						{
+						mainInput, {
 							tag: "input",
 							type: "file",
-							accept: "image/*",
+							"aria-label": "Upload image",
+							accept: type + "/*",
 							events: {
 								change: evt => {
 									var file = evt.target.files[0];
@@ -156,31 +200,19 @@ _.register({
 										return;
 									}
 
-									// Read file
-									var reader = new FileReader();
-									reader.onload = f => {
-										uploadBackend.upload(reader.result, path + "/" + file.name)
-											.then(url => {
-												mainInput.value = url;
-												this.mavo.inProgress = false;
-												$.fire(mainInput, "input");
-											});
-									};
-
-									this.mavo.inProgress = "Uploading";
-									reader.readAsDataURL(file);
+									upload(file);
 								}
 							}
+						}, {
+							className: "mv-tip",
+							innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
 						}
-					]
+					],
+					events: uploadEvents
 				});
 			}
 			else {
-				return {
-					"tag": "input",
-					"type": "url",
-					"placeholder": "http://example.com"
-				};
+				return mainInput;
 			}
 		}
 	},

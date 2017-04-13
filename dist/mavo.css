@@ -276,7 +276,8 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   box-shadow: 0 0.1em 0.3em rgba(0, 0, 0, 0.3);
   background: white;
   transform-origin: 1.4em -0.45em;
-  transition: .3s transform; }
+  transition: .3s;
+  transition-property: transform, top, left; }
   .mv-popup::before {
     content: "";
     position: absolute;
@@ -288,6 +289,9 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     border-bottom-width: 0;
     background: inherit;
     transform: rotate(45deg); }
+  .mv-popup > fieldset {
+    border: none;
+    padding: 0; }
   .mv-popup[hidden] {
     display: block;
     transform: scale(0); }
@@ -297,11 +301,24 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     min-width: 100%; }
   .mv-popup select[size] {
     border: 1px solid rgba(0, 0, 0, 0.2); }
-  .mv-popup .mv-upload-popup input[type=file] {
+  .mv-popup .mv-upload-popup {
+    border: 2px dashed rgba(0, 0, 0, 0.1);
+    padding: 1em;
     margin-top: .5em; }
-  .mv-popup .mv-upload-popup .mv-tip {
-    font-size: 70%;
-    color: gray; }
+    .mv-popup .mv-upload-popup.mv-dragover {
+      background: #cef; }
+    .mv-popup .mv-upload-popup input[type=file] {
+      margin-top: .8em; }
+    .mv-popup .mv-upload-popup .mv-tip {
+      color: rgba(0, 0, 0, 0.5);
+      margin-top: .8em;
+      font-size: 85%; }
+      .mv-popup .mv-upload-popup .mv-tip::before {
+        content: "💡 "; }
+
+.mv-dragover {
+  outline: 2px dashed rgba(0, 0, 0, 0.3);
+  outline-offset: -2px; }
 
 .mv-ui a {
   color: inherit; }

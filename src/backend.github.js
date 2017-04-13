@@ -35,10 +35,7 @@ var _ = Mavo.Backend.register($.Class({
 		serialized = serialized.replace(RegExp(`^${media}(;base64)?,`), "");
 
 		return this.put(serialized, path, {isEncoded: dataURL.indexOf("base64") > -1})
-			.then(fileInfo => {
-				console.log(fileInfo.commit.sha);
-				return this.getURL(path, fileInfo.commit.sha);
-			});
+			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
 	},
 
 	/**

@@ -683,6 +683,29 @@ var _ = self.Mavo = $.Class({
 			});
 	},
 
+	upload: function(file, path = "images/" + file.name) {
+		if (!this.uploadBackend) {
+			return Promise.reject();
+		}
+
+		var reader = new FileReader();
+
+		return new Promise((resolve, reject) => {
+			reader.onload = f => {
+				resolve(this.uploadBackend.upload(reader.result, path)
+					.then(url => {
+						this.inProgress = false;
+						return url;
+					}));
+			};
+
+			reader.onerror = reader.onabort = reject;
+
+			this.inProgress = "Uploading";
+			reader.readAsDataURL(file);
+		});
+	},
+
 	save: function() {
 		return this.store().then(saved => {
 			if (saved) {
@@ -747,6 +770,15 @@ var _ = self.Mavo = $.Class({
 				}
 
 				return value;
+			}
+		},
+
+		uploadBackend: {
+			get: function() {
+				if (this.storage && this.storage.upload) {
+					// Prioritize storage
+					return this.storage;
+				}
 			}
 		}
 	},
@@ -3323,7 +3355,7 @@ var _ = Mavo.Primitive = $.Class({
 		}, this);
 
 		if (this.attribute || this.config.popup) {
-			this.popup = new _.Popup(this);
+			this.popup = new Mavo.UI.Popup(this);
 		}
 
 		if (!this.popup) {
@@ -3355,10 +3387,8 @@ var _ = Mavo.Primitive = $.Class({
 
 			var timer;
 
-			$.events(this.element, {
-				"click.mavo:preedit": resolve,
-				"focus.mavo:preedit": resolve
-			});
+			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
+			$.events(this.element, events, resolve);
 
 			if (!this.attribute) {
 				// Hovering over the element for over 150ms will trigger edit
@@ -3793,17 +3823,45 @@ var _ = Mavo.Primitive = $.Class({
 	}
 });
 
-_.Popup = $.Class({
+})(Bliss, Bliss.$);
+
+(function($, $$) {
+
+var _ = Mavo.UI.Popup = $.Class({
 	constructor: function(primitive) {
 		this.primitive = primitive;
+
+		// Need to be defined here so that this is what expected
+		this.position = evt => {
+			var bounds = this.element.getBoundingClientRect();
+			var x = bounds.left;
+			var y = bounds.bottom;
+
+			if (this.popup.offsetHeight) {
+				// Is in the DOM, check if it fits
+				var popupBounds = this.popup.getBoundingClientRect();
+
+				if (popupBounds.height + y > innerHeight) {
+					y = innerHeight - popupBounds.height - 20;
+				}
+			}
+
+			$.style(this.popup, { top:  `${y}px`, left: `${x}px` });
+		};
 
 		this.popup = $.create("div", {
 			className: "mv-popup",
 			hidden: true,
-			contents: [
-				this.primitive.label + ":",
-				this.editor
-			],
+			contents: {
+				tag: "fieldset",
+				contents: [
+					{
+						tag: "legend",
+						textContent: this.primitive.label + ":"
+					},
+					this.editor
+				]
+			},
 			events: {
 				keyup: evt => {
 					if (evt.keyCode == 13 || evt.keyCode == 27) {
@@ -3814,7 +3872,8 @@ _.Popup = $.Class({
 						evt.stopPropagation();
 						this.hide();
 					}
-				}
+				},
+				transitionend: this.position
 			}
 		});
 
@@ -3833,15 +3892,6 @@ _.Popup = $.Class({
 			if (!this.popup.contains(evt.target) && !this.element.contains(evt.target)) {
 				this.hide();
 			}
-		};
-
-		this.position = evt => {
-			var bounds = this.element.getBoundingClientRect();
-			var x = bounds.left;
-			var y = bounds.bottom;
-
-			 // TODO what if it doesn’t fit?
-			$.style(this.popup, { top:  `${y}px`, left: `${x}px` });
 		};
 
 		this.position();
@@ -4023,23 +4073,67 @@ _.register({
 		attribute: "src",
 		editor: function() {
 			var uploadBackend = this.mavo.storage && this.mavo.storage.upload? this.mavo.storage : this.uploadBackend;
-			var path = this.element.getAttribute("mv-uploads") || "images";
 
-			if (uploadBackend) {
-				var mainInput = $.create("input", {
-					"type": "url",
-					"placeholder": "http://example.com",
-					"className": "mv-output"
-				});
+			var mainInput = $.create("input", {
+				"type": "url",
+				"placeholder": "http://example.com/image.png",
+				"className": "mv-output",
+				"aria-label": "URL to image"
+			});
 
-				return $.create({
+			if (uploadBackend && self.FileReader) {
+				var popup;
+				var type = this.element.nodeName.toLowerCase();
+				type = type == "img"? "image" : type;
+				var path = this.element.getAttribute("mv-uploads") || type + "s";
+
+				var upload = (file, name = file.name) => {
+					if (file && file.type.indexOf(type + "/") === 0) {
+						this.mavo.upload(file, path + "/" + name).then(url => {
+							mainInput.value = url;
+							$.fire(mainInput, "input");
+						});
+					}
+				};
+
+				var uploadEvents = {
+					"paste": evt => {
+						var item = evt.clipboardData.items[0];
+
+						if (item.kind == "file" && item.type.indexOf(type + "/") === 0) {
+							// Is a file of the correct type, upload!
+							var name = `pasted-${type}-${Date.now()}.${item.type.slice(6)}`; // image, video, audio are all 5 chars
+							upload(item.getAsFile(), name);
+							evt.preventDefault();
+						}
+					},
+					"drag dragstart dragend dragover dragenter dragleave drop": evt => {
+						evt.preventDefault();
+						evt.stopPropagation();
+					},
+					"dragover dragenter": evt => {
+						popup.classList.add("mv-dragover");
+						this.element.classList.add("mv-dragover");
+					},
+					"dragleave dragend drop": evt => {
+						popup.classList.remove("mv-dragover");
+						this.element.classList.remove("mv-dragover");
+					},
+					"drop": evt => {
+						upload(evt.dataTransfer.files[0]);
+					}
+				};
+
+				$.events(this.element, uploadEvents);
+
+				return popup = $.create({
 					className: "mv-upload-popup",
 					contents: [
-						mainInput,
-						{
+						mainInput, {
 							tag: "input",
 							type: "file",
-							accept: "image/*",
+							"aria-label": "Upload image",
+							accept: type + "/*",
 							events: {
 								change: evt => {
 									var file = evt.target.files[0];
@@ -4048,31 +4142,19 @@ _.register({
 										return;
 									}
 
-									// Read file
-									var reader = new FileReader();
-									reader.onload = f => {
-										uploadBackend.upload(reader.result, path + "/" + file.name)
-											.then(url => {
-												mainInput.value = url;
-												this.mavo.inProgress = false;
-												$.fire(mainInput, "input");
-											});
-									};
-
-									this.mavo.inProgress = "Uploading";
-									reader.readAsDataURL(file);
+									upload(file);
 								}
 							}
+						}, {
+							className: "mv-tip",
+							innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
 						}
-					]
+					],
+					events: uploadEvents
 				});
 			}
 			else {
-				return {
-					"tag": "input",
-					"type": "url",
-					"placeholder": "http://example.com"
-				};
+				return mainInput;
 			}
 		}
 	},
@@ -6479,10 +6561,7 @@ var _ = Mavo.Backend.register($.Class({
 		serialized = serialized.replace(RegExp(`^${media}(;base64)?,`), "");
 
 		return this.put(serialized, path, {isEncoded: dataURL.indexOf("base64") > -1})
-			.then(fileInfo => {
-				console.log(fileInfo.commit.sha);
-				return this.getURL(path, fileInfo.commit.sha);
-			});
+			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
 	},
 
 	/**

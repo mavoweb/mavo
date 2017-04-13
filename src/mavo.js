@@ -479,6 +479,29 @@ var _ = self.Mavo = $.Class({
 			});
 	},
 
+	upload: function(file, path = "images/" + file.name) {
+		if (!this.uploadBackend) {
+			return Promise.reject();
+		}
+
+		var reader = new FileReader();
+
+		return new Promise((resolve, reject) => {
+			reader.onload = f => {
+				resolve(this.uploadBackend.upload(reader.result, path)
+					.then(url => {
+						this.inProgress = false;
+						return url;
+					}));
+			};
+
+			reader.onerror = reader.onabort = reject;
+
+			this.inProgress = "Uploading";
+			reader.readAsDataURL(file);
+		});
+	},
+
 	save: function() {
 		return this.store().then(saved => {
 			if (saved) {
@@ -543,6 +566,15 @@ var _ = self.Mavo = $.Class({
 				}
 
 				return value;
+			}
+		},
+
+		uploadBackend: {
+			get: function() {
+				if (this.storage && this.storage.upload) {
+					// Prioritize storage
+					return this.storage;
+				}
 			}
 		}
 	},
