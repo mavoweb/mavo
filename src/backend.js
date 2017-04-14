@@ -80,7 +80,7 @@ var _ = Mavo.Backend = $.Class({
 			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
 		}
 
-		if (typeof req.data === "object") {
+		if ($.type(req.data) === "object") {
 			if (req.method == "GET") {
 				req.data = Object.keys(req.data).map(p => p + "=" + encodeURIComponent(req.data[p])).join("&");
 			}

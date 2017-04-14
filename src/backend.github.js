@@ -29,13 +29,16 @@ var _ = Mavo.Backend.register($.Class({
 		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
-	upload: function(dataURL, path = this.path) {
-		var serialized = dataURL.slice(5); // remove data:
-		var media = serialized.match(/^\w+\/[\w+]+/)[0];
-		serialized = serialized.replace(RegExp(`^${media}(;base64)?,`), "");
+	upload: function(file, path = this.path) {
+		return Mavo.readFile(file).then(dataURL => {
+				var base64 = dataURL.slice(5); // remove data:
+				var media = base64.match(/^\w+\/[\w+]+/)[0];
+				base64 = base64.replace(RegExp(`^${media}(;base64)?,`), "");
+				path = this.path.replace(/[^/]+$/, "") + path;
 
-		return this.put(serialized, path, {isEncoded: dataURL.indexOf("base64") > -1})
-			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
+				return this.put(base64, path, {isEncoded: true});
+			})
+			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));	
 	},
 
 	/**

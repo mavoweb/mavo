@@ -688,22 +688,18 @@ var _ = self.Mavo = $.Class({
 			return Promise.reject();
 		}
 
-		var reader = new FileReader();
+		this.inProgress = "Uploading";
 
-		return new Promise((resolve, reject) => {
-			reader.onload = f => {
-				resolve(this.uploadBackend.upload(reader.result, path)
-					.then(url => {
-						this.inProgress = false;
-						return url;
-					}));
-			};
-
-			reader.onerror = reader.onabort = reject;
-
-			this.inProgress = "Uploading";
-			reader.readAsDataURL(file);
-		});
+		return this.uploadBackend.upload(file, path)
+			.then(url => {
+				this.inProgress = false;
+				return url;
+			})
+			.catch(err => {
+				this.error("Error uploading file", err);
+				this.inProgress = false;
+				return null;
+			});
 	},
 
 	save: function() {
@@ -913,6 +909,16 @@ var _ = $.extend(Mavo, {
 
 		// JS file
 		return $.include(url);
+	},
+
+	readFile: (file, format = "DataURL") => {
+		var reader = new FileReader();
+
+		return new Promise((resolve, reject) => {
+			reader.onload = f => resolve(reader.result);
+			reader.onerror = reader.onabort = reject;
+			reader["readAs" + format](file);
+		});
 	},
 
 	toJSON: data => {
@@ -2109,7 +2115,7 @@ var _ = Mavo.Backend = $.Class({
 			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
 		}
 
-		if (typeof req.data === "object") {
+		if ($.type(req.data) === "object") {
 			if (req.method == "GET") {
 				req.data = Object.keys(req.data).map(p => p + "=" + encodeURIComponent(req.data[p])).join("&");
 			}
@@ -6446,12 +6452,20 @@ var _ = Mavo.Backend.register($.Class({
 		this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
 
 		// Transform the dropbox shared URL into something raw and CORS-enabled
-		this.url = new URL(this.url, location);
-
-		this.url.hostname = "dl.dropboxusercontent.com";
-		this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
+		this.url = _.fixShareURL(this.url);
 
 		this.login(true);
+	},
+
+	upload: function(file, path) {
+		path = this.path.replace(/[^/]+$/, "") + path;
+
+		return this.put(file, path).then(fileInfo => this.getURL(path));
+	},
+
+	getURL: function(path) {
+		return this.request("sharing/create_shared_link_with_settings", {path}, "POST")
+			.then(shareInfo => _.fixShareURL(shareInfo.url));
 	},
 
 	/**
@@ -6459,11 +6473,11 @@ var _ = Mavo.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(serialized, path) {
+	put: function(serialized, path = this.path, o = {}) {
 		return this.request("https://content.dropboxapi.com/2/files/upload", serialized, "POST", {
 			headers: {
 				"Dropbox-API-Arg": JSON.stringify({
-					path: this.path,
+					path,
 					mode: "overwrite"
 				}),
 				"Content-Type": "application/octet-stream"
@@ -6518,6 +6532,13 @@ var _ = Mavo.Backend.register($.Class({
 		test: function(url) {
 			url = new URL(url, location);
 			return /dropbox.com/.test(url.host);
+		},
+
+		fixShareURL: url => {
+			url = new URL(url, location);
+			url.hostname = "dl.dropboxusercontent.com";
+			url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
+			return url;
 		}
 	}
 }));
@@ -6555,13 +6576,16 @@ var _ = Mavo.Backend.register($.Class({
 		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
 	},
 
-	upload: function(dataURL, path = this.path) {
-		var serialized = dataURL.slice(5); // remove data:
-		var media = serialized.match(/^\w+\/[\w+]+/)[0];
-		serialized = serialized.replace(RegExp(`^${media}(;base64)?,`), "");
+	upload: function(file, path = this.path) {
+		return Mavo.readFile(file).then(dataURL => {
+				var base64 = dataURL.slice(5); // remove data:
+				var media = base64.match(/^\w+\/[\w+]+/)[0];
+				base64 = base64.replace(RegExp(`^${media}(;base64)?,`), "");
+				path = this.path.replace(/[^/]+$/, "") + path;
 
-		return this.put(serialized, path, {isEncoded: dataURL.indexOf("base64") > -1})
-			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
+				return this.put(base64, path, {isEncoded: true});
+			})
+			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));	
 	},
 
 	/**

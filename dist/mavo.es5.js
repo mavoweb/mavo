@@ -852,20 +852,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return Promise.reject();
 			}
 
-			var reader = new FileReader();
+			this.inProgress = "Uploading";
 
-			return new Promise(function (resolve, reject) {
-				reader.onload = function (f) {
-					resolve(_this5.uploadBackend.upload(reader.result, path).then(function (url) {
-						_this5.inProgress = false;
-						return url;
-					}));
-				};
-
-				reader.onerror = reader.onabort = reject;
-
-				_this5.inProgress = "Uploading";
-				reader.readAsDataURL(file);
+			return this.uploadBackend.upload(file, path).then(function (url) {
+				_this5.inProgress = false;
+				return url;
+			}).catch(function (err) {
+				_this5.error("Error uploading file", err);
+				_this5.inProgress = false;
+				return null;
 			});
 		},
 
@@ -1097,6 +1092,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// JS file
 			return $.include(url);
+		},
+
+		readFile: function readFile(file) {
+			var format = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "DataURL";
+
+			var reader = new FileReader();
+
+			return new Promise(function (resolve, reject) {
+				reader.onload = function (f) {
+					return resolve(reader.result);
+				};
+				reader.onerror = reader.onabort = reject;
+				reader["readAs" + format](file);
+			});
 		},
 
 		toJSON: function toJSON(data) {
@@ -2487,8 +2496,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 (function ($) {
 
 	/**
@@ -2599,7 +2606,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				req.headers["Authorization"] = req.headers["Authorization"] || "Bearer " + this.accessToken;
 			}
 
-			if (_typeof(req.data) === "object") {
+			if ($.type(req.data) === "object") {
 				if (req.method == "GET") {
 					req.data = Object.keys(req.data).map(function (p) {
 						return p + "=" + encodeURIComponent(req.data[p]);
@@ -7591,12 +7598,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
 
 			// Transform the dropbox shared URL into something raw and CORS-enabled
-			this.url = new URL(this.url, location);
-
-			this.url.hostname = "dl.dropboxusercontent.com";
-			this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
+			this.url = _.fixShareURL(this.url);
 
 			this.login(true);
+		},
+
+		upload: function upload(file, path) {
+			var _this = this;
+
+			path = this.path.replace(/[^/]+$/, "") + path;
+
+			return this.put(file, path).then(function (fileInfo) {
+				return _this.getURL(path);
+			});
+		},
+
+		getURL: function getURL(path) {
+			return this.request("sharing/create_shared_link_with_settings", { path: path }, "POST").then(function (shareInfo) {
+				return _.fixShareURL(shareInfo.url);
+			});
 		},
 
 		/**
@@ -7604,11 +7624,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @param {Object} file - An object with name & data keys
    * @return {Promise} A promise that resolves when the file is saved.
    */
-		put: function put(serialized, path) {
+		put: function put(serialized) {
+			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.path;
+			var o = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
 			return this.request("https://content.dropboxapi.com/2/files/upload", serialized, "POST", {
 				headers: {
 					"Dropbox-API-Arg": JSON.stringify({
-						path: this.path,
+						path: path,
 						mode: "overwrite"
 					}),
 					"Content-Type": "application/octet-stream"
@@ -7621,14 +7644,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getUser: function getUser() {
-			var _this = this;
+			var _this2 = this;
 
 			if (this.user) {
 				return Promise.resolve(this.user);
 			}
 
 			return this.request("users/get_current_account", "null", "POST").then(function (info) {
-				_this.user = {
+				_this2.user = {
 					username: info.email,
 					name: info.name.display_name,
 					avatar: info.profile_photo_url,
@@ -7638,20 +7661,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		login: function login(passive) {
-			var _this2 = this;
+			var _this3 = this;
 
 			return this.oAuthenticate(passive).then(function () {
-				return _this2.getUser();
+				return _this3.getUser();
 			}).then(function (u) {
-				if (_this2.user) {
-					_this2.permissions.logout = true;
+				if (_this3.user) {
+					_this3.permissions.logout = true;
 
 					// Check if can actually edit the file
-					_this2.request("sharing/get_shared_link_metadata", {
-						"url": _this2.source
+					_this3.request("sharing/get_shared_link_metadata", {
+						"url": _this3.source
 					}, "POST").then(function (info) {
-						_this2.path = info.path_lower;
-						_this2.permissions.on(["edit", "save"]);
+						_this3.path = info.path_lower;
+						_this3.permissions.on(["edit", "save"]);
 					});
 				}
 			});
@@ -7669,6 +7692,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				url = new URL(url, location);
 				return (/dropbox.com/.test(url.host)
 				);
+			},
+
+			fixShareURL: function fixShareURL(url) {
+				url = new URL(url, location);
+				url.hostname = "dl.dropboxusercontent.com";
+				url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
+				return url;
 			}
 		}
 	}));
@@ -7708,16 +7738,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		upload: function upload(dataURL) {
+		upload: function upload(file) {
 			var _this2 = this;
 
 			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.path;
 
-			var serialized = dataURL.slice(5); // remove data:
-			var media = serialized.match(/^\w+\/[\w+]+/)[0];
-			serialized = serialized.replace(RegExp("^" + media + "(;base64)?,"), "");
+			return Mavo.readFile(file).then(function (dataURL) {
+				var base64 = dataURL.slice(5); // remove data:
+				var media = base64.match(/^\w+\/[\w+]+/)[0];
+				base64 = base64.replace(RegExp("^" + media + "(;base64)?,"), "");
+				path = _this2.path.replace(/[^/]+$/, "") + path;
 
-			return this.put(serialized, path, { isEncoded: dataURL.indexOf("base64") > -1 }).then(function (fileInfo) {
+				return _this2.put(base64, path, { isEncoded: true });
+			}).then(function (fileInfo) {
 				return _this2.getURL(path, fileInfo.commit.sha);
 			});
 		},

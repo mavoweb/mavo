@@ -9,12 +9,20 @@ var _ = Mavo.Backend.register($.Class({
 		this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
 
 		// Transform the dropbox shared URL into something raw and CORS-enabled
-		this.url = new URL(this.url, location);
-
-		this.url.hostname = "dl.dropboxusercontent.com";
-		this.url.search = this.url.search.replace(/\bdl=0|^$/, "raw=1");
+		this.url = _.fixShareURL(this.url);
 
 		this.login(true);
+	},
+
+	upload: function(file, path) {
+		path = this.path.replace(/[^/]+$/, "") + path;
+
+		return this.put(file, path).then(fileInfo => this.getURL(path));
+	},
+
+	getURL: function(path) {
+		return this.request("sharing/create_shared_link_with_settings", {path}, "POST")
+			.then(shareInfo => _.fixShareURL(shareInfo.url));
 	},
 
 	/**
@@ -22,11 +30,11 @@ var _ = Mavo.Backend.register($.Class({
 	 * @param {Object} file - An object with name & data keys
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(serialized, path) {
+	put: function(serialized, path = this.path, o = {}) {
 		return this.request("https://content.dropboxapi.com/2/files/upload", serialized, "POST", {
 			headers: {
 				"Dropbox-API-Arg": JSON.stringify({
-					path: this.path,
+					path,
 					mode: "overwrite"
 				}),
 				"Content-Type": "application/octet-stream"
@@ -81,6 +89,13 @@ var _ = Mavo.Backend.register($.Class({
 		test: function(url) {
 			url = new URL(url, location);
 			return /dropbox.com/.test(url.host);
+		},
+
+		fixShareURL: url => {
+			url = new URL(url, location);
+			url.hostname = "dl.dropboxusercontent.com";
+			url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
+			return url;
 		}
 	}
 }));

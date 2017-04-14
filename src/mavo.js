@@ -484,22 +484,18 @@ var _ = self.Mavo = $.Class({
 			return Promise.reject();
 		}
 
-		var reader = new FileReader();
+		this.inProgress = "Uploading";
 
-		return new Promise((resolve, reject) => {
-			reader.onload = f => {
-				resolve(this.uploadBackend.upload(reader.result, path)
-					.then(url => {
-						this.inProgress = false;
-						return url;
-					}));
-			};
-
-			reader.onerror = reader.onabort = reject;
-
-			this.inProgress = "Uploading";
-			reader.readAsDataURL(file);
-		});
+		return this.uploadBackend.upload(file, path)
+			.then(url => {
+				this.inProgress = false;
+				return url;
+			})
+			.catch(err => {
+				this.error("Error uploading file", err);
+				this.inProgress = false;
+				return null;
+			});
 	},
 
 	save: function() {

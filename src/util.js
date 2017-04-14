@@ -29,6 +29,16 @@ var _ = $.extend(Mavo, {
 		return $.include(url);
 	},
 
+	readFile: (file, format = "DataURL") => {
+		var reader = new FileReader();
+
+		return new Promise((resolve, reject) => {
+			reader.onload = f => resolve(reader.result);
+			reader.onerror = reader.onabort = reject;
+			reader["readAs" + format](file);
+		});
+	},
+
 	toJSON: data => {
 		if (data === null) {
 			return "";
