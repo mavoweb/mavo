@@ -11,8 +11,9 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this});
 
 		// Convert any data-mv-* attributes to mv-*
-		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
-		for (let element of $$(dataMv.join(", "), this.element).concat(this.element)) {
+		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
+
+		[this.element, ...$$(selector, this.element)].forEach(element => {
 			for (let attribute of _.attributes) {
 				let value = element.getAttribute("data-" + attribute);
 
@@ -20,7 +21,7 @@ var _ = self.Mavo = $.Class({
 					element.setAttribute(attribute, value);
 				}
 			}
-		}
+		});
 
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
@@ -46,7 +47,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-start", this);
 
 		// Apply heuristic for groups
-		for (let element of $$(_.selectors.primitive, this.element)) {
+		for (var element of $$(_.selectors.primitive, this.element)) {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
@@ -288,15 +289,6 @@ var _ = self.Mavo = $.Class({
 		this.root.edit();
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
-			if (evt.target.matches(".mv-item-controls *")) {
-				var itemControls = evt.target.closest(".mv-item-controls");
-				var item = Mavo.data(itemControls, "item");
-
-				if (item && item.element) {
-					item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
-				}
-			}
-
 			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
 
@@ -661,7 +653,7 @@ $.extend(_.selectors, {
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
 requestAnimationFrame(() => {
-	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest;
+	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
 
 	_.dependencies.push(
 		$.ready(),

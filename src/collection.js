@@ -259,77 +259,10 @@ var _ = Mavo.Collection = $.Class({
 
 	editItem: function(item) {
 		if (!item.itemControls) {
-			item.itemControls = $$(".mv-item-controls", item.element)
-								   .filter(el => {
-									   // Remove item controls meant for other collections
-									   return el.closest(Mavo.selectors.multiple) == item.element && !Mavo.data(el, "item");
-								   })[0];
-
-			item.itemControls = item.itemControls || $.create({
-				className: "mv-item-controls mv-ui"
-			});
-
-			Mavo.data(item.itemControls, "item", item);
-
-			$.set(item.itemControls, {
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + item.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => item.collection.delete(item)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${item.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => {
-								var newItem = this.add(null, item.index);
-
-								if (evt[Mavo.superKey]) {
-									newItem.render(item.data);
-								}
-
-								Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-								return this.editItem(newItem);
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + item.name,
-						className: "mv-drag-handle",
-						events: {
-							click: evt => evt.target.focus(),
-							keydown: evt => {
-								if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-									// Arrow keys
-									this.move(item, evt.keyCode <= 38? -1 : 1);
-
-									evt.stopPropagation();
-									evt.preventDefault();
-									evt.target.focus();
-								}
-							}
-						}
-					}
-				]
-			});
+			item.itemControls = new Mavo.UI.Itembar(item);
 		}
 
-		if (!item.itemControls.parentNode) {
-			if (!Mavo.revocably.add(item.itemControls)) {
-				if (item instanceof Mavo.Primitive && !item.attribute) {
-					item.itemControls.classList.add("mv-adjacent");
-					$.after(item.itemControls, item.element);
-				}
-				else {
-					item.element.appendChild(item.itemControls);
-				}
-			}
-		}
+		item.itemControls.add();
 
 		item.edit();
 	},
@@ -370,7 +303,11 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => Mavo.revocably.remove(item.itemControls));
+			this.propagate(item => {
+				if (item.itemControls) {
+					item.itemControls.remove();
+				}
+			});
 		}
 	},
 

@@ -221,62 +221,42 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Object.defineProperty(_.all, this.index - 1, { value: this });
 
 			// Convert any data-mv-* attributes to mv-*
-			var dataMv = _.attributes.map(function (attribute) {
+			var selector = _.attributes.map(function (attribute) {
 				return "[data-" + attribute + "]";
-			});
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
+			}).join(", ");
 
-			try {
-				for (var _iterator = $$(dataMv.join(", "), this.element).concat(this.element)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var _element = _step.value;
-					var _iteratorNormalCompletion6 = true;
-					var _didIteratorError6 = false;
-					var _iteratorError6 = undefined;
+			[this.element].concat(_toConsumableArray($$(selector, this.element))).forEach(function (element) {
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
 
-					try {
-						for (var _iterator6 = _.attributes[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-							var attribute = _step6.value;
-
-							var value = _element.getAttribute("data-" + attribute);
-
-							if (value !== null) {
-								_element.setAttribute(attribute, value);
-							}
-						}
-					} catch (err) {
-						_didIteratorError6 = true;
-						_iteratorError6 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion6 && _iterator6.return) {
-								_iterator6.return();
-							}
-						} finally {
-							if (_didIteratorError6) {
-								throw _iteratorError6;
-							}
-						}
-					}
-				}
-
-				// Assign a unique (for the page) id to this mavo instance
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
 				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
+					for (var _iterator = _.attributes[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var attribute = _step.value;
+
+						var value = element.getAttribute("data-" + attribute);
+
+						if (value !== null) {
+							element.setAttribute(attribute, value);
+						}
 					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
 				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
 					}
 				}
-			}
+			});
 
+			// Assign a unique (for the page) id to this mavo instance
 			this.id = Mavo.getAttribute(this.element, "mv-app", "id") || "mavo" + this.index;
 
 			if (this.id in _.all) {
@@ -306,16 +286,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator2 = $$(_.selectors.primitive, this.element)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var _element2 = _step2.value;
+					var element = _step2.value;
 
-					var hasChildren = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, _element2);
+					var hasChildren = $(_.selectors.not(_.selectors.formControl) + ", " + _.selectors.property, element);
 
 					if (hasChildren) {
-						var config = Mavo.Primitive.getConfig(_element2);
-						var isCollection = Mavo.is("multiple", _element2);
+						var config = Mavo.Primitive.getConfig(element);
+						var isCollection = Mavo.is("multiple", element);
 
 						if (isCollection || !config.attribute && !config.hasChildren) {
-							_element2.setAttribute("typeof", "");
+							element.setAttribute("typeof", "");
 						}
 					}
 				}
@@ -460,20 +440,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							for (var _iterator4 = records[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
 								var record = _step4.value;
 
-								var _element3 = record.target;
+								var _element = record.target;
 
 								var _iteratorNormalCompletion5 = true;
 								var _didIteratorError5 = false;
 								var _iteratorError5 = undefined;
 
 								try {
-									nodeloop: for (var _iterator5 = _.Node.children(_element3)[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+									nodeloop: for (var _iterator5 = _.Node.children(_element)[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
 										var node = _step5.value;
 
 										var previousMode = node.mode,
 										    mode = void 0;
 
-										if (node.element == _element3) {
+										if (node.element == _element) {
 											// If attribute set directly on a Mavo node, then it forces it into that mode
 											// otherwise, descendant nodes still inherit, unless they are also mode-restricted
 											mode = node.element.getAttribute("mv-mode");
@@ -648,15 +628,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.root.edit();
 
 			$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", function (evt) {
-				if (evt.target.matches(".mv-item-controls *")) {
-					var itemControls = evt.target.closest(".mv-item-controls");
-					var item = Mavo.data(itemControls, "item");
-
-					if (item && item.element) {
-						item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
-					}
-				}
-
 				if (evt.target.matches(_.selectors.multiple)) {
 					evt.target.classList.remove("mv-has-hovered-item");
 
@@ -1044,7 +1015,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// Init mavo. Async to give other scripts a chance to modify stuff.
 	requestAnimationFrame(function () {
-		var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest;
+		var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
 
 		_.dependencies.push($.ready(), _.Plugins.load(), $.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en"));
 
@@ -1797,7 +1768,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				innerHTML: "<button>&nbsp;</button>"
 			});
 
-			this.order = this.mavo.element.getAttribute("mv-bar");
+			if (this.element.classList.contains("mv-compact")) {
+				this.noResize = true;
+			}
+
+			this.order = this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar");
 
 			if (this.order) {
 				this.order = this.order == "none" ? [] : this.order.split(/\s+/);
@@ -1886,7 +1861,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			if (this.order.length && !this.element.classList.contains("mv-compact")) {
+			if (this.order.length && !this.noResize) {
 				this.resize();
 
 				if (self.ResizeObserver) {
@@ -1934,6 +1909,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		add: function add(id) {
+			var _this2 = this;
+
 			var o = _.controls[id];
 
 			if (o.prepare) {
@@ -1941,15 +1918,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			Mavo.revocably.add(this[id], this.element);
+
+			if (!this.resizeObserver && !this.noResize) {
+				requestAnimationFrame(function () {
+					return _this2.resize();
+				});
+			}
 		},
 
 		remove: function remove(id) {
+			var _this3 = this;
+
 			var o = _.controls[id];
 
 			Mavo.revocably.remove(this[id], "mv-" + id);
 
 			if (o.cleanup) {
 				o.cleanup.call(this.mavo);
+			}
+
+			if (!this.resizeObserver && !this.noResize) {
+				requestAnimationFrame(function () {
+					return _this3.resize();
+				});
 			}
 		},
 
@@ -5480,86 +5471,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		editItem: function editItem(item) {
-			var _this4 = this;
-
 			if (!item.itemControls) {
-				item.itemControls = $$(".mv-item-controls", item.element).filter(function (el) {
-					// Remove item controls meant for other collections
-					return el.closest(Mavo.selectors.multiple) == item.element && !Mavo.data(el, "item");
-				})[0];
-
-				item.itemControls = item.itemControls || $.create({
-					className: "mv-item-controls mv-ui"
-				});
-
-				Mavo.data(item.itemControls, "item", item);
-
-				$.set(item.itemControls, {
-					contents: [{
-						tag: "button",
-						title: "Delete this " + item.name,
-						className: "mv-delete",
-						events: {
-							"click": function click(evt) {
-								return item.collection.delete(item);
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Add new " + item.name.replace(/s$/i, "") + " " + (this.bottomUp ? "after" : "before"),
-						className: "mv-add",
-						events: {
-							"click": function click(evt) {
-								var newItem = _this4.add(null, item.index);
-
-								if (evt[Mavo.superKey]) {
-									newItem.render(item.data);
-								}
-
-								Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-								return _this4.editItem(newItem);
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + item.name,
-						className: "mv-drag-handle",
-						events: {
-							click: function click(evt) {
-								return evt.target.focus();
-							},
-							keydown: function keydown(evt) {
-								if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-									// Arrow keys
-									_this4.move(item, evt.keyCode <= 38 ? -1 : 1);
-
-									evt.stopPropagation();
-									evt.preventDefault();
-									evt.target.focus();
-								}
-							}
-						}
-					}]
-				});
+				item.itemControls = new Mavo.UI.Itembar(item);
 			}
 
-			if (!item.itemControls.parentNode) {
-				if (!Mavo.revocably.add(item.itemControls)) {
-					if (item instanceof Mavo.Primitive && !item.attribute) {
-						item.itemControls.classList.add("mv-adjacent");
-						$.after(item.itemControls, item.element);
-					} else {
-						item.element.appendChild(item.itemControls);
-					}
-				}
-			}
+			item.itemControls.add();
 
 			item.edit();
 		},
 
 		edit: function edit() {
-			var _this5 = this;
+			var _this4 = this;
 
 			if (this.super.edit.call(this) === false) {
 				return false;
@@ -5576,12 +5498,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				// Insert item controls
 				this.propagate(function (item) {
-					_this5.editItem(item);
+					_this4.editItem(item);
 				});
 
 				// Set up drag & drop
 				_.dragula.then(function () {
-					_this5.getDragula();
+					_this4.getDragula();
 				});
 			}
 		},
@@ -5597,7 +5519,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				this.propagate(function (item) {
-					return Mavo.revocably.remove(item.itemControls);
+					if (item.itemControls) {
+						item.itemControls.remove();
+					}
 				});
 			}
 		},
@@ -5661,7 +5585,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		propagated: ["save"],
 
 		dataRender: function dataRender(data) {
-			var _this6 = this;
+			var _this5 = this;
 
 			if (!data) {
 				return;
@@ -5702,7 +5626,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						Mavo.hooks.run("collection-add-end", env);
 
 						this.mavo.treeBuilt.then(function () {
-							return _this6.mavo.expressions.update(env.item.element);
+							return _this5.mavo.expressions.update(env.item.element);
 						});
 					}
 
@@ -5757,7 +5681,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this7 = this;
+			var _this6 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -5772,9 +5696,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this7.accepts.length) {
-						return Mavo.flatten(_this7.accepts.map(function (property) {
-							return _this7.mavo.root.find(property, { collections: true });
+					if (_this6.accepts.length) {
+						return Mavo.flatten(_this6.accepts.map(function (property) {
+							return _this6.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -5822,7 +5746,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this7.dragula.cancel(true);
+					return _this6.dragula.cancel(true);
 				}
 			});
 
@@ -5864,7 +5788,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this8 = this;
+				var _this7 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -5872,7 +5796,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this8.templateElement.contains(button);
+						return !_this7.templateElement.contains(button);
 					})[0];
 				}
 
@@ -5893,7 +5817,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this8.editItem(_this8.add());
+					_this7.editItem(_this7.add());
 				});
 
 				return button;
@@ -5921,6 +5845,108 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js");
 				}
 			}
+		}
+	});
+})(Bliss, Bliss.$);
+"use strict";
+
+(function ($, $$) {
+
+	var _ = Mavo.UI.Itembar = $.Class({
+		constructor: function constructor(item) {
+			var _this = this;
+
+			this.item = item;
+
+			this.element = $$(".mv-item-controls", this.item.element).filter(function (el) {
+				// Remove item controls meant for other collections
+				return el.closest(Mavo.selectors.multiple) == _this.item.element && !Mavo.data(el, "item");
+			})[0];
+
+			this.element = this.element || $.create({
+				className: "mv-item-controls mv-ui"
+			});
+
+			Mavo.data(this.element, "item", this.item);
+
+			$.set(this.element, {
+				contents: [{
+					tag: "button",
+					title: "Delete this " + this.item.name,
+					className: "mv-delete",
+					events: {
+						"click": function click(evt) {
+							return _this.item.collection.delete(item);
+						}
+					}
+				}, {
+					tag: "button",
+					title: "Add new " + this.item.name.replace(/s$/i, "") + " " + (this.collection.bottomUp ? "after" : "before"),
+					className: "mv-add",
+					events: {
+						"click": function click(evt) {
+							var newItem = _this.collection.add(null, _this.item.index);
+
+							if (evt[Mavo.superKey]) {
+								newItem.render(_this.item.data);
+							}
+
+							Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+							return _this.collection.editItem(newItem);
+						}
+					}
+				}, {
+					tag: "button",
+					title: "Drag to reorder " + this.item.name,
+					className: "mv-drag-handle",
+					events: {
+						click: function click(evt) {
+							return evt.target.focus();
+						},
+						keydown: function keydown(evt) {
+							if (evt.keyCode >= 37 && evt.keyCode <= 40) {
+								// Arrow keys
+								_this.move(_this.item, evt.keyCode <= 38 ? -1 : 1);
+
+								evt.stopPropagation();
+								evt.preventDefault();
+								evt.target.focus();
+							}
+						}
+					}
+				}],
+				events: {
+					mouseenter: function mouseenter(evt) {
+						_this.item.element.classList.add("mv-highlight");
+					},
+					mouseleave: function mouseleave(evt) {
+						_this.item.element.classList.remove("mv-highlight");
+					}
+				}
+			});
+		},
+
+		add: function add() {
+			if (!this.element.parentNode) {
+				if (!Mavo.revocably.add(this.element)) {
+					if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
+						this.element.classList.add("mv-adjacent");
+						$.after(this.element, this.item.element);
+					} else {
+						this.item.element.appendChild(this.element);
+					}
+				}
+			}
+		},
+
+		remove: function remove() {
+			Mavo.revocably.remove(this.element);
+		},
+
+		proxy: {
+			collection: "item",
+			mavo: "item"
 		}
 	});
 })(Bliss, Bliss.$);
@@ -6906,45 +6932,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			"=": "eq"
 		},
 
-		// Read-only syntactic sugar for URL stuff
-		$url: function () {
-			var ret = {};
-			var url = new URL(location);
-
-			var _iteratorNormalCompletion = true;
-			var _didIteratorError = false;
-			var _iteratorError = undefined;
-
-			try {
-				for (var _iterator = url.searchParams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var pair = _step.value;
-
-					ret[pair[0]] = pair[1];
-				}
-			} catch (err) {
-				_didIteratorError = true;
-				_iteratorError = err;
-			} finally {
-				try {
-					if (!_iteratorNormalCompletion && _iterator.return) {
-						_iterator.return();
-					}
-				} finally {
-					if (_didIteratorError) {
-						throw _iteratorError;
-					}
-				}
-			}
-
-			Object.defineProperty(ret, "toString", {
-				value: function value() {
-					return new URL(location);
-				}
-			});
-
-			return ret;
-		}(),
-
 		/**
    * Get a property of an object. Used by the . operator to prevent TypeErrors
    */
@@ -7150,6 +7137,45 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12));
 		}
 	};
+
+	// $url: Read-only syntactic sugar for URL stuff
+	$.lazy(Mavo.Functions, "$url", function () {
+		var ret = {};
+		var url = new URL(location);
+
+		var _iteratorNormalCompletion = true;
+		var _didIteratorError = false;
+		var _iteratorError = undefined;
+
+		try {
+			for (var _iterator = url.searchParams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+				var pair = _step.value;
+
+				ret[pair[0]] = pair[1];
+			}
+		} catch (err) {
+			_didIteratorError = true;
+			_iteratorError = err;
+		} finally {
+			try {
+				if (!_iteratorNormalCompletion && _iterator.return) {
+					_iterator.return();
+				}
+			} finally {
+				if (_didIteratorError) {
+					throw _iteratorError;
+				}
+			}
+		}
+
+		Object.defineProperty(ret, "toString", {
+			value: function value() {
+				return new URL(location);
+			}
+		});
+
+		return ret;
+	});
 
 	Mavo.Script = {
 		addUnaryOperator: function addUnaryOperator(name, o) {

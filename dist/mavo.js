@@ -215,8 +215,9 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this});
 
 		// Convert any data-mv-* attributes to mv-*
-		var dataMv = _.attributes.map(attribute => `[data-${attribute}]`);
-		for (let element of $$(dataMv.join(", "), this.element).concat(this.element)) {
+		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
+
+		[this.element, ...$$(selector, this.element)].forEach(element => {
 			for (let attribute of _.attributes) {
 				let value = element.getAttribute("data-" + attribute);
 
@@ -224,7 +225,7 @@ var _ = self.Mavo = $.Class({
 					element.setAttribute(attribute, value);
 				}
 			}
-		}
+		});
 
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
@@ -250,7 +251,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-start", this);
 
 		// Apply heuristic for groups
-		for (let element of $$(_.selectors.primitive, this.element)) {
+		for (var element of $$(_.selectors.primitive, this.element)) {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
@@ -492,15 +493,6 @@ var _ = self.Mavo = $.Class({
 		this.root.edit();
 
 		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
-			if (evt.target.matches(".mv-item-controls *")) {
-				var itemControls = evt.target.closest(".mv-item-controls");
-				var item = Mavo.data(itemControls, "item");
-
-				if (item && item.element) {
-					item.element.classList.toggle("mv-highlight", evt.type == "mouseenter");
-				}
-			}
-
 			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
 
@@ -865,7 +857,7 @@ $.extend(_.selectors, {
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
 requestAnimationFrame(() => {
-	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest;
+	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
 
 	_.dependencies.push(
 		$.ready(),
@@ -1496,7 +1488,11 @@ var _ = Mavo.UI.Bar = $.Class({
 			innerHTML: "<button>&nbsp;</button>"
 		});
 
-		this.order = this.mavo.element.getAttribute("mv-bar");
+		if (this.element.classList.contains("mv-compact")) {
+			this.noResize = true;
+		}
+
+		this.order = this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar");
 
 		if (this.order) {
 			this.order = this.order == "none"? [] : this.order.split(/\s+/);
@@ -1558,7 +1554,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 		}
 
-		if (this.order.length && !this.element.classList.contains("mv-compact")) {
+		if (this.order.length && !this.noResize) {
 			this.resize();
 
 			if (self.ResizeObserver) {
@@ -1615,6 +1611,10 @@ var _ = Mavo.UI.Bar = $.Class({
 		}
 
 		Mavo.revocably.add(this[id], this.element);
+
+		if (!this.resizeObserver && !this.noResize) {
+			requestAnimationFrame(() => this.resize());
+		}
 	},
 
 	remove: function(id) {
@@ -1624,6 +1624,10 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		if (o.cleanup) {
 			o.cleanup.call(this.mavo);
+		}
+
+		if (!this.resizeObserver && !this.noResize) {
+			requestAnimationFrame(() => this.resize());
 		}
 	},
 
@@ -4680,77 +4684,10 @@ var _ = Mavo.Collection = $.Class({
 
 	editItem: function(item) {
 		if (!item.itemControls) {
-			item.itemControls = $$(".mv-item-controls", item.element)
-								   .filter(el => {
-									   // Remove item controls meant for other collections
-									   return el.closest(Mavo.selectors.multiple) == item.element && !Mavo.data(el, "item");
-								   })[0];
-
-			item.itemControls = item.itemControls || $.create({
-				className: "mv-item-controls mv-ui"
-			});
-
-			Mavo.data(item.itemControls, "item", item);
-
-			$.set(item.itemControls, {
-				contents: [
-					{
-						tag: "button",
-						title: "Delete this " + item.name,
-						className: "mv-delete",
-						events: {
-							"click": evt => item.collection.delete(item)
-						}
-					}, {
-						tag: "button",
-						title: `Add new ${item.name.replace(/s$/i, "")} ${this.bottomUp? "after" : "before"}`,
-						className: "mv-add",
-						events: {
-							"click": evt => {
-								var newItem = this.add(null, item.index);
-
-								if (evt[Mavo.superKey]) {
-									newItem.render(item.data);
-								}
-
-								Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-								return this.editItem(newItem);
-							}
-						}
-					}, {
-						tag: "button",
-						title: "Drag to reorder " + item.name,
-						className: "mv-drag-handle",
-						events: {
-							click: evt => evt.target.focus(),
-							keydown: evt => {
-								if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-									// Arrow keys
-									this.move(item, evt.keyCode <= 38? -1 : 1);
-
-									evt.stopPropagation();
-									evt.preventDefault();
-									evt.target.focus();
-								}
-							}
-						}
-					}
-				]
-			});
+			item.itemControls = new Mavo.UI.Itembar(item);
 		}
 
-		if (!item.itemControls.parentNode) {
-			if (!Mavo.revocably.add(item.itemControls)) {
-				if (item instanceof Mavo.Primitive && !item.attribute) {
-					item.itemControls.classList.add("mv-adjacent");
-					$.after(item.itemControls, item.element);
-				}
-				else {
-					item.element.appendChild(item.itemControls);
-				}
-			}
-		}
+		item.itemControls.add();
 
 		item.edit();
 	},
@@ -4791,7 +4728,11 @@ var _ = Mavo.Collection = $.Class({
 				this.addButton.remove();
 			}
 
-			this.propagate(item => Mavo.revocably.remove(item.itemControls));
+			this.propagate(item => {
+				if (item.itemControls) {
+					item.itemControls.remove();
+				}
+			});
 		}
 	},
 
@@ -5076,6 +5017,105 @@ var _ = Mavo.Collection = $.Class({
 		lazy: {
 			dragula: () => $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js")
 		}
+	}
+});
+
+})(Bliss, Bliss.$);
+
+(function($, $$) {
+
+var _ = Mavo.UI.Itembar = $.Class({
+	constructor: function(item) {
+		this.item = item;
+
+		this.element = $$(".mv-item-controls", this.item.element).filter(el => {
+								   // Remove item controls meant for other collections
+								   return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
+							   })[0];
+
+		this.element = this.element || $.create({
+			className: "mv-item-controls mv-ui"
+		});
+
+		Mavo.data(this.element, "item", this.item);
+
+		$.set(this.element, {
+			contents: [
+				{
+					tag: "button",
+					title: "Delete this " + this.item.name,
+					className: "mv-delete",
+					events: {
+						"click": evt => this.item.collection.delete(item)
+					}
+				}, {
+					tag: "button",
+					title: `Add new ${this.item.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
+					className: "mv-add",
+					events: {
+						"click": evt => {
+							var newItem = this.collection.add(null, this.item.index);
+
+							if (evt[Mavo.superKey]) {
+								newItem.render(this.item.data);
+							}
+
+							Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+							return this.collection.editItem(newItem);
+						}
+					}
+				}, {
+					tag: "button",
+					title: "Drag to reorder " + this.item.name,
+					className: "mv-drag-handle",
+					events: {
+						click: evt => evt.target.focus(),
+						keydown: evt => {
+							if (evt.keyCode >= 37 && evt.keyCode <= 40) {
+								// Arrow keys
+								this.move(this.item, evt.keyCode <= 38? -1 : 1);
+
+								evt.stopPropagation();
+								evt.preventDefault();
+								evt.target.focus();
+							}
+						}
+					}
+				}
+			],
+			events: {
+				mouseenter: evt => {
+					this.item.element.classList.add("mv-highlight");
+				},
+				mouseleave: evt => {
+					this.item.element.classList.remove("mv-highlight");
+				}
+			}
+		});
+	},
+
+	add: function() {
+		if (!this.element.parentNode) {
+			if (!Mavo.revocably.add(this.element)) {
+				if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
+					this.element.classList.add("mv-adjacent");
+					$.after(this.element, this.item.element);
+				}
+				else {
+					this.item.element.appendChild(this.element);
+				}
+			}
+		}
+	},
+
+	remove: function() {
+		 Mavo.revocably.remove(this.element);
+	},
+
+	proxy: {
+		collection: "item",
+		mavo: "item"
 	}
 });
 
@@ -5919,22 +5959,6 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
-	// Read-only syntactic sugar for URL stuff
-	$url: (function() {
-		var ret = {};
-		var url = new URL(location);
-
-		for (let pair of url.searchParams) {
-			ret[pair[0]] = pair[1];
-		}
-
-		Object.defineProperty(ret, "toString", {
-			value: () => new URL(location)
-		});
-
-		return ret;
-	})(),
-
 	/**
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
@@ -6102,6 +6126,22 @@ var _ = Mavo.Functions = {
 	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
 	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
 };
+
+// $url: Read-only syntactic sugar for URL stuff
+$.lazy(Mavo.Functions, "$url", function() {
+	var ret = {};
+	var url = new URL(location);
+
+	for (let pair of url.searchParams) {
+		ret[pair[0]] = pair[1];
+	}
+
+	Object.defineProperty(ret, "toString", {
+		value: () => new URL(location)
+	});
+
+	return ret;
+});
 
 Mavo.Script = {
 	addUnaryOperator: function(name, o) {

@@ -9,22 +9,6 @@ var _ = Mavo.Functions = {
 		"=": "eq"
 	},
 
-	// Read-only syntactic sugar for URL stuff
-	$url: (function() {
-		var ret = {};
-		var url = new URL(location);
-
-		for (let pair of url.searchParams) {
-			ret[pair[0]] = pair[1];
-		}
-
-		Object.defineProperty(ret, "toString", {
-			value: () => new URL(location)
-		});
-
-		return ret;
-	})(),
-
 	/**
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
@@ -192,6 +176,22 @@ var _ = Mavo.Functions = {
 	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
 	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
 };
+
+// $url: Read-only syntactic sugar for URL stuff
+$.lazy(Mavo.Functions, "$url", function() {
+	var ret = {};
+	var url = new URL(location);
+
+	for (let pair of url.searchParams) {
+		ret[pair[0]] = pair[1];
+	}
+
+	Object.defineProperty(ret, "toString", {
+		value: () => new URL(location)
+	});
+
+	return ret;
+});
 
 Mavo.Script = {
 	addUnaryOperator: function(name, o) {

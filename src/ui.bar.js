@@ -12,7 +12,11 @@ var _ = Mavo.UI.Bar = $.Class({
 			innerHTML: "<button>&nbsp;</button>"
 		});
 
-		this.order = this.mavo.element.getAttribute("mv-bar");
+		if (this.element.classList.contains("mv-compact")) {
+			this.noResize = true;
+		}
+
+		this.order = this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar");
 
 		if (this.order) {
 			this.order = this.order == "none"? [] : this.order.split(/\s+/);
@@ -74,7 +78,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 		}
 
-		if (this.order.length && !this.element.classList.contains("mv-compact")) {
+		if (this.order.length && !this.noResize) {
 			this.resize();
 
 			if (self.ResizeObserver) {
@@ -131,6 +135,10 @@ var _ = Mavo.UI.Bar = $.Class({
 		}
 
 		Mavo.revocably.add(this[id], this.element);
+
+		if (!this.resizeObserver && !this.noResize) {
+			requestAnimationFrame(() => this.resize());
+		}
 	},
 
 	remove: function(id) {
@@ -140,6 +148,10 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		if (o.cleanup) {
 			o.cleanup.call(this.mavo);
+		}
+
+		if (!this.resizeObserver && !this.noResize) {
+			requestAnimationFrame(() => this.resize());
 		}
 	},
 
