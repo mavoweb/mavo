@@ -6,7 +6,7 @@
 var _ = Mavo.Backend = $.Class({
 	constructor: function(url, o = {}) {
 		this.source = url;
-		this.url = new URL(this.source, location);
+		this.url = new URL(this.source, Mavo.base);
 		this.mavo = o.mavo;
 		this.format = Mavo.Formats.create(o.format, this);
 

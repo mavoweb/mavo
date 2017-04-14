@@ -600,6 +600,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
+		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
 		dependencies: [],
 
 		init: function(container = document) {

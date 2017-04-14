@@ -87,12 +87,12 @@ var _ = Mavo.Backend.register($.Class({
 		oAuth: "https://www.dropbox.com/oauth2/authorize",
 
 		test: function(url) {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			return /dropbox.com/.test(url.host);
 		},
 
 		fixShareURL: url => {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			url.hostname = "dl.dropboxusercontent.com";
 			url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
 			return url;

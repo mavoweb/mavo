@@ -804,6 +804,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
+		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
 		dependencies: [],
 
 		init: function(container = document) {
@@ -2041,7 +2042,7 @@ _.register(["add", "delete"], function(can) {
 var _ = Mavo.Backend = $.Class({
 	constructor: function(url, o = {}) {
 		this.source = url;
-		this.url = new URL(this.source, location);
+		this.url = new URL(this.source, Mavo.base);
 		this.mavo = o.mavo;
 		this.format = Mavo.Formats.create(o.format, this);
 
@@ -6530,12 +6531,12 @@ var _ = Mavo.Backend.register($.Class({
 		oAuth: "https://www.dropbox.com/oauth2/authorize",
 
 		test: function(url) {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			return /dropbox.com/.test(url.host);
 		},
 
 		fixShareURL: url => {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			url.hostname = "dl.dropboxusercontent.com";
 			url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
 			return url;
@@ -6836,7 +6837,7 @@ Preview my changes here: ${previewURL}`,
 		oAuth: "https://github.com/login/oauth/authorize",
 
 		test: function(url) {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			return /\bgithub.com|raw.githubusercontent.com/.test(url.host);
 		},
 
@@ -6846,7 +6847,7 @@ Preview my changes here: ${previewURL}`,
 		parseURL: function(url) {
 			var ret = {};
 
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 
 			var path = url.pathname.slice(1).split("/");
 

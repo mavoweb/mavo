@@ -289,7 +289,7 @@ Preview my changes here: ${previewURL}`,
 		oAuth: "https://github.com/login/oauth/authorize",
 
 		test: function(url) {
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 			return /\bgithub.com|raw.githubusercontent.com/.test(url.host);
 		},
 
@@ -299,7 +299,7 @@ Preview my changes here: ${previewURL}`,
 		parseURL: function(url) {
 			var ret = {};
 
-			url = new URL(url, location);
+			url = new URL(url, Mavo.base);
 
 			var path = url.pathname.slice(1).split("/");
 

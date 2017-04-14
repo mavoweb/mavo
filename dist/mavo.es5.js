@@ -967,6 +967,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			superKey: navigator.platform.indexOf("Mac") === 0 ? "metaKey" : "ctrlKey",
+			base: location.protocol == "about:" ? document.currentScript ? document.currentScript.src : "http://mavo.io" : location,
 			dependencies: [],
 
 			init: function init() {
@@ -2506,7 +2507,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var o = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
 			this.source = url;
-			this.url = new URL(this.source, location);
+			this.url = new URL(this.source, Mavo.base);
 			this.mavo = o.mavo;
 			this.format = Mavo.Formats.create(o.format, this);
 
@@ -7689,13 +7690,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			oAuth: "https://www.dropbox.com/oauth2/authorize",
 
 			test: function test(url) {
-				url = new URL(url, location);
+				url = new URL(url, Mavo.base);
 				return (/dropbox.com/.test(url.host)
 				);
 			},
 
 			fixShareURL: function fixShareURL(url) {
-				url = new URL(url, location);
+				url = new URL(url, Mavo.base);
 				url.hostname = "dl.dropboxusercontent.com";
 				url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
 				return url;
@@ -8005,7 +8006,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			oAuth: "https://github.com/login/oauth/authorize",
 
 			test: function test(url) {
-				url = new URL(url, location);
+				url = new URL(url, Mavo.base);
 				return (/\bgithub.com|raw.githubusercontent.com/.test(url.host)
 				);
 			},
@@ -8016,7 +8017,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			parseURL: function parseURL(url) {
 				var ret = {};
 
-				url = new URL(url, location);
+				url = new URL(url, Mavo.base);
 
 				var path = url.pathname.slice(1).split("/");
 
