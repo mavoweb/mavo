@@ -7135,7 +7135,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 		years: function years(seconds) {
 			return Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12));
-		}
+		},
+
+		localTimezone: -new Date().getTimezoneOffset()
 	};
 
 	// $url: Read-only syntactic sugar for URL stuff
@@ -7342,7 +7344,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 			"mod": {
 				scalar: function scalar(a, b) {
-					return a % b;
+					var ret = a % b;
+					ret += ret < 0 ? b : 0;
+					return ret;
 				}
 			},
 			"lte": {
@@ -7547,14 +7551,41 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		});
 	}
 
+	var twodigits = new Intl.NumberFormat("en", {
+		minimumIntegerDigits: "2"
+	});
+
+	twodigits = twodigits.format.bind(twodigits);
+
 	function toDate(date) {
 		if (!date) {
 			return null;
 		}
 
-		if ($.type(date) === "string" && date.indexOf(":") === -1) {
-			// Dates without a time are parsed as UTC, we want local timezone
-			date += " 00:00:00";
+		if ($.type(date) === "string") {
+			// Fix up time format
+
+			if (date.indexOf(":") === -1) {
+				// Add a time if one doesn't exist
+				date += "T00:00:00";
+			} else {
+				// Make sure time starts with T, due to Safari bug
+				date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
+			}
+
+			// Remove all whitespace
+			date = date.replace(/\s+/g, "");
+
+			// If no timezone, insert local
+			var timezone = (date.match(/[+-]\d{2}:?\d{2}|Z$/) || [])[0];
+
+			if (!timezone) {
+				var local = _.localTimezone;
+				var minutes = Math.abs(local % 60);
+				var hours = (Math.abs(local) - minutes) / 60;
+				var sign = local < 0 ? "-" : "+";
+				date += sign + twodigits(hours) + ":" + twodigits(minutes);
+			}
 		}
 
 		date = new Date(date);

@@ -38,7 +38,7 @@ var _ = Mavo.Backend.register($.Class({
 
 				return this.put(base64, path, {isEncoded: true});
 			})
-			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));	
+			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
 	},
 
 	/**
