@@ -403,7 +403,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   display: flex;
   color: white;
   padding: 0 .5em 0 6em;
-  background: url("http://mavo.io/logo.svg") 0.5em 50%/auto 50% no-repeat, linear-gradient(transparent, rgba(38, 38, 38, 0.5));
+  background: url("https://mavo.io/logo.svg") 0.5em 50%/auto 50% no-repeat rgba(38, 38, 38, 0.5);
   background-color: rgba(64, 64, 64, 0.9);
   font-family: inherit;
   font-size: 1rem;
@@ -418,8 +418,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     z-index: 10000; }
   .mv-bar.mv-ui:not(.mv-fixed) {
     border-radius: .3em;
-    margin-bottom: 1em;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3) inset, 0 0.1em 0.4em rgba(0, 0, 0, 0.3); }
+    margin-bottom: 1em; }
   .mv-bar.mv-ui button, .mv-bar.mv-ui .mv-button {
     all: unset;
     font-weight: bold;
@@ -522,8 +521,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     content: "Logged in to " var(--mv-backend) " as "; }
   .mv-bar.mv-ui.mv-compact {
     padding: 0 .5em 0 .7em;
-    background-image: linear-gradient(transparent, rgba(38, 38, 38, 0.5));
-    background-size: auto; }
+    background-image: url("http://localhost:8001/favicon.svg"); }
   .mv-bar.mv-ui.mv-tiny > button:not(.mv-login),
   .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login) {
     width: 1em;

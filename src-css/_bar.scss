@@ -4,8 +4,7 @@
 	display: flex;
 	color: white;
 	padding: 0 .5em 0 6em;
-	background: url("http://mavo.io/logo.svg") .5em 50% / auto 50% no-repeat,
-				linear-gradient(transparent, hsla(0,0%,15%,.5));
+	background: url("https://mavo.io/logo.svg") .5em 50% / auto 50% no-repeat hsla(0,0%,15%,.5);
 	background-color: hsla(0,0%,25%,.9);
 	font-family: inherit;
 	font-size: 1rem;
@@ -26,7 +25,6 @@
 	&:not(.mv-fixed) {
 		border-radius: .3em;
 		margin-bottom: 1em;
-		box-shadow: 0 0 0 1px rgba(0,0,0,.3) inset, 0 .1em .4em rgba(0, 0, 0, .3);
 	}
 
 	button, .mv-button {
@@ -169,8 +167,7 @@
 	// Displaying mv-bar in small spaces
 	&.mv-compact {
 		padding: 0 .5em 0 .7em;
-		background-image: linear-gradient(transparent, hsla(0,0%,15%,.5));
-		background-size: auto;
+		background-image: url("http://localhost:8001/favicon.svg");
 	}
 
 	&.mv-tiny {
