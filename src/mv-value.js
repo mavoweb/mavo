@@ -13,6 +13,7 @@ Mavo.Expressions.directive("mv-value", {
 			}
 
 			et.mavoNode = this;
+			this.expressionText = et;
 			this.storage = this.storage || "none";
 			this.modes = "read";
 

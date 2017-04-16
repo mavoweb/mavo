@@ -156,23 +156,32 @@ var _ = Mavo.Group = $.Class({
 			return;
 		}
 
-		// TODO what if it was a primitive and now it's a group?
-		// In that case, render the this.children[this.property] with it
+		// What if data is not an object?
+		if (typeof data !== "object") {
+			// Data is a primitive, render it on this.property or failing that, any writable property
+			var score = prop => (prop == this.property)
+				+ (!this.children[prop].expressionText)
+				+ (this.children[prop] instanceof Mavo.Primitive);
+			var property = Object.keys(this.children).sort((prop1, prop2) => score(prop1) - score(prop2)).reverse()[0];
+			this.data = {[property]: data};
+			this.children[property].render(data);
+		}
+		else {
+			this.propagate(obj => {
+				obj.render(data[obj.property]);
+			});
 
-		this.propagate(obj => {
-			obj.render(data[obj.property]);
-		});
+			// Fire datachange events for properties not in the template,
+			// since nothing else will and they can still be referenced in expressions
+			var oldData = Mavo.subset(this.oldData, this.inPath);
 
-		// Fire datachange events for properties not in the template,
-		// since nothing else will and they can still be referenced in expressions
-		var oldData = Mavo.subset(this.oldData, this.inPath);
+			for (let property in data) {
+				if (!(property in this.children)) {
+					let value = data[property];
 
-		for (let property in data) {
-			if (!(property in this.children)) {
-				let value = data[property];
-
-				if (typeof value != "object" && (!oldData || oldData[property] != value)) {
-					this.dataChanged("propertychange", {property});
+					if (typeof value != "object" && (!oldData || oldData[property] != value)) {
+						this.dataChanged("propertychange", {property});
+					}
 				}
 			}
 		}

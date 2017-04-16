@@ -3002,7 +3002,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (!this.fromTemplate("property", "type")) {
 				this.property = _.getProperty(element);
 				this.type = Mavo.Group.normalize(element);
-				this.store = this.element.getAttribute("mv-storage"); // TODO rename to storage
+				this.storage = this.element.getAttribute("mv-storage"); // TODO rename to storage
 			}
 
 			this.modes = this.element.getAttribute("mv-mode");
@@ -3048,7 +3048,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		get saved() {
-			return this.store !== "none";
+			return this.storage !== "none";
 		},
 
 		get path() {
@@ -3080,7 +3080,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var env = {
 				context: this,
 				options: o,
-				result: this.deleted || !this.saved && o.store != "*"
+				result: this.deleted || !this.saved && !o.live
 			};
 
 			Mavo.hooks.run("unit-isdatanull", env);
@@ -3470,6 +3470,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 (function ($, $$) {
@@ -3636,27 +3638,39 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Do not call directly, call this.render() instead
 		dataRender: function dataRender(data) {
+			var _this3 = this;
+
 			if (!data) {
 				return;
 			}
 
-			// TODO what if it was a primitive and now it's a group?
-			// In that case, render the this.children[this.property] with it
+			// What if data is not an object?
+			if ((typeof data === "undefined" ? "undefined" : _typeof(data)) !== "object") {
+				// Data is a primitive, render it on this.property or failing that, any writable property
+				var score = function score(prop) {
+					return (prop == _this3.property) + !_this3.children[prop].expressionText + (_this3.children[prop] instanceof Mavo.Primitive);
+				};
+				var property = Object.keys(this.children).sort(function (prop1, prop2) {
+					return score(prop1) - score(prop2);
+				}).reverse()[0];
+				this.data = _defineProperty({}, property, data);
+				this.children[property].render(data);
+			} else {
+				this.propagate(function (obj) {
+					obj.render(data[obj.property]);
+				});
 
-			this.propagate(function (obj) {
-				obj.render(data[obj.property]);
-			});
+				// Fire datachange events for properties not in the template,
+				// since nothing else will and they can still be referenced in expressions
+				var oldData = Mavo.subset(this.oldData, this.inPath);
 
-			// Fire datachange events for properties not in the template,
-			// since nothing else will and they can still be referenced in expressions
-			var oldData = Mavo.subset(this.oldData, this.inPath);
+				for (var _property in data) {
+					if (!(_property in this.children)) {
+						var value = data[_property];
 
-			for (var property in data) {
-				if (!(property in this.children)) {
-					var value = data[property];
-
-					if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldData || oldData[property] != value)) {
-						this.dataChanged("propertychange", { property: property });
+						if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldData || oldData[_property] != value)) {
+							this.dataChanged("propertychange", { property: _property });
+						}
 					}
 				}
 			}
@@ -6864,6 +6878,7 @@ Mavo.Expressions.directive("mv-value", {
 			}
 
 			et.mavoNode = this;
+			this.expressionText = et;
 			this.storage = this.storage || "none";
 			this.modes = "read";
 

@@ -35,7 +35,7 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
-			this.store = this.element.getAttribute("mv-storage"); // TODO rename to storage
+			this.storage = this.element.getAttribute("mv-storage"); // TODO rename to storage
 		}
 
 		this.modes = this.element.getAttribute("mv-mode");
@@ -79,7 +79,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get saved() {
-		return this.store !== "none";
+		return this.storage !== "none";
 	},
 
 	get path() {
@@ -111,7 +111,7 @@ var _ = Mavo.Node = $.Class({
 		var env = {
 			context: this,
 			options: o,
-			result: this.deleted || !this.saved && (o.store != "*")
+			result: this.deleted || !this.saved && !o.live
 		};
 
 		Mavo.hooks.run("unit-isdatanull", env);
