@@ -5145,6 +5145,7 @@ var _ = Mavo.Expression = $.Class({
 		}
 		catch (exception) {
 			console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
+
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -5270,7 +5271,7 @@ var _ = Mavo.Expression = $.Class({
 			code = _.rewrite(code);
 
 			return new Function("data", `with(Mavo.Functions._Trap)
-					with(data) {
+					with (data || {}) {
 						return ${code};
 					}`);
 		},
@@ -6078,10 +6079,12 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).join(glue);
 	},
 
-	idify: readable => ((readable || "") + "")
-		.replace(/\s+/g, "-") // Convert whitespace to hyphens
-		.replace(/[^\w-]/g, "") // Remove weird characters
-		.toLowerCase(),
+	idify: function(readable) {
+		return ((readable || "") + "")
+			.replace(/\s+/g, "-") // Convert whitespace to hyphens
+			.replace(/[^\w-]/g, "") // Remove weird characters
+			.toLowerCase();
+	},
 
 	// Convert an identifier to readable text that can be used as a label
 	readable: function (identifier) {

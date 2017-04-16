@@ -128,10 +128,12 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).join(glue);
 	},
 
-	idify: readable => ((readable || "") + "")
-		.replace(/\s+/g, "-") // Convert whitespace to hyphens
-		.replace(/[^\w-]/g, "") // Remove weird characters
-		.toLowerCase(),
+	idify: function(readable) {
+		return ((readable || "") + "")
+			.replace(/\s+/g, "-") // Convert whitespace to hyphens
+			.replace(/[^\w-]/g, "") // Remove weird characters
+			.toLowerCase();
+	},
 
 	// Convert an identifier to readable text that can be used as a label
 	readable: function (identifier) {

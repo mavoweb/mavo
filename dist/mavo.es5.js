@@ -5977,6 +5977,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.value = this.function(data);
 			} catch (exception) {
 				console.info("%cExpression error!", "color: red; font-weight: bold", exception.message + " in expression " + this.expression);
+
 				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
 
 				this.value = exception;
@@ -6121,7 +6122,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			compile: function compile(code) {
 				code = _.rewrite(code);
 
-				return new Function("data", "with(Mavo.Functions._Trap)\n\t\t\t\t\twith(data) {\n\t\t\t\t\t\treturn " + code + ";\n\t\t\t\t\t}");
+				return new Function("data", "with(Mavo.Functions._Trap)\n\t\t\t\t\twith (data || {}) {\n\t\t\t\t\t\treturn " + code + ";\n\t\t\t\t\t}");
 			},
 
 			parse: self.jsep

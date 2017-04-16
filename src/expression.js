@@ -22,6 +22,7 @@ var _ = Mavo.Expression = $.Class({
 		}
 		catch (exception) {
 			console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`);
+
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
 			this.value = exception;
@@ -147,7 +148,7 @@ var _ = Mavo.Expression = $.Class({
 			code = _.rewrite(code);
 
 			return new Function("data", `with(Mavo.Functions._Trap)
-					with(data) {
+					with (data || {}) {
 						return ${code};
 					}`);
 		},
