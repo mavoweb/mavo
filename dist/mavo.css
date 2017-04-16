@@ -521,7 +521,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     content: "Logged in to " var(--mv-backend) " as "; }
   .mv-bar.mv-ui.mv-compact {
     padding: 0 .5em 0 .7em;
-    background-image: url("http://localhost:8001/favicon.svg"); }
+    background-image: url("https://mavo.io/favicon.svg"); }
   .mv-bar.mv-ui.mv-tiny > button:not(.mv-login),
   .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login) {
     width: 1em;
