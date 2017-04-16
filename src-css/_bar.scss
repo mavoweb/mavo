@@ -44,7 +44,7 @@
 
 	& > button,
 	& > .mv-button {
-		padding: .3em .6em .4em;
+		padding: .35em .6em;
 		border: 0;
 		text-align: center;
 
@@ -166,7 +166,7 @@
 
 	// Displaying mv-bar in small spaces
 	&.mv-compact {
-		padding: 0 .5em 0 .7em;
+		padding: 0 .5em 0 1.5em;
 		background-image: url("https://mavo.io/favicon.svg");
 	}
 

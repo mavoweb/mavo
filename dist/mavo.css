@@ -430,7 +430,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
       cursor: not-allowed; }
   .mv-bar.mv-ui > button,
   .mv-bar.mv-ui > .mv-button {
-    padding: .3em .6em .4em;
+    padding: .35em .6em;
     border: 0;
     text-align: center; }
     .mv-bar.mv-ui > button:first-child,
@@ -520,7 +520,7 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   [mv-permissions~="logout"] .mv-bar.mv-ui:not(.mv-compact) .mv-status::before {
     content: "Logged in to " var(--mv-backend) " as "; }
   .mv-bar.mv-ui.mv-compact {
-    padding: 0 .5em 0 .7em;
+    padding: 0 .5em 0 1.5em;
     background-image: url("https://mavo.io/favicon.svg"); }
   .mv-bar.mv-ui.mv-tiny > button:not(.mv-login),
   .mv-bar.mv-ui.mv-tiny > .mv-button:not(.mv-login) {
