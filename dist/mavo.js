@@ -3213,7 +3213,7 @@ var _ = Mavo.Primitive = $.Class({
 				if (!this.template) {
 					new Mavo.Observer(original, "all", records => {
 						var all = this.copies.concat(this);
-						
+
 						for (let primitive of all) {
 							primitive.editor = original.cloneNode(true);
 							primitive.setValue(primitive.value, {force: true, silent: true});
@@ -3663,7 +3663,7 @@ var _ = Mavo.Primitive = $.Class({
 		getValueAttribute: function (element, config = Mavo.Elements.search(element)) {
 			var ret = element.getAttribute("mv-attribute") || config.attribute;
 
-			if (!ret || ret === "null") {
+			if (!ret || ret === "null" || ret === "none") {
 				ret = null;
 			}
 

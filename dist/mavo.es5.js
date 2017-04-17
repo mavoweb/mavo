@@ -4282,7 +4282,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				var ret = element.getAttribute("mv-attribute") || config.attribute;
 
-				if (!ret || ret === "null") {
+				if (!ret || ret === "null" || ret === "none") {
 					ret = null;
 				}
 
