@@ -13,7 +13,21 @@ var _ = Mavo.Functions = {
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
 	get: function(obj, property) {
-		return obj && obj[property] !== undefined? obj[property] : null;
+		if (obj && obj[property] !== undefined) {
+			return obj[property];
+		}
+
+		if (Array.isArray(obj) && isNaN(property) && typeof obj[0] === "object") {
+			// Array and non-numerical property, try by id
+			for (var i=0; i<obj.length; i++) {
+				if (obj[i] && obj[i].id == property) {
+					return obj[i];
+				}
+			}
+		}
+
+		// Not found :(
+		return null;
 	},
 
 	unique: function(arr) {

@@ -3009,8 +3009,11 @@ var _ = Mavo.Group = $.Class({
 			}
 		}
 
-		if (!env.options.live) {
-			// Add JSON-LD stuff to stored data
+		if (!env.options.live) { // Stored data
+			// If storing, use the rendered data too
+			env.data = Mavo.subset(this.data, this.inPath, env.data);
+
+			// Add JSON-LD stuff
 			if (this.type && this.type != _.DEFAULT_TYPE) {
 				env.data["@type"] = this.type;
 			}
@@ -3018,9 +3021,13 @@ var _ = Mavo.Group = $.Class({
 			if (this.vocab) {
 				env.data["@context"] = this.vocab;
 			}
+		}
 
-			// If storing, use the rendered data too
-			env.data = Mavo.subset(this.data, this.inPath, env.data);
+		// {foo: {foo: 5}} should become {foo: 5}
+		var properties = Object.keys(env.data);
+
+		if (properties.length == 1 && properties[0] == this.property) {
+			env.data = env.data[this.property];
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
@@ -5980,7 +5987,21 @@ var _ = Mavo.Functions = {
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
 	get: function(obj, property) {
-		return obj && obj[property] !== undefined? obj[property] : null;
+		if (obj && obj[property] !== undefined) {
+			return obj[property];
+		}
+
+		if (Array.isArray(obj) && isNaN(property) && typeof obj[0] === "object") {
+			// Array and non-numerical property, try by id
+			for (var i=0; i<obj.length; i++) {
+				if (obj[i] && obj[i].id == property) {
+					return obj[i];
+				}
+			}
+		}
+
+		// Not found :(
+		return null;
 	},
 
 	unique: function(arr) {

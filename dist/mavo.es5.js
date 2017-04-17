@@ -3574,7 +3574,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (!env.options.live) {
-				// Add JSON-LD stuff to stored data
+				// Stored data
+				// If storing, use the rendered data too
+				env.data = Mavo.subset(this.data, this.inPath, env.data);
+
+				// Add JSON-LD stuff
 				if (this.type && this.type != _.DEFAULT_TYPE) {
 					env.data["@type"] = this.type;
 				}
@@ -3582,9 +3586,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (this.vocab) {
 					env.data["@context"] = this.vocab;
 				}
+			}
 
-				// If storing, use the rendered data too
-				env.data = Mavo.subset(this.data, this.inPath, env.data);
+			// {foo: {foo: 5}} should become {foo: 5}
+			var properties = Object.keys(env.data);
+
+			if (properties.length == 1 && properties[0] == this.property) {
+				env.data = env.data[this.property];
 			}
 
 			Mavo.hooks.run("node-getdata-end", env);
@@ -6935,6 +6943,8 @@ Mavo.Expressions.directive("mv-value", {
 
 var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -6954,7 +6964,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Get a property of an object. Used by the . operator to prevent TypeErrors
    */
 		get: function get(obj, property) {
-			return obj && obj[property] !== undefined ? obj[property] : null;
+			if (obj && obj[property] !== undefined) {
+				return obj[property];
+			}
+
+			if (Array.isArray(obj) && isNaN(property) && _typeof(obj[0]) === "object") {
+				// Array and non-numerical property, try by id
+				for (var i = 0; i < obj.length; i++) {
+					if (obj[i] && obj[i].id == property) {
+						return obj[i];
+					}
+				}
+			}
+
+			// Not found :(
+			return null;
 		},
 
 		unique: function unique(arr) {
