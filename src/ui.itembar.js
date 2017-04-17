@@ -4,18 +4,20 @@ var _ = Mavo.UI.Itembar = $.Class({
 	constructor: function(item) {
 		this.item = item;
 
-		this.element = $$(".mv-item-controls", this.item.element).filter(el => {
+		this.element = $$(`.mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel="${this.item.property}"]`, this.item.element).filter(el => {
+
 								   // Remove item controls meant for other collections
 								   return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 							   })[0];
 
 		this.element = this.element || $.create({
-			className: "mv-item-controls mv-ui"
+			className: "mv-item-bar mv-ui"
 		});
 
 		Mavo.data(this.element, "item", this.item);
 
 		$.set(this.element, {
+			"mv-rel": this.item.property,
 			contents: [
 				{
 					tag: "button",

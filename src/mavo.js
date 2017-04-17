@@ -607,7 +607,8 @@ var _ = self.Mavo = $.Class({
 
 		attributes: [
 			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
-			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions"
+			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions",
+			"mv-rel"
 		]
 	}
 });

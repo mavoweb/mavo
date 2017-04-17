@@ -14,7 +14,7 @@
 	@include highlight(hsla(58, 100%, 50%, .5));
 }
 
-.mv-item-controls.mv-ui {
+.mv-item-bar.mv-ui {
 	all: initial;
 	position: absolute;
 	z-index: 10;
@@ -156,7 +156,7 @@
 [mv-multiple] {
 	position: relative;
 
-	&.mv-highlight {  // basically &:has(> .mv-item-controls:hover)
+	&.mv-highlight {  // basically &:has(> .mv-item-bar:hover)
 		@include highlight(hsla(80, 50%, 50%, .25), "!important");
 	}
 
