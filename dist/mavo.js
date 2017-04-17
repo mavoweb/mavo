@@ -1123,25 +1123,21 @@ var _ = $.extend(Mavo, {
 	 * Deep clone an object. Only supports object literals, arrays, and primitives
 	 */
 	clone: function(o) {
-		if (typeof o !== "object" || o === null) {
-			// Primitive
-			return o;
-		}
+		var cache = new WeakSet();
 
-		if (Array.isArray(o)) {
-			return o.slice().map(_.clone);
-		}
+		return JSON.parse(JSON.stringify(o, (key, value) => {
+			if (typeof value === "object" && value !== null) {
+				// No circular reference found
 
-		// Object
-		var clone = {};
+				if (cache.has(value)) {
+					return; // Circular reference found!
+				}
 
-		for (let property in o) {
-			if (o.hasOwnProperty(property)) {
-				clone[property] = _.clone(o[property]);
+				cache.add(value);
 			}
-		}
 
-		return clone;
+			return value;
+		}));
 	},
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
@@ -3084,8 +3080,14 @@ var _ = Mavo.Group = $.Class({
 				+ (!this.children[prop].expressionText)
 				+ (this.children[prop] instanceof Mavo.Primitive);
 			var property = Object.keys(this.children).sort((prop1, prop2) => score(prop1) - score(prop2)).reverse()[0];
-			this.data = {[property]: data};
-			this.children[property].render(data);
+
+			data = {[property]: data};
+
+			this.data = Mavo.subset(this.data, this.inPath, data);
+
+			this.propagate(obj => {
+				obj.render(data[obj.property]);
+			});
 		}
 		else {
 			this.propagate(obj => {
@@ -4799,6 +4801,7 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					this.delete(this.children[i], true);
+					this.children[i].dataChanged("delete");
 				}
 			}
 
@@ -4820,7 +4823,9 @@ var _ = Mavo.Collection = $.Class({
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
 
-					this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
+					this.mavo.treeBuilt.then(() => {
+						item.dataChanged("add");
+					});
 				}
 
 				if (this.bottomUp) {
@@ -5445,6 +5450,7 @@ var _ = Mavo.DOMExpression = $.Class({
 	update: function(data = this.data, event) {
 		var env = {context: this, ret: {}, event};
 		var parentEnv = env;
+		
 		this.data = data;
 
 		env.ret = {};
@@ -5764,7 +5770,7 @@ if (self.Proxy) {
 					}
 
 					// Does it reference another Mavo?
-					if (property in Mavo.all) {
+					if (property in Mavo.all && Mavo.all[property].root) {
 						return data[property] = Mavo.all[property].root.getData(env.options);
 					}
 
@@ -6139,7 +6145,13 @@ var _ = Mavo.Functions = {
 	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
 	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
 
-	localTimezone: -(new Date()).getTimezoneOffset()
+	localTimezone: -(new Date()).getTimezoneOffset(),
+
+	// Log to the console and return
+	log: (...args) => {
+		console.log(args);
+		return args[0];
+	}
 };
 
 // $url: Read-only syntactic sugar for URL stuff

@@ -365,6 +365,7 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					this.delete(this.children[i], true);
+					this.children[i].dataChanged("delete");
 				}
 			}
 
@@ -386,7 +387,9 @@ var _ = Mavo.Collection = $.Class({
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
 
-					this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
+					this.mavo.treeBuilt.then(() => {
+						item.dataChanged("add");
+					});
 				}
 
 				if (this.bottomUp) {

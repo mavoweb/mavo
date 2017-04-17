@@ -248,25 +248,21 @@ var _ = $.extend(Mavo, {
 	 * Deep clone an object. Only supports object literals, arrays, and primitives
 	 */
 	clone: function(o) {
-		if (typeof o !== "object" || o === null) {
-			// Primitive
-			return o;
-		}
+		var cache = new WeakSet();
 
-		if (Array.isArray(o)) {
-			return o.slice().map(_.clone);
-		}
+		return JSON.parse(JSON.stringify(o, (key, value) => {
+			if (typeof value === "object" && value !== null) {
+				// No circular reference found
 
-		// Object
-		var clone = {};
+				if (cache.has(value)) {
+					return; // Circular reference found!
+				}
 
-		for (let property in o) {
-			if (o.hasOwnProperty(property)) {
-				clone[property] = _.clone(o[property]);
+				cache.add(value);
 			}
-		}
 
-		return clone;
+			return value;
+		}));
 	},
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls

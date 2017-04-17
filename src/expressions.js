@@ -205,7 +205,7 @@ if (self.Proxy) {
 					}
 
 					// Does it reference another Mavo?
-					if (property in Mavo.all) {
+					if (property in Mavo.all && Mavo.all[property].root) {
 						return data[property] = Mavo.all[property].root.getData(env.options);
 					}
 

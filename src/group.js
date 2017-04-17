@@ -163,8 +163,14 @@ var _ = Mavo.Group = $.Class({
 				+ (!this.children[prop].expressionText)
 				+ (this.children[prop] instanceof Mavo.Primitive);
 			var property = Object.keys(this.children).sort((prop1, prop2) => score(prop1) - score(prop2)).reverse()[0];
-			this.data = {[property]: data};
-			this.children[property].render(data);
+
+			data = {[property]: data};
+
+			this.data = Mavo.subset(this.data, this.inPath, data);
+
+			this.propagate(obj => {
+				obj.render(data[obj.property]);
+			});
 		}
 		else {
 			this.propagate(obj => {

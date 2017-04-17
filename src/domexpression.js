@@ -86,6 +86,7 @@ var _ = Mavo.DOMExpression = $.Class({
 	update: function(data = this.data, event) {
 		var env = {context: this, ret: {}, event};
 		var parentEnv = env;
+		
 		this.data = data;
 
 		env.ret = {};

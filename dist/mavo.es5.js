@@ -1322,25 +1322,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Deep clone an object. Only supports object literals, arrays, and primitives
    */
 		clone: function clone(o) {
-			if ((typeof o === "undefined" ? "undefined" : _typeof(o)) !== "object" || o === null) {
-				// Primitive
-				return o;
-			}
+			var cache = new WeakSet();
 
-			if (Array.isArray(o)) {
-				return o.slice().map(_.clone);
-			}
+			return JSON.parse(JSON.stringify(o, function (key, value) {
+				if ((typeof value === "undefined" ? "undefined" : _typeof(value)) === "object" && value !== null) {
+					// No circular reference found
 
-			// Object
-			var clone = {};
+					if (cache.has(value)) {
+						return; // Circular reference found!
+					}
 
-			for (var property in o) {
-				if (o.hasOwnProperty(property)) {
-					clone[property] = _.clone(o[property]);
+					cache.add(value);
 				}
-			}
 
-			return clone;
+				return value;
+			}));
 		},
 
 		// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
@@ -3653,8 +3649,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				var property = Object.keys(this.children).sort(function (prop1, prop2) {
 					return score(prop1) - score(prop2);
 				}).reverse()[0];
-				this.data = _defineProperty({}, property, data);
-				this.children[property].render(data);
+
+				data = _defineProperty({}, property, data);
+
+				this.data = Mavo.subset(this.data, this.inPath, data);
+
+				this.propagate(function (obj) {
+					obj.render(data[obj.property]);
+				});
 			} else {
 				this.propagate(function (obj) {
 					obj.render(data[obj.property]);
@@ -5599,8 +5601,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		propagated: ["save"],
 
 		dataRender: function dataRender(data) {
-			var _this5 = this;
-
 			if (!data) {
 				return;
 			}
@@ -5618,6 +5618,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						this.children[i].render(data[i]);
 					} else {
 						this.delete(this.children[i], true);
+						this.children[i].dataChanged("delete");
 					}
 				}
 
@@ -5640,7 +5641,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						Mavo.hooks.run("collection-add-end", env);
 
 						this.mavo.treeBuilt.then(function () {
-							return _this5.mavo.expressions.update(env.item.element);
+							item.dataChanged("add");
 						});
 					}
 
@@ -5695,7 +5696,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this6 = this;
+			var _this5 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -5710,9 +5711,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this6.accepts.length) {
-						return Mavo.flatten(_this6.accepts.map(function (property) {
-							return _this6.mavo.root.find(property, { collections: true });
+					if (_this5.accepts.length) {
+						return Mavo.flatten(_this5.accepts.map(function (property) {
+							return _this5.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -5760,7 +5761,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this6.dragula.cancel(true);
+					return _this5.dragula.cancel(true);
 				}
 			});
 
@@ -5802,7 +5803,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this7 = this;
+				var _this6 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -5810,7 +5811,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this7.templateElement.contains(button);
+						return !_this6.templateElement.contains(button);
 					})[0];
 				}
 
@@ -5831,7 +5832,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this7.editItem(_this7.add());
+					_this6.editItem(_this6.add());
 				});
 
 				return button;
@@ -6318,6 +6319,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			var env = { context: this, ret: {}, event: event };
 			var parentEnv = env;
+
 			this.data = data;
 
 			env.ret = {};
@@ -6682,7 +6684,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 
 						// Does it reference another Mavo?
-						if (property in Mavo.all) {
+						if (property in Mavo.all && Mavo.all[property].root) {
 							return data[property] = Mavo.all[property].root.getData(env.options);
 						}
 
@@ -7153,7 +7155,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12));
 		},
 
-		localTimezone: -new Date().getTimezoneOffset()
+		localTimezone: -new Date().getTimezoneOffset(),
+
+		// Log to the console and return
+		log: function log() {
+			for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+				args[_key] = arguments[_key];
+			}
+
+			console.log(args);
+			return args[0];
+		}
 	};
 
 	// $url: Read-only syntactic sugar for URL stuff
@@ -7240,8 +7252,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			o.identity = o.identity === undefined ? 0 : o.identity;
 
 			return _[name] = o.code || function () {
-				for (var _len = arguments.length, operands = Array(_len), _key = 0; _key < _len; _key++) {
-					operands[_key] = arguments[_key];
+				for (var _len2 = arguments.length, operands = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+					operands[_key2] = arguments[_key2];
 				}
 
 				if (operands.length === 1) {

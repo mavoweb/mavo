@@ -178,7 +178,13 @@ var _ = Mavo.Functions = {
 	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
 	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
 
-	localTimezone: -(new Date()).getTimezoneOffset()
+	localTimezone: -(new Date()).getTimezoneOffset(),
+
+	// Log to the console and return
+	log: (...args) => {
+		console.log(args);
+		return args[0];
+	}
 };
 
 // $url: Read-only syntactic sugar for URL stuff
