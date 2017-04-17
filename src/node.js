@@ -98,7 +98,9 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	destroy: function() {
-
+		if (this.template) {
+			Mavo.delete(this.template.copies, this);
+		}
 	},
 
 	getData: function(o = {}) {

@@ -131,10 +131,10 @@ var _ = Mavo.Expressions = $.Class({
 
 if (self.Proxy) {
 	Mavo.hooks.add("node-getdata-end", function(env) {
-		if (env.options.live && (env.data && typeof env.data === "object" || this.collection)) {
+		if (env.options.live && (env.data && (typeof env.data === "object" || this.collection))) {
 			var data = env.data;
 
-			if (this instanceof Mavo.Primitive) {
+			if (typeof env.data !== "object") {
 				env.data = {
 					[Symbol.toPrimitive]: () => data,
 					[this.property]: data

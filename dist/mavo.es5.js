@@ -3062,7 +3062,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		destroy: function destroy() {},
+		destroy: function destroy() {
+			if (this.template) {
+				Mavo.delete(this.template.copies, this);
+			}
+		},
 
 		getData: function getData() {
 			var o = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -3774,34 +3778,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
     * Set up input widget
     */
 
-			// Nested widgets
-			if (!this.editor && !this.attribute) {
-				this.editor = $$(this.element.children).filter(function (el) {
-					return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
-				})[0];
-
-				if (this.editor) {
-					this.element.textContent = this.editorValue;
-					$.remove(this.editor);
-				}
-			}
-
 			// Linked widgets
 			if (!this.editor && this.element.hasAttribute("mv-edit")) {
 				var original = $(this.element.getAttribute("mv-edit"));
 
-				if (original && Mavo.is("formControl", original)) {
+				if (original) {
 					this.editor = original.cloneNode(true);
 
 					// Update editor if original mutates
+					// This means that expressions on mv-edit for individual collection items will not be picked up
 					if (!this.template) {
 						new Mavo.Observer(original, "all", function (records) {
+							var all = _this.copies.concat(_this);
+
 							var _iteratorNormalCompletion = true;
 							var _didIteratorError = false;
 							var _iteratorError = undefined;
 
 							try {
-								for (var _iterator = _this.copies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+								for (var _iterator = all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 									var primitive = _step.value;
 
 									primitive.editor = original.cloneNode(true);
@@ -3823,6 +3818,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						});
 					}
+				}
+			}
+
+			// Nested widgets
+			if (!this.editor && !this.attribute) {
+				this.editor = $$(this.element.children).filter(function (el) {
+					return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
+				})[0];
+
+				if (this.editor) {
+					this.element.textContent = this.editorValue;
+					$.remove(this.editor);
 				}
 			}
 
@@ -6615,10 +6622,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		Mavo.hooks.add("node-getdata-end", function (env) {
 			var _this4 = this;
 
-			if (env.options.live && (env.data && _typeof(env.data) === "object" || this.collection)) {
+			if (env.options.live && env.data && (_typeof(env.data) === "object" || this.collection)) {
 				var data = env.data;
 
-				if (this instanceof Mavo.Primitive) {
+				if (_typeof(env.data) !== "object") {
 					var _env$data;
 
 					env.data = (_env$data = {}, _defineProperty(_env$data, Symbol.toPrimitive, function () {

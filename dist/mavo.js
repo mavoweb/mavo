@@ -2547,7 +2547,9 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	destroy: function() {
-
+		if (this.template) {
+			Mavo.delete(this.template.copies, this);
+		}
 	},
 
 	getData: function(o = {}) {
@@ -3199,6 +3201,28 @@ var _ = Mavo.Primitive = $.Class({
 		 * Set up input widget
 		 */
 
+		 // Linked widgets
+		if (!this.editor && this.element.hasAttribute("mv-edit")) {
+			var original = $(this.element.getAttribute("mv-edit"));
+
+			if (original) {
+				this.editor = original.cloneNode(true);
+
+				// Update editor if original mutates
+				// This means that expressions on mv-edit for individual collection items will not be picked up
+				if (!this.template) {
+					new Mavo.Observer(original, "all", records => {
+						var all = this.copies.concat(this);
+						
+						for (let primitive of all) {
+							primitive.editor = original.cloneNode(true);
+							primitive.setValue(primitive.value, {force: true, silent: true});
+						}
+					});
+				}
+			}
+		}
+
 		// Nested widgets
 		if (!this.editor && !this.attribute) {
 			this.editor = $$(this.element.children).filter(function (el) {
@@ -3208,25 +3232,6 @@ var _ = Mavo.Primitive = $.Class({
 			if (this.editor) {
 				this.element.textContent = this.editorValue;
 				$.remove(this.editor);
-			}
-		}
-
-		// Linked widgets
-		if (!this.editor && this.element.hasAttribute("mv-edit")) {
-			var original = $(this.element.getAttribute("mv-edit"));
-
-			if (original && Mavo.is("formControl", original)) {
-				this.editor = original.cloneNode(true);
-
-				// Update editor if original mutates
-				if (!this.template) {
-					new Mavo.Observer(original, "all", records => {
-						for (let primitive of this.copies) {
-							primitive.editor = original.cloneNode(true);
-							primitive.setValue(primitive.value, {force: true, silent: true});
-						}
-					});
-				}
 			}
 		}
 
@@ -5703,10 +5708,10 @@ var _ = Mavo.Expressions = $.Class({
 
 if (self.Proxy) {
 	Mavo.hooks.add("node-getdata-end", function(env) {
-		if (env.options.live && (env.data && typeof env.data === "object" || this.collection)) {
+		if (env.options.live && (env.data && (typeof env.data === "object" || this.collection))) {
 			var data = env.data;
 
-			if (this instanceof Mavo.Primitive) {
+			if (typeof env.data !== "object") {
 				env.data = {
 					[Symbol.toPrimitive]: () => data,
 					[this.property]: data
