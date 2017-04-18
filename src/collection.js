@@ -364,8 +364,8 @@ var _ = Mavo.Collection = $.Class({
 					this.children[i].render(data[i]);
 				}
 				else {
-					this.delete(this.children[i], true);
 					this.children[i].dataChanged("delete");
+					this.delete(this.children[i], true);
 				}
 			}
 

@@ -95,15 +95,6 @@ var _ = Mavo.Group = $.Class({
 		if (!env.options.live) { // Stored data
 			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
-
-			// Add JSON-LD stuff
-			if (this.type && this.type != _.DEFAULT_TYPE) {
-				env.data["@type"] = this.type;
-			}
-
-			if (this.vocab) {
-				env.data["@context"] = this.vocab;
-			}
 		}
 
 		// {foo: {foo: 5}} should become {foo: 5}
@@ -111,6 +102,23 @@ var _ = Mavo.Group = $.Class({
 
 		if (properties.length == 1 && properties[0] == this.property) {
 			env.data = env.data[this.property];
+		}
+
+		if (!env.options.live) { // Stored data again
+			if (!properties.length && !this.isRoot) {
+				// Avoid {} in the data
+				env.data = null;
+			}
+			else if (env.data && typeof env.data === "object") {
+				// Add JSON-LD stuff
+				if (this.type && this.type != _.DEFAULT_TYPE) {
+					env.data["@type"] = this.type;
+				}
+
+				if (this.vocab) {
+					env.data["@context"] = this.vocab;
+				}
+			}
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);

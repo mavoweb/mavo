@@ -3015,15 +3015,6 @@ var _ = Mavo.Group = $.Class({
 		if (!env.options.live) { // Stored data
 			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
-
-			// Add JSON-LD stuff
-			if (this.type && this.type != _.DEFAULT_TYPE) {
-				env.data["@type"] = this.type;
-			}
-
-			if (this.vocab) {
-				env.data["@context"] = this.vocab;
-			}
 		}
 
 		// {foo: {foo: 5}} should become {foo: 5}
@@ -3031,6 +3022,23 @@ var _ = Mavo.Group = $.Class({
 
 		if (properties.length == 1 && properties[0] == this.property) {
 			env.data = env.data[this.property];
+		}
+
+		if (!env.options.live) { // Stored data again
+			if (!properties.length && !this.isRoot) {
+				// Avoid {} in the data
+				env.data = null;
+			}
+			else if (env.data && typeof env.data === "object") {
+				// Add JSON-LD stuff
+				if (this.type && this.type != _.DEFAULT_TYPE) {
+					env.data["@type"] = this.type;
+				}
+
+				if (this.vocab) {
+					env.data["@context"] = this.vocab;
+				}
+			}
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
@@ -4813,8 +4821,8 @@ var _ = Mavo.Collection = $.Class({
 					this.children[i].render(data[i]);
 				}
 				else {
-					this.delete(this.children[i], true);
 					this.children[i].dataChanged("delete");
+					this.delete(this.children[i], true);
 				}
 			}
 
@@ -5736,22 +5744,23 @@ if (self.Proxy) {
 
 					// Property does not exist, look for it elsewhere
 
-					if (property == "$index") {
-						data[property] = this.index || 0;
-						return true; // if index is 0 it's falsy and has would return false!
-					}
+					switch(property) {
+						case "$index":
+							data[property] = this.index || 0;
+							return true; // if index is 0 it's falsy and has would return false!
+						case "$all":
+							return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
+						case "$next":
+						case "$previous":
+							if (this.closestCollection) {
+								return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
+							}
 
-					if (property == "$all") {
-						return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
-					}
-
-					if (property == "$next" || property == "$previous") {
-						if (this.closestCollection) {
-							return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
-						}
-
-						data[property] = null;
-						return null;
+							data[property] = null;
+							return null;
+						case "$edit":
+							data[property] = this.editing;
+							return true;
 					}
 
 					if (this instanceof Mavo.Group && property == this.property && this.collection) {
@@ -6112,10 +6121,12 @@ var _ = Mavo.Functions = {
 	/**
 	 * Case insensitive search
 	 */
-	search: (haystack, needle) => haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1,
+	search: (haystack, needle) => haystack && needle? (haystack + "").toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
 
-	starts: (haystack, needle) => _.search(haystack, needle) === 0,
+	starts: (haystack, needle) => _.search((haystack + ""), (needle + "")) === 0,
 	ends: function(haystack, needle) {
+		haystack += "";
+		needle += "";
 		var i = _.search(haystack, needle);
 		return  i > -1 && i === haystack.length - needle.length;
 	},

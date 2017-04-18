@@ -156,22 +156,23 @@ if (self.Proxy) {
 
 					// Property does not exist, look for it elsewhere
 
-					if (property == "$index") {
-						data[property] = this.index || 0;
-						return true; // if index is 0 it's falsy and has would return false!
-					}
+					switch(property) {
+						case "$index":
+							data[property] = this.index || 0;
+							return true; // if index is 0 it's falsy and has would return false!
+						case "$all":
+							return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
+						case "$next":
+						case "$previous":
+							if (this.closestCollection) {
+								return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
+							}
 
-					if (property == "$all") {
-						return data[property] = this.closestCollection? this.closestCollection.getData(env.options) : [env.data];
-					}
-
-					if (property == "$next" || property == "$previous") {
-						if (this.closestCollection) {
-							return data[property] = this.closestCollection.getData(env.options)[this.index + (property == "$next"? 1 : -1)];
-						}
-
-						data[property] = null;
-						return null;
+							data[property] = null;
+							return null;
+						case "$edit":
+							data[property] = this.editing;
+							return true;
 					}
 
 					if (this instanceof Mavo.Group && property == this.property && this.collection) {

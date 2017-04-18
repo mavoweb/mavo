@@ -3581,15 +3581,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Stored data
 				// If storing, use the rendered data too
 				env.data = Mavo.subset(this.data, this.inPath, env.data);
-
-				// Add JSON-LD stuff
-				if (this.type && this.type != _.DEFAULT_TYPE) {
-					env.data["@type"] = this.type;
-				}
-
-				if (this.vocab) {
-					env.data["@context"] = this.vocab;
-				}
 			}
 
 			// {foo: {foo: 5}} should become {foo: 5}
@@ -3597,6 +3588,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (properties.length == 1 && properties[0] == this.property) {
 				env.data = env.data[this.property];
+			}
+
+			if (!env.options.live) {
+				// Stored data again
+				if (!properties.length && !this.isRoot) {
+					// Avoid {} in the data
+					env.data = null;
+				} else if (env.data && _typeof(env.data) === "object") {
+					// Add JSON-LD stuff
+					if (this.type && this.type != _.DEFAULT_TYPE) {
+						env.data["@type"] = this.type;
+					}
+
+					if (this.vocab) {
+						env.data["@context"] = this.vocab;
+					}
+				}
 			}
 
 			Mavo.hooks.run("node-getdata-end", env);
@@ -5632,8 +5640,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (i < data.length) {
 						this.children[i].render(data[i]);
 					} else {
-						this.delete(this.children[i], true);
 						this.children[i].dataChanged("delete");
+						this.delete(this.children[i], true);
 					}
 				}
 
@@ -6650,22 +6658,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						// Property does not exist, look for it elsewhere
 
-						if (property == "$index") {
-							data[property] = _this4.index || 0;
-							return true; // if index is 0 it's falsy and has would return false!
-						}
+						switch (property) {
+							case "$index":
+								data[property] = _this4.index || 0;
+								return true; // if index is 0 it's falsy and has would return false!
+							case "$all":
+								return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
+							case "$next":
+							case "$previous":
+								if (_this4.closestCollection) {
+									return data[property] = _this4.closestCollection.getData(env.options)[_this4.index + (property == "$next" ? 1 : -1)];
+								}
 
-						if (property == "$all") {
-							return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
-						}
-
-						if (property == "$next" || property == "$previous") {
-							if (_this4.closestCollection) {
-								return data[property] = _this4.closestCollection.getData(env.options)[_this4.index + (property == "$next" ? 1 : -1)];
-							}
-
-							data[property] = null;
-							return null;
+								data[property] = null;
+								return null;
+							case "$edit":
+								data[property] = _this4.editing;
+								return true;
 						}
 
 						if (_this4 instanceof Mavo.Group && property == _this4.property && _this4.collection) {
@@ -7103,13 +7112,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Case insensitive search
    */
 		search: function search(haystack, needle) {
-			return haystack && needle ? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
+			return haystack && needle ? (haystack + "").toLowerCase().indexOf((needle + "").toLowerCase()) : -1;
 		},
 
 		starts: function starts(haystack, needle) {
-			return _.search(haystack, needle) === 0;
+			return _.search(haystack + "", needle + "") === 0;
 		},
 		ends: function ends(haystack, needle) {
+			haystack += "";
+			needle += "";
 			var i = _.search(haystack, needle);
 			return i > -1 && i === haystack.length - needle.length;
 		},
