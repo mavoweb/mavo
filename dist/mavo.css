@@ -250,6 +250,9 @@ button.mv-close {
 [property][mv-mode="edit"]:not([typeof]):not([mv-group]) input.mv-editor {
   max-width: 100%; }
 
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]) select.mv-editor {
+  white-space: nowrap; }
+
 meta[property][mv-mode="edit"] {
   display: inline-block;
   padding: .15em .4em;

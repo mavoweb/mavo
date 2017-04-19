@@ -478,7 +478,7 @@ var _ = self.Mavo = $.Class({
 		this.unsavedChanges = false;
 
 		this.expressions.active = true;
-		this.expressions.update();
+		requestAnimationFrame(() => this.expressions.update());
 
 		_.hooks.run("render-end", env);
 	},
@@ -2619,8 +2619,6 @@ var _ = Mavo.Node = $.Class({
 			return false;
 		}
 
-		this.propagate("edit");
-
 		Mavo.hooks.run("node-edit-end", this);
 	},
 
@@ -3079,6 +3077,14 @@ var _ = Mavo.Group = $.Class({
 		}
 	},
 
+	edit: function() {
+		if (this.super.edit.call(this) === false) {
+			return false;
+		}
+		
+		this.propagate("edit");
+	},
+
 	save: function() {
 		this.unsavedChanges = false;
 	},
@@ -3425,7 +3431,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
 			if (this.empty && !this.attribute) {
-				return resolve();
+				return setTimeout(resolve, 10);
 			}
 
 			var timer;
@@ -4844,9 +4850,7 @@ var _ = Mavo.Collection = $.Class({
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
 
-					this.mavo.treeBuilt.then(() => {
-						item.dataChanged("add");
-					});
+					item.dataChanged("add");
 				}
 
 				if (this.bottomUp) {
@@ -5621,7 +5625,7 @@ var _ = Mavo.Expressions = $.Class({
 					}
 				}
 				else {
-					requestAnimationFrame(() => this.update(evt));
+					setTimeout(() => this.update(evt), 10);
 				}
 			});
 

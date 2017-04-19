@@ -295,9 +295,9 @@ button.mv-close {
 
 // Primitives
 [property][mv-mode="edit"]:not([typeof]):not([mv-group]) {
-	& input.mv-editor,
-	& select.mv-editor,
-	& textarea.mv-editor {
+	input.mv-editor,
+	select.mv-editor,
+	textarea.mv-editor {
 		all: unset;
 		cursor: auto;
 	}
@@ -314,6 +314,10 @@ button.mv-close {
 
 	input.mv-editor {
 		max-width: 100%;
+	}
+
+	select.mv-editor {
+		white-space: nowrap;
 	}
 }
 

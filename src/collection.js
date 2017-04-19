@@ -387,9 +387,7 @@ var _ = Mavo.Collection = $.Class({
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
 
-					this.mavo.treeBuilt.then(() => {
-						item.dataChanged("add");
-					});
+					item.dataChanged("add");
 				}
 
 				if (this.bottomUp) {

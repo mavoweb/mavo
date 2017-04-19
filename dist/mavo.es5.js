@@ -597,6 +597,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		render: function render(data) {
+			var _this2 = this;
+
 			this.expressions.active = false;
 
 			var env = { context: this, data: data };
@@ -609,17 +611,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.unsavedChanges = false;
 
 			this.expressions.active = true;
-			this.expressions.update();
+			requestAnimationFrame(function () {
+				return _this2.expressions.update();
+			});
 
 			_.hooks.run("render-end", env);
 		},
 
 		clear: function clear() {
-			var _this2 = this;
+			var _this3 = this;
 
 			if (confirm("This will delete all your data. Are you sure?")) {
 				this.store(null).then(function () {
-					return _this2.root.clear();
+					return _this3.root.clear();
 				});
 			}
 		},
@@ -737,7 +741,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Promise}  A promise that resolves when the data is loaded.
    */
 		load: function load() {
-			var _this3 = this;
+			var _this4 = this;
 
 			var backend = this.source || this.storage;
 
@@ -751,10 +755,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return backend.load();
 			}).catch(function (err) {
 				// Try again with init
-				if (_this3.init && _this3.init != backend) {
-					backend = _this3.init;
-					return _this3.init.ready.then(function () {
-						return _this3.init.load();
+				if (_this4.init && _this4.init != backend) {
+					backend = _this4.init;
+					return _this4.init.ready.then(function () {
+						return _this4.init.load();
 					});
 				}
 
@@ -765,7 +769,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var xhr = err instanceof XMLHttpRequest ? err : err.xhr;
 
 					if (xhr && xhr.status == 404) {
-						_this3.render(null);
+						_this4.render(null);
 					} else {
 						var message = "Problem loading data";
 
@@ -773,20 +777,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							message += xhr.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
 						}
 
-						_this3.error(message, err);
+						_this4.error(message, err);
 					}
 				}
 				return null;
 			}).then(function (data) {
-				return _this3.render(data);
+				return _this4.render(data);
 			}).then(function () {
-				_this3.inProgress = false;
-				$.fire(_this3.element, "mavo:load");
+				_this4.inProgress = false;
+				$.fire(_this4.element, "mavo:load");
 			});
 		},
 
 		store: function store() {
-			var _this4 = this;
+			var _this5 = this;
 
 			if (!this.storage) {
 				return Promise.resolve();
@@ -795,7 +799,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.inProgress = "Saving";
 
 			return this.storage.login().then(function () {
-				return _this4.storage.store(_this4.getData());
+				return _this5.storage.store(_this5.getData());
 			}).catch(function (err) {
 				if (err) {
 					var message = "Problem saving data";
@@ -804,18 +808,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						message += err.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
 					}
 
-					_this4.error(message, err);
+					_this5.error(message, err);
 				}
 
 				return null;
 			}).then(function (saved) {
-				_this4.inProgress = false;
+				_this5.inProgress = false;
 				return saved;
 			});
 		},
 
 		upload: function upload(file) {
-			var _this5 = this;
+			var _this6 = this;
 
 			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "images/" + file.name;
 
@@ -826,25 +830,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.inProgress = "Uploading";
 
 			return this.uploadBackend.upload(file, path).then(function (url) {
-				_this5.inProgress = false;
+				_this6.inProgress = false;
 				return url;
 			}).catch(function (err) {
-				_this5.error("Error uploading file", err);
-				_this5.inProgress = false;
+				_this6.error("Error uploading file", err);
+				_this6.inProgress = false;
 				return null;
 			});
 		},
 
 		save: function save() {
-			var _this6 = this;
+			var _this7 = this;
 
 			return this.store().then(function (saved) {
 				if (saved) {
-					$.fire(_this6.element, "mavo:save", saved);
+					$.fire(_this7.element, "mavo:save", saved);
 
-					_this6.lastSaved = Date.now();
-					_this6.root.save();
-					_this6.unsavedChanges = false;
+					_this7.lastSaved = Date.now();
+					_this7.root.save();
+					_this7.unsavedChanges = false;
 				}
 			});
 		},
@@ -3138,8 +3142,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return false;
 			}
 
-			this.propagate("edit");
-
 			Mavo.hooks.run("node-edit-end", this);
 		},
 
@@ -3646,6 +3648,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
+		edit: function edit() {
+			if (this.super.edit.call(this) === false) {
+				return false;
+			}
+
+			this.propagate("edit");
+		},
+
 		save: function save() {
 			this.unsavedChanges = false;
 		},
@@ -4030,7 +4040,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Empty properties should become editable immediately
 				// otherwise they could be invisible!
 				if (_this3.empty && !_this3.attribute) {
-					return resolve();
+					return setTimeout(resolve, 10);
 				}
 
 				var timer;
@@ -5663,9 +5673,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						var env = { context: this, item: item };
 						Mavo.hooks.run("collection-add-end", env);
 
-						this.mavo.treeBuilt.then(function () {
-							item.dataChanged("add");
-						});
+						item.dataChanged("add");
 					}
 
 					if (this.bottomUp) {
@@ -6498,9 +6506,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							_this.scheduled.add(evt.property);
 						}
 					} else {
-						requestAnimationFrame(function () {
+						setTimeout(function () {
 							return _this.update(evt);
-						});
+						}, 10);
 					}
 				});
 

@@ -274,7 +274,7 @@ var _ = self.Mavo = $.Class({
 		this.unsavedChanges = false;
 
 		this.expressions.active = true;
-		this.expressions.update();
+		requestAnimationFrame(() => this.expressions.update());
 
 		_.hooks.run("render-end", env);
 	},

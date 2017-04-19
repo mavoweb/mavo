@@ -264,7 +264,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
 			if (this.empty && !this.attribute) {
-				return resolve();
+				return setTimeout(resolve, 10);
 			}
 
 			var timer;

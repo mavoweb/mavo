@@ -169,8 +169,6 @@ var _ = Mavo.Node = $.Class({
 			return false;
 		}
 
-		this.propagate("edit");
-
 		Mavo.hooks.run("node-edit-end", this);
 	},
 

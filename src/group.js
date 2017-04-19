@@ -159,6 +159,14 @@ var _ = Mavo.Group = $.Class({
 		}
 	},
 
+	edit: function() {
+		if (this.super.edit.call(this) === false) {
+			return false;
+		}
+		
+		this.propagate("edit");
+	},
+
 	save: function() {
 		this.unsavedChanges = false;
 	},
