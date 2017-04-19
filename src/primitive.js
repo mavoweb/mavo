@@ -264,7 +264,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
 			if (this.empty && !this.attribute) {
-				return setTimeout(resolve, 10);
+				return requestAnimationFrame(resolve);
 			}
 
 			var timer;
@@ -594,7 +594,7 @@ var _ = Mavo.Primitive = $.Class({
 			return _.safeCast(ret, datatype);
 		},
 
-		getConfig: function(element, attribute) {
+		getConfig: function(element, attribute, datatype) {
 			if (attribute === undefined) {
 				attribute = element.getAttribute("mv-attribute") || undefined;
 			}
@@ -603,10 +603,16 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			var config = Mavo.Elements.search(element, attribute);
+			datatype = element.getAttribute("datatype") || undefined;
+
+			var config = Mavo.Elements.search(element, attribute, datatype);
 
 			if (config.attribute === undefined) {
 				config.attribute = attribute || null;
+			}
+
+			if (config.datatype === undefined) {
+				config.datatype = datatype;
 			}
 
 			return config;

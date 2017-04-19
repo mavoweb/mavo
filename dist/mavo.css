@@ -266,6 +266,14 @@ meta[property][mv-mode="edit"] {
 meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
   cursor: ew-resize; }
 
+[role="checkbox"][property]:not([aria-checked="false"]):not([mv-mode="edit"]) {
+  display: none; }
+
+[role="checkbox"][property][mv-mode="edit"] {
+  cursor: pointer; }
+  [role="checkbox"][property][mv-mode="edit"]:not([aria-checked]) {
+    opacity: .5; }
+
 .mv-popup {
   all: initial;
   position: fixed;

@@ -258,11 +258,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (!item.itemControls) {
-			item.itemControls = new Mavo.UI.Itembar(item);
-		}
+		setTimeout(() => {
+			if (!item.itemControls) {
+				item.itemControls = new Mavo.UI.Itembar(item);
+			}
 
-		item.itemControls.add();
+			item.itemControls.add();
+		}, 10);
 
 		item.edit();
 	},

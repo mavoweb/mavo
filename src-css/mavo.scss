@@ -342,6 +342,20 @@ meter, progress {
 	}
 }
 
+[role="checkbox"][property] {
+	&:not([aria-checked="false"]):not([mv-mode="edit"]) {
+		display: none;
+	}
+
+	&[mv-mode="edit"] {
+		cursor: pointer;
+
+		&:not([aria-checked]) {
+			opacity: .5;
+		}
+	}
+}
+
 .mv-popup {
 	all: initial;
 	position: fixed;

@@ -465,6 +465,21 @@ _.register({
 	"text": {
 		default: true,
 		popup: true
+	},
+
+	"[role=checkbox]": {
+		default: true,
+		attribute: "aria-checked",
+		datatype: "boolean",
+		edit: function() {
+			this.element.addEventListener("click.mavo:edit", evt => {
+				this.value = !this.value;
+				evt.preventDefault();
+			});
+		},
+		done: function() {
+			$.unbind(this.element, ".mavo:edit");
+		}
 	}
 });
 

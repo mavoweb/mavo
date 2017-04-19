@@ -33,7 +33,7 @@ var _ = Mavo.Expressions = $.Class({
 					}
 				}
 				else {
-					setTimeout(() => this.update(evt), 10);
+					requestAnimationFrame(() => this.update(evt));
 				}
 			});
 

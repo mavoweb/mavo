@@ -546,16 +546,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						});
 					});
 				}
-			}, function () {
-				_this.element.removeEventListener(".mavo:autosave");
-			});
 
-			// Ctrl + S or Cmd + S to save
-			this.element.addEventListener("keydown", function (evt) {
-				if (evt.keyCode == 83 && evt[_.superKey]) {
-					evt.preventDefault();
-					_this.save();
-				}
+				// Ctrl + S or Cmd + S to save
+				_this.element.addEventListener("keydown.mavo:save", function (evt) {
+					if (evt.keyCode == 83 && evt[_.superKey]) {
+						evt.preventDefault();
+						_this.save();
+					}
+				});
+			}, function () {
+				$.unbind(_this.element, ".mavo:save .mavo:autosave");
 			});
 
 			Mavo.hooks.run("init-end", this);
@@ -4040,7 +4040,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Empty properties should become editable immediately
 				// otherwise they could be invisible!
 				if (_this3.empty && !_this3.attribute) {
-					return setTimeout(resolve, 10);
+					return requestAnimationFrame(resolve);
 				}
 
 				var timer;
@@ -4389,7 +4389,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return _.safeCast(ret, datatype);
 			},
 
-			getConfig: function getConfig(element, attribute) {
+			getConfig: function getConfig(element, attribute, datatype) {
 				if (attribute === undefined) {
 					attribute = element.getAttribute("mv-attribute") || undefined;
 				}
@@ -4398,10 +4398,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					attribute = null;
 				}
 
-				var config = Mavo.Elements.search(element, attribute);
+				datatype = element.getAttribute("datatype") || undefined;
+
+				var config = Mavo.Elements.search(element, attribute, datatype);
 
 				if (config.attribute === undefined) {
 					config.attribute = attribute || null;
+				}
+
+				if (config.datatype === undefined) {
+					config.datatype = datatype;
 				}
 
 				return config;
@@ -5171,6 +5177,23 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		"text": {
 			default: true,
 			popup: true
+		},
+
+		"[role=checkbox]": {
+			default: true,
+			attribute: "aria-checked",
+			datatype: "boolean",
+			edit: function edit() {
+				var _this5 = this;
+
+				this.element.addEventListener("click.mavo:edit", function (evt) {
+					_this5.value = !_this5.value;
+					evt.preventDefault();
+				});
+			},
+			done: function done() {
+				$.unbind(this.element, ".mavo:edit");
+			}
 		}
 	});
 })(Bliss, Bliss.$);
@@ -5520,11 +5543,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		editItem: function editItem(item) {
-			if (!item.itemControls) {
-				item.itemControls = new Mavo.UI.Itembar(item);
-			}
+			setTimeout(function () {
+				if (!item.itemControls) {
+					item.itemControls = new Mavo.UI.Itembar(item);
+				}
 
-			item.itemControls.add();
+				item.itemControls.add();
+			}, 10);
 
 			item.edit();
 		},
@@ -6506,9 +6531,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							_this.scheduled.add(evt.property);
 						}
 					} else {
-						setTimeout(function () {
+						requestAnimationFrame(function () {
 							return _this.update(evt);
-						}, 10);
+						});
 					}
 				});
 
@@ -7912,6 +7937,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			var repoCall = "repos/" + this.username + "/" + this.repo;
 			var fileCall = repoCall + "/contents/" + path;
+			var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix");
 
 			// Create repo if it doesn’t exist
 			var repoInfo = this.repoInfo || this.request("user/repos", { name: this.repo }, "POST").then(function (repoInfo) {
@@ -7949,7 +7975,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					ref: _this3.branch
 				}).then(function (fileInfo) {
 					return _this3.request(fileCall, {
-						message: "Updated " + (fileInfo.name || "file"),
+						message: commitPrefix + " Updated " + (fileInfo.name || "file"),
 						content: serialized,
 						branch: _this3.branch,
 						sha: fileInfo.sha
@@ -7958,7 +7984,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (xhr.status == 404) {
 						// File does not exist, create it
 						return _this3.request(fileCall, {
-							message: "Created file",
+							message: commitPrefix + "Created file",
 							content: serialized,
 							branch: _this3.branch
 						}, "PUT");

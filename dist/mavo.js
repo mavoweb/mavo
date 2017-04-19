@@ -422,16 +422,16 @@ var _ = self.Mavo = $.Class({
 					});
 				});
 			}
-		}, () => {
-			this.element.removeEventListener(".mavo:autosave");
-		});
 
-		// Ctrl + S or Cmd + S to save
-		this.element.addEventListener("keydown", evt => {
-			if (evt.keyCode == 83 && evt[_.superKey]) {
-				evt.preventDefault();
-				this.save();
-			}
+			// Ctrl + S or Cmd + S to save
+			this.element.addEventListener("keydown.mavo:save", evt => {
+				if (evt.keyCode == 83 && evt[_.superKey]) {
+					evt.preventDefault();
+					this.save();
+				}
+			});
+		}, () => {
+			$.unbind(this.element, ".mavo:save .mavo:autosave");
 		});
 
 		Mavo.hooks.run("init-end", this);
@@ -3431,7 +3431,7 @@ var _ = Mavo.Primitive = $.Class({
 			// Empty properties should become editable immediately
 			// otherwise they could be invisible!
 			if (this.empty && !this.attribute) {
-				return setTimeout(resolve, 10);
+				return requestAnimationFrame(resolve);
 			}
 
 			var timer;
@@ -3761,7 +3761,7 @@ var _ = Mavo.Primitive = $.Class({
 			return _.safeCast(ret, datatype);
 		},
 
-		getConfig: function(element, attribute) {
+		getConfig: function(element, attribute, datatype) {
 			if (attribute === undefined) {
 				attribute = element.getAttribute("mv-attribute") || undefined;
 			}
@@ -3770,10 +3770,16 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			var config = Mavo.Elements.search(element, attribute);
+			datatype = element.getAttribute("datatype") || undefined;
+
+			var config = Mavo.Elements.search(element, attribute, datatype);
 
 			if (config.attribute === undefined) {
 				config.attribute = attribute || null;
+			}
+
+			if (config.datatype === undefined) {
+				config.datatype = datatype;
 			}
 
 			return config;
@@ -4456,6 +4462,21 @@ _.register({
 	"text": {
 		default: true,
 		popup: true
+	},
+
+	"[role=checkbox]": {
+		default: true,
+		attribute: "aria-checked",
+		datatype: "boolean",
+		edit: function() {
+			this.element.addEventListener("click.mavo:edit", evt => {
+				this.value = !this.value;
+				evt.preventDefault();
+			});
+		},
+		done: function() {
+			$.unbind(this.element, ".mavo:edit");
+		}
 	}
 });
 
@@ -4721,11 +4742,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (!item.itemControls) {
-			item.itemControls = new Mavo.UI.Itembar(item);
-		}
+		setTimeout(() => {
+			if (!item.itemControls) {
+				item.itemControls = new Mavo.UI.Itembar(item);
+			}
 
-		item.itemControls.add();
+			item.itemControls.add();
+		}, 10);
 
 		item.edit();
 	},
@@ -5625,7 +5648,7 @@ var _ = Mavo.Expressions = $.Class({
 					}
 				}
 				else {
-					setTimeout(() => this.update(evt), 10);
+					requestAnimationFrame(() => this.update(evt));
 				}
 			});
 
@@ -6746,6 +6769,7 @@ var _ = Mavo.Backend.register($.Class({
 
 		var repoCall = `repos/${this.username}/${this.repo}`;
 		var fileCall = `${repoCall}/contents/${path}`;
+		var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix");
 
 		// Create repo if it doesn’t exist
 		var repoInfo = this.repoInfo || this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
@@ -6786,7 +6810,7 @@ var _ = Mavo.Backend.register($.Class({
 				return this.request(fileCall, {
 					ref: this.branch
 				}).then(fileInfo => this.request(fileCall, {
-					message: `Updated ${fileInfo.name || "file"}`,
+					message: `${commitPrefix} Updated ${fileInfo.name || "file"}`,
 					content: serialized,
 					branch: this.branch,
 					sha: fileInfo.sha
@@ -6794,7 +6818,7 @@ var _ = Mavo.Backend.register($.Class({
 					if (xhr.status == 404) {
 						// File does not exist, create it
 						return this.request(fileCall, {
-							message: "Created file",
+							message: commitPrefix + "Created file",
 							content: serialized,
 							branch: this.branch
 						}, "PUT");

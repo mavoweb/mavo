@@ -218,16 +218,16 @@ var _ = self.Mavo = $.Class({
 					});
 				});
 			}
-		}, () => {
-			this.element.removeEventListener(".mavo:autosave");
-		});
 
-		// Ctrl + S or Cmd + S to save
-		this.element.addEventListener("keydown", evt => {
-			if (evt.keyCode == 83 && evt[_.superKey]) {
-				evt.preventDefault();
-				this.save();
-			}
+			// Ctrl + S or Cmd + S to save
+			this.element.addEventListener("keydown.mavo:save", evt => {
+				if (evt.keyCode == 83 && evt[_.superKey]) {
+					evt.preventDefault();
+					this.save();
+				}
+			});
+		}, () => {
+			$.unbind(this.element, ".mavo:save .mavo:autosave");
 		});
 
 		Mavo.hooks.run("init-end", this);
