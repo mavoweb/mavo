@@ -137,18 +137,20 @@ var _ = Mavo.Collection = $.Class({
 			add: env.item
 		});
 
-		if (!o.silent) {
-			env.changed.forEach(i => {
-				i.dataChanged(i == env.item && env.previousIndex === undefined? "add" : "move");
-				i.unsavedChanges = true;
-			});
+		requestAnimationFrame(() => {
+			if (!o.silent) {
+				env.changed.forEach(i => {
+					i.dataChanged(i == env.item && env.previousIndex === undefined? "add" : "move");
+					i.unsavedChanges = true;
+				});
 
-			this.unsavedChanges = this.mavo.unsavedChanges = true;
-		}
+				this.unsavedChanges = this.mavo.unsavedChanges = true;
+			}
+
+			this.mavo.expressions.update(env.item.element);
+		});
 
 		Mavo.hooks.run("collection-add-end", env);
-
-		this.mavo.treeBuilt.then(() => this.mavo.expressions.update(env.item.element));
 
 		return env.item;
 	},
@@ -258,13 +260,11 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		setTimeout(() => {
-			if (!item.itemControls) {
-				item.itemControls = new Mavo.UI.Itembar(item);
-			}
+		if (!item.itemControls) {
+			item.itemControls = new Mavo.UI.Itembar(item);
+		}
 
-			item.itemControls.add();
-		}, 10);
+		item.itemControls.add();
 
 		item.edit();
 	},

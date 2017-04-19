@@ -5366,20 +5366,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				add: env.item
 			});
 
-			if (!o.silent) {
-				env.changed.forEach(function (i) {
-					i.dataChanged(i == env.item && env.previousIndex === undefined ? "add" : "move");
-					i.unsavedChanges = true;
-				});
+			requestAnimationFrame(function () {
+				if (!o.silent) {
+					env.changed.forEach(function (i) {
+						i.dataChanged(i == env.item && env.previousIndex === undefined ? "add" : "move");
+						i.unsavedChanges = true;
+					});
 
-				this.unsavedChanges = this.mavo.unsavedChanges = true;
-			}
+					_this.unsavedChanges = _this.mavo.unsavedChanges = true;
+				}
+
+				_this.mavo.expressions.update(env.item.element);
+			});
 
 			Mavo.hooks.run("collection-add-end", env);
-
-			this.mavo.treeBuilt.then(function () {
-				return _this.mavo.expressions.update(env.item.element);
-			});
 
 			return env.item;
 		},
@@ -5543,13 +5543,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		editItem: function editItem(item) {
-			setTimeout(function () {
-				if (!item.itemControls) {
-					item.itemControls = new Mavo.UI.Itembar(item);
-				}
+			if (!item.itemControls) {
+				item.itemControls = new Mavo.UI.Itembar(item);
+			}
 
-				item.itemControls.add();
-			}, 10);
+			item.itemControls.add();
 
 			item.edit();
 		},
