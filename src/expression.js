@@ -48,18 +48,18 @@ var _ = Mavo.Expression = $.Class({
 			return true;
 		}
 
-		if (Mavo.hasIntersection(evt.properties, this.identifiers)) {
+		if (Mavo.Functions.intersects(evt.properties, this.identifiers)) {
 			return true;
 		}
 
 		if (evt.action != "propertychange") {
-			if (Mavo.hasIntersection(["$index", "$all", "$previous", "$next"], this.identifiers)) {
+			if (Mavo.Functions.intersects(["$index", "$previous", "$next"], this.identifiers)) {
 				return true;
 			}
 
 			var collection = evt.node.collection || evt.node;
 
-			if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
+			if (Mavo.Functions.intersects(collection.properties, this.identifiers)) {
 				return true;
 			}
 		}

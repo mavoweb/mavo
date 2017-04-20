@@ -25,8 +25,17 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	get: function() {
-		return this.request(this.apiCall)
-		       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
+		if (this.isAuthenticated() || !this.path) {
+			// Authenticated or raw API call
+			return this.request(this.apiCall)
+			       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
+		}
+		else {
+			// Unauthenticated, use simple GET request to avoid rate limit
+			var url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
+
+			return this.super.get.call(this, url);
+		}
 	},
 
 	upload: function(file, path = this.path) {

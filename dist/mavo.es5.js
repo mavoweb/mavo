@@ -1098,6 +1098,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
+   * toJSON without cycles
+   */
+		safeToJSON: function safeToJSON(o) {
+			var cache = new WeakSet();
+
+			return JSON.stringify(o, function (key, value) {
+				if ((typeof value === "undefined" ? "undefined" : _typeof(value)) === "object" && value !== null) {
+					// No circular reference found
+
+					if (cache.has(value)) {
+						return; // Circular reference found!
+					}
+
+					cache.add(value);
+				}
+
+				return value;
+			});
+		},
+
+		/**
    * Array utlities
    */
 
@@ -1112,16 +1133,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (index > -1) {
 				arr.splice(index, 1);
 			}
-		},
-
-		/**
-   * Do two arrays have a non-empty intersection?
-   * @return {Boolean}
-   */
-		hasIntersection: function hasIntersection(arr1, arr2) {
-			return arr1 && arr2 && !arr1.every(function (el) {
-				return arr2.indexOf(el) == -1;
-			});
 		},
 
 		// Recursively flatten a multi-dimensional array
@@ -1322,25 +1333,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		/**
-   * Deep clone an object. Only supports object literals, arrays, and primitives
-   */
 		clone: function clone(o) {
-			var cache = new WeakSet();
-
-			return JSON.parse(JSON.stringify(o, function (key, value) {
-				if ((typeof value === "undefined" ? "undefined" : _typeof(value)) === "object" && value !== null) {
-					// No circular reference found
-
-					if (cache.has(value)) {
-						return; // Circular reference found!
-					}
-
-					cache.add(value);
-				}
-
-				return value;
-			}));
+			return JSON.parse(_.safeToJSON(o));
 		},
 
 		// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
@@ -2507,10 +2501,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		get: function get() {
-			var url = new URL(this.url);
+			var url = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new URL(this.url);
+
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-			return $.fetch(this.url.href).then(function (xhr) {
+			return $.fetch(url.href).then(function (xhr) {
 				return Promise.resolve(xhr.responseText);
 			}, function () {
 				return Promise.resolve(null);
@@ -3280,6 +3275,91 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return !!this.parentGroup && this.parentGroup.isDeleted();
 		},
 
+		relativizeData: function relativizeData(data) {
+			var _this2 = this;
+
+			var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { live: true };
+
+			return new Proxy(data, {
+				get: function get(data, property, proxy) {
+					// Checking if property is in proxy might add it to the data
+					if (property in data || property in proxy && property in data) {
+						var ret = data[property];
+
+						return ret;
+					}
+				},
+
+				has: function has(data, property) {
+					if (property in data) {
+						return true;
+					}
+
+					// Property does not exist, look for it elsewhere
+
+					// Special values
+					switch (property) {
+						case "$index":
+							data[property] = _this2.index || 0;
+							return true; // if index is 0 it's falsy and has would return false!
+						case "$next":
+						case "$previous":
+							if (_this2.closestCollection) {
+								data[property] = _this2.closestCollection.getData(options)[_this2.index + (property == "$next" ? 1 : -1)];
+								return true;
+							}
+
+							data[property] = null;
+							return false;
+					}
+
+					if (_this2 instanceof Mavo.Group && property == _this2.property && _this2.collection) {
+						data[property] = data;
+						return true;
+					}
+
+					// First look in ancestors
+					var ret = _this2.walkUp(function (group) {
+						if (property in group.children) {
+							return group.children[property];
+						};
+					});
+
+					if (ret === undefined) {
+						// Still not found, look in descendants
+						ret = _this2.find(property);
+					}
+
+					if (ret !== undefined) {
+						if (Array.isArray(ret)) {
+							ret = ret.map(function (item) {
+								return item.getData(options);
+							}).filter(function (item) {
+								return item !== null;
+							});
+						} else if (ret instanceof Mavo.Node) {
+							ret = ret.getData(options);
+						}
+
+						data[property] = ret;
+
+						return true;
+					}
+
+					// Does it reference another Mavo?
+					if (property in Mavo.all && Mavo.all[property].root) {
+						return data[property] = Mavo.all[property].root.getData(options);
+					}
+
+					return false;
+				},
+
+				set: function set(data, property, value) {
+					throw Error("You can’t set data via expressions.");
+				}
+			});
+		},
+
 		lazy: {
 			closestCollection: function closestCollection() {
 				return this.getClosestCollection();
@@ -3313,7 +3393,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			mode: function mode(value) {
-				var _this2 = this;
+				var _this3 = this;
 
 				if (this._mode != value) {
 					// Is it allowed?
@@ -3329,7 +3409,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// If attribute is not one of the recognized values, leave it alone
 						var set = this.modes || value == "edit";
 						Mavo.Observer.sneak(this.mavo.modeObserver, function () {
-							$.toggleAttribute(_this2.element, "mv-mode", value, set);
+							$.toggleAttribute(_this3.element, "mv-mode", value, set);
 						});
 					}
 
@@ -3350,7 +3430,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			deleted: function deleted(value) {
-				var _this3 = this;
+				var _this4 = this;
 
 				this.element.classList.toggle("mv-deleted", value);
 
@@ -3359,7 +3439,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// and replace them with an undo prompt.
 					this.elementContents = document.createDocumentFragment();
 					$$(this.element.childNodes).forEach(function (node) {
-						_this3.elementContents.appendChild(node);
+						_this4.elementContents.appendChild(node);
 					});
 
 					$.contents(this.element, [{
@@ -3377,7 +3457,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						textContent: "Undo",
 						events: {
 							"click": function click(evt) {
-								return _this3.deleted = false;
+								return _this4.deleted = false;
 							}
 						}
 					}]);
@@ -3510,7 +3590,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						var collection = existing;
 
 						if (!(existing instanceof Mavo.Collection)) {
+
 							collection = new Mavo.Collection(existing.element, _this.mavo, constructorOptions);
+
 							_this.children[property] = existing.collection = collection;
 							collection.add(existing);
 						}
@@ -3673,12 +3755,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			// What if data is not an object?
 			if ((typeof data === "undefined" ? "undefined" : _typeof(data)) !== "object") {
 				// Data is a primitive, render it on this.property or failing that, any writable property
-				var score = function score(prop) {
-					return (prop == _this3.property) + !_this3.children[prop].expressionText + (_this3.children[prop] instanceof Mavo.Primitive);
-				};
-				var property = Object.keys(this.children).sort(function (prop1, prop2) {
-					return score(prop1) - score(prop2);
-				}).reverse()[0];
+				if (this.property in this.children) {
+					var property = this.property;
+				} else {
+					var type = $.type(data);
+					var score = function score(prop) {
+						return (_this3.children[prop] instanceof Mavo.Primitive) + (_this3.children[prop].datatype == type);
+					};
+
+					var property = Object.keys(this.children).filter(function (p) {
+						return !_this3.children[p].expressionText;
+					}).sort(function (prop1, prop2) {
+						return score(prop1) - score(prop2);
+					}).reverse()[0];
+				}
 
 				data = _defineProperty({}, property, data);
 
@@ -3696,12 +3786,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// since nothing else will and they can still be referenced in expressions
 				var oldData = Mavo.subset(this.oldData, this.inPath);
 
-				for (var _property in data) {
-					if (!(_property in this.children)) {
-						var value = data[_property];
+				for (var property in data) {
+					if (!(property in this.children)) {
+						var value = data[property];
 
-						if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldData || oldData[_property] != value)) {
-							this.dataChanged("propertychange", { property: _property });
+						if ((typeof value === "undefined" ? "undefined" : _typeof(value)) != "object" && (!oldData || oldData[property] != value)) {
+							this.dataChanged("propertychange", { property: property });
 						}
 					}
 				}
@@ -4727,6 +4817,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 		"search": {
 			value: function value(element, attribute, datatype) {
+
 				var matches = _.matches(element, attribute, datatype);
 
 				return matches[matches.length - 1] || { attribute: attribute };
@@ -5229,7 +5320,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.mutable) {
 				var item = this.createItem(this.element);
-				this.add(item);
+				this.add(item, undefined, { silent: true });
 				this.itemTemplate = item.template || item;
 			}
 
@@ -5366,18 +5457,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				add: env.item
 			});
 
-			requestAnimationFrame(function () {
-				if (!o.silent) {
+			if (this.mavo.expressions.active && !o.silent) {
+				requestAnimationFrame(function () {
 					env.changed.forEach(function (i) {
 						i.dataChanged(i == env.item && env.previousIndex === undefined ? "add" : "move");
 						i.unsavedChanges = true;
 					});
 
 					_this.unsavedChanges = _this.mavo.unsavedChanges = true;
-				}
 
-				_this.mavo.expressions.update(env.item.element);
-			});
+					_this.mavo.expressions.update(env.item.element);
+				});
+			}
 
 			Mavo.hooks.run("collection-add-end", env);
 
@@ -6075,18 +6166,18 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return true;
 			}
 
-			if (Mavo.hasIntersection(evt.properties, this.identifiers)) {
+			if (Mavo.Functions.intersects(evt.properties, this.identifiers)) {
 				return true;
 			}
 
 			if (evt.action != "propertychange") {
-				if (Mavo.hasIntersection(["$index", "$all", "$previous", "$next"], this.identifiers)) {
+				if (Mavo.Functions.intersects(["$index", "$previous", "$next"], this.identifiers)) {
 					return true;
 				}
 
 				var collection = evt.node.collection || evt.node;
 
-				if (Mavo.hasIntersection(collection.properties, this.identifiers)) {
+				if (Mavo.Functions.intersects(collection.properties, this.identifiers)) {
 					return true;
 				}
 			}
@@ -6349,6 +6440,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.mavo.treeBuilt.then(function () {
 				if (!_this.template) {
+					// Only collection items and groups can have their own expressions arrays
 					_this.item = Mavo.Node.get(_this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
 					_this.item.expressions = [].concat(_toConsumableArray(_this.item.expressions || []), [_this]);
 				}
@@ -6540,9 +6632,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		update: function update(evt) {
-			var _this2 = this;
-
 			var root, rootGroup;
+
+			if (!this.active) {
+				return;
+			}
 
 			if (evt instanceof Element) {
 				root = evt.closest(Mavo.selectors.group);
@@ -6552,13 +6646,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			root = root || this.mavo.element;
 			rootGroup = Mavo.Node.get(root);
 
-			var data = rootGroup.getData({ live: true });
+			var allData = rootGroup.getData({ live: true });
 
 			rootGroup.walk(function (obj, path) {
-				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-					var env = { context: _this2, data: $.value.apply($, [data].concat(_toConsumableArray(path))) };
+				var data = $.value.apply($, [allData].concat(_toConsumableArray(path)));
 
-					Mavo.hooks.run("expressions-update-start", env);
+				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+					if ((typeof data === "undefined" ? "undefined" : _typeof(data)) != "object") {
+						var _data;
+
+						var parentData = $.value.apply($, [allData].concat(_toConsumableArray(path.slice(0, -1))));
+
+						data = (_data = {}, _defineProperty(_data, Symbol.toPrimitive, function () {
+							return data;
+						}), _defineProperty(_data, obj.property, data), _data);
+
+						if (self.Proxy) {
+							data = obj.relativizeData(data);
+						}
+					}
+
 					var _iteratorNormalCompletion = true;
 					var _didIteratorError = false;
 					var _iteratorError = undefined;
@@ -6568,7 +6675,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							var et = _step.value;
 
 							if (et.changedBy(evt)) {
-								et.update(env.data, evt);
+								et.update(data, evt);
 							}
 						}
 					} catch (err) {
@@ -6608,7 +6715,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Traverse an element, including attribute nodes, text nodes and all descendants
 		traverse: function traverse(node) {
-			var _this3 = this;
+			var _this2 = this;
 
 			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "";
 			var syntax = arguments[2];
@@ -6637,10 +6744,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				$$(node.attributes).forEach(function (attribute) {
-					return _this3.extract(node, attribute, path, syntax);
+					return _this2.extract(node, attribute, path, syntax);
 				});
 				$$(node.childNodes).forEach(function (child, i) {
-					return _this3.traverse(child, path + "/" + i, syntax);
+					return _this2.traverse(child, path + "/" + i, syntax);
 				});
 			}
 		},
@@ -6661,97 +6768,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	if (self.Proxy) {
 		Mavo.hooks.add("node-getdata-end", function (env) {
-			var _this4 = this;
-
-			if (env.options.live && env.data && (_typeof(env.data) === "object" || this.collection)) {
+			if (env.options.live && (env.data || env.data === 0 || env.data === "") && _typeof(env.data) === "object") {
 				var data = env.data;
 
-				if (_typeof(env.data) !== "object") {
-					var _env$data;
-
-					env.data = (_env$data = {}, _defineProperty(_env$data, Symbol.toPrimitive, function () {
-						return data;
-					}), _defineProperty(_env$data, this.property, data), _env$data);
-				}
-
-				env.data = new Proxy(env.data, {
-					get: function get(data, property, proxy) {
-						// Checking if property is in proxy might add it to the data
-						if (property in data || property in proxy && property in data) {
-							return data[property];
-						}
-					},
-
-					has: function has(data, property) {
-						if (property in data) {
-							return true;
-						}
-
-						// Property does not exist, look for it elsewhere
-
-						switch (property) {
-							case "$index":
-								data[property] = _this4.index || 0;
-								return true; // if index is 0 it's falsy and has would return false!
-							case "$all":
-								return data[property] = _this4.closestCollection ? _this4.closestCollection.getData(env.options) : [env.data];
-							case "$next":
-							case "$previous":
-								if (_this4.closestCollection) {
-									return data[property] = _this4.closestCollection.getData(env.options)[_this4.index + (property == "$next" ? 1 : -1)];
-								}
-
-								data[property] = null;
-								return null;
-							case "$edit":
-								data[property] = _this4.editing;
-								return true;
-						}
-
-						if (_this4 instanceof Mavo.Group && property == _this4.property && _this4.collection) {
-							return data[property] = env.data;
-						}
-
-						// First look in ancestors
-						var ret = _this4.walkUp(function (group) {
-							if (property in group.children) {
-								return group.children[property];
-							};
-						});
-
-						if (ret === undefined) {
-							// Still not found, look in descendants
-							ret = _this4.find(property);
-						}
-
-						if (ret !== undefined) {
-							if (Array.isArray(ret)) {
-								ret = ret.map(function (item) {
-									return item.getData(env.options);
-								}).filter(function (item) {
-									return item !== null;
-								});
-							} else if (ret instanceof Mavo.Node) {
-								ret = ret.getData(env.options);
-							}
-
-							data[property] = ret;
-
-							return true;
-						}
-
-						// Does it reference another Mavo?
-						if (property in Mavo.all && Mavo.all[property].root) {
-							return data[property] = Mavo.all[property].root.getData(env.options);
-						}
-
-						return false;
-					},
-
-					set: function set(data, property, value) {
-						throw Error("You can’t set data via expressions.");
-					}
-				});
+				env.data = this.relativizeData(data);
 			}
 		});
 	}
@@ -7017,12 +7037,49 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return obj[property];
 			}
 
-			if (Array.isArray(obj) && isNaN(property) && _typeof(obj[0]) === "object") {
-				// Array and non-numerical property, try by id
-				for (var i = 0; i < obj.length; i++) {
-					if (obj[i] && obj[i].id == property) {
-						return obj[i];
+			if (Array.isArray(obj) && isNaN(property)) {
+				// Array and non-numerical property
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = obj[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var first = _step.value;
+
+						if (first && (typeof first === "undefined" ? "undefined" : _typeof(first)) === "object") {
+							break;
+						}
 					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+
+				if (first) {
+					if ("id" in first) {
+						// Try by id?
+						for (var i = 0; i < obj.length; i++) {
+							if (obj[i] && obj[i].id == property) {
+								return _.get(obj, i);
+							}
+						}
+					}
+
+					// Still here, get that property from the objects inside
+					return obj.map(function (e) {
+						return _.get(e, property);
+					});
 				}
 			}
 
@@ -7031,7 +7088,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		unique: function unique(arr) {
+			if (!Array.isArray(arr)) {
+				return arr;
+			}
+
 			return [].concat(_toConsumableArray(new Set(arr)));
+		},
+
+		/**
+   * Do two arrays have a non-empty intersection?
+   * @return {Boolean}
+   */
+		intersects: function intersects(arr1, arr2) {
+			return arr1 && arr2 && !arr1.every(function (el) {
+				return arr2.indexOf(el) == -1;
+			});
 		},
 
 		/*********************
@@ -7248,27 +7319,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		var ret = {};
 		var url = new URL(location);
 
-		var _iteratorNormalCompletion = true;
-		var _didIteratorError = false;
-		var _iteratorError = undefined;
+		var _iteratorNormalCompletion2 = true;
+		var _didIteratorError2 = false;
+		var _iteratorError2 = undefined;
 
 		try {
-			for (var _iterator = url.searchParams[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-				var pair = _step.value;
+			for (var _iterator2 = url.searchParams[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+				var pair = _step2.value;
 
 				ret[pair[0]] = pair[1];
 			}
 		} catch (err) {
-			_didIteratorError = true;
-			_iteratorError = err;
+			_didIteratorError2 = true;
+			_iteratorError2 = err;
 		} finally {
 			try {
-				if (!_iteratorNormalCompletion && _iterator.return) {
-					_iterator.return();
+				if (!_iteratorNormalCompletion2 && _iterator2.return) {
+					_iterator2.return();
 				}
 			} finally {
-				if (_didIteratorError) {
-					throw _iteratorError;
+				if (_didIteratorError2) {
+					throw _iteratorError2;
 				}
 			}
 		}
@@ -7298,27 +7369,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		addBinaryOperator: function addBinaryOperator(name, o) {
 			if (o.symbol) {
 				// Build map of symbols to function names for easy rewriting
-				var _iteratorNormalCompletion2 = true;
-				var _didIteratorError2 = false;
-				var _iteratorError2 = undefined;
+				var _iteratorNormalCompletion3 = true;
+				var _didIteratorError3 = false;
+				var _iteratorError3 = undefined;
 
 				try {
-					for (var _iterator2 = Mavo.toArray(o.symbol)[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-						var symbol = _step2.value;
+					for (var _iterator3 = Mavo.toArray(o.symbol)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+						var symbol = _step3.value;
 
 						Mavo.Script.symbols[symbol] = name;
 					}
 				} catch (err) {
-					_didIteratorError2 = true;
-					_iteratorError2 = err;
+					_didIteratorError3 = true;
+					_iteratorError3 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion2 && _iterator2.return) {
-							_iterator2.return();
+						if (!_iteratorNormalCompletion3 && _iterator3.return) {
+							_iterator3.return();
 						}
 					} finally {
-						if (_didIteratorError2) {
-							throw _iteratorError2;
+						if (_didIteratorError3) {
+							throw _iteratorError3;
 						}
 					}
 				}
@@ -7894,9 +7965,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		get: function get() {
 			var _this = this;
 
-			return this.request(this.apiCall).then(function (response) {
-				return Promise.resolve(_this.repo ? _.atob(response.content) : response);
-			});
+			if (this.isAuthenticated() || !this.path) {
+				// Authenticated or raw API call
+				return this.request(this.apiCall).then(function (response) {
+					return Promise.resolve(_this.repo ? _.atob(response.content) : response);
+				});
+			} else {
+				// Unauthenticated, use simple GET request to avoid rate limit
+				var url = new URL("https://raw.githubusercontent.com/" + this.username + "/" + this.repo + "/" + (this.branch || "master") + "/" + this.path);
+
+				return this.super.get.call(this, url);
+			}
 		},
 
 		upload: function upload(file) {

@@ -53,6 +53,27 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
+	 * toJSON without cycles
+	 */
+	safeToJSON: function(o) {
+		var cache = new WeakSet();
+
+		return JSON.stringify(o, (key, value) => {
+			if (typeof value === "object" && value !== null) {
+				// No circular reference found
+
+				if (cache.has(value)) {
+					return; // Circular reference found!
+				}
+
+				cache.add(value);
+			}
+
+			return value;
+		});
+	},
+
+	/**
 	 * Array utlities
 	 */
 
@@ -68,12 +89,6 @@ var _ = $.extend(Mavo, {
 			arr.splice(index, 1);
 		}
 	},
-
-	/**
-	 * Do two arrays have a non-empty intersection?
-	 * @return {Boolean}
-	 */
-	hasIntersection: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	// Recursively flatten a multi-dimensional array
 	flatten: arr => {
@@ -244,25 +259,8 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	/**
-	 * Deep clone an object. Only supports object literals, arrays, and primitives
-	 */
 	clone: function(o) {
-		var cache = new WeakSet();
-
-		return JSON.parse(JSON.stringify(o, (key, value) => {
-			if (typeof value === "object" && value !== null) {
-				// No circular reference found
-
-				if (cache.has(value)) {
-					return; // Circular reference found!
-				}
-
-				cache.add(value);
-			}
-
-			return value;
-		}));
+		return JSON.parse(_.safeToJSON(o));
 	},
 
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls

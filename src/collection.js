@@ -26,7 +26,7 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.mutable) {
 			var item = this.createItem(this.element);
-			this.add(item);
+			this.add(item, undefined, {silent: true});
 			this.itemTemplate = item.template || item;
 		}
 
@@ -137,18 +137,18 @@ var _ = Mavo.Collection = $.Class({
 			add: env.item
 		});
 
-		requestAnimationFrame(() => {
-			if (!o.silent) {
+		if (this.mavo.expressions.active && !o.silent) {
+			requestAnimationFrame(() => {
 				env.changed.forEach(i => {
 					i.dataChanged(i == env.item && env.previousIndex === undefined? "add" : "move");
 					i.unsavedChanges = true;
 				});
 
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
-			}
 
-			this.mavo.expressions.update(env.item.element);
-		});
+				this.mavo.expressions.update(env.item.element);
+			});
+		}
 
 		Mavo.hooks.run("collection-add-end", env);
 

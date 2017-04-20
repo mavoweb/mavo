@@ -14,11 +14,10 @@ var _ = Mavo.Backend = $.Class({
 		this.permissions = new Mavo.Permissions();
 	},
 
-	get: function() {
-		var url = new URL(this.url);
+	get: function(url = new URL(this.url)) {
 		url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-		return $.fetch(this.url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+		return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
 
 	load: function() {

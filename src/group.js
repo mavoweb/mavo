@@ -30,7 +30,9 @@ var _ = Mavo.Group = $.Class({
 					var collection = existing;
 
 					if (!(existing instanceof Mavo.Collection)) {
+
 						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
+
 						this.children[property] = existing.collection = collection;
 						collection.add(existing);
 					}
@@ -80,11 +82,11 @@ var _ = Mavo.Group = $.Class({
 
 		env.data = this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
 
-		for (let property in this.children) {
-			let obj = this.children[property];
+		for (var property in this.children) {
+			var obj = this.children[property];
 
 			if (obj.saved || env.options.live) {
-				let data = obj.getData(o);
+				var data = obj.getData(o);
 
 				if (data !== null || env.options.live) {
 					env.data[obj.property] = data;
@@ -163,7 +165,7 @@ var _ = Mavo.Group = $.Class({
 		if (this.super.edit.call(this) === false) {
 			return false;
 		}
-		
+
 		this.propagate("edit");
 	},
 
@@ -182,10 +184,19 @@ var _ = Mavo.Group = $.Class({
 		// What if data is not an object?
 		if (typeof data !== "object") {
 			// Data is a primitive, render it on this.property or failing that, any writable property
-			var score = prop => (prop == this.property)
-				+ (!this.children[prop].expressionText)
-				+ (this.children[prop] instanceof Mavo.Primitive);
-			var property = Object.keys(this.children).sort((prop1, prop2) => score(prop1) - score(prop2)).reverse()[0];
+			if (this.property in this.children) {
+				var property = this.property;
+			}
+			else {
+				var type = $.type(data);
+				var score = prop => (this.children[prop] instanceof Mavo.Primitive) + (this.children[prop].datatype == type);
+
+				var property = Object.keys(this.children)
+					.filter(p => !this.children[p].expressionText)
+					.sort((prop1, prop2) => score(prop1) - score(prop2))
+					.reverse()[0];
+
+			}
 
 			data = {[property]: data};
 
@@ -204,9 +215,9 @@ var _ = Mavo.Group = $.Class({
 			// since nothing else will and they can still be referenced in expressions
 			var oldData = Mavo.subset(this.oldData, this.inPath);
 
-			for (let property in data) {
+			for (var property in data) {
 				if (!(property in this.children)) {
-					let value = data[property];
+					var value = data[property];
 
 					if (typeof value != "object" && (!oldData || oldData[property] != value)) {
 						this.dataChanged("propertychange", {property});

@@ -17,12 +17,26 @@ var _ = Mavo.Functions = {
 			return obj[property];
 		}
 
-		if (Array.isArray(obj) && isNaN(property) && typeof obj[0] === "object") {
-			// Array and non-numerical property, try by id
-			for (var i=0; i<obj.length; i++) {
-				if (obj[i] && obj[i].id == property) {
-					return obj[i];
+		if (Array.isArray(obj) && isNaN(property)) {
+			// Array and non-numerical property
+			for (var first of obj) {
+				if (first && typeof first === "object") {
+					break;
 				}
+			}
+
+			if (first) {
+				if ("id" in first) {
+					// Try by id?
+					for (var i=0; i<obj.length; i++) {
+						if (obj[i] && obj[i].id == property) {
+							return _.get(obj, i);
+						}
+					}
+				}
+
+				// Still here, get that property from the objects inside
+				return obj.map(e => _.get(e, property));
 			}
 		}
 
@@ -31,8 +45,18 @@ var _ = Mavo.Functions = {
 	},
 
 	unique: function(arr) {
+		if (!Array.isArray(arr)) {
+			return arr;
+		}
+
 		return [...new Set(arr)];
 	},
+
+	/**
+	 * Do two arrays have a non-empty intersection?
+	 * @return {Boolean}
+	 */
+	intersects: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
 
 	/*********************
 	 * Number functions

@@ -287,6 +287,85 @@ var _ = Mavo.Node = $.Class({
 		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
+	relativizeData: function(data, options = {live: true}) {
+		return new Proxy(data, {
+			get: (data, property, proxy) => {
+				// Checking if property is in proxy might add it to the data
+				if (property in data || (property in proxy && property in data)) {
+					var ret = data[property];
+
+					return ret;
+				}
+			},
+
+			has: (data, property) => {
+				if (property in data) {
+					return true;
+				}
+
+				// Property does not exist, look for it elsewhere
+
+				// Special values
+				switch (property) {
+					case "$index":
+						data[property] = this.index || 0;
+						return true; // if index is 0 it's falsy and has would return false!
+					case "$next":
+					case "$previous":
+						if (this.closestCollection) {
+							data[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
+							return true;
+						}
+
+						data[property] = null;
+						return false;
+				}
+
+				if (this instanceof Mavo.Group && property == this.property && this.collection) {
+					data[property] = data;
+					return true;
+				}
+
+				// First look in ancestors
+				var ret = this.walkUp(group => {
+					if (property in group.children) {
+						return group.children[property];
+					};
+				});
+
+				if (ret === undefined) {
+					// Still not found, look in descendants
+					ret = this.find(property);
+				}
+
+				if (ret !== undefined) {
+					if (Array.isArray(ret)) {
+						ret = ret.map(item => item.getData(options))
+								 .filter(item => item !== null);
+					}
+					else if (ret instanceof Mavo.Node) {
+						ret = ret.getData(options);
+					}
+
+					data[property] = ret;
+
+					return true;
+				}
+
+				// Does it reference another Mavo?
+				if (property in Mavo.all && Mavo.all[property].root) {
+					return data[property] = Mavo.all[property].root.getData(options);
+				}
+
+				return false;
+			},
+
+			set: function(data, property, value) {
+				throw Error("You can’t set data via expressions.");
+			}
+		});
+	},
+
 	lazy: {
 		closestCollection: function() {
 			return this.getClosestCollection();

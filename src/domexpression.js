@@ -67,6 +67,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		this.mavo.treeBuilt.then(() => {
 			if (!this.template) {
+				// Only collection items and groups can have their own expressions arrays
 				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
 				this.item.expressions = [...(this.item.expressions || []), this];
 			}
@@ -86,7 +87,7 @@ var _ = Mavo.DOMExpression = $.Class({
 	update: function(data = this.data, event) {
 		var env = {context: this, ret: {}, event};
 		var parentEnv = env;
-		
+
 		this.data = data;
 
 		env.ret = {};

@@ -49,8 +49,9 @@ Object.defineProperties(_, {
 	},
 	"search": {
 		value: function(element, attribute, datatype) {
-			var matches = _.matches(element, attribute, datatype);
 
+			var matches = _.matches(element, attribute, datatype);
+			
 			return matches[matches.length - 1] || { attribute };
 		}
 	},
