@@ -5836,7 +5836,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// Keep position of the template in the DOM, since we might remove it
 					this.marker = document.createComment("mv-marker");
 					Mavo.data(this.marker, "collection", this);
-					$.after(this.marker, this.templateElement);
+
+					var ref = this.templateElement.parentNode ? this.templateElement : this.children[this.length - 1].element;
+
+					$.after(this.marker, ref);
 				}
 			}
 		},
@@ -8300,3 +8303,4 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	}));
 })(Bliss);
+//# sourceMappingURL=maps/mavo.es5.js.map
