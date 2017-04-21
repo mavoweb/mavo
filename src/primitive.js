@@ -99,7 +99,16 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
+		if (this.default === undefined && (!this.template || !this.closestCollection)) {
+			this.initialValue = this.templateValue;
+		}
+		else {
+			this.initialValue = this.default;
+		}
+
+		if (this.initialValue === undefined) {
+			this.initialValue = this.emptyValue;
+		}
 
 		this.setValue(this.initialValue, {silent: true});
 

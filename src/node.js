@@ -19,18 +19,18 @@ var _ = Mavo.Node = $.Class({
 
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
+		this.mavo = mavo;
+		this.group = this.parentGroup = env.options.group;
+
 		this.template = env.options.template;
 
 		if (this.template) {
-			// TODO remove if this is deleted
 			this.template.copies.push(this);
 		}
 		else {
+			// First (or only) of its kind
 			this.copies = [];
 		}
-
-		this.mavo = mavo;
-		this.group = this.parentGroup = env.options.group;
 
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
@@ -269,9 +269,15 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	getClosestCollection: function() {
-		return this.collection ||
-			   this.group.collection ||
-			   (this.parentGroup? this.parentGroup.closestCollection : null);
+		if (this.collection && this.collection.mutable) {
+			return this.collection;
+		}
+
+		if (this.group.collection && this.group.collection.mutable) {
+			return this.group.collection;
+		}
+
+		return this.parentGroup? this.parentGroup.closestCollection : null;
 	},
 
 	/**

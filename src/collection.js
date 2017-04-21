@@ -24,11 +24,9 @@ var _ = Mavo.Collection = $.Class({
 			this.templateElement = this.templateElement.cloneNode(true);
 		}
 
-		if (this.mutable) {
-			var item = this.createItem(this.element);
-			this.add(item, undefined, {silent: true});
-			this.itemTemplate = item.template || item;
-		}
+		var item = this.createItem(this.element);
+		this.add(item, undefined, {silent: true});
+		this.itemTemplate = item.template || item;
 
 		this.postInit();
 
@@ -260,11 +258,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (!item.itemControls) {
-			item.itemControls = new Mavo.UI.Itembar(item);
-		}
+		if (this.mutable) {
+			if (!item.itemControls) {
+				item.itemControls = new Mavo.UI.Itembar(item);
+			}
 
-		item.itemControls.add();
+			item.itemControls.add();
+		}
 
 		item.edit();
 	},
@@ -283,16 +283,16 @@ var _ = Mavo.Collection = $.Class({
 				$[this.bottomUp? "before" : "after"](this.addButton, rel);
 			}
 
-			// Insert item controls
-			this.propagate(item => {
-				this.editItem(item);
-			});
-
 			// Set up drag & drop
 			_.dragula.then(() => {
 				this.getDragula();
 			});
 		}
+
+		// Edit items, maybe insert item bar
+		this.propagate(item => {
+			this.editItem(item);
+		});
 	},
 
 	done: function() {

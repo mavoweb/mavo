@@ -17,38 +17,30 @@ var _ = Mavo.Group = $.Class({
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		$$(Mavo.selectors.property, this.element).forEach(element => {
-			var property = Mavo.Node.getProperty(element);
+		var properties = $$(Mavo.selectors.property, this.element).filter(element => {
+			return this.element === element.parentNode.closest(Mavo.selectors.group);
+		});
 
-			if (this.contains(element)) {
-				var existing = this.children[property];
-				var template = this.template? this.template.children[property] : null;
-				var constructorOptions = {template, group: this};
+		var propertyNames = properties.map(element => Mavo.Node.getProperty(element));
 
-				if (existing) {
-					// Twogroups with the same property, convert to static collection
-					var collection = existing;
+		properties.forEach((element, i) => {
+			var property = propertyNames[i];
+			var template = this.template? this.template.children[property] : null;
+			var options = {template, group: this};
 
-					if (!(existing instanceof Mavo.Collection)) {
-
-						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-
-						this.children[property] = existing.collection = collection;
-						collection.add(existing);
-					}
-
-					if (!collection.mutable && Mavo.is("multiple", element)) {
-						collection.mutable = true;
-					}
-
-					collection.add(element);
-				}
-				else {
-					// No existing properties with this id, normal case
-					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
-
-					this.children[property] = obj;
-				}
+			if (this.children[property]) {
+				// Already exists, must be a collection
+				var collection = this.children[property];
+				collection.add(element);
+				collection.mutable = collection.mutable || Mavo.is("multiple", element);
+			}
+			else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
+				// There are duplicates, so this should be a collection.
+				this.children[property] = new Mavo.Collection(element, this.mavo, options);
+			}
+			else {
+				// Normal case
+				this.children[property] = Mavo.Node.create(element, this.mavo, options);
 			}
 		});
 
@@ -225,15 +217,6 @@ var _ = Mavo.Group = $.Class({
 				}
 			}
 		}
-	},
-
-	// Check if this group contains a property
-	contains: function(property) {
-		if (property instanceof Mavo.Node) {
-			return property.parentGroup === this;
-		}
-
-		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.group));
 	},
 
 	static: {

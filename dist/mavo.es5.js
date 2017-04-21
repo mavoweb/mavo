@@ -2982,17 +2982,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			_.all.set(element, [].concat(_toConsumableArray(_.all.get(this.element) || []), [this]));
 
+			this.mavo = mavo;
+			this.group = this.parentGroup = env.options.group;
+
 			this.template = env.options.template;
 
 			if (this.template) {
-				// TODO remove if this is deleted
 				this.template.copies.push(this);
 			} else {
+				// First (or only) of its kind
 				this.copies = [];
 			}
-
-			this.mavo = mavo;
-			this.group = this.parentGroup = env.options.group;
 
 			if (!this.fromTemplate("property", "type")) {
 				this.property = _.getProperty(element);
@@ -3259,7 +3259,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		getClosestCollection: function getClosestCollection() {
-			return this.collection || this.group.collection || (this.parentGroup ? this.parentGroup.closestCollection : null);
+			if (this.collection && this.collection.mutable) {
+				return this.collection;
+			}
+
+			if (this.group.collection && this.group.collection.mutable) {
+				return this.group.collection;
+			}
+
+			return this.parentGroup ? this.parentGroup.closestCollection : null;
 		},
 
 		/**
@@ -3577,37 +3585,30 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Create Mavo objects for all properties in this group (primitives or groups),
 			// but not properties in descendant groups (they will be handled by their group)
-			$$(Mavo.selectors.property, this.element).forEach(function (element) {
-				var property = Mavo.Node.getProperty(element);
+			var properties = $$(Mavo.selectors.property, this.element).filter(function (element) {
+				return _this.element === element.parentNode.closest(Mavo.selectors.group);
+			});
 
-				if (_this.contains(element)) {
-					var existing = _this.children[property];
-					var template = _this.template ? _this.template.children[property] : null;
-					var constructorOptions = { template: template, group: _this };
+			var propertyNames = properties.map(function (element) {
+				return Mavo.Node.getProperty(element);
+			});
 
-					if (existing) {
-						// Twogroups with the same property, convert to static collection
-						var collection = existing;
+			properties.forEach(function (element, i) {
+				var property = propertyNames[i];
+				var template = _this.template ? _this.template.children[property] : null;
+				var options = { template: template, group: _this };
 
-						if (!(existing instanceof Mavo.Collection)) {
-
-							collection = new Mavo.Collection(existing.element, _this.mavo, constructorOptions);
-
-							_this.children[property] = existing.collection = collection;
-							collection.add(existing);
-						}
-
-						if (!collection.mutable && Mavo.is("multiple", element)) {
-							collection.mutable = true;
-						}
-
-						collection.add(element);
-					} else {
-						// No existing properties with this id, normal case
-						var obj = Mavo.Node.create(element, _this.mavo, constructorOptions);
-
-						_this.children[property] = obj;
-					}
+				if (_this.children[property]) {
+					// Already exists, must be a collection
+					var collection = _this.children[property];
+					collection.add(element);
+					collection.mutable = collection.mutable || Mavo.is("multiple", element);
+				} else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
+					// There are duplicates, so this should be a collection.
+					_this.children[property] = new Mavo.Collection(element, _this.mavo, options);
+				} else {
+					// Normal case
+					_this.children[property] = Mavo.Node.create(element, _this.mavo, options);
 				}
 			});
 
@@ -3798,15 +3799,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		// Check if this group contains a property
-		contains: function contains(property) {
-			if (property instanceof Mavo.Node) {
-				return property.parentGroup === this;
-			}
-
-			return property.parentNode && this.element === property.parentNode.closest(Mavo.selectors.group);
-		},
-
 		static: {
 			all: new WeakMap(),
 
@@ -3958,7 +3950,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			this.initialValue = (!this.template && this.default === undefined ? this.templateValue : this.default) || this.emptyValue;
+			if (this.default === undefined && (!this.template || !this.closestCollection)) {
+				this.initialValue = this.templateValue;
+			} else {
+				this.initialValue = this.default;
+			}
+
+			if (this.initialValue === undefined) {
+				this.initialValue = this.emptyValue;
+			}
 
 			this.setValue(this.initialValue, { silent: true });
 
@@ -5318,11 +5318,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.templateElement = this.templateElement.cloneNode(true);
 			}
 
-			if (this.mutable) {
-				var item = this.createItem(this.element);
-				this.add(item, undefined, { silent: true });
-				this.itemTemplate = item.template || item;
-			}
+			var item = this.createItem(this.element);
+			this.add(item, undefined, { silent: true });
+			this.itemTemplate = item.template || item;
 
 			this.postInit();
 
@@ -5634,11 +5632,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		editItem: function editItem(item) {
-			if (!item.itemControls) {
-				item.itemControls = new Mavo.UI.Itembar(item);
-			}
+			if (this.mutable) {
+				if (!item.itemControls) {
+					item.itemControls = new Mavo.UI.Itembar(item);
+				}
 
-			item.itemControls.add();
+				item.itemControls.add();
+			}
 
 			item.edit();
 		},
@@ -5659,16 +5659,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					$[this.bottomUp ? "before" : "after"](this.addButton, rel);
 				}
 
-				// Insert item controls
-				this.propagate(function (item) {
-					_this4.editItem(item);
-				});
-
 				// Set up drag & drop
 				_.dragula.then(function () {
 					_this4.getDragula();
 				});
 			}
+
+			// Edit items, maybe insert item bar
+			this.propagate(function (item) {
+				_this4.editItem(item);
+			});
 		},
 
 		done: function done() {
@@ -6021,7 +6021,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.item = item;
 
 			this.element = $$(".mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel=\"" + this.item.property + "\"]", this.item.element).filter(function (el) {
-
 				// Remove item controls meant for other collections
 				return el.closest(Mavo.selectors.multiple) == _this.item.element && !Mavo.data(el, "item");
 			})[0];

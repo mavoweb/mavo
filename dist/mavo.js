@@ -2466,18 +2466,18 @@ var _ = Mavo.Node = $.Class({
 
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
+		this.mavo = mavo;
+		this.group = this.parentGroup = env.options.group;
+
 		this.template = env.options.template;
 
 		if (this.template) {
-			// TODO remove if this is deleted
 			this.template.copies.push(this);
 		}
 		else {
+			// First (or only) of its kind
 			this.copies = [];
 		}
-
-		this.mavo = mavo;
-		this.group = this.parentGroup = env.options.group;
 
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
@@ -2716,9 +2716,15 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	getClosestCollection: function() {
-		return this.collection ||
-			   this.group.collection ||
-			   (this.parentGroup? this.parentGroup.closestCollection : null);
+		if (this.collection && this.collection.mutable) {
+			return this.collection;
+		}
+
+		if (this.group.collection && this.group.collection.mutable) {
+			return this.group.collection;
+		}
+
+		return this.parentGroup? this.parentGroup.closestCollection : null;
 	},
 
 	/**
@@ -3011,38 +3017,30 @@ var _ = Mavo.Group = $.Class({
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		$$(Mavo.selectors.property, this.element).forEach(element => {
-			var property = Mavo.Node.getProperty(element);
+		var properties = $$(Mavo.selectors.property, this.element).filter(element => {
+			return this.element === element.parentNode.closest(Mavo.selectors.group);
+		});
 
-			if (this.contains(element)) {
-				var existing = this.children[property];
-				var template = this.template? this.template.children[property] : null;
-				var constructorOptions = {template, group: this};
+		var propertyNames = properties.map(element => Mavo.Node.getProperty(element));
 
-				if (existing) {
-					// Twogroups with the same property, convert to static collection
-					var collection = existing;
+		properties.forEach((element, i) => {
+			var property = propertyNames[i];
+			var template = this.template? this.template.children[property] : null;
+			var options = {template, group: this};
 
-					if (!(existing instanceof Mavo.Collection)) {
-
-						collection = new Mavo.Collection(existing.element, this.mavo, constructorOptions);
-
-						this.children[property] = existing.collection = collection;
-						collection.add(existing);
-					}
-
-					if (!collection.mutable && Mavo.is("multiple", element)) {
-						collection.mutable = true;
-					}
-
-					collection.add(element);
-				}
-				else {
-					// No existing properties with this id, normal case
-					var obj = Mavo.Node.create(element, this.mavo, constructorOptions);
-
-					this.children[property] = obj;
-				}
+			if (this.children[property]) {
+				// Already exists, must be a collection
+				var collection = this.children[property];
+				collection.add(element);
+				collection.mutable = collection.mutable || Mavo.is("multiple", element);
+			}
+			else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
+				// There are duplicates, so this should be a collection.
+				this.children[property] = new Mavo.Collection(element, this.mavo, options);
+			}
+			else {
+				// Normal case
+				this.children[property] = Mavo.Node.create(element, this.mavo, options);
 			}
 		});
 
@@ -3221,15 +3219,6 @@ var _ = Mavo.Group = $.Class({
 		}
 	},
 
-	// Check if this group contains a property
-	contains: function(property) {
-		if (property instanceof Mavo.Node) {
-			return property.parentGroup === this;
-		}
-
-		return property.parentNode && (this.element === property.parentNode.closest(Mavo.selectors.group));
-	},
-
 	static: {
 		all: new WeakMap(),
 
@@ -3353,7 +3342,16 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		this.initialValue = (!this.template && this.default === undefined? this.templateValue : this.default) || this.emptyValue;
+		if (this.default === undefined && (!this.template || !this.closestCollection)) {
+			this.initialValue = this.templateValue;
+		}
+		else {
+			this.initialValue = this.default;
+		}
+
+		if (this.initialValue === undefined) {
+			this.initialValue = this.emptyValue;
+		}
 
 		this.setValue(this.initialValue, {silent: true});
 
@@ -4596,11 +4594,9 @@ var _ = Mavo.Collection = $.Class({
 			this.templateElement = this.templateElement.cloneNode(true);
 		}
 
-		if (this.mutable) {
-			var item = this.createItem(this.element);
-			this.add(item, undefined, {silent: true});
-			this.itemTemplate = item.template || item;
-		}
+		var item = this.createItem(this.element);
+		this.add(item, undefined, {silent: true});
+		this.itemTemplate = item.template || item;
 
 		this.postInit();
 
@@ -4832,11 +4828,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (!item.itemControls) {
-			item.itemControls = new Mavo.UI.Itembar(item);
-		}
+		if (this.mutable) {
+			if (!item.itemControls) {
+				item.itemControls = new Mavo.UI.Itembar(item);
+			}
 
-		item.itemControls.add();
+			item.itemControls.add();
+		}
 
 		item.edit();
 	},
@@ -4855,16 +4853,16 @@ var _ = Mavo.Collection = $.Class({
 				$[this.bottomUp? "before" : "after"](this.addButton, rel);
 			}
 
-			// Insert item controls
-			this.propagate(item => {
-				this.editItem(item);
-			});
-
 			// Set up drag & drop
 			_.dragula.then(() => {
 				this.getDragula();
 			});
 		}
+
+		// Edit items, maybe insert item bar
+		this.propagate(item => {
+			this.editItem(item);
+		});
 	},
 
 	done: function() {
@@ -5181,10 +5179,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 		this.item = item;
 
 		this.element = $$(`.mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel="${this.item.property}"]`, this.item.element).filter(el => {
-
-								   // Remove item controls meant for other collections
-								   return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
-							   })[0];
+				// Remove item controls meant for other collections
+				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
+			})[0];
 
 		this.element = this.element || $.create({
 			className: "mv-item-bar mv-ui"
