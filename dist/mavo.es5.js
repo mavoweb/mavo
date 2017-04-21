@@ -5786,14 +5786,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						var env = { context: this, item: item };
 						Mavo.hooks.run("collection-add-end", env);
-
-						item.dataChanged("add");
 					}
 
 					if (this.bottomUp) {
 						$.after(fragment, i > 0 ? this.children[i - 1].element : this.marker);
 					} else {
 						$.before(fragment, this.marker);
+					}
+
+					for (var j = i; j < this.children.length; j++) {
+						this.children[j].dataChanged("add");
 					}
 				}
 			}

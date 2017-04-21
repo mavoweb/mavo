@@ -388,8 +388,6 @@ var _ = Mavo.Collection = $.Class({
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
-
-					item.dataChanged("add");
 				}
 
 				if (this.bottomUp) {
@@ -397,6 +395,10 @@ var _ = Mavo.Collection = $.Class({
 				}
 				else {
 					$.before(fragment, this.marker);
+				}
+
+				for (var j = i; j < this.children.length; j++) {
+					this.children[j].dataChanged("add");
 				}
 			}
 		}
