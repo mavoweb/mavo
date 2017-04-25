@@ -64,7 +64,7 @@ var _ = Mavo.Backend.register($.Class({
 
 		var repoCall = `repos/${this.username}/${this.repo}`;
 		var fileCall = `${repoCall}/contents/${path}`;
-		var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix");
+		var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
 
 		// Create repo if it doesn’t exist
 		var repoInfo = this.repoInfo || this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);

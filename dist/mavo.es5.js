@@ -1013,6 +1013,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		$.extend(_.selectors, {
 			primitive: andNot(s.property, s.group),
 			rootGroup: andNot(s.group, s.property),
+			item: or(s.multiple, s.group),
 			output: or(s.specificProperty("output"), ".mv-output")
 		});
 	}
@@ -5463,8 +5464,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					});
 
 					_this.unsavedChanges = _this.mavo.unsavedChanges = true;
-
-					_this.mavo.expressions.update(env.item.element);
 				});
 			}
 
@@ -6445,7 +6444,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mavo.treeBuilt.then(function () {
 				if (!_this.template) {
 					// Only collection items and groups can have their own expressions arrays
-					_this.item = Mavo.Node.get(_this.element.closest(Mavo.selectors.multiple + ", " + Mavo.selectors.group));
+					_this.item = Mavo.Node.get(_this.element.closest(Mavo.selectors.item));
 					_this.item.expressions = [].concat(_toConsumableArray(_this.item.expressions || []), [_this]);
 				}
 
@@ -6636,29 +6635,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		update: function update(evt) {
-			var root, rootGroup;
-
 			if (!this.active) {
 				return;
 			}
 
-			if (evt instanceof Element) {
-				root = evt.closest(Mavo.selectors.group);
+			var root, rootObject;
+
+			if (evt instanceof Mavo.Node) {
+				rootObject = evt;
 				evt = null;
+			} else if (evt instanceof Element) {
+				root = evt.closest(Mavo.selectors.item);
+				rootObject = Mavo.Node.get(root);
+				evt = null;
+			} else {
+				rootObject = this.mavo.root;
 			}
 
-			root = root || this.mavo.element;
-			rootGroup = Mavo.Node.get(root);
+			var allData = rootObject.getData({ live: true });
 
-			var allData = rootGroup.getData({ live: true });
-
-			rootGroup.walk(function (obj, path) {
+			rootObject.walk(function (obj, path) {
 				var data = $.value.apply($, [allData].concat(_toConsumableArray(path)));
 
 				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-					if ((typeof data === "undefined" ? "undefined" : _typeof(data)) != "object") {
+					if ((typeof data === "undefined" ? "undefined" : _typeof(data)) != "object" || data === null) {
 						var _data;
 
+						// Turn primitives into objects, so we can have $index, their property
+						// name etc resolve relative to them, not their parent group
 						var parentData = $.value.apply($, [allData].concat(_toConsumableArray(path.slice(0, -1))));
 
 						data = (_data = {}, _defineProperty(_data, Symbol.toPrimitive, function () {
@@ -8018,7 +8022,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			var repoCall = "repos/" + this.username + "/" + this.repo;
 			var fileCall = repoCall + "/contents/" + path;
-			var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix");
+			var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
 
 			// Create repo if it doesn’t exist
 			var repoInfo = this.repoInfo || this.request("user/repos", { name: this.repo }, "POST").then(function (repoInfo) {

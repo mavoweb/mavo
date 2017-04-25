@@ -42,27 +42,34 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	update: function(evt) {
-		var root, rootGroup;
-
 		if (!this.active) {
 			return;
 		}
 
-		if (evt instanceof Element) {
-			root = evt.closest(Mavo.selectors.group);
+		var root, rootObject;
+
+		if (evt instanceof Mavo.Node) {
+			rootObject = evt;
 			evt = null;
 		}
+		else if (evt instanceof Element) {
+			root = evt.closest(Mavo.selectors.item);
+			rootObject = Mavo.Node.get(root);
+			evt = null;
+		}
+		else {
+			rootObject = this.mavo.root;
+		}
 
-		root = root || this.mavo.element;
-		rootGroup = Mavo.Node.get(root);
+		var allData = rootObject.getData({live: true});
 
-		var allData = rootGroup.getData({live: true});
-
-		rootGroup.walk((obj, path) => {
+		rootObject.walk((obj, path) => {
 			var data = $.value(allData, ...path);
 
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
-				if (typeof data != "object") {
+				if (typeof data != "object" || data === null) {
+					// Turn primitives into objects, so we can have $index, their property
+					// name etc resolve relative to them, not their parent group
 					var parentData = $.value(allData, ...path.slice(0, -1));
 
 					data = {
