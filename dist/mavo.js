@@ -568,7 +568,7 @@ var _ = self.Mavo = $.Class({
 			// We have a string, convert to a backend object if different than existing
 			this[role] = backend = _.Backend.create(backend, {
 				mavo: this,
-				format: this.element.getAttribute("mv-format-" + role) || this.element.getAttribute("mv-format")
+				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
 			});
 		}
 		else if (!backend) {
@@ -1421,8 +1421,8 @@ var _ = Mavo.Plugins = {
 		});
 	},
 
-	register: function(o) {
-		if (o.name && _.loaded[o.name]) {
+	register: function(name, o = {}) {
+		if (_.loaded[name]) {
 			// Do not register same plugin twice
 			return;
 		}
@@ -1456,9 +1456,7 @@ var _ = Mavo.Plugins = {
 			Mavo.dependencies.push(...ready);
 		}
 
-		if (o.name) {
-			_.loaded[o.name] = o;
-		}
+		_.loaded[name] = o;
 
 		if (o.init) {
 			Promise.all(ready).then(() => o.init());
@@ -2399,7 +2397,7 @@ var csv = _.CSV = $.Class({
 			};
 		}),
 
-		stringify: (serialized, me) => csv.ready().then(() => {
+		stringify: (data, me) => csv.ready().then(() => {
 			var property = me? me.property : "content";
 			var options = me? me.options : csv.defaultOptions;
 			return Papa.unparse(data[property], options);
@@ -5851,8 +5849,7 @@ var _ = Mavo.Expressions = $.Class({
 		directive: function(name, o) {
 			_.directives.push(name);
 			Mavo.attributes.push(name);
-			o.name = name;
-			Mavo.Plugins.register(o);
+			Mavo.Plugins.register(name, o);
 		}
 	}
 });

@@ -708,7 +708,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// We have a string, convert to a backend object if different than existing
 				this[role] = backend = _.Backend.create(backend, {
 					mavo: this,
-					format: this.element.getAttribute("mv-format-" + role) || this.element.getAttribute("mv-format")
+					format: this.element.getAttribute("mv-" + role + "-format") || this.element.getAttribute("mv-format")
 				});
 			} else if (!backend) {
 				// We had a backend and now we will un-have it
@@ -1693,8 +1693,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		register: function register(o) {
-			if (o.name && _.loaded[o.name]) {
+		register: function register(name) {
+			var o = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+			if (_.loaded[name]) {
 				// Do not register same plugin twice
 				return;
 			}
@@ -1731,9 +1733,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				(_Mavo$dependencies = Mavo.dependencies).push.apply(_Mavo$dependencies, ready);
 			}
 
-			if (o.name) {
-				_.loaded[o.name] = o;
-			}
+			_.loaded[name] = o;
 
 			if (o.init) {
 				Promise.all(ready).then(function () {
@@ -2905,7 +2905,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				});
 			},
 
-			stringify: function stringify(serialized, me) {
+			stringify: function stringify(data, me) {
 				return csv.ready().then(function () {
 					var property = me ? me.property : "content";
 					var options = me ? me.options : csv.defaultOptions;
@@ -6768,8 +6768,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			directive: function directive(name, o) {
 				_.directives.push(name);
 				Mavo.attributes.push(name);
-				o.name = name;
-				Mavo.Plugins.register(o);
+				Mavo.Plugins.register(name, o);
 			}
 		}
 	});

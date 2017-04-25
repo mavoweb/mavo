@@ -364,7 +364,7 @@ var _ = self.Mavo = $.Class({
 			// We have a string, convert to a backend object if different than existing
 			this[role] = backend = _.Backend.create(backend, {
 				mavo: this,
-				format: this.element.getAttribute("mv-format-" + role) || this.element.getAttribute("mv-format")
+				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
 			});
 		}
 		else if (!backend) {

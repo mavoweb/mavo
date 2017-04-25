@@ -91,7 +91,7 @@ var csv = _.CSV = $.Class({
 			};
 		}),
 
-		stringify: (serialized, me) => csv.ready().then(() => {
+		stringify: (data, me) => csv.ready().then(() => {
 			var property = me? me.property : "content";
 			var options = me? me.options : csv.defaultOptions;
 			return Papa.unparse(data[property], options);

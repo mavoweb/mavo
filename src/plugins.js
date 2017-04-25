@@ -46,8 +46,8 @@ var _ = Mavo.Plugins = {
 		});
 	},
 
-	register: function(o) {
-		if (o.name && _.loaded[o.name]) {
+	register: function(name, o = {}) {
+		if (_.loaded[name]) {
 			// Do not register same plugin twice
 			return;
 		}
@@ -81,9 +81,7 @@ var _ = Mavo.Plugins = {
 			Mavo.dependencies.push(...ready);
 		}
 
-		if (o.name) {
-			_.loaded[o.name] = o;
-		}
+		_.loaded[name] = o;
 
 		if (o.init) {
 			Promise.all(ready).then(() => o.init());

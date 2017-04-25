@@ -146,8 +146,7 @@ var _ = Mavo.Expressions = $.Class({
 		directive: function(name, o) {
 			_.directives.push(name);
 			Mavo.attributes.push(name);
-			o.name = name;
-			Mavo.Plugins.register(o);
+			Mavo.Plugins.register(name, o);
 		}
 	}
 });
