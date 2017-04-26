@@ -4114,7 +4114,7 @@ Object.defineProperties(_, {
 			for (config of all) {
 				config.attribute = Mavo.toArray(config.attribute || null);
 
-				for (attribute of config.attribute) {
+				for (var attribute of config.attribute) {
 					let o = $.extend({}, config);
 					o.attribute = attribute;
 					o.selector = o.selector || id;
@@ -4130,9 +4130,8 @@ Object.defineProperties(_, {
 	},
 	"search": {
 		value: function(element, attribute, datatype) {
-
 			var matches = _.matches(element, attribute, datatype);
-			
+
 			return matches[matches.length - 1] || { attribute };
 		}
 	},
@@ -5655,7 +5654,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		}
 
 		if (env.ret.presentational === env.ret.value) {
-			ret = env.ret.value;
+			env.ret = env.ret.value;
 		}
 
 		this.output(env.ret);

@@ -4773,7 +4773,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 						try {
 							for (var _iterator2 = config.attribute[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-								attribute = _step2.value;
+								var attribute = _step2.value;
 
 								var _o = $.extend({}, config);
 								_o.attribute = attribute;
@@ -4818,7 +4818,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 		"search": {
 			value: function value(element, attribute, datatype) {
-
 				var matches = _.matches(element, attribute, datatype);
 
 				return matches[matches.length - 1] || { attribute: attribute };
@@ -6535,7 +6534,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (env.ret.presentational === env.ret.value) {
-				ret = env.ret.value;
+				env.ret = env.ret.value;
 			}
 
 			this.output(env.ret);

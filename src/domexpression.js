@@ -154,7 +154,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		}
 
 		if (env.ret.presentational === env.ret.value) {
-			ret = env.ret.value;
+			env.ret = env.ret.value;
 		}
 
 		this.output(env.ret);
