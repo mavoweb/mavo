@@ -6530,18 +6530,26 @@ for (let name in aliases) {
 // Make function names case insensitive
 Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
+		var ret;
+
 		if (property in functions) {
-			return functions[property];
+			ret = functions[property];
+		}
+		else {
+			var propertyL = property.toLowerCase && property.toLowerCase();
+
+			if (propertyL && functions.hasOwnProperty(propertyL)) {
+				ret = functions[propertyL];
+			}
+			else if (property in Math || propertyL in Math) {
+				ret = Math[property] || Math[propertyL];
+			}
 		}
 
-		var propertyL = property.toLowerCase && property.toLowerCase();
-
-		if (propertyL && functions.hasOwnProperty(propertyL)) {
-			return functions[propertyL];
-		}
-
-		if (property in Math || propertyL in Math) {
-			return Math[property] || Math[propertyL];
+		if (ret) {
+			// For when function names are used as unquoted strings, see #160
+			ret.toString = () => property;
+			return ret;
 		}
 
 		if (property in self) {
