@@ -30,7 +30,7 @@ Object.defineProperties(_, {
 
 			var all = Mavo.toArray(arguments[1]);
 
-			for (config of all) {
+			for (var config of all) {
 				config.attribute = Mavo.toArray(config.attribute || null);
 
 				for (var attribute of config.attribute) {

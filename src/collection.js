@@ -44,7 +44,7 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		for (item of this.children) {
+		for (var item of this.children) {
 			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 

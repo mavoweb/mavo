@@ -4111,7 +4111,7 @@ Object.defineProperties(_, {
 
 			var all = Mavo.toArray(arguments[1]);
 
-			for (config of all) {
+			for (var config of all) {
 				config.attribute = Mavo.toArray(config.attribute || null);
 
 				for (var attribute of config.attribute) {
@@ -4612,7 +4612,7 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		for (item of this.children) {
+		for (var item of this.children) {
 			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 

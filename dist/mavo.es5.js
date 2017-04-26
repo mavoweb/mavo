@@ -4763,7 +4763,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 				try {
 					for (var _iterator = all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						config = _step.value;
+						var config = _step.value;
 
 						config.attribute = Mavo.toArray(config.attribute || null);
 
@@ -5346,7 +5346,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					item = _step.value;
+					var item = _step.value;
 
 					if (!item.deleted || env.options.live) {
 						var itemData = item.getData(env.options);
@@ -5550,11 +5550,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var changed = [];
 
 			for (var i = 0; i < this.length; i++) {
-				var _item = this.children[i];
+				var item = this.children[i];
 
-				if (_item && _item.index !== i) {
-					_item.index = i;
-					changed.push(_item);
+				if (item && item.index !== i) {
+					item.index = i;
+					changed.push(item);
 				}
 			}
 
@@ -5719,12 +5719,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator4 = this.children[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-					var _item2 = _step4.value;
+					var item = _step4.value;
 
-					if (_item2.deleted) {
-						this.delete(_item2, true);
+					if (item.deleted) {
+						this.delete(item, true);
 					} else {
-						_item2.unsavedChanges = false;
+						item.unsavedChanges = false;
 					}
 				}
 			} catch (err) {
