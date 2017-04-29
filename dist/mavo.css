@@ -405,6 +405,9 @@ meter[property][mv-mode="edit"], progress[property][mv-mode="edit"] {
     .mv-message.mv-error::before {
       content: "😳 Oh noes! "; }
 
+time[property][mv-label][mv-mode="edit"].mv-empty::before {
+  content: "(No " attr(mv-label) ")"; }
+
 .mv-bar.mv-ui {
   all: initial;
   visibility: inherit;

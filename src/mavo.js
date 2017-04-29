@@ -193,7 +193,9 @@ var _ = self.Mavo = $.Class({
 		}
 		else {
 			// No storage or source
-			$.fire(this.element, "mavo:load");
+			requestAnimationFrame(() => {
+				$.fire(this.element, "mavo:load");
+			});
 		}
 
 		this.permissions.can("save", () => {

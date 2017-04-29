@@ -91,17 +91,26 @@ var _ = Mavo.Expressions = $.Class({
 		});
 	},
 
-	extract: function(node, attribute, path, syntax) {
+	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
 		if (attribute && attribute.name == "mv-expressions") {
 			return;
+		}
+
+		if (path === undefined) {
+			path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
+		}
+		else if (path && typeof path === "string") {
+			path = path.slice(1).split("/").map(i => +i);
+		}
+		else {
+			path = [];
 		}
 
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			this.expressions.push(new Mavo.DOMExpression({
-				node, syntax,
-				path: path? path.slice(1).split("/").map(i => +i) : [],
+				node, syntax, path,
 				attribute: attribute && attribute.name,
 				mavo: this.mavo
 			}));

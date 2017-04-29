@@ -109,6 +109,20 @@ var _ = Mavo.Functions = {
 		});
 	},
 
+	ordinal: function(num) {
+		if (num === null || num === "") {
+			return "";
+		}
+
+		if (ord < 10 || ord > 20) {
+			var ord = ["th", "st", "nd", "th"][num % 10];
+		}
+
+		ord = ord || "th";
+
+		return num + ord;
+	},
+
 	iff: function(condition, iftrue, iffalse="") {
 		if (Array.isArray(condition)) {
 			return condition.map((c, i) => {
@@ -193,6 +207,10 @@ var _ = Mavo.Functions = {
 
 	get $now() {
 		return new Date();
+	},
+
+	get $today() {
+		return _.date(new Date());
 	},
 
 	year: getDateComponent("year"),
@@ -542,7 +560,13 @@ function toDate(date) {
 	}
 
 	if ($.type(date) === "string") {
+		date = date.trim();
+
 		// Fix up time format
+		if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
+			// No date, add today’s
+			date = _.$today + " " + date;
+		}
 
 		if (date.indexOf(":") === -1) {
 			// Add a time if one doesn't exist

@@ -550,6 +550,8 @@ meter, progress {
 	}
 }
 
-
+time[property][mv-label][mv-mode="edit"].mv-empty::before {
+	content: "(No " attr(mv-label) ")";
+}
 
 @import 'bar';

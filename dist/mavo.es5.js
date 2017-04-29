@@ -521,7 +521,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			} else {
 				// No storage or source
-				$.fire(this.element, "mavo:load");
+				requestAnimationFrame(function () {
+					$.fire(_this.element, "mavo:load");
+				});
 			}
 
 			this.permissions.can("save", function () {
@@ -1209,6 +1211,45 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			} else {
 				element._.data.mavo = element._.data.mavo || {};
 				return element._.data.mavo[name] = value;
+			}
+		},
+
+		elementPath: function elementPath(ancestor, element) {
+			var types = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [1, 3];
+
+			var elementsOnly = types.length === 1 && types[0] == 1;
+
+			if (Array.isArray(element)) {
+				// Get element by path
+				var path = element;
+				return path.reduce(function (acc, cur) {
+					if (elementsOnly) {
+						var children = acc.children;
+					} else {
+						var children = [].concat(_toConsumableArray(acc.childNodes)).filter(function (node) {
+							return types.indexOf(node.nodeType) > -1;
+						});
+					}
+					return children[cur];
+				}, ancestor);
+			} else {
+				// Get path
+				var path = [];
+
+				for (var parent = element; parent && parent != ancestor; parent = parent.parentNode) {
+					var index = 0;
+					var element = parent;
+
+					while (element = element["previous" + (elementsOnly ? "Element" : "") + "Sibling"]) {
+						if (types.indexOf(element.nodeType) > -1) {
+							index++;
+						}
+					}
+
+					path.unshift(index);
+				}
+
+				return parent ? path : null;
 			}
 		},
 
@@ -5215,44 +5256,51 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		"time": {
 			attribute: "datetime",
 			default: true,
-			editor: function editor() {
-				var types = {
-					"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-					"month": /^[Y\d]{4}-[M\d]{2}$/i,
-					"time": /^[H\d]{2}:[M\d]{2}/i,
-					"week": /[Y\d]{4}-W[W\d]{2}$/i,
-					"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-				};
+			init: function init() {
+				this.element.setAttribute("mv-label", this.label);
 
-				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+				if (!this.fromTemplate("dateType")) {
+					var dateFormat = Mavo.DOMExpression.search(this.element, null);
 
-				for (var type in types) {
-					if (types[type].test(datetime)) {
-						break;
+					var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+
+					for (var type in this.config.dateTypes) {
+						if (this.config.dateTypes[type].test(datetime)) {
+							break;
+						}
+					}
+
+					this.dateType = type;
+
+					if (!dateFormat) {
+						// TODO what about mv-expressions?
+						this.element.textContent = this.config.defaultFormats[this.dateType](this.property);
+						this.mavo.expressions.extract(this.element, null);
 					}
 				}
-
-				return { tag: "input", type: type };
 			},
-			humanReadable: function humanReadable(value) {
-				var date = new Date(value);
-
-				if (!value || isNaN(date)) {
-					return "(No " + this.label + ")";
+			dateTypes: {
+				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+				"month": /^[Y\d]{4}-[M\d]{2}$/i,
+				"time": /^[H\d]{2}:[M\d]{2}/i,
+				"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+			},
+			defaultFormats: {
+				"date": function date(property) {
+					return "[day(" + property + ")] [month(" + property + ").shortname] [year(" + property + ")]";
+				},
+				"month": function month(property) {
+					return "[month(" + property + ").name] [year(" + property + ")]";
+				},
+				"time": function time(property) {
+					return "[hour(" + property + ")]:[minute(" + property + ")]";
+				},
+				"datetime-local": function datetimeLocal(property) {
+					return "[day(" + property + ")] [month(" + property + ").shortname] [year(" + property + ")]";
 				}
-
-				// TODO do this properly (account for other datetime datatypes and different formats)
-				var options = {
-					"date": { day: "numeric", month: "short", year: "numeric" },
-					"month": { month: "long" },
-					"time": { hour: "numeric", minute: "numeric" },
-					"datetime-local": { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric" }
-				};
-
-				var format = options[this.editor && this.editor.type] || options.date;
-				format.timeZone = "UTC";
-
-				return date.toLocaleString("en-GB", format);
+			},
+			editor: function editor() {
+				return { tag: "input", type: this.dateType };
 			}
 		},
 
@@ -6387,9 +6435,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (!this.node) {
 				// No node provided, figure it out from path
-				this.node = this.path.reduce(function (node, index) {
-					return node.childNodes[index];
-				}, this.item.element);
+				this.node = Mavo.elementPath(this.item.element, this.path);
 			}
 
 			this.element = this.node;
@@ -6440,11 +6486,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return x instanceof Mavo.Expression ? x.expression : x;
 			});
 
+			this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
+
 			this.mavo.treeBuilt.then(function () {
-				if (!_this.template) {
+				if (!_this.template && !_this.item) {
 					// Only collection items and groups can have their own expressions arrays
 					_this.item = Mavo.Node.get(_this.element.closest(Mavo.selectors.item));
-					_this.item.expressions = [].concat(_toConsumableArray(_this.item.expressions || []), [_this]);
 				}
 
 				Mavo.hooks.run("domexpression-init-treebuilt", _this);
@@ -6548,6 +6595,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			} else {
 				value = value.presentational || value;
 				Mavo.Primitive.setValue(this.node, value, { attribute: this.attribute });
+			}
+		},
+
+		live: {
+			item: function item(_item) {
+				if (_item && this._item != _item) {
+					if (this._item) {
+						// Previous item, delete from its expressions
+						Mavo.delete(this._item.expressions, this);
+					}
+
+					_item.expressions = _item.expressions || [];
+					_item.expressions.push(this);
+				}
 			}
 		},
 
@@ -6703,17 +6764,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
-		extract: function extract(node, attribute, path, syntax) {
+		extract: function extract(node, attribute, path) {
+			var syntax = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : Mavo.Expression.Syntax.default;
+
 			if (attribute && attribute.name == "mv-expressions") {
 				return;
 			}
 
+			if (path === undefined) {
+				path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
+			} else if (path && typeof path === "string") {
+				path = path.slice(1).split("/").map(function (i) {
+					return +i;
+				});
+			} else {
+				path = [];
+			}
+
 			if (attribute && _.directives.indexOf(attribute.name) > -1 || syntax.test(attribute ? attribute.value : node.textContent)) {
 				this.expressions.push(new Mavo.DOMExpression({
-					node: node, syntax: syntax,
-					path: path ? path.slice(1).split("/").map(function (i) {
-						return +i;
-					}) : [],
+					node: node, syntax: syntax, path: path,
 					attribute: attribute && attribute.name,
 					mavo: this.mavo
 				}));
@@ -7006,11 +7076,6 @@ Mavo.Expressions.directive("mv-value", {
 			this.changedBy = function (evt) {
 				return true;
 			};
-		},
-		"domexpression-update-start": function domexpressionUpdateStart() {
-			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
-				return;
-			}
 		}
 	}
 });
@@ -7164,6 +7229,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			});
 		},
 
+		ordinal: function ordinal(num) {
+			if (num === null || num === "") {
+				return "";
+			}
+
+			if (ord < 10 || ord > 20) {
+				var ord = ["th", "st", "nd", "th"][num % 10];
+			}
+
+			ord = ord || "th";
+
+			return num + ord;
+		},
+
 		iff: function iff(condition, iftrue) {
 			var iffalse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
 
@@ -7270,6 +7349,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		get $now() {
 			return new Date();
+		},
+
+		get $today() {
+			return _.date(new Date());
 		},
 
 		year: getDateComponent("year"),
@@ -7751,7 +7834,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 
 		if ($.type(date) === "string") {
+			date = date.trim();
+
 			// Fix up time format
+			if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
+				// No date, add today’s
+				date = _.$today + " " + date;
+			}
 
 			if (date.indexOf(":") === -1) {
 				// Add a time if one doesn't exist

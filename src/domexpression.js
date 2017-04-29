@@ -13,9 +13,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		if (!this.node) {
 			// No node provided, figure it out from path
-			this.node = this.path.reduce((node, index) => {
-				return node.childNodes[index];
-			}, this.item.element);
+			this.node = Mavo.elementPath(this.item.element, this.path);
 		}
 
 		this.element = this.node;
@@ -65,11 +63,12 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
 
+		this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
+
 		this.mavo.treeBuilt.then(() => {
-			if (!this.template) {
+			if (!this.template && !this.item) {
 				// Only collection items and groups can have their own expressions arrays
 				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
-				this.item.expressions = [...(this.item.expressions || []), this];
 			}
 
 			Mavo.hooks.run("domexpression-init-treebuilt", this);
@@ -169,6 +168,20 @@ var _ = Mavo.DOMExpression = $.Class({
 		else {
 			value = value.presentational || value;
 			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
+		}
+	},
+
+	live: {
+		item: function(item) {
+			if (item && this._item != item) {
+				if (this._item) {
+					// Previous item, delete from its expressions
+					Mavo.delete(this._item.expressions, this);
+				}
+
+				item.expressions = item.expressions || [];
+				item.expressions.push(this);
+			}
 		}
 	},
 

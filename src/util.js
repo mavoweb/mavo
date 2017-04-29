@@ -138,6 +138,43 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	elementPath: function (ancestor, element, types = [1, 3]) {
+		var elementsOnly = types.length === 1 && types[0] == 1;
+
+		if (Array.isArray(element)) {
+			// Get element by path
+			var path = element;
+			return path.reduce((acc, cur) => {
+				if (elementsOnly) {
+					var children = acc.children;
+				}
+				else {
+					var children = [...acc.childNodes].filter(node => types.indexOf(node.nodeType) > -1);
+				}
+				return children[cur];
+			}, ancestor);
+		}
+		else {
+			// Get path
+			var path = [];
+
+			for (var parent = element; parent && parent != ancestor; parent = parent.parentNode) {
+				var index = 0;
+				var element = parent;
+
+				while (element = element[`previous${elementsOnly? "Element" : ""}Sibling`]) {
+					if (types.indexOf(element.nodeType) > -1) {
+						index++;
+					}
+				}
+
+				path.unshift(index);
+			}
+
+			return parent? path : null;
+		}
+	},
+
 	/**
 	 * Revocably add/remove elements from the DOM
 	 */

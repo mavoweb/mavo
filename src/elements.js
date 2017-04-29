@@ -410,44 +410,43 @@ _.register({
 	"time": {
 		attribute: "datetime",
 		default: true,
-		editor: function() {
-			var types = {
-				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-				"month": /^[Y\d]{4}-[M\d]{2}$/i,
-				"time": /^[H\d]{2}:[M\d]{2}/i,
-				"week": /[Y\d]{4}-W[W\d]{2}$/i,
-				"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-			};
+		init: function() {
+			this.element.setAttribute("mv-label", this.label);
 
-			var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+			if (!this.fromTemplate("dateType")) {
+				var dateFormat = Mavo.DOMExpression.search(this.element, null);
 
-			for (var type in types) {
-				if (types[type].test(datetime)) {
-					break;
+				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+
+				for (var type in this.config.dateTypes) {
+					if (this.config.dateTypes[type].test(datetime)) {
+						break;
+					}
+				}
+
+				this.dateType = type;
+
+				if (!dateFormat) {
+					// TODO what about mv-expressions?
+					this.element.textContent = this.config.defaultFormats[this.dateType](this.property);
+					this.mavo.expressions.extract(this.element, null);
 				}
 			}
-
-			return {tag: "input", type};
 		},
-		humanReadable: function (value) {
-			var date = new Date(value);
-
-			if (!value || isNaN(date)) {
-				return "(No " + this.label + ")";
-			}
-
-			// TODO do this properly (account for other datetime datatypes and different formats)
-			var options = {
-				"date": {day: "numeric", month: "short", year: "numeric"},
-				"month": {month: "long"},
-				"time": {hour: "numeric", minute: "numeric"},
-				"datetime-local": {day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric"}
-			};
-
-			var format = options[this.editor && this.editor.type] || options.date;
-			format.timeZone = "UTC";
-
-			return date.toLocaleString("en-GB", format);
+		dateTypes: {
+			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+			"month": /^[Y\d]{4}-[M\d]{2}$/i,
+			"time": /^[H\d]{2}:[M\d]{2}/i,
+			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+		},
+		defaultFormats: {
+			"date": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`,
+			"month": property => `[month(${property}).name] [year(${property})]`,
+			"time": property => `[hour(${property})]:[minute(${property})]`,
+			"datetime-local": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`
+		},
+		editor: function() {
+			return {tag: "input", type: this.dateType};
 		}
 	},
 
