@@ -267,8 +267,9 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		// Make element focusable, so it can actually receive focus
-		this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-		this.element.tabIndex = 0;
+		if (this.element.tabIndex === -1) {
+			Mavo.revocably.setAttribute(this.element, "tabindex", "0");
+		}
 
 		// Prevent default actions while editing
 		// e.g. following links etc
@@ -321,6 +322,10 @@ var _ = Mavo.Primitive = $.Class({
 					this.element.textContent = "";
 
 					this.element.appendChild(this.editor);
+
+					if (!this.collection) {
+						Mavo.revocably.restoreAttribute(this.element, "tabindex");
+					}
 				}
 			}
 		});
@@ -356,12 +361,8 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
-		// Revert tabIndex
-		if (this.element._.data.prevTabindex !== null) {
-			this.element.tabIndex = this.element._.data.prevTabindex;
-		}
-		else {
-			this.element.removeAttribute("tabindex");
+		if (!this.collection) {
+			Mavo.revocably.restoreAttribute(this.element, "tabindex");
 		}
 	},
 

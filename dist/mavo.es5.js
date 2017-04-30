@@ -1216,7 +1216,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return $.value(element, "_", "data", "mavo", name);
 			} else {
 				element._.data.mavo = element._.data.mavo || {};
-				return element._.data.mavo[name] = value;
+
+				if (value === undefined) {
+					delete element._.data.mavo[name];
+				} else {
+					return element._.data.mavo[name] = value;
+				}
 			}
 		},
 
@@ -1308,6 +1313,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return false;
+			},
+
+			setAttribute: function setAttribute(element, attribute, value) {
+				var previousValue = _.data(element, "attribute-" + attribute);
+
+				if (previousValue === undefined) {
+					// Only set this when there's no old value stored, otherwise
+					// if called multiple times, it could result in losing the original value
+					_.data(element, "attribute-" + attribute, element.getAttribute(attribute));
+				}
+
+				element.setAttribute(attribute, value);
+			},
+
+			restoreAttribute: function restoreAttribute(element, attribute) {
+				var previousValue = _.data(element, "attribute-" + attribute);
+
+				if (previousValue !== undefined) {
+					$.toggleAttribute(element, attribute, previousValue);
+					_.data(element, "attribute-" + attribute, undefined);
+				}
 			}
 		},
 
@@ -4170,8 +4196,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			// Make element focusable, so it can actually receive focus
-			this.element._.data.prevTabindex = this.element.getAttribute("tabindex");
-			this.element.tabIndex = 0;
+			if (this.element.tabIndex === -1) {
+				Mavo.revocably.setAttribute(this.element, "tabindex", "0");
+			}
 
 			// Prevent default actions while editing
 			// e.g. following links etc
@@ -4230,6 +4257,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						_this3.element.textContent = "";
 
 						_this3.element.appendChild(_this3.editor);
+
+						if (!_this3.collection) {
+							Mavo.revocably.restoreAttribute(_this3.element, "tabindex");
+						}
 					}
 				}
 			});
@@ -4266,11 +4297,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			// Revert tabIndex
-			if (this.element._.data.prevTabindex !== null) {
-				this.element.tabIndex = this.element._.data.prevTabindex;
-			} else {
-				this.element.removeAttribute("tabindex");
+			if (!this.collection) {
+				Mavo.revocably.restoreAttribute(this.element, "tabindex");
 			}
 		},
 

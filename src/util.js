@@ -134,7 +134,13 @@ var _ = $.extend(Mavo, {
 		}
 		else {
 			element._.data.mavo = element._.data.mavo || {};
-			return element._.data.mavo[name] = value;
+
+			if (value === undefined) {
+				delete element._.data.mavo[name];
+			}
+			else {
+				return element._.data.mavo[name] = value;
+			}
 		}
 	},
 
@@ -225,6 +231,27 @@ var _ = $.extend(Mavo, {
 			}
 
 			return false;
+		},
+
+		setAttribute: function(element, attribute, value) {
+			var previousValue = _.data(element, "attribute-" + attribute);
+
+			if (previousValue === undefined) {
+				// Only set this when there's no old value stored, otherwise
+				// if called multiple times, it could result in losing the original value
+				_.data(element, "attribute-" + attribute, element.getAttribute(attribute));
+			}
+
+			element.setAttribute(attribute, value);
+		},
+
+		restoreAttribute: function(element, attribute) {
+			var previousValue = _.data(element, "attribute-" + attribute);
+
+			if (previousValue !== undefined) {
+				$.toggleAttribute(element, attribute, previousValue);
+				_.data(element, "attribute-" + attribute, undefined);
+			}
 		}
 	},
 
