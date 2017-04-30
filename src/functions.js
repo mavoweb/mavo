@@ -109,7 +109,7 @@ var _ = Mavo.Functions = {
 		});
 	},
 
-	ordinal: function(num) {
+	th: function(num) {
 		if (num === null || num === "") {
 			return "";
 		}
@@ -493,7 +493,8 @@ var aliases = {
 	divide: "div",
 	lt: "lessThan smaller",
 	gt: "moreThan greater greaterThan bigger",
-	eq: "equal equality"
+	eq: "equal equality",
+	th: "ordinal"
 };
 
 for (let name in aliases) {
@@ -602,8 +603,6 @@ function toDate(date) {
 }
 
 function getDateComponent(component, option = "numeric", o) {
-	var locale = document.documentElement.lang || "en-GB";
-
 	return function(date, format = option) {
 		date = toDate(date);
 
@@ -620,23 +619,26 @@ function getDateComponent(component, option = "numeric", o) {
 			ret = date.getDay() || 7;
 		}
 		else {
-			var ret = date.toLocaleString(locale, options);
+			var ret = date.toLocaleString(Mavo.locale, options);
 		}
 
 		if (format == "numeric" && !isNaN(ret)) {
-			ret = new Number(ret);
+			if (component != "year") {
+				// We don't want years to be formatted like 2,017!
+				ret = new Number(ret);
+			}
 
 			if (component == "month" || component == "weekday") {
 				options[component] = "long";
-				ret.name = date.toLocaleString(locale, options);
+				ret.name = date.toLocaleString(Mavo.locale, options);
 
 				options[component] = "short";
-				ret.shortname = date.toLocaleString(locale, options);
+				ret.shortname = date.toLocaleString(Mavo.locale, options);
 			}
 
 			if (component != "weekday") {
 				options[component] = "2-digit";
-				ret.twodigit = date.toLocaleString(locale, options);
+				ret.twodigit = date.toLocaleString(Mavo.locale, options);
 			}
 		}
 

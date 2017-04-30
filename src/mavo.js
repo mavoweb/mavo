@@ -611,7 +611,11 @@ var _ = self.Mavo = $.Class({
 			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
 			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions",
 			"mv-rel"
-		]
+		],
+
+		lazy: {
+			locale: () => document.documentElement.lang || "en-GB"
+		}
 	}
 });
 

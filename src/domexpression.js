@@ -84,18 +84,16 @@ var _ = Mavo.DOMExpression = $.Class({
 	},
 
 	update: function(data = this.data, event) {
-		var env = {context: this, ret: {}, event};
+		var env = {context: this, event};
 		var parentEnv = env;
 
 		this.data = data;
-
-		env.ret = {};
 
 		Mavo.hooks.run("domexpression-update-start", env);
 
 		this.oldValue = this.value;
 
-		env.ret.value = this.value = this.parsed.map((expr, i) => {
+		env.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
 				if (expr.changedBy(parentEnv.event)) {
 					var env = {context: this, expr, parentEnv};
@@ -124,39 +122,9 @@ var _ = Mavo.DOMExpression = $.Class({
 			return expr;
 		});
 
-		if (!this.attribute) {
-			// Separate presentational & actual values only apply when content is variable
-			env.ret.presentational = this.value.map(value => {
-				if (Array.isArray(value)) {
-					return value.join(", ");
-				}
+		env.value = env.value.length === 1? env.value[0] : env.value.map(Mavo.Primitive.format).join("");
 
-				if (typeof value == "number") {
-					return Mavo.Primitive.formatNumber(value);
-				}
-
-				return value;
-			});
-
-			env.ret.presentational = env.ret.presentational.length === 1? env.ret.presentational[0] : env.ret.presentational.join("");
-		}
-
-		env.ret.value = env.ret.value.length === 1? env.ret.value[0] : env.ret.value.join("");
-
-		if (this.primitive && this.parsed.length === 1) {
-			if (typeof env.ret.value === "number") {
-				this.primitive.datatype = "number";
-			}
-			else if (typeof env.ret.value === "boolean") {
-				this.primitive.datatype = "boolean";
-			}
-		}
-
-		if (env.ret.presentational === env.ret.value) {
-			env.ret = env.ret.value;
-		}
-
-		this.output(env.ret);
+		this.output(env.value);
 
 		Mavo.hooks.run("domexpression-update-end", env);
 	},
@@ -166,7 +134,6 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.primitive.value = value;
 		}
 		else {
-			value = value.presentational || value;
 			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
 		}
 	},
