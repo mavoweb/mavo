@@ -67,7 +67,16 @@ Object.defineProperties(_, {
 		value: function(element, attribute, datatype) {
 			var matches = _.matches(element, attribute, datatype);
 
-			return matches[matches.length - 1] || { attribute };
+			var lastMatch = matches[matches.length - 1];
+
+			if (lastMatch) {
+				return lastMatch;
+			}
+
+			var config = $.extend({}, _.defaultConfig[datatype || "string"]);
+			config.attribute = attribute === undefined? config.attribute : attribute;
+
+			return config;
 		}
 	},
 	"matches": {
@@ -112,11 +121,18 @@ Object.defineProperties(_, {
 		value: e => e.namespaceURI == "http://www.w3.org/2000/svg"
 	},
 
-	defaultEditors: {
+	defaultConfig: {
 		value: {
-			"string":  { tag: "input" },
-			"number":  { tag: "input", type: "number" },
-			"boolean": { tag: "input", type: "checkbox" }
+			"string":  {
+				editor: { tag: "input" }
+			},
+			"number":  {
+				editor: { tag: "input", type: "number" }
+			},
+			"boolean": {
+				attribute: "content",
+				editor: { tag: "input", type: "checkbox" }
+			}
 		}
 	}
 });
@@ -366,6 +382,8 @@ _.register({
 					newValue = Math.max(min, Math.min(newValue, max));
 
 					this.element.setAttribute("value", newValue);
+
+					evt.preventDefault();
 				}
 			});
 		},
@@ -426,7 +444,7 @@ _.register({
 		attribute: "datetime",
 		default: true,
 		init: function() {
-			this.element.setAttribute("mv-label", this.label);
+			this.element.setAttribute("aria-label", this.label);
 
 			if (!this.fromTemplate("dateType")) {
 				var dateFormat = Mavo.DOMExpression.search(this.element, null);
@@ -457,7 +475,7 @@ _.register({
 		defaultFormats: {
 			"date": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`,
 			"month": property => `[month(${property}).name] [year(${property})]`,
-			"time": property => `[hour(${property})]:[minute(${property})]`,
+			"time": property => `[hour(${property}).twodigit]:[minute(${property}).twodigit]`,
 			"datetime-local": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`
 		},
 		editor: function() {

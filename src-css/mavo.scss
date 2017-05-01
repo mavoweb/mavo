@@ -546,8 +546,8 @@ meter, progress {
 	}
 }
 
-time[property][mv-label][mv-mode="edit"].mv-empty::before {
-	content: "(No " attr(mv-label) ")";
+time[property][aria-label][mv-mode="edit"].mv-empty::before {
+	content: "(No " attr(aria-label) ")";
 }
 
 @import 'bar';

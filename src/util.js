@@ -269,6 +269,15 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
+	 * Set attribute only if it doesn’t exist
+	 */
+	setAttributeShy: function(element, attribute, value) {
+		if (!element.hasAttribute(attribute)) {
+			element.setAttribute(attribute, value);
+		}
+	},
+
+	/**
 	 * Get the value of an attribute, with fallback attributes in priority order.
 	 */
 	getAttribute: function(element, ...attributes) {

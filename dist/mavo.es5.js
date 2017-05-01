@@ -1351,6 +1351,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
+   * Set attribute only if it doesn’t exist
+   */
+		setAttributeShy: function setAttributeShy(element, attribute, value) {
+			if (!element.hasAttribute(attribute)) {
+				element.setAttribute(attribute, value);
+			}
+		},
+
+		/**
    * Get the value of an attribute, with fallback attributes in priority order.
    */
 		getAttribute: function getAttribute(element) {
@@ -3942,18 +3951,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.modes = "read";
 			}
 
-			if (this.config.init) {
-				this.config.init.call(this, this.element);
-			}
-
-			if (this.config.changeEvents) {
-				$.events(this.element, this.config.changeEvents, function (evt) {
-					if (evt.target === _this.element) {
-						_this.value = _this.getValue();
-					}
-				});
-			}
-
 			/**
     * Set up input widget
     */
@@ -4011,9 +4008,26 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				})[0];
 
 				if (this.editor) {
-					this.element.textContent = this.editorValue;
 					$.remove(this.editor);
 				}
+			}
+
+			var editorValue = this.editorValue;
+
+			if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
+				this.datatype = typeof editorValue === "undefined" ? "undefined" : _typeof(editorValue);
+			}
+
+			if (this.config.init) {
+				this.config.init.call(this, this.element);
+			}
+
+			if (this.config.changeEvents) {
+				$.events(this.element, this.config.changeEvents, function (evt) {
+					if (evt.target === _this.element) {
+						_this.value = _this.getValue();
+					}
+				});
 			}
 
 			this.templateValue = this.getValue();
@@ -4022,7 +4036,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.default === null) {
 				// no mv-default
-				this._default = this.modes === "read" ? this.templateValue : this.editorValue;
+				this._default = this.modes === "read" ? this.templateValue : editorValue;
 			} else if (this.default === "") {
 				// mv-default exists, no value, default is template value
 				this._default = this.templateValue;
@@ -4033,7 +4047,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				});
 			}
 
-			if (this.default === undefined && (!this.template || !this.closestCollection)) {
+			var keepTemplateValue = !this.template // not in a collection or first item
+			|| this.template.templateValue != this.templateValue; // or different template value than first item
+
+			if (this.default === undefined && keepTemplateValue) {
 				this.initialValue = this.templateValue;
 			} else {
 				this.initialValue = this.default;
@@ -4077,12 +4094,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		set editorValue(value) {
-			if (this.config.setEditorValue) {
+			if (this.config.setEditorValue && this.datatype !== "boolean") {
 				return this.config.setEditorValue.call(this, value);
 			}
 
 			if (this.editor) {
 				if (this.editor.matches(Mavo.selectors.formControl)) {
+
 					_.setValue(this.editor, value, { config: this.editorDefaults });
 				} else {
 					// if we're here, this.editor is an entire HTML structure
@@ -4150,7 +4168,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (!this.editor) {
 				// No editor provided, use default for element type
 				// Find default editor for datatype
-				var editor = this.config.editor || Mavo.Elements.defaultEditors[this.datatype] || Mavo.Elements.defaultEditors.string;
+				var editor = this.config.editor;
+
+				if (!editor || this.datatype == "boolean") {
+					var editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+				}
 
 				this.editor = $.create($.type(editor) === "function" ? editor.call(this) : editor);
 				this.editorValue = this.value;
@@ -4256,6 +4278,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				if (_this3.popup) {
+					_this3.popup.prepare();
 					_this3.popup.show();
 				}
 
@@ -4390,7 +4413,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			this.sneak(function () {
 				// Convert nulls and undefineds to empty string
-				value = value || value === 0 ? value : "";
+				value = value || value === 0 || value === false ? value : "";
 
 				// If there's no datatype, adopt that of the value
 				if (!_this5.datatype && (typeof value == "number" || typeof value == "boolean")) {
@@ -4423,7 +4446,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 
-				_this5.empty = value === "";
+				_this5.empty = !value && value !== 0;
 
 				_this5._value = value;
 
@@ -4458,10 +4481,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return this.setValue(_value);
 			},
 
+			datatype: function datatype(value) {
+				if (value !== this._datatype) {
+					if (value == "boolean" && !this.attribute) {
+						this.attribute = Mavo.Elements.defaultConfig.boolean.attribute;
+					}
+
+					$.toggleAttribute(this.element, "datatype", value, value && value !== "string");
+				}
+			},
+
 			empty: function empty(value) {
 				var hide = value && // is empty
 				!this.modes && // and supports both modes
-				this.config.default && // and using the default settings
 				!(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 				this.element.classList.toggle("mv-empty", !!hide);
@@ -4574,7 +4606,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					attribute = null;
 				}
 
-				datatype = element.getAttribute("datatype") || undefined;
+				if (!datatype) {
+					datatype = element.getAttribute("datatype") || undefined;
+				}
 
 				var config = Mavo.Elements.search(element, attribute, datatype);
 
@@ -4597,8 +4631,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						o.config = _.getConfig(element, o.attribute);
 					}
 
-					o.attribute = o.config.attribute;
-
+					o.attribute = o.attribute !== undefined ? o.attribute : o.config.attribute;
 					o.datatype = o.datatype !== undefined ? o.datatype : o.config.datatype;
 
 					if (o.config.setValue && o.attribute == o.config.attribute) {
@@ -4707,23 +4740,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Need to be defined here so that this is what expected
 			this.position = function (evt) {
-				var bounds = _this.element.getBoundingClientRect();
+				var bounds = _this.primitive.element.getBoundingClientRect();
 				var x = bounds.left;
 				var y = bounds.bottom;
 
-				if (_this.popup.offsetHeight) {
+				if (_this.element.offsetHeight) {
 					// Is in the DOM, check if it fits
-					var popupBounds = _this.popup.getBoundingClientRect();
+					var popupBounds = _this.element.getBoundingClientRect();
 
 					if (popupBounds.height + y > innerHeight) {
 						y = innerHeight - popupBounds.height - 20;
 					}
 				}
 
-				$.style(_this.popup, { top: y + "px", left: x + "px" });
+				$.style(_this.element, { top: y + "px", left: x + "px" });
 			};
 
-			this.popup = $.create("div", {
+			this.element = $.create("div", {
 				className: "mv-popup",
 				hidden: true,
 				contents: {
@@ -4736,8 +4769,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				events: {
 					keyup: function keyup(evt) {
 						if (evt.keyCode == 13 || evt.keyCode == 27) {
-							if (_this.popup.contains(document.activeElement)) {
-								_this.element.focus();
+							if (_this.element.contains(document.activeElement)) {
+								_this.primitive.element.focus();
 							}
 
 							evt.stopPropagation();
@@ -4757,22 +4790,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		show: function show() {
 			var _this2 = this;
 
-			$.unbind([this.element, this.popup], ".mavo:showpopup");
+			$.unbind([this.primitive.element, this.element], ".mavo:showpopup");
 
 			this.shown = true;
 
 			this.hideCallback = function (evt) {
-				if (!_this2.popup.contains(evt.target) && !_this2.element.contains(evt.target)) {
+				if (!_this2.element.contains(evt.target) && !_this2.primitive.element.contains(evt.target)) {
 					_this2.hide();
 				}
 			};
 
 			this.position();
 
-			document.body.appendChild(this.popup);
+			document.body.appendChild(this.element);
 
 			requestAnimationFrame(function (e) {
-				return _this2.popup.removeAttribute("hidden");
+				return _this2.element.removeAttribute("hidden");
 			}); // trigger transition
 
 			$.events(document, "focus click", this.hideCallback, true);
@@ -4784,22 +4817,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			$.unbind(document, "focus click", this.hideCallback, true);
 			window.removeEventListener("scroll", this.position);
-			this.popup.setAttribute("hidden", ""); // trigger transition
+			this.element.setAttribute("hidden", ""); // trigger transition
 			this.shown = false;
 
 			setTimeout(function () {
-				$.remove(_this3.popup);
-			}, parseFloat(getComputedStyle(this.popup).transitionDuration) * 1000 || 400); // TODO transition-duration could override this
+				$.remove(_this3.element);
+			}, parseFloat(getComputedStyle(this.element).transitionDuration) * 1000 || 400); // TODO transition-duration could override this
+		},
 
-			$.events(this.element, {
-				"click.mavo:showpopup": function clickMavoShowpopup(evt) {
-					_this3.show();
+		prepare: function prepare() {
+			var _this4 = this;
+
+			$.events(this.primitive.element, {
+				"click.mavo:edit": function clickMavoEdit(evt) {
+					_this4.show();
 				},
-				"keyup.mavo:showpopup": function keyupMavoShowpopup(evt) {
+				"keyup.mavo:edit": function keyupMavoEdit(evt) {
+					console.log(evt.keyCode);
 					if ([13, 113].indexOf(evt.keyCode) > -1) {
 						// Enter or F2
-						_this3.show();
-						_this3.editor.focus();
+						_this4.show();
+						_this4.editor.focus();
 					}
 				}
 			});
@@ -4807,12 +4845,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		close: function close() {
 			this.hide();
-			$.unbind(this.element, ".mavo:edit .mavo:preedit .mavo:showpopup");
+			$.unbind(this.primitive.element, ".mavo:edit .mavo:preedit .mavo:showpopup");
 		},
 
 		proxy: {
-			"editor": "primitive",
-			"element": "primitive"
+			"editor": "primitive"
 		}
 	});
 })(Bliss, Bliss.$);
@@ -4911,7 +4948,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			value: function value(element, attribute, datatype) {
 				var matches = _.matches(element, attribute, datatype);
 
-				return matches[matches.length - 1] || { attribute: attribute };
+				var lastMatch = matches[matches.length - 1];
+
+				if (lastMatch) {
+					return lastMatch;
+				}
+
+				var config = $.extend({}, _.defaultConfig[datatype || "string"]);
+				config.attribute = attribute === undefined ? config.attribute : attribute;
+
+				return config;
 			}
 		},
 		"matches": {
@@ -4958,11 +5004,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		defaultEditors: {
+		defaultConfig: {
 			value: {
-				"string": { tag: "input" },
-				"number": { tag: "input", type: "number" },
-				"boolean": { tag: "input", type: "checkbox" }
+				"string": {
+					editor: { tag: "input" }
+				},
+				"number": {
+					editor: { tag: "input", type: "number" }
+				},
+				"boolean": {
+					attribute: "content",
+					editor: { tag: "input", type: "checkbox" }
+				}
 			}
 		}
 	});
@@ -5227,6 +5280,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						newValue = Math.max(min, Math.min(newValue, max));
 
 						_this4.element.setAttribute("value", newValue);
+
+						evt.preventDefault();
 					}
 				});
 			},
@@ -5287,7 +5342,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "datetime",
 			default: true,
 			init: function init() {
-				this.element.setAttribute("mv-label", this.label);
+				this.element.setAttribute("aria-label", this.label);
 
 				if (!this.fromTemplate("dateType")) {
 					var dateFormat = Mavo.DOMExpression.search(this.element, null);
@@ -5323,7 +5378,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					return "[month(" + property + ").name] [year(" + property + ")]";
 				},
 				"time": function time(property) {
-					return "[hour(" + property + ")]:[minute(" + property + ")]";
+					return "[hour(" + property + ").twodigit]:[minute(" + property + ").twodigit]";
 				},
 				"datetime-local": function datetimeLocal(property) {
 					return "[day(" + property + ")] [month(" + property + ").shortname] [year(" + property + ")]";

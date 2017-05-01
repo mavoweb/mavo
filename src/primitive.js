@@ -33,18 +33,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.modes = "read";
 		}
 
-		if (this.config.init) {
-			this.config.init.call(this, this.element);
-		}
-
-		if (this.config.changeEvents) {
-			$.events(this.element, this.config.changeEvents, evt => {
-				if (evt.target === this.element) {
-					this.value = this.getValue();
-				}
-			});
-		}
-
 		/**
 		 * Set up input widget
 		 */
@@ -81,9 +69,26 @@ var _ = Mavo.Primitive = $.Class({
 			})[0];
 
 			if (this.editor) {
-				this.element.textContent = this.editorValue;
 				$.remove(this.editor);
 			}
+		}
+
+		var editorValue = this.editorValue;
+
+		if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
+			this.datatype = typeof editorValue;
+		}
+
+		if (this.config.init) {
+			this.config.init.call(this, this.element);
+		}
+
+		if (this.config.changeEvents) {
+			$.events(this.element, this.config.changeEvents, evt => {
+				if (evt.target === this.element) {
+					this.value = this.getValue();
+				}
+			});
 		}
 
 		this.templateValue = this.getValue();
@@ -91,7 +96,7 @@ var _ = Mavo.Primitive = $.Class({
 		this._default = this.element.getAttribute("mv-default");
 
 		if (this.default === null) { // no mv-default
-			this._default = this.modes === "read"? this.templateValue : this.editorValue;
+			this._default = this.modes === "read"? this.templateValue : editorValue;
 		}
 		else if (this.default === "") { // mv-default exists, no value, default is template value
 			this._default = this.templateValue;
@@ -102,7 +107,10 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		if (this.default === undefined && (!this.template || !this.closestCollection)) {
+		var keepTemplateValue = !this.template // not in a collection or first item
+		                        || this.template.templateValue != this.templateValue; // or different template value than first item
+
+		if (this.default === undefined && keepTemplateValue) {
 			this.initialValue = this.templateValue;
 		}
 		else {
@@ -147,12 +155,13 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	set editorValue(value) {
-		if (this.config.setEditorValue) {
+		if (this.config.setEditorValue && this.datatype !== "boolean") {
 			return this.config.setEditorValue.call(this, value);
 		}
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
+
 				_.setValue(this.editor, value, {config: this.editorDefaults});
 			}
 			else {
@@ -217,7 +226,11 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.editor) {
 			// No editor provided, use default for element type
 			// Find default editor for datatype
-			var editor = this.config.editor || Mavo.Elements.defaultEditors[this.datatype] || Mavo.Elements.defaultEditors.string;
+			var editor = this.config.editor;
+
+			if (!editor || this.datatype == "boolean") {
+				var editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+			}
 
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
 			this.editorValue = this.value;
@@ -315,6 +328,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			if (this.popup) {
+				this.popup.prepare();
 				this.popup.show();
 			}
 
@@ -443,7 +457,7 @@ var _ = Mavo.Primitive = $.Class({
 	setValue: function (value, o = {}) {
 		this.sneak(() => {
 			// Convert nulls and undefineds to empty string
-			value = value || value === 0? value : "";
+			value = value || value === 0 || value === false? value : "";
 
 			// If there's no datatype, adopt that of the value
 			if (!this.datatype && (typeof value == "number" || typeof value == "boolean")) {
@@ -477,7 +491,7 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 
-			this.empty = value === "";
+			this.empty = !value && value !== 0;
 
 			this._value = value;
 
@@ -509,10 +523,19 @@ var _ = Mavo.Primitive = $.Class({
 			return this.setValue(value);
 		},
 
+		datatype: function (value) {
+			if (value !== this._datatype) {
+				if (value == "boolean" && !this.attribute) {
+					this.attribute = Mavo.Elements.defaultConfig.boolean.attribute;
+				}
+
+				$.toggleAttribute(this.element, "datatype", value, value && value !== "string");
+			}
+		},
+
 		empty: function (value) {
 			var hide = value && // is empty
 			           !this.modes && // and supports both modes
-					   this.config.default && // and using the default settings
 			           !(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
 
 			this.element.classList.toggle("mv-empty", !!hide);
@@ -617,7 +640,9 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			datatype = element.getAttribute("datatype") || undefined;
+			if (!datatype) {
+				datatype = element.getAttribute("datatype") || undefined;
+			}
 
 			var config = Mavo.Elements.search(element, attribute, datatype);
 
@@ -638,8 +663,7 @@ var _ = Mavo.Primitive = $.Class({
 					o.config = _.getConfig(element, o.attribute);
 				}
 
-				o.attribute = o.config.attribute;
-
+				o.attribute = o.attribute !== undefined? o.attribute : o.config.attribute;
 				o.datatype = o.datatype !== undefined? o.datatype : o.config.datatype;
 
 				if (o.config.setValue && o.attribute == o.config.attribute) {
