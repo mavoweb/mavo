@@ -5485,7 +5485,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (!item.deleted || env.options.live) {
 						var itemData = item.getData(env.options);
 
-						if (itemData || env.options.live) {
+						if (itemData !== null || env.options.live) {
 							env.data.push(itemData);
 						}
 					}

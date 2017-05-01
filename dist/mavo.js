@@ -4776,7 +4776,7 @@ var _ = Mavo.Collection = $.Class({
 			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 
-				if (itemData || env.options.live) {
+				if (itemData !== null || env.options.live) {
 					env.data.push(itemData);
 				}
 			}
