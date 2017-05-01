@@ -302,11 +302,11 @@ button.mv-close {
 		cursor: auto;
 	}
 
-	&:hover {
+	&:not(input):not(select):not(textarea):hover {
 		@include highlight(hsla(58, 100%, 50%, .2));
 	}
 
-	& textarea.mv-editor {
+	textarea.mv-editor {
 		display: block;
 		box-sizing: border-box;
 		width: 100%;

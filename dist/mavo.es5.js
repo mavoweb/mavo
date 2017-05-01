@@ -3228,6 +3228,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Mavo.hooks.run("node-done-end", this);
 		},
 
+		clear: function clear() {
+			if (this.modes != "read") {
+				this.propagate("clear");
+			}
+		},
+
 		propagate: function propagate(callback) {
 			for (var i in this.children) {
 				var _node2 = this.children[i];
@@ -3817,7 +3823,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.unsavedChanges = false;
 		},
 
-		propagated: ["save", "import", "clear"],
+		propagated: ["save", "import"],
 
 		// Do not call directly, call this.render() instead
 		dataRender: function dataRender(data) {
@@ -4202,9 +4208,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Prevent default actions while editing
 			// e.g. following links etc
-			this.element.addEventListener("click.mavo:edit", function (evt) {
-				return evt.preventDefault();
-			});
+			if (!this.modes) {
+				this.element.addEventListener("click.mavo:edit", function (evt) {
+					return evt.preventDefault();
+				});
+			}
 
 			this.preEdit = Mavo.defer(function (resolve, reject) {
 				// Empty properties should become editable immediately
@@ -4303,7 +4311,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		clear: function clear() {
-			this.value = this.templateValue;
+			if (this.modes != "read") {
+				this.value = this.templateValue;
+			}
 		},
 
 		dataRender: function dataRender(data) {
@@ -4403,19 +4413,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (!_this5.editing || _this5.popup || !_this5.editor) {
 					if (_this5.config.setValue) {
 						_this5.config.setValue.call(_this5, _this5.element, value);
-					} else {
-						// if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-						// 	presentational = this.editor.selectedOptions[0].textContent;
-						// }
-
-						if (!o.dataOnly) {
-							_.setValue(_this5.element, value, {
-								config: _this5.config,
-								attribute: _this5.attribute,
-								datatype: _this5.datatype,
-								map: _this5.originalEditor || _this5.editor
-							});
-						}
+					} else if (!o.dataOnly) {
+						_.setValue(_this5.element, value, {
+							config: _this5.config,
+							attribute: _this5.attribute,
+							datatype: _this5.datatype,
+							map: _this5.originalEditor || _this5.editor
+						});
 					}
 				}
 
@@ -4836,7 +4840,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 	Object.defineProperties(_, {
 		"register": {
-			value: function value(id, o) {
+			value: function value(id, config) {
 				if (_typeof(arguments[0]) === "object") {
 					// Multiple definitions
 					for (var s in arguments[0]) {
@@ -4846,62 +4850,58 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 					return;
 				}
 
-				var all = Mavo.toArray(arguments[1]);
+				if (config.extend) {
+					var base = _[config.extend];
 
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+					config = $.extend($.extend({}, base, function (p) {
+						return p != "selector";
+					}), config);
+				}
 
-				try {
-					for (var _iterator = all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var config = _step.value;
+				if (id.indexOf("@") > -1) {
+					var parts = id.split("@");
 
-						config.attribute = Mavo.toArray(config.attribute || null);
+					config.selector = config.selector || parts[0] || "*";
 
-						var _iteratorNormalCompletion2 = true;
-						var _didIteratorError2 = false;
-						var _iteratorError2 = undefined;
-
-						try {
-							for (var _iterator2 = config.attribute[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-								var attribute = _step2.value;
-
-								var _o = $.extend({}, config);
-								_o.attribute = attribute;
-								_o.selector = _o.selector || id;
-								_o.id = id;
-
-								_[id] = _[id] || [];
-								_[id].push(_o);
-							}
-						} catch (err) {
-							_didIteratorError2 = true;
-							_iteratorError2 = err;
-						} finally {
-							try {
-								if (!_iteratorNormalCompletion2 && _iterator2.return) {
-									_iterator2.return();
-								}
-							} finally {
-								if (_didIteratorError2) {
-									throw _iteratorError2;
-								}
-							}
-						}
+					if (config.attribute === undefined) {
+						config.attribute = parts[1];
 					}
-				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
-				} finally {
+				}
+
+				config.selector = config.selector || id;
+				config.id = id;
+
+				if (Array.isArray(config.attribute)) {
+					var _iteratorNormalCompletion = true;
+					var _didIteratorError = false;
+					var _iteratorError = undefined;
+
 					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
+						for (var _iterator = config.attribute[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+							var attribute = _step.value;
+
+							o = $.extend({}, config);
+							o.attribute = attribute;
+
+							_[id + "@" + attribute] = o;
 						}
+					} catch (err) {
+						_didIteratorError = true;
+						_iteratorError = err;
 					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
+						try {
+							if (!_iteratorNormalCompletion && _iterator.return) {
+								_iterator.return();
+							}
+						} finally {
+							if (_didIteratorError) {
+								throw _iteratorError;
+							}
 						}
 					}
+				} else {
+
+					_[id] = config;
 				}
 
 				return _;
@@ -4919,54 +4919,33 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 				var matches = [];
 
 				selectorloop: for (var id in _) {
-					var _iteratorNormalCompletion3 = true;
-					var _didIteratorError3 = false;
-					var _iteratorError3 = undefined;
+					var o = _[id];
 
-					try {
-						for (var _iterator3 = _[id][Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-							var o = _step3.value;
+					// Passes attribute test?
+					var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
 
-							// Passes attribute test?
-							var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
-
-							if (!attributeMatches) {
-								continue;
-							}
-
-							// Passes datatype test?
-							if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
-								continue;
-							}
-
-							// Passes selector test?
-							var selector = o.selector || id;
-							if (!element.matches(selector)) {
-								continue;
-							}
-
-							// Passes arbitrary test?
-							if (o.test && !o.test(element, attribute, datatype)) {
-								continue;
-							}
-
-							// All tests have passed
-							matches.push(o);
-						}
-					} catch (err) {
-						_didIteratorError3 = true;
-						_iteratorError3 = err;
-					} finally {
-						try {
-							if (!_iteratorNormalCompletion3 && _iterator3.return) {
-								_iterator3.return();
-							}
-						} finally {
-							if (_didIteratorError3) {
-								throw _iteratorError3;
-							}
-						}
+					if (!attributeMatches) {
+						continue;
 					}
+
+					// Passes datatype test?
+					if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+						continue;
+					}
+
+					// Passes selector test?
+					var selector = o.selector || id;
+					if (!element.matches(selector)) {
+						continue;
+					}
+
+					// Passes arbitrary test?
+					if (o.test && !o.test(element, attribute, datatype)) {
+						continue;
+					}
+
+					// All tests have passed
+					matches.push(o);
 				}
 
 				return matches;
@@ -4989,22 +4968,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 	});
 
 	_.register({
-		"*": [{
-			test: function test(e, a) {
-				return a == "hidden";
-			},
-			attribute: "hidden",
+		"@hidden": {
 			datatype: "boolean"
-		}, {
+		},
+
+		"@y": {
 			test: _.isSVG,
-			attribute: "y",
 			datatype: "number"
-		}, {
+		},
+
+		"@x": {
 			default: true,
 			test: _.isSVG,
-			attribute: "x",
 			datatype: "number"
-		}],
+		},
 
 		"media": {
 			default: true,
@@ -5114,17 +5091,19 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			datatype: "boolean"
 		},
 
-		"select, input": {
+		"formControl": {
+			selector: "select, input",
 			default: true,
 			attribute: "value",
-			modes: "read",
-			changeEvents: "input change"
+			modes: "edit",
+			changeEvents: "input change",
+			edit: function edit() {},
+			done: function done() {}
 		},
 
 		"textarea": {
-			default: true,
-			modes: "read",
-			changeEvents: "input",
+			extend: "formControl",
+			attribute: null,
 			getValue: function getValue(element) {
 				return element.value;
 			},
@@ -5133,26 +5112,24 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		"input[type=range], input[type=number]": {
-			default: true,
-			attribute: "value",
-			datatype: "number",
-			modes: "read",
-			changeEvents: "input change"
+		"formNumber": {
+			extend: "formControl",
+			selector: "input[type=range], input[type=number]",
+			datatype: "number"
 		},
 
-		"input[type=checkbox]": {
-			default: true,
+		"checkbox": {
+			extend: "formControl",
+			selector: "input[type=checkbox]",
 			attribute: "checked",
 			datatype: "boolean",
-			modes: "read",
 			changeEvents: "click"
 		},
 
 		"input[type=radio]": {
-			default: true,
+			extend: "formControl",
 			attribute: "checked",
-			modes: "read",
+			modes: "edit",
 			getValue: function getValue(element) {
 				if (element.form) {
 					return element.form[element.name].value;
@@ -5182,10 +5159,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 		},
 
 		"button, .counter": {
-			default: true,
+			extend: "formControl",
 			attribute: "mv-clicked",
 			datatype: "number",
-			modes: "read",
 			init: function init(element) {
 				var _this3 = this;
 
@@ -5354,14 +5330,15 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		"circle": [{
+		"circle@r": {
 			default: true,
-			attribute: "r",
 			datatype: "number"
-		}, {
+		},
+
+		"circle": {
 			attribute: ["cx", "cy"],
 			datatype: "number"
-		}],
+		},
 
 		"text": {
 			default: true,
@@ -5789,6 +5766,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Delete all items in the collection. Not undoable.
    */
 		clear: function clear() {
+			if (this.modes == "read") {
+				return;
+			}
+
 			if (this.mutable) {
 				for (var i = 1, item; item = this.children[i]; i++) {
 					item.element.remove();

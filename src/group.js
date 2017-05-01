@@ -165,7 +165,7 @@ var _ = Mavo.Group = $.Class({
 		this.unsavedChanges = false;
 	},
 
-	propagated: ["save", "import", "clear"],
+	propagated: ["save", "import"],
 
 	// Do not call directly, call this.render() instead
 	dataRender: function(data) {

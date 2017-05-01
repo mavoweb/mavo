@@ -239,7 +239,7 @@ button.mv-close {
   all: unset;
   cursor: auto; }
 
-[property][mv-mode="edit"]:not([typeof]):not([mv-group]):hover {
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]):not(input):not(select):not(textarea):hover {
   box-shadow: 0 0 0 50vmax rgba(255, 247, 0, 0.2) inset ; }
 
 [property][mv-mode="edit"]:not([typeof]):not([mv-group]) textarea.mv-editor {

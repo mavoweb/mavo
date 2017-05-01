@@ -186,6 +186,12 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-done-end", this);
 	},
 
+	clear: function() {
+		if (this.modes != "read") {
+			this.propagate("clear");
+		}
+	},
+
 	propagate: function(callback) {
 		for (let i in this.children) {
 			let node = this.children[i];

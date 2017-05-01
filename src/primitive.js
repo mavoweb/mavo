@@ -273,7 +273,9 @@ var _ = Mavo.Primitive = $.Class({
 
 		// Prevent default actions while editing
 		// e.g. following links etc
-		this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
+		if (!this.modes) {
+			this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
+		}
 
 		this.preEdit = Mavo.defer((resolve, reject) => {
 			// Empty properties should become editable immediately
@@ -367,7 +369,9 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	clear: function() {
-		this.value = this.templateValue;
+		if (this.modes != "read") {
+			this.value = this.templateValue;
+		}
 	},
 
 	dataRender: function(data) {
@@ -463,19 +467,13 @@ var _ = Mavo.Primitive = $.Class({
 				if (this.config.setValue) {
 					this.config.setValue.call(this, this.element, value);
 				}
-				else {
-					// if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-					// 	presentational = this.editor.selectedOptions[0].textContent;
-					// }
-
-					if (!o.dataOnly) {
-						_.setValue(this.element, value, {
-							config: this.config,
-							attribute: this.attribute,
-							datatype: this.datatype,
-							map: this.originalEditor || this.editor
-						});
-					}
+				else if (!o.dataOnly) {
+					_.setValue(this.element, value, {
+						config: this.config,
+						attribute: this.attribute,
+						datatype: this.datatype,
+						map: this.originalEditor || this.editor
+					});
 				}
 			}
 

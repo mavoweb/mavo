@@ -315,6 +315,10 @@ var _ = Mavo.Collection = $.Class({
 	 * Delete all items in the collection. Not undoable.
 	 */
 	clear: function() {
+		if (this.modes == "read") {
+			return;
+		}
+
 		if (this.mutable) {
 			for (var i = 1, item; item = this.children[i]; i++) {
 				item.element.remove();

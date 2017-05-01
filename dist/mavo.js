@@ -2702,6 +2702,12 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-done-end", this);
 	},
 
+	clear: function() {
+		if (this.modes != "read") {
+			this.propagate("clear");
+		}
+	},
+
 	propagate: function(callback) {
 		for (let i in this.children) {
 			let node = this.children[i];
@@ -3234,7 +3240,7 @@ var _ = Mavo.Group = $.Class({
 		this.unsavedChanges = false;
 	},
 
-	propagated: ["save", "import", "clear"],
+	propagated: ["save", "import"],
 
 	// Do not call directly, call this.render() instead
 	dataRender: function(data) {
@@ -3585,7 +3591,9 @@ var _ = Mavo.Primitive = $.Class({
 
 		// Prevent default actions while editing
 		// e.g. following links etc
-		this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
+		if (!this.modes) {
+			this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
+		}
 
 		this.preEdit = Mavo.defer((resolve, reject) => {
 			// Empty properties should become editable immediately
@@ -3679,7 +3687,9 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	clear: function() {
-		this.value = this.templateValue;
+		if (this.modes != "read") {
+			this.value = this.templateValue;
+		}
 	},
 
 	dataRender: function(data) {
@@ -3775,19 +3785,13 @@ var _ = Mavo.Primitive = $.Class({
 				if (this.config.setValue) {
 					this.config.setValue.call(this, this.element, value);
 				}
-				else {
-					// if (this.editor && this.editor.matches("select") && this.editor.selectedOptions[0]) {
-					// 	presentational = this.editor.selectedOptions[0].textContent;
-					// }
-
-					if (!o.dataOnly) {
-						_.setValue(this.element, value, {
-							config: this.config,
-							attribute: this.attribute,
-							datatype: this.datatype,
-							map: this.originalEditor || this.editor
-						});
-					}
+				else if (!o.dataOnly) {
+					_.setValue(this.element, value, {
+						config: this.config,
+						attribute: this.attribute,
+						datatype: this.datatype,
+						map: this.originalEditor || this.editor
+					});
 				}
 			}
 
@@ -4189,7 +4193,7 @@ var _ = Mavo.Elements = {};
 
 Object.defineProperties(_, {
 	"register": {
-		value: function(id, o) {
+		value: function(id, config) {
 			if (typeof arguments[0] === "object") {
 				// Multiple definitions
 				for (let s in arguments[0]) {
@@ -4199,20 +4203,36 @@ Object.defineProperties(_, {
 				return;
 			}
 
-			var all = Mavo.toArray(arguments[1]);
+			if (config.extend) {
+				var base = _[config.extend];
 
-			for (var config of all) {
-				config.attribute = Mavo.toArray(config.attribute || null);
+				config = $.extend($.extend({}, base, p => p != "selector"), config);
+			}
 
-				for (var attribute of config.attribute) {
-					let o = $.extend({}, config);
-					o.attribute = attribute;
-					o.selector = o.selector || id;
-					o.id = id;
+			if (id.indexOf("@") > -1) {
+				var parts = id.split("@");
 
-					_[id] = _[id] || [];
-					_[id].push(o);
+				config.selector = config.selector || parts[0] || "*";
+
+				if (config.attribute === undefined) {
+					config.attribute = parts[1];
 				}
+			}
+
+			config.selector = config.selector || id;
+			config.id = id;
+
+			if (Array.isArray(config.attribute)) {
+				for (var attribute of config.attribute) {
+					o = $.extend({}, config);
+					o.attribute = attribute;
+
+					_[`${id}@${attribute}`] = o;
+				}
+			}
+			else {
+
+				_[id] = config;
 			}
 
 			return _;
@@ -4230,33 +4250,33 @@ Object.defineProperties(_, {
 			var matches = [];
 
 			selectorloop: for (var id in _) {
-				for (var o of _[id]) {
-					// Passes attribute test?
-					var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
+				var o = _[id];
 
-					if (!attributeMatches) {
-						continue;
-					}
+				// Passes attribute test?
+				var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
 
-					// Passes datatype test?
-					if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
-						continue;
-					}
-
-					// Passes selector test?
-					var selector = o.selector || id;
-					if (!element.matches(selector)) {
-						continue;
-					}
-
-					// Passes arbitrary test?
-					if (o.test && !o.test(element, attribute, datatype)) {
-						continue;
-					}
-
-					// All tests have passed
-					matches.push(o);
+				if (!attributeMatches) {
+					continue;
 				}
+
+				// Passes datatype test?
+				if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+					continue;
+				}
+
+				// Passes selector test?
+				var selector = o.selector || id;
+				if (!element.matches(selector)) {
+					continue;
+				}
+
+				// Passes arbitrary test?
+				if (o.test && !o.test(element, attribute, datatype)) {
+					continue;
+				}
+
+				// All tests have passed
+				matches.push(o);
 			}
 
 			return matches;
@@ -4277,24 +4297,20 @@ Object.defineProperties(_, {
 });
 
 _.register({
-	"*": [
-		{
-			test: (e, a) => a == "hidden",
-			attribute: "hidden",
-			datatype: "boolean"
-		},
-		{
-			test: _.isSVG,
-			attribute: "y",
-			datatype: "number"
-		},
-		{
-			default: true,
-			test: _.isSVG,
-			attribute: "x",
-			datatype: "number"
-		},
-	],
+	"@hidden": {
+		datatype: "boolean"
+	},
+
+	"@y": {
+		test: _.isSVG,
+		datatype: "number"
+	},
+
+	"@x": {
+		default: true,
+		test: _.isSVG,
+		datatype: "number"
+	},
 
 	"media": {
 		default: true,
@@ -4403,41 +4419,41 @@ _.register({
 		datatype: "boolean"
 	},
 
-	"select, input": {
+	"formControl": {
+		selector: "select, input",
 		default: true,
 		attribute: "value",
-		modes: "read",
-		changeEvents: "input change"
+		modes: "edit",
+		changeEvents: "input change",
+		edit: () => {},
+		done: () => {}
 	},
 
 	"textarea": {
-		default: true,
-		modes: "read",
-		changeEvents: "input",
+		extend: "formControl",
+		attribute: null,
 		getValue: element => element.value,
 		setValue: (element, value) => element.value = value
 	},
 
-	"input[type=range], input[type=number]": {
-		default: true,
-		attribute: "value",
-		datatype: "number",
-		modes: "read",
-		changeEvents: "input change"
+	"formNumber": {
+		extend: "formControl",
+		selector: "input[type=range], input[type=number]",
+		datatype: "number"
 	},
 
-	"input[type=checkbox]": {
-		default: true,
+	"checkbox": {
+		extend: "formControl",
+		selector: "input[type=checkbox]",
 		attribute: "checked",
 		datatype: "boolean",
-		modes: "read",
 		changeEvents: "click"
 	},
 
 	"input[type=radio]": {
-		default: true,
+		extend: "formControl",
 		attribute: "checked",
-		modes: "read",
+		modes: "edit",
 		getValue: element => {
 			if (element.form) {
 				return element.form[element.name].value;
@@ -4465,10 +4481,9 @@ _.register({
 	},
 
 	"button, .counter": {
-		default: true,
+		extend: "formControl",
 		attribute: "mv-clicked",
 		datatype: "number",
-		modes: "read",
 		init: function(element) {
 			if (this.attribute === "mv-clicked") {
 				element.setAttribute("mv-clicked", "0");
@@ -4621,16 +4636,15 @@ _.register({
 		}
 	},
 
-	"circle": [
-		{
-			default: true,
-			attribute: "r",
-			datatype: "number"
-		}, {
-			attribute: ["cx", "cy"],
-			datatype: "number"
-		}
-	],
+	"circle@r": {
+		default: true,
+		datatype: "number"
+	},
+
+	"circle": {
+		attribute: ["cx", "cy"],
+		datatype: "number"
+	},
 
 	"text": {
 		default: true,
@@ -4972,6 +4986,10 @@ var _ = Mavo.Collection = $.Class({
 	 * Delete all items in the collection. Not undoable.
 	 */
 	clear: function() {
+		if (this.modes == "read") {
+			return;
+		}
+
 		if (this.mutable) {
 			for (var i = 1, item; item = this.children[i]; i++) {
 				item.element.remove();
