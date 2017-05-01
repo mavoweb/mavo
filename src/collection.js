@@ -143,6 +143,8 @@ var _ = Mavo.Collection = $.Class({
 				});
 
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
+
+				this.mavo.expressions.update(env.item);
 			});
 		}
 

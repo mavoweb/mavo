@@ -251,7 +251,10 @@ _.register({
 		modes: "edit",
 		changeEvents: "input change",
 		edit: () => {},
-		done: () => {}
+		done: () => {},
+		init: function() {
+			this.editor = this.element;
+		}
 	},
 
 	"textarea": {
@@ -305,8 +308,9 @@ _.register({
 		}
 	},
 
-	"button, .counter": {
+	"counter": {
 		extend: "formControl",
+		selector: "button, .counter",
 		attribute: "mv-clicked",
 		datatype: "number",
 		init: function(element) {

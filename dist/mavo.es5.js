@@ -5098,7 +5098,10 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			modes: "edit",
 			changeEvents: "input change",
 			edit: function edit() {},
-			done: function done() {}
+			done: function done() {},
+			init: function init() {
+				this.editor = this.element;
+			}
 		},
 
 		"textarea": {
@@ -5158,8 +5161,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			}
 		},
 
-		"button, .counter": {
+		"counter": {
 			extend: "formControl",
+			selector: "button, .counter",
 			attribute: "mv-clicked",
 			datatype: "number",
 			init: function init(element) {
@@ -5538,6 +5542,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					});
 
 					_this.unsavedChanges = _this.mavo.unsavedChanges = true;
+
+					_this.mavo.expressions.update(env.item);
 				});
 			}
 

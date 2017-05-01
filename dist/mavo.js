@@ -4426,7 +4426,10 @@ _.register({
 		modes: "edit",
 		changeEvents: "input change",
 		edit: () => {},
-		done: () => {}
+		done: () => {},
+		init: function() {
+			this.editor = this.element;
+		}
 	},
 
 	"textarea": {
@@ -4480,8 +4483,9 @@ _.register({
 		}
 	},
 
-	"button, .counter": {
+	"counter": {
 		extend: "formControl",
+		selector: "button, .counter",
 		attribute: "mv-clicked",
 		datatype: "number",
 		init: function(element) {
@@ -4814,6 +4818,8 @@ var _ = Mavo.Collection = $.Class({
 				});
 
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
+
+				this.mavo.expressions.update(env.item);
 			});
 		}
 
