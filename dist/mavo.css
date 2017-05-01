@@ -95,19 +95,20 @@
     .mv-item-bar.mv-ui .mv-add:hover, .mv-item-bar.mv-ui .mv-add:focus {
       background-color: #81b814;
       color: white; }
-  .mv-item-bar.mv-ui .mv-drag-handle {
-    cursor: move; }
-    .mv-item-bar.mv-ui .mv-drag-handle:active, .mv-item-bar.mv-ui .mv-drag-handle:focus {
-      cursor: -webkit-grabbing;
-      cursor: grabbing; }
-    .mv-item-bar.mv-ui .mv-drag-handle::before {
-      content: "≡"; }
-    .mv-item-bar.mv-ui .mv-drag-handle:hover, .mv-item-bar.mv-ui .mv-drag-handle:focus {
-      background-color: #4d4d4d;
-      color: white; }
+  .mv-item-bar.mv-ui .mv-drag-handle::before {
+    content: "≡"; }
+  .mv-item-bar.mv-ui .mv-drag-handle:hover, .mv-item-bar.mv-ui .mv-drag-handle:focus {
+    background-color: #4d4d4d;
+    color: white; }
   [mv-app]:not([mv-permissions~="delete"]) .mv-item-bar.mv-ui .mv-delete,
   [mv-app]:not([mv-permissions~="add"]) .mv-item-bar.mv-ui .mv-add {
     display: none; }
+
+.mv-drag-handle {
+  cursor: move; }
+  .mv-drag-handle:active, .mv-drag-handle:focus {
+    cursor: -webkit-grabbing;
+    cursor: grabbing; }
 
 [mv-multiple] {
   position: relative; }
@@ -214,14 +215,9 @@ button.mv-close {
 [mv-app] [mv-mode="edit"] .mv-empty {
   opacity: .5; }
 
-[mv-app][mv-mode="edit"] [mv-multiple]:focus,
-[mv-app][mv-mode="edit"] .mv-editor:focus,
-[mv-app] [mv-mode="edit"] [mv-multiple]:focus,
-[mv-app] [mv-mode="edit"] .mv-editor:focus {
-  outline: none; }
-
 [mv-app][mv-mode="edit"] .mv-editor:focus,
 [mv-app] [mv-mode="edit"] .mv-editor:focus {
+  outline: none;
   box-shadow: 0 0 0 1px rgba(133, 160, 173, 0.5), 1px 1px 0.5em 1px rgba(0, 0, 0, 0.3) !important; }
 
 [mv-mode="read"] {

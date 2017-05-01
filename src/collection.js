@@ -135,6 +135,10 @@ var _ = Mavo.Collection = $.Class({
 			add: env.item
 		});
 
+		if (env.item.itembar) {
+			env.item.itembar.reposition();
+		}
+
 		if (this.mavo.expressions.active && !o.silent) {
 			requestAnimationFrame(() => {
 				env.changed.forEach(i => {
@@ -255,15 +259,19 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		this.add(item, index);
+
+		if (item instanceof Mavo.Primitive && item.itembar) {
+			item.itembar.reposition();
+		}
 	},
 
 	editItem: function(item) {
 		if (this.mutable) {
-			if (!item.itemControls) {
-				item.itemControls = new Mavo.UI.Itembar(item);
+			if (!item.itembar) {
+				item.itembar = new Mavo.UI.Itembar(item);
 			}
 
-			item.itemControls.add();
+			item.itembar.add();
 		}
 
 		item.edit();
@@ -306,8 +314,8 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			this.propagate(item => {
-				if (item.itemControls) {
-					item.itemControls.remove();
+				if (item.itembar) {
+					item.itembar.remove();
 				}
 			});
 		}

@@ -5534,6 +5534,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				add: env.item
 			});
 
+			if (env.item.itembar) {
+				env.item.itembar.reposition();
+			}
+
 			if (this.mavo.expressions.active && !o.silent) {
 				requestAnimationFrame(function () {
 					env.changed.forEach(function (i) {
@@ -5708,15 +5712,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.add(item, index);
+
+			if (item instanceof Mavo.Primitive && item.itembar) {
+				item.itembar.reposition();
+			}
 		},
 
 		editItem: function editItem(item) {
 			if (this.mutable) {
-				if (!item.itemControls) {
-					item.itemControls = new Mavo.UI.Itembar(item);
+				if (!item.itembar) {
+					item.itembar = new Mavo.UI.Itembar(item);
 				}
 
-				item.itemControls.add();
+				item.itembar.add();
 			}
 
 			item.edit();
@@ -5761,8 +5769,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				this.propagate(function (item) {
-					if (item.itemControls) {
-						item.itemControls.remove();
+					if (item.itembar) {
+						item.itembar.remove();
 					}
 				});
 			}
@@ -6117,54 +6125,65 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			Mavo.data(this.element, "item", this.item);
 
-			$.set(this.element, {
-				"mv-rel": this.item.property,
-				contents: [{
-					tag: "button",
-					title: "Delete this " + this.item.name,
-					className: "mv-delete",
-					events: {
-						"click": function click(evt) {
-							return _this.item.collection.delete(item);
-						}
+			var buttons = [{
+				tag: "button",
+				title: "Delete this " + this.item.name,
+				className: "mv-delete",
+				events: {
+					"click": function click(evt) {
+						return _this.item.collection.delete(item);
 					}
-				}, {
-					tag: "button",
-					title: "Add new " + this.item.name.replace(/s$/i, "") + " " + (this.collection.bottomUp ? "after" : "before"),
-					className: "mv-add",
-					events: {
-						"click": function click(evt) {
-							var newItem = _this.collection.add(null, _this.item.index);
+				}
+			}, {
+				tag: "button",
+				title: "Add new " + this.item.name + " " + (this.collection.bottomUp ? "after" : "before"),
+				className: "mv-add",
+				events: {
+					"click": function click(evt) {
+						var newItem = _this.collection.add(null, _this.item.index);
 
-							if (evt[Mavo.superKey]) {
-								newItem.render(_this.item.data);
-							}
-
-							Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-							return _this.collection.editItem(newItem);
+						if (evt[Mavo.superKey]) {
+							newItem.render(_this.item.data);
 						}
+
+						Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+						return _this.collection.editItem(newItem);
 					}
-				}, {
+				}
+			}];
+
+			if (this.item instanceof Mavo.Group) {
+				this.dragHandle = $.create({
 					tag: "button",
 					title: "Drag to reorder " + this.item.name,
 					className: "mv-drag-handle",
 					events: {
 						click: function click(evt) {
 							return evt.target.focus();
-						},
-						keydown: function keydown(evt) {
-							if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-								// Arrow keys
-								_this.move(_this.item, evt.keyCode <= 38 ? -1 : 1);
-
-								evt.stopPropagation();
-								evt.preventDefault();
-								evt.target.focus();
-							}
 						}
 					}
-				}],
+				});
+
+				buttons.push(this.dragHandle);
+			} else {
+				this.dragHandle = this.item.element;
+			}
+
+			this.dragHandle.addEventListener("keydown", function (evt) {
+				if (_this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
+					// Arrow keys
+					_this.collection.move(_this.item, evt.keyCode <= 38 ? -1 : 1);
+
+					evt.stopPropagation();
+					evt.preventDefault();
+					evt.target.focus();
+				}
+			});
+
+			$.set(this.element, {
+				"mv-rel": this.item.property,
+				contents: buttons,
 				events: {
 					mouseenter: function mouseenter(evt) {
 						_this.item.element.classList.add("mv-highlight");
@@ -6187,10 +6206,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 			}
+
+			if (this.dragHandle == this.item.element) {
+				this.item.element.classList.add("mv-drag-handle");
+			}
 		},
 
 		remove: function remove() {
 			Mavo.revocably.remove(this.element);
+
+			if (this.dragHandle == this.item.element) {
+				this.item.element.classList.remove("mv-drag-handle");
+			}
+		},
+
+		reposition: function reposition() {
+			this.element.remove();
+			this.add();
 		},
 
 		proxy: {

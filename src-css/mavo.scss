@@ -131,11 +131,6 @@
 
 	.mv-drag-handle {
 		$color: hsl(0, 0%, 30%);
-		cursor: move;
-
-		&:active, &:focus {
-			cursor: grabbing;
-		}
 
 		&::before {
 			content: "≡";
@@ -150,6 +145,14 @@
 	[mv-app]:not([mv-permissions~="delete"]) & .mv-delete,
 	[mv-app]:not([mv-permissions~="add"]) & .mv-add {
 		display: none;
+	}
+}
+
+.mv-drag-handle {
+	cursor: move;
+
+	&:active, &:focus {
+		cursor: grabbing;
 	}
 }
 
@@ -274,15 +277,8 @@ button.mv-close {
 			opacity: .5;
 		}
 
-		[mv-multiple],
-		.mv-editor {
-			&:focus {
-				outline: none;
-			}
-		}
-
-		// Temporary, good for debugging keyboard usability
 		.mv-editor:focus {
+			outline: none;
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
 	}

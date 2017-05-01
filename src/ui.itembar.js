@@ -15,52 +15,64 @@ var _ = Mavo.UI.Itembar = $.Class({
 
 		Mavo.data(this.element, "item", this.item);
 
-		$.set(this.element, {
-			"mv-rel": this.item.property,
-			contents: [
-				{
-					tag: "button",
-					title: "Delete this " + this.item.name,
-					className: "mv-delete",
-					events: {
-						"click": evt => this.item.collection.delete(item)
-					}
-				}, {
-					tag: "button",
-					title: `Add new ${this.item.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-					className: "mv-add",
-					events: {
-						"click": evt => {
-							var newItem = this.collection.add(null, this.item.index);
+		var buttons = [
+			{
+				tag: "button",
+				title: "Delete this " + this.item.name,
+				className: "mv-delete",
+				events: {
+					"click": evt => this.item.collection.delete(item)
+				}
+			}, {
+				tag: "button",
+				title: `Add new ${this.item.name} ${this.collection.bottomUp? "after" : "before"}`,
+				className: "mv-add",
+				events: {
+					"click": evt => {
+						var newItem = this.collection.add(null, this.item.index);
 
-							if (evt[Mavo.superKey]) {
-								newItem.render(this.item.data);
-							}
-
-							Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-							return this.collection.editItem(newItem);
+						if (evt[Mavo.superKey]) {
+							newItem.render(this.item.data);
 						}
-					}
-				}, {
-					tag: "button",
-					title: "Drag to reorder " + this.item.name,
-					className: "mv-drag-handle",
-					events: {
-						click: evt => evt.target.focus(),
-						keydown: evt => {
-							if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-								// Arrow keys
-								this.move(this.item, evt.keyCode <= 38? -1 : 1);
 
-								evt.stopPropagation();
-								evt.preventDefault();
-								evt.target.focus();
-							}
-						}
+						Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+						return this.collection.editItem(newItem);
 					}
 				}
-			],
+			}
+		];
+
+		if (this.item instanceof Mavo.Group) {
+			this.dragHandle = $.create({
+				tag: "button",
+				title: "Drag to reorder " + this.item.name,
+				className: "mv-drag-handle",
+				events: {
+					click: evt => evt.target.focus()
+				}
+			});
+
+			buttons.push(this.dragHandle);
+		}
+		else {
+			this.dragHandle = this.item.element;
+		}
+
+		this.dragHandle.addEventListener("keydown", evt => {
+			if (this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
+				// Arrow keys
+				this.collection.move(this.item, evt.keyCode <= 38? -1 : 1);
+
+				evt.stopPropagation();
+				evt.preventDefault();
+				evt.target.focus();
+			}
+		});
+
+		$.set(this.element, {
+			"mv-rel": this.item.property,
+			contents: buttons,
 			events: {
 				mouseenter: evt => {
 					this.item.element.classList.add("mv-highlight");
@@ -84,10 +96,23 @@ var _ = Mavo.UI.Itembar = $.Class({
 				}
 			}
 		}
+
+		if (this.dragHandle == this.item.element) {
+			this.item.element.classList.add("mv-drag-handle");
+		}
 	},
 
 	remove: function() {
-		 Mavo.revocably.remove(this.element);
+		Mavo.revocably.remove(this.element);
+
+		if (this.dragHandle == this.item.element) {
+			this.item.element.classList.remove("mv-drag-handle");
+		}
+	},
+
+	reposition: function() {
+		this.element.remove();
+		this.add();
 	},
 
 	proxy: {
