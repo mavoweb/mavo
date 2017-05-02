@@ -457,7 +457,7 @@ var _ = self.Mavo = $.Class({
 
 	error: function(message, ...log) {
 		this.message(message, {
-			classes: "mv-error",
+			type: "error",
 			dismiss: ["button", "timeout"]
 		});
 
@@ -730,6 +730,7 @@ var _ = self.Mavo = $.Class({
 	live: {
 		inProgress: function(value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);
+			$.toggleAttribute(this.element, "aria-busy", !!value, !!value);
 		},
 
 		unsavedChanges: function(value) {
@@ -1813,7 +1814,7 @@ var _ = Mavo.UI.Message = $.Class({
 		this.closed = Mavo.defer();
 
 		this.element = $.create({
-			className: "mv-ui mv-message",
+			className: "mv-ui mv-message" + (o.type? " mv-" + type : ""),
 			innerHTML: this.message,
 			events: {
 				click: e => Mavo.scrollIntoViewIfNeeded(this.mavo.element)
@@ -1823,6 +1824,13 @@ var _ = Mavo.UI.Message = $.Class({
 
 		if (o.classes) {
 			this.element.classList.add(o.classes);
+		}
+
+		if (o.type == "error") {
+			this.element.setAttribute("role", "alert");
+		}
+		else {
+			this.element.setAttribute("aria-live", "polite");
 		}
 
 		o.dismiss = o.dismiss || {};
@@ -3355,9 +3363,11 @@ var _ = Mavo.Primitive = $.Class({
 		this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
 
 		if (this.expressionText && !this.expressionText.mavoNode) {
+			// Computed property
 			this.expressionText.primitive = this;
 			this.storage = this.storage || "none";
 			this.modes = "read";
+			this.element.setAttribute("aria-live", "polite");
 		}
 
 		/**
@@ -3435,7 +3445,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		var keepTemplateValue = !this.template // not in a collection or first item
-		                        || this.template.templateValue != this.templateValue; // or different template value than first item
+		                        || this.template.templateValue != this.templateValue // or different template value than first item
+								|| this.modes == "edit"; // or is always edited
 
 		if (this.default === undefined && keepTemplateValue) {
 			this.initialValue = this.templateValue;
@@ -5891,7 +5902,7 @@ var _ = Mavo.Expressions = $.Class({
 		var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 		this.traverse(this.mavo.element, undefined, syntax);
 
-		this.scheduled = new Set();
+		this.scheduled = {};
 
 		this.mavo.treeBuilt.then(() => {
 			this.expressions = [];
@@ -5902,15 +5913,17 @@ var _ = Mavo.Expressions = $.Class({
 					return;
 				}
 
-				if (evt.action == "propertychange" && evt.node.closestCollection) {
-					// Throttle propertychange events in collections and events from other Mavos
-					if (!this.scheduled.has(evt.property)) {
-						setTimeout(() => {
-							this.scheduled.delete(evt.property);
-							this.update(evt);
-						}, _.PROPERTYCHANGE_THROTTLE);
+				var scheduled = this.scheduled[evt.action] = this.scheduled[evt.action] || new Set();
 
-						this.scheduled.add(evt.property);
+				if (evt.node.closestCollection || evt.mavo != this.mavo) {
+					// Throttle events in collections and events from other Mavos
+					if (!scheduled.has(evt.property)) {
+						setTimeout(() => {
+							scheduled.delete(evt.property);
+							this.update(evt);
+						}, _.THROTTLE);
+
+						scheduled.add(evt.property);
 					}
 				}
 				else {
@@ -6031,7 +6044,7 @@ var _ = Mavo.Expressions = $.Class({
 	static: {
 		directives: [],
 
-		PROPERTYCHANGE_THROTTLE: 50,
+		THROTTLE: 50,
 
 		directive: function(name, o) {
 			_.directives.push(name);

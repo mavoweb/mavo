@@ -581,7 +581,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		error: function error(message) {
 			this.message(message, {
-				classes: "mv-error",
+				type: "error",
 				dismiss: ["button", "timeout"]
 			});
 
@@ -877,6 +877,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		live: {
 			inProgress: function inProgress(value) {
 				$.toggleAttribute(this.element, "mv-progress", value, value);
+				$.toggleAttribute(this.element, "aria-busy", !!value, !!value);
 			},
 
 			unsavedChanges: function unsavedChanges(value) {
@@ -2131,7 +2132,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.closed = Mavo.defer();
 
 			this.element = $.create({
-				className: "mv-ui mv-message",
+				className: "mv-ui mv-message" + (o.type ? " mv-" + type : ""),
 				innerHTML: this.message,
 				events: {
 					click: function click(e) {
@@ -2143,6 +2144,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (o.classes) {
 				this.element.classList.add(o.classes);
+			}
+
+			if (o.type == "error") {
+				this.element.setAttribute("role", "alert");
+			} else {
+				this.element.setAttribute("aria-live", "polite");
 			}
 
 			o.dismiss = o.dismiss || {};
@@ -3946,9 +3953,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
 
 			if (this.expressionText && !this.expressionText.mavoNode) {
+				// Computed property
 				this.expressionText.primitive = this;
 				this.storage = this.storage || "none";
 				this.modes = "read";
+				this.element.setAttribute("aria-live", "polite");
 			}
 
 			/**
@@ -4048,7 +4057,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			var keepTemplateValue = !this.template // not in a collection or first item
-			|| this.template.templateValue != this.templateValue; // or different template value than first item
+			|| this.template.templateValue != this.templateValue // or different template value than first item
+			|| this.modes == "edit"; // or is always edited
 
 			if (this.default === undefined && keepTemplateValue) {
 				this.initialValue = this.templateValue;
@@ -6754,7 +6764,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 			this.traverse(this.mavo.element, undefined, syntax);
 
-			this.scheduled = new Set();
+			this.scheduled = {};
 
 			this.mavo.treeBuilt.then(function () {
 				_this.expressions = [];
@@ -6765,15 +6775,17 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						return;
 					}
 
-					if (evt.action == "propertychange" && evt.node.closestCollection) {
-						// Throttle propertychange events in collections and events from other Mavos
-						if (!_this.scheduled.has(evt.property)) {
-							setTimeout(function () {
-								_this.scheduled.delete(evt.property);
-								_this.update(evt);
-							}, _.PROPERTYCHANGE_THROTTLE);
+					var scheduled = _this.scheduled[evt.action] = _this.scheduled[evt.action] || new Set();
 
-							_this.scheduled.add(evt.property);
+					if (evt.node.closestCollection || evt.mavo != _this.mavo) {
+						// Throttle events in collections and events from other Mavos
+						if (!scheduled.has(evt.property)) {
+							setTimeout(function () {
+								scheduled.delete(evt.property);
+								_this.update(evt);
+							}, _.THROTTLE);
+
+							scheduled.add(evt.property);
 						}
 					} else {
 						requestAnimationFrame(function () {
@@ -6924,7 +6936,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		static: {
 			directives: [],
 
-			PROPERTYCHANGE_THROTTLE: 50,
+			THROTTLE: 50,
 
 			directive: function directive(name, o) {
 				_.directives.push(name);

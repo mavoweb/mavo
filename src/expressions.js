@@ -10,7 +10,7 @@ var _ = Mavo.Expressions = $.Class({
 		var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 		this.traverse(this.mavo.element, undefined, syntax);
 
-		this.scheduled = new Set();
+		this.scheduled = {};
 
 		this.mavo.treeBuilt.then(() => {
 			this.expressions = [];
@@ -21,15 +21,17 @@ var _ = Mavo.Expressions = $.Class({
 					return;
 				}
 
-				if (evt.action == "propertychange" && evt.node.closestCollection) {
-					// Throttle propertychange events in collections and events from other Mavos
-					if (!this.scheduled.has(evt.property)) {
-						setTimeout(() => {
-							this.scheduled.delete(evt.property);
-							this.update(evt);
-						}, _.PROPERTYCHANGE_THROTTLE);
+				var scheduled = this.scheduled[evt.action] = this.scheduled[evt.action] || new Set();
 
-						this.scheduled.add(evt.property);
+				if (evt.node.closestCollection || evt.mavo != this.mavo) {
+					// Throttle events in collections and events from other Mavos
+					if (!scheduled.has(evt.property)) {
+						setTimeout(() => {
+							scheduled.delete(evt.property);
+							this.update(evt);
+						}, _.THROTTLE);
+
+						scheduled.add(evt.property);
 					}
 				}
 				else {
@@ -150,7 +152,7 @@ var _ = Mavo.Expressions = $.Class({
 	static: {
 		directives: [],
 
-		PROPERTYCHANGE_THROTTLE: 50,
+		THROTTLE: 50,
 
 		directive: function(name, o) {
 			_.directives.push(name);

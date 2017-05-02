@@ -28,9 +28,11 @@ var _ = Mavo.Primitive = $.Class({
 		this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
 
 		if (this.expressionText && !this.expressionText.mavoNode) {
+			// Computed property
 			this.expressionText.primitive = this;
 			this.storage = this.storage || "none";
 			this.modes = "read";
+			this.element.setAttribute("aria-live", "polite");
 		}
 
 		/**
@@ -108,7 +110,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		var keepTemplateValue = !this.template // not in a collection or first item
-		                        || this.template.templateValue != this.templateValue; // or different template value than first item
+		                        || this.template.templateValue != this.templateValue // or different template value than first item
+								|| this.modes == "edit"; // or is always edited
 
 		if (this.default === undefined && keepTemplateValue) {
 			this.initialValue = this.templateValue;

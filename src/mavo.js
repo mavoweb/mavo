@@ -253,7 +253,7 @@ var _ = self.Mavo = $.Class({
 
 	error: function(message, ...log) {
 		this.message(message, {
-			classes: "mv-error",
+			type: "error",
 			dismiss: ["button", "timeout"]
 		});
 
@@ -526,6 +526,7 @@ var _ = self.Mavo = $.Class({
 	live: {
 		inProgress: function(value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);
+			$.toggleAttribute(this.element, "aria-busy", !!value, !!value);
 		},
 
 		unsavedChanges: function(value) {
