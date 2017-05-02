@@ -280,6 +280,7 @@ var _ = $.extend(Mavo, {
 
 				var callback = evt => {
 					element.removeEventListener("mavo:inview", callback);
+					evt.stopPropagation();
 					resolve();
 				};
 

@@ -1041,7 +1041,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		});
 
-		_.dependencies.push($.ready(), _.Plugins.load(), $.include(polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(",")));
+		_.dependencies.push($.ready(), _.Plugins.load(), $.include(!polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(",")));
 
 		_.ready = _.all(_.dependencies);
 		_.inited = _.ready.catch(console.error).then(function () {
@@ -1394,6 +1394,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					var callback = function callback(evt) {
 						element.removeEventListener("mavo:inview", callback);
+						evt.stopPropagation();
 						resolve();
 					};
 
@@ -5963,6 +5964,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		propagated: ["save"],
 
 		dataRender: function dataRender(data) {
+			var _this6 = this;
+
 			if (!data) {
 				return;
 			}
@@ -5985,32 +5988,40 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				if (data.length > i) {
-					// There are still remaining items
-					// Using document fragments improves performance by 60%
-					var fragment = document.createDocumentFragment();
+					var _loop = function _loop() {
+						previousItem = _this6.children[j - 1];
 
-					for (var j = i; j < data.length; j++) {
-						var item = this.createItem();
+						var item = _this6.createItem();
 
 						item.render(data[j]);
 
-						this.children.push(item);
+						_this6.children.push(item);
 						item.index = j;
 
-						fragment.appendChild(item.element);
+						inView = previousItem ? Mavo.inView.when(previousItem.element) : Promise.resolve();
 
-						var env = { context: this, item: item };
+						inView.then(function () {
+							if (_this6.bottomUp) {
+								$.after(item.element, i > 0 ? _this6.children[i - 1].element : _this6.marker);
+							} else {
+								$.before(item.element, _this6.marker);
+							}
+						});
+
+						env = { context: _this6, item: item };
+
 						Mavo.hooks.run("collection-add-end", env);
-					}
 
-					if (this.bottomUp) {
-						$.after(fragment, i > 0 ? this.children[i - 1].element : this.marker);
-					} else {
-						$.before(fragment, this.marker);
-					}
+						item.dataChanged("add");
+					};
 
-					for (var j = i; j < this.children.length; j++) {
-						this.children[j].dataChanged("add");
+					// There are still remaining items
+					for (var j = i; j < data.length; j++) {
+						var previousItem;
+						var inView;
+						var env;
+
+						_loop();
 					}
 				}
 			}
@@ -6061,7 +6072,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this6 = this;
+			var _this7 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -6076,9 +6087,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this6.accepts.length) {
-						return Mavo.flatten(_this6.accepts.map(function (property) {
-							return _this6.mavo.root.find(property, { collections: true });
+					if (_this7.accepts.length) {
+						return Mavo.flatten(_this7.accepts.map(function (property) {
+							return _this7.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -6126,7 +6137,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this6.dragula.cancel(true);
+					return _this7.dragula.cancel(true);
 				}
 			});
 
@@ -6168,7 +6179,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this7 = this;
+				var _this8 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -6176,7 +6187,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this7.templateElement.contains(button);
+						return !_this8.templateElement.contains(button);
 					})[0];
 				}
 
@@ -6197,7 +6208,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this7.editItem(_this7.add());
+					_this8.editItem(_this8.add());
 				});
 
 				return button;

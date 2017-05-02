@@ -387,32 +387,29 @@ var _ = Mavo.Collection = $.Class({
 
 			if (data.length > i) {
 				// There are still remaining items
-				// Using document fragments improves performance by 60%
-				var fragment = document.createDocumentFragment();
-
 				for (var j = i; j < data.length; j++) {
-					var item = this.createItem();
+					var previousItem = this.children[j-1];
+					let item = this.createItem();
 
 					item.render(data[j]);
 
 					this.children.push(item);
 					item.index = j;
 
-					fragment.appendChild(item.element);
+					var inView = previousItem? Mavo.inView.when(previousItem.element) : Promise.resolve();
+					inView.then(() => {
+						if (this.bottomUp) {
+							$.after(item.element, i > 0? this.children[i-1].element : this.marker);
+						}
+						else {
+							$.before(item.element, this.marker);
+						}
+					});
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
-				}
 
-				if (this.bottomUp) {
-					$.after(fragment, i > 0? this.children[i-1].element : this.marker);
-				}
-				else {
-					$.before(fragment, this.marker);
-				}
-
-				for (var j = i; j < this.children.length; j++) {
-					this.children[j].dataChanged("add");
+					item.dataChanged("add");
 				}
 			}
 		}
