@@ -662,12 +662,22 @@ $.extend(_.selectors, {
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
 requestAnimationFrame(() => {
-	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
+	var polyfills = [];
+
+	$.each({
+		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+		"Intl.~locale.en": self.Intl,
+		"IntersectionObserver": self.IntersectionObserver
+	}, (id, supported) => {
+		if (!supported) {
+			polyfills.push(id);
+		}
+	});
 
 	_.dependencies.push(
 		$.ready(),
 		_.Plugins.load(),
-		$.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+		$.include(polyfills.length, `https://cdn.polyfill.io/v2/polyfill.min.js?features=${polyfills.join(",")}`),
 	);
 
 	_.ready = _.all(_.dependencies);

@@ -866,12 +866,22 @@ $.extend(_.selectors, {
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
 requestAnimationFrame(() => {
-	var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
+	var polyfills = [];
+
+	$.each({
+		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+		"Intl.~locale.en": self.Intl,
+		"IntersectionObserver": self.IntersectionObserver
+	}, (id, supported) => {
+		if (!supported) {
+			polyfills.push(id);
+		}
+	});
 
 	_.dependencies.push(
 		$.ready(),
 		_.Plugins.load(),
-		$.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en")
+		$.include(polyfills.length, `https://cdn.polyfill.io/v2/polyfill.min.js?features=${polyfills.join(",")}`),
 	);
 
 	_.ready = _.all(_.dependencies);
@@ -1139,15 +1149,41 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	inViewport: element => {
-		var r = element.getBoundingClientRect();
+	inView: {
+		is: element => {
+			var r = element.getBoundingClientRect();
 
-		return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
-		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+			return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
+			       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+		},
+
+		when: element => {
+			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries) {
+				for (var entry of entries) {
+					this.unobserve(entry.target);
+					$.fire(entry.target, "mavo:inview", {entry});
+				}
+			});
+
+			return new Promise(resolve => {
+				if (_.is(element)) {
+					resolve();
+				}
+
+				observer.observe(element);
+
+				var callback = evt => {
+					element.removeEventListener("mavo:inview", callback);
+					resolve();
+				};
+
+				element.addEventListener("mavo:inview", callback);
+			});
+		}
 	},
 
 	scrollIntoViewIfNeeded: element => {
-		if (element && !Mavo.inViewport(element)) {
+		if (element && !Mavo.inView.is(element)) {
 			element.scrollIntoView({behavior: "smooth"});
 		}
 	},
@@ -5003,15 +5039,17 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (this.mutable) {
-			if (!item.itembar) {
-				item.itembar = new Mavo.UI.Itembar(item);
+		Mavo.inView.when(item.element).then(() => {
+			if (this.mutable) {
+				if (!item.itembar) {
+					item.itembar = new Mavo.UI.Itembar(item);
+				}
+
+				item.itembar.add();
 			}
 
-			item.itembar.add();
-		}
-
-		item.edit();
+			item.edit();
+		});
 	},
 
 	edit: function() {

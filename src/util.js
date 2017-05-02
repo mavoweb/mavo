@@ -255,15 +255,41 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	inViewport: element => {
-		var r = element.getBoundingClientRect();
+	inView: {
+		is: element => {
+			var r = element.getBoundingClientRect();
 
-		return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
-		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+			return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
+			       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+		},
+
+		when: element => {
+			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries) {
+				for (var entry of entries) {
+					this.unobserve(entry.target);
+					$.fire(entry.target, "mavo:inview", {entry});
+				}
+			});
+
+			return new Promise(resolve => {
+				if (_.is(element)) {
+					resolve();
+				}
+
+				observer.observe(element);
+
+				var callback = evt => {
+					element.removeEventListener("mavo:inview", callback);
+					resolve();
+				};
+
+				element.addEventListener("mavo:inview", callback);
+			});
+		}
 	},
 
 	scrollIntoViewIfNeeded: element => {
-		if (element && !Mavo.inViewport(element)) {
+		if (element && !Mavo.inView.is(element)) {
 			element.scrollIntoView({behavior: "smooth"});
 		}
 	},

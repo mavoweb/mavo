@@ -1029,9 +1029,19 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 	// Init mavo. Async to give other scripts a chance to modify stuff.
 	requestAnimationFrame(function () {
-		var isDecentBrowser = Array.from && window.Intl && document.documentElement.closest && self.URL && "searchParams" in URL.prototype;
+		var polyfills = [];
 
-		_.dependencies.push($.ready(), _.Plugins.load(), $.include(isDecentBrowser, "https://cdn.polyfill.io/v2/polyfill.min.js?features=blissfuljs,Intl.~locale.en"));
+		$.each({
+			"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+			"Intl.~locale.en": self.Intl,
+			"IntersectionObserver": self.IntersectionObserver
+		}, function (id, supported) {
+			if (!supported) {
+				polyfills.push(id);
+			}
+		});
+
+		_.dependencies.push($.ready(), _.Plugins.load(), $.include(polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(",")));
 
 		_.ready = _.all(_.dependencies);
 		_.inited = _.ready.catch(console.error).then(function () {
@@ -1338,15 +1348,62 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 		},
 
-		inViewport: function inViewport(element) {
-			var r = element.getBoundingClientRect();
+		inView: {
+			is: function is(element) {
+				var r = element.getBoundingClientRect();
 
-			return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) && ( // vertical
-			0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+				return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) && ( // vertical
+				0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+			},
+
+			when: function when(element) {
+				var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function (entries) {
+					var _iteratorNormalCompletion2 = true;
+					var _didIteratorError2 = false;
+					var _iteratorError2 = undefined;
+
+					try {
+						for (var _iterator2 = entries[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+							var entry = _step2.value;
+
+							this.unobserve(entry.target);
+							$.fire(entry.target, "mavo:inview", { entry: entry });
+						}
+					} catch (err) {
+						_didIteratorError2 = true;
+						_iteratorError2 = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion2 && _iterator2.return) {
+								_iterator2.return();
+							}
+						} finally {
+							if (_didIteratorError2) {
+								throw _iteratorError2;
+							}
+						}
+					}
+				});
+
+				return new Promise(function (resolve) {
+					if (_.is(element)) {
+						resolve();
+					}
+
+					observer.observe(element);
+
+					var callback = function callback(evt) {
+						element.removeEventListener("mavo:inview", callback);
+						resolve();
+					};
+
+					element.addEventListener("mavo:inview", callback);
+				});
+			}
 		},
 
 		scrollIntoViewIfNeeded: function scrollIntoViewIfNeeded(element) {
-			if (element && !Mavo.inViewport(element)) {
+			if (element && !Mavo.inView.is(element)) {
 				element.scrollIntoView({ behavior: "smooth" });
 			}
 		},
@@ -1558,13 +1615,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    */
 		all: function all(iterable) {
 			// Turn rejected promises into resolved ones
-			var _iteratorNormalCompletion2 = true;
-			var _didIteratorError2 = false;
-			var _iteratorError2 = undefined;
+			var _iteratorNormalCompletion3 = true;
+			var _didIteratorError3 = false;
+			var _iteratorError3 = undefined;
 
 			try {
-				for (var _iterator2 = iterable[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-					var promise = _step2.value;
+				for (var _iterator3 = iterable[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+					var promise = _step3.value;
 
 					if ($.type(promise) == "promise") {
 						promise = promise.catch(function (err) {
@@ -1573,16 +1630,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				}
 			} catch (err) {
-				_didIteratorError2 = true;
-				_iteratorError2 = err;
+				_didIteratorError3 = true;
+				_iteratorError3 = err;
 			} finally {
 				try {
-					if (!_iteratorNormalCompletion2 && _iterator2.return) {
-						_iterator2.return();
+					if (!_iteratorNormalCompletion3 && _iterator3.return) {
+						_iterator3.return();
 					}
 				} finally {
-					if (_didIteratorError2) {
-						throw _iteratorError2;
+					if (_didIteratorError3) {
+						throw _iteratorError3;
 					}
 				}
 			}
@@ -5782,19 +5839,23 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		editItem: function editItem(item) {
-			if (this.mutable) {
-				if (!item.itembar) {
-					item.itembar = new Mavo.UI.Itembar(item);
+			var _this4 = this;
+
+			Mavo.inView.when(item.element).then(function () {
+				if (_this4.mutable) {
+					if (!item.itembar) {
+						item.itembar = new Mavo.UI.Itembar(item);
+					}
+
+					item.itembar.add();
 				}
 
-				item.itembar.add();
-			}
-
-			item.edit();
+				item.edit();
+			});
 		},
 
 		edit: function edit() {
-			var _this4 = this;
+			var _this5 = this;
 
 			if (this.super.edit.call(this) === false) {
 				return false;
@@ -5811,13 +5872,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				// Set up drag & drop
 				_.dragula.then(function () {
-					_this4.getDragula();
+					_this5.getDragula();
 				});
 			}
 
 			// Edit items, maybe insert item bar
 			this.propagate(function (item) {
-				_this4.editItem(item);
+				_this5.editItem(item);
 			});
 		},
 
@@ -6000,7 +6061,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		// Make sure to only call after dragula has loaded
 		getDragula: function getDragula() {
-			var _this5 = this;
+			var _this6 = this;
 
 			if (this.dragula) {
 				return this.dragula;
@@ -6015,9 +6076,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.dragula = dragula({
 				containers: [this.marker.parentNode],
 				isContainer: function isContainer(el) {
-					if (_this5.accepts.length) {
-						return Mavo.flatten(_this5.accepts.map(function (property) {
-							return _this5.mavo.root.find(property, { collections: true });
+					if (_this6.accepts.length) {
+						return Mavo.flatten(_this6.accepts.map(function (property) {
+							return _this6.mavo.root.find(property, { collections: true });
 						})).filter(function (c) {
 							return c && c instanceof _;
 						}).map(function (c) {
@@ -6065,7 +6126,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
 				} else {
-					return _this5.dragula.cancel(true);
+					return _this6.dragula.cancel(true);
 				}
 			});
 
@@ -6107,7 +6168,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			},
 
 			addButton: function addButton() {
-				var _this6 = this;
+				var _this7 = this;
 
 				// Find add button if provided, or generate one
 				var selector = "button.mv-add-" + this.property;
@@ -6115,7 +6176,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (group) {
 					var button = $$(selector, group).filter(function (button) {
-						return !_this6.templateElement.contains(button);
+						return !_this7.templateElement.contains(button);
 					})[0];
 				}
 
@@ -6136,7 +6197,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				button.addEventListener("click", function (evt) {
 					evt.preventDefault();
 
-					_this6.editItem(_this6.add());
+					_this7.editItem(_this7.add());
 				});
 
 				return button;

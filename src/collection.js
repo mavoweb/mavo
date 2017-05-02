@@ -266,15 +266,17 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		if (this.mutable) {
-			if (!item.itembar) {
-				item.itembar = new Mavo.UI.Itembar(item);
+		Mavo.inView.when(item.element).then(() => {
+			if (this.mutable) {
+				if (!item.itembar) {
+					item.itembar = new Mavo.UI.Itembar(item);
+				}
+
+				item.itembar.add();
 			}
 
-			item.itembar.add();
-		}
-
-		item.edit();
+			item.edit();
+		});
 	},
 
 	edit: function() {
