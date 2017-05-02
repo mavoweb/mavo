@@ -444,8 +444,6 @@ _.register({
 		attribute: "datetime",
 		default: true,
 		init: function() {
-			this.element.setAttribute("aria-label", this.label);
-
 			if (!this.fromTemplate("dateType")) {
 				var dateFormat = Mavo.DOMExpression.search(this.element, null);
 

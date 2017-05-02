@@ -4045,7 +4045,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.default === null) {
 				// no mv-default
-				this._default = this.modes === "read" ? this.templateValue : editorValue;
+				this._default = this.modes ? this.templateValue : editorValue;
 			} else if (this.default === "") {
 				// mv-default exists, no value, default is template value
 				this._default = this.templateValue;
@@ -4071,6 +4071,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.setValue(this.initialValue, { silent: true });
+
+			Mavo.setAttributeShy(this.element, "aria-label", this.label);
+
+			if (!this.attribute) {
+				Mavo.setAttributeShy(this.element, "mv-attribute", "none");
+			}
 
 			// Observe future mutations to this property, if possible
 			// Properties like input.checked or input.value cannot be observed that way
@@ -4247,12 +4253,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			this.preEdit = Mavo.defer(function (resolve, reject) {
-				// Empty properties should become editable immediately
-				// otherwise they could be invisible!
-				if (_this3.empty && !_this3.attribute) {
-					return requestAnimationFrame(resolve);
-				}
-
 				var timer;
 
 				var events = "click focus dragover dragenter".split(" ").map(function (e) {
@@ -4370,7 +4370,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (data === undefined) {
 				// New property has been added to the schema and nobody has saved since
-				if (this.modes != "read") {
+				if (!this.modes) {
 					this.value = this.closestCollection ? this.default : this.templateValue;
 				}
 			} else {
@@ -5352,8 +5352,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 			attribute: "datetime",
 			default: true,
 			init: function init() {
-				this.element.setAttribute("aria-label", this.label);
-
 				if (!this.fromTemplate("dateType")) {
 					var dateFormat = Mavo.DOMExpression.search(this.element, null);
 
@@ -7445,6 +7443,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 		lowercase: function lowercase(str) {
 			return (str + "").toLowerCase();
+		},
+
+		json: function json(data) {
+			return Mavo.safeToJSON(data);
 		},
 
 		/*********************

@@ -3433,7 +3433,7 @@ var _ = Mavo.Primitive = $.Class({
 		this._default = this.element.getAttribute("mv-default");
 
 		if (this.default === null) { // no mv-default
-			this._default = this.modes === "read"? this.templateValue : editorValue;
+			this._default = this.modes? this.templateValue : editorValue;
 		}
 		else if (this.default === "") { // mv-default exists, no value, default is template value
 			this._default = this.templateValue;
@@ -3460,6 +3460,12 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.setValue(this.initialValue, {silent: true});
+
+		Mavo.setAttributeShy(this.element, "aria-label", this.label);
+
+		if (!this.attribute) {
+			Mavo.setAttributeShy(this.element, "mv-attribute", "none");
+		}
 
 		// Observe future mutations to this property, if possible
 		// Properties like input.checked or input.value cannot be observed that way
@@ -3629,12 +3635,6 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.preEdit = Mavo.defer((resolve, reject) => {
-			// Empty properties should become editable immediately
-			// otherwise they could be invisible!
-			if (this.empty && !this.attribute) {
-				return requestAnimationFrame(resolve);
-			}
-
 			var timer;
 
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
@@ -3745,7 +3745,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (data === undefined) {
 			// New property has been added to the schema and nobody has saved since
-			if (this.modes != "read") {
+			if (!this.modes) {
 				this.value = this.closestCollection? this.default : this.templateValue;
 			}
 		}
@@ -4665,8 +4665,6 @@ _.register({
 		attribute: "datetime",
 		default: true,
 		init: function() {
-			this.element.setAttribute("aria-label", this.label);
-
 			if (!this.fromTemplate("dateType")) {
 				var dateFormat = Mavo.DOMExpression.search(this.element, null);
 
@@ -6441,6 +6439,8 @@ var _ = Mavo.Functions = {
 
 	uppercase: str => (str + "").toUpperCase(),
 	lowercase: str => (str + "").toLowerCase(),
+
+	json: data => Mavo.safeToJSON(data),
 
 	/*********************
 	 * Date functions

@@ -201,6 +201,8 @@ var _ = Mavo.Functions = {
 	uppercase: str => (str + "").toUpperCase(),
 	lowercase: str => (str + "").toLowerCase(),
 
+	json: data => Mavo.safeToJSON(data),
+
 	/*********************
 	 * Date functions
 	 *********************/

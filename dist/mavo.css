@@ -249,6 +249,10 @@ button.mv-close {
 [property][mv-mode="edit"]:not([typeof]):not([mv-group]) select.mv-editor {
   white-space: nowrap; }
 
+[property][mv-mode="edit"]:not([typeof]):not([mv-group]).mv-empty[mv-attribute="none"]:empty::before {
+  content: "(" attr(aria-label) ")";
+  opacity: .5; }
+
 meta[property][mv-mode="edit"] {
   display: inline-block;
   padding: .15em .4em;
