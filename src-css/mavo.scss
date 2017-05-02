@@ -321,6 +321,7 @@ button.mv-close {
 	&.mv-empty[mv-attribute="none"]:empty::before {
 		content: "(" attr(aria-label) ")";
 		opacity: .5;
+		cursor: text;
 	}
 }
 

@@ -9,55 +9,56 @@ var _ = Mavo.UI.Itembar = $.Class({
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
 
-		this.element = this.element || $.create({
-			className: "mv-item-bar mv-ui"
-		});
-
-		Mavo.data(this.element, "item", this.item);
-
-		var buttons = [
-			{
-				tag: "button",
-				title: "Delete this " + this.item.name,
-				className: "mv-delete",
-				events: {
-					"click": evt => this.item.collection.delete(item)
-				}
-			}, {
-				tag: "button",
-				title: `Add new ${this.item.name} ${this.collection.bottomUp? "after" : "before"}`,
-				className: "mv-add",
-				events: {
-					"click": evt => {
-						var newItem = this.collection.add(null, this.item.index);
-
-						if (evt[Mavo.superKey]) {
-							newItem.render(this.item.data);
-						}
-
-						Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-						return this.collection.editItem(newItem);
-					}
-				}
-			}
-		];
-
-		if (this.item instanceof Mavo.Group) {
-			this.dragHandle = $.create({
-				tag: "button",
-				title: "Drag to reorder " + this.item.name,
-				className: "mv-drag-handle",
-				events: {
-					click: evt => evt.target.focus()
-				}
-			});
-
-			buttons.push(this.dragHandle);
+		if (!this.element && this.item.template && this.item.template.itembar) {
+			// We can clone the buttons from the template
+			this.element = this.item.template.itembar.element.cloneNode(true);
+			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
 		}
 		else {
-			this.dragHandle = this.item.element;
+			// First item of this type
+			this.element = this.element || $.create({
+				className: "mv-item-bar mv-ui"
+			});
+
+			var buttons = [
+				{
+					tag: "button",
+					title: "Delete this " + this.item.name,
+					className: "mv-delete"
+				}, {
+					tag: "button",
+					title: `Add new ${this.item.name} ${this.collection.bottomUp? "after" : "before"}`,
+					className: "mv-add"
+				}
+			];
+
+			if (this.item instanceof Mavo.Group) {
+				this.dragHandle = $.create({
+					tag: "button",
+					title: "Drag to reorder " + this.item.name,
+					className: "mv-drag-handle"
+				});
+
+				buttons.push(this.dragHandle);
+			}
+			else {
+				this.dragHandle = this.item.element;
+			}
+
+			$.set(this.element, {
+				"mv-rel": this.item.property,
+				contents: buttons
+			});
 		}
+
+		$.events(this.element, {
+			mouseenter: evt => {
+				this.item.element.classList.add("mv-highlight");
+			},
+			mouseleave: evt => {
+				this.item.element.classList.remove("mv-highlight");
+			}
+		});
 
 		this.dragHandle.addEventListener("keydown", evt => {
 			if (this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
@@ -70,18 +71,35 @@ var _ = Mavo.UI.Itembar = $.Class({
 			}
 		});
 
-		$.set(this.element, {
-			"mv-rel": this.item.property,
-			contents: buttons,
-			events: {
-				mouseenter: evt => {
-					this.item.element.classList.add("mv-highlight");
-				},
-				mouseleave: evt => {
-					this.item.element.classList.remove("mv-highlight");
+		var selectors = {
+			add: this.buttonSelector("add"),
+			delete: this.buttonSelector("delete"),
+			drag: this.buttonSelector("drag")
+		};
+
+		this.item.element.addEventListener("click", evt => {
+			if (this.item.collection.editing) {
+				if (evt.target.matches(selectors.add)) {
+					var newItem = this.collection.add(null, this.item.index);
+
+					if (evt[Mavo.superKey]) {
+						newItem.render(this.item.data);
+					}
+
+					Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+					return this.collection.editItem(newItem);
+				}
+				else if (evt.target.matches(selectors.delete)) {
+					this.item.collection.delete(item);
+				}
+				else if (evt.target.matches(selectors["drag-handle"])) {
+					evt => evt.target.focus();
 				}
 			}
 		});
+
+		Mavo.data(this.element, "item", this.item);
 	},
 
 	add: function() {
@@ -113,6 +131,10 @@ var _ = Mavo.UI.Itembar = $.Class({
 	reposition: function() {
 		this.element.remove();
 		this.add();
+	},
+
+	buttonSelector: function(type) {
+		return `.mv-${type}[mv-rel="${this.item.property}"], [mv-rel="${this.item.property}"] > .mv-${type}`;
 	},
 
 	proxy: {

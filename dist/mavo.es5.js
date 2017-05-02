@@ -6182,56 +6182,52 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return el.closest(Mavo.selectors.multiple) == _this.item.element && !Mavo.data(el, "item");
 			})[0];
 
-			this.element = this.element || $.create({
-				className: "mv-item-bar mv-ui"
-			});
-
-			Mavo.data(this.element, "item", this.item);
-
-			var buttons = [{
-				tag: "button",
-				title: "Delete this " + this.item.name,
-				className: "mv-delete",
-				events: {
-					"click": function click(evt) {
-						return _this.item.collection.delete(item);
-					}
-				}
-			}, {
-				tag: "button",
-				title: "Add new " + this.item.name + " " + (this.collection.bottomUp ? "after" : "before"),
-				className: "mv-add",
-				events: {
-					"click": function click(evt) {
-						var newItem = _this.collection.add(null, _this.item.index);
-
-						if (evt[Mavo.superKey]) {
-							newItem.render(_this.item.data);
-						}
-
-						Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-						return _this.collection.editItem(newItem);
-					}
-				}
-			}];
-
-			if (this.item instanceof Mavo.Group) {
-				this.dragHandle = $.create({
-					tag: "button",
-					title: "Drag to reorder " + this.item.name,
-					className: "mv-drag-handle",
-					events: {
-						click: function click(evt) {
-							return evt.target.focus();
-						}
-					}
+			if (!this.element && this.item.template && this.item.template.itembar) {
+				// We can clone the buttons from the template
+				this.element = this.item.template.itembar.element.cloneNode(true);
+				this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
+			} else {
+				// First item of this type
+				this.element = this.element || $.create({
+					className: "mv-item-bar mv-ui"
 				});
 
-				buttons.push(this.dragHandle);
-			} else {
-				this.dragHandle = this.item.element;
+				var buttons = [{
+					tag: "button",
+					title: "Delete this " + this.item.name,
+					className: "mv-delete"
+				}, {
+					tag: "button",
+					title: "Add new " + this.item.name + " " + (this.collection.bottomUp ? "after" : "before"),
+					className: "mv-add"
+				}];
+
+				if (this.item instanceof Mavo.Group) {
+					this.dragHandle = $.create({
+						tag: "button",
+						title: "Drag to reorder " + this.item.name,
+						className: "mv-drag-handle"
+					});
+
+					buttons.push(this.dragHandle);
+				} else {
+					this.dragHandle = this.item.element;
+				}
+
+				$.set(this.element, {
+					"mv-rel": this.item.property,
+					contents: buttons
+				});
 			}
+
+			$.events(this.element, {
+				mouseenter: function mouseenter(evt) {
+					_this.item.element.classList.add("mv-highlight");
+				},
+				mouseleave: function mouseleave(evt) {
+					_this.item.element.classList.remove("mv-highlight");
+				}
+			});
 
 			this.dragHandle.addEventListener("keydown", function (evt) {
 				if (_this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
@@ -6244,18 +6240,35 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			});
 
-			$.set(this.element, {
-				"mv-rel": this.item.property,
-				contents: buttons,
-				events: {
-					mouseenter: function mouseenter(evt) {
-						_this.item.element.classList.add("mv-highlight");
-					},
-					mouseleave: function mouseleave(evt) {
-						_this.item.element.classList.remove("mv-highlight");
+			var selectors = {
+				add: this.buttonSelector("add"),
+				delete: this.buttonSelector("delete"),
+				drag: this.buttonSelector("drag")
+			};
+
+			this.item.element.addEventListener("click", function (evt) {
+				if (_this.item.collection.editing) {
+					if (evt.target.matches(selectors.add)) {
+						var newItem = _this.collection.add(null, _this.item.index);
+
+						if (evt[Mavo.superKey]) {
+							newItem.render(_this.item.data);
+						}
+
+						Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+						return _this.collection.editItem(newItem);
+					} else if (evt.target.matches(selectors.delete)) {
+						_this.item.collection.delete(item);
+					} else if (evt.target.matches(selectors["drag-handle"])) {
+						(function (evt) {
+							return evt.target.focus();
+						});
 					}
 				}
 			});
+
+			Mavo.data(this.element, "item", this.item);
 		},
 
 		add: function add() {
@@ -6286,6 +6299,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		reposition: function reposition() {
 			this.element.remove();
 			this.add();
+		},
+
+		buttonSelector: function buttonSelector(type) {
+			return ".mv-" + type + "[mv-rel=\"" + this.item.property + "\"], [mv-rel=\"" + this.item.property + "\"] > .mv-" + type;
 		},
 
 		proxy: {
