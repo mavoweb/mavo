@@ -6014,9 +6014,9 @@ var _ = Mavo.Expressions = $.Class({
 		var allData = rootObject.getData({live: true});
 
 		rootObject.walk((obj, path) => {
-			var data = $.value(allData, ...path);
-
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+				var data = $.value(allData, ...path);
+
 				if (typeof data != "object" || data === null) {
 					// Turn primitives into objects, so we can have $index, their property
 					// name etc resolve relative to them, not their parent group

@@ -6906,9 +6906,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var allData = rootObject.getData({ live: true });
 
 			rootObject.walk(function (obj, path) {
-				var data = $.value.apply($, [allData].concat(_toConsumableArray(path)));
-
 				if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+					var data = $.value.apply($, [allData].concat(_toConsumableArray(path)));
+
 					if ((typeof data === "undefined" ? "undefined" : _typeof(data)) != "object" || data === null) {
 						var _data;
 
