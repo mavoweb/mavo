@@ -3194,10 +3194,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return this.storage !== "none";
 		},
 
-		get path() {
-			var path = this.parentGroup ? this.parentGroup.path : [];
-
-			return this.property ? [].concat(_toConsumableArray(path), [this.property]) : path;
+		get parent() {
+			return this.collection || this.parentGroup;
 		},
 
 		/**
@@ -3635,6 +3633,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this._deleted = false;
 
 					this.dataChanged("undelete");
+				}
+			},
+
+			path: {
+				get: function get() {
+					var path = this.parent ? this.parent.path : [];
+
+					return this.property ? [].concat(_toConsumableArray(path), [this.property]) : path;
 				}
 			}
 		},
