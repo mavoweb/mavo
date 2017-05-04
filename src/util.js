@@ -159,7 +159,7 @@ var _ = $.extend(Mavo, {
 					var children = acc.children;
 				}
 				else {
-					var children = [...acc.childNodes].filter(node => types.indexOf(node.nodeType) > -1);
+					var children = $$(acc.childNodes).filter(node => types.indexOf(node.nodeType) > -1);
 				}
 				return children[cur];
 			}, ancestor);

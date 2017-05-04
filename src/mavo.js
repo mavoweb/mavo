@@ -7,7 +7,7 @@ var _ = self.Mavo = $.Class({
 		this.element = element;
 
 		// Index among other mavos in the page, 1 is first
-		this.index = _.length + 1;
+		this.index = Object.keys(_.all).length + 1;
 		Object.defineProperty(_.all, this.index - 1, {value: this});
 
 		// Convert any data-mv-* attributes to mv-*
@@ -572,10 +572,6 @@ var _ = self.Mavo = $.Class({
 
 	static: {
 		all: {},
-
-		get length() {
-			return Object.keys(_.all).length;
-		},
 
 		get: function(id) {
 			if (id instanceof Element) {

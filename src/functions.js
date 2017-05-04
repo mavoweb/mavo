@@ -610,6 +610,14 @@ function toDate(date) {
 	return date;
 }
 
+function toLocaleString(date, options) {
+	var ret = date.toLocaleString(Mavo.locale, options);
+
+	ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
+
+	return ret;
+}
+
 function getDateComponent(component, option = "numeric", o) {
 	return function(date, format = option) {
 		date = toDate(date);
@@ -627,10 +635,11 @@ function getDateComponent(component, option = "numeric", o) {
 			ret = date.getDay() || 7;
 		}
 		else {
-			var ret = date.toLocaleString(Mavo.locale, options);
+			var ret = toLocaleString(date, options);
 		}
 
 		if (format == "numeric" && !isNaN(ret)) {
+
 			if (component != "year") {
 				// We don't want years to be formatted like 2,017!
 				ret = new Number(ret);
@@ -638,15 +647,15 @@ function getDateComponent(component, option = "numeric", o) {
 
 			if (component == "month" || component == "weekday") {
 				options[component] = "long";
-				ret.name = date.toLocaleString(Mavo.locale, options);
+				ret.name = toLocaleString(date, options);
 
 				options[component] = "short";
-				ret.shortname = date.toLocaleString(Mavo.locale, options);
+				ret.shortname = toLocaleString(date, options);
 			}
 
 			if (component != "weekday") {
 				options[component] = "2-digit";
-				ret.twodigit = date.toLocaleString(Mavo.locale, options);
+				ret.twodigit = toLocaleString(date, options);
 			}
 		}
 
