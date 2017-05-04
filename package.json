@@ -2,20 +2,20 @@
   "name": "mavo",
   "version": "0.0.3",
   "description": "Create web applications with HTML and CSS",
-  "main": "mavo.js",
+  "main": "dist/mavo.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/LeaVerou/mavo.git"
+    "url": "https://github.com/mavoweb/mavo.git"
   },
   "author": "Lea Verou",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/LeaVerou/mavo/issues"
+    "url": "https://github.com/mavoweb/mavo/issues"
   },
-  "homepage": "https://github.com/LeaVerou/mavo",
+  "homepage": "https://github.com/mavoweb/mavo",
   "devDependencies": {
     "babel-core": "^6.24.0",
     "babel-preset-env": "^1.2.2",
