@@ -6554,7 +6554,6 @@ var _ = Mavo.Functions = {
 	day: getDateComponent("day"),
 	weekday: getDateComponent("weekday"),
 	hour: getDateComponent("hour"),
-	hour12: getDateComponent("hour", "numeric", {hour12:true}),
 	minute: getDateComponent("minute"),
 	second: getDateComponent("second"),
 
@@ -6946,45 +6945,36 @@ function toLocaleString(date, options) {
 	return ret;
 }
 
-function getDateComponent(component, option = "numeric", o) {
-	return function(date, format = option) {
+var numeric = {
+	year: d => d.getFullYear(),
+	month: d => d.getMonth() + 1,
+	day: d => d.getDate(),
+	weekday: d => d.getDay() || 7,
+	hour: d => d.getHours(),
+	minute: d => d.getMinutes(),
+	second: d => d.getSeconds()
+};
+
+function getDateComponent(component) {
+	return function(date) {
 		date = toDate(date);
 
 		if (!date) {
 			return "";
 		}
 
-		var options = $.extend({
-			[component]: format,
-			hour12: false
-		}, o);
+		ret = numeric[component](date);
 
-		if (component == "weekday" && format == "numeric") {
-			ret = date.getDay() || 7;
-		}
-		else {
-			var ret = toLocaleString(date, options);
+		// We don't want years to be formatted like 2,017!
+		ret = new self[component == "year"? "String" : "Number"](ret);
+
+		if (component == "month" || component == "weekday") {
+			ret.name = toLocaleString(date, {[component]: "long"});
+			ret.shortname = toLocaleString(date, {[component]: "short"});
 		}
 
-		if (format == "numeric" && !isNaN(ret)) {
-
-			if (component != "year") {
-				// We don't want years to be formatted like 2,017!
-				ret = new Number(ret);
-			}
-
-			if (component == "month" || component == "weekday") {
-				options[component] = "long";
-				ret.name = toLocaleString(date, options);
-
-				options[component] = "short";
-				ret.shortname = toLocaleString(date, options);
-			}
-
-			if (component != "weekday") {
-				options[component] = "2-digit";
-				ret.twodigit = toLocaleString(date, options);
-			}
+		if (component != "weekday") {
+			ret.twodigit = (ret < 10? "0" : "") + (ret < 1? "0" : "") + ret % 100;
 		}
 
 		return ret;

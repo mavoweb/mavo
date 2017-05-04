@@ -7575,7 +7575,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		day: getDateComponent("day"),
 		weekday: getDateComponent("weekday"),
 		hour: getDateComponent("hour"),
-		hour12: getDateComponent("hour", "numeric", { hour12: true }),
 		minute: getDateComponent("minute"),
 		second: getDateComponent("second"),
 
@@ -8098,48 +8097,50 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		return ret;
 	}
 
+	var numeric = {
+		year: function year(d) {
+			return d.getFullYear();
+		},
+		month: function month(d) {
+			return d.getMonth() + 1;
+		},
+		day: function day(d) {
+			return d.getDate();
+		},
+		weekday: function weekday(d) {
+			return d.getDay() || 7;
+		},
+		hour: function hour(d) {
+			return d.getHours();
+		},
+		minute: function minute(d) {
+			return d.getMinutes();
+		},
+		second: function second(d) {
+			return d.getSeconds();
+		}
+	};
+
 	function getDateComponent(component) {
-		var option = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "numeric";
-		var o = arguments[2];
-
 		return function (date) {
-			var _$$extend;
-
-			var format = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : option;
-
 			date = toDate(date);
 
 			if (!date) {
 				return "";
 			}
 
-			var options = $.extend((_$$extend = {}, _defineProperty(_$$extend, component, format), _defineProperty(_$$extend, "hour12", false), _$$extend), o);
+			ret = numeric[component](date);
 
-			if (component == "weekday" && format == "numeric") {
-				ret = date.getDay() || 7;
-			} else {
-				var ret = toLocaleString(date, options);
+			// We don't want years to be formatted like 2,017!
+			ret = new self[component == "year" ? "String" : "Number"](ret);
+
+			if (component == "month" || component == "weekday") {
+				ret.name = toLocaleString(date, _defineProperty({}, component, "long"));
+				ret.shortname = toLocaleString(date, _defineProperty({}, component, "short"));
 			}
 
-			if (format == "numeric" && !isNaN(ret)) {
-
-				if (component != "year") {
-					// We don't want years to be formatted like 2,017!
-					ret = new Number(ret);
-				}
-
-				if (component == "month" || component == "weekday") {
-					options[component] = "long";
-					ret.name = toLocaleString(date, options);
-
-					options[component] = "short";
-					ret.shortname = toLocaleString(date, options);
-				}
-
-				if (component != "weekday") {
-					options[component] = "2-digit";
-					ret.twodigit = toLocaleString(date, options);
-				}
+			if (component != "weekday") {
+				ret.twodigit = (ret < 10 ? "0" : "") + (ret < 1 ? "0" : "") + ret % 100;
 			}
 
 			return ret;
