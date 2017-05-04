@@ -77,7 +77,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 			drag: this.buttonSelector("drag")
 		};
 
-		this.item.element.addEventListener("click", evt => {
+		this.element.addEventListener("click", evt => {
 			if (this.item.collection.editing) {
 				if (evt.target.matches(selectors.add)) {
 					var newItem = this.collection.add(null, this.item.index);
