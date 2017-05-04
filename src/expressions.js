@@ -145,7 +145,15 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
-			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`, syntax));
+
+			var index = 0;
+
+			$$(node.childNodes).forEach(child => {
+				if (child.nodeType == 1 || child.nodeType == 3) {
+					this.traverse(child, `${path}/${index}`, syntax);
+					index++;
+				}
+			});
 		}
 	},
 

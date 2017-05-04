@@ -1044,6 +1044,7 @@ var _ = $.extend(Mavo, {
 		if (Array.isArray(element)) {
 			// Get element by path
 			var path = element;
+
 			return path.reduce((acc, cur) => {
 				if (elementsOnly) {
 					var children = acc.children;
@@ -1060,10 +1061,10 @@ var _ = $.extend(Mavo, {
 
 			for (var parent = element; parent && parent != ancestor; parent = parent.parentNode) {
 				var index = 0;
-				var element = parent;
+				var sibling = parent;
 
-				while (element = element[`previous${elementsOnly? "Element" : ""}Sibling`]) {
-					if (types.indexOf(element.nodeType) > -1) {
+				while (sibling = sibling[`previous${elementsOnly? "Element" : ""}Sibling`]) {
+					if (types.indexOf(sibling.nodeType) > -1) {
 						index++;
 					}
 				}
@@ -6119,7 +6120,15 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
-			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`, syntax));
+
+			var index = 0;
+
+			$$(node.childNodes).forEach(child => {
+				if (child.nodeType == 1 || child.nodeType == 3) {
+					this.traverse(child, `${path}/${index}`, syntax);
+					index++;
+				}
+			});
 		}
 	},
 
