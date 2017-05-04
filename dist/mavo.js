@@ -5167,29 +5167,31 @@ var _ = Mavo.Collection = $.Class({
 
 			if (data.length > i) {
 				// There are still remaining items
+				var fragment = document.createDocumentFragment();
+
 				for (var j = i; j < data.length; j++) {
-					var previousItem = this.children[j-1];
-					let item = this.createItem();
+					var item = this.createItem();
 
 					item.render(data[j]);
 
 					this.children.push(item);
 					item.index = j;
 
-					var inView = previousItem? Mavo.inView.when(previousItem.element) : Promise.resolve();
-					inView.then(() => {
-						if (this.bottomUp) {
-							$.after(item.element, i > 0? this.children[i-1].element : this.marker);
-						}
-						else {
-							$.before(item.element, this.marker);
-						}
-					});
+					fragment.appendChild(item.element);
 
 					var env = {context: this, item};
 					Mavo.hooks.run("collection-add-end", env);
+				}
 
-					item.dataChanged("add");
+				if (this.bottomUp) {
+					$.after(fragment, i > 0? this.children[i-1].element : this.marker);
+				}
+				else {
+					$.before(fragment, this.marker);
+				}
+
+				for (var j = i; j < this.children.length; j++) {
+					this.children[j].dataChanged("add");
 				}
 			}
 		}
@@ -6146,10 +6148,6 @@ Mavo.Expressions.directive("mv-if", {
 		"DOMExpression": {
 			lazy: {
 				"childProperties": function() {
-					if (this.attribute != "mv-if") {
-						return;
-					}
-
 					var properties = $$(Mavo.selectors.property, this.element)
 									.filter(el => el.closest("[mv-if]") == this.element)
 									.map(el => Mavo.Node.get(el));
