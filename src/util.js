@@ -74,7 +74,7 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
-	 * Array utlities
+	 * Array & set utlities
 	 */
 
 	// If the passed value is not an array, convert to an array
@@ -104,6 +104,10 @@ var _ = $.extend(Mavo, {
 		if (arr.indexOf(item) === -1) {
 			arr.push(item);
 		}
+	},
+
+	union: (set1, set2) => {
+		return new Set([...(set1 || []), ...(set2 || [])]);
 	},
 
 	/**

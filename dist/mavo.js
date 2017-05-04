@@ -968,7 +968,7 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
-	 * Array utlities
+	 * Array & set utlities
 	 */
 
 	// If the passed value is not an array, convert to an array
@@ -998,6 +998,10 @@ var _ = $.extend(Mavo, {
 		if (arr.indexOf(item) === -1) {
 			arr.push(item);
 		}
+	},
+
+	union: (set1, set2) => {
+		return new Set([...(set1 || []), ...(set2 || [])]);
 	},
 
 	/**
@@ -2958,6 +2962,25 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return [];
+		},
+
+		properties: function() {
+			if (this.template) {
+				return this.template.properties;
+			}
+
+			var ret = new Set(this.property && [this.property]);
+
+			if (this.nodeType == "Group") {
+				for (var property in this.children) {
+					ret = Mavo.union(ret, this.children[property].properties);
+				}
+			}
+			else if (this.nodeType == "Collection") {
+				ret = Mavo.union(ret, this.itemTemplate.properties);
+			}
+
+			return ret;
 		}
 	},
 
@@ -3264,28 +3287,27 @@ var _ = Mavo.Group = $.Class({
 			return this;
 		}
 
-		if (property in this.children) {
-			return this.children[property].find(property, o);
+		if (!this.properties.has(property)) {
+			return;
 		}
 
-		var all = [];
+		var results = [], returnArray;
 
 		for (var prop in this.children) {
-			var ret = this.children[prop].find(property, o);
+			ret = this.children[prop].find(property, o);
 
 			if (ret !== undefined) {
 				if (Array.isArray(ret)) {
-					all.push(...ret);
+					results.push(...ret);
+					returnArray = Array.isArray(ret);
 				}
 				else {
-					return ret;
+					results.push(ret);
 				}
 			}
 		}
 
-		if (all.length) {
-			return all;
-		}
+		return returnArray || results.length > 1? results : results[0];
 	},
 
 	edit: function() {
@@ -4794,8 +4816,7 @@ var _ = Mavo.Collection = $.Class({
 		this.children = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("properties", "mutable", "templateElement", "accepts")) {
-			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
+		if (!this.fromTemplate("mutable", "templateElement", "accepts")) {
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 
@@ -5205,7 +5226,7 @@ var _ = Mavo.Collection = $.Class({
 			return o.collections? this : items;
 		}
 
-		if (this.properties.indexOf(property) > -1) {
+		if (this.properties.has(property)) {
 			var ret = items.map(item => item.find(property, o));
 
 			return Mavo.flatten(ret);
@@ -6358,7 +6379,13 @@ var _ = Mavo.Functions = {
 	 * Do two arrays have a non-empty intersection?
 	 * @return {Boolean}
 	 */
-	intersects: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
+	intersects: (arr1, arr2) => {
+		if (arr1 && arr2) {
+			arr2 = new Set(arr2);
+
+			return !arr1.every(el => arr2.has(el));
+		}
+	},
 
 	/*********************
 	 * Number functions

@@ -56,7 +56,13 @@ var _ = Mavo.Functions = {
 	 * Do two arrays have a non-empty intersection?
 	 * @return {Boolean}
 	 */
-	intersects: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
+	intersects: (arr1, arr2) => {
+		if (arr1 && arr2) {
+			arr2 = new Set(arr2);
+
+			return !arr1.every(el => arr2.has(el));
+		}
+	},
 
 	/*********************
 	 * Number functions

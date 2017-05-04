@@ -1139,7 +1139,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		/**
-   * Array utlities
+   * Array & set utlities
    */
 
 		// If the passed value is not an array, convert to an array
@@ -1171,6 +1171,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (arr.indexOf(item) === -1) {
 				arr.push(item);
 			}
+		},
+
+		union: function union(set1, set2) {
+			return new Set([].concat(_toConsumableArray(set1 || []), _toConsumableArray(set2 || [])));
 		},
 
 		/**
@@ -3534,6 +3538,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return [];
+			},
+
+			properties: function properties() {
+				if (this.template) {
+					return this.template.properties;
+				}
+
+				var ret = new Set(this.property && [this.property]);
+
+				if (this.nodeType == "Group") {
+					for (var property in this.children) {
+						ret = Mavo.union(ret, this.children[property].properties);
+					}
+				} else if (this.nodeType == "Collection") {
+					ret = Mavo.union(ret, this.itemTemplate.properties);
+				}
+
+				return ret;
 			}
 		},
 
@@ -3868,27 +3890,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return this;
 			}
 
-			if (property in this.children) {
-				return this.children[property].find(property, o);
+			if (!this.properties.has(property)) {
+				return;
 			}
 
-			var all = [];
+			var results = [],
+			    returnArray;
 
 			for (var prop in this.children) {
-				var ret = this.children[prop].find(property, o);
+				ret = this.children[prop].find(property, o);
 
 				if (ret !== undefined) {
 					if (Array.isArray(ret)) {
-						all.push.apply(all, _toConsumableArray(ret));
+						results.push.apply(results, _toConsumableArray(ret));
+						returnArray = Array.isArray(ret);
 					} else {
-						return ret;
+						results.push(ret);
 					}
 				}
 			}
 
-			if (all.length) {
-				return all;
-			}
+			return returnArray || results.length > 1 ? results : results[0];
 		},
 
 		edit: function edit() {
@@ -5514,8 +5536,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.children = [];
 
 			// ALL descendant property names as an array
-			if (!this.fromTemplate("properties", "mutable", "templateElement", "accepts")) {
-				this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
+			if (!this.fromTemplate("mutable", "templateElement", "accepts")) {
 				this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 				this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 
@@ -6034,7 +6055,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return o.collections ? this : items;
 			}
 
-			if (this.properties.indexOf(property) > -1) {
+			if (this.properties.has(property)) {
 				var ret = items.map(function (item) {
 					return item.find(property, o);
 				});
@@ -7354,9 +7375,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Boolean}
    */
 		intersects: function intersects(arr1, arr2) {
-			return arr1 && arr2 && !arr1.every(function (el) {
-				return arr2.indexOf(el) == -1;
-			});
+			if (arr1 && arr2) {
+				arr2 = new Set(arr2);
+
+				return !arr1.every(function (el) {
+					return arr2.has(el);
+				});
+			}
 		},
 
 		/*********************

@@ -14,8 +14,7 @@ var _ = Mavo.Collection = $.Class({
 		this.children = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("properties", "mutable", "templateElement", "accepts")) {
-			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
+		if (!this.fromTemplate("mutable", "templateElement", "accepts")) {
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 
@@ -425,7 +424,7 @@ var _ = Mavo.Collection = $.Class({
 			return o.collections? this : items;
 		}
 
-		if (this.properties.indexOf(property) > -1) {
+		if (this.properties.has(property)) {
 			var ret = items.map(item => item.find(property, o));
 
 			return Mavo.flatten(ret);

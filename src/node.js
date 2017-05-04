@@ -388,6 +388,25 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return [];
+		},
+
+		properties: function() {
+			if (this.template) {
+				return this.template.properties;
+			}
+
+			var ret = new Set(this.property && [this.property]);
+
+			if (this.nodeType == "Group") {
+				for (var property in this.children) {
+					ret = Mavo.union(ret, this.children[property].properties);
+				}
+			}
+			else if (this.nodeType == "Collection") {
+				ret = Mavo.union(ret, this.itemTemplate.properties);
+			}
+
+			return ret;
 		}
 	},
 
