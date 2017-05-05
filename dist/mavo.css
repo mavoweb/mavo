@@ -435,7 +435,9 @@ time[property][aria-label][mv-mode="edit"].mv-empty::before {
   .mv-bar.mv-ui button, .mv-bar.mv-ui .mv-button {
     all: unset;
     font-weight: bold;
-    cursor: pointer; }
+    cursor: pointer;
+    background: transparent;
+    color: inherit; }
     .mv-bar.mv-ui button:enabled:hover, .mv-bar.mv-ui .mv-button:enabled:hover {
       background: rgba(255, 255, 255, 0.2); }
     .mv-bar.mv-ui button:disabled, .mv-bar.mv-ui .mv-button:disabled {
