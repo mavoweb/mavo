@@ -7,7 +7,7 @@ var _ = Mavo.UI.Message = $.Class({
 		this.closed = Mavo.defer();
 
 		this.element = $.create({
-			className: "mv-ui mv-message" + (o.type? " mv-" + type : ""),
+			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),
 			innerHTML: this.message,
 			events: {
 				click: e => Mavo.scrollIntoViewIfNeeded(this.mavo.element)

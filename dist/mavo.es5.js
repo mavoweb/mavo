@@ -2191,7 +2191,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.closed = Mavo.defer();
 
 			this.element = $.create({
-				className: "mv-ui mv-message" + (o.type ? " mv-" + type : ""),
+				className: "mv-ui mv-message" + (o.type ? " mv-" + o.type : ""),
 				innerHTML: this.message,
 				events: {
 					click: function click(e) {
