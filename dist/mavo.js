@@ -2470,7 +2470,7 @@ var _ = Mavo.Node = $.Class({
 
 		this.template = env.options.template;
 
-    this.alias = this.element.getAttribute("mv-alias");
+		this.alias = this.element.getAttribute("mv-alias");
 
 		if (this.template) {
 			this.template.copies.push(this);
@@ -3196,15 +3196,15 @@ var _ = Mavo.Group = $.Class({
 			this.data = Mavo.subset(this.data, this.inPath, data);
 
 			this.propagate(obj => {
-        var propertyData = data[obj.property];
-        var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
+				var propertyData = data[obj.property];
+				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
 				obj.render(renderData);
 			});
 		}
 		else {
 			this.propagate(obj => {
-        var propertyData = data[obj.property];
-        var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
+				var propertyData = data[obj.property];
+				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
 				obj.render(renderData);
 			});
 
