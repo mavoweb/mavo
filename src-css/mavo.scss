@@ -249,6 +249,7 @@ button.mv-close {
 			content: attr(mv-progress) "…";
 			@include progress(1.5em);
 			position: fixed;
+			z-index: 10;
 			border: 1em solid transparent;
 			border-bottom-width: .8em;
 			padding-top: 2em;
