@@ -14,7 +14,13 @@ var _ = Mavo.Backend.register($.Class({
 		if (parsedURL.username) {
 			$.extend(this, parsedURL);
 			this.repo = this.repo || "mv-data";
-			this.path = this.path || `${this.mavo.id}.json`;
+			this.path = this.path || "";
+
+			if (!/\.\w+$/.test(this.path)) {
+				var extension = this.format.constructor.extensions[0] || ".json";
+				this.path += `/${this.mavo.id}${extension}`;
+			}
+
 			this.apiCall = `repos/${this.username}/${this.repo}/contents/${this.path}`;
 		}
 		else {
