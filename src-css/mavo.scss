@@ -319,7 +319,8 @@ button.mv-close {
 
 	// Make sure empty properties have SOME area to focus on/hover over
 	// This looks as close as possible to their edited state
-	&.mv-empty[mv-attribute="none"]:empty::before {
+	&.mv-empty[mv-attribute="none"]:empty::before,
+	&.mv-empty[mv-attribute="null"]:empty::before {
 		content: "(" attr(aria-label) ")";
 		opacity: .5;
 		cursor: text;
