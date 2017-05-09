@@ -6,6 +6,8 @@ var _ = self.Mavo = $.Class({
 
 		this.element = element;
 
+		this.inProgress = false;
+
 		// Index among other mavos in the page, 1 is first
 		this.index = Object.keys(_.all).length + 1;
 		Object.defineProperty(_.all, this.index - 1, {value: this});
@@ -595,8 +597,9 @@ var _ = self.Mavo = $.Class({
 		dependencies: [],
 
 		init: function(container = document) {
-			return $$(_.selectors.init, container)
-				.filter(element => !_.get(element)) // not already inited
+			var mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
+
+			return mavos.filter(element => !_.get(element)) // not already inited
 				.map(element => new _(element));
 		},
 
@@ -676,8 +679,10 @@ requestAnimationFrame(() => {
 		$.include(!polyfills.length, `https://cdn.polyfill.io/v2/polyfill.min.js?features=${polyfills.join(",")}`),
 	);
 
+	var mavos = $.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+
 	_.ready = _.all(_.dependencies);
-	_.inited = _.ready.catch(console.error).then(() => Mavo.init());
+	_.inited = _.ready.catch(console.error).then(() => Mavo.init(mavos));
 });
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
