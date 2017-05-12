@@ -381,6 +381,20 @@ var _ = Mavo.Node = $.Class({
 			return this.getClosestCollection();
 		},
 
+		closestItem: function() {
+			if (this.collection) {
+				return this;
+			}
+
+			this.walkUp(obj => {
+				if (obj.collection) {
+					return obj;
+				}
+			});
+
+			return null;
+		},
+
 		// Are were only rendering and editing a subset of the data?
 		inPath: function() {
 			if (this.nodeType != "Collection") {
