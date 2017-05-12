@@ -265,7 +265,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	editItem: function(item) {
-		Mavo.inView.when(item.element).then(() => {
+		return Mavo.inView.when(item.element).then(() => {
 			if (this.mutable) {
 				if (!item.itembar) {
 					item.itembar = new Mavo.UI.Itembar(item);
@@ -274,7 +274,7 @@ var _ = Mavo.Collection = $.Class({
 				item.itembar.add();
 			}
 
-			item.edit();
+			return item.edit();
 		});
 	},
 

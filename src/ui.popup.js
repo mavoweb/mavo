@@ -94,7 +94,6 @@ var _ = Mavo.UI.Popup = $.Class({
 				this.show();
 			},
 			"keyup.mavo:edit": evt => {
-				console.log(evt.keyCode);
 				if ([13, 113].indexOf(evt.keyCode) > -1) { // Enter or F2
 					this.show();
 					this.editor.focus();
