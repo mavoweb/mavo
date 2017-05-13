@@ -116,9 +116,12 @@
 			}
 
 			&::after {
-				content: "";
-				color: white;
-				@include progress;
+				content: $loader;
+				position: absolute;
+				top: .5em;
+				right: .5em;
+				bottom: .5em;
+				left: .5em;
 			}
 		}
 

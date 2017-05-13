@@ -240,28 +240,6 @@ button.mv-close {
 		}
 	}
 
-	&[mv-progress="Loading"] [mv-multiple] {
-		display: none;
-	}
-
-	&[mv-progress] {
-		&::after {
-			content: attr(mv-progress) "…";
-			@include progress(1.5em);
-			position: fixed;
-			z-index: 10;
-			border: 1em solid transparent;
-			border-bottom-width: .8em;
-			padding-top: 2em;
-			border-radius: .5em;
-			background-color: rgba(0,0,0,.4);
-			background-position-y: calc(50% - 1em);
-			background-origin: padding-box;
-			color: white;
-			font-weight: bold;
-		}
-	}
-
 	&.mv-highlight-unsaved .mv-unsaved-changes {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
@@ -282,6 +260,33 @@ button.mv-close {
 			outline: none;
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
+	}
+}
+
+[mv-progress="Loading"] [mv-multiple] {
+	display: none;
+}
+
+[mv-progress] {
+	&::after {
+		content: attr(mv-progress) "…";
+		position: fixed;
+		z-index: 10;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		border: 1em solid transparent;
+		border-bottom-width: .8em;
+		padding-top: 2em;
+		border-radius: .5em;
+		background-image: $loader;
+		background-repeat: no-repeat;
+		background-color: rgba(0,0,0,.4);
+		background-position-y: calc(50% - 1em);
+		background-origin: padding-box;
+		color: white;
+		font-weight: bold;
+		hyphens: none;
 	}
 }
 

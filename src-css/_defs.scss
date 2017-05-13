@@ -71,46 +71,20 @@ $font-mono: Consolas, Monaco, monospace;
 	}
 }
 
-@keyframes loader {
-	33% {
-		background-size: .5em .5em, 1em 1em, .5em .5em;
-		background-position: .25em 50%, 1em 50%, 2.25em 50%;
-	}
-
-	66% {
-		background-size: .5em .5em, .5em .5em, 1em 1em;
-		background-position: .25em 50%, 1.25em 50%, 2em 50%;
-	}
+$loader: inline-svg('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 100">
+<style>
+@keyframes grow {
+	33.3% {stroke-width: 50px}
+	from, 66.6%, to { stroke-width: 0}
 }
 
-@mixin progress($size: 1em) {
-	$double: $size $size;
-	$doublehalf: $size/2 $size/2;
-
-	@keyframes loader-#{$size * 100} {
-		33% {
-			background-size: $doublehalf, $double, $doublehalf;
-			background-position-x: $size * .25, $size, $size * 2.25;
-		}
-
-		66% {
-			background-size: $doublehalf, $doublehalf, $double;
-			background-position-x: $size * .25, $size * 1.25, $size * 2;
-		}
-	}
-
-	width: $size * 3.3;
-	height: $size;
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
-	background: radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent),
-				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent),
-				radial-gradient(circle closest-side, currentColor calc(100% - 1px), transparent);
-	background-size: $double, $doublehalf, $doublehalf;
-	background-repeat: no-repeat;
-	background-position-x: 0, $size * 1.25, $size * 2.25;
-	background-position-y: 50%;
-	animation: loader-#{$size * 100} .6s infinite;
+circle {
+	animation: grow .6s infinite both;
+	fill: white;
+	stroke: white;
 }
+</style>
+<circle cx="50" cy="50" r="22" />
+<circle cx="150" cy="50" r="22" style="animation-delay: .2s" />
+<circle cx="250" cy="50" r="22" style="animation-delay: .4s" />
+</svg>');
