@@ -386,13 +386,15 @@ var _ = Mavo.Node = $.Class({
 				return this;
 			}
 
+			var object = null
 			this.walkUp(obj => {
 				if (obj.collection) {
+					object = obj;
 					return obj;
 				}
 			});
 
-			return null;
+			return object;
 		},
 
 		// Are were only rendering and editing a subset of the data?
