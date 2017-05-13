@@ -257,6 +257,23 @@ var _ = Mavo.Primitive = $.Class({
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
 				}
+			},
+			"keyup": evt => {
+				var key = evt.which || evt.keyCode;
+				if (!this.popup && (evt.currentTarget.type === "text" || evt.currentTarget.type === "email"|| evt.currentTarget.type === "url")) { //also possibly tel, search, number, time
+					if (key === 13) { //enter key
+						var newPrimitiveIndex = this.closestItem.index + 1;
+						var newPrimitive = this.closestCollection.add(undefined, newPrimitiveIndex);
+						var oldPrimitive = this;
+						this.closestCollection.editItem(newPrimitive).then(function() {
+							var newPrimitiveTemplate = oldPrimitive.template.copies[oldPrimitive.template.copies.length-1];
+							newPrimitiveTemplate.element.focus();
+							newPrimitiveTemplate.preEdit.then(() => {
+								newPrimitiveTemplate.editor.focus();
+							});
+						});
+					}
+				}
 			}
 		});
 
