@@ -373,10 +373,14 @@ var _ = Mavo.Primitive = $.Class({
 					this.element.textContent = "";
 
 					this.element.appendChild(this.editor);
+				}
 
-					if (!this.collection) {
-						Mavo.revocably.restoreAttribute(this.element, "tabindex");
+				if (!this.collection) {
+					if (document.activeElement === this.element) {
+						this.editor.focus();
 					}
+					
+					Mavo.revocably.restoreAttribute(this.element, "tabindex");
 				}
 			}
 		});
