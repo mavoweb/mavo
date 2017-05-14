@@ -628,6 +628,7 @@ let s = _.selectors = {
 	group: "[typeof], [itemscope], [itemtype], [mv-group]",
 	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
+	textInput: ["text", "email", "url", "tel", "search"].map(t => `input[type=${t}]`).join(", ") + ", textarea",
 	ui: ".mv-ui",
 	container: {
 		// "li": "ul, ol",

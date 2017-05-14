@@ -273,15 +273,17 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	getClosestCollection: function() {
+		var closestItem = this.closestItem;
+
+		return closestItem? closestItem.collection : null;
+	},
+
+	getClosestItem: function() {
 		if (this.collection && this.collection.mutable) {
-			return this.collection;
+			return this;
 		}
 
-		if (this.group.collection && this.group.collection.mutable) {
-			return this.group.collection;
-		}
-
-		return this.parentGroup? this.parentGroup.closestCollection : null;
+		return this.parentGroup? this.parentGroup.closestItem : null;
 	},
 
 	/**
@@ -382,19 +384,7 @@ var _ = Mavo.Node = $.Class({
 		},
 
 		closestItem: function() {
-			if (this.collection) {
-				return this;
-			}
-
-			var object = null
-			this.walkUp(obj => {
-				if (obj.collection) {
-					object = obj;
-					return obj;
-				}
-			});
-
-			return object;
+			return this.getClosestItem();
 		},
 
 		// Are were only rendering and editing a subset of the data?

@@ -257,25 +257,36 @@ var _ = Mavo.Primitive = $.Class({
 					evt.stopPropagation();
 					$.fire(this.editor, "input");
 				}
-			},
-			"keyup": evt => {
-				var key = evt.which || evt.keyCode;
-				if (!this.popup && (evt.currentTarget.type === "text" || evt.currentTarget.type === "email"|| evt.currentTarget.type === "url")) { //also possibly tel, search, number, time
-					if (key === 13) { //enter key
-						var newPrimitiveIndex = this.closestItem.index + 1;
-						var newPrimitive = this.closestCollection.add(undefined, newPrimitiveIndex);
-						var oldPrimitive = this;
-						this.closestCollection.editItem(newPrimitive).then(function() {
-							var newPrimitiveTemplate = oldPrimitive.template.copies[oldPrimitive.template.copies.length-1];
-							newPrimitiveTemplate.element.focus();
-							newPrimitiveTemplate.preEdit.then(() => {
-								newPrimitiveTemplate.editor.focus();
-							});
-						});
-					}
-				}
 			}
 		});
+
+		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
+			var multiline = this.editor.matches("textarea");
+			this.editor.addEventListener("keydown", evt => {
+				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
+					var index = this.closestItem.index;
+					var next = this.closestCollection.children[index + 1];
+
+					if (!next) {
+						// It's the last item, insert new
+						next = this.closestCollection.add();
+					}
+
+					var copy = this.template? this.template.copies[this.template.copies.indexOf(this) + 1] : this.copies[0];
+
+					this.closestCollection.editItem(next).then(() => {
+						copy.preEdit.then(() => {
+							copy.editor.focus();
+						});
+						copy.element.focus();
+					});
+
+					if (multiline) {
+						evt.preventDefault();
+					}
+				}
+			});
+		}
 
 		if ("placeholder" in this.editor) {
 			this.editor.placeholder = "(" + this.label + ")";
