@@ -24,6 +24,8 @@ var _ = Mavo.Node = $.Class({
 
 		this.template = env.options.template;
 
+		this.alias = this.element.getAttribute("mv-alias");
+
 		if (this.template) {
 			this.template.copies.push(this);
 		}

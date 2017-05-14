@@ -194,12 +194,16 @@ var _ = Mavo.Group = $.Class({
 			this.data = Mavo.subset(this.data, this.inPath, data);
 
 			this.propagate(obj => {
-				obj.render(data[obj.property]);
+				var propertyData = data[obj.property];
+				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
+				obj.render(renderData);
 			});
 		}
 		else {
 			this.propagate(obj => {
-				obj.render(data[obj.property]);
+				var propertyData = data[obj.property];
+				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
+				obj.render(renderData);
 			});
 
 			// Fire datachange events for properties not in the template,
