@@ -152,12 +152,12 @@ var _ = Mavo.Group = $.Class({
 		return returnArray || results.length > 1? results : results[0];
 	},
 
-	edit: function() {
+	edit: function(o = {}) {
 		if (this.super.edit.call(this) === false) {
 			return false;
 		}
 
-		this.propagate("edit");
+		return Promise.all(Object.keys(this.children).map(prop => this.children[prop].edit(o)));
 	},
 
 	save: function() {

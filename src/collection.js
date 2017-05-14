@@ -264,8 +264,10 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	editItem: function(item) {
-		return Mavo.inView.when(item.element).then(() => {
+	editItem: function(item, o = {}) {
+		var when = o.immediately? Promise.resolve() : Mavo.inView.when(item.element);
+
+		return when.then(() => {
 			if (this.mutable) {
 				if (!item.itembar) {
 					item.itembar = new Mavo.UI.Itembar(item);
@@ -274,11 +276,11 @@ var _ = Mavo.Collection = $.Class({
 				item.itembar.add();
 			}
 
-			return item.edit();
+			return item.edit(o);
 		});
 	},
 
-	edit: function() {
+	edit: function(o = {}) {
 		if (this.super.edit.call(this) === false) {
 			return false;
 		}
@@ -299,9 +301,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		// Edit items, maybe insert item bar
-		this.propagate(item => {
-			this.editItem(item);
-		});
+		return Promise.all(this.children.map(item => this.editItem(item, o)));
 	},
 
 	done: function() {

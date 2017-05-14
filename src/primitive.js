@@ -260,8 +260,10 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
+		// Enter should go to the next item or insert a new one
 		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
 			var multiline = this.editor.matches("textarea");
+
 			this.editor.addEventListener("keydown", evt => {
 				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
 					var index = this.closestItem.index;
@@ -272,13 +274,11 @@ var _ = Mavo.Primitive = $.Class({
 						next = this.closestCollection.add();
 					}
 
-					var copy = this.template? this.template.copies[this.template.copies.indexOf(this) + 1] : this.copies[0];
+					var relativePath = this.pathFrom(this.closestItem);
+					var copy = next.getDescendant(relativePath);
 
-					this.closestCollection.editItem(next).then(() => {
-						copy.preEdit.then(() => {
-							copy.editor.focus();
-						});
-						copy.element.focus();
+					this.closestCollection.editItem(next, {immediately: true}).then(() => {
+						copy.editor.focus();
 					});
 
 					if (multiline) {
@@ -311,7 +311,7 @@ var _ = Mavo.Primitive = $.Class({
 		this.initEdit = null;
 	},
 
-	edit: function () {
+	edit: function (o = {}) {
 		if (this.super.edit.call(this) === false) {
 			return false;
 		}
@@ -327,7 +327,11 @@ var _ = Mavo.Primitive = $.Class({
 			this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
 		}
 
-		this.preEdit = Mavo.defer((resolve, reject) => {
+		this.preEdit = Mavo.defer(resolve => {
+			if (o.immediately) {
+				return resolve();
+			}
+
 			var timer;
 
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
@@ -352,7 +356,7 @@ var _ = Mavo.Primitive = $.Class({
 			return;
 		}
 
-		this.preEdit.then(() => {
+		return this.preEdit.then(() => {
 			// Actual edit
 			if (this.initEdit) {
 				this.initEdit();

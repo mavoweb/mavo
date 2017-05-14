@@ -378,6 +378,19 @@ var _ = Mavo.Node = $.Class({
 		});
 	},
 
+	pathFrom: function(node) {
+		var path = this.path;
+		var nodePath = node.path;
+
+		for (var i = 0; i<path.length && nodePath[i] == path[i]; i++) {}
+
+		return path.slice(i);
+	},
+
+	getDescendant: function(path) {
+		return path.reduce((acc, cur) => acc.children[cur], this);
+	},
+
 	lazy: {
 		closestCollection: function() {
 			return this.getClosestCollection();
