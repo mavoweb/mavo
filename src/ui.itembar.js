@@ -61,7 +61,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 		});
 
 		this.dragHandle.addEventListener("keydown", evt => {
-			if (this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
+			if (evt.target === this.dragHandle && this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
 				// Arrow keys
 				this.collection.move(this.item, evt.keyCode <= 38? -1 : 1);
 
