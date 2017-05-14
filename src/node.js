@@ -391,6 +391,52 @@ var _ = Mavo.Node = $.Class({
 		return path.reduce((acc, cur) => acc.children[cur], this);
 	},
 
+	/**
+	 * Get same node in other item in same collection
+	 * E.g. for same node in the next item, use an offset of -1
+	 */
+	getCousin: function(offset, o = {}) {
+		if (!this.closestCollection) {
+			return null;
+		}
+
+		var collection = this.closestCollection;
+		var distance = Math.abs(offset);
+		var direction =  offset < 0? -1 : 1;
+
+		if (collection.length < distance + 1) {
+			return null;
+		}
+
+		var index = this.closestItem.index + offset;
+
+		if (o.wrap) {
+			index = Mavo.wrap(index, collection.length);
+		}
+
+		for (var i = 0; i<collection.length; i++) {
+			var ind = index + i * direction;
+			ind = o.wrap? Mavo.wrap(ind, collection.length) : ind;
+
+			var item = collection.children[ind];
+
+			if (!item || !item.isDeleted()) {
+				break;
+			}
+		}
+
+		if (!item || item.isDeleted() || item == this.closestItem) {
+			return null;
+		}
+
+		if (this.collection) {
+			return item;
+		}
+
+		var relativePath = this.pathFrom(this.closestItem);
+		return item.getDescendant(relativePath);
+	},
+
 	lazy: {
 		closestCollection: function() {
 			return this.getClosestCollection();

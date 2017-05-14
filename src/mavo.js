@@ -222,16 +222,47 @@ var _ = self.Mavo = $.Class({
 					});
 				});
 			}
-
-			// Ctrl + S or Cmd + S to save
-			this.element.addEventListener("keydown.mavo:save", evt => {
-				if (evt.keyCode == 83 && evt[_.superKey]) {
-					evt.preventDefault();
-					this.save();
-				}
-			});
 		}, () => {
 			$.unbind(this.element, ".mavo:save .mavo:autosave");
+		});
+
+		// Keyboard navigation
+		this.element.addEventListener("keydown", evt => {
+			// Ctrl + S or Cmd + S to save
+			if (this.permissions.save && evt.keyCode == 83 && evt[_.superKey]) {
+				evt.preventDefault();
+				this.save();
+			}
+			else if (evt.keyCode == 38 || evt.keyCode == 40) {
+				var element = evt.target;
+
+				if (element.matches("textarea, input[type=range], input[type=number]")) {
+					// Arrow keys are meaningful here
+					return;
+				}
+
+				if (element.matches(".mv-editor")) {
+					var editor = true;
+					element = element.parentNode;
+				}
+
+				var node = Mavo.Node.get(element);
+
+				if (node && node.closestCollection) {
+					var nextNode = node.getCousin(evt.keyCode == 38? -1 : 1, {wrap: true});
+
+					if (nextNode) {
+						if (editor && nextNode.editing) {
+							nextNode.edit({immediately: true}).then(() => nextNode.editor.focus());
+						}
+						else {
+							nextNode.element.focus();
+						}
+
+						evt.preventDefault();
+					}
+				}
+			}
 		});
 
 		Mavo.hooks.run("init-end", this);

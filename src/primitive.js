@@ -266,20 +266,20 @@ var _ = Mavo.Primitive = $.Class({
 
 			this.editor.addEventListener("keydown", evt => {
 				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
-					var index = this.closestItem.index;
-					var next = this.closestCollection.children[index + 1];
+					var copy = this.getCousin(1);
 
-					if (!next) {
-						// It's the last item, insert new
+					if (!copy) {
+						// It's the last item, insert new if top-down
+						if (this.bottomUp) {
+							return;
+						}
+
 						next = this.closestCollection.add();
+						this.closestCollection.editItem(next, {immediately: true});
 					}
 
-					var relativePath = this.pathFrom(this.closestItem);
-					var copy = next.getDescendant(relativePath);
-
-					this.closestCollection.editItem(next, {immediately: true}).then(() => {
-						copy.editor.focus();
-					});
+					copy = this.getCousin(1);
+					copy.edit({immediately: true}).then(() => copy.editor.focus());
 
 					if (multiline) {
 						evt.preventDefault();

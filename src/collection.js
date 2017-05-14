@@ -250,12 +250,7 @@ var _ = Mavo.Collection = $.Class({
 	move: function(item, offset) {
 		index = item.index + offset + (offset > 0);
 
-		if (index < 0) {
-			index = this.children.length;
-		}
-		else if (index > this.children.length) {
-			index = 0;
-		}
+		index = Mavo.wrap(index, this.children.length + 1);
 
 		this.add(item, index);
 

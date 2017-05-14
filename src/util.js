@@ -525,7 +525,9 @@ var _ = $.extend(Mavo, {
 	rr: function(f) {
 		f();
 		return f;
-	}
+	},
+
+	wrap: (index, length) => index < 0? length - 1 : index >= length? 0 : index
 });
 
 // Bliss plugins
