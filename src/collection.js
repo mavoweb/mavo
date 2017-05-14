@@ -14,8 +14,7 @@ var _ = Mavo.Collection = $.Class({
 		this.children = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("properties", "mutable", "templateElement", "accepts")) {
-			this.properties = $$(Mavo.selectors.property, this.templateElement).map(Mavo.Node.getProperty);
+		if (!this.fromTemplate("mutable", "templateElement", "accepts")) {
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 
@@ -48,7 +47,7 @@ var _ = Mavo.Collection = $.Class({
 			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 
-				if (itemData || env.options.live) {
+				if (itemData !== null || env.options.live) {
 					env.data.push(itemData);
 				}
 			}
@@ -135,6 +134,10 @@ var _ = Mavo.Collection = $.Class({
 			add: env.item
 		});
 
+		if (env.item.itembar) {
+			env.item.itembar.reposition();
+		}
+
 		if (this.mavo.expressions.active && !o.silent) {
 			requestAnimationFrame(() => {
 				env.changed.forEach(i => {
@@ -143,6 +146,8 @@ var _ = Mavo.Collection = $.Class({
 				});
 
 				this.unsavedChanges = this.mavo.unsavedChanges = true;
+
+				this.mavo.expressions.update(env.item);
 			});
 		}
 
@@ -253,18 +258,24 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		this.add(item, index);
+
+		if (item instanceof Mavo.Primitive && item.itembar) {
+			item.itembar.reposition();
+		}
 	},
 
 	editItem: function(item) {
-		if (this.mutable) {
-			if (!item.itemControls) {
-				item.itemControls = new Mavo.UI.Itembar(item);
+		Mavo.inView.when(item.element).then(() => {
+			if (this.mutable) {
+				if (!item.itembar) {
+					item.itembar = new Mavo.UI.Itembar(item);
+				}
+
+				item.itembar.add();
 			}
 
-			item.itemControls.add();
-		}
-
-		item.edit();
+			item.edit();
+		});
 	},
 
 	edit: function() {
@@ -304,8 +315,8 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			this.propagate(item => {
-				if (item.itemControls) {
-					item.itemControls.remove();
+				if (item.itembar) {
+					item.itembar.remove();
 				}
 			});
 		}
@@ -315,6 +326,10 @@ var _ = Mavo.Collection = $.Class({
 	 * Delete all items in the collection. Not undoable.
 	 */
 	clear: function() {
+		if (this.modes == "read") {
+			return;
+		}
+
 		if (this.mutable) {
 			for (var i = 1, item; item = this.children[i]; i++) {
 				item.element.remove();
@@ -409,7 +424,7 @@ var _ = Mavo.Collection = $.Class({
 			return o.collections? this : items;
 		}
 
-		if (this.properties.indexOf(property) > -1) {
+		if (this.properties.has(property)) {
 			var ret = items.map(item => item.find(property, o));
 
 			return Mavo.flatten(ret);

@@ -10,7 +10,7 @@ var _ = Mavo.Expressions = $.Class({
 		var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
 		this.traverse(this.mavo.element, undefined, syntax);
 
-		this.scheduled = new Set();
+		this.scheduled = {};
 
 		this.mavo.treeBuilt.then(() => {
 			this.expressions = [];
@@ -21,15 +21,17 @@ var _ = Mavo.Expressions = $.Class({
 					return;
 				}
 
-				if (evt.action == "propertychange" && evt.node.closestCollection) {
-					// Throttle propertychange events in collections and events from other Mavos
-					if (!this.scheduled.has(evt.property)) {
-						setTimeout(() => {
-							this.scheduled.delete(evt.property);
-							this.update(evt);
-						}, _.PROPERTYCHANGE_THROTTLE);
+				var scheduled = this.scheduled[evt.action] = this.scheduled[evt.action] || new Set();
 
-						this.scheduled.add(evt.property);
+				if (evt.node.closestCollection || evt.mavo != this.mavo) {
+					// Throttle events in collections and events from other Mavos
+					if (!scheduled.has(evt.property)) {
+						setTimeout(() => {
+							scheduled.delete(evt.property);
+							this.update(evt);
+						}, _.THROTTLE);
+
+						scheduled.add(evt.property);
 					}
 				}
 				else {
@@ -64,9 +66,9 @@ var _ = Mavo.Expressions = $.Class({
 		var allData = rootObject.getData({live: true});
 
 		rootObject.walk((obj, path) => {
-			var data = $.value(allData, ...path);
-
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+				var data = $.value(allData, ...path);
+
 				if (typeof data != "object" || data === null) {
 					// Turn primitives into objects, so we can have $index, their property
 					// name etc resolve relative to them, not their parent group
@@ -91,17 +93,26 @@ var _ = Mavo.Expressions = $.Class({
 		});
 	},
 
-	extract: function(node, attribute, path, syntax) {
+	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
 		if (attribute && attribute.name == "mv-expressions") {
 			return;
+		}
+
+		if (path === undefined) {
+			path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
+		}
+		else if (path && typeof path === "string") {
+			path = path.slice(1).split("/").map(i => +i);
+		}
+		else {
+			path = [];
 		}
 
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			this.expressions.push(new Mavo.DOMExpression({
-				node, syntax,
-				path: path? path.slice(1).split("/").map(i => +i) : [],
+				node, syntax, path,
 				attribute: attribute && attribute.name,
 				mavo: this.mavo
 			}));
@@ -134,14 +145,22 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
-			$$(node.childNodes).forEach((child, i) => this.traverse(child, `${path}/${i}`, syntax));
+
+			var index = 0;
+
+			$$(node.childNodes).forEach(child => {
+				if (child.nodeType == 1 || child.nodeType == 3) {
+					this.traverse(child, `${path}/${index}`, syntax);
+					index++;
+				}
+			});
 		}
 	},
 
 	static: {
 		directives: [],
 
-		PROPERTYCHANGE_THROTTLE: 50,
+		THROTTLE: 50,
 
 		directive: function(name, o) {
 			_.directives.push(name);

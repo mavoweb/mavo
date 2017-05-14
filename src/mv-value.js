@@ -56,11 +56,6 @@ Mavo.Expressions.directive("mv-value", {
 			};
 
 			this.changedBy = evt => true;
-		},
-		"domexpression-update-start": function() {
-			if (this.originalAttribute != "mv-value" || this.mavoNode != this.item) {
-				return;
-			}
 		}
 	}
 });

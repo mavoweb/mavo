@@ -31,6 +31,8 @@
 		all: unset;
 		font-weight: bold;
 		cursor: pointer;
+		background: transparent;
+		color: inherit;
 
 		&:enabled:hover {
 			background: hsla(0,0%,100%,.2);

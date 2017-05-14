@@ -16,10 +16,6 @@ Mavo.Expressions.directive("mv-if", {
 		"DOMExpression": {
 			lazy: {
 				"childProperties": function() {
-					if (this.attribute != "mv-if") {
-						return;
-					}
-
 					var properties = $$(Mavo.selectors.property, this.element)
 									.filter(el => el.closest("[mv-if]") == this.element)
 									.map(el => Mavo.Node.get(el));

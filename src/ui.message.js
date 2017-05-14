@@ -7,7 +7,7 @@ var _ = Mavo.UI.Message = $.Class({
 		this.closed = Mavo.defer();
 
 		this.element = $.create({
-			className: "mv-ui mv-message",
+			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),
 			innerHTML: this.message,
 			events: {
 				click: e => Mavo.scrollIntoViewIfNeeded(this.mavo.element)
@@ -17,6 +17,13 @@ var _ = Mavo.UI.Message = $.Class({
 
 		if (o.classes) {
 			this.element.classList.add(o.classes);
+		}
+
+		if (o.type == "error") {
+			this.element.setAttribute("role", "alert");
+		}
+		else {
+			this.element.setAttribute("aria-live", "polite");
 		}
 
 		o.dismiss = o.dismiss || {};

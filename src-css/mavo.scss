@@ -131,11 +131,6 @@
 
 	.mv-drag-handle {
 		$color: hsl(0, 0%, 30%);
-		cursor: move;
-
-		&:active, &:focus {
-			cursor: grabbing;
-		}
 
 		&::before {
 			content: "≡";
@@ -150,6 +145,14 @@
 	[mv-app]:not([mv-permissions~="delete"]) & .mv-delete,
 	[mv-app]:not([mv-permissions~="add"]) & .mv-add {
 		display: none;
+	}
+}
+
+.mv-drag-handle {
+	cursor: move;
+
+	&:active, &:focus {
+		cursor: grabbing;
 	}
 }
 
@@ -274,15 +277,8 @@ button.mv-close {
 			opacity: .5;
 		}
 
-		[mv-multiple],
-		.mv-editor {
-			&:focus {
-				outline: none;
-			}
-		}
-
-		// Temporary, good for debugging keyboard usability
 		.mv-editor:focus {
+			outline: none;
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
 	}
@@ -302,11 +298,11 @@ button.mv-close {
 		cursor: auto;
 	}
 
-	&:hover {
+	&:not(input):not(select):not(textarea):hover {
 		@include highlight(hsla(58, 100%, 50%, .2));
 	}
 
-	& textarea.mv-editor {
+	textarea.mv-editor {
 		display: block;
 		box-sizing: border-box;
 		width: 100%;
@@ -318,6 +314,14 @@ button.mv-close {
 
 	select.mv-editor {
 		white-space: nowrap;
+	}
+
+	// Make sure empty properties have SOME area to focus on/hover over
+	// This looks as close as possible to their edited state
+	&.mv-empty[mv-attribute="none"]:empty::before {
+		content: "(" attr(aria-label) ")";
+		opacity: .5;
+		cursor: text;
 	}
 }
 
@@ -550,6 +554,8 @@ meter, progress {
 	}
 }
 
-
+time[property][aria-label][mv-mode="edit"].mv-empty::before {
+	content: "(No " attr(aria-label) ")";
+}
 
 @import 'bar';

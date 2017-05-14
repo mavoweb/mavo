@@ -74,7 +74,7 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
-	 * Array utlities
+	 * Array & set utlities
 	 */
 
 	// If the passed value is not an array, convert to an array
@@ -106,6 +106,10 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	union: (set1, set2) => {
+		return new Set([...(set1 || []), ...(set2 || [])]);
+	},
+
 	/**
 	 * DOM element utilities
 	 */
@@ -134,7 +138,51 @@ var _ = $.extend(Mavo, {
 		}
 		else {
 			element._.data.mavo = element._.data.mavo || {};
-			return element._.data.mavo[name] = value;
+
+			if (value === undefined) {
+				delete element._.data.mavo[name];
+			}
+			else {
+				return element._.data.mavo[name] = value;
+			}
+		}
+	},
+
+	elementPath: function (ancestor, element, types = [1, 3]) {
+		var elementsOnly = types.length === 1 && types[0] == 1;
+
+		if (Array.isArray(element)) {
+			// Get element by path
+			var path = element;
+
+			return path.reduce((acc, cur) => {
+				if (elementsOnly) {
+					var children = acc.children;
+				}
+				else {
+					var children = $$(acc.childNodes).filter(node => types.indexOf(node.nodeType) > -1);
+				}
+				return children[cur];
+			}, ancestor);
+		}
+		else {
+			// Get path
+			var path = [];
+
+			for (var parent = element; parent && parent != ancestor; parent = parent.parentNode) {
+				var index = 0;
+				var sibling = parent;
+
+				while (sibling = sibling[`previous${elementsOnly? "Element" : ""}Sibling`]) {
+					if (types.indexOf(sibling.nodeType) > -1) {
+						index++;
+					}
+				}
+
+				path.unshift(index);
+			}
+
+			return parent? path : null;
 		}
 	},
 
@@ -188,19 +236,76 @@ var _ = $.extend(Mavo, {
 			}
 
 			return false;
+		},
+
+		setAttribute: function(element, attribute, value) {
+			var previousValue = _.data(element, "attribute-" + attribute);
+
+			if (previousValue === undefined) {
+				// Only set this when there's no old value stored, otherwise
+				// if called multiple times, it could result in losing the original value
+				_.data(element, "attribute-" + attribute, element.getAttribute(attribute));
+			}
+
+			element.setAttribute(attribute, value);
+		},
+
+		restoreAttribute: function(element, attribute) {
+			var previousValue = _.data(element, "attribute-" + attribute);
+
+			if (previousValue !== undefined) {
+				$.toggleAttribute(element, attribute, previousValue);
+				_.data(element, "attribute-" + attribute, undefined);
+			}
 		}
 	},
 
-	inViewport: element => {
-		var r = element.getBoundingClientRect();
+	inView: {
+		is: element => {
+			var r = element.getBoundingClientRect();
 
-		return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
-		       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+			return (0 <= r.bottom && r.bottom <= innerHeight || 0 <= r.top && r.top <= innerHeight) // vertical
+			       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
+		},
+
+		when: element => {
+			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries) {
+				for (var entry of entries) {
+					this.unobserve(entry.target);
+					$.fire(entry.target, "mavo:inview", {entry});
+				}
+			});
+
+			return new Promise(resolve => {
+				if (_.is(element)) {
+					resolve();
+				}
+
+				observer.observe(element);
+
+				var callback = evt => {
+					element.removeEventListener("mavo:inview", callback);
+					evt.stopPropagation();
+					resolve();
+				};
+
+				element.addEventListener("mavo:inview", callback);
+			});
+		}
 	},
 
 	scrollIntoViewIfNeeded: element => {
-		if (element && !Mavo.inViewport(element)) {
+		if (element && !Mavo.inView.is(element)) {
 			element.scrollIntoView({behavior: "smooth"});
+		}
+	},
+
+	/**
+	 * Set attribute only if it doesn’t exist
+	 */
+	setAttributeShy: function(element, attribute, value) {
+		if (!element.hasAttribute(attribute)) {
+			element.setAttribute(attribute, value);
 		}
 	},
 

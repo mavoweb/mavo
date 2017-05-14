@@ -56,7 +56,13 @@ var _ = Mavo.Functions = {
 	 * Do two arrays have a non-empty intersection?
 	 * @return {Boolean}
 	 */
-	intersects: (arr1, arr2) => arr1 && arr2 && !arr1.every(el => arr2.indexOf(el) == -1),
+	intersects: (arr1, arr2) => {
+		if (arr1 && arr2) {
+			arr2 = new Set(arr2);
+
+			return !arr1.every(el => arr2.has(el));
+		}
+	},
 
 	/*********************
 	 * Number functions
@@ -107,6 +113,20 @@ var _ = Mavo.Functions = {
 			useGrouping: false,
 			maximumFractionDigits: decimals
 		});
+	},
+
+	th: function(num) {
+		if (num === null || num === "") {
+			return "";
+		}
+
+		if (ord < 10 || ord > 20) {
+			var ord = ["th", "st", "nd", "th"][num % 10];
+		}
+
+		ord = ord || "th";
+
+		return num + ord;
 	},
 
 	iff: function(condition, iftrue, iffalse="") {
@@ -187,6 +207,8 @@ var _ = Mavo.Functions = {
 	uppercase: str => (str + "").toUpperCase(),
 	lowercase: str => (str + "").toLowerCase(),
 
+	json: data => Mavo.safeToJSON(data),
+
 	/*********************
 	 * Date functions
 	 *********************/
@@ -195,12 +217,15 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
+	get $today() {
+		return _.date(new Date());
+	},
+
 	year: getDateComponent("year"),
 	month: getDateComponent("month"),
 	day: getDateComponent("day"),
 	weekday: getDateComponent("weekday"),
 	hour: getDateComponent("hour"),
-	hour12: getDateComponent("hour", "numeric", {hour12:true}),
 	minute: getDateComponent("minute"),
 	second: getDateComponent("second"),
 
@@ -475,7 +500,8 @@ var aliases = {
 	divide: "div",
 	lt: "lessThan smaller",
 	gt: "moreThan greater greaterThan bigger",
-	eq: "equal equality"
+	eq: "equal equality",
+	th: "ordinal"
 };
 
 for (let name in aliases) {
@@ -542,7 +568,13 @@ function toDate(date) {
 	}
 
 	if ($.type(date) === "string") {
+		date = date.trim();
+
 		// Fix up time format
+		if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
+			// No date, add today’s
+			date = _.$today + " " + date;
+		}
 
 		if (date.indexOf(":") === -1) {
 			// Add a time if one doesn't exist
@@ -577,43 +609,44 @@ function toDate(date) {
 	return date;
 }
 
-function getDateComponent(component, option = "numeric", o) {
-	var locale = document.documentElement.lang || "en-GB";
+function toLocaleString(date, options) {
+	var ret = date.toLocaleString(Mavo.locale, options);
 
-	return function(date, format = option) {
+	ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
+
+	return ret;
+}
+
+var numeric = {
+	year: d => d.getFullYear(),
+	month: d => d.getMonth() + 1,
+	day: d => d.getDate(),
+	weekday: d => d.getDay() || 7,
+	hour: d => d.getHours(),
+	minute: d => d.getMinutes(),
+	second: d => d.getSeconds()
+};
+
+function getDateComponent(component) {
+	return function(date) {
 		date = toDate(date);
 
 		if (!date) {
 			return "";
 		}
 
-		var options = $.extend({
-			[component]: format,
-			hour12: false
-		}, o);
+		ret = numeric[component](date);
 
-		if (component == "weekday" && format == "numeric") {
-			ret = date.getDay() || 7;
-		}
-		else {
-			var ret = date.toLocaleString(locale, options);
+		// We don't want years to be formatted like 2,017!
+		ret = new self[component == "year"? "String" : "Number"](ret);
+
+		if (component == "month" || component == "weekday") {
+			ret.name = toLocaleString(date, {[component]: "long"});
+			ret.shortname = toLocaleString(date, {[component]: "short"});
 		}
 
-		if (format == "numeric" && !isNaN(ret)) {
-			ret = new Number(ret);
-
-			if (component == "month" || component == "weekday") {
-				options[component] = "long";
-				ret.name = date.toLocaleString(locale, options);
-
-				options[component] = "short";
-				ret.shortname = date.toLocaleString(locale, options);
-			}
-
-			if (component != "weekday") {
-				options[component] = "2-digit";
-				ret.twodigit = date.toLocaleString(locale, options);
-			}
+		if (component != "weekday") {
+			ret.twodigit = (ret < 10? "0" : "") + (ret < 1? "0" : "") + ret % 100;
 		}
 
 		return ret;

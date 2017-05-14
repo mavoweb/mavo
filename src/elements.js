@@ -18,7 +18,7 @@ var _ = Mavo.Elements = {};
 
 Object.defineProperties(_, {
 	"register": {
-		value: function(id, o) {
+		value: function(id, config) {
 			if (typeof arguments[0] === "object") {
 				// Multiple definitions
 				for (let s in arguments[0]) {
@@ -28,20 +28,36 @@ Object.defineProperties(_, {
 				return;
 			}
 
-			var all = Mavo.toArray(arguments[1]);
+			if (config.extend) {
+				var base = _[config.extend];
 
-			for (var config of all) {
-				config.attribute = Mavo.toArray(config.attribute || null);
+				config = $.extend($.extend({}, base, p => p != "selector"), config);
+			}
 
-				for (var attribute of config.attribute) {
-					let o = $.extend({}, config);
-					o.attribute = attribute;
-					o.selector = o.selector || id;
-					o.id = id;
+			if (id.indexOf("@") > -1) {
+				var parts = id.split("@");
 
-					_[id] = _[id] || [];
-					_[id].push(o);
+				config.selector = config.selector || parts[0] || "*";
+
+				if (config.attribute === undefined) {
+					config.attribute = parts[1];
 				}
+			}
+
+			config.selector = config.selector || id;
+			config.id = id;
+
+			if (Array.isArray(config.attribute)) {
+				for (var attribute of config.attribute) {
+					o = $.extend({}, config);
+					o.attribute = attribute;
+
+					_[`${id}@${attribute}`] = o;
+				}
+			}
+			else {
+
+				_[id] = config;
 			}
 
 			return _;
@@ -51,7 +67,16 @@ Object.defineProperties(_, {
 		value: function(element, attribute, datatype) {
 			var matches = _.matches(element, attribute, datatype);
 
-			return matches[matches.length - 1] || { attribute };
+			var lastMatch = matches[matches.length - 1];
+
+			if (lastMatch) {
+				return lastMatch;
+			}
+
+			var config = $.extend({}, _.defaultConfig[datatype || "string"]);
+			config.attribute = attribute === undefined? config.attribute : attribute;
+
+			return config;
 		}
 	},
 	"matches": {
@@ -59,33 +84,33 @@ Object.defineProperties(_, {
 			var matches = [];
 
 			selectorloop: for (var id in _) {
-				for (var o of _[id]) {
-					// Passes attribute test?
-					var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
+				var o = _[id];
 
-					if (!attributeMatches) {
-						continue;
-					}
+				// Passes attribute test?
+				var attributeMatches = attribute === undefined && o.default || attribute === o.attribute;
 
-					// Passes datatype test?
-					if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
-						continue;
-					}
-
-					// Passes selector test?
-					var selector = o.selector || id;
-					if (!element.matches(selector)) {
-						continue;
-					}
-
-					// Passes arbitrary test?
-					if (o.test && !o.test(element, attribute, datatype)) {
-						continue;
-					}
-
-					// All tests have passed
-					matches.push(o);
+				if (!attributeMatches) {
+					continue;
 				}
+
+				// Passes datatype test?
+				if (datatype !== undefined && datatype !== "string" && datatype !== o.datatype) {
+					continue;
+				}
+
+				// Passes selector test?
+				var selector = o.selector || id;
+				if (!element.matches(selector)) {
+					continue;
+				}
+
+				// Passes arbitrary test?
+				if (o.test && !o.test(element, attribute, datatype)) {
+					continue;
+				}
+
+				// All tests have passed
+				matches.push(o);
 			}
 
 			return matches;
@@ -96,34 +121,37 @@ Object.defineProperties(_, {
 		value: e => e.namespaceURI == "http://www.w3.org/2000/svg"
 	},
 
-	defaultEditors: {
+	defaultConfig: {
 		value: {
-			"string":  { tag: "input" },
-			"number":  { tag: "input", type: "number" },
-			"boolean": { tag: "input", type: "checkbox" }
+			"string":  {
+				editor: { tag: "input" }
+			},
+			"number":  {
+				editor: { tag: "input", type: "number" }
+			},
+			"boolean": {
+				attribute: "content",
+				editor: { tag: "input", type: "checkbox" }
+			}
 		}
 	}
 });
 
 _.register({
-	"*": [
-		{
-			test: (e, a) => a == "hidden",
-			attribute: "hidden",
-			datatype: "boolean"
-		},
-		{
-			test: _.isSVG,
-			attribute: "y",
-			datatype: "number"
-		},
-		{
-			default: true,
-			test: _.isSVG,
-			attribute: "x",
-			datatype: "number"
-		},
-	],
+	"@hidden": {
+		datatype: "boolean"
+	},
+
+	"@y": {
+		test: _.isSVG,
+		datatype: "number"
+	},
+
+	"@x": {
+		default: true,
+		test: _.isSVG,
+		datatype: "number"
+	},
 
 	"media": {
 		default: true,
@@ -232,41 +260,44 @@ _.register({
 		datatype: "boolean"
 	},
 
-	"select, input": {
+	"formControl": {
+		selector: "select, input",
 		default: true,
 		attribute: "value",
-		modes: "read",
-		changeEvents: "input change"
+		modes: "edit",
+		changeEvents: "input change",
+		edit: () => {},
+		done: () => {},
+		init: function() {
+			this.editor = this.element;
+		}
 	},
 
 	"textarea": {
-		default: true,
-		modes: "read",
-		changeEvents: "input",
+		extend: "formControl",
+		attribute: null,
 		getValue: element => element.value,
 		setValue: (element, value) => element.value = value
 	},
 
-	"input[type=range], input[type=number]": {
-		default: true,
-		attribute: "value",
-		datatype: "number",
-		modes: "read",
-		changeEvents: "input change"
+	"formNumber": {
+		extend: "formControl",
+		selector: "input[type=range], input[type=number]",
+		datatype: "number"
 	},
 
-	"input[type=checkbox]": {
-		default: true,
+	"checkbox": {
+		extend: "formControl",
+		selector: "input[type=checkbox]",
 		attribute: "checked",
 		datatype: "boolean",
-		modes: "read",
 		changeEvents: "click"
 	},
 
 	"input[type=radio]": {
-		default: true,
+		extend: "formControl",
 		attribute: "checked",
-		modes: "read",
+		modes: "edit",
 		getValue: element => {
 			if (element.form) {
 				return element.form[element.name].value;
@@ -293,11 +324,11 @@ _.register({
 		}
 	},
 
-	"button, .counter": {
-		default: true,
+	"counter": {
+		extend: "formControl",
+		selector: "button, .counter",
 		attribute: "mv-clicked",
 		datatype: "number",
-		modes: "read",
 		init: function(element) {
 			if (this.attribute === "mv-clicked") {
 				element.setAttribute("mv-clicked", "0");
@@ -351,6 +382,8 @@ _.register({
 					newValue = Math.max(min, Math.min(newValue, max));
 
 					this.element.setAttribute("value", newValue);
+
+					evt.preventDefault();
 				}
 			});
 		},
@@ -410,57 +443,53 @@ _.register({
 	"time": {
 		attribute: "datetime",
 		default: true,
-		editor: function() {
-			var types = {
-				"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
-				"month": /^[Y\d]{4}-[M\d]{2}$/i,
-				"time": /^[H\d]{2}:[M\d]{2}/i,
-				"week": /[Y\d]{4}-W[W\d]{2}$/i,
-				"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
-			};
+		init: function() {
+			if (!this.fromTemplate("dateType")) {
+				var dateFormat = Mavo.DOMExpression.search(this.element, null);
 
-			var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
+				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
 
-			for (var type in types) {
-				if (types[type].test(datetime)) {
-					break;
+				for (var type in this.config.dateTypes) {
+					if (this.config.dateTypes[type].test(datetime)) {
+						break;
+					}
+				}
+
+				this.dateType = type;
+
+				if (!dateFormat) {
+					// TODO what about mv-expressions?
+					this.element.textContent = this.config.defaultFormats[this.dateType](this.property);
+					this.mavo.expressions.extract(this.element, null);
 				}
 			}
-
-			return {tag: "input", type};
 		},
-		humanReadable: function (value) {
-			var date = new Date(value);
-
-			if (!value || isNaN(date)) {
-				return "(No " + this.label + ")";
-			}
-
-			// TODO do this properly (account for other datetime datatypes and different formats)
-			var options = {
-				"date": {day: "numeric", month: "short", year: "numeric"},
-				"month": {month: "long"},
-				"time": {hour: "numeric", minute: "numeric"},
-				"datetime-local": {day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "numeric"}
-			};
-
-			var format = options[this.editor && this.editor.type] || options.date;
-			format.timeZone = "UTC";
-
-			return date.toLocaleString("en-GB", format);
+		dateTypes: {
+			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+			"month": /^[Y\d]{4}-[M\d]{2}$/i,
+			"time": /^[H\d]{2}:[M\d]{2}/i,
+			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+		},
+		defaultFormats: {
+			"date": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`,
+			"month": property => `[month(${property}).name] [year(${property})]`,
+			"time": property => `[hour(${property}).twodigit]:[minute(${property}).twodigit]`,
+			"datetime-local": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`
+		},
+		editor: function() {
+			return {tag: "input", type: this.dateType};
 		}
 	},
 
-	"circle": [
-		{
-			default: true,
-			attribute: "r",
-			datatype: "number"
-		}, {
-			attribute: ["cx", "cy"],
-			datatype: "number"
-		}
-	],
+	"circle@r": {
+		default: true,
+		datatype: "number"
+	},
+
+	"circle": {
+		attribute: ["cx", "cy"],
+		datatype: "number"
+	},
 
 	"text": {
 		default: true,

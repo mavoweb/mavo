@@ -9,67 +9,97 @@ var _ = Mavo.UI.Itembar = $.Class({
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
 
-		this.element = this.element || $.create({
-			className: "mv-item-bar mv-ui"
-		});
+		if (!this.element && this.item.template && this.item.template.itembar) {
+			// We can clone the buttons from the template
+			this.element = this.item.template.itembar.element.cloneNode(true);
+			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
+		}
+		else {
+			// First item of this type
+			this.element = this.element || $.create({
+				className: "mv-item-bar mv-ui"
+			});
 
-		Mavo.data(this.element, "item", this.item);
-
-		$.set(this.element, {
-			"mv-rel": this.item.property,
-			contents: [
+			var buttons = [
 				{
 					tag: "button",
 					title: "Delete this " + this.item.name,
-					className: "mv-delete",
-					events: {
-						"click": evt => this.item.collection.delete(item)
-					}
+					className: "mv-delete"
 				}, {
 					tag: "button",
-					title: `Add new ${this.item.name.replace(/s$/i, "")} ${this.collection.bottomUp? "after" : "before"}`,
-					className: "mv-add",
-					events: {
-						"click": evt => {
-							var newItem = this.collection.add(null, this.item.index);
+					title: `Add new ${this.item.name} ${this.collection.bottomUp? "after" : "before"}`,
+					className: "mv-add"
+				}
+			];
 
-							if (evt[Mavo.superKey]) {
-								newItem.render(this.item.data);
-							}
-
-							Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-							return this.collection.editItem(newItem);
-						}
-					}
-				}, {
+			if (this.item instanceof Mavo.Group) {
+				this.dragHandle = $.create({
 					tag: "button",
 					title: "Drag to reorder " + this.item.name,
-					className: "mv-drag-handle",
-					events: {
-						click: evt => evt.target.focus(),
-						keydown: evt => {
-							if (evt.keyCode >= 37 && evt.keyCode <= 40) {
-								// Arrow keys
-								this.move(this.item, evt.keyCode <= 38? -1 : 1);
+					className: "mv-drag-handle"
+				});
 
-								evt.stopPropagation();
-								evt.preventDefault();
-								evt.target.focus();
-							}
-						}
+				buttons.push(this.dragHandle);
+			}
+			else {
+				this.dragHandle = this.item.element;
+			}
+
+			$.set(this.element, {
+				"mv-rel": this.item.property,
+				contents: buttons
+			});
+		}
+
+		$.events(this.element, {
+			mouseenter: evt => {
+				this.item.element.classList.add("mv-highlight");
+			},
+			mouseleave: evt => {
+				this.item.element.classList.remove("mv-highlight");
+			}
+		});
+
+		this.dragHandle.addEventListener("keydown", evt => {
+			if (this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
+				// Arrow keys
+				this.collection.move(this.item, evt.keyCode <= 38? -1 : 1);
+
+				evt.stopPropagation();
+				evt.preventDefault();
+				evt.target.focus();
+			}
+		});
+
+		var selectors = {
+			add: this.buttonSelector("add"),
+			delete: this.buttonSelector("delete"),
+			drag: this.buttonSelector("drag")
+		};
+
+		this.element.addEventListener("click", evt => {
+			if (this.item.collection.editing) {
+				if (evt.target.matches(selectors.add)) {
+					var newItem = this.collection.add(null, this.item.index);
+
+					if (evt[Mavo.superKey]) {
+						newItem.render(this.item.data);
 					}
+
+					Mavo.scrollIntoViewIfNeeded(newItem.element);
+
+					return this.collection.editItem(newItem);
 				}
-			],
-			events: {
-				mouseenter: evt => {
-					this.item.element.classList.add("mv-highlight");
-				},
-				mouseleave: evt => {
-					this.item.element.classList.remove("mv-highlight");
+				else if (evt.target.matches(selectors.delete)) {
+					this.item.collection.delete(item);
+				}
+				else if (evt.target.matches(selectors["drag-handle"])) {
+					evt => evt.target.focus();
 				}
 			}
 		});
+
+		Mavo.data(this.element, "item", this.item);
 	},
 
 	add: function() {
@@ -84,10 +114,27 @@ var _ = Mavo.UI.Itembar = $.Class({
 				}
 			}
 		}
+
+		if (this.dragHandle == this.item.element) {
+			this.item.element.classList.add("mv-drag-handle");
+		}
 	},
 
 	remove: function() {
-		 Mavo.revocably.remove(this.element);
+		Mavo.revocably.remove(this.element);
+
+		if (this.dragHandle == this.item.element) {
+			this.item.element.classList.remove("mv-drag-handle");
+		}
+	},
+
+	reposition: function() {
+		this.element.remove();
+		this.add();
+	},
+
+	buttonSelector: function(type) {
+		return `.mv-${type}[mv-rel="${this.item.property}"], [mv-rel="${this.item.property}"] > .mv-${type}`;
 	},
 
 	proxy: {

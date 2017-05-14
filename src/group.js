@@ -129,28 +129,27 @@ var _ = Mavo.Group = $.Class({
 			return this;
 		}
 
-		if (property in this.children) {
-			return this.children[property].find(property, o);
+		if (!this.properties.has(property)) {
+			return;
 		}
 
-		var all = [];
+		var results = [], returnArray;
 
 		for (var prop in this.children) {
-			var ret = this.children[prop].find(property, o);
+			ret = this.children[prop].find(property, o);
 
 			if (ret !== undefined) {
 				if (Array.isArray(ret)) {
-					all.push(...ret);
+					results.push(...ret);
+					returnArray = Array.isArray(ret);
 				}
 				else {
-					return ret;
+					results.push(ret);
 				}
 			}
 		}
 
-		if (all.length) {
-			return all;
-		}
+		return returnArray || results.length > 1? results : results[0];
 	},
 
 	edit: function() {
@@ -165,7 +164,7 @@ var _ = Mavo.Group = $.Class({
 		this.unsavedChanges = false;
 	},
 
-	propagated: ["save", "import", "clear"],
+	propagated: ["save", "import"],
 
 	// Do not call directly, call this.render() instead
 	dataRender: function(data) {

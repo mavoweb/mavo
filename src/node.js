@@ -84,10 +84,8 @@ var _ = Mavo.Node = $.Class({
 		return this.storage !== "none";
 	},
 
-	get path() {
-		var path = this.parentGroup? this.parentGroup.path : [];
-
-		return this.property? [...path, this.property] : path;
+	get parent() {
+		return this.collection || this.parentGroup;
 	},
 
 	/**
@@ -186,6 +184,12 @@ var _ = Mavo.Node = $.Class({
 		this.propagate("done");
 
 		Mavo.hooks.run("node-done-end", this);
+	},
+
+	clear: function() {
+		if (this.modes != "read") {
+			this.propagate("clear");
+		}
 	},
 
 	propagate: function(callback) {
@@ -386,6 +390,25 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return [];
+		},
+
+		properties: function() {
+			if (this.template) {
+				return this.template.properties;
+			}
+
+			var ret = new Set(this.property && [this.property]);
+
+			if (this.nodeType == "Group") {
+				for (var property in this.children) {
+					ret = Mavo.union(ret, this.children[property].properties);
+				}
+			}
+			else if (this.nodeType == "Collection") {
+				ret = Mavo.union(ret, this.itemTemplate.properties);
+			}
+
+			return ret;
 		}
 	},
 
@@ -484,6 +507,14 @@ var _ = Mavo.Node = $.Class({
 				this._deleted = false;
 
 				this.dataChanged("undelete");
+			}
+		},
+
+		path: {
+			get: function() {
+				var path = this.parent? this.parent.path : [];
+
+				return this.property? [...path, this.property] : path;
 			}
 		}
 	},
