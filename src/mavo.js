@@ -679,10 +679,12 @@ requestAnimationFrame(() => {
 		$.include(!polyfills.length, `https://cdn.polyfill.io/v2/polyfill.min.js?features=${polyfills.join(",")}`),
 	);
 
-	var mavos = $.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+	$.ready().then(() => {
+		var mavos = $.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+		_.inited = _.ready.catch(console.error).then(() => Mavo.init(mavos));
+	});
 
 	_.ready = _.all(_.dependencies);
-	_.inited = _.ready.catch(console.error).then(() => Mavo.init(mavos));
 });
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
