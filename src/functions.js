@@ -44,6 +44,8 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
+	last: arr => arr && arr[arr.length - 1] || "",
+
 	unique: function(arr) {
 		if (!Array.isArray(arr)) {
 			return arr;
@@ -261,8 +263,13 @@ $.lazy(Mavo.Functions, "$url", function() {
 		ret[pair[0]] = pair[1];
 	}
 
-	Object.defineProperty(ret, "toString", {
-		value: () => new URL(location)
+	Object.defineProperties(ret, {
+		path: {
+			value: url.pathname.split("/").filter(a => !!a)
+		},
+		toString: {
+			value: () => new URL(location)
+		}
 	});
 
 	return ret;
@@ -451,7 +458,7 @@ Mavo.Script = {
 		},
 		"or": {
 			logical: true,
-			scalar: (a, b) => !!a || !!b,
+			scalar: (a, b) => a || b,
 			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: "||"
