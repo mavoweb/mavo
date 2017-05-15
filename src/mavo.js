@@ -708,7 +708,7 @@ requestAnimationFrame(() => {
 	_.dependencies.push(
 		$.ready(),
 		_.Plugins.load(),
-		$.include(!polyfills.length, `https://cdn.polyfill.io/v2/polyfill.min.js?features=${polyfills.join(",")}`),
+		$.include(!polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(","))
 	);
 
 	$.ready().then(() => {
