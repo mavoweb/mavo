@@ -174,6 +174,8 @@ var _ = Mavo.Group = $.Class({
 
 		// What if data is not an object?
 		if (typeof data !== "object") {
+			var wasPrimitive = true;
+
 			// Data is a primitive, render it on this.property or failing that, any writable property
 			if (this.property in this.children) {
 				var property = this.property;
@@ -192,20 +194,15 @@ var _ = Mavo.Group = $.Class({
 			data = {[property]: data};
 
 			this.data = Mavo.subset(this.data, this.inPath, data);
-
-			this.propagate(obj => {
-				var propertyData = data[obj.property];
-				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
-				obj.render(renderData);
-			});
 		}
-		else {
-			this.propagate(obj => {
-				var propertyData = data[obj.property];
-				var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
-				obj.render(renderData);
-			});
 
+		this.propagate(obj => {
+			var propertyData = data[obj.property];
+			var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
+			obj.render(renderData);
+		});
+
+		if (!wasPrimitive) {
 			// Fire datachange events for properties not in the template,
 			// since nothing else will and they can still be referenced in expressions
 			var oldData = Mavo.subset(this.oldData, this.inPath);

@@ -379,7 +379,7 @@ var _ = Mavo.Primitive = $.Class({
 					if (document.activeElement === this.element) {
 						this.editor.focus();
 					}
-					
+
 					Mavo.revocably.restoreAttribute(this.element, "tabindex");
 				}
 			}
