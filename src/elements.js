@@ -179,13 +179,18 @@ _.register({
 							mainInput.value = url;
 
 							var attempts = 0;
-							var foo = Mavo.rr(() => {
+
+							var checkIfLoaded = Mavo.rr(() => {
 								return $.fetch(url + "?" + Date.now())
-									.then(() => $.fire(mainInput, "input"))
+									.then(() => {
+										this.mavo.inProgress = false;
+										$.fire(mainInput, "input");
+									})
 									.catch(xhr => {
 										if (xhr.status > 400 && attempts < 10) {
+											this.mavo.inProgress = "Loading Image";
 											attempts++;
-											return Mavo.timeout(1500).then(foo);
+											return Mavo.timeout(2000).then(checkIfLoaded);
 										}
 									});
 							});

@@ -21,6 +21,8 @@ var _ = Mavo.Backend.register($.Class({
 				this.path += `/${this.mavo.id}${extension}`;
 			}
 
+			this.path = this.path.replace(/\/\/|^\/|\/$/g, "");
+
 			this.apiCall = `repos/${this.username}/${this.repo}/contents/${this.path}`;
 		}
 		else {
