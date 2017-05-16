@@ -390,7 +390,11 @@ var _ = $.extend(Mavo, {
 		};
 	},
 
+	timeout: delay => new Promise(resolve => setTimeout(resolve, delay)),
+
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
+
+	match: (str, regex, i=0) => ((str + "").match(regex) || [])[i] || "",
 
 	Observer: $.Class({
 		constructor: function(element, attribute, callback, o = {}) {

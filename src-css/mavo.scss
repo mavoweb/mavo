@@ -284,6 +284,7 @@ button.mv-close {
 		background-color: rgba(0,0,0,.4);
 		background-position-y: calc(50% - 1em);
 		background-origin: padding-box;
+		backdrop-filter: blur(3px);
 		color: white;
 		font-weight: bold;
 		hyphens: none;

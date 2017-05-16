@@ -173,6 +173,7 @@ var _ = Mavo.Functions = {
 	},
 
 	len: str => (str || "").length,
+
 	/**
 	 * Case insensitive search
 	 */
@@ -202,12 +203,24 @@ var _ = Mavo.Functions = {
 		// Is it camelCase?
 		return identifier && identifier
 				 .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
-				 .replace(/([a-z])[_\/-](?=[a-z])/g, "$1 ") // Hyphen-separated / Underscore_separated?
+				 .replace(/([a-z0-9])[_\/-](?=[a-z0-9])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 	},
 
 	uppercase: str => (str + "").toUpperCase(),
 	lowercase: str => (str + "").toLowerCase(),
+
+	from: (str, needle) => _.between(str, needle),
+	to: (str, needle) => _.between(str, "", needle),
+	between: (str, needle1, needle2) => {
+		needle1 = needle1? Mavo.escapeRegExp(needle1) : "^";
+		needle2 = needle2? Mavo.escapeRegExp(needle2) : "$";
+
+		var regex = RegExp(`${needle1}([\\S\\s]+?)${needle2}`);
+		return Mavo.match(str, regex, 1);
+	},
+
+	filename: url => Mavo.match(new URL(url || "", Mavo.base).pathname, /[^/]+?$/),
 
 	json: data => Mavo.safeToJSON(data),
 
@@ -596,7 +609,7 @@ function toDate(date) {
 		date = date.replace(/\s+/g, "");
 
 		// If no timezone, insert local
-		var timezone = (date.match(/[+-]\d{2}:?\d{2}|Z$/) || [])[0];
+		var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
 
 		if (!timezone) {
 			var local = _.localTimezone;

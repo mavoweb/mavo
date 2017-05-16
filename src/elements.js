@@ -177,7 +177,18 @@ _.register({
 					if (file && file.type.indexOf(type + "/") === 0) {
 						this.mavo.upload(file, path + "/" + name).then(url => {
 							mainInput.value = url;
-							$.fire(mainInput, "input");
+
+							var attempts = 0;
+							var foo = Mavo.rr(() => {
+								return $.fetch(url + "?" + Date.now())
+									.then(() => $.fire(mainInput, "input"))
+									.catch(xhr => {
+										if (xhr.status > 400 && attempts < 10) {
+											attempts++;
+											return Mavo.timeout(1500).then(foo);
+										}
+									});
+							});
 						});
 					}
 				};
