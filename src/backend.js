@@ -128,8 +128,8 @@ var _ = Mavo.Backend = $.Class({
 						height: Math.min(800, innerHeight - 100)
 					};
 
-					popup.top = (innerHeight - popup.height)/2 + (screen.top || screenTop);
-					popup.left = (innerWidth - popup.width)/2 + (screen.left || screenLeft);
+					popup.top = (screen.height - popup.height)/2;
+					popup.left = (screen.width - popup.width)/2;
 
 					var state = {
 						url: location.href,
