@@ -82,23 +82,9 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.resize();
 
 			if (self.ResizeObserver) {
-				var previousRect = null;
-
-				this.resizeObserver = new ResizeObserver(entries => {
-					var contentRect = entries[entries.length - 1].contentRect;
-
-					if (previousRect
-						&& previousRect.width == contentRect.width
-						&& previousRect.height == contentRect.height) {
-						return;
-					}
-
+				this.resizeObserver = Mavo.observeResize(this.element, entries => {
 					this.resize();
-
-					previousRect = contentRect;
 				});
-
-				this.resizeObserver.observe(this.element);
 			}
 		}
 	},
