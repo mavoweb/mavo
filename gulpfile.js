@@ -71,7 +71,7 @@ gulp.task("transpile", function() {
 		.pipe(gulp.dest("dist"));
 });
 
-gulp.task("minify", function() {
+gulp.task("minify", ["concat", "transpile"], function() {
 	return gulp.src(["dist/mavo.js", "dist/mavo.es5.js"])
 		.pipe(sourcemaps.init())
 		.pipe(babel({
