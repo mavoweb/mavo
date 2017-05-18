@@ -17,7 +17,7 @@ var _ = Mavo.Group = $.Class({
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		var properties = $$(Mavo.selectors.property, this.element).filter(element => {
+		var properties = $$(Mavo.selectors.property + ", " + Mavo.selectors.multiple, this.element).filter(element => {
 			return this.element === element.parentNode.closest(Mavo.selectors.group);
 		});
 

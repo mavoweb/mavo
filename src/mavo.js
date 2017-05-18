@@ -49,7 +49,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-start", this);
 
 		// Apply heuristic for groups
-		for (var element of $$(_.selectors.primitive, this.element)) {
+		for (var element of $$(_.selectors.primitive + "," + _.selectors.multiple, this.element)) {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {

@@ -603,8 +603,14 @@ var _ = Mavo.Node = $.Class({
 		getProperty: function(element) {
 			var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
-			if (!property && element.hasAttribute("property")) {
-				property = element.name || element.id || element.classList[0];
+			if (!property) {
+				if (element.hasAttribute("property")) { // property used without a value
+					property = element.name || element.id || element.classList[0];
+				}
+				else if (element.matches(Mavo.selectors.multiple)) {
+					// mv-multiple used without property, generate name
+					property = element.getAttribute("mv-multiple") || "collection";
+				}
 			}
 
 			if (property) {
