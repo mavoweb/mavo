@@ -65,7 +65,7 @@ var transpileStream = () => gulp.src(mavo)
 	});
 
 gulp.task("transpile", function() {
-	return merge(gulp.src(dependencies), transpileStream())
+	return merge(gulp.src(["lib/*.js"]), transpileStream())
 		.pipe(concat("mavo.es5.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
