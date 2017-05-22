@@ -608,19 +608,26 @@ function toDate(date) {
 		// Remove all whitespace
 		date = date.replace(/\s+/g, "");
 
-		// If no timezone, insert local
 		var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
-
-		if (!timezone) {
-			var local = _.localTimezone;
-			var minutes = Math.abs(local % 60);
-			var hours = (Math.abs(local) - minutes) / 60;
-			var sign = local < 0? "-" : "+";
-			date += sign + twodigits(hours) + ":" + twodigits(minutes);
+		if (timezone) {
+			// parse as ISO format
+			date = new Date(date);
+		}
+		else {
+			// construct date in local timezone
+			var fields = date.match(/\d+/g);
+			date = new Date(
+				// year, month, date,
+				fields[0], (fields[1] || 1) - 1, fields[2] || 1,
+				// hours, minutes, seconds, milliseconds,
+				fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
+			);
 		}
 	}
+	else {
+		date = new Date(date);
+	}
 
-	date = new Date(date);
 
 	if (isNaN(date)) {
 		return null;
