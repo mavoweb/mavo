@@ -13,7 +13,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var notify = require("gulp-notify");
 var merge = require("merge2");
 
-var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.js", "../jsep/build/jsep.min.js"];
+var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.min.js", "../jsep/build/jsep.min.js"];
 var mavo = `mavo util plugins ui.bar ui.message permissions backend formats node group primitive ui.popup elements collection ui.itembar
 			expression domexpression expressions mv-if mv-value functions
 			backend.dropbox backend.github`
