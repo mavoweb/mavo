@@ -229,7 +229,7 @@ var _ = self.Mavo = $.Class({
 		// Keyboard navigation
 		this.element.addEventListener("keydown", evt => {
 			// Ctrl + S or Cmd + S to save
-			if (this.permissions.save && evt.keyCode == 83 && evt[_.superKey]) {
+			if (this.permissions.save && evt.keyCode == 83 && evt[_.superKey] && !evt.altKey) {
 				evt.preventDefault();
 				this.save();
 			}
