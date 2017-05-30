@@ -124,9 +124,13 @@ var _ = Mavo.Node = $.Class({
 	/**
 	 * Execute a callback on every node of the Mavo tree
 	 * If callback returns (strict) false, walk stops.
+	 * @param callback {Function}
+	 * @param path {Array} Initial path. Mostly used internally.
+	 * @param o {Object} Options:
+	 * 			- descentReturn {Boolean} If callback returns false, just don't descend
 	 * @return false if was stopped via a false return value, true otherwise
 	 */
-	walk: function(callback, path = []) {
+	walk: function(callback, path = [], o = {}) {
 		var walker = (obj, path) => {
 			var ret = callback(obj, path);
 
@@ -137,7 +141,7 @@ var _ = Mavo.Node = $.Class({
 					if (node instanceof Mavo.Node) {
 						var ret = walker.call(node, node, [...path, i]);
 
-						if (ret === false) {
+						if (ret === false && !o.descentReturn) {
 							return false;
 						}
 					}

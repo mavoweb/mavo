@@ -131,7 +131,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Is there any control that requires an edit button?
-		this.needsEdit = this.some(obj => obj != this.root && !obj.modes && obj.mode == "read");
+		this.needsEdit = this.calculateNeedsEdit();
 
 		this.setUnsavedChanges(false);
 
@@ -541,19 +541,22 @@ var _ = self.Mavo = $.Class({
 		return this.root.walk(callback);
 	},
 
-	/**
-	 * Executes a test on every node. If ANY node passes (test returns true),
-	 * the function returns true. Otherwise, it returns false.
-	 * Similar semantics to Array.prototype.some().
-	 */
-	some: function(test) {
-		return !this.walk((obj, path) => {
-			var ret = test(obj, path);
+	calculateNeedsEdit: function(test) {
+		var needsEdit = false;
 
-			if (ret === true) {
+		this.walk((obj, path) => {
+			if (needsEdit) {
 				return false;
 			}
+
+			needsEdit = !obj.modes && obj.nodeType != "Group";
+
+			return !obj.modes;
+		}, undefined, {
+			descentReturn: true
 		});
+
+		return needsEdit;
 	},
 
 	live: {
