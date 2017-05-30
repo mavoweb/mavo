@@ -105,7 +105,7 @@ var _ = Mavo.DOMExpression = $.Class({
 					Mavo.hooks.run("domexpression-update-aftereval", env);
 
 					if (env.value instanceof Error) {
-						return this.fallback !== undefined? this.fallback : env.expr.expression;
+						return this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
 					}
 					if (env.value === undefined || env.value === null) {
 						// Don’t print things like "undefined" or "null"
