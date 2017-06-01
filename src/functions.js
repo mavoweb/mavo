@@ -2,7 +2,7 @@
  * Functions available inside Mavo expressions
  */
 
-(function() {
+(function($) {
 
 var _ = Mavo.Functions = {
 	operators: {
@@ -680,4 +680,4 @@ function getDateComponent(component) {
 	};
 }
 
-})();
+})(Bliss);
