@@ -16,25 +16,16 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.noResize = true;
 		}
 
-		this.order = this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar");
+		this.controls = _.getControls(this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar"));
 
-		if (this.order) {
-			this.order = this.order == "none"? [] : this.order.split(/\s+/);
-		}
-		else {
-			this.order = Object.keys(_.controls);
-		}
-
-		this.order = this.order.filter(id => _.controls[id]);
-
-		if (this.order.length) {
+		if (this.controls.length) {
 			// Measure height of 1 row
 			this.targetHeight = this.element.offsetHeight;
 		}
 
 		this.element.innerHTML = "";
 
-		for (let id of this.order) {
+		for (let id of this.controls) {
 			let o = _.controls[id];
 
 			if (o.create) {
@@ -78,7 +69,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 		}
 
-		if (this.order.length && !this.noResize) {
+		if (this.controls.length && !this.noResize) {
 			this.resize();
 
 			if (self.ResizeObserver) {
@@ -150,6 +141,34 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	static: {
+		getControls: function(attribute) {
+			if (attribute) {
+				var ids = attribute == "none"? [] : attribute.split(/\s+/);
+
+				// Is there ANY non-negative key?
+				var excludeOnly = !/(\s+|^)(?!no\-)[a-z]+(\s+|$)/.test(attribute);
+
+				var keys = excludeOnly? Object.keys(_.controls) : [];
+
+				for (var key of ids) {
+					var negative = /^\s*no\-/i.test(key);
+					var id = Mavo.match(key, /([a-z]+)\s*$/i, 1);
+
+					if (negative) {
+						Mavo.delete(keys, id);
+					}
+					else if (id in _.controls) {
+						keys.push(id);
+					}
+				}
+			}
+			else {
+				return Object.keys(_.controls);
+			}
+
+			return keys;
+		},
+
 		controls: {
 			status: {
 				create: function() {
