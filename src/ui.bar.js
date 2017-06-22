@@ -6,11 +6,18 @@ var _ = Mavo.UI.Bar = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
 
-		this.element = $(".mv-bar", this.mavo.element) || $.create({
-			className: "mv-bar mv-ui",
-			start: this.mavo.element,
-			innerHTML: "<button>&nbsp;</button>"
-		});
+		this.element = $(".mv-bar", this.mavo.element);
+
+		if (this.element) {
+			this.custom = true;
+		}
+		else {
+			this.element = $.create({
+				className: "mv-bar mv-ui",
+				start: this.mavo.element,
+				innerHTML: "<button>&nbsp;</button>"
+			});
+		}
 
 		if (this.element.classList.contains("mv-compact")) {
 			this.noResize = true;
@@ -23,12 +30,20 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.targetHeight = this.element.offsetHeight;
 		}
 
-		this.element.innerHTML = "";
+		if (!this.custom) {
+			this.element.innerHTML = "";
+		}
 
 		for (let id of this.controls) {
 			let o = _.controls[id];
 
-			if (o.create) {
+			this[id] = $(`.mv-${id}`, this.element);
+
+			if (this[id]) {
+				// Custom control, remove to not mess up order
+				this[id].remove();
+			}
+			else if (o.create) {
 				this[id] = o.create.call(this.mavo);
 			}
 			else {
