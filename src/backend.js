@@ -147,6 +147,10 @@ var _ = Mavo.Backend = $.Class({
 					this.authPopup = open(`${this.constructor.oAuth}?client_id=${this.key}&state=${encodeURIComponent(JSON.stringify(state))}` + this.oAuthParams(),
 						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
 
+					if (!this.authPopup) {
+						alert("Login popup was blocked! Please check your popup blocker settings.");
+					}
+
 					addEventListener("message", evt => {
 						if (evt.source === this.authPopup) {
 							if (evt.data.backend == this.id) {
