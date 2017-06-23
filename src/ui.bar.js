@@ -76,7 +76,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 
 			if (o.action) {
-				$.delegate(this.element, "click", ".mv-" + id, () => {
+				$.delegate(this.mavo.element, "click", ".mv-" + id, () => {
 					if (!o.permission || this.permissions.is(o.permission)) {
 						o.action.call(this.mavo);
 					}
