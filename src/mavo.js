@@ -570,7 +570,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		needsEdit: function(value) {
-			this.bar.toggle("edit", value);
+			this.bar.toggle("edit", value && this.permissions.edit);
 		},
 
 		storage: function(value) {

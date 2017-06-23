@@ -234,12 +234,6 @@ button.mv-close {
 		display: none;
 	}
 
-	&:not([mv-permissions~="edit"]) {
-		.mv-edit {
-			display: none;
-		}
-	}
-
 	&.mv-highlight-unsaved .mv-unsaved-changes {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
