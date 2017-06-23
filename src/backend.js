@@ -148,7 +148,9 @@ var _ = Mavo.Backend = $.Class({
 						"popup", `width=${popup.width},height=${popup.height},left=${popup.left},top=${popup.top}`);
 
 					if (!this.authPopup) {
-						alert("Login popup was blocked! Please check your popup blocker settings.");
+						var message = "Login popup was blocked! Please check your popup blocker settings.";
+						this.mavo.error(message);
+						reject(Error(message));
 					}
 
 					addEventListener("message", evt => {
@@ -162,6 +164,18 @@ var _ = Mavo.Backend = $.Class({
 							}
 
 							resolve(this.accessToken);
+
+							// Log in to other similar backends that are logged out
+							for (var appid in Mavo.all) {
+								var storage = Mavo.all[appid].primaryBackend;
+
+								if (storage
+									&& storage.id === this.id
+									&& storage !== this
+									&& !storage.isAuthenticated()) {
+										storage.login(true);
+								}
+							}
 						}
 					});
 				}
