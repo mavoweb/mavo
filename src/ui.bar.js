@@ -74,6 +74,10 @@ var _ = Mavo.UI.Bar = $.Class({
 			for (var events in o.events) {
 				$.events(this[id], events, o.events[events].bind(this.mavo));
 			}
+		}
+
+		for (let id in _.controls) {
+			let o = _.controls[id];
 
 			if (o.action) {
 				$.delegate(this.mavo.element, "click", ".mv-" + id, evt => {
