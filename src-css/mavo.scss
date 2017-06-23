@@ -230,6 +230,7 @@ button.mv-close {
 		vertical-align: middle;
 	}
 
+	// Is this really needed?!
 	&:not([mv-permissions~="add"]) button.mv-add {
 		display: none;
 	}
@@ -254,6 +255,11 @@ button.mv-close {
 			outline: none;
 			box-shadow: 0 0 0 1px hsla(200,20%,60%,.5), 1px 1px .5em 1px rgba(0,0,0,.3) !important;
 		}
+	}
+
+	&[mv-permissions~="login"] .mv-logged-in,
+	&[mv-permissions~="logout"] .mv-logged-out {
+		display: none;
 	}
 }
 
