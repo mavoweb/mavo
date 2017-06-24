@@ -83,7 +83,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 					var newItem = this.collection.add(null, this.item.index);
 
 					if (evt[Mavo.superKey]) {
-						newItem.render(this.item.data);
+						newItem.render(this.item.getData());
 					}
 
 					Mavo.scrollIntoViewIfNeeded(newItem.element);
