@@ -268,7 +268,7 @@ var _ = Mavo.Functions = {
 
 	// Log to the console and return
 	log: (...args) => {
-		console.log(args);
+		console.log(...args);
 		return args[0];
 	}
 };
