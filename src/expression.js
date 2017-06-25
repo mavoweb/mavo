@@ -83,7 +83,7 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 		serializers: {
 			"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
 			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
-			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
+			"CallExpression": node => `${"Mavo.Functions._Trap." + _.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
 			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 			"MemberExpression": node => `get(${_.serialize(node.object)}, "${node.property.name || node.property.value}")`,
 			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
