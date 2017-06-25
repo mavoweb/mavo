@@ -140,7 +140,7 @@ var _ = Mavo.Expressions = $.Class({
 				return;
 			}
 
-			if (Mavo.is("multiple", node)) {
+			if (Mavo.is("item", node)) {
 				path = "";
 			}
 
