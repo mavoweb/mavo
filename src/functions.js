@@ -14,7 +14,13 @@ var _ = Mavo.Functions = {
 	 */
 	get: function(obj, property) {
 		if (obj && obj[property] !== undefined) {
-			return obj[property];
+			var ret = obj[property];
+
+			if (typeof ret === "function") {
+				return ret.bind(obj);
+			}
+
+			return ret;
 		}
 
 		if (Array.isArray(obj) && isNaN(property)) {
