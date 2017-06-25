@@ -50,6 +50,8 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
+	// TODO return first/last non-null?
+	first: arr => arr && arr[0] || "",
 	last: arr => arr && arr[arr.length - 1] || "",
 
 	unique: function(arr) {
