@@ -356,6 +356,11 @@ var _ = Mavo.Node = $.Class({
 					ret = this.find(property);
 				}
 
+				if (ret === undefined) {
+					// Still not found, look anywhere
+					ret = this.mavo.root.find(property);
+				}
+
 				if (ret !== undefined) {
 					if (Array.isArray(ret)) {
 						ret = ret.map(item => item.getData(options))
