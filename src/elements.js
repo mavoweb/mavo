@@ -349,11 +349,12 @@ _.register({
 			if (this.attribute === "mv-clicked") {
 				element.setAttribute("mv-clicked", "0");
 
-				element.addEventListener("click", evt => {
-					let clicked = +element.getAttribute("mv-clicked") || 0;
-					this.value = ++clicked;
-				});
+				element.addEventListener("click", this);
 			}
+		},
+		handleEvent: function (evt) {
+			let clicked = +evt.currentTarget.getAttribute("mv-clicked") || 0;
+			this.value = ++clicked;
 		}
 	},
 
@@ -361,50 +362,59 @@ _.register({
 		default: true,
 		attribute: "value",
 		datatype: "number",
-		edit: function() {
+		handleEvent: function (evt) {
 			var min = +this.element.getAttribute("min") || 0;
 			var max = +this.element.getAttribute("max") || 1;
-			var range = max - min;
 			var step = +this.element.getAttribute("mv-edit-step") || (range > 1? 1 : range/100);
+			switch(evt.type) {
+				case "mousemove.mavo:edit":
+					var range = max - min;
+					var left = this.element.getBoundingClientRect().left;
+					var offset = Math.max(0, (evt.clientX - left) / this.element.offsetWidth);
+					var newValue = min + range * offset;
+					var mod = newValue % step;
 
-			this.element.addEventListener("mousemove.mavo:edit", evt => {
-				// Change property as mouse moves
-				var left = this.element.getBoundingClientRect().left;
-				var offset = Math.max(0, (evt.clientX - left) / this.element.offsetWidth);
-				var newValue = min + range * offset;
-				var mod = newValue % step;
-
-				newValue += mod > step/2? step - mod : -mod;
-				newValue = Math.max(min, Math.min(newValue, max));
-
-				this.sneak(() => this.element.setAttribute("value", newValue));
-			});
-
-			this.element.addEventListener("mouseleave.mavo:edit", evt => {
-				// Return to actual value
-				this.sneak(() => this.element.setAttribute("value", this.value));
-			});
-
-			this.element.addEventListener("click.mavo:edit", evt => {
-				// Register change
-				this.value = this.getValue();
-			});
-
-			this.element.addEventListener("keydown.mavo:edit", evt => {
-				// Edit with arrow keys
-				if (evt.target == this.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
-					var increment = step * (evt.keyCode == 39? 1 : -1) * (evt.shiftKey? 10 : 1);
-					var newValue = this.value + increment;
+					newValue += mod > step/2? step - mod : -mod;
 					newValue = Math.max(min, Math.min(newValue, max));
 
-					this.element.setAttribute("value", newValue);
+					this.sneak(() => this.element.setAttribute("value", newValue));
+					break;
 
-					evt.preventDefault();
-				}
-			});
+				// Return to actual value
+				case "mouseleave.mavo:edit":
+					this.sneak(() => this.element.setAttribute("value", this.value));
+					break;
+
+				// Register change
+				case "click.mavo:edit":
+					this.value = this.getValue();
+					break;
+
+				// Edit with arrow keys
+				case "keydown.mavo:edit":
+					if (evt.target == this.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
+						var increment = step * (evt.keyCode == 39? 1 : -1) * (evt.shiftKey? 10 : 1);
+						var newValue = this.value + increment;
+						newValue = Math.max(min, Math.min(newValue, max));
+
+						this.element.setAttribute("value", newValue);
+
+						evt.preventDefault();
+					}
+					break;
+			}
+		},
+		edit: function() {
+			this.element.addEventListener("mousemove.mavo:edit", this);
+			this.element.addEventListener("mouseleave.mavo:edit", this);
+			this.element.addEventListener("click.mavo:edit", this);
+			this.element.addEventListener("keydown.mavo:edit", this);
 		},
 		done: function() {
-			$.unbind(this.element, ".mavo:edit");
+			this.element.removeEventListener("mousemove.mavo:edit", this);
+			this.element.removeEventListener("mouseleave.mavo:edit", this);
+			this.element.removeEventListener("click.mavo:edit", this);
+			this.element.removeEventListener("keydown.mavo:edit", this);
 		}
 	},
 
@@ -516,14 +526,15 @@ _.register({
 		default: true,
 		attribute: "aria-checked",
 		datatype: "boolean",
+		handleEvent: function(evt) {
+			this.value = !this.value;
+			evt.preventDefault();
+		},
 		edit: function() {
-			this.element.addEventListener("click.mavo:edit", evt => {
-				this.value = !this.value;
-				evt.preventDefault();
-			});
+			this.element.addEventListener("click.mavo:edit", this);
 		},
 		done: function() {
-			$.unbind(this.element, ".mavo:edit");
+			this.element.removeEventListener("click.mavo:edit", this);
 		}
 	}
 });
