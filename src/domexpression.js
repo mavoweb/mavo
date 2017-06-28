@@ -5,7 +5,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
 
-		for (let prop of ["item", "path", "syntax", "fallback", "attribute"]) {
+		for (let prop of ["item", "path", "syntax", "fallback", "attribute", "originalAttribute", "expression", "parsed"]) {
 			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
 		}
 
@@ -21,18 +21,18 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		Mavo.hooks.run("domexpression-init-start", this);
 
-		if (!this.expression) { // Still unhandled?
-			if (this.node.nodeType === 3) {
-				this.element = this.node.parentNode;
+		if (this.node.nodeType === 3 && this.element === this.node) {
+			this.element = this.node.parentNode;
 
-				// If no element siblings make this.node the element, which is more robust
-				// Same if attribute, there are no attributes on a text node!
-				if (!this.node.parentNode.children.length || this.attribute) {
-					this.node = this.element;
-					this.element.normalize();
-				}
+			// If no element siblings make this.node the element, which is more robust
+			// Same if attribute, there are no attributes on a text node!
+			if (!this.node.parentNode.children.length || this.attribute) {
+				this.node = this.element;
+				this.element.normalize();
 			}
+		}
 
+		if (!this.expression) { // Still unhandled?
 			if (this.attribute) {
 				this.expression = this.node.getAttribute(this.attribute).trim();
 			}
@@ -56,7 +56,6 @@ var _ = Mavo.DOMExpression = $.Class({
 
 				this.expression = this.node.textContent;
 			}
-
 
 			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
 		}

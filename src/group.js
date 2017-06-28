@@ -188,7 +188,6 @@ var _ = Mavo.Group = $.Class({
 					.filter(p => !this.children[p].expressionText)
 					.sort((prop1, prop2) => score(prop1) - score(prop2))
 					.reverse()[0];
-
 			}
 
 			data = {[property]: data};
