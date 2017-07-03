@@ -129,11 +129,15 @@ var _ = Mavo.Group = $.Class({
 			return this;
 		}
 
+		if (property in this.children) {
+			return this.children[property].find(property, o);
+		}
+
 		if (!this.properties.has(property)) {
 			return;
 		}
 
-		var results = [], returnArray;
+		var results = [], returnArray, ret;
 
 		for (var prop in this.children) {
 			ret = this.children[prop].find(property, o);
@@ -141,7 +145,7 @@ var _ = Mavo.Group = $.Class({
 			if (ret !== undefined) {
 				if (Array.isArray(ret)) {
 					results.push(...ret);
-					returnArray = Array.isArray(ret);
+					returnArray = true;
 				}
 				else {
 					results.push(ret);
