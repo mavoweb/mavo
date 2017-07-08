@@ -358,11 +358,11 @@ var _ = Mavo.Collection = $.Class({
 	propagated: ["save"],
 
 	dataRender: function(data) {
-		if (!data) {
+		if (data === undefined) {
 			return;
 		}
 
-		data = Mavo.toArray(data);
+		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
 
 		if (!this.mutable) {
 			this.children.forEach((item, i) => item.render(data && data[i]));
@@ -370,12 +370,14 @@ var _ = Mavo.Collection = $.Class({
 		else {
 			// First render on existing items
 			for (var i = 0; i < this.children.length; i++) {
+				var item = this.children[i];
+
 				if (i < data.length) {
-					this.children[i].render(data[i]);
+					item.render(data[i]);
 				}
 				else {
-					this.children[i].dataChanged("delete");
-					this.delete(this.children[i], true);
+					item.dataChanged("delete");
+					this.delete(item, true);
 				}
 			}
 
