@@ -325,6 +325,14 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
+	 * Get the element identified by the URL hash
+	 */
+	getTarget: function() {
+		var id = location.hash.substr(1);
+		return document.getElementById(id);
+	},
+
+	/**
 	 * Object utilities
 	 */
 
@@ -620,12 +628,12 @@ document.addEventListener("blur", evt => {
 }, true);
 
 addEventListener("hashchange", evt => {
-	updateWithin("target", $(location.hash));
+	updateWithin("target", _.getTarget());
 });
 
 document.documentElement.addEventListener("mavo:datachange", evt => {
 	// TODO debounce
-	updateWithin("target", $(location.hash));
+	updateWithin("target", _.getTarget());
 });
 
 updateWithin("focus", document.activeElement !== document.body? document.activeElement : null);
