@@ -82,12 +82,14 @@ var _ = $.extend(Mavo, {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
-	delete: (arr, element) => {
-		var index = arr && arr.indexOf(element);
+	delete: (arr, element, all) => {
+		do {
+			var index = arr && arr.indexOf(element);
 
-		if (index > -1) {
-			arr.splice(index, 1);
-		}
+			if (index > -1) {
+				arr.splice(index, 1);
+			}
+		} while (index > -1 && all);
 	},
 
 	// Recursively flatten a multi-dimensional array
