@@ -239,10 +239,8 @@ button.mv-close {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
-	&:not([mv-mode="edit"]) {
-		.mv-empty {
-			display: none;
-		}
+	.mv-empty:not([mv-mode="edit"]) {
+		display: none;
 	}
 
 	&[mv-mode="edit"],
