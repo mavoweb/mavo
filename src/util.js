@@ -338,6 +338,43 @@ var _ = $.extend(Mavo, {
 	 * Object utilities
 	 */
 
+	/**
+	 * Check if property exists in object. Like the in operator but more robust and does not throw.
+	 * Why not just in? E.g. "foo".length is 3 but "length" in "foo" throws
+	 */
+	in: function(obj, property) {
+		if (obj) {
+			return (typeof obj === "object" && property in obj) || obj[property] !== undefined;
+		}
+	},
+
+	/**
+	 * Get real property name from case insensitive property
+	 */
+	getCanonicalProperty: function(obj, property) {
+		if (obj && property) {
+			// Property in object?
+			if (_.in(obj, property)) {
+				return property;
+			}
+
+			// Lowercase property in object?
+			var propertyL = property.toLowerCase();
+
+			if (_.in(obj, propertyL)) {
+				return propertyL;
+			}
+
+			// Any case property in object?
+			var properties = Object.keys(obj);
+			var i = properties.map(p => p.toLowerCase()).indexOf(propertyL);
+
+			if (i > -1) {
+				return properties[i];
+			}
+		}		
+	},
+
 	subset: function(obj, path, value) {
 		if (arguments.length == 3) {
 			// Put

@@ -13,27 +13,16 @@ var _ = Mavo.Functions = {
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
 	get: function(obj, property) {
-		if (!obj || !property) {
-			return null;
-		}
+		var canonicalProperty = Mavo.getCanonicalProperty(obj, property);
 
-		if (obj[property] !== undefined) {
-			var ret = obj[property];
+		if (canonicalProperty) {
+			var ret = obj[canonicalProperty];
 
 			if (typeof ret === "function") {
 				return ret.bind(obj);
 			}
 
 			return ret;
-		}
-
-		var properties = Object.keys(obj);
-		var propertiesL = properties.map(p => p.toLowerCase());
-		var i = propertiesL.indexOf(property.toLowerCase());
-
-		if (i > -1) {
-			// Case insensitive property lookups
-			return obj[properties[i]];
 		}
 
 		if (Array.isArray(obj) && isNaN(property)) {
