@@ -400,7 +400,7 @@ var _ = self.Mavo = $.Class({
 			this[role] = backend = _.Backend.create(backend, {
 				mavo: this,
 				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
-			});
+			}, this.element.getAttribute(`mv-${role}-type`));
 		}
 		else if (!backend) {
 			// We had a backend and now we will un-have it

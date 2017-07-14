@@ -203,14 +203,18 @@ var _ = Mavo.Backend = $.Class({
 
 	static: {
 		// Return the appropriate backend(s) for this url
-		create: function(url, o) {
-			if (url) {
-				var Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
+		create: function(url, o, type) {
+			var Backend;
 
-				return new Backend(url, o);
+			if (type) {
+				Backend = Mavo.Functions.get(_, type);
 			}
 
-			return null;
+			if (url && !Backend) {
+				Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
+			}
+
+			return Backend? new Backend(url, o) : null;
 		},
 
 		types: [],
