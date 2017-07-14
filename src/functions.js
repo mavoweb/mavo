@@ -543,18 +543,11 @@ Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
 		var ret;
 
-		if (property in functions) {
-			ret = functions[property];
-		}
-		else {
-			var propertyL = property.toLowerCase && property.toLowerCase();
+		var canonicalProperty = Mavo.getCanonicalProperty(functions, property)
+		                     || Mavo.getCanonicalProperty(Math, property);
 
-			if (propertyL && functions.hasOwnProperty(propertyL)) {
-				ret = functions[propertyL];
-			}
-			else if (property in Math || propertyL in Math) {
-				ret = Math[property] || Math[propertyL];
-			}
+		if (canonicalProperty) {
+			ret = functions[canonicalProperty] || Math[canonicalProperty];
 		}
 
 		if (ret) {

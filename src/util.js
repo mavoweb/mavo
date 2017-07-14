@@ -358,21 +358,23 @@ var _ = $.extend(Mavo, {
 				return property;
 			}
 
-			// Lowercase property in object?
-			var propertyL = property.toLowerCase();
+			if (property.toLowerCase) {
+				// Lowercase property in object?
+				var propertyL = property.toLowerCase();
 
-			if (_.in(obj, propertyL)) {
-				return propertyL;
+				if (_.in(obj, propertyL)) {
+					return propertyL;
+				}
+
+				// Any case property in object?
+				var properties = Object.keys(obj);
+				var i = properties.map(p => p.toLowerCase()).indexOf(propertyL);
+
+				if (i > -1) {
+					return properties[i];
+				}
 			}
-
-			// Any case property in object?
-			var properties = Object.keys(obj);
-			var i = properties.map(p => p.toLowerCase()).indexOf(propertyL);
-
-			if (i > -1) {
-				return properties[i];
-			}
-		}		
+		}
 	},
 
 	subset: function(obj, path, value) {
