@@ -576,7 +576,7 @@ var _ = $.extend(Mavo, {
 	 * Similar to Promise.all() but can handle post-hoc additions
 	 * and does not reject if one promise rejects.
 	 */
-	all: function(iterable) {
+	thenAll: function(iterable) {
 		// Turn rejected promises into resolved ones
 		for (let promise of iterable) {
 			if ($.type(promise) == "promise") {
@@ -588,7 +588,7 @@ var _ = $.extend(Mavo, {
 			if (iterable.length != resolved.length) {
 				// The list of promises or values changed. Return a new Promise.
 				// The original promise won't resolve until the new one does.
-				return _.all(iterable);
+				return _.thenAll(iterable);
 			}
 
 			// The list of promises or values stayed the same.

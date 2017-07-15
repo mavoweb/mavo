@@ -25,7 +25,7 @@ var _ = Mavo.Plugins = {
 			responseType: "json"
 		}).then(xhr => {
 			// Fetch plugins
-			return Mavo.all(xhr.response.plugin
+			return Mavo.thenAll(xhr.response.plugin
 				.filter(plugin => _.plugins.has(plugin.id))
 				.map(plugin => {
 					// Load plugin

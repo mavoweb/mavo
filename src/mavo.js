@@ -653,6 +653,12 @@ var _ = self.Mavo = $.Class({
 	}
 });
 
+Object.defineProperty(_.all, "length", {
+	get: function() {
+		return Object.keys(this).length;
+	}
+});
+
 {
 
 let s = _.selectors = {
@@ -714,12 +720,14 @@ requestAnimationFrame(() => {
 		$.include(!polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(","))
 	);
 
-	$.ready().then(() => {
-		var mavos = $.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
-		_.inited = _.ready.catch(console.error).then(() => Mavo.init(mavos));
-	});
+	_.inited = $.ready().then(() => {
+		$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+		return _.ready;
+	})
+	.catch(console.error)
+	.then(() => Mavo.init());
 
-	_.ready = _.all(_.dependencies);
+	_.ready = _.thenAll(_.dependencies);
 });
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
