@@ -49,7 +49,7 @@ Object.defineProperties(_, {
 
 			if (Array.isArray(config.attribute)) {
 				for (var attribute of config.attribute) {
-					o = $.extend({}, config);
+					var o = $.extend({}, config);
 					o.attribute = attribute;
 
 					_[`${id}@${attribute}`] = o;

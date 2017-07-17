@@ -248,7 +248,7 @@ var _ = Mavo.Collection = $.Class({
 	 * @offset relative position
 	 */
 	move: function(item, offset) {
-		index = item.index + offset + (offset > 0);
+		var index = item.index + offset + (offset > 0);
 
 		index = Mavo.wrap(index, this.children.length + 1);
 
