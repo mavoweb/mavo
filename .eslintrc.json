@@ -32,6 +32,14 @@
 		"space-before-blocks": [1, "always"],
 		"arrow-spacing": 1,
 		"comma-spacing": 1,
-		"keyword-spacing": 1
+		"keyword-spacing": 1,
+		"indent": ["error", "tab", {
+			"outerIIFEBody": 0
+		}]
+	},
+	"globals": {
+		"Mavo": 1,
+		"Bliss": 1,
+		"jsep": 1
 	}
 }
