@@ -100,6 +100,17 @@ Mavo.prototype._ = function(id, vars) {
 	return this.locale && id? this.locale.phrase(id, vars) : id;
 };
 
+$.ready().then(() => {
+	for (var datalist of $$("datalist.mv-phrases[lang]")) {
+		var phrases = $$("option", datalist).reduce((o, option) => {
+			o[option.value] = option.textContent.trim();
+			return o;
+		}, {});
+
+		Mavo.Locale.register(datalist.lang, phrases);
+	}
+});
+
 })(Bliss);
 
 // Note that this is incomplete, it doesn't include phrases which are the same as their ID
