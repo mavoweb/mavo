@@ -570,7 +570,7 @@ var _ = Mavo.Collection = $.Class({
 			if (!button) {
 				button = $.create("button", {
 					className: "mv-add",
-					textContent: "Add " + this.name
+					textContent: this.mavo._("add-item", this)
 				});
 			};
 

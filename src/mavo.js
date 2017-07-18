@@ -37,6 +37,9 @@ var _ = self.Mavo = $.Class({
 		_.all[this.id] = this;
 		this.element.setAttribute("mv-app", this.id);
 
+		var lang = $.value(this.element.closest("[lang]"), "lang") || Mavo.locale;
+		this.locale = Mavo.Locale.get(lang);
+
 		// Should we start in edit mode?
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
 
@@ -315,7 +318,7 @@ var _ = self.Mavo = $.Class({
 	},
 
 	clear: function() {
-		if (confirm("This will delete all your data. Are you sure?")) {
+		if (confirm(this._("delete-confirmation"))) {
 			this.store(null).then(() => this.root.clear());
 		}
 	},
@@ -489,10 +492,10 @@ var _ = self.Mavo = $.Class({
 			.then(() => this.storage.store(this.getData()))
 			.catch(err => {
 				if (err) {
-					var message = "Problem saving data";
+					var message = this._("problem-saving");
 
 					if (err instanceof XMLHttpRequest) {
-						message += err.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+						message += ": " + (err.status? this._("http-error", err) : this._("cant-connect"));
 					}
 
 					this.error(message, err);
@@ -511,7 +514,7 @@ var _ = self.Mavo = $.Class({
 			return Promise.reject();
 		}
 
-		this.inProgress = "Uploading";
+		this.inProgress = this._("uploading");
 
 		return this.uploadBackend.upload(file, path)
 			.then(url => {
@@ -519,7 +522,7 @@ var _ = self.Mavo = $.Class({
 				return url;
 			})
 			.catch(err => {
-				this.error("Error uploading file", err);
+				this.error(this._("error-uploading"), err);
 				this.inProgress = false;
 				return null;
 			});
@@ -563,6 +566,7 @@ var _ = self.Mavo = $.Class({
 		inProgress: function(value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);
 			$.toggleAttribute(this.element, "aria-busy", !!value, !!value);
+			this.element.style.setProperty("--mv-progress-text", value? `"${this._(value)}"` : "");
 		},
 
 		unsavedChanges: function(value) {

@@ -443,7 +443,12 @@ var _ = $.extend(Mavo, {
 
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
 
-	match: (str, regex, i=0) => ((str + "").match(regex) || [])[i] || "",
+	matches: (str, regex) => {
+		var ret = (str + "").match(regex);
+		return ret? ret : [];
+	},
+
+	match: (str, regex, i=0) => _.matches(str, regex)[i] || "",
 
 	observeResize: function(element, callbackOrObserver) {
 		if (!self.ResizeObserver) {

@@ -113,7 +113,7 @@ var _ = Mavo.Backend.register($.Class({
 				return this.request(fileCall, {
 					ref: this.branch
 				}).then(fileInfo => this.request(fileCall, {
-					message: `${commitPrefix} Updated ${fileInfo.name || "file"}`,
+					message: commitPrefix + this.mavo._("gh-updated-file", {name: fileInfo.name || "file"}),
 					content: serialized,
 					branch: this.branch,
 					sha: fileInfo.sha
@@ -148,7 +148,7 @@ var _ = Mavo.Backend.register($.Class({
 	pullRequest: function(existing) {
 		var previewURL = new URL(location);
 		previewURL.searchParams.set(this.mavo.id + "-storage", `https://github.com/${this.forkInfo.full_name}/${this.path}`);
-		var message = `Your edits are saved to <a href="${previewURL}" target="_blank">your own profile</a>, because you are not allowed to edit this page.`;
+		var message = this.mavo._("gh-edit-suggestion-saved-in-profile", {previewURL});
 
 		if (this.notice) {
 			this.notice.close();
@@ -157,9 +157,9 @@ var _ = Mavo.Backend.register($.Class({
 		if (existing) {
 			// We already have a pull request, ask about closing it
 			this.notice = this.mavo.message(`${message}
-				You have selected to suggest your edits to the page admins. Your suggestions have not been reviewed yet.
+				${this.mavo._("gh-edit-suggestion-notreviewed")}
 				<form onsubmit="return false">
-					<button class="mv-danger">Revoke edit suggestion</button>
+					<button class="mv-danger">${this.mavo._("gh-edit-suggestion-revoke")}</button>
 				</form>`, {
 					classes: "mv-inline",
 					dismiss: ["button", "submit"]
@@ -174,7 +174,7 @@ var _ = Mavo.Backend.register($.Class({
 				this.request(`repos/${this.username}/${this.repo}/pulls/${existing.number}`, {
 					state: "closed"
 				}, "POST").then(prInfo => {
-					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">Edit suggestion cancelled successfully!</a>`, {
+					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-cancelled")}</a>`, {
 						dismiss: ["button", "timeout"]
 					});
 
@@ -185,10 +185,10 @@ var _ = Mavo.Backend.register($.Class({
 		else {
 			// Ask about creating a PR
 			this.notice = this.mavo.message(`${message}
-				Write a short description of your edits below to suggest them to the page admins:
+				${this.mavo._("gh-edit-suggestion-instructions")}
 				<form onsubmit="return false">
-					<textarea name="edits" class="mv-autosize" placeholder="I added / corrected / deleted ..."></textarea>
-					<button>Send edit suggestion</button>
+					<textarea name="edits" class="mv-autosize" placeholder="${this.mavo._("gh-edit-suggestion-reason-placeholder")}"></textarea>
+					<button>${this.mavo._("gh-edit-suggestion-send")}</button>
 				</form>`, {
 					classes: "mv-inline",
 					dismiss: ["button", "submit"]
@@ -201,14 +201,15 @@ var _ = Mavo.Backend.register($.Class({
 
 				// We want to send a pull request
 				this.request(`repos/${this.username}/${this.repo}/pulls`, {
-					title: "Suggested edits to data",
-					body: `Hello there! I used Mavo to suggest the following edits:
-${form.elements.edits.value}
-Preview my changes here: ${previewURL}`,
+					title: this.mavo._("gh-edit-suggestion-title"),
+					body: this.mavo._("gh-edit-suggestion-body", {
+						description: form.elements.edits.value,
+						previewURL
+					}),
 					head: `${this.user.username}:${this.branch}`,
 					base: this.branch
 				}, "POST").then(prInfo => {
-					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">Edit suggestion sent successfully!</a>`, {
+					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-sent")}</a>`, {
 						dismiss: ["button", "timeout"]
 					});
 

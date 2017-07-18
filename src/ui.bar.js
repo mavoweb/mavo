@@ -47,12 +47,9 @@ var _ = Mavo.UI.Bar = $.Class({
 				this[id] = o.create.call(this.mavo);
 			}
 			else {
-				var label = o.label || Mavo.Functions.readable(id);
-
 				this[id] = $.create("button", {
 					className: `mv-${id}`,
-					textContent: label,
-					title: label
+					textContent: this.mavo._(id)
 				});
 			}
 
@@ -213,7 +210,7 @@ var _ = Mavo.UI.Bar = $.Class({
 							html = `<a href="${user.url}" target="_blank">${html}</a>`;
 						}
 
-						this.bar.status.innerHTML = html;
+						this.bar.status.innerHTML = `<span>${this._("logged-in-as", backend)}</span> ` + html;
 					}
 				},
 				permission: "logout"
