@@ -488,8 +488,7 @@ var _ = self.Mavo = $.Class({
 
 		this.inProgress = "Saving";
 
-		return this.storage.login()
-			.then(() => this.storage.store(this.getData()))
+		return this.storage.store(this.getData())
 			.catch(err => {
 				if (err) {
 					var message = this._("problem-saving");
