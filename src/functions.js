@@ -182,27 +182,27 @@ var _ = Mavo.Functions = {
 		return ret;
 	},
 
-	len: str => (str || "").length,
+	len: text => str(text).length,
 
 	/**
 	 * Case insensitive search
 	 */
-	search: (haystack, needle) => haystack && needle? (haystack + "").toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
+	search: (haystack, needle) => haystack && needle? str(haystack).toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
 
-	starts: (haystack, needle) => _.search((haystack + ""), (needle + "")) === 0,
+	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
 	ends: function(haystack, needle) {
-		haystack += "";
-		needle += "";
+		[haystack, needle] = [str(haystack), str(needle)];
+
 		var i = _.search(haystack, needle);
 		return  i > -1 && i === haystack.length - needle.length;
 	},
 
-	join: function(array, glue = "") {
-		return Mavo.toArray(array).join(glue);
+	join: function(array, glue) {
+		return Mavo.toArray(array).join(str(glue));
 	},
 
 	idify: function(readable) {
-		return ((readable || "") + "")
+		return str(readable)
 			.replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.replace(/[^\w-]/g, "") // Remove weird characters
 			.toLowerCase();
@@ -211,23 +211,27 @@ var _ = Mavo.Functions = {
 	// Convert an identifier to readable text that can be used as a label
 	readable: function (identifier) {
 		// Is it camelCase?
-		return identifier && identifier
-				 .replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
-				 .replace(/([a-z0-9])[_\/-](?=[a-z0-9])/g, "$1 ") // Hyphen-separated / Underscore_separated?
-				 .replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
+		return str(identifier)
+				.replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
+				.replace(/([a-z0-9])[_\/-](?=[a-z0-9])/g, "$1 ") // Hyphen-separated / Underscore_separated?
+				.replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
 	},
 
-	uppercase: str => (str + "").toUpperCase(),
-	lowercase: str => (str + "").toLowerCase(),
+	uppercase: text => str(text).toUpperCase(),
+	lowercase: text => str(text).toLowerCase(),
 
-	from: (str, needle) => _.between(str, needle),
-	to: (str, needle) => _.between(str, "", needle),
-	between: (str, needle1, needle2) => {
-		needle1 = needle1? Mavo.escapeRegExp(needle1) : "^";
-		needle2 = needle2? Mavo.escapeRegExp(needle2) : "$";
+	from: (haystack, needle) => _.between(haystack, needle),
+	fromlast: (haystack, needle) => _.between(haystack, needle, "", true),
+	to: (haystack, needle) => _.between(haystack, "", needle),
+	tofirst: (haystack, needle) => _.between(haystack, "", needle, true),
 
-		var regex = RegExp(`${needle1}([\\S\\s]+?)${needle2}`);
-		return Mavo.match(str, regex, 1);
+	between: (haystack, from, to, tight) => {
+		[haystack, from, to] = [str(haystack), str(from), str(to)];
+
+		var i1 = from? haystack[tight? "lastIndexOf" : "indexOf"](from) : -1;
+		var i2 = haystack[tight? "indexOf" : "lastIndexOf"](to);
+
+		return haystack.slice(i1 + 1, i2 === -1 || !to? haystack.length : i2);
 	},
 
 	filename: url => Mavo.match(new URL(url || "", Mavo.base).pathname, /[^/]+?$/),
@@ -577,6 +581,11 @@ function numbers(array, args) {
 	array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 	return array.filter(number => !isNaN(number) && number !== "").map(n => +n);
+}
+
+// Convert argument to string
+function str(str = "") {
+	return !str && str !== 0? "" : str + "";
 }
 
 var twodigits = new Intl.NumberFormat("en", {
