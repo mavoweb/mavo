@@ -238,7 +238,7 @@ var _ = Mavo.Primitive = $.Class({
 			var editor = this.config.editor;
 
 			if (!editor || this.datatype == "boolean") {
-				var editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+				editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
 			}
 
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
@@ -274,7 +274,7 @@ var _ = Mavo.Primitive = $.Class({
 							return;
 						}
 
-						next = this.closestCollection.add();
+						var next = this.closestCollection.add();
 						this.closestCollection.editItem(next, {immediately: true});
 					}
 
@@ -732,7 +732,7 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 			else {
-				presentational = _.format(value, o);
+				var presentational = _.format(value, o);
 
 				if (presentational !== value) {
 					element.textContent = presentational;

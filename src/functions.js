@@ -665,7 +665,7 @@ function getDateComponent(component) {
 			return "";
 		}
 
-		ret = numeric[component](date);
+		var ret = numeric[component](date);
 
 		// We don't want years to be formatted like 2,017!
 		ret = new self[component == "year"? "String" : "Number"](ret);
