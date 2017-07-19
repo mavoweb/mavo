@@ -283,24 +283,26 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	getURL: function(path = this.path, sha) {
-		var repo = `${this.username}/${this.repo}`;
+		var repoInfo = this.forkInfo || this.repoInfo;
+		var repo = repoInfo.full_name;
 		path = path.replace(/ /g, "%20");
 
-		return this.request(`repos/${repo}/pages`, {}, "GET", {
+		repoInfo.pagesInfo = repoInfo.pagesInfo || this.request(`repos/${repo}/pages`, {}, "GET", {
 			headers: {
 				"Accept": "application/vnd.github.mister-fantastic-preview+json"
 			}
-		})
-		.then(pagesInfo => pagesInfo.html_url + path)
-		.catch(xhr => {
-			// No Github Pages, return rawgit URL
-			if (sha) {
-				return `https://cdn.rawgit.com/${repo}/${sha}/${path}`;
-			}
-			else {
-				return `https://rawgit.com/${repo}/${this.branch}/${path}`;
-			}
 		});
+
+		return repoInfo.pagesInfo.then(pagesInfo => pagesInfo.html_url + path)
+			.catch(xhr => {
+				// No Github Pages, return rawgit URL
+				if (sha) {
+					return `https://cdn.rawgit.com/${repo}/${sha}/${path}`;
+				}
+				else {
+					return `https://rawgit.com/${repo}/${this.branch}/${path}`;
+				}
+			});
 	},
 
 	static: {
