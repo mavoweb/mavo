@@ -332,7 +332,7 @@ var _ = Mavo.Backend.register($.Class({
 				// raw API call, stop parsing and just return
 				return {};
 			}
-			else if (/github.com$/.test(url.host) && path[0] == "blob") {
+			else if (path[0] == "blob") {
 				path.shift();
 				ret.branch = path.shift();
 			}
