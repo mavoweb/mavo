@@ -49,6 +49,7 @@ var _ = Mavo.Backend = $.Class({
 	ready: Promise.resolve(),
 	login: () => Promise.resolve(),
 	logout: () => Promise.resolve(),
+	put: () => Promise.resolve(),
 
 	isAuthenticated: function() {
 		return !!this.accessToken;
