@@ -553,7 +553,7 @@ var _ = self.Mavo = $.Class({
 
 			needsEdit = !obj.modes && obj.nodeType != "Group";
 
-			return !obj.modes;
+			return obj.modes? undefined : true;
 		}, undefined, {
 			descentReturn: true
 		});
