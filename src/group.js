@@ -80,8 +80,10 @@ var _ = Mavo.Group = $.Class({
 			if (obj.saved || env.options.live) {
 				var data = obj.getData(o);
 
-				if (data !== null || env.options.live) {
-					env.data[obj.property] = data;
+				env.data[obj.property] = data;
+
+				if (data === null && !env.options.live) {
+					delete env.data[obj.property];
 				}
 			}
 		}
