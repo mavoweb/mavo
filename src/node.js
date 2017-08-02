@@ -571,6 +571,7 @@ var _ = Mavo.Node = $.Class({
 				]);
 
 				this.element.classList.remove("mv-highlight");
+				this.itembar.remove();
 			}
 			else if (this.deleted) {
 				// Undelete
@@ -582,6 +583,7 @@ var _ = Mavo.Node = $.Class({
 				this._deleted = false;
 
 				this.dataChanged("undelete");
+				this.itembar.add();
 			}
 		},
 
