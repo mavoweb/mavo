@@ -383,8 +383,8 @@ var _ = Mavo.Node = $.Class({
 				return false;
 			},
 
-			set: function(data, property, value) {
-				console.warn(`You cannot set data via expressions. Attempt to set ${property} to ${value} ignored.`);
+			set: function(data, property = "", value) {
+				console.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
 				return value;
 			}
 		});
