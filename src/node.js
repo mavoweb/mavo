@@ -305,7 +305,7 @@ var _ = Mavo.Node = $.Class({
 		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
-	relativizeData: function(data, options = {live: true}) {
+	relativizeData: self.Proxy? function(data, options = {live: true}) {
 		return new Proxy(data, {
 			get: (data, property, proxy) => {
 				// Checking if property is in proxy might add it to the data
@@ -388,7 +388,7 @@ var _ = Mavo.Node = $.Class({
 				return value;
 			}
 		});
-	},
+	} : data => data,
 
 	pathFrom: function(node) {
 		var path = this.path;
