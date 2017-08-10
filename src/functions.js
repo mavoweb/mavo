@@ -18,7 +18,7 @@ var _ = Mavo.Functions = {
 		if (canonicalProperty) {
 			var ret = obj[canonicalProperty];
 
-			if (typeof ret === "function") {
+			if (typeof ret === "function" && ret.name.indexOf("bound") !== 0) {
 				return ret.bind(obj);
 			}
 
