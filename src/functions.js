@@ -304,7 +304,14 @@ $.lazy(Mavo.Functions, "$url", function() {
 
 Mavo.Script = {
 	addUnaryOperator: function(name, o) {
-		return operand => Array.isArray(operand)? operand.map(o.scalar) : o.scalar(operand);
+		if (o.symbol) {
+			// Build map of symbols to function names for easy rewriting
+			for (let symbol of Mavo.toArray(o.symbol)) {
+				Mavo.Script.symbols[symbol] = name;
+			}
+		}
+
+		return _[name] = operand => Array.isArray(operand)? operand.map(o.scalar) : o.scalar(operand);
 	},
 
 	/**
@@ -392,7 +399,8 @@ Mavo.Script = {
 	 */
 	operators: {
 		"not": {
-			scalar: a => a => !a
+			symbol: "!",
+			scalar: a => !a
 		},
 		"multiply": {
 			scalar: (a, b) => a * b,

@@ -99,7 +99,6 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 		transformations: {
 			"BinaryExpression": node => {
 				let name = Mavo.Script.getOperatorName(node.operator);
-				let details = Mavo.Script.operators[name];
 
 				// Flatten same operator calls
 				var nodeLeft = node;
@@ -116,6 +115,13 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 					return `${name}(${args.map(_.serialize).join(", ")})`;
 				}
 			},
+			"UnaryExpression": node => {
+				var name = Mavo.Script.getOperatorName(node.operator);
+
+				if (name) {
+					return `${name}(${_.serialize(node.argument)})`;
+				}
+			},
 			"CallExpression": node => {
 				if (node.callee.type == "Identifier") {
 					if (node.callee.name == "if") {
@@ -128,12 +134,10 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 		},
 
 		serialize: node => {
-			if (_.transformations[node.type]) {
-				var ret = _.transformations[node.type](node);
+			var ret = _.transformations[node.type] && _.transformations[node.type](node);
 
-				if (ret !== undefined) {
-					return ret;
-				}
+			if (ret !== undefined) {
+				return ret;
 			}
 
 			return _.serializers[node.type](node);
