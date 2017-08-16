@@ -791,7 +791,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 
 			if (Array.isArray(value)) {
-				return value.join(", ");
+				return value.map(_.format).join(", ");
 			}
 
 			if ($.type(value) === "object") {
