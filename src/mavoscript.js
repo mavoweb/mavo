@@ -235,7 +235,10 @@ var _ = Mavo.Script = {
 		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
 		"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-		"MemberExpression": node => `get(${_.serialize(node.object)}, "${node.property.name || node.property.value}")`,
+		"MemberExpression": node => {
+			var property = node.computed? _.serialize(node.property) : `"${node.property.name}"`;
+			return `get(${_.serialize(node.object)}, ${property})`;
+		},
 		"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
 		"Literal": node => node.raw,
 		"Identifier": node => node.name,
