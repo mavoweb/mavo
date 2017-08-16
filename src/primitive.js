@@ -218,7 +218,7 @@ var _ = Mavo.Primitive = $.Class({
 					env.data[this.property] = env.data;
 					env.data = this.relativizeData(env.data);
 				}
-			}			
+			}
 		}
 		else if (!this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
@@ -789,8 +789,14 @@ var _ = Mavo.Primitive = $.Class({
 			if ($.type(value) === "number" || o.datatype == "number") {
 				return _.formatNumber(value);
 			}
-			else if (Array.isArray(value)) {
+
+			if (Array.isArray(value)) {
 				return value.join(", ");
+			}
+
+			if ($.type(value) === "object") {
+				// Oops, we have an object. Print something more useful than [object Object]
+				return Mavo.toJSON(value);
 			}
 
 			return value;
