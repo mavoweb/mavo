@@ -711,7 +711,8 @@ requestAnimationFrame(() => {
 	$.each({
 		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
 		"Intl.~locale.en": self.Intl,
-		"IntersectionObserver": self.IntersectionObserver
+		"IntersectionObserver": self.IntersectionObserver,
+		"Symbol": self.Symbol
 	}, (id, supported) => {
 		if (!supported) {
 			polyfills.push(id);
