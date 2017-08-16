@@ -13,9 +13,10 @@ var _ = Mavo.Functions = {
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
 	get: function(obj, property) {
+		property = val(property);
 		var canonicalProperty = Mavo.getCanonicalProperty(obj, property);
 
-		if (canonicalProperty) {
+		if (canonicalProperty !== undefined) {
 			var ret = obj[canonicalProperty];
 
 			if (typeof ret === "function" && ret.name.indexOf("bound") !== 0) {
@@ -38,7 +39,7 @@ var _ = Mavo.Functions = {
 					// Try by id?
 					for (var i=0; i<obj.length; i++) {
 						if (obj[i] && obj[i].id == property) {
-							return _.get(obj, i);
+							return obj[i];
 						}
 					}
 				}

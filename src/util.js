@@ -375,7 +375,7 @@ var _ = $.extend(Mavo, {
 	 * Get real property name from case insensitive property
 	 */
 	getCanonicalProperty: function(obj, property) {
-		if (obj && property) {
+		if (obj && (property || property === 0)) {
 			// Property in object?
 			if (_.in(obj, property)) {
 				return property;
