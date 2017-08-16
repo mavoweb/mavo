@@ -69,21 +69,6 @@ var _ = Mavo.Expressions = $.Class({
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				var data = $.value(allData, ...path);
 
-				if (typeof data != "object" || data === null) {
-					// Turn primitives into objects, so we can have $index, their property
-					// name etc resolve relative to them, not their parent group
-					var parentData = $.value(allData, ...path.slice(0, -1));
-
-					data = {
-						[Symbol.toPrimitive]: () => data,
-						[obj.property]: data
-					};
-
-					if (self.Proxy) {
-						data = obj.relativizeData(data);
-					}
-				}
-
 				for (let et of obj.expressions) {
 					if (et.changedBy(evt)) {
 						et.update(data, evt);
@@ -169,15 +154,5 @@ var _ = Mavo.Expressions = $.Class({
 		}
 	}
 });
-
-if (self.Proxy) {
-	Mavo.hooks.add("node-getdata-end", function(env) {
-		if (env.options.live && (env.data || env.data === 0 || env.data === "") && (typeof env.data === "object")) {
-			var data = env.data;
-
-			env.data = this.relativizeData(data);
-		}
-	});
-}
 
 })(Bliss, Bliss.$);

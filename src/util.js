@@ -73,6 +73,29 @@ var _ = $.extend(Mavo, {
 		});
 	},
 
+	objectify: (value, properties) => {
+		var primitive = Mavo.value(value);
+
+		if (typeof value !== "object" || value === null) {
+			if (value === null) {
+				value = {
+					[Symbol.toStringTag]: "Null"
+				};
+			}
+			else {
+				var constructor = value.constructor;
+				value = new constructor(primitive);
+				value[Symbol.toStringTag] = constructor.name;
+			}
+
+			value.valueOf = value[Symbol.toPrimitive] = () => primitive;
+		}
+
+		return $.extend(value, properties);
+	},
+
+	value: value => value && value.valueOf? value.valueOf() : value,
+
 	/**
 	 * Array & set utlities
 	 */

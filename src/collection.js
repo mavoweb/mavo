@@ -47,7 +47,7 @@ var _ = Mavo.Collection = $.Class({
 			if (!item.deleted || env.options.live) {
 				let itemData = item.getData(env.options);
 
-				if (itemData !== null || env.options.live) {
+				if (env.options.live || Mavo.value(itemData) !== null) {
 					env.data.push(itemData);
 				}
 			}
@@ -55,8 +55,7 @@ var _ = Mavo.Collection = $.Class({
 
 		if (!this.mutable) {
 			// If immutable, drop nulls
-
-			env.data = env.data.filter(item => item !== null);
+			env.data = env.data.filter(item => Mavo.value(item) !== null);
 
 			if (env.options.live && env.data.length === 1) {
 				// If immutable with only 1 item, return the item
@@ -67,6 +66,11 @@ var _ = Mavo.Collection = $.Class({
 				var rendered = Mavo.subset(this.data, this.inPath);
 				env.data = env.data.concat(rendered.slice(env.data.length));
 			}
+		}
+
+		if (env.options.live && Array.isArray(env.data)) {
+			env.data[Mavo.toNode] = this;
+			env.data = this.relativizeData(env.data);
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);

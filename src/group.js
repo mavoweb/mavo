@@ -74,33 +74,34 @@ var _ = Mavo.Group = $.Class({
 
 		env.data = this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
 
-		for (var property in this.children) {
-			var obj = this.children[property];
+		var properties = Object.keys(this.children);
 
-			if (obj.saved || env.options.live) {
-				var data = obj.getData(o);
+		if (properties.length == 1 && properties[0] == this.property) {
+			// {foo: {foo: 5}} should become {foo: 5}
+			var options = $.extend($.extend({}, env.options), {forceObjects: true});
+			env.data = this.children[this.property].getData(options);
+		}
+		else {
+			for (var property in this.children) {
+				var obj = this.children[property];
 
-				env.data[obj.property] = data;
+				if (obj.saved || env.options.live) {
+					var data = obj.getData(env.options);
 
-				if (data === null && !env.options.live) {
-					delete env.data[obj.property];
+					if (data === null && !env.options.live) {
+						delete env.data[obj.property];
+					}
+					else {
+						env.data[obj.property] = data;
+					}
 				}
 			}
 		}
 
-		if (!env.options.live) { // Stored data
+		if (!env.options.live) { // Stored data again
 			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
-		}
 
-		// {foo: {foo: 5}} should become {foo: 5}
-		var properties = Object.keys(env.data);
-
-		if (properties.length == 1 && properties[0] == this.property) {
-			env.data = env.data[this.property];
-		}
-
-		if (!env.options.live) { // Stored data again
 			if (!properties.length && !this.isRoot) {
 				// Avoid {} in the data
 				env.data = null;
@@ -115,6 +116,10 @@ var _ = Mavo.Group = $.Class({
 					env.data["@context"] = this.vocab;
 				}
 			}
+		}
+		else if (env.data) {
+			env.data[Mavo.toNode] = this;
+			env.data = this.relativizeData(env.data);
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);

@@ -198,17 +198,29 @@ var _ = Mavo.Primitive = $.Class({
 			data: this.super.getData.call(this, o)
 		};
 
-		if (env.data !== undefined) {
-			return env.data;
+		if (env.data === undefined) {
+			env.data = this.value;
+
+			if (env.data === "") {
+				env.data = null;
+			}
 		}
 
-		env.data = this.value;
+		if (env.options.live) {
+			if (this.collection || o.forceObjects) {
+				env.data = Mavo.objectify(env.data, {
+					[Mavo.toNode]: this
+				});
 
-		if (env.data === "") {
-			env.data = null;
+				if (this.collection) {
+					// Turn primitive collection items into objects, so we can have $index etc, and their property
+					// name etc resolve relative to them, not their parent group
+					env.data[this.property] = env.data;
+					env.data = this.relativizeData(env.data);
+				}
+			}			
 		}
-
-		if (!o.live && this.inPath.length) {
+		else if (!this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 

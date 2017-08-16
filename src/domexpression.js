@@ -99,7 +99,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 					Mavo.hooks.run("domexpression-update-beforeeval", env);
 
-					env.value = env.expr.eval(data);
+					env.value = Mavo.value(env.expr.eval(data));
 
 					Mavo.hooks.run("domexpression-update-aftereval", env);
 

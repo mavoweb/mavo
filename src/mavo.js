@@ -275,8 +275,8 @@ var _ = self.Mavo = $.Class({
 		return this.root.editing;
 	},
 
-	getData: function() {
-		return this.root.getData();
+	getData: function(o) {
+		return this.root.getData(o);
 	},
 
 	toJSON: function() {
@@ -629,6 +629,7 @@ var _ = self.Mavo = $.Class({
 			return _.all[name] || null;
 		},
 
+		toNode: Symbol("toNode"),
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
 		dependencies: [],

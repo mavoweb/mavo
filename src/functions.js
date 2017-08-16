@@ -61,7 +61,7 @@ var _ = Mavo.Functions = {
 			return arr;
 		}
 
-		return [...new Set(arr)];
+		return [...new Set(arr.map(val))];
 	},
 
 	/**
@@ -70,9 +70,9 @@ var _ = Mavo.Functions = {
 	 */
 	intersects: (arr1, arr2) => {
 		if (arr1 && arr2) {
-			arr2 = new Set(arr2);
+			arr2 = new Set(arr2.map(val));
 
-			return !arr1.every(el => arr2.has(el));
+			return !arr1.map(val).every(el => arr2.has(el));
 		}
 	},
 
@@ -113,11 +113,11 @@ var _ = Mavo.Functions = {
 	},
 
 	count: function(array) {
-		return Mavo.toArray(array).filter(a => a !== null && a !== false && a !== "").length;
+		return Mavo.toArray(array).filter(a => !empty(a)).length;
 	},
 
 	round: function(num, decimals) {
-		if (!num || !decimals || !isFinite(num)) {
+		if (not(num) || not(decimals) || !isFinite(num)) {
 			return Math.round(num);
 		}
 
@@ -128,7 +128,7 @@ var _ = Mavo.Functions = {
 	},
 
 	th: function(num) {
-		if (num === null || num === "") {
+		if (empty(num)) {
 			return "";
 		}
 
@@ -144,17 +144,13 @@ var _ = Mavo.Functions = {
 	iff: function(condition, iftrue, iffalse="") {
 		if (Array.isArray(condition)) {
 			return condition.map((c, i) => {
-				var ret = c? iftrue : iffalse;
+				var ret = val(c)? iftrue : iffalse;
 
-				if (Array.isArray(ret)) {
-					return ret[Math.min(i, ret.length - 1)];
-				}
-
-				return ret;
+				return Array.isArray(ret)? ret[Math.min(i, ret.length - 1)] : ret;
 			});
 		}
 
-		return condition? iftrue : iffalse;
+		return val(condition)? iftrue : iffalse;
 	},
 
 	/*********************
@@ -234,7 +230,7 @@ var _ = Mavo.Functions = {
 		return haystack.slice(i1 + 1, i2 === -1 || !to? haystack.length : i2);
 	},
 
-	filename: url => Mavo.match(new URL(url || "", Mavo.base).pathname, /[^/]+?$/),
+	filename: url => Mavo.match(new URL(str(url), Mavo.base).pathname, /[^/]+?$/),
 
 	json: data => Mavo.safeToJSON(data),
 
@@ -311,7 +307,7 @@ Mavo.Script = {
 			}
 		}
 
-		return _[name] = operand => Array.isArray(operand)? operand.map(o.scalar) : o.scalar(operand);
+		return _[name] = operand => Array.isArray(operand)? operand.map(val).map(o.scalar) : o.scalar(val(operand));
 	},
 
 	/**
@@ -336,6 +332,10 @@ Mavo.Script = {
 					// Operand is an array of operands, expand it out
 					operands = [...operands[0]];
 				}
+			}
+
+			if (!o.raw) {
+				operands = operands.map(val);
 			}
 
 			var prev = o.logical? o.identity : operands[0], result;
@@ -503,8 +503,11 @@ Mavo.Script = {
 			identity: "",
 			scalar: (a, b) => "" + (a || "") + (b || "")
 		},
+		// Filter is listed here because it's an easy way to handle multiple
+		// array filters without having to code it
 		"filter": {
-			scalar: (a, b) => b? a : null
+			scalar: (a, b) => val(b)? a : null,
+			raw: true
 		}
 	},
 
@@ -593,7 +596,21 @@ function numbers(array, args) {
 
 // Convert argument to string
 function str(str = "") {
+	str = val(str);
 	return !str && str !== 0? "" : str + "";
+}
+
+function empty(v) {
+	v = Mavo.value(v);
+	return v === null || v === false || v === "";
+}
+
+function val(v) {
+	return Mavo.value(v);
+}
+
+function not(v) {
+	return !val(v);
 }
 
 var twodigits = new Intl.NumberFormat("en", {
@@ -603,6 +620,8 @@ var twodigits = new Intl.NumberFormat("en", {
 twodigits = twodigits.format.bind(twodigits);
 
 function toDate(date) {
+	date = val(date);
+
 	if (!date) {
 		return null;
 	}
@@ -647,7 +666,6 @@ function toDate(date) {
 	else {
 		date = new Date(date);
 	}
-
 
 	if (isNaN(date)) {
 		return null;

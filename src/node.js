@@ -105,7 +105,7 @@ var _ = Mavo.Node = $.Class({
 
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
-			return null;
+			return o.forceObjects? Mavo.objectify(null) : null;
 		}
 	},
 
