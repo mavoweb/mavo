@@ -66,14 +66,15 @@ var _ = Mavo.Functions = {
 	},
 
 	/**
-	 * Do two arrays have a non-empty intersection?
+	 * Do two arrays or sets have a non-empty intersection?
 	 * @return {Boolean}
 	 */
-	intersects: (arr1, arr2) => {
+	intersects: function(arr1, arr2) {
 		if (arr1 && arr2) {
-			arr2 = new Set(arr2.map(val));
+			var set2 = new Set(arr2.map? arr2.map(val): arr2);
+			arr1 = arr1.map? arr1.map(val) : [...arr1];
 
-			return !arr1.map(val).every(el => arr2.has(el));
+			return !arr1.every(el => !set2.has(el));
 		}
 	},
 
