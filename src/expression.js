@@ -14,7 +14,7 @@ var _ = Mavo.Expression = $.Class({
 
 		try {
 			if (!this.function) {
-				this.function = _.compile(this.expression);
+				this.function = Mavo.Script.compile(this.expression);
 				this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 			}
 
@@ -70,112 +70,13 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 
 	live: {
 		expression: function(value) {
-			var code = value = value;
-
 			this.function = null;
 		}
 	},
 
 	static: {
-		/**
-		 * These serializers transform the AST into JS
-		 */
-		serializers: {
-			"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
-			"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
-			"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
-			"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-			"MemberExpression": node => `get(${_.serialize(node.object)}, "${node.property.name || node.property.value}")`,
-			"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
-			"Literal": node => node.raw,
-			"Identifier": node => node.name,
-			"ThisExpression": node => "this",
-			"Compound": node => node.body.map(_.serialize).join(" ")
-		},
-
-		/**
-		 * These are run before the serializers and transform the expression to support MavoScript
-		 */
-		transformations: {
-			"BinaryExpression": node => {
-				let name = Mavo.Script.getOperatorName(node.operator);
-
-				// Flatten same operator calls
-				var nodeLeft = node;
-				var args = [];
-
-				do {
-					args.unshift(nodeLeft.right);
-					nodeLeft = nodeLeft.left;
-				} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
-
-				args.unshift(nodeLeft);
-
-				if (args.length > 1) {
-					return `${name}(${args.map(_.serialize).join(", ")})`;
-				}
-			},
-			"UnaryExpression": node => {
-				var name = Mavo.Script.getOperatorName(node.operator);
-
-				if (name) {
-					return `${name}(${_.serialize(node.argument)})`;
-				}
-			},
-			"CallExpression": node => {
-				if (node.callee.type == "Identifier") {
-					if (node.callee.name == "if") {
-						node.callee.name = "iff";
-					}
-
-					node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
-				}
-			}
-		},
-
-		serialize: node => {
-			var ret = _.transformations[node.type] && _.transformations[node.type](node);
-
-			if (ret !== undefined) {
-				return ret;
-			}
-
-			return _.serializers[node.type](node);
-		},
-
-		rewrite: function(code) {
-			try {
-				return _.serialize(_.parse(code));
-			}
-			catch (e) {
-				// Parsing as MavoScript failed, falling back to plain JS
-				return code;
-			}
-		},
-
-		compile: function(code) {
-			code = _.rewrite(code);
-
-			return new Function("data", `with(Mavo.Functions._Trap)
-					with (data || {}) {
-						return ${code};
-					}`);
-		},
-
-		parse: self.jsep,
 	}
 });
-
-if (self.jsep) {
-	jsep.addBinaryOp("and", 2);
-	jsep.addBinaryOp("or", 2);
-	jsep.addBinaryOp("=", 6);
-	jsep.addBinaryOp("mod", 10);
-	jsep.removeBinaryOp("===");
-}
-
-_.serializers.LogicalExpression = _.serializers.BinaryExpression;
-_.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
 _.Syntax = $.Class({
 	constructor: function(start, end) {

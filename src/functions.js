@@ -2,7 +2,7 @@
  * Functions available inside Mavo expressions
  */
 
-(function($) {
+(function($, val) {
 
 var _ = Mavo.Functions = {
 	operators: {
@@ -84,7 +84,7 @@ var _ = Mavo.Functions = {
 	 * Aggregate sum
 	 */
 	sum: function(array) {
-		return numbers(array, arguments).reduce((prev, current) => {
+		return $u.numbers(array, arguments).reduce((prev, current) => {
 			return +prev + (+current || 0);
 		}, 0);
 	},
@@ -93,7 +93,7 @@ var _ = Mavo.Functions = {
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		array = numbers(array, arguments);
+		array = $u.numbers(array, arguments);
 
 		return array.length && _.sum(array) / array.length;
 	},
@@ -102,14 +102,14 @@ var _ = Mavo.Functions = {
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		return Math.min(...numbers(array, arguments));
+		return Math.min(...$u.numbers(array, arguments));
 	},
 
 	/**
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		return Math.max(...numbers(array, arguments));
+		return Math.max(...$u.numbers(array, arguments));
 	},
 
 	count: function(array) {
@@ -274,11 +274,77 @@ var _ = Mavo.Functions = {
 	log: (...args) => {
 		console.log(...args);
 		return args[0];
+	},
+
+	// "Private" helpers
+	util: {
+		numbers: function(array, args) {
+			array = Array.isArray(array)? array : (args? $$(args) : [array]);
+
+			return array.filter(number => !isNaN(number) && val(number) !== "").map(n => +n);
+		},
+
+		date: function(date) {
+			date = val(date);
+
+			if (!date) {
+				return null;
+			}
+
+			if ($.type(date) === "string") {
+				date = date.trim();
+
+				// Fix up time format
+				if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
+					// No date, add today’s
+					date = _.$today + " " + date;
+				}
+
+				if (date.indexOf(":") === -1) {
+					// Add a time if one doesn't exist
+					date += "T00:00:00";
+				}
+				else {
+					// Make sure time starts with T, due to Safari bug
+					date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
+				}
+
+				// Remove all whitespace
+				date = date.replace(/\s+/g, "");
+
+				var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
+				if (timezone) {
+					// parse as ISO format
+					date = new Date(date);
+				}
+				else {
+					// construct date in local timezone
+					var fields = date.match(/\d+/g);
+					date = new Date(
+						// year, month, date,
+						fields[0], (fields[1] || 1) - 1, fields[2] || 1,
+						// hours, minutes, seconds, milliseconds,
+						fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
+					);
+				}
+			}
+			else {
+				date = new Date(date);
+			}
+
+			if (isNaN(date)) {
+				return null;
+			}
+
+			return date;
+		}
 	}
 };
 
+var $u = _.util;
+
 // $url: Read-only syntactic sugar for URL stuff
-$.lazy(Mavo.Functions, "$url", function() {
+$.lazy(_, "$url", function() {
 	var ret = {};
 	var url = new URL(location);
 
@@ -298,244 +364,7 @@ $.lazy(Mavo.Functions, "$url", function() {
 	return ret;
 });
 
-Mavo.Script = {
-	addUnaryOperator: function(name, o) {
-		if (o.symbol) {
-			// Build map of symbols to function names for easy rewriting
-			for (let symbol of Mavo.toArray(o.symbol)) {
-				Mavo.Script.symbols[symbol] = name;
-			}
-		}
 
-		return _[name] = operand => Array.isArray(operand)? operand.map(val).map(o.scalar) : o.scalar(val(operand));
-	},
-
-	/**
-	 * Extend a scalar operator to arrays, or arrays and scalars
-	 * The operation between arrays is applied element-wise.
-	 * The operation operation between a scalar and an array will result in
-	 * the operation being applied between the scalar and every array element.
-	 */
-	addBinaryOperator: function(name, o) {
-		if (o.symbol) {
-			// Build map of symbols to function names for easy rewriting
-			for (let symbol of Mavo.toArray(o.symbol)) {
-				Mavo.Script.symbols[symbol] = name;
-			}
-		}
-
-		o.identity = o.identity === undefined? 0 : o.identity;
-
-		return _[name] = o.code || function(...operands) {
-			if (operands.length === 1) {
-				if (Array.isArray(operands[0])) {
-					// Operand is an array of operands, expand it out
-					operands = [...operands[0]];
-				}
-			}
-
-			if (!o.raw) {
-				operands = operands.map(val);
-			}
-
-			var prev = o.logical? o.identity : operands[0], result;
-
-			for (let i = 1; i < operands.length; i++) {
-				let a = o.logical? operands[i - 1] : prev;
-				let b = operands[i];
-
-				if (Array.isArray(b)) {
-					if (typeof o.identity == "number") {
-						b = numbers(b);
-					}
-
-					if (Array.isArray(a)) {
-						result = [
-							...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-							...a.slice(b.length)
-						];
-					}
-					else {
-						result = b.map(n => o.scalar(a, n));
-					}
-				}
-				else if (Array.isArray(a)) {
-					result = a.map(n => o.scalar(n, b));
-				}
-				else {
-					result = o.scalar(a, b);
-				}
-
-				if (o.reduce) {
-					prev = o.reduce(prev, result, a, b);
-				}
-				else if (o.logical) {
-					prev = prev && result;
-				}
-				else {
-					prev = result;
-				}
-			}
-
-			return prev;
-		};
-	},
-
-	/**
-	 * Mapping of operator symbols to function name.
-	 * Populated via addOperator() and addLogicalOperator()
-	 */
-	symbols: {},
-
-	getOperatorName: op => Mavo.Script.symbols[op] || op,
-
-	/**
-	 * Operations for elements and scalars.
-	 * Operations between arrays happen element-wise.
-	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
-	 * Ordered by precedence (higher to lower)
-	 * @param scalar {Function} The operation between two scalars
-	 * @param identity The operation’s identity element. Defaults to 0.
-	 */
-	operators: {
-		"not": {
-			symbol: "!",
-			scalar: a => !a
-		},
-		"multiply": {
-			scalar: (a, b) => a * b,
-			identity: 1,
-			symbol: "*"
-		},
-		"divide": {
-			scalar: (a, b) => a / b,
-			identity: 1,
-			symbol: "/"
-		},
-		"add": {
-			scalar: (a, b) => +a + +b,
-			symbol: "+"
-		},
-		"subtract": {
-			scalar: (a, b) => {
-				if (isNaN(a) || isNaN(b)) {
-					var dateA = toDate(a), dateB = toDate(b);
-
-					if (dateA && dateB) {
-						return (dateA - dateB)/1000;
-					}
-				}
-
-				return a - b;
-			},
-			symbol: "-"
-		},
-		"mod": {
-			scalar: (a, b) => {
-				var ret = a % b;
-				ret += ret < 0? b : 0;
-				return ret;
-			}
-		},
-		"lte": {
-			logical: true,
-			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
-				return a <= b;
-			},
-			identity: true,
-			symbol: "<="
-		},
-		"lt": {
-			logical: true,
-			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
-				return a < b;
-			},
-			identity: true,
-			symbol: "<"
-		},
-		"gte": {
-			logical: true,
-			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
-				return a >= b;
-			},
-			identity: true,
-			symbol: ">="
-		},
-		"gt": {
-			logical: true,
-			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
-				return a > b;
-			},
-			identity: true,
-			symbol: ">"
-		},
-		"eq": {
-			logical: true,
-			scalar: (a, b) => a == b,
-			symbol: ["=", "=="],
-			identity: true
-		},
-		"neq": {
-			logical: true,
-			scalar: (a, b) => a != b,
-			symbol: ["!="],
-			identity: true
-		},
-		"and": {
-			logical: true,
-			scalar: (a, b) => !!a && !!b,
-			identity: true,
-			symbol: "&&"
-		},
-		"or": {
-			logical: true,
-			scalar: (a, b) => a || b,
-			reduce: (p, r) => p || r,
-			identity: false,
-			symbol: "||"
-		},
-		"concatenate": {
-			symbol: "&",
-			identity: "",
-			scalar: (a, b) => "" + (a || "") + (b || "")
-		},
-		// Filter is listed here because it's an easy way to handle multiple
-		// array filters without having to code it
-		"filter": {
-			scalar: (a, b) => val(b)? a : null,
-			raw: true
-		}
-	},
-
-	getNumericalOperands: function(a, b) {
-		if (isNaN(a) || isNaN(b)) {
-			// Try comparing as dates
-			var da = toDate(a), db = toDate(b);
-
-			if (da && db) {
-				// Both valid dates
-				return [da, db];
-			}
-		}
-
-		return [a, b];
-	}
-};
-
-for (let name in Mavo.Script.operators) {
-	let details = Mavo.Script.operators[name];
-
-	if (details.scalar.length < 2) {
-		Mavo.Script.addUnaryOperator(name, details);
-	}
-	else {
-		Mavo.Script.addBinaryOperator(name, details);
-	}
-}
 
 var aliases = {
 	average: "avg",
@@ -554,7 +383,7 @@ for (let name in aliases) {
 }
 
 // Make function names case insensitive
-Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
+_._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
 		var ret;
 
@@ -583,16 +412,11 @@ Mavo.Functions._Trap = self.Proxy? new Proxy(_, {
 	// the local variable it should be, but the string "data"
 	// so all property lookups fail.
 	has: (functions, property) => property != "data"
-}) : Mavo.Functions;
+}) : _;
 
 /**
  * Private helper methods
  */
-function numbers(array, args) {
-	array = Array.isArray(array)? array : (args? $$(args) : [array]);
-
-	return array.filter(number => !isNaN(number) && number !== "").map(n => +n);
-}
 
 // Convert argument to string
 function str(str = "") {
@@ -605,10 +429,6 @@ function empty(v) {
 	return v === null || v === false || v === "";
 }
 
-function val(v) {
-	return Mavo.value(v);
-}
-
 function not(v) {
 	return !val(v);
 }
@@ -618,61 +438,6 @@ var twodigits = new Intl.NumberFormat("en", {
 });
 
 twodigits = twodigits.format.bind(twodigits);
-
-function toDate(date) {
-	date = val(date);
-
-	if (!date) {
-		return null;
-	}
-
-	if ($.type(date) === "string") {
-		date = date.trim();
-
-		// Fix up time format
-		if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
-			// No date, add today’s
-			date = _.$today + " " + date;
-		}
-
-		if (date.indexOf(":") === -1) {
-			// Add a time if one doesn't exist
-			date += "T00:00:00";
-		}
-		else {
-			// Make sure time starts with T, due to Safari bug
-			date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
-		}
-
-		// Remove all whitespace
-		date = date.replace(/\s+/g, "");
-
-		var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
-		if (timezone) {
-			// parse as ISO format
-			date = new Date(date);
-		}
-		else {
-			// construct date in local timezone
-			var fields = date.match(/\d+/g);
-			date = new Date(
-				// year, month, date,
-				fields[0], (fields[1] || 1) - 1, fields[2] || 1,
-				// hours, minutes, seconds, milliseconds,
-				fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
-			);
-		}
-	}
-	else {
-		date = new Date(date);
-	}
-
-	if (isNaN(date)) {
-		return null;
-	}
-
-	return date;
-}
 
 function toLocaleString(date, options) {
 	var ret = date.toLocaleString(Mavo.locale, options);
@@ -694,7 +459,7 @@ var numeric = {
 
 function getDateComponent(component) {
 	return function(date) {
-		date = toDate(date);
+		date = $u.date(date);
 
 		if (!date) {
 			return "";
@@ -718,4 +483,4 @@ function getDateComponent(component) {
 	};
 }
 
-})(Bliss);
+})(Bliss, Mavo.value);
