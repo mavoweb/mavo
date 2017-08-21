@@ -79,7 +79,8 @@ var _ = $.extend(Mavo, {
 		if (typeof value !== "object" || value === null) {
 			if (value === null) {
 				value = {
-					[Symbol.toStringTag]: "Null"
+					[Symbol.toStringTag]: "Null",
+					toJSON: () => null
 				};
 			}
 			else {
