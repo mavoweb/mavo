@@ -456,11 +456,9 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		}
 
-		if (data === undefined) {
+		if (data === undefined && !this.modes) {
 			// New property has been added to the schema and nobody has saved since
-			if (!this.modes) {
-				this.value = this.closestCollection? this.default : this.templateValue;
-			}
+			this.value = this.closestCollection? this.default : this.templateValue;
 		}
 		else {
 			this.value = data;
