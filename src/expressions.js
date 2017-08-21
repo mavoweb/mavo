@@ -23,15 +23,15 @@ var _ = Mavo.Expressions = $.Class({
 
 				var scheduled = this.scheduled[evt.action] = this.scheduled[evt.action] || new Set();
 
-				if (evt.node.closestCollection || evt.mavo != this.mavo) {
+				if (evt.node.template) {
 					// Throttle events in collections and events from other Mavos
-					if (!scheduled.has(evt.property)) {
+					if (!scheduled.has(evt.node.template)) {
 						setTimeout(() => {
-							scheduled.delete(evt.property);
+							scheduled.delete(evt.node.template);
 							this.update(evt);
 						}, _.THROTTLE);
 
-						scheduled.add(evt.property);
+						scheduled.add(evt.node.template);
 					}
 				}
 				else {
