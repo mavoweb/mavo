@@ -306,18 +306,22 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	relativizeData: self.Proxy? function(data, options = {live: true}) {
+		var cache = {};
+
 		return new Proxy(data, {
 			get: (data, property, proxy) => {
-				// Checking if property is in proxy might add it to the data
-				if (property in data || (property in proxy && property in data)) {
-					var ret = data[property];
+				if (property in data) {
+					return data[property];
+				}
 
-					return ret;
+				// Checking if property is in proxy might add it to the cache
+				if (property in proxy && property in cache) {
+					return cache[property];
 				}
 			},
 
 			has: (data, property) => {
-				if (property in data) {
+				if (property in data || property in cache) {
 					return true;
 				}
 
@@ -326,21 +330,21 @@ var _ = Mavo.Node = $.Class({
 				// Special values
 				switch (property) {
 					case "$index":
-						data[property] = this.index || 0;
+						cache[property] = this.index || 0;
 						return true; // if index is 0 it's falsy and has would return false!
 					case "$next":
 					case "$previous":
 						if (this.closestCollection) {
-							data[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
+							cache[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
 							return true;
 						}
 
-						data[property] = null;
+						cache[property] = null;
 						return false;
 				}
 
 				if (this instanceof Mavo.Group && property == this.property && this.collection) {
-					data[property] = data;
+					cache[property] = data;
 					return true;
 				}
 
@@ -370,14 +374,14 @@ var _ = Mavo.Node = $.Class({
 						ret = ret.getData(options);
 					}
 
-					data[property] = ret;
+					cache[property] = ret;
 
 					return true;
 				}
 
 				// Does it reference another Mavo?
 				if (property in Mavo.all && Mavo.all[property].root) {
-					return data[property] = Mavo.all[property].root.getData(options);
+					return cache[property] = Mavo.all[property].root.getData(options);
 				}
 
 				return false;

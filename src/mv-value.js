@@ -37,6 +37,17 @@ Mavo.Expressions.directive("mv-value", {
 
 			this.parsed = [new Mavo.Expression(this.expression)];
 			this.expression = this.syntax.start + this.expression + this.syntax.end;
+
+			var changedBy = Mavo.Expression.prototype.changedBy;
+			this.parsed[0].changedBy = function(evt) {
+				var ret = changedBy.call(this, evt);
+
+				if (!ret && evt && evt.action == "propertychange") {
+					ret = Mavo.Functions.intersects(this.identifiers, evt.node.path);
+				}
+
+				return ret;
+			};
 		},
 		"domexpression-init-treebuilt": function() {
 			if (this.originalAttribute != "mv-value" ||
@@ -55,7 +66,8 @@ Mavo.Expressions.directive("mv-value", {
 				this.mavoNode.render(value);
 			};
 
-			this.changedBy = evt => true;
+			// Just prevent the same node from triggering changes
+			this.changedBy = evt => !(evt && (evt.node === this.mavoNode || evt.node.collection === this.mavoNode));
 		}
 	}
 });
