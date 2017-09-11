@@ -26,6 +26,7 @@
     "gulp-babel": "^6.1.2",
     "gulp-babili": "0.0.2",
     "gulp-concat": "^2.6.0",
+    "gulp-inject-version": "^1.0.1",
     "gulp-notify": "^2.2.0",
     "gulp-rename": "^1.2.2",
     "gulp-replace": "^0.5.4",

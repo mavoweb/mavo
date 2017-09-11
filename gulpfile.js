@@ -12,18 +12,23 @@ var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
 var notify = require("gulp-notify");
 var merge = require("merge2");
+var injectVersion = require("gulp-inject-version");
 
 var dependencies = ["../bliss/bliss.min.js", "../stretchy/stretchy.min.js", "../jsep/build/jsep.min.js"];
 var mavo = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats node group primitive ui.popup elements collection ui.itembar
 			expression domexpression expressions mv-if mv-value functions mavoscript
 			backend.dropbox backend.github`
 	.split(/\s+/).map(path => `src/${path}.js`);
+var versionOptions = {
+	replace: "%%VERSION%%"
+};
 
 gulp.task("concat", function () {
 	var files = ["lib/*.js", ...mavo];
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
+		.pipe(injectVersion(versionOptions))
 		.pipe(concat("mavo.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
@@ -48,6 +53,7 @@ gulp.task("sass", function () {
 
 var transpileStream = () => gulp.src(mavo)
 	.pipe(sourcemaps.init())
+	.pipe(injectVersion(versionOptions))
 	.pipe(babel({
 		"presets": [
 			["env", {

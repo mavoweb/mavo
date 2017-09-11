@@ -1,3 +1,8 @@
+/**
+ * Mavo: Create web applications by writing HTML and CSS!
+ * @author Lea Verou
+ * @version %%VERSION%%
+ */
 (function ($, $$) {
 
 var _ = self.Mavo = $.Class({
