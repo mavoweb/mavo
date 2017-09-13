@@ -354,7 +354,7 @@ meter, progress {
 }
 
 [role="checkbox"][property] {
-	&:not([aria-checked="false"]):not([mv-mode="edit"]) {
+	&:not([aria-checked="true"]):not([mv-mode="edit"]) {
 		display: none;
 	}
 
