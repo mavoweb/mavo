@@ -348,16 +348,20 @@ var _ = Mavo.Node = $.Class({
 					return true;
 				}
 
-				// First look in ancestors
-				var ret = this.walkUp(group => {
-					if (property in group.children) {
-						return group.children[property];
-					};
-				});
+				// First look in descendants
+				var ret = this.find(property);
 
+				if (this.property == "argument" && property=="name") {
+					console.log(property, cache, this.nodeType);
+				}
 				if (ret === undefined) {
-					// Still not found, look in descendants
-					ret = this.find(property);
+					// Still not found, look in ancestors
+					ret = this.walkUp(group => {
+						if (property in group.children) {
+							return group.children[property];
+						};
+					});
+
 				}
 
 				if (ret === undefined) {
