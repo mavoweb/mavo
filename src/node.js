@@ -351,9 +351,6 @@ var _ = Mavo.Node = $.Class({
 				// First look in descendants
 				var ret = this.find(property);
 
-				if (this.property == "argument" && property=="name") {
-					console.log(property, cache, this.nodeType);
-				}
 				if (ret === undefined) {
 					// Still not found, look in ancestors
 					ret = this.walkUp(group => {
