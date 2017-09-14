@@ -724,10 +724,12 @@ requestAnimationFrame(() => {
 		}
 	});
 
+	var polyfillURL = "https://cdn.polyfill.io/v2/polyfill.min.js?unknown=polyfill&features=" + polyfills.map(a => a + "|gated").join(",");
+
 	_.dependencies.push(
 		$.ready(),
 		_.Plugins.load(),
-		$.include(!polyfills.length, "https://cdn.polyfill.io/v2/polyfill.min.js?features=" + polyfills.join(","))
+		$.include(!polyfills.length, polyfillURL)
 	);
 
 	_.inited = $.ready().then(() => {
