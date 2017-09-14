@@ -152,7 +152,7 @@ var _ = $.extend(Mavo, {
 
 	/**
 	 * Get the current value of a CSS property on an element
-    */
+	 */
 	getStyle: (element, property) => {
         var value = getComputedStyle(element).getPropertyValue(property);
 
