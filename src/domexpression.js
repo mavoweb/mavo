@@ -173,12 +173,13 @@ var _ = Mavo.DOMExpression = $.Class({
 			if (element === null) {
 				return element;
 			}
+			
 			var all = _.elements.get(element) || [];
 
 			if (arguments.length > 1) {
 				if (!all.length) {
 					return null;
-			}
+				}
 
 				return all.filter(et => et.attribute === attribute)[0] || null;
 			}
