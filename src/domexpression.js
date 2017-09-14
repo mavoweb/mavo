@@ -169,7 +169,11 @@ var _ = Mavo.DOMExpression = $.Class({
 		 * @return If one argument, array of matching DOMExpression objects.
 		 *         If two arguments, the matching DOMExpression object or null
 		 */
-		search: function(element, attribute) {
+		search: function (element, attribute) {
+			if (element === null) {
+				return element;
+			}
+			
 			var all = _.elements.get(element) || [];
 
 			if (arguments.length > 1) {
