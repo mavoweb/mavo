@@ -214,7 +214,7 @@ var _ = self.Mavo = $.Class({
 				var callback = records => {
 					var target = $(location.hash);
 
-					if (target) {
+					if (target || !location.hash) {
 						if (this.element.contains(target)) {
 							requestAnimationFrame(() => { // Give the browser a chance to render
 								Mavo.scrollIntoViewIfNeeded(target);
