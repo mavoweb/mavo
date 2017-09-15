@@ -154,10 +154,12 @@ var _ = $.extend(Mavo, {
 	 * Get the current value of a CSS property on an element
 	 */
 	getStyle: (element, property) => {
-		var value = getComputedStyle(element).getPropertyValue(property);
+		if (element) {
+			var value = getComputedStyle(element).getPropertyValue(property);
 
-		if (value) {
-			return element && value.trim();
+			if (value) {
+				return value.trim();
+			}
 		}
 	},
 	/**
@@ -538,7 +540,10 @@ var _ = $.extend(Mavo, {
 		},
 
 		stop: function() {
-			this.observer.disconnect();
+			if (this.observer) {
+				this.observer.disconnect();
+			}
+
 			this.running = false;
 
 			return this;
