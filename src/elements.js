@@ -266,6 +266,11 @@ _.register({
 		datatype: "boolean"
 	},
 
+	"details": {
+		attribute: "open",
+		datatype: "boolean"
+	},
+
 	"a, link": {
 		default: true,
 		attribute: "href"
