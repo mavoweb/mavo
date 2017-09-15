@@ -24,6 +24,10 @@ var _ = Mavo.Script = {
 			for (let symbol of Mavo.toArray(o.symbol)) {
 				Mavo.Script.symbols[symbol] = name;
 			}
+
+			if (o.precedence) {
+				jsep.addBinaryOp(o.symbol, o.precedence);
+			}
 		}
 
 		o.identity = o.identity === undefined? 0 : o.identity;
@@ -203,7 +207,8 @@ var _ = Mavo.Script = {
 		"concatenate": {
 			symbol: "&",
 			identity: "",
-			scalar: (a, b) => "" + (a || "") + (b || "")
+			scalar: (a, b) => "" + (a || "") + (b || ""),
+			precedence: 10
 		},
 		// Filter is listed here because it's an easy way to handle multiple
 		// array filters without having to code it
