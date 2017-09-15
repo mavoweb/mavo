@@ -212,7 +212,7 @@ var _ = self.Mavo = $.Class({
 		if (location.hash) {
 			this.element.addEventListener("mavo:load.mavo", evt => {
 				var callback = records => {
-					var target = $(location.hash);
+					var target = document.getElementById(location.hash.slice(1));
 
 					if (target || !location.hash) {
 						if (this.element.contains(target)) {
