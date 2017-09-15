@@ -208,6 +208,35 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
+		// Dynamic ids
+		if (location.hash) {
+			this.element.addEventListener("mavo:load.mavo", evt => {
+				var callback = records => {
+					var target = $(location.hash);
+
+					if (target) {
+						if (this.element.contains(target)) {
+							requestAnimationFrame(() => { // Give the browser a chance to render
+								Mavo.scrollIntoViewIfNeeded(target);
+							});
+						}
+
+						if (observer) {
+							observer.destroy();
+							observer = null;
+						}
+					}
+
+					return target;
+				};
+
+				if (!callback()) {
+					// No target, perhaps not yet?
+					var observer = new Mavo.Observer(this.element, "id", callback, {subtree: true});
+				}
+			});
+		}
+
 		this.permissions.can("save", () => {
 			if (this.autoSave) {
 				this.element.addEventListener("mavo:load.mavo:autosave", evt => {

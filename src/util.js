@@ -575,7 +575,7 @@ var _ = $.extend(Mavo, {
 		},
 
 		destroy: function() {
-			this.observer.disconnect();
+			this.stop();
 			this.observer = this.element = null;
 		},
 
