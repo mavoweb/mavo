@@ -348,19 +348,6 @@ var _ = Mavo.Primitive = $.Class({
 
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
 			$.events(this.element, events, resolve);
-
-			if (!this.attribute) {
-				// Hovering over the element for over 150ms will trigger edit
-				$.events(this.element, {
-					"mouseenter.mavo:preedit": e => {
-						clearTimeout(timer);
-						timer = setTimeout(resolve, 150);
-					},
-					"mouseleave.mavo:preedit": e => {
-						clearTimeout(timer);
-					}
-				});
-			}
 		}).then(() => $.unbind(this.element, ".mavo:preedit"));
 
 		if (this.config.edit) {
