@@ -512,17 +512,27 @@ _.register({
 		popup: true
 	},
 
-	"[role=checkbox]": {
+	".mv-toggle": {
 		default: true,
 		attribute: "aria-checked",
 		datatype: "boolean",
 		edit: function() {
-			this.element.addEventListener("click.mavo:edit", evt => {
-				this.value = !this.value;
-				evt.preventDefault();
+			Mavo.revocably.setAttribute(this.element, "role", "checkbox");
+
+			$.events(this.element, "click.mavo:edit keyup.mavo:edit keydown.mavo:edit", evt => {
+				if (evt.type == "click" || evt.key == " " || evt.key == "Enter") {
+					if (evt.type != "keydown") {
+						this.value = !this.value;
+					}
+
+					evt.preventDefault();
+					evt.stopPropagation();
+				}
 			});
 		},
 		done: function() {
+			Mavo.revocably.restoreAttribute(this.element, "role");
+
 			$.unbind(this.element, ".mavo:edit");
 		}
 	}

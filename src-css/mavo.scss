@@ -353,7 +353,7 @@ meter, progress {
 	}
 }
 
-[role="checkbox"][property] {
+.mv-toggle[property] {
 	&:not([aria-checked="true"]):not([mv-mode="edit"]) {
 		display: none;
 	}
