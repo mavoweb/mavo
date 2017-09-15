@@ -58,7 +58,7 @@ var transpileStream = () => gulp.src(mavo)
 		"presets": [
 			["env", {
 				"targets": {
-					"browsers": ["last 4 versions"]
+					"browsers": ["last 4 versions", "Chrome >= 41"]
 				}
 			}
 			]
