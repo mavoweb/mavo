@@ -343,17 +343,16 @@ var _ = Mavo.Node = $.Class({
 						return false;
 				}
 
-				if (this instanceof Mavo.Group && property == this.property && this.collection) {
-					cache[property] = data;
-					return true;
-				}
-
 				// First look in descendants
 				var ret = this.find(property);
 
 				if (ret === undefined) {
 					// Still not found, look in ancestors
 					ret = this.walkUp(group => {
+						if (group.property == property) {
+							return group;
+						}
+
 						if (property in group.children) {
 							return group.children[property];
 						};
