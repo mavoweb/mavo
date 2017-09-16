@@ -324,7 +324,7 @@ button.mv-close {
 
 	// Make sure empty properties have SOME area to focus on/hover over
 	// This looks as close as possible to their edited state
-	&[mv-attribute="none"]
+	&[mv-attribute="none"],
 	&[mv-attribute="null"] {
 		cursor: text;
 
