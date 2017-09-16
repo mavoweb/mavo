@@ -1,4 +1,5 @@
 /node_modules
 *.map
-/dist/*
-!dist/*.html
+/dist/maps/
+dist/*.js
+dist/*.css
