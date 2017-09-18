@@ -5,7 +5,7 @@ var _ = Mavo.Script = {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			for (let symbol of Mavo.toArray(o.symbol)) {
-				Mavo.Script.symbols[symbol] = name;
+				Mavo.Script.unarySymbols[symbol] = name;
 			}
 		}
 
@@ -23,10 +23,10 @@ var _ = Mavo.Script = {
 			// Build map of symbols to function names for easy rewriting
 			for (let symbol of Mavo.toArray(o.symbol)) {
 				Mavo.Script.symbols[symbol] = name;
-			}
 
-			if (o.precedence) {
-				jsep.addBinaryOp(o.symbol, o.precedence);
+				if (o.precedence) {
+					jsep.addBinaryOp(symbol, o.precedence);
+				}
 			}
 		}
 
@@ -92,8 +92,9 @@ var _ = Mavo.Script = {
 	 * Populated via addOperator() and addLogicalOperator()
 	 */
 	symbols: {},
+	unarySymbols: {},
 
-	getOperatorName: op => Mavo.Script.symbols[op] || op,
+	getOperatorName: (op, unary) => Mavo.Script[unary? "unarySymbols" : "symbols"][op] || op,
 
 	/**
 	 * Operations for elements and scalars.
@@ -122,9 +123,14 @@ var _ = Mavo.Script = {
 			scalar: (a, b) => +a + +b,
 			symbol: "+"
 		},
+		"plus": {
+			scalar: a => +a,
+			symbol: "+"
+		},
 		"subtract": {
 			scalar: (a, b) => {
 				if (isNaN(a) || isNaN(b)) {
+					// Handle dates
 					var dateA = $u.date(a), dateB = $u.date(b);
 
 					if (dateA && dateB) {
@@ -134,6 +140,10 @@ var _ = Mavo.Script = {
 
 				return a - b;
 			},
+			symbol: "-"
+		},
+		"minus": {
+			scalar: a => -a,
 			symbol: "-"
 		},
 		"mod": {
@@ -274,7 +284,7 @@ var _ = Mavo.Script = {
 			}
 		},
 		"UnaryExpression": node => {
-			var name = Mavo.Script.getOperatorName(node.operator);
+			var name = Mavo.Script.getOperatorName(node.operator, true);
 
 			if (name) {
 				return `${name}(${_.serialize(node.argument)})`;

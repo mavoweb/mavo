@@ -371,7 +371,6 @@ $.lazy(_, "$url", function() {
 var aliases = {
 	average: "avg",
 	iff: "iff IF",
-	subtract: "minus",
 	multiply: "mult product",
 	divide: "div",
 	lt: "lessThan smaller",
