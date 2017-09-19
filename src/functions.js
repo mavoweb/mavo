@@ -376,21 +376,6 @@ $.lazy(_, "$url", function() {
 	return ret;
 });
 
-var aliases = {
-	average: "avg",
-	iff: "iff IF",
-	multiply: "mult product",
-	divide: "div",
-	lt: "lessThan smaller",
-	gt: "moreThan greater greaterThan bigger",
-	eq: "equal equality",
-	th: "ordinal"
-};
-
-for (let name in aliases) {
-	aliases[name].split(/\s+/g).forEach(alias => _[alias] = _[name]);
-}
-
 // Make function names case insensitive
 _._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {

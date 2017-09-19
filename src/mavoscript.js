@@ -355,4 +355,19 @@ for (let name in Mavo.Script.operators) {
 	}
 }
 
+var aliases = {
+	average: "avg",
+	iff: "iff IF",
+	multiply: "mult product",
+	divide: "div",
+	lt: "smaller",
+	gt: "larger bigger",
+	eq: "equal equality",
+	th: "ordinal"
+};
+
+for (let name in aliases) {
+	aliases[name].split(/\s+/g).forEach(alias => Mavo.Functions[alias] = Mavo.Functions[name]);
+}
+
 })(Bliss, Mavo.value, Mavo.Functions.util);
