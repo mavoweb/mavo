@@ -220,7 +220,7 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
-		else if (!this.inPath.length) {
+		else if (this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
