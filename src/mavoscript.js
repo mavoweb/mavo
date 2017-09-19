@@ -6,6 +6,8 @@ var _ = Mavo.Script = {
 			// Build map of symbols to function names for easy rewriting
 			for (let symbol of Mavo.toArray(o.symbol)) {
 				Mavo.Script.unarySymbols[symbol] = name;
+
+				jsep.addUnaryOp(symbol);
 			}
 		}
 
@@ -106,7 +108,7 @@ var _ = Mavo.Script = {
 	 */
 	operators: {
 		"not": {
-			symbol: "!",
+			symbol: ["!", "not"],
 			scalar: a => !a
 		},
 		"multiply": {
