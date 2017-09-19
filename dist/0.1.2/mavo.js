@@ -13,7 +13,7 @@ e.offsetWidth){e.style.width="0","border-box"==n.boxSizing?o=e.offsetWidth:"padd
  * @version v0.1.2
  */
 (function ($, $$) {
-console.log("local");
+
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();

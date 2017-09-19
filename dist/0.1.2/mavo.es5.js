@@ -17,7 +17,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
  * @version v0.1.2
  */
 (function ($, $$) {
-	console.log("local");
+	
 	var _ = self.Mavo = $.Class({
 		constructor: function constructor(element) {
 			var _this = this;
