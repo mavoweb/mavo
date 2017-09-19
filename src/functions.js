@@ -154,7 +154,7 @@ var _ = Mavo.Functions = {
 		return num + ord;
 	},
 
-	iff: function(condition, iftrue, iffalse="") {
+	iff: function(condition, iftrue=condition, iffalse="") {
 		if (Array.isArray(condition)) {
 			return condition.map((c, i) => {
 				var ret = val(c)? iftrue : iffalse;

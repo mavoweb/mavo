@@ -357,7 +357,6 @@ var _ = Mavo.Node = $.Class({
 							return group.children[property];
 						};
 					});
-
 				}
 
 				if (ret === undefined) {
