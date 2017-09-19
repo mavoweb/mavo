@@ -151,7 +151,9 @@ var _ = Mavo.Script = {
 				var ret = a % b;
 				ret += ret < 0? b : 0;
 				return ret;
-			}
+			},
+			symbol: "mod",
+			precedence: 6
 		},
 		"lte": {
 			logical: true,
@@ -193,7 +195,8 @@ var _ = Mavo.Script = {
 			logical: true,
 			scalar: (a, b) => a == b,
 			symbol: ["=", "=="],
-			identity: true
+			identity: true,
+			precedence: 6
 		},
 		"neq": {
 			logical: true,
@@ -205,14 +208,16 @@ var _ = Mavo.Script = {
 			logical: true,
 			scalar: (a, b) => !!a && !!b,
 			identity: true,
-			symbol: "&&"
+			symbol: ["&&", "and"],
+			precedence: 2
 		},
 		"or": {
 			logical: true,
 			scalar: (a, b) => a || b,
 			reduce: (p, r) => p || r,
 			identity: false,
-			symbol: "||"
+			symbol: ["||", "or"],
+			precedence: 2
 		},
 		"concatenate": {
 			symbol: "&",
@@ -332,14 +337,6 @@ var _ = Mavo.Script = {
 
 	parse: self.jsep,
 };
-
-if (self.jsep) {
-	jsep.addBinaryOp("and", 2);
-	jsep.addBinaryOp("or", 2);
-	jsep.addBinaryOp("=", 6);
-	jsep.addBinaryOp("mod", 10);
-	jsep.removeBinaryOp("===");
-}
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
