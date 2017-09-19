@@ -53,6 +53,15 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
+	url: (id, url = location) => {
+		id = str(id).replace(/[^\w-:]/g);
+
+		var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
+		       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
+
+		return ret === null? null : ret[1] || "";
+	},
+
 	// TODO return first/last non-null?
 	first: arr => arr && arr[0] || "",
 	last: arr => arr && arr[arr.length - 1] || "",
@@ -346,6 +355,7 @@ var _ = Mavo.Functions = {
 var $u = _.util;
 
 // $url: Read-only syntactic sugar for URL stuff
+// Deprecated. Use url() instead.
 $.lazy(_, "$url", function() {
 	var ret = {};
 	var url = new URL(location);
@@ -365,8 +375,6 @@ $.lazy(_, "$url", function() {
 
 	return ret;
 });
-
-
 
 var aliases = {
 	average: "avg",
