@@ -54,12 +54,14 @@ var _ = Mavo.Functions = {
 	},
 
 	url: (id, url = location) => {
-		id = str(id).replace(/[^\w-:]/g);
+		if (id) {
+			id = str(id).replace(/[^\w-:]/g);
 
-		var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
-		       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
+			var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
+			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
+		}
 
-		return ret === null? null : ret[1] || "";
+		return ret === null || !id? null : ret[1] || "";
 	},
 
 	// TODO return first/last non-null?
