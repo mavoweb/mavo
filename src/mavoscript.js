@@ -108,7 +108,7 @@ var _ = Mavo.Script = {
 	 */
 	operators: {
 		"not": {
-			symbol: ["!", "not"],
+			symbol: "!",
 			scalar: a => !a
 		},
 		"multiply": {
