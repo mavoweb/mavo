@@ -680,7 +680,7 @@ var _ = self.Mavo = $.Class({
 		hooks: new $.Hooks(),
 
 		attributes: [
-			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
+			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-multiple-path", "mv-format",
 			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions",
 			"mv-rel"
 		],

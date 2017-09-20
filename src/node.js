@@ -463,11 +463,9 @@ var _ = Mavo.Node = $.Class({
 
 		// Are were only rendering and editing a subset of the data?
 		inPath: function() {
-			if (this.nodeType != "Collection") {
-				return (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
-			}
+			var attribute = this.nodeType == "Collection"? "mv-multiple-path" : "mv-path";
 
-			return [];
+			return (this.element.getAttribute(attribute) || "").split("/").filter(p => p.length);
 		},
 
 		properties: function() {

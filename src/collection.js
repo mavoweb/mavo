@@ -73,6 +73,10 @@ var _ = Mavo.Collection = $.Class({
 			env.data = this.relativizeData(env.data);
 		}
 
+		if (!env.options.live) {
+			env.data = Mavo.subset(this.data, this.inPath, env.data);
+		}
+
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;

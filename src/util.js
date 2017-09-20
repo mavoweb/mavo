@@ -412,8 +412,17 @@ var _ = $.extend(Mavo, {
 		if (arguments.length == 3) {
 			// Put
 			if (path.length) {
+				var last = path[path.length - 1];
 				var parent = $.value(obj, ...path.slice(0, -1));
-				parent[path[path.length - 1]] = value;
+
+				if (Array.isArray(parent) && Array.isArray(value)) {
+					// Merge arrays instead of adding array inside array
+					parent.splice(last, 1, ...value);
+				}
+				else {
+					parent[path[path.length - 1]] = value;
+				}
+
 				return obj;
 			}
 
@@ -433,6 +442,10 @@ var _ = $.extend(Mavo, {
 							return obj[j];
 						}
 					}
+
+					// Not found
+					path[i] = obj.length;
+					return {id: property};
 				}
 
 				return obj;
