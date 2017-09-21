@@ -54,6 +54,10 @@ var _ = Mavo.Functions = {
 	},
 
 	url: (id, url = location) => {
+		if (id === undefined) {
+			return location.href;
+		}
+
 		if (id) {
 			id = str(id).replace(/[^\w-:]/g);
 
