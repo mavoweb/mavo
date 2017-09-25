@@ -511,7 +511,9 @@ var _ = self.Mavo = $.Class({
 		.then(data => this.render(data))
 		.then(() => {
 			this.inProgress = false;
-			$.fire(this.element, "mavo:load");
+			requestAnimationFrame(() => {
+				$.fire(this.element, "mavo:load");
+			});
 		});
 	},
 
