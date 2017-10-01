@@ -491,7 +491,7 @@ function getDateComponent(component) {
 		}
 
 		if (component != "weekday") {
-			ret.twodigit = (ret < 10? "0" : "") + (ret < 1? "0" : "") + ret % 100;
+			ret.twodigit = (ret % 100 < 10? "0" : "") + ret % 100;
 		}
 
 		return ret;
