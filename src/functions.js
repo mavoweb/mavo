@@ -391,15 +391,23 @@ _._Trap = self.Proxy? new Proxy(_, {
 		                     || Mavo.getCanonicalProperty(Math, property);
 
 		if (canonicalProperty) {
-			ret = functions[canonicalProperty] || Math[canonicalProperty];
+			ret = functions[canonicalProperty];
+
+			if (ret === undefined) {
+				ret = Math[canonicalProperty];
+			}
 		}
 
-		if (ret) {
-			// For when function names are used as unquoted strings, see #160
-			ret.toString = () => property;
+		if (ret !== undefined) {
+			if (typeof ret === "function") {
+				// For when function names are used as unquoted strings, see #160
+				ret.toString = () => property;
+			}
+
 			return ret;
 		}
 
+		// Still not found? Maybe it's a global
 		if (property in self) {
 			return self[property];
 		}
