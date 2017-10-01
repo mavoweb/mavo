@@ -624,13 +624,6 @@ var _ = self.Mavo = $.Class({
 			value = value || null;
 
 			if (value != this._primaryBackend) {
-				if (value)  {
-					this.element.style.setProperty("--mv-backend", `"${value.id}"`);
-				}
-				else {
-					this.element.style.removeProperty("--mv-backend");
-				}
-
 				return value;
 			}
 		},
