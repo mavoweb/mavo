@@ -101,6 +101,12 @@ var _ = Mavo.Node = $.Class({
 		if (this.template) {
 			Mavo.delete(this.template.copies, this);
 		}
+
+		if (this.expressions) {
+			for (var expression of this.expressions) {
+				expression.destroy();
+			}
+		}
 	},
 
 	getData: function(o = {}) {

@@ -293,6 +293,13 @@ var _ = Mavo.Functions = {
 		return args[0];
 	},
 
+	// Other special variables (some updated via events)
+	$mouse: {x: 0, y: 0},
+
+	get $hash() {
+		return location.hash.slice(1);
+	},
+
 	// "Private" helpers
 	util: {
 		numbers: function(array, args) {

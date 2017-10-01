@@ -78,8 +78,19 @@ var _ = Mavo.DOMExpression = $.Class({
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
 	},
 
+	destroy: function() {
+		_.special.delete(this);
+	},
+
 	changedBy: function(evt) {
-		return !this.parsed.every(expr => !(expr instanceof Mavo.Expression) || !expr.changedBy(evt));
+		if (!this.identifiers) {
+			this.identifiers = Mavo.flatten(this.parsed.map(x => x.identifiers || []));
+
+			// Any identifiers that need additional updating?
+			_.special.add(this);
+		}
+
+		return Mavo.Expression.changedBy(this.identifiers, evt);
 	},
 
 	update: function(data = this.data, event) {
@@ -185,8 +196,104 @@ var _ = Mavo.DOMExpression = $.Class({
 			}
 
 			return all;
+		},
+
+		special: {
+			add: function(domexpression, name) {
+				if (name) {
+					var o = this.vars[name];
+
+					if (o && domexpression.identifiers.indexOf(name) > -1) {
+						o.all = o.all || new Set();
+						o.all.add(domexpression);
+
+						if (o.all.size === 1) {
+							o.observe();
+						}
+						else if (!o.all.size) {
+							o.unobserve();
+						}
+					}
+				}
+				else {
+					// All names
+					for (var name in this.vars) {
+						this.add(domexpression, name);
+					}
+				}
+			},
+
+			delete: function(domexpression, name) {
+				if (name) {
+					var o = this.vars[name];
+
+					o.all = o.all || new Set();
+					o.all.delete(domexpression);
+
+					if (!o.all.size) {
+						o.unobserve();
+					}
+				}
+				else {
+					// All names
+					for (var name in this.vars) {
+						this.delete(domexpression, name);
+					}
+				}
+			},
+
+			update: function() {
+				if (this.update) {
+					this.update(...arguments);
+				}
+
+				for (var domexpression of this.all) {
+					domexpression.update();
+				}
+			},
+
+			event: function(name, {type, update, target = document} = {}) {
+				this.vars[name] = {
+					observe: function() {
+						this.callback = this.callback || _.special.update.bind(this);
+						target.addEventListener(type, this.callback);
+					},
+					unobserve: function() {
+						target.removeEventListener(type, this.callback);
+					}
+				};
+
+				if (update) {
+					this.vars[name].update = function(evt) {
+						Mavo.Functions[name] = update(evt);
+					};
+				}
+			},
+
+			vars: {
+				"$now": {
+					observe: function() {
+						this.timer = setInterval(_.special.update.bind(this), 999);
+					},
+					unobserve: function() {
+						clearInterval(this.timer);
+					}
+				}
+			}
 		}
 	}
+});
+
+_.special.event("$mouse", {
+	type: "mousemove",
+	update: function(evt) {
+		return {x: evt.clientX, y: evt.clientY};
+	}
+});
+
+_.special.event("$hash", {
+	type: "hashchange",
+	target: window
 });
 
 })(Bliss);

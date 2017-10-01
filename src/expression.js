@@ -15,7 +15,6 @@ var _ = Mavo.Expression = $.Class({
 		try {
 			if (!this.function) {
 				this.function = Mavo.Script.compile(this.expression);
-				this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 			}
 
 			this.value = this.function(data);
@@ -37,44 +36,48 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 	},
 
 	changedBy: function(evt) {
-		if (!evt) {
-			return true;
-		}
-
-		if (!this.identifiers) {
-			return false;
-		}
-
-		if (this.identifiers.indexOf(evt.property) > -1) {
-			return true;
-		}
-
-		if (Mavo.Functions.intersects(evt.properties, this.identifiers)) {
-			return true;
-		}
-
-		if (evt.action != "propertychange") {
-			if (Mavo.Functions.intersects(["$index", "$previous", "$next"], this.identifiers)) {
-				return true;
-			}
-
-			var collection = evt.node.collection || evt.node;
-
-			if (Mavo.Functions.intersects(collection.properties, this.identifiers)) {
-				return true;
-			}
-		}
-
-		return false;
+		return _.changedBy(this.identifiers, evt);
 	},
 
 	live: {
 		expression: function(value) {
 			this.function = null;
+			this.identifiers = value.match(/[$a-z][$\w]*/ig) || [];
 		}
 	},
 
 	static: {
+		changedBy: function(identifiers, evt) {
+			if (!evt) {
+				return true;
+			}
+
+			if (!identifiers) {
+				return false;
+			}
+
+			if (identifiers.indexOf(evt.property) > -1) {
+				return true;
+			}
+
+			if (Mavo.Functions.intersects(evt.properties, identifiers)) {
+				return true;
+			}
+
+			if (evt.action != "propertychange") {
+				if (Mavo.Functions.intersects(["$index", "$previous", "$next"], identifiers)) {
+					return true;
+				}
+
+				var collection = evt.node.collection || evt.node;
+
+				if (Mavo.Functions.intersects(collection.properties, identifiers)) {
+					return true;
+				}
+			}
+
+			return false;
+		},
 	}
 });
 
