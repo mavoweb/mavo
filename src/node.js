@@ -311,6 +311,32 @@ var _ = Mavo.Node = $.Class({
 		return !!this.parentGroup && this.parentGroup.isDeleted();
 	},
 
+	// Resolve a property name from this node
+	resolve: function(property) {
+		// First look in descendants
+		var ret = this.find(property);
+
+		if (ret === undefined) {
+			// Still not found, look in ancestors
+			ret = this.walkUp(group => {
+				if (group.property == property) {
+					return group;
+				}
+
+				if (property in group.children) {
+					return group.children[property];
+				};
+			});
+		}
+
+		if (ret === undefined) {
+			// Still not found, look anywhere
+			ret = this.mavo.root.find(property);
+		}
+
+		return ret;
+	},
+
 	relativizeData: self.Proxy? function(data, options = {live: true}) {
 		var cache = {};
 
@@ -350,25 +376,7 @@ var _ = Mavo.Node = $.Class({
 				}
 
 				// First look in descendants
-				var ret = this.find(property);
-
-				if (ret === undefined) {
-					// Still not found, look in ancestors
-					ret = this.walkUp(group => {
-						if (group.property == property) {
-							return group;
-						}
-
-						if (property in group.children) {
-							return group.children[property];
-						};
-					});
-				}
-
-				if (ret === undefined) {
-					// Still not found, look anywhere
-					ret = this.mavo.root.find(property);
-				}
+				var ret = this.resolve(property);
 
 				if (ret !== undefined) {
 					if (Array.isArray(ret)) {
