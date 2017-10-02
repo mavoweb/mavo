@@ -8,8 +8,6 @@ var _ = Mavo.Expression = $.Class({
 	},
 
 	eval: function(data) {
-		this.oldValue = this.value;
-
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
@@ -17,7 +15,7 @@ var _ = Mavo.Expression = $.Class({
 				this.function = Mavo.Script.compile(this.expression);
 			}
 
-			this.value = this.function(data);
+			return this.function(data);
 		}
 		catch (exception) {
 			console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`, `
@@ -25,10 +23,8 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 
 			Mavo.hooks.run("expression-eval-error", {context: this, exception});
 
-			this.value = exception;
+			return exception;
 		}
-
-		return this.value;
 	},
 
 	toString() {
