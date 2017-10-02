@@ -7,9 +7,22 @@ var _ = Mavo.UI.Bar = $.Class({
 		this.mavo = mavo;
 
 		this.element = $(".mv-bar", this.mavo.element);
+		this.template = this.mavo.element.getAttribute("mv-bar");
 
 		if (this.element) {
 			this.custom = true;
+			this.template = this.element.getAttribute("mv-bar") || this.template || "";
+
+			var selector = Object.keys(_.controls).map(id => `.mv-${id}`).join(", ");
+			this.customControls = $$(selector, this.element);
+
+			for (let id in _.controls) {
+				this[id] = $(`.mv-${id}`, this.element);
+
+				if (this[id]) {
+					this.template += ` yes-${id}`;
+				}
+			}
 		}
 		else {
 			this.element = $.create({
@@ -36,8 +49,6 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		for (let id of this.controls) {
 			let o = _.controls[id];
-
-			this[id] = $(`.mv-${id}`, this.element);
 
 			if (this[id]) {
 				// Custom control, remove to not mess up order
@@ -159,31 +170,50 @@ var _ = Mavo.UI.Bar = $.Class({
 
 	static: {
 		getControls: function(attribute) {
+			var initial = Object.keys(_.controls).filter(id => !_.controls[id].optional);
+
 			if (attribute) {
-				var ids = attribute == "none"? [] : attribute.split(/\s+/);
+				var ids = attribute == "none"? [] : attribute.trim().split(/\s+/);
 
-				// Is there ANY non-negative key?
-				var excludeOnly = !/(\s+|^)(?!no\-)[a-z]+(\s+|$)/.test(attribute);
+				// Is there ANY non-relative key?
+				var relative = true;
+				var values = {};
 
-				var keys = excludeOnly? Object.keys(_.controls) : [];
+				// Make map of ids and relativeness, dropping duplicates
+				for (var value of ids) {
+					let id = Mavo.match(value, /([a-z]+)\s*$/i, 1);
 
-				for (var key of ids) {
-					var negative = /^\s*no\-/i.test(key);
-					var id = Mavo.match(key, /([a-z]+)\s*$/i, 1);
+					if (id in _.controls) {
+						values[id] = Mavo.match(value, /^(no|yes)\-/i, 1);
+					}
+				}
 
-					if (negative) {
+				// Any absolute value left?
+				for (var id in values) {
+					if (!values[id]) {
+						relative = false;
+						break;
+					}
+				}
+
+				var keys = relative? initial : [];
+
+				for (var id in values) {
+					var rel = values[id];
+
+					if (rel == "no" || !rel) {
 						Mavo.delete(keys, id);
 					}
-					else if (id in _.controls) {
+
+					if (keys.indexOf(id) === -1 && rel != "no") {
 						keys.push(id);
 					}
 				}
-			}
-			else {
-				return Object.keys(_.controls);
+
+				return keys;
 			}
 
-			return keys;
+			return initial;
 		},
 
 		controls: {
@@ -255,7 +285,8 @@ var _ = Mavo.UI.Bar = $.Class({
 				action: function() {
 					this.clear();
 				},
-				permission: "delete"
+				permission: "delete",
+				optional: true
 			},
 
 			login: {
