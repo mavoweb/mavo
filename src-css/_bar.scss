@@ -131,19 +131,6 @@
 		}
 	}
 
-	.mv-clear {
-		&::before {
-			@extend %rubbish-bin;
-			vertical-align: -.25em;
-			width: .9em;
-			filter: saturate(0) brightness(600%);
-		}
-
-		&:enabled:hover {
-			background: #b00;
-		}
-	}
-
 	.mv-logout {
 		&::before {
 			content: "↪";

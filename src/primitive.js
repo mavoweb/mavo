@@ -420,12 +420,6 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	clear: function() {
-		if (this.modes != "read") {
-			this.value = this.templateValue;
-		}
-	},
-
 	dataRender: function(data) {
 		if (data && typeof data === "object") {
 			if (Symbol.toPrimitive in data) {

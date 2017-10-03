@@ -351,12 +351,6 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-end", env);
 	},
 
-	clear: function() {
-		if (confirm(this._("delete-confirmation"))) {
-			this.store(null).then(() => this.root.clear());
-		}
-	},
-
 	edit: function() {
 		this.root.edit();
 

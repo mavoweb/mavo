@@ -101,8 +101,10 @@
 		color: $color;
 
 		&::before {
-			@extend %rubbish-bin;
+			content: $rubbish-bin;
 			display: block;
+			width: 1em;
+			height: 1em;
 		}
 
 		&:hover, &:focus {

@@ -281,14 +281,6 @@ var _ = Mavo.UI.Bar = $.Class({
 				}
 			},
 
-			clear: {
-				action: function() {
-					this.clear();
-				},
-				permission: "delete",
-				optional: true
-			},
-
 			login: {
 				action: function() {
 					this.primaryBackend.login();

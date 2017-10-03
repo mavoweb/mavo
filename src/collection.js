@@ -325,28 +325,6 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	/**
-	 * Delete all items in the collection. Not undoable.
-	 */
-	clear: function() {
-		if (this.modes == "read") {
-			return;
-		}
-
-		if (this.mutable) {
-			for (var i = 1, item; item = this.children[i]; i++) {
-				item.element.remove();
-				item.destroy();
-			}
-
-			this.children = this.children.slice(0, 1);
-
-			this.dataChanged("clear");
-		}
-
-		this.propagate("clear");
-	},
-
 	dataChanged: function(action, o = {}) {
 		o.element = o.element || this.marker;
 		return this.super.dataChanged.call(this, action, o);
