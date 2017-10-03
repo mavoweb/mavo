@@ -34,8 +34,19 @@
 		background: transparent;
 		color: inherit;
 
+		&:focus {
+			background: hsla(0,0%,100%,.1);
+			outline: 1px dotted hsla(0,0%,100%,.25);
+			outline-offset: -5px;
+			-moz-outline-radius: 1px;
+		}
+
 		&:enabled:hover {
 			background: hsla(0,0%,100%,.2);
+		}
+
+		&::-moz-focus-inner {
+			border: 0;
 		}
 
 		&:disabled {
@@ -90,6 +101,10 @@
 		[mv-app][mv-mode="edit"] & {
 			background: rgba(0,0,0,.6);
 			box-shadow: .2em 0 .1em -.1em black inset, -.2em 0 .1em -.1em black inset;
+
+			&:focus {
+				background: rgba(0,0,0,.4);
+			}
 
 			&::after {
 				content: "ing";
