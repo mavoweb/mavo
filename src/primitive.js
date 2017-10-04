@@ -769,8 +769,12 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 
-			if ($.type(value) === "number" || o.datatype == "number") {
-				return _.formatNumber(value);
+			if (($.type(value) === "number" || o.datatype == "number")) {
+				var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
+
+				if (!skipNumberFormatting) {
+					return _.formatNumber(value);
+				}
 			}
 
 			if (Array.isArray(value)) {

@@ -140,7 +140,15 @@ var _ = Mavo.DOMExpression = $.Class({
 			return;
 		}
 
-		env.value = env.value.length === 1? env.value[0] : env.value.map(Mavo.Primitive.format).join("");
+		if (env.value.length === 1) {
+			env.value = env.value[0];
+		}
+		else {
+			env.value = env.value.map(v => Mavo.Primitive.format(v, {
+				attribute: this.attribute,
+				element: this.element
+			})).join("");
+		}
 
 		this.output(env.value);
 
