@@ -270,6 +270,7 @@ var _ = Mavo.Functions = {
 	hour: getDateComponent("hour"),
 	minute: getDateComponent("minute"),
 	second: getDateComponent("second"),
+	ms: getDateComponent("ms"),
 
 	date: date => {
 		return `${_.year(date)}-${_.month(date).twodigit}-${_.day(date).twodigit}`;
@@ -469,7 +470,8 @@ var numeric = {
 	weekday: d => d.getDay() || 7,
 	hour: d => d.getHours(),
 	minute: d => d.getMinutes(),
-	second: d => d.getSeconds()
+	second: d => d.getSeconds(),
+	ms: d => d.getMilliseconds()
 };
 
 function getDateComponent(component) {

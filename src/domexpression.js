@@ -281,7 +281,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			vars: {
 				"$now": {
 					observe: function() {
-						this.timer = setInterval(_.special.update.bind(this), 999);
+						this.timer = setInterval(_.special.update.bind(this), 100);
 					},
 					unobserve: function() {
 						clearInterval(this.timer);
