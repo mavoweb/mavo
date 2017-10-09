@@ -282,7 +282,7 @@ _.register({
 	},
 
 	"formControl": {
-		selector: "select, input",
+		selector: "input",
 		default: true,
 		attribute: "value",
 		modes: "edit",
@@ -292,6 +292,12 @@ _.register({
 		init: function() {
 			this.editor = this.element;
 		}
+	},
+
+	"select": {
+		extend: "formControl",
+		selector: "select",
+		subtree: true
 	},
 
 	"textarea": {

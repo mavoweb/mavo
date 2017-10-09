@@ -136,10 +136,10 @@ var _ = Mavo.Primitive = $.Class({
 		// Properties like input.checked or input.value cannot be observed that way
 		// so we cannot depend on mutation observers for everything :(
 		this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-			if (this.attribute || !this.editing) {
+			if (this.attribute || !this.editing || this.config.subtree) {
 				this.value = this.getValue();
 			}
-		});
+		}, {subtree: this.config.subtree, childList: this.config.subtree});
 
 		this.postInit();
 
@@ -356,32 +356,34 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		return this.preEdit.then(() => {
-			// Actual edit
-			if (this.initEdit) {
-				this.initEdit();
-			}
-
-			if (this.popup) {
-				this.popup.prepare();
-				this.popup.show();
-			}
-
-			if (!this.attribute && !this.popup) {
-				if (this.editor.parentNode != this.element) {
-					this.editorValue = this.value;
-					this.element.textContent = "";
-
-					this.element.appendChild(this.editor);
+			this.sneak(() => {
+				// Actual edit
+				if (this.initEdit) {
+					this.initEdit();
 				}
 
-				if (!this.collection) {
-					if (document.activeElement === this.element) {
-						this.editor.focus();
+				if (this.popup) {
+					this.popup.prepare();
+					this.popup.show();
+				}
+
+				if (!this.attribute && !this.popup) {
+					if (this.editor.parentNode != this.element) {
+						this.editorValue = this.value;
+						this.element.textContent = "";
+
+						this.element.appendChild(this.editor);
 					}
 
-					Mavo.revocably.restoreAttribute(this.element, "tabindex");
+					if (!this.collection) {
+						if (document.activeElement === this.element) {
+							this.editor.focus();
+						}
+
+						Mavo.revocably.restoreAttribute(this.element, "tabindex");
+					}
 				}
-			}
+			});
 		});
 	}, // edit
 
