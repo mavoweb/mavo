@@ -429,7 +429,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 			else {
 				// Candidate properties to get a value from
-				for (let property of [this.property, "value", ...Object.keys(data)]) {
+				for (let property of [this.property, "value", "content"]) {
 					if (property in data) {
 						data = data[property];
 						this.inPath.push(property);
