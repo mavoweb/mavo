@@ -134,8 +134,7 @@ var _ = Mavo.Functions = {
 	},
 
 	reverse: function(array) {
-		var n = array.length;
-		return array.map((elem, i) => array[n-i-1]);
+		return Mavo.toArray(array).splice().reverse();
 	},
 
 	round: function(num, decimals) {
