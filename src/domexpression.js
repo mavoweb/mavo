@@ -21,6 +21,16 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		Mavo.hooks.run("domexpression-init-start", this);
 
+		if (this.attribute == "mv-value") {
+			this.originalAttribute = "mv-value";
+			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
+			var expression = this.element.getAttribute("mv-value");
+			this.element.removeAttribute("mv-value");
+			this.parsed = [new Mavo.Expression(expression)];
+			this.expression = this.syntax.start + expression + this.syntax.end;
+		}
+
 		if (this.node.nodeType === 3 && this.element === this.node) {
 			this.element = this.node.parentNode;
 
@@ -70,6 +80,10 @@ var _ = Mavo.DOMExpression = $.Class({
 				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
 			}
 
+			if (this.originalAttribute == "mv-value" && this.mavoNode && this.mavoNode == this.item.collection) {
+				Mavo.delete(this.item.expressions, this);
+			}
+
 			Mavo.hooks.run("domexpression-init-treebuilt", this);
 		});
 
@@ -83,6 +97,11 @@ var _ = Mavo.DOMExpression = $.Class({
 	},
 
 	changedBy: function(evt) {
+		if (this.originalAttribute == "mv-value" && !(this.mavoNode instanceof Mavo.Primitive)) {
+			// Just prevent the same node from triggering changes
+			return !(evt && (evt.node === this.mavoNode || evt.node.collection === this.mavoNode));
+		}
+
 		if (!this.identifiers) {
 			this.identifiers = Mavo.flatten(this.parsed.map(x => x.identifiers || []));
 
@@ -158,6 +177,11 @@ var _ = Mavo.DOMExpression = $.Class({
 	output: function(value) {
 		if (this.primitive) {
 			this.primitive.value = value;
+		}
+		else if (this.mavoNode) {
+			//value = value.value || value;
+
+			this.mavoNode.render(value);
 		}
 		else {
 			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});

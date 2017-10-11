@@ -25,7 +25,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		// Link primitive with its expressionText object
 		// We need to do this before any editing UI is generated
-		this.expressionText = Mavo.DOMExpression.search(this.element, this.attribute);
+		this.expressionText = this.expressionText || Mavo.DOMExpression.search(this.element, this.attribute);
 
 		if (this.expressionText && !this.expressionText.mavoNode) {
 			// Computed property

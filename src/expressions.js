@@ -143,7 +143,9 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	static: {
-		directives: [],
+		directives: [
+			"mv-value"
+		],
 
 		THROTTLE: 50,
 

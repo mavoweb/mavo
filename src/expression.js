@@ -60,7 +60,10 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 				return true;
 			}
 
-			if (evt.action != "propertychange") {
+			if (evt.action == "propertychange") {
+				return Mavo.Functions.intersects(identifiers, evt.node.path);
+			}
+			else {
 				if (Mavo.Functions.intersects(["$index", "$previous", "$next"], identifiers)) {
 					return true;
 				}

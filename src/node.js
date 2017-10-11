@@ -37,7 +37,7 @@ var _ = Mavo.Node = $.Class({
 		if (!this.fromTemplate("property", "type")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
-			this.storage = this.element.getAttribute("mv-storage"); // TODO rename to storage
+			this.storage = this.element.getAttribute("mv-storage");
 		}
 
 		this.modes = this.element.getAttribute("mv-mode");
@@ -63,6 +63,26 @@ var _ = Mavo.Node = $.Class({
 				item: this,
 				mavo: this.mavo
 			}));
+		}
+
+		if (this instanceof Mavo.Group || this.collection) {
+			// Handle mv-value
+			// TODO integrate with the code in Primitive that decides whether this is a computed property
+			var et = Mavo.DOMExpression.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
+
+			if (et) {
+				et.mavoNode = this;
+				this.expressionText = et;
+				this.storage = this.storage || "none";
+				this.modes = "read";
+
+				if (this.collection) {
+					this.collection.expressions = [...(this.collection.expressions || []), et];
+					et.mavoNode = this.collection;
+					this.collection.storage = this.collection.storage || "none";
+					this.collection.modes = "read";
+				}
+			}
 		}
 
 		Mavo.hooks.run("node-init-end", env);
