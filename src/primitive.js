@@ -297,6 +297,17 @@ var _ = Mavo.Primitive = $.Class({
 						evt.preventDefault();
 					}
 				}
+				else if (evt.keyCode == 8 && (this.empty && this.collection || evt[Mavo.superKey])) {
+					// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
+					this.closestCollection.delete(this.closestItem);
+
+					// Focus on sibling
+					var sibling = this.getCousin(1) || this.getCousin(-1);
+
+					if (sibling) {
+						sibling.edit({immediately: true}).then(() => sibling.editor.focus());
+					}
+				}
 			});
 		}
 
