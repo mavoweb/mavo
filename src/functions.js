@@ -133,6 +133,10 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).filter(a => !empty(a)).length;
 	},
 
+	reverse: function(array) {
+		return Mavo.toArray(array).splice().reverse();
+	},
+
 	round: function(num, decimals) {
 		if (not(num) || not(decimals) || !isFinite(num)) {
 			return Math.round(num);
