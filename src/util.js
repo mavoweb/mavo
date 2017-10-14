@@ -181,22 +181,39 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
-	elementPath: function (ancestor, element, types = [1, 3]) {
-		var elementsOnly = types.length === 1 && types[0] == 1;
-
+	/**
+	 * Get node from path or get path of a node to an ancestor
+	 * For maximum robustness, all but the last path segment refer to elements only.
+	 * The last part of the path is a decimal: the integer part of the decimal is element index,
+	 * the decimal part is node index *after* that element and starts from 1.
+	 * If the node has no previous element sibling, the integer part of the index will be -1.
+	 */
+	elementPath: function (ancestor, element) {
 		if (Array.isArray(element)) {
 			// Get element by path
 			var path = element;
 
-			return path.reduce((acc, cur) => {
-				if (elementsOnly) {
-					var children = acc.children;
-				}
-				else {
-					var children = $$(acc.childNodes).filter(node => types.indexOf(node.nodeType) > -1);
-				}
-				return children[cur];
+			var ret = path.reduce((acc, cur) => {
+				return acc.children[cur >> 0] || acc;
 			}, ancestor);
+
+			var last = path[path.length - 1];
+
+			if (last != (last >> 0)) {
+				// We are returning a non-element node
+				var offset = +(last + "").split(".")[1];
+
+				if (last >> 0 < 0) {
+					ret = ret.firstChild;
+					offset--;
+				}
+
+				for (var i=0; i<offset; i++) {
+					ret = ret.nextSibling;
+				}
+			}
+
+			return ret;
 		}
 		else {
 			// Get path
@@ -204,12 +221,25 @@ var _ = $.extend(Mavo, {
 
 			for (var parent = element; parent && parent != ancestor; parent = parent.parentNode) {
 				var index = 0;
+				var countNonElementSiblings = parent === element && element.nodeType !== 1;
+				var offset = countNonElementSiblings? 1 : 0;
 				var sibling = parent;
 
-				while (sibling = sibling[`previous${elementsOnly? "Element" : ""}Sibling`]) {
-					if (types.indexOf(sibling.nodeType) > -1) {
+				while (sibling = sibling[`previous${countNonElementSiblings? "" : "Element"}Sibling`]) {
+					if (countNonElementSiblings) {
+						offset++;
+
+						if (sibling.nodeType == 1) {
+							countNonElementSiblings = false;
+						}
+					}
+					else {
 						index++;
 					}
+				}
+
+				if (offset > 0) {
+					index = index - 1 + "." + offset;
 				}
 
 				path.unshift(index);

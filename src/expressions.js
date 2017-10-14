@@ -86,12 +86,6 @@ var _ = Mavo.Expressions = $.Class({
 		if (path === undefined) {
 			path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
 		}
-		else if (path && typeof path === "string") {
-			path = path.slice(1).split("/").map(i => +i);
-		}
-		else {
-			path = [];
-		}
 
 		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
 		    syntax.test(attribute? attribute.value : node.textContent)
@@ -105,7 +99,7 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	// Traverse an element, including attribute nodes, text nodes and all descendants
-	traverse: function(node, path = "", syntax) {
+	traverse: function(node, path = [], syntax) {
 		if (node.nodeType === 8) {
 			// We don't want expressions to be picked up from comments!
 			// Commenting stuff out is a common debugging technique
@@ -126,17 +120,25 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			if (Mavo.is("item", node)) {
-				path = "";
+				path = [];
 			}
 
 			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
 
-			var index = 0;
+			var index = -1, offset = 0;
 
 			$$(node.childNodes).forEach(child => {
-				if (child.nodeType == 1 || child.nodeType == 3) {
-					this.traverse(child, `${path}/${index}`, syntax);
+				if (child.nodeType == 1) {
+					offset = 0;
 					index++;
+				}
+				else {
+					offset++;
+				}
+
+				if (child.nodeType == 1 || child.nodeType == 3) {
+					var segment = offset > 0? `${index}.${offset}` : index;
+					this.traverse(child, [...path || [], segment], syntax);
 				}
 			});
 		}
