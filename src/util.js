@@ -731,9 +731,11 @@ $.classProps.propagated = function(proto, names) {
 	});
 };
 
-// :focus-within and :target-within shim
-function updateWithin(cl, element) {
-	cl = "mv-" + cl + "-within";
+// :target-within shim
+function updateTargetWithin() {
+	var element = _.getTarget();
+	const cl = "mv-target-within";
+
 	$$("." + cl).forEach(el => el.classList.remove(cl));
 
 	while (element && element.classList) {
@@ -742,23 +744,7 @@ function updateWithin(cl, element) {
 	}
 };
 
-document.addEventListener("focus", evt => {
-	updateWithin("focus", evt.target);
-}, true);
-
-document.addEventListener("blur", evt => {
-	updateWithin("focus", null);
-}, true);
-
-addEventListener("hashchange", evt => {
-	updateWithin("target", _.getTarget());
-});
-
-document.documentElement.addEventListener("mavo:datachange", evt => {
-	// TODO debounce
-	updateWithin("target", _.getTarget());
-});
-
-updateWithin("focus", document.activeElement !== document.body? document.activeElement : null);
+addEventListener("hashchange", updateTargetWithin);
+var idObserver = new Mavo.Observer(document.documentElement, "id", updateTargetWithin);
 
 })(Bliss, Bliss.$);

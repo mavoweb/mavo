@@ -51,6 +51,10 @@ var _ = Mavo.UI.Itembar = $.Class({
 			});
 		}
 
+		this.element.setAttribute("hidden", "");
+
+		$.events([this.item.element, this.element], "focusin mouseover", this);
+
 		$.events(this.element, {
 			mouseenter: evt => {
 				this.item.element.classList.add("mv-highlight");
@@ -102,11 +106,84 @@ var _ = Mavo.UI.Itembar = $.Class({
 		Mavo.data(this.element, "item", this.item);
 	},
 
+	destroy: function() {
+		this.hide();
+	},
+
+	show: function(sticky) {
+		for (var instance of _.visible) {
+			if (instance != this && (!this.sticky || instance.sticky)) {
+				clearTimeout(instance.hideTimeout);
+				instance.hide(sticky, _.DELAY);
+			}
+		}
+
+		_.visible.add(this);
+
+		if (this.element.hasAttribute("hidden") || sticky && !this.sticky) {
+			this.element.removeAttribute("hidden");
+			this.sticky = this.sticky || sticky;
+			$.events([this.item.element, this.element], "focusout mouseleave", this);
+
+			if (this.adjacent) {
+				// Position
+				$.style(this.element, {
+					"--mv-item-width": this.item.element.offsetWidth + "px",
+					"--mv-item-height": this.item.element.offsetHeight + "px",
+					"--mv-item-left": this.item.element.offsetLeft + "px",
+					"--mv-item-top": this.item.element.offsetTop + "px"
+				});
+			}
+		}
+	},
+
+	hide: function(sticky, timeout = 0) {
+		if (!this.sticky || sticky) {
+			if (timeout) {
+				this.hideTimeout = setTimeout(() => this.hide(sticky), timeout);
+			}
+			else {
+				this.element.setAttribute("hidden", "");
+				$.unbind([this.item.element, this.element], "focusout mouseleave", this);
+				this.sticky = false;
+				_.visible.delete(this);
+			}
+
+		}
+	},
+
+	handleEvent: function(evt) {
+		var sticky = evt.type.indexOf("mouse") === -1;
+
+		if (this.isWithinItem(evt.target)) {
+			clearTimeout(this.hideTimeout);
+
+			if (["mouseleave", "focusout", "blur"].indexOf(evt.type) > -1) {
+				if (!this.isWithinItem(evt.relatedTarget)) {
+					this.hide(sticky, _.DELAY);
+				}
+			}
+			else {
+				this.show(sticky);
+				evt.stopPropagation();
+			}
+		}
+	},
+
+	isWithinItem: function(element) {
+		if (!element) {
+			return false;
+		}
+
+		var itemBar = element.closest(".mv-item-bar");
+		return itemBar? itemBar === this.element : element.closest(Mavo.selectors.item) === this.item.element;
+	},
+
 	add: function() {
 		if (!this.element.parentNode) {
 			if (!Mavo.revocably.add(this.element)) {
 				if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
-					this.element.classList.add("mv-adjacent");
+					this.adjacent = true;
 					$.after(this.element, this.item.element);
 				}
 				else {
@@ -142,9 +219,24 @@ var _ = Mavo.UI.Itembar = $.Class({
 		return `.mv-${type}[mv-rel="${this.item.property}"], [mv-rel="${this.item.property}"] > .mv-${type}`;
 	},
 
+	live: {
+		sticky: function(v) {
+			this.element.classList.toggle("mv-sticky", v);
+		},
+
+		adjacent: function(v) {
+			this.element.classList.toggle("mv-adjacent", v);
+		}
+	},
+
 	proxy: {
 		collection: "item",
 		mavo: "item"
+	},
+
+	static: {
+		DELAY: 100,
+		visible: new Set()
 	}
 });
 

@@ -18,53 +18,45 @@
 	all: initial;
 	position: absolute;
 	z-index: 10;
-	filter: drop-shadow(0 .1em .1em rgba(0,0,0,.2));
-	opacity: 0;
-	pointer-events: none;
-	border: solid transparent;
-	border-width: .4em .5em .8em .5em;
-	border-radius: 1em;
+	display: inline-flex;
+	box-shadow: 0 .1em .15em rgba(0,0,0,.12);
+	border-radius: calc(.3em + 1px);
 	white-space: nowrap;
+	opacity: .7;
 	bottom: 100%;
-	bottom: calc(100% - 1.1em);
-	right: .1em;
+	right: 0;
+	margin: .2em 0;
 
-	@mixin show-item-controls {
+	&.mv-adjacent,
+	tr[mv-multiple] > & { // Table rows cannot be relative, hack to fix that
+		bottom: auto;
+		right: auto;
+	}
+
+	&[hidden] {
+		opacity: 0;
+	}
+	&:not([hidden]) {
 		transition: .4s opacity;
-		opacity: 1;
-		pointer-events: auto;
 	}
 
 	&:hover,
-	&.mv-focus-within {
-		@include show-item-controls;
+	&.mv-sticky {
+		opacity: 1;
 	}
 
-	&:not(.mv-adjacent) {
-		[mv-multiple]:hover:not(.mv-has-hovered-item) > &,
-		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple]:focus > &,
-		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) [mv-multiple].mv-focus-within:not(:hover) > &,
-		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &:focus,
-		[mv-multiple]:not(:hover):not(.mv-has-hovered-item) > &.mv-focus-within {
-			@include show-item-controls;
-		}
+	&:focus-within {
+		opacity: 1;
 	}
 
 	&.mv-adjacent {
-		margin: -.45em;
-		bottom: auto;
-		right: auto;
-
-		[mv-multiple]:hover + &,
-		[mv-multiple].mv-focus-within + & {
-			@include show-item-controls;
-		}
+		transform: translate(-100%, -100%) translateX(-.3em);
+		top: var(--mv-item-top);
+		left: calc(var(--mv-item-left) + var(--mv-item-width));
 	}
 
 	button {
 		all: unset;
-		display: inline-block;
-		vertical-align: middle;
 		padding: .2em .3em;
 		min-width: 1em;
 		min-height: 1em;

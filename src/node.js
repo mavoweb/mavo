@@ -127,6 +127,10 @@ var _ = Mavo.Node = $.Class({
 				expression.destroy();
 			}
 		}
+
+		if (this.itembar) {
+			this.itembar.destroy();
+		}
 	},
 
 	getData: function(o = {}) {
