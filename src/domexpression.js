@@ -97,7 +97,7 @@ var _ = Mavo.DOMExpression = $.Class({
 	},
 
 	changedBy: function(evt) {
-		if (this.originalAttribute == "mv-value" && !(this.mavoNode instanceof Mavo.Primitive)) {
+		if (this.originalAttribute == "mv-value" && this.mavoNode && !(this.mavoNode instanceof Mavo.Primitive)) {
 			// Just prevent the same node from triggering changes
 			return !(evt && (evt.node === this.mavoNode || evt.node.collection === this.mavoNode));
 		}
