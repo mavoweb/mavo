@@ -53,6 +53,10 @@ var _ = Mavo.Primitive = $.Class({
 						var all = this.copies.concat(this);
 
 						for (let primitive of all) {
+							if (primitive.defaultSource == "editor") {
+								primitive.default = this.originalEditor.value;
+							}
+
 							if (primitive.editor) {
 								primitive.editor = this.originalEditor.cloneNode(true);
 							}
@@ -99,14 +103,17 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (this.default === null) { // no mv-default
 			this._default = this.modes? this.templateValue : editorValue;
+			this.defaultSource = this.modes? "template" : "editor";
 		}
 		else if (this.default === "") { // mv-default exists, no value, default is template value
 			this._default = this.templateValue;
+			this.defaultSource = "template";
 		}
 		else { // mv-default with value
 			this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
 				this.default = this.element.getAttribute("mv-default");
 			});
+			this.defaultSource = "attribute";
 		}
 
 		var keepTemplateValue = !this.template // not in a collection or first item
