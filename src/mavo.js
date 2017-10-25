@@ -578,15 +578,15 @@ var _ = self.Mavo = $.Class({
 
 		this.walk((obj, path) => {
 			if (needsEdit) {
+				// If already true, no need to descend further
 				return false;
 			}
 
+			// True if both modes are allowed and node is not group
 			needsEdit = !obj.modes && obj.nodeType != "Group";
 
-			return obj.modes? undefined : true;
-		}, undefined, {
-			descentReturn: true
-		});
+			return !obj.modes;
+		}, undefined, {descentReturn: true});
 
 		return needsEdit;
 	},
