@@ -12,11 +12,12 @@ var _ = Mavo.Functions = {
 	/**
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
-	get: function(obj, property) {
-		property = val(property);
+	get: function(obj, property, meta = {}) {
+		property = meta.property = val(property);
 		var canonicalProperty = Mavo.getCanonicalProperty(obj, property);
 
 		if (canonicalProperty !== undefined) {
+			meta.property = canonicalProperty;
 			var ret = obj[canonicalProperty];
 
 			if (typeof ret === "function" && ret.name.indexOf("bound") !== 0) {
@@ -26,25 +27,46 @@ var _ = Mavo.Functions = {
 			return ret;
 		}
 
-		if (Array.isArray(obj) && isNaN(property)) {
+		if (Array.isArray(obj) && property && isNaN(property)) {
 			// Array and non-numerical property
-			for (var first of obj) {
-				if (first && typeof first === "object") {
-					break;
-				}
-			}
+			var eqIndex = property.indexOf("=");
 
-			if (first) {
-				if ("id" in first) {
-					// Try by id?
-					for (var i=0; i<obj.length; i++) {
-						if (obj[i] && obj[i].id == property) {
-							return obj[i];
-						}
+			if (eqIndex > -1) {
+				// Property query
+				meta.query = {
+					property: property.slice(0, eqIndex),
+					value: property.slice(eqIndex + 1)
+				};
+
+				meta.property = [];
+
+				ret = obj.filter((e, i) => {
+					var passes = _.get(e, meta.query.property) == meta.query.value;
+
+					if (passes) {
+						meta.property.push(i);
 					}
+
+					return passes;
+				});
+
+				if (meta.query.property == "id") {
+					meta.property = meta.property[0];
+					ret = ret[0];
 				}
 
-				// Still here, get that property from the objects inside
+				if (ret === undefined) {
+					meta.property = obj.length;
+				}
+				else if (ret.length === 0) {
+					meta.property = [obj.length];
+				}
+
+				return ret;
+			}
+			else {
+				// Not a property query, get from objects inside
+				// TODO meta.property = ??
 				return obj.map(e => _.get(e, property));
 			}
 		}

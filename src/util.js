@@ -460,26 +460,19 @@ var _ = $.extend(Mavo, {
 		}
 		else if (typeof obj == "object" && path && path.length) { // Get
 			return path.reduce((obj, property, i) => {
-				if (obj && property in obj) {
-					return obj[property];
+				var meta = {};
+				var ret = Mavo.Functions.get(obj, property, meta);
+
+				// We don't yet support multiple properties at the same level
+				// i.e. the path can't be for the 2nd and 3rd item
+				path[i] = Array.isArray(meta.property)? meta.property[0] : meta.property;
+
+				if (ret === undefined && meta.query) {
+					// Not found, return dummy if query
+					ret = {[meta.query.property]: meta.query.value};
 				}
 
-				if (Array.isArray(obj) && isNaN(property)) {
-					// Non-numeric property on array, try getting by id
-					for (var j=0; j<obj.length; j++) {
-						if (obj[j] && obj[j].id == property) {
-							path[i] = j;
-							return obj[j];
-						}
-					}
-
-					// Not found
-					path[i] = obj.length;
-					return {id: property};
-				}
-
-				return obj;
-
+				return ret;
 			}, obj);
 		}
 		else {
