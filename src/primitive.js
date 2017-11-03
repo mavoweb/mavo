@@ -459,7 +459,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (data === undefined) {
 			// New property has been added to the schema and nobody has saved since
-			if (!this.modes) {
+			if (this.modes !== "read") {
 				this.value = this.closestCollection? this.default : this.templateValue;
 			}
 		}
@@ -531,7 +531,7 @@ var _ = Mavo.Primitive = $.Class({
 				this.editorValue = value;
 			}
 
-			if (!this.editing || this.popup || !this.editor) {
+			if (this.popup || !this.editor || this.editor !== document.activeElement) { // Prevent loops
 				if (this.config.setValue) {
 					this.config.setValue.call(this, this.element, value);
 				}
@@ -568,7 +568,6 @@ var _ = Mavo.Primitive = $.Class({
 	live: {
 		default: function (value) {
 			if (this.value == this._default) {
-
 				this.value = value;
 			}
 		},
@@ -721,7 +720,7 @@ var _ = Mavo.Primitive = $.Class({
 				o.datatype = o.datatype !== undefined? o.datatype : o.config.datatype;
 
 				if (o.config.setValue && o.attribute == o.config.attribute) {
-					return o.config.setValue(element, value);
+					return o.config.setValue(element, value, o.attribute);
 				}
 			}
 

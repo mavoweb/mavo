@@ -31,7 +31,7 @@ Object.defineProperties(_, {
 			if (config.extend) {
 				var base = _[config.extend];
 
-				config = $.extend($.extend({}, base, p => p != "selector"), config);
+				config = $.extend($.extend({}, base), config);
 			}
 
 			if (id.indexOf("@") > -1) {
@@ -56,7 +56,6 @@ Object.defineProperties(_, {
 				}
 			}
 			else {
-
 				_[id] = config;
 			}
 
@@ -302,6 +301,7 @@ _.register({
 
 	"textarea": {
 		extend: "formControl",
+		selector: "textarea",
 		attribute: null,
 		getValue: element => element.value,
 		setValue: (element, value) => element.value = value
@@ -310,7 +310,32 @@ _.register({
 	"formNumber": {
 		extend: "formControl",
 		selector: "input[type=range], input[type=number]",
-		datatype: "number"
+		datatype: "number",
+		setValue: function(element, value) {
+			element.value = value;
+			element.setAttribute("value", value);
+
+			var attribute = value > element.value? "max" : "min";
+
+			if (!isNaN(value) && element.value != value && !Mavo.data(element, "boundObserver")) {
+				// Value out of bounds, maybe race condition? See #295
+				// Observe min/max attrs until user interaction or data change
+				var observer = new Mavo.Observer(element, attribute, r => {
+					element.value = value;
+				});
+
+				requestAnimationFrame(() => {
+					$.events(element, "input mavo:datachange", function handler() {
+						observer.destroy();
+						Mavo.data(element, "boundObserver", undefined);
+						$.unbind(element, "input mavo:datachange", handler);
+					});
+				});
+
+				// Prevent creating same observer twice
+				Mavo.data(element, "boundObserver", observer);
+			}
+		}
 	},
 
 	"checkbox": {
@@ -321,8 +346,9 @@ _.register({
 		changeEvents: "click"
 	},
 
-	"input[type=radio]": {
+	"radio": {
 		extend: "formControl",
+		selector: "input[type=radio]",
 		attribute: "checked",
 		modes: "edit",
 		getValue: element => {
