@@ -8,6 +8,7 @@
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.defer();
+		this.dataLoaded = Mavo.defer();
 
 		this.element = element;
 
@@ -204,6 +205,7 @@ var _ = self.Mavo = $.Class({
 		else {
 			// No storage or source
 			requestAnimationFrame(() => {
+				this.dataLoaded.resolve();
 				$.fire(this.element, "mavo:load");
 			});
 		}
@@ -237,31 +239,27 @@ var _ = self.Mavo = $.Class({
 			});
 		}
 
-		this.permissions.can("save", () => {
-			if (this.autoSave) {
-				this.element.addEventListener("mavo:load.mavo:autosave", evt => {
-					var debouncedSave = _.debounce(() => {
-						this.save();
-					}, this.autoSaveDelay);
+		if (this.autoSave) {
+			this.dataLoaded.then(evt => {
+				var debouncedSave = _.debounce(() => {
+					this.save();
+				}, this.autoSaveDelay);
 
-					var callback = evt => {
-						if (evt.node.saved) {
-							debouncedSave();
-						}
-					};
+				var callback = evt => {
+					if (evt.node.saved) {
+						debouncedSave();
+					}
+				};
 
-					requestAnimationFrame(() => {
-						this.permissions.can("save", () => {
-							this.element.addEventListener("mavo:datachange.mavo:autosave", callback);
-						}, () => {
-							this.element.removeEventListener("mavo:datachange.mavo:autosave", callback);
-						});
+				requestAnimationFrame(() => {
+					this.permissions.can("save", () => {
+						this.element.addEventListener("mavo:datachange.mavo:autosave", callback);
+					}, () => {
+						this.element.removeEventListener("mavo:datachange.mavo:autosave", callback);
 					});
 				});
-			}
-		}, () => {
-			$.unbind(this.element, ".mavo:save .mavo:autosave");
-		});
+			});
+		}
 
 		// Keyboard navigation
 		this.element.addEventListener("keydown", evt => {
@@ -506,6 +504,7 @@ var _ = self.Mavo = $.Class({
 		.then(() => {
 			this.inProgress = false;
 			requestAnimationFrame(() => {
+				this.dataLoaded.resolve();
 				$.fire(this.element, "mavo:load");
 			});
 		});
