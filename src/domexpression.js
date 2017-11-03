@@ -139,6 +139,7 @@ var _ = Mavo.DOMExpression = $.Class({
 					if (env.value instanceof Error) {
 						return this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
 					}
+
 					if (env.value === undefined || env.value === null) {
 						// Don’t print things like "undefined" or "null"
 						return "";
@@ -179,8 +180,6 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.primitive.value = value;
 		}
 		else if (this.mavoNode) {
-			//value = value.value || value;
-
 			this.mavoNode.render(value);
 		}
 		else {

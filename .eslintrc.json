@@ -32,6 +32,17 @@
 		"space-before-blocks": [1, "always"],
 		"arrow-spacing": 1,
 		"comma-spacing": 1,
-		"keyword-spacing": 1
+		"keyword-spacing": 1,
+		"padding-line-between-statements": [1,
+			{
+				"blankLine": "always",
+				"prev": "*",
+				"next": "block-like"
+			}, {
+				"blankLine": "any",
+				"prev": ["const", "let", "var"],
+				"next": ["const", "let", "var"]
+			}
+		]
 	}
 }

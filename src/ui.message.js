@@ -30,6 +30,7 @@ var _ = Mavo.UI.Message = $.Class({
 
 		if (typeof o.dismiss == "string" || Array.isArray(o.dismiss)) {
 			var dismiss = {};
+
 			for (let prop of Mavo.toArray(o.dismiss)) {
 				dismiss[prop] = true;
 			}

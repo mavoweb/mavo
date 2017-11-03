@@ -99,6 +99,7 @@ Object.defineProperties(_, {
 
 				// Passes selector test?
 				var selector = o.selector || id;
+
 				if (!element.matches(selector)) {
 					continue;
 				}

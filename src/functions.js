@@ -364,6 +364,7 @@ var _ = Mavo.Functions = {
 				date = date.replace(/\s+/g, "");
 
 				var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
+
 				if (timezone) {
 					// parse as ISO format
 					date = new Date(date);

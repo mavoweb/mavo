@@ -495,6 +495,7 @@ var _ = $.extend(Mavo, {
 
 		return function () {
 			var context = this, args = arguments;
+
 			code = function () {
 				fn.apply(context, args);
 				removeEventListener("beforeunload", code);

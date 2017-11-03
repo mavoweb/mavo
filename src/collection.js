@@ -526,6 +526,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			var order = this.templateElement.getAttribute("mv-order");
+			
 			if (order !== null) {
 				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);
