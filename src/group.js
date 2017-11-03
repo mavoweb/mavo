@@ -206,11 +206,31 @@ var _ = Mavo.Group = $.Class({
 			this.data = Mavo.subset(this.data, this.inPath, data);
 		}
 
+		var copy; // to handle renaming
+
 		this.propagate(obj => {
 			var propertyData = data[obj.property];
-			var renderData = propertyData === undefined && obj.alias ? data[obj.alias] : propertyData;
-			obj.render(renderData);
+
+			if (obj.alias && data[obj.alias] !== undefined) {
+				copy = copy || $.extend({}, data);
+				propertyData = data[obj.alias];
+			}
+
+			obj.render(propertyData);
 		});
+
+		// Rename properties. This needs to be done separately to handle swapping.
+		if (copy) {
+			this.propagate(obj => {
+				if (obj.alias) {
+					data[obj.property] = copy[obj.alias];
+
+					if (!(obj.alias in this.children)) {
+						delete data[obj.alias];
+					}
+				}
+			});
+		}
 
 		if (!wasPrimitive) {
 			// Fire datachange events for properties not in the template,
