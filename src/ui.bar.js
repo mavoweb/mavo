@@ -260,6 +260,9 @@ var _ = Mavo.UI.Bar = $.Class({
 					if (this.editing) {
 						this.done();
 					}
+				},
+				condition: function() {
+					return this.needsEdit;
 				}
 			},
 
