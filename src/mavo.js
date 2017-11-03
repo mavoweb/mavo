@@ -569,8 +569,8 @@ var _ = self.Mavo = $.Class({
 		});
 	},
 
-	walk: function(callback) {
-		return this.root.walk(callback);
+	walk: function() {
+		return this.root.walk(...arguments);
 	},
 
 	calculateNeedsEdit: function(test) {
