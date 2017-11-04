@@ -12,7 +12,7 @@ var _ = Mavo.UI.Message = $.Class({
 			events: {
 				click: e => Mavo.scrollIntoViewIfNeeded(this.mavo.element)
 			},
-			after: this.mavo.bar.element
+			[this.mavo.bar? "after" : "start"]: (this.mavo.bar || this.mavo).element
 		});
 
 		if (o.classes) {
