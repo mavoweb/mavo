@@ -12,11 +12,11 @@ var _ = Mavo.UI.Popup = $.Class({
 
 			if (this.element.offsetHeight) {
 				// Is in the DOM, check if it fits
-				var popupBounds = this.element.getBoundingClientRect();
+				this.height = this.element.getBoundingClientRect().height || this.height;
+			}
 
-				if (popupBounds.height + y > innerHeight) {
-					y = innerHeight - popupBounds.height - 20;
-				}
+			if (this.height + y > innerHeight) {
+				y = innerHeight - this.height - 20;
 			}
 
 			$.style(this.element, { top:  `${y}px`, left: `${x}px` });
@@ -67,11 +67,19 @@ var _ = Mavo.UI.Popup = $.Class({
 			}
 		};
 
+		this.element.style.transition = "none";
+		this.element.removeAttribute("hidden");
+
 		this.position();
+
+		this.element.setAttribute("hidden", "");
+		this.element.style.transition = "";
 
 		document.body.appendChild(this.element);
 
-		requestAnimationFrame(e => this.element.removeAttribute("hidden")); // trigger transition
+		setTimeout(() => {
+			this.element.removeAttribute("hidden");
+		}, 100); // trigger transition. rAF or timeouts < 100 don't seem to, oddly.
 
 		$.events(document, "focus click", this.hideCallback, true);
 		window.addEventListener("scroll", this.position);
