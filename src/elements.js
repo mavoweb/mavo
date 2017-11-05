@@ -539,16 +539,18 @@ _.register({
 			}
 		},
 		dateTypes: {
-			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 			"month": /^[Y\d]{4}-[M\d]{2}$/i,
 			"time": /^[H\d]{2}:[M\d]{2}/i,
-			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i
+			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i,
+			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 		},
 		defaultFormats: {
-			"date": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`,
-			"month": property => `[month(${property}).name] [year(${property})]`,
-			"time": property => `[hour(${property}).twodigit]:[minute(${property}).twodigit]`,
-			"datetime-local": property => `[day(${property})] [month(${property}).shortname] [year(${property})]`
+			"date": name => `[day(${name})] [month(${name}).shortname] [year(${name})]`,
+			"month": name => `[month(${name}).name] [year(${name})]`,
+			"time": name => `[hour(${name}).twodigit]:[minute(${name}).twodigit]`,
+			"datetime-local": function(name) {
+				return this.date(name) + " " + this.time(name);
+			}
 		},
 		editor: function() {
 			return {tag: "input", type: this.dateType};
