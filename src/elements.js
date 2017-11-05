@@ -541,7 +541,7 @@ _.register({
 		dateTypes: {
 			"month": /^[Y\d]{4}-[M\d]{2}$/i,
 			"time": /^[H\d]{2}:[M\d]{2}/i,
-			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[M\d]{2}/i,
+			"datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[Mi\d]{2}/i,
 			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 		},
 		defaultFormats: {
