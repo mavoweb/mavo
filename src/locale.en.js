@@ -9,6 +9,7 @@ Mavo.Locale.register("en", {
 	"logged-in-as": "Logged in to {id} as ",
 	"login-to": "Login to {id}",
 	"error-uploading": "Error uploading file",
+	"cannot-load-uploaded-file": "Cannot load uploaded file",
 	"problem-saving": "Problem saving data",
 	"http-error": "HTTP error {status}: {statusText}",
 	"cant-connect": "Can’t connect to the Internet",

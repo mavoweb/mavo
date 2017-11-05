@@ -158,8 +158,6 @@ _.register({
 		selector: "img, video, audio",
 		attribute: "src",
 		editor: function() {
-			var uploadBackend = this.mavo.storage && this.mavo.storage.upload? this.mavo.storage : this.uploadBackend;
-
 			var mainInput = $.create("input", {
 				"type": "url",
 				"placeholder": "http://example.com/image.png",
@@ -167,35 +165,57 @@ _.register({
 				"aria-label": "URL to image"
 			});
 
-			if (uploadBackend && self.FileReader) {
+			if (this.mavo.uploadBackend && self.FileReader) {
 				var popup;
 				var type = this.element.nodeName.toLowerCase();
 				type = type == "img"? "image" : type;
 				var path = this.element.getAttribute("mv-uploads") || type + "s";
 
 				var upload = (file, name = file.name) => {
-					if (file && file.type.indexOf(type + "/") === 0) {
-						this.mavo.upload(file, path + "/" + name).then(url => {
-							mainInput.value = url;
-
-							var attempts = 0;
-
-							var checkIfLoaded = Mavo.rr(() => {
-								return $.fetch(url + "?" + Date.now())
-									.then(() => {
-										this.mavo.inProgress = false;
-										$.fire(mainInput, "input");
-									})
-									.catch(xhr => {
-										if (xhr.status > 400 && attempts < 10) {
-											this.mavo.inProgress = "Loading Image";
-											attempts++;
-											return Mavo.timeout(2000).then(checkIfLoaded);
-										}
-									});
-							});
-						});
+					if (!file || file.type.indexOf(type + "/") !== 0) {
+						return;
 					}
+
+					var tempURL = URL.createObjectURL(file);
+
+					this.sneak(() => this.element.src = tempURL);
+
+					this.mavo.upload(file, path + "/" + name).then(url => {
+						// Backend claims image is uploaded, we should load it from remote to make sure everything went well
+						var attempts = 0;
+						var load = Mavo.rr(() => Mavo.timeout(1000 + attempts * 500).then(() => {
+							attempts++;
+							this.element.src = url;
+						}));
+						var cleanup = () => {
+							URL.revokeObjectURL(tempURL);
+							this.element.removeEventListener("load", onload);
+							this.element.removeEventListener("error", onload);
+						};
+						var onload = evt => {
+							if (this.element.src != tempURL) {
+								// Actual uploaded image has loaded, yay!
+								this.element.src = url;
+								cleanup();
+							}
+						};
+						var onerror = evt => {
+							// Oops, failed. Put back temp URL and try again
+							if (attempts <= 10) {
+								this.sneak(() => this.element.src = tempURL);
+								load();
+							}
+							else {
+								// 11 + 0.5*10*11/2 = 38.5 seconds later, giving up
+								this.mavo.error(this.mavo._("cannot-load-uploaded-file") + " " + url);
+								cleanup();
+							}
+						};
+
+						mainInput.value = url;
+						this.element.addEventListener("load", onload);
+						this.element.addEventListener("error", onerror);
+					});
 				};
 
 				var uploadEvents = {
