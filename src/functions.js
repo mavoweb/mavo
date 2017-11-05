@@ -285,6 +285,8 @@ var _ = Mavo.Functions = {
 		return new Date();
 	},
 
+	$startup: new Date(), // Like $now, but doesn't update
+
 	get $today() {
 		return _.date(new Date());
 	},
@@ -305,12 +307,12 @@ var _ = Mavo.Functions = {
 		return `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}`;
 	},
 
-	minutes: seconds => Math.floor(Math.abs(seconds) / 60),
-	hours: seconds => Math.floor(Math.abs(seconds) / 3600),
-	days: seconds => Math.floor(Math.abs(seconds) / 86400),
-	weeks: seconds => Math.floor(Math.abs(seconds) / 604800),
-	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)),
-	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)),
+	minutes: seconds => Math.floor(Math.abs(seconds) / 60) || 0,
+	hours: seconds => Math.floor(Math.abs(seconds) / 3600) || 0,
+	days: seconds => Math.floor(Math.abs(seconds) / 86400) || 0,
+	weeks: seconds => Math.floor(Math.abs(seconds) / 604800) || 0,
+	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)) || 0,
+	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)) || 0,
 
 	localTimezone: -(new Date()).getTimezoneOffset(),
 
