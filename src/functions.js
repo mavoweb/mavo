@@ -301,10 +301,14 @@ var _ = Mavo.Functions = {
 	ms: getDateComponent("ms"),
 
 	date: date => {
-		return `${_.year(date)}-${_.month(date).twodigit}-${_.day(date).twodigit}`;
+		date = $u.date(date);
+
+		return date? `${_.year(date)}-${_.month(date).twodigit}-${_.day(date).twodigit}` : "";
 	},
 	time: date => {
-		return `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}`;
+		date = $u.date(date);
+
+		return date? `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}` : "";
 	},
 
 	minutes: seconds => Math.floor(Math.abs(seconds) / 60) || 0,
