@@ -520,7 +520,6 @@ _.register({
 		init: function() {
 			if (!this.fromTemplate("dateType")) {
 				var dateFormat = Mavo.DOMExpression.search(this.element, null);
-
 				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
 
 				for (var type in this.config.dateTypes) {

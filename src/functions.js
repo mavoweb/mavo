@@ -337,6 +337,41 @@ var _ = Mavo.Functions = {
 			return array.filter(number => !isNaN(number) && val(number) !== "").map(n => +n);
 		},
 
+		fixDateString: function(date) {
+			date = date.trim();
+
+			var hasDate = /^\d{4}-\d{2}(-\d{2})?/.test(date);
+			var hasTime = date.indexOf(":") > -1;
+
+			if (!hasDate && !hasTime) {
+				return null;
+			}
+
+			// Fix up time format
+			if (!hasDate) {
+				// No date, add today’s
+				date = _.$today + " " + date;
+			}
+			else {
+				// Only year-month, add day
+				date = date.replace(/^(\d{4}-\d{2})(?!-\d{2})/, "$1-01");
+			}
+
+			if (!hasTime) {
+				// Add a time if one doesn't exist
+				date += "T00:00:00";
+			}
+			else {
+				// Make sure time starts with T, due to Safari bug
+				date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
+			}
+
+			// Remove all whitespace
+			date = date.replace(/\s+/g, "");
+
+			return date;
+		},
+
 		date: function(date) {
 			date = val(date);
 
@@ -345,25 +380,11 @@ var _ = Mavo.Functions = {
 			}
 
 			if ($.type(date) === "string") {
-				date = date.trim();
+				date = $u.fixDateString(date);
 
-				// Fix up time format
-				if (!/^\d{4}-\d{2}-\d{2}/.test(date)) {
-					// No date, add today’s
-					date = _.$today + " " + date;
+				if (date === null) {
+					return null;
 				}
-
-				if (date.indexOf(":") === -1) {
-					// Add a time if one doesn't exist
-					date += "T00:00:00";
-				}
-				else {
-					// Make sure time starts with T, due to Safari bug
-					date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
-				}
-
-				// Remove all whitespace
-				date = date.replace(/\s+/g, "");
 
 				var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
 
