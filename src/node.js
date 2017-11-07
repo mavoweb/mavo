@@ -203,6 +203,11 @@ var _ = Mavo.Node = $.Class({
 			return false;
 		}
 
+		$.fire(this.element, "mv-edit", {
+			mavo: this.mavo,
+			node: this
+		});
+
 		Mavo.hooks.run("node-edit-end", this);
 	},
 
@@ -214,6 +219,11 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		$.unbind(this.element, ".mavo:edit");
+
+		$.fire(this.element, "mv-done", {
+			mavo: this.mavo,
+			node: this
+		});
 
 		this.propagate("done");
 
