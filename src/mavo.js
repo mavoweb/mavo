@@ -119,7 +119,7 @@ var _ = self.Mavo = $.Class({
 		});
 
 		// Update login status
-		this.element.addEventListener("mavo:login.mavo", evt => {
+		this.element.addEventListener("mv-login.mavo", evt => {
 			if (evt.backend == (this.source || this.storage)) {
 				// If last time we rendered we got nothing, maybe now we'll have better luck?
 				if (!this.root.data && !this.unsavedChanges) {
@@ -206,13 +206,13 @@ var _ = self.Mavo = $.Class({
 			// No storage or source
 			requestAnimationFrame(() => {
 				this.dataLoaded.resolve();
-				$.fire(this.element, "mavo:load");
+				$.fire(this.element, "mv-load");
 			});
 		}
 
 		// Dynamic ids
 		if (location.hash) {
-			this.element.addEventListener("mavo:load.mavo", evt => {
+			this.element.addEventListener("mv-load.mavo", evt => {
 				var callback = records => {
 					var target = document.getElementById(location.hash.slice(1));
 
@@ -253,9 +253,9 @@ var _ = self.Mavo = $.Class({
 
 				requestAnimationFrame(() => {
 					this.permissions.can("save", () => {
-						this.element.addEventListener("mavo:datachange.mavo:autosave", callback);
+						this.element.addEventListener("mv-change.mavo:autosave", callback);
 					}, () => {
-						this.element.removeEventListener("mavo:datachange.mavo:autosave", callback);
+						this.element.removeEventListener("mv-change.mavo:autosave", callback);
 					});
 				});
 			});
@@ -505,7 +505,7 @@ var _ = self.Mavo = $.Class({
 			this.inProgress = false;
 			requestAnimationFrame(() => {
 				this.dataLoaded.resolve();
-				$.fire(this.element, "mavo:load");
+				$.fire(this.element, "mv-load");
 			});
 		});
 	},
@@ -559,7 +559,7 @@ var _ = self.Mavo = $.Class({
 	save: function() {
 		return this.store().then(saved => {
 			if (saved) {
-				$.fire(this.element, "mavo:save", saved);
+				$.fire(this.element, "mv-save", saved);
 
 				this.lastSaved = Date.now();
 				this.root.save();

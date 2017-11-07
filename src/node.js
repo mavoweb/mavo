@@ -291,7 +291,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	dataChanged: function(action, o = {}) {
-		$.fire(o.element || this.element, "mavo:datachange", $.extend({
+		$.fire(o.element || this.element, "mv-change", $.extend({
 			property: this.property,
 			action,
 			mavo: this.mavo,

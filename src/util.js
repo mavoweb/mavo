@@ -335,7 +335,7 @@ var _ = $.extend(Mavo, {
 			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries) {
 				for (var entry of entries) {
 					this.unobserve(entry.target);
-					$.fire(entry.target, "mavo:inview", {entry});
+					$.fire(entry.target, "mv-inview", {entry});
 				}
 			});
 
@@ -347,12 +347,12 @@ var _ = $.extend(Mavo, {
 				observer.observe(element);
 
 				var callback = evt => {
-					element.removeEventListener("mavo:inview", callback);
+					element.removeEventListener("mv-inview", callback);
 					evt.stopPropagation();
 					resolve();
 				};
 
-				element.addEventListener("mavo:inview", callback);
+				element.addEventListener("mv-inview", callback);
 			});
 		}
 	},

@@ -346,10 +346,10 @@ _.register({
 				});
 
 				requestAnimationFrame(() => {
-					$.events(element, "input mavo:datachange", function handler() {
+					$.events(element, "input mv-change", function handler() {
 						observer.destroy();
 						Mavo.data(element, "boundObserver", undefined);
-						$.unbind(element, "input mavo:datachange", handler);
+						$.unbind(element, "input mv-change", handler);
 					});
 				});
 

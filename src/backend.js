@@ -196,7 +196,7 @@ var _ = Mavo.Backend = $.Class({
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.mavo.element._.fire("mavo:logout", {backend: this});
+			this.mavo.element._.fire("mv-logout", {backend: this});
 		}
 
 		return Promise.resolve();

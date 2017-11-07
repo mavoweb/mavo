@@ -278,7 +278,7 @@ var _ = Mavo.Backend.register($.Class({
 				info
 			};
 
-			$.fire(this.mavo.element, "mavo:login", { backend: this });
+			$.fire(this.mavo.element, "mv-login", { backend: this });
 		});
 	},
 

@@ -271,7 +271,7 @@ var _ = Mavo.Primitive = $.Class({
 			"focus": evt => {
 				this.editor.select && this.editor.select();
 			},
-			"mavo:datachange": evt => {
+			"mv-change": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
 					$.fire(this.editor, "input");

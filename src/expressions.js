@@ -16,7 +16,7 @@ var _ = Mavo.Expressions = $.Class({
 			this.expressions = [];
 
 			// Watch changes and update value
-			document.documentElement.addEventListener("mavo:datachange", evt => {
+			document.documentElement.addEventListener("mv-change", evt => {
 				if (!this.active) {
 					return;
 				}
