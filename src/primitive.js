@@ -461,7 +461,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (data === undefined) {
 			// New property has been added to the schema and nobody has saved since
-			if (this.modes !== "read") {
+			if (!this.modes) {
 				this.value = this.closestCollection? this.default : this.templateValue;
 			}
 		}
