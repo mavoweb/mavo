@@ -83,13 +83,13 @@ var _ = Mavo.Expressions = $.Class({
 			return;
 		}
 
-		if (path === undefined) {
-			path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
-		}
-
-		if ((attribute && _.directives.indexOf(attribute.name) > -1) ||
-		    syntax.test(attribute? attribute.value : node.textContent)
+		if (attribute && _.directives.indexOf(attribute.name) > -1 ||
+		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
+			if (path === undefined) {
+				path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
+			}
+
 			this.expressions.push(new Mavo.DOMExpression({
 				node, syntax, path,
 				attribute: attribute && attribute.name,
@@ -114,10 +114,6 @@ var _ = Mavo.Expressions = $.Class({
 			node.normalize();
 
 			syntax = Mavo.Expression.Syntax.create(node) || syntax;
-
-			if (syntax === Mavo.Expression.Syntax.ESCAPE) {
-				return;
-			}
 
 			if (Mavo.is("item", node)) {
 				path = [];
