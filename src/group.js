@@ -72,7 +72,7 @@ var _ = Mavo.Group = $.Class({
 			return env.data;
 		}
 
-		env.data = this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {};
+		env.data = (this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {}) || {};
 
 		var properties = Object.keys(this.children);
 
