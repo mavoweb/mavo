@@ -266,6 +266,25 @@ var _ = Mavo.UI.Bar = $.Class({
 				}
 			},
 
+			download: {
+				create: function() {
+					var status = $.create("a", {
+						className: "mv-download mv-button",
+						textContent: this._("download"),
+						download: this.id + ".json"
+					});
+
+					return status;
+				},
+				events: {
+					mousedown: function() {
+						this.bar.download.href = "data:application/json;charset=UTF-8," + encodeURIComponent(this.toJSON());
+					}
+				},
+				permission: "edit",
+				optional: true
+			},
+
 			save: {
 				action: function() {
 					this.save();

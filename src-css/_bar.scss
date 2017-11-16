@@ -146,6 +146,12 @@
 		}
 	}
 
+	.mv-download {
+		&::before {
+			content: "⬇";
+		}
+	}
+
 	.mv-logout {
 		&::before {
 			content: "↪";
