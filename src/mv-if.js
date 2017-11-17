@@ -68,10 +68,6 @@ Mavo.Expressions.directive("mv-if", {
 					this.value[0] = value = value && parentValue;
 				}
 
-				if (value === oldValue) {
-					return;
-				}
-
 				if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
 					if (value) {
 						// Is removed from the DOM and needs to get back
@@ -83,16 +79,18 @@ Mavo.Expressions.directive("mv-if", {
 					}
 				}
 
-				// Mark any properties inside as hidden or not
-				if (this.childProperties) {
-					for (let property of this.childProperties) {
-						property.hidden = !value;
+				if (value !== oldValue) {
+					// Mark any properties inside as hidden or not
+					if (this.childProperties) {
+						for (let property of this.childProperties) {
+							property.hidden = !value;
+						}
 					}
-				}
 
-				if (this.childIfs) {
-					for (let childIf of this.childIfs) {
-						childIf.update();
+					if (this.childIfs) {
+						for (let childIf of this.childIfs) {
+							childIf.update();
+						}
 					}
 				}
 			});
