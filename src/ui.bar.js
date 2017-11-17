@@ -7,11 +7,11 @@ var _ = Mavo.UI.Bar = $.Class({
 		this.mavo = mavo;
 
 		this.element = $(".mv-bar", this.mavo.element);
-		this.template = this.mavo.element.getAttribute("mv-bar");
+		this.template = this.mavo.element.getAttribute("mv-bar") || "";
 
 		if (this.element) {
 			this.custom = true;
-			this.template = this.element.getAttribute("mv-bar") || this.template || "";
+			this.template += " " + (this.element.getAttribute("mv-bar") || "");
 
 			var selector = Object.keys(_.controls).map(id => `.mv-${id}`).join(", ");
 			this.customControls = $$(selector, this.element);
@@ -36,7 +36,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.noResize = true;
 		}
 
-		this.controls = _.getControls(this.mavo.element.getAttribute("mv-bar") || this.element.getAttribute("mv-bar"));
+		this.controls = _.getControls(this.template);
 
 		if (this.controls.length) {
 			// Measure height of 1 row
@@ -54,8 +54,9 @@ var _ = Mavo.UI.Bar = $.Class({
 				// Custom control, remove to not mess up order
 				this[id].remove();
 			}
-			else if (o.create) {
-				this[id] = o.create.call(this.mavo);
+
+			if (o.create) {
+				this[id] = o.create.call(this.mavo, this[id]);
 			}
 			else {
 				this[id] = $.create("button", {
@@ -169,11 +170,11 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	static: {
-		getControls: function(attribute) {
+		getControls: function(template) {
 			var initial = Object.keys(_.controls).filter(id => !_.controls[id].optional);
 
-			if (attribute) {
-				var ids = attribute == "none"? [] : attribute.trim().split(/\s+/);
+			if (template && (template = template.trim())) {
+				var ids = template == "none"? [] : template.split(/\s+/);
 
 				// Is there ANY non-relative key?
 				var relative = true;
@@ -218,12 +219,10 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		controls: {
 			status: {
-				create: function() {
-					var status = $.create({
+				create: function(existing) {
+					return existing || $.create({
 						className: "mv-status"
 					});
-
-					return status;
 				},
 				prepare: function() {
 					var backend = this.primaryBackend;
@@ -267,14 +266,25 @@ var _ = Mavo.UI.Bar = $.Class({
 			},
 
 			download: {
-				create: function() {
-					var status = $.create("a", {
-						className: "mv-download mv-button",
-						textContent: this._("download"),
-						download: this.id + ".json"
-					});
+				create: function(existing) {
+					var a;
 
-					return status;
+					if (existing) {
+						a = existing.matches("a")? existing : $.create("a", {
+							className: "mv-button",
+							around: existing
+						});
+					}
+					else {
+						a = $.create("a", {
+							className: "mv-download mv-button",
+							textContent: this._("download")
+						});
+					}
+
+					a.setAttribute("download", this.id + ".json");
+
+					return a;
 				},
 				events: {
 					mousedown: function() {
