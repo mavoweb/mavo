@@ -731,9 +731,16 @@ var _ = Mavo.Primitive = $.Class({
 					// Setting properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					try {
-						element[o.attribute] = value;
+						var previousValue = element[o.attribute];
+						var newValue = element[o.attribute] = value;
 					}
 					catch (e) {}
+
+					if (previousValue != newValue && o.config.changeEvents) {
+						for (var type of o.config.changeEvents.split(/\s+/)) {
+							$.fire(element, type);
+						}
+					}
 				}
 
 				// Set attribute anyway, even if we set a property because when
