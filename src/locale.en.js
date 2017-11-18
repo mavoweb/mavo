@@ -12,6 +12,7 @@ Mavo.Locale.register("en", {
 	"error-uploading": "Error uploading file",
 	"cannot-load-uploaded-file": "Cannot load uploaded file",
 	"problem-saving": "Problem saving data",
+	"problem-loading": "Problem loading data",
 	"http-error": "HTTP error {status}: {statusText}",
 	"cant-connect": "Can’t connect to the Internet",
 	"add-item": "Add {name}",

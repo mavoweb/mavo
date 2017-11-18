@@ -489,10 +489,10 @@ var _ = self.Mavo = $.Class({
 					this.render(null);
 				}
 				else {
-					var message = "Problem loading data";
+					var message = this._("problem-loading");
 
 					if (xhr) {
-						message += xhr.status? `: HTTP error ${err.status}: ${err.statusText}` : ": Can’t connect to the Internet";
+						message += xhr.status? this._("http-error", err) : ": " + this._("cant-connect");
 					}
 
 					this.error(message, err);
