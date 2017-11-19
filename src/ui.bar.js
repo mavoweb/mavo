@@ -219,8 +219,8 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		controls: {
 			status: {
-				create: function(existing) {
-					return existing || $.create({
+				create: function(custom) {
+					return custom || $.create({
 						className: "mv-status"
 					});
 				},
@@ -265,36 +265,6 @@ var _ = Mavo.UI.Bar = $.Class({
 				}
 			},
 
-			download: {
-				create: function(existing) {
-					var a;
-
-					if (existing) {
-						a = existing.matches("a")? existing : $.create("a", {
-							className: "mv-button",
-							around: existing
-						});
-					}
-					else {
-						a = $.create("a", {
-							className: "mv-download mv-button",
-							textContent: this._("download")
-						});
-					}
-
-					a.setAttribute("download", this.id + ".json");
-
-					return a;
-				},
-				events: {
-					mousedown: function() {
-						this.bar.download.href = "data:application/json;charset=UTF-8," + encodeURIComponent(this.toJSON());
-					}
-				},
-				permission: "edit",
-				optional: true
-			},
-
 			save: {
 				action: function() {
 					this.save();
@@ -313,6 +283,87 @@ var _ = Mavo.UI.Bar = $.Class({
 				}
 			},
 
+			export: {
+				create: function(custom) {
+					var a;
+
+					if (custom) {
+						a = custom.matches("a")? custom : $.create("a", {
+							className: "mv-button",
+							around: custom
+						});
+					}
+					else {
+						a = $.create("a", {
+							className: "mv-export mv-button",
+							textContent: this._("export")
+						});
+					}
+
+					a.setAttribute("download", this.id + ".json");
+
+					return a;
+				},
+				events: {
+					mousedown: function() {
+						this.bar.export.href = "data:application/json;charset=UTF-8," + encodeURIComponent(this.toJSON());
+					}
+				},
+				permission: "edit",
+				optional: true
+			},
+
+			import: {
+				create: function(custom) {
+					var button = custom || $.create("span", {
+						role: "button",
+						tabIndex: "0",
+						className: "mv-import mv-button",
+						textContent: this._("import"),
+						events: {
+							focus: evt => {
+								input.focus();
+							}
+						}
+					});
+
+					var input = $.create("input", {
+						type: "file",
+						inside: button,
+						events: {
+							change: evt => {
+								var file = evt.target.files[0];
+
+								if (file) {
+									var reader = $.extend(new FileReader(), {
+										onload: evt => {
+											this.inProgress = false;
+
+											try {
+												var json = JSON.parse(reader.result);
+												this.render(json);
+											}
+											catch (e) {
+												this.error(this._("cannot-parse"));
+											}
+										},
+										onerror: evt => {
+											this.error(this._("problem-loading"));
+										}
+									});
+
+									this.inProgress = this._("uploading");
+									reader.readAsText(file);
+								}
+							}
+						}
+					});
+
+					return button;
+				},
+				optional: true
+			},
+
 			login: {
 				action: function() {
 					this.primaryBackend.login();
@@ -326,7 +377,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				},
 				permission: "logout"
 			}
-		}
+		},
 	}
 });
 

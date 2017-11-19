@@ -146,9 +146,15 @@
 		}
 	}
 
-	.mv-download {
+	.mv-export {
 		&::before {
 			content: "⬇";
+		}
+	}
+
+	.mv-import {
+		&::before {
+			content: "⬆";
 		}
 	}
 
@@ -192,6 +198,27 @@
 				transform: translate(-50%, -50%);
 				text-indent: 0;
 			}
+		}
+	}
+}
+
+// Essential styles that should be applied even with no .mv-ui
+.mv-bar {
+	.mv-import {
+		position: relative;
+		overflow: hidden;
+		cursor: auto;
+
+		input[type=file] {
+			position: absolute;
+			top: 0;
+			right: 0;
+			cursor: pointer;
+			background: red;
+			width: 100%;
+			height: 100%;
+			font-size: 300px;
+			opacity: 0;
 		}
 	}
 }
