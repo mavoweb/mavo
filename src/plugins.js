@@ -88,7 +88,7 @@ var _ = Mavo.Plugins = {
 		}
 	},
 
-	url: "https://plugins.mavo.io/"
+	url: "https://plugins.mavo.io"
 };
 
 })(Bliss);
