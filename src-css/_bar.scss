@@ -41,7 +41,7 @@
 			-moz-outline-radius: 1px;
 		}
 
-		&:enabled:hover {
+		&:not(:disabled):hover {
 			background: hsla(0,0%,100%,.2);
 		}
 
@@ -203,7 +203,7 @@
 }
 
 // Essential styles that should be applied even with no .mv-ui
-.mv-bar {
+.mv-bar.mv-bar {
 	.mv-import {
 		position: relative;
 		overflow: hidden;
@@ -214,7 +214,6 @@
 			top: 0;
 			right: 0;
 			cursor: pointer;
-			background: red;
 			width: 100%;
 			height: 100%;
 			font-size: 300px;
