@@ -695,7 +695,7 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			if (!datatype) {
+			if (!datatype && attribute == _.getValueAttribute(element)) {				
 				datatype = element.getAttribute("datatype") || undefined;
 			}
 
