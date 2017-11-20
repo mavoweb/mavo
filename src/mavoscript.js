@@ -333,7 +333,7 @@ var _ = Mavo.Script = {
 
 		return new Function("data", `with(Mavo.Functions._Trap)
 				with (data || {}) {
-					return ${code};
+					return (${code});
 				}`);
 	},
 
