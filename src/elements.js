@@ -475,7 +475,8 @@ _.register({
 		default: true,
 		selector: "p, div, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address",
 		editor: function() {
-			var display = getComputedStyle(this.element).display;
+			var cs = getComputedStyle(this.element);
+			var display = cs.display;
 			var tag = display.indexOf("inline") === 0? "input" : "textarea";
 			var editor = $.create(tag);
 
@@ -486,6 +487,13 @@ _.register({
 				if (width) {
 					editor.width = width;
 				}
+
+				// We cannot collapse whitespace because then users
+				// are adding characters they don’t see (#300).
+				editor.style.whiteSpace = ({
+					"normal": "pre-wrap",
+					"nowrap": "pre"
+				})[cs.whiteSpace] || "inherit";
 			}
 
 			return editor;
