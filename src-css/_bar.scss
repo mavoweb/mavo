@@ -2,6 +2,7 @@
 	all: initial;
 	visibility: inherit;
 	display: flex;
+	align-items: center;
 	color: white;
 	padding: 0 .5em 0 6em;
 	background: url("https://mavo.io/logo.svg") .5em 50% / auto 50% no-repeat;

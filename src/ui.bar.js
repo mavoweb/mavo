@@ -125,7 +125,7 @@ var _ = Mavo.UI.Bar = $.Class({
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
 		// Exceeded single row?
-		if (this.element.offsetHeight > this.targetHeight * 1.5) {
+		if (this.element.offsetHeight > this.targetHeight * 1.6) {
 			this.element.classList.add("mv-compact");
 
 			if (this.element.offsetHeight > this.targetHeight * 1.2) {
