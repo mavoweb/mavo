@@ -44,7 +44,10 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		if (!this.expression) { // Still unhandled?
 			if (this.attribute) {
-				this.expression = this.node.getAttribute(this.attribute).trim();
+				// Some web components (e.g. AFrame) hijack getAttribute()
+				var value = Element.prototype.getAttribute.call(this.node, this.attribute);
+
+				this.expression = (value || "").trim();
 			}
 			else {
 				// Move whitespace outside to prevent it from messing with types
