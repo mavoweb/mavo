@@ -12,14 +12,13 @@ var _ = Mavo.UI.Bar = $.Class({
 		if (this.element) {
 			this.custom = true;
 			this.template += " " + (this.element.getAttribute("mv-bar") || "");
-
-			var selector = Object.keys(_.controls).map(id => `.mv-${id}`).join(", ");
-			this.customControls = $$(selector, this.element);
+			this.template = this.template.trim();
 
 			for (let id in _.controls) {
 				this[id] = $(`.mv-${id}`, this.element);
 
 				if (this[id]) {
+					this.template = this.template || "with";
 					this.template += ` ${id}`;
 				}
 			}
@@ -63,7 +62,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			if (o.create) {
 				this[id] = o.create.call(this.mavo, this[id]);
 			}
-			else {
+			else if (!this[id]) {
 				this[id] = $.create("button", {
 					className: `mv-${id}`,
 					textContent: this.mavo._(id)
