@@ -20,7 +20,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				this[id] = $(`.mv-${id}`, this.element);
 
 				if (this[id]) {
-					this.template += ` yes-${id}`;
+					this.template += ` ${id}`;
 				}
 			}
 		}
@@ -34,6 +34,11 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		if (this.element.classList.contains("mv-compact")) {
 			this.noResize = true;
+		}
+
+		// yes- is deprecated and will be removed
+		if (/\byes-\w+/.test(this.template)) {
+			console.warn(`${this.mavo.id}: You used mv-bar="${this.template}". Note that yes-* in mv-bar is deprecated and will be removed in v0.1.6. Please use the new syntax: http://mavo.io/docs/ui/#bar`);
 		}
 
 		this.controls = _.getControls(this.template);
@@ -171,50 +176,36 @@ var _ = Mavo.UI.Bar = $.Class({
 
 	static: {
 		getControls: function(template) {
-			var initial = Object.keys(_.controls).filter(id => !_.controls[id].optional);
+			var all = Object.keys(_.controls);
 
 			if (template && (template = template.trim())) {
-				var ids = template == "none"? [] : template.split(/\s+/);
-
-				// Is there ANY non-relative key?
-				var relative = true;
-				var values = {};
-
-				// Make map of ids and relativeness, dropping duplicates
-				for (var value of ids) {
-					let id = Mavo.match(value, /([a-z]+)\s*$/i, 1);
-
-					if (id in _.controls) {
-						values[id] = Mavo.match(value, /^(no|yes)\-/i, 1);
-					}
+				if (template == "none") {
+					return [];
 				}
 
-				// Any absolute value left?
-				for (var id in values) {
-					if (!values[id]) {
-						relative = false;
-						break;
-					}
+				var relative = /^with\s|\b(yes|no)-\w+\b/.test(template);
+				template = template.replace(/\byes-|^with\s+/g, "");
+				var ids = template.split(/\s+/);
+
+				// Drop duplicates (last one wins)
+				ids = Mavo.Functions.unique(ids.reverse()).reverse();
+
+				if (relative) {
+					return all.filter(id => {
+						var positive = ids.lastIndexOf(id);
+						var negative = ids.lastIndexOf("no-" + id);
+						var keep = positive > Math.max(-1, negative);
+						var drop = negative > Math.max(-1, positive);
+
+						return keep || (!_.controls[id].optional && !drop);
+					});
 				}
 
-				var keys = relative? initial : [];
-
-				for (var id in values) {
-					var rel = values[id];
-
-					if (rel == "no" || !rel) {
-						Mavo.delete(keys, id);
-					}
-
-					if (keys.indexOf(id) === -1 && rel != "no") {
-						keys.push(id);
-					}
-				}
-
-				return keys;
+				return ids;
 			}
 
-			return initial;
+			// No template, return default set
+			return all.filter(id => !_.controls[id].optional);
 		},
 
 		controls: {
