@@ -242,8 +242,10 @@ var _ = Mavo.Functions = {
 
 	idify: function(readable) {
 		return str(readable)
+			.trim()
+			.normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Convert accented letters to ASCII
+			.replace(/[^\w\s-]/g, "") // Remove remaining non-ASCII characters
 			.replace(/\s+/g, "-") // Convert whitespace to hyphens
-			.replace(/[^\w-]/g, "") // Remove weird characters
 			.toLowerCase();
 	},
 
