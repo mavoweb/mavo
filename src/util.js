@@ -681,7 +681,35 @@ var _ = $.extend(Mavo, {
 		return f;
 	},
 
-	wrap: (index, length) => index < 0? length - 1 : index >= length? 0 : index
+	// Get out of bounds array index to wrap around
+	wrap: (index, length) => index < 0? length - 1 : index >= length? 0 : index,
+
+	/**
+	 * Parses a simple CSS-like text format for declaring key-value options:
+	 * Pairs are comma or semicolon-separated, key and value are colon separated.
+	 * Escapes are supported, via backslash. Useful for attributes.
+	 */
+	options: str => {
+		var ret = {};
+		var pairs = str.trim().match(/(?:\\[,;]|[^,;])+/g) || [];
+
+		for (var option of pairs) {
+			if (option) {
+				option = option.trim().replace(/\\([,;])/g, "$1");
+				var pair = option.match(/^\s*((?:\\:|[^:])+?)\s*:\s*(.+)$/);
+
+				if (pair) {
+					ret[pair[1].replace(/\\:/g, ":")] = pair[2];
+				}
+				else {
+					// If no value, it's boolean
+					ret[option] = true;
+				}
+			}
+		}
+
+		return ret;
+	}
 });
 
 // Bliss plugins
