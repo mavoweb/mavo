@@ -376,7 +376,7 @@ meter, progress {
 	background: white;
 	transform-origin: 1.4em -0.45em; // Magic numbers. No idea why.
 	transition: .3s;
-	transition-property: transform, top, left;
+	transition-property: transform, top, right, bottom, left;
 
 	// tip
 	&::before {
@@ -390,6 +390,18 @@ meter, progress {
 		border-bottom-width: 0;
 		background: inherit;
 		transform: rotate(45deg)
+	}
+
+	&.mv-point-down {
+		transform-origin: 1.4em calc(100% - 0.45em);
+
+		&::before {
+			top: auto;
+			bottom: -.36em;
+			border: inherit;
+			border-left-width: 0;
+			border-top-width: 0;
+		}
 	}
 
 	& > fieldset {

@@ -9,15 +9,28 @@ var _ = Mavo.UI.Popup = $.Class({
 			var bounds = this.primitive.element.getBoundingClientRect();
 			var x = bounds.left;
 			var y = bounds.bottom;
+			var pointDown = false;
 
 			if (this.element.offsetHeight) {
 				// Is in the DOM, check if it fits
 				this.height = this.element.getBoundingClientRect().height || this.height;
 			}
 
-			if (this.height + y > innerHeight) {
-				y = innerHeight - this.height - 20;
+			if (this.height + y + 20 > innerHeight) {
+				// Normal positioning means the popup would be cut off or too close to the edge, adjust
+
+				// Perhaps placing it above is better
+				if (bounds.top - this.height > 20) {
+					var pointDown = true;
+					y = bounds.top - this.height - 20;
+				}
+				else {
+					// Nah, just raise it a bit
+					y = innerHeight - this.height - 20;
+				}
 			}
+
+			this.element.classList.toggle("mv-point-down", pointDown);
 
 			$.style(this.element, { top:  `${y}px`, left: `${x}px` });
 		};
