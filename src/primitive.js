@@ -270,9 +270,6 @@ var _ = Mavo.Primitive = $.Class({
 			"input change": evt => {
 				this.value = this.editorValue;
 			},
-			"focus": evt => {
-				this.editor.select && this.editor.select();
-			},
 			"mv-change": evt => {
 				if (evt.property === "output") {
 					evt.stopPropagation();
@@ -281,10 +278,16 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		});
 
+		var multiline = this.editor.matches("textarea");
+
+		if (!multiline) {
+			this.editor.addEventListener("focus", evt => {
+				this.editor.select && this.editor.select();
+			});
+		}
+
 		// Enter should go to the next item or insert a new one
 		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
-			var multiline = this.editor.matches("textarea");
-
 			this.editor.addEventListener("keydown", evt => {
 				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
 					var copy = this.getCousin(1);
@@ -324,7 +327,7 @@ var _ = Mavo.Primitive = $.Class({
 			this.editor.placeholder = "(" + this.label + ")";
 		}
 
-		// Copy any data-input-* attributes from the element to the editor
+		// Copy any mv-edit-* attributes from the element to the editor
 		var dataInput = /^mv-edit-/i;
 		$$(this.element.attributes).forEach(function (attribute) {
 			if (dataInput.test(attribute.name)) {
@@ -695,7 +698,7 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			if (!datatype && attribute == _.getValueAttribute(element)) {				
+			if (!datatype && attribute == _.getValueAttribute(element)) {
 				datatype = element.getAttribute("datatype") || undefined;
 			}
 
