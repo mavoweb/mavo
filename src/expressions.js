@@ -123,20 +123,22 @@ var _ = Mavo.Expressions = $.Class({
 
 			var index = -1, offset = 0;
 
-			$$(node.childNodes).forEach(child => {
-				if (child.nodeType == 1) {
-					offset = 0;
-					index++;
-				}
-				else {
-					offset++;
-				}
+			if (!node.matches("script:not([mv-expressions])")) {
+				$$(node.childNodes).forEach(child => {
+					if (child.nodeType == 1) {
+						offset = 0;
+						index++;
+					}
+					else {
+						offset++;
+					}
 
-				if (child.nodeType == 1 || child.nodeType == 3) {
-					var segment = offset > 0? `${index}.${offset}` : index;
-					this.traverse(child, [...path || [], segment], syntax);
-				}
-			});
+					if (child.nodeType == 1 || child.nodeType == 3) {
+						var segment = offset > 0? `${index}.${offset}` : index;
+						this.traverse(child, [...path || [], segment], syntax);
+					}
+				});
+			}
 		}
 	},
 
