@@ -483,12 +483,6 @@ function not(v) {
 	return !val(v);
 }
 
-var twodigits = new Intl.NumberFormat("en", {
-	minimumIntegerDigits: "2"
-});
-
-twodigits = twodigits.format.bind(twodigits);
-
 function toLocaleString(date, options) {
 	var ret = date.toLocaleString(Mavo.locale, options);
 
