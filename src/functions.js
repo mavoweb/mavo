@@ -424,28 +424,6 @@ var _ = Mavo.Functions = {
 
 var $u = _.util;
 
-// $url: Read-only syntactic sugar for URL stuff
-// Deprecated. Use url() instead.
-$.lazy(_, "$url", function() {
-	var ret = {};
-	var url = new URL(location);
-
-	for (let pair of url.searchParams) {
-		ret[pair[0]] = pair[1];
-	}
-
-	Object.defineProperties(ret, {
-		path: {
-			value: url.pathname.split("/").filter(a => !!a)
-		},
-		toString: {
-			value: () => new URL(location)
-		}
-	});
-
-	return ret;
-});
-
 // Make function names case insensitive
 _._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
