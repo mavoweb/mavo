@@ -113,7 +113,7 @@ var _ = self.Mavo = $.Class({
 
 		this.permissions.can("login", () => {
 			// We also support a URL param to trigger login, in case the user doesn't want visible login UI
-			if ("login" in Mavo.Functions.$url && this.index == 1 || this.id + "-login" in Mavo.Functions.$url) {
+			if (Mavo.Functions.url("login") !== null && this.index == 1 || Mavo.Functions.url(this.id + "-login")) {
 				this.primaryBackend.login();
 			}
 		});
@@ -409,11 +409,11 @@ var _ = self.Mavo = $.Class({
 		var previous = this[role], backend;
 
 		if (this.index == 1) {
-			backend = _.Functions.$url[role];
+			backend = _.Functions.url(role);
 		}
 
 		if (!backend) {
-			backend =  _.Functions.$url[`${this.id}-${role}`] || this.element.getAttribute("mv-" + role) || null;
+			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute("mv-" + role) || null;
 		}
 
 		if (backend) {
