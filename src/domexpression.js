@@ -307,10 +307,15 @@ var _ = Mavo.DOMExpression = $.Class({
 			vars: {
 				"$now": {
 					observe: function() {
-						this.timer = setInterval(_.special.update.bind(this), 100);
+						var callback = () => {
+							_.special.update.call(this);
+							this.timer = requestAnimationFrame(callback);
+						};
+
+						this.timer = requestAnimationFrame(callback);
 					},
 					unobserve: function() {
-						clearInterval(this.timer);
+						cancelAnimationFrame(this.timer);
 					}
 				}
 			}
