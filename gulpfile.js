@@ -8,6 +8,7 @@ var rename = require("gulp-rename");
 var concat = require("gulp-concat");
 var sass = require("gulp-sass");
 var babel = require("gulp-babel");
+var babili = require("gulp-babili");
 var autoprefixer = require("gulp-autoprefixer");
 var sourcemaps = require("gulp-sourcemaps");
 var notify = require("gulp-notify");
@@ -80,11 +81,7 @@ gulp.task("transpile", function () {
 gulp.task("minify", function () {
 	return merge(gulp.src("lib/*.js")
 		, gulp.src(mavo)
-			.pipe(babel({
-				"presets": [
-					["babili"]
-				]
-			}))
+			.pipe(babili())
 	)
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.min.js"))
@@ -95,11 +92,7 @@ gulp.task("minify", function () {
 gulp.task("minify-es5", function () {
 	return merge(gulp.src("lib/*.js")
 		, transpileStream()
-			.pipe(babel({
-				"presets": [
-					["babili"]
-				]
-			}))
+			.pipe(babili())
 	)
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.es5.min.js"))
