@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 var _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
@@ -350,4 +350,4 @@ var _ = Mavo.Backend.register($.Class({
 	}
 }));
 
-})(Bliss);
+})(Bliss, Bliss.$);

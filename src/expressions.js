@@ -69,11 +69,11 @@ var _ = Mavo.Expressions = $.Class({
 			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
 				var data = $.value(allData, ...path);
 
-				for (let et of obj.expressions) {
+				obj.expressions.forEach(et => {
 					if (et.changedBy(evt)) {
 						et.update(data, evt);
 					}
-				}
+				});
 			}
 		});
 	},

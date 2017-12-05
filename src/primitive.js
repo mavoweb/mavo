@@ -50,9 +50,7 @@ var _ = Mavo.Primitive = $.Class({
 				// This means that expressions on mv-edit for individual collection items will not be picked up
 				if (!this.template) {
 					this.originalEditorObserver = new Mavo.Observer(this.originalEditor, "all", records => {
-						var all = this.copies.concat(this);
-
-						for (let primitive of all) {
+						this.copies.concat(this).forEach(primitive => {
 							if (primitive.defaultSource == "editor") {
 								primitive.default = this.originalEditor.value;
 							}
@@ -62,7 +60,7 @@ var _ = Mavo.Primitive = $.Class({
 							}
 
 							primitive.setValue(primitive.value, {force: true, silent: true});
-						}
+						});
 					});
 				}
 			}
@@ -90,7 +88,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (this.config.changeEvents) {
-			$.events(this.element, this.config.changeEvents, evt => {
+			$.bind(this.element, this.config.changeEvents, evt => {
 				if (evt.target === this.element) {
 					this.value = this.getValue();
 				}
@@ -266,7 +264,7 @@ var _ = Mavo.Primitive = $.Class({
 			this.editorValue = this.value;
 		}
 
-		$.events(this.editor, {
+		$.bind(this.editor, {
 			"input change": evt => {
 				this.value = this.editorValue;
 			},
@@ -359,7 +357,7 @@ var _ = Mavo.Primitive = $.Class({
 		// Prevent default actions while editing
 		// e.g. following links etc
 		if (!this.modes) {
-			this.element.addEventListener("click.mavo:edit", evt => evt.preventDefault());
+			$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
 		}
 
 		this.preEdit = Mavo.defer(resolve => {
@@ -370,7 +368,7 @@ var _ = Mavo.Primitive = $.Class({
 			var timer;
 
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
-			$.events(this.element, events, resolve);
+			$.bind(this.element, events, resolve);
 		}).then(() => $.unbind(this.element, ".mavo:preedit"));
 
 		if (this.config.edit) {
@@ -740,9 +738,7 @@ var _ = Mavo.Primitive = $.Class({
 					catch (e) {}
 
 					if (previousValue != newValue && o.config.changeEvents) {
-						for (var type of o.config.changeEvents.split(/\s+/)) {
-							$.fire(element, type);
-						}
+						o.config.changeEvents.split(/\s+/).forEach(type => $.fire(element, type));
 					}
 				}
 

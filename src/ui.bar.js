@@ -51,7 +51,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.element.innerHTML = "";
 		}
 
-		for (let id of this.controls) {
+		this.controls.forEach(id => {
 			let o = _.controls[id];
 
 			if (this[id]) {
@@ -85,9 +85,9 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 
 			for (var events in o.events) {
-				$.events(this[id], events, o.events[events].bind(this.mavo));
+				$.bind(this[id], events, o.events[events].bind(this.mavo));
 			}
-		}
+		});
 
 		for (let id in _.controls) {
 			let o = _.controls[id];

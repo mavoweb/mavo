@@ -82,15 +82,11 @@ Mavo.Expressions.directive("mv-if", {
 				if (value !== oldValue) {
 					// Mark any properties inside as hidden or not
 					if (this.childProperties) {
-						for (let property of this.childProperties) {
-							property.hidden = !value;
-						}
+						this.childProperties.forEach(property => property.hidden = !value);
 					}
 
 					if (this.childIfs) {
-						for (let childIf of this.childIfs) {
-							childIf.update();
-						}
+						this.childIfs.forEach(childIf => childIf.update());
 					}
 				}
 			});

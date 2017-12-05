@@ -123,9 +123,7 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		if (this.expressions) {
-			for (var expression of this.expressions) {
-				expression.destroy();
-			}
+			this.expressions.forEach(expression => expression.destroy());
 		}
 
 		if (this.itembar) {
@@ -251,9 +249,7 @@ var _ = Mavo.Node = $.Class({
 
 	fromTemplate: function(...properties) {
 		if (this.template) {
-			for (let property of properties) {
-				this[property] = this.template[property];
-			}
+			properties.forEach(property => this[property] = this.template[property]);
 		}
 
 		return !!this.template;

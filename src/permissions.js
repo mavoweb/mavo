@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 var _ = Mavo.Permissions = $.Class({
 	constructor: function(o) {
@@ -79,9 +79,9 @@ var _ = Mavo.Permissions = $.Class({
 		this.hooks.add("change", callback);
 
 		// Fire for current values
-		for (let action of _.actions) {
+		_.actions.forEach(action => {
 			callback.call(this, {action, value: this[action]});
-		}
+		});
 	},
 
 	parentChanged: function(o = {}) {
@@ -117,7 +117,7 @@ var _ = Mavo.Permissions = $.Class({
 	},
 
 	fireTriggers: function(action) {
-		for (let trigger of this.triggers) {
+		this.triggers.forEach(trigger => {
 			var match = this.is(trigger.actions, trigger.value);
 
 			if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
@@ -131,13 +131,13 @@ var _ = Mavo.Permissions = $.Class({
 				// if a and b are set to true one after the other
 				trigger.active = true;
 			}
-		}
+		});
 	},
 
 	or: function(permissions) {
-		for (let action of _.actions) {
+		_.actions.forEach(action => {
 			this[action] = this[action] || permissions[action];
-		}
+		});
 
 		return this;
 	},
@@ -158,13 +158,13 @@ var _ = Mavo.Permissions = $.Class({
 			}
 
 			// What changes does this cause? Fire triggers for them
-			for (let action of _.actions) {
+			_.actions.forEach(action => {
 				this.parentChanged({
 					action,
 					value: parent? parent[action] : undefined,
 					from: oldParent? oldParent[action] : undefined
 				});
-			}
+			});
 
 			if (parent) {
 				// Add new trigger
@@ -233,4 +233,4 @@ _.register(["add", "delete"], function(can) {
 	}
 });
 
-})(Bliss);
+})(Bliss, Bliss.$);

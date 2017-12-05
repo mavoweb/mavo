@@ -4,11 +4,10 @@ var _ = Mavo.Script = {
 	addUnaryOperator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
-			for (let symbol of Mavo.toArray(o.symbol)) {
+			Mavo.toArray(o.symbol).forEach(symbol => {
 				Mavo.Script.unarySymbols[symbol] = name;
-
 				jsep.addUnaryOp(symbol);
-			}
+			});
 		}
 
 		return Mavo.Functions[name] = operand => Array.isArray(operand)? operand.map(val).map(o.scalar) : o.scalar(val(operand));
@@ -23,13 +22,13 @@ var _ = Mavo.Script = {
 	addBinaryOperator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
-			for (let symbol of Mavo.toArray(o.symbol)) {
+			Mavo.toArray(o.symbol).forEach(symbol => {
 				Mavo.Script.symbols[symbol] = name;
 
 				if (o.precedence) {
 					jsep.addBinaryOp(symbol, o.precedence);
 				}
-			}
+			});
 		}
 
 		o.identity = o.identity === undefined? 0 : o.identity;

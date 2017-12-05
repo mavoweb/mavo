@@ -31,9 +31,10 @@ var _ = Mavo.UI.Message = $.Class({
 		if (typeof o.dismiss == "string" || Array.isArray(o.dismiss)) {
 			var dismiss = {};
 
-			for (let prop of Mavo.toArray(o.dismiss)) {
+			Mavo.toArray(o.dismiss).forEach(prop => {
 				dismiss[prop] = true;
-			}
+			});
+			
 			o.dismiss = dismiss;
 		}
 
@@ -52,7 +53,7 @@ var _ = Mavo.UI.Message = $.Class({
 			var timeout = typeof o.dismiss.timeout === "number"? o.dismiss.timeout : 5000;
 			var closeTimeout;
 
-			$.events(this.element, {
+			$.bind(this.element, {
 				mouseenter: e => clearTimeout(closeTimeout),
 				mouseleave: Mavo.rr(e => closeTimeout = setTimeout(() => this.close(), timeout)),
 			});

@@ -22,13 +22,13 @@ var _ = self.Mavo = $.Class({
 		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
 
 		[this.element, ...$$(selector, this.element)].forEach(element => {
-			for (let attribute of _.attributes) {
-				let value = element.getAttribute("data-" + attribute);
+			_.attributes.forEach(attribute => {
+				var value = element.getAttribute("data-" + attribute);
 
 				if (value !== null) {
 					element.setAttribute(attribute, value);
 				}
-			}
+			});
 		});
 
 		// Assign a unique (for the page) id to this mavo instance
@@ -58,7 +58,7 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-start", this);
 
 		// Apply heuristic for groups
-		for (var element of $$(_.selectors.primitive + "," + _.selectors.multiple, this.element)) {
+		$$(_.selectors.primitive + "," + _.selectors.multiple, this.element).forEach(element => {
 			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
 
 			if (hasChildren) {
@@ -69,7 +69,7 @@ var _ = self.Mavo = $.Class({
 					element.setAttribute("typeof", "");
 				}
 			}
-		}
+		});
 
 		this.expressions = new Mavo.Expressions(this);
 
@@ -86,9 +86,7 @@ var _ = self.Mavo = $.Class({
 		var backendTypes = ["source", "storage", "init"]; // order is significant!
 
 		// Figure out backends for storage, data reads, and initialization respectively
-		for (let role of backendTypes) {
-			this.updateBackend(role);
-		}
+		backendTypes.forEach(role => this.updateBackend(role));
 
 		this.backendObserver = new Mavo.Observer(this.element, backendTypes.map(role => "mv-" + role), records => {
 			var changed = {};
@@ -119,7 +117,7 @@ var _ = self.Mavo = $.Class({
 		});
 
 		// Update login status
-		this.element.addEventListener("mv-login.mavo", evt => {
+		$.bind(this.element, "mv-login.mavo", evt => {
 			if (evt.backend == (this.source || this.storage)) {
 				// If last time we rendered we got nothing, maybe now we'll have better luck?
 				if (!this.root.data && !this.unsavedChanges) {
@@ -159,10 +157,12 @@ var _ = self.Mavo = $.Class({
 			this.permissions.can(["edit", "add", "delete"], () => {
 				// Observe entire tree for mv-mode changes
 				this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-					for (let record of records) {
+					records.forEach(record => {
 						let element = record.target;
+						let nodes = _.Node.children(element);
 
-						nodeloop: for (let node of _.Node.children(element)) {
+						nodeloop: for (let i=0; i<nodes.length; i++) {
+							let node = nodes[i];
 							let previousMode = node.mode, mode;
 
 							if (node.element == element) {
@@ -187,7 +187,7 @@ var _ = self.Mavo = $.Class({
 								node[node.mode == "edit"? "edit" : "done"]();
 							}
 						}
-					}
+					});
 				}, {subtree: true});
 
 				if (this.autoEdit) {
@@ -212,7 +212,7 @@ var _ = self.Mavo = $.Class({
 
 		// Dynamic ids
 		if (location.hash) {
-			this.element.addEventListener("mv-load.mavo", evt => {
+			$.bind(this.element, "mv-load.mavo", evt => {
 				var callback = records => {
 					var target = document.getElementById(location.hash.slice(1));
 
@@ -253,9 +253,9 @@ var _ = self.Mavo = $.Class({
 
 				requestAnimationFrame(() => {
 					this.permissions.can("save", () => {
-						this.element.addEventListener("mv-change.mavo:autosave", callback);
+						$.bind(this.element, "mv-change.mavo:autosave", callback);
 					}, () => {
-						this.element.removeEventListener("mv-change.mavo:autosave", callback);
+						$.unbind(this.element, "mv-change.mavo:autosave", callback);
 					});
 				});
 			});
@@ -352,7 +352,7 @@ var _ = self.Mavo = $.Class({
 	edit: function() {
 		this.root.edit();
 
-		$.events(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
+		$.bind(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
 
@@ -651,7 +651,6 @@ var _ = self.Mavo = $.Class({
 			return _.all[name] || null;
 		},
 
-		toNode: Symbol("toNode"),
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
 		dependencies: [],
@@ -674,7 +673,8 @@ var _ = self.Mavo = $.Class({
 		],
 
 		lazy: {
-			locale: () => document.documentElement.lang || "en-GB"
+			locale: () => document.documentElement.lang || "en-GB",
+			toNode: () => Symbol("toNode")
 		}
 	}
 });
@@ -734,7 +734,8 @@ requestAnimationFrame(() => {
 		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
 		"Intl.~locale.en": self.Intl,
 		"IntersectionObserver": self.IntersectionObserver,
-		"Symbol": self.Symbol
+		"Symbol": self.Symbol,
+		"Element.prototype.remove": Element.prototype.remove
 	}, (id, supported) => {
 		if (!supported) {
 			polyfills.push(id);
@@ -760,5 +761,10 @@ requestAnimationFrame(() => {
 });
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
+
+// Define $ and $$ if they are not already defined
+// Primarily for backwards compat since we used to use Bliss Full.
+self.$ = self.$ || $;
+self.$$ = self.$$ || $$;
 
 })(Bliss, Bliss.$);

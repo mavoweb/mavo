@@ -56,7 +56,7 @@ var _ = $.extend(Mavo, {
 	 * toJSON without cycles
 	 */
 	safeToJSON: function(o) {
-		var cache = new WeakSet();
+		var cache = self.WeakSet? new WeakSet() : new Set();
 
 		return JSON.stringify(o, (key, value) => {
 			if (typeof value === "object" && value !== null) {
@@ -141,7 +141,9 @@ var _ = $.extend(Mavo, {
 	 */
 
 	is: function(thing, ...elements) {
-		for (let element of elements) {
+		for (let i=0, element; i < elements.length; i++) {
+			element = elements[i];
+
 			if (element && element.matches && element.matches(_.selectors[thing])) {
 				return true;
 			}
@@ -166,20 +168,23 @@ var _ = $.extend(Mavo, {
 	 * Get/set data on an element
 	 */
 	data: function(element, name, value) {
+		var data = _.elementData.get(element) || {}, ret;
+
 		if (arguments.length == 2) {
-			return $.value(element, "_", "data", "mavo", name);
+			ret = data[name];
+		}
+		else if (value === undefined) {
+			delete data[name];
 		}
 		else {
-			element._.data.mavo = element._.data.mavo || {};
-
-			if (value === undefined) {
-				delete element._.data.mavo[name];
-			}
-			else {
-				return element._.data.mavo[name] = value;
-			}
+			ret = data[name] = value;
 		}
+
+		_.elementData.set(element, data);
+		return ret;
 	},
+
+	elementData: new WeakMap(),
 
 	/**
 	 * Get node from path or get path of a node to an ancestor
@@ -333,10 +338,10 @@ var _ = $.extend(Mavo, {
 
 		when: element => {
 			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries) {
-				for (var entry of entries) {
+				entries.forEach(entry => {
 					this.unobserve(entry.target);
 					$.fire(entry.target, "mv-inview", {entry});
-				}
+				});
 			});
 
 			return new Promise(resolve => {
@@ -654,11 +659,11 @@ var _ = $.extend(Mavo, {
 	 */
 	thenAll: function(iterable) {
 		// Turn rejected promises into resolved ones
-		for (let promise of iterable) {
+		$$(iterable).forEach(promise => {
 			if ($.type(promise) == "promise") {
 				promise = promise.catch(err => err);
 			}
-		}
+		});
 
 		return Promise.all(iterable).then(resolved => {
 			if (iterable.length != resolved.length) {
@@ -691,9 +696,8 @@ var _ = $.extend(Mavo, {
 	 */
 	options: str => {
 		var ret = {};
-		var pairs = str.trim().match(/(?:\\[,;]|[^,;])+/g) || [];
 
-		for (var option of pairs) {
+		(str.trim().match(/(?:\\[,;]|[^,;])+/g) || []).forEach(option => {
 			if (option) {
 				option = option.trim().replace(/\\([,;])/g, "$1");
 				var pair = option.match(/^\s*((?:\\:|[^:])+?)\s*:\s*(.+)$/);
@@ -706,7 +710,7 @@ var _ = $.extend(Mavo, {
 					ret[option] = true;
 				}
 			}
-		}
+		});
 
 		return ret;
 	}

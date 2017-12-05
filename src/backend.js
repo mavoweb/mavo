@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 /**
  * Base class for all backends
@@ -196,7 +196,7 @@ var _ = Mavo.Backend = $.Class({
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			this.mavo.element._.fire("mv-logout", {backend: this});
+			$.fire(this.mavo.element, "mv-logout", {backend: this});
 		}
 
 		return Promise.resolve();
@@ -299,4 +299,4 @@ _.register($.Class({
 	}
 }));
 
-})(Bliss);
+})(Bliss, Bliss.$);

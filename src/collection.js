@@ -43,15 +43,15 @@ var _ = Mavo.Collection = $.Class({
 			data: []
 		};
 
-		for (var item of this.children) {
+		this.children.forEach(item => {
 			if (!item.deleted || env.options.live) {
-				let itemData = item.getData(env.options);
+				var itemData = item.getData(env.options);
 
 				if (env.options.live || Mavo.value(itemData) !== null) {
 					env.data.push(itemData);
 				}
 			}
-		}
+		});
 
 		if (!this.mutable) {
 			// If immutable, drop nulls
@@ -165,13 +165,13 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	splice: function(...actions) {
-		for (let action of actions) {
+		actions.forEach(action => {
 			if (action.index === undefined && action.remove && isNaN(action.remove)) {
 				// Remove is an item
 				action.index = this.children.indexOf(action.remove);
 				action.remove = 1;
 			}
-		}
+		});
 
 		// Sort in reverse index order
 		actions.sort((a, b) => b.index - a.index);
@@ -180,14 +180,14 @@ var _ = Mavo.Collection = $.Class({
 		// Think of e.g. adding items on i, then removing > 1 items on i-1.
 		// The new items would get removed instead of the old ones.
 		// Not a pressing issue though since we always remove 1 max when adding things too.
-		for (let action of actions) {
+		actions.forEach(action => {
 			if (action.index > -1 && (action.remove || action.add)) {
 				action.remove = action.remove || 0;
 				action.add = Mavo.toArray(action.add);
 
 				this.children.splice(action.index, +action.remove, ...action.add);
 			}
-		}
+		});
 
 		var changed = [];
 
@@ -331,14 +331,14 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		for (let item of this.children) {
+		this.children.forEach(item => {
 			if (item.deleted) {
 				this.delete(item, true);
 			}
 			else {
 				item.unsavedChanges = false;
 			}
-		}
+		});
 	},
 
 	propagated: ["save"],
@@ -526,7 +526,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			var order = this.templateElement.getAttribute("mv-order");
-			
+
 			if (order !== null) {
 				// Attribute has the highest priority and overrides any heuristics
 				return /^desc\b/i.test(order);

@@ -94,7 +94,7 @@ var _ = Mavo.UI.Popup = $.Class({
 			this.element.removeAttribute("hidden");
 		}, 100); // trigger transition. rAF or timeouts < 100 don't seem to, oddly.
 
-		$.events(document, "focus click", this.hideCallback, true);
+		$.bind(document, "focus click", this.hideCallback, true);
 		window.addEventListener("scroll", this.position, {passive: true});
 	},
 
@@ -110,7 +110,7 @@ var _ = Mavo.UI.Popup = $.Class({
 	},
 
 	prepare: function() {
-		$.events(this.primitive.element, {
+		$.bind(this.primitive.element, {
 			"click.mavo:edit": evt => {
 				this.show();
 			},

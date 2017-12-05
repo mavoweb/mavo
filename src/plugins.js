@@ -1,4 +1,4 @@
-(function ($) {
+(function ($, $$) {
 
 Mavo.attributes.push("mv-plugins");
 
@@ -8,13 +8,11 @@ var _ = Mavo.Plugins = {
 	load: function() {
 		_.plugins = new Set();
 
-		for (let element of $$("[mv-plugins]")) {
-			let plugins = element.getAttribute("mv-plugins").trim().split(/\s+/);
-
-			for (let plugin of plugins) {
-				_.plugins.add(plugin);
-			}
-		}
+		$$("[mv-plugins]").forEach(element => {
+			element
+				.getAttribute("mv-plugins").trim().split(/\s+/)
+				.forEach(plugin => _.plugins.add(plugin));
+		});
 
 		if (!_.plugins.size) {
 			return Promise.resolve();
@@ -91,4 +89,4 @@ var _ = Mavo.Plugins = {
 	url: "https://plugins.mavo.io"
 };
 
-})(Bliss);
+})(Bliss, Bliss.$);

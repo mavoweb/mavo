@@ -48,12 +48,12 @@ Object.defineProperties(_, {
 			config.id = id;
 
 			if (Array.isArray(config.attribute)) {
-				for (var attribute of config.attribute) {
+				config.attribute.forEach(attribute => {
 					var o = $.extend({}, config);
 					o.attribute = attribute;
 
 					_[`${id}@${attribute}`] = o;
-				}
+				});
 			}
 			else {
 				_[id] = config;
@@ -246,7 +246,7 @@ _.register({
 					}
 				};
 
-				$.events(this.element, uploadEvents);
+				$.bind(this.element, uploadEvents);
 
 				return popup = $.create({
 					className: "mv-upload-popup",
@@ -346,7 +346,7 @@ _.register({
 				});
 
 				requestAnimationFrame(() => {
-					$.events(element, "input mv-change", function handler() {
+					$.bind(element, "input mv-change", function handler() {
 						observer.destroy();
 						Mavo.data(element, "boundObserver", undefined);
 						$.unbind(element, "input mv-change", handler);
@@ -425,7 +425,7 @@ _.register({
 			var range = max - min;
 			var step = +this.element.getAttribute("mv-edit-step") || (range > 1? 1 : range/100);
 
-			this.element.addEventListener("mousemove.mavo:edit", evt => {
+			$.bind(this.element, "mousemove.mavo:edit", evt => {
 				// Change property as mouse moves
 				var left = this.element.getBoundingClientRect().left;
 				var offset = Math.max(0, (evt.clientX - left) / this.element.offsetWidth);
@@ -438,17 +438,17 @@ _.register({
 				this.sneak(() => this.element.setAttribute("value", newValue));
 			});
 
-			this.element.addEventListener("mouseleave.mavo:edit", evt => {
+			$.bind(this.element, "mouseleave.mavo:edit", evt => {
 				// Return to actual value
 				this.sneak(() => this.element.setAttribute("value", this.value));
 			});
 
-			this.element.addEventListener("click.mavo:edit", evt => {
+			$.bind(this.element, "click.mavo:edit", evt => {
 				// Register change
 				this.value = this.getValue();
 			});
 
-			this.element.addEventListener("keydown.mavo:edit", evt => {
+			$.bind(this.element, "keydown.mavo:edit", evt => {
 				// Edit with arrow keys
 				if (evt.target == this.element && (evt.keyCode == 37 || evt.keyCode == 39)) {
 					var increment = step * (evt.keyCode == 39? 1 : -1) * (evt.shiftKey? 10 : 1);
@@ -586,7 +586,7 @@ _.register({
 		edit: function() {
 			Mavo.revocably.setAttribute(this.element, "role", "checkbox");
 
-			$.events(this.element, "click.mavo:edit keyup.mavo:edit keydown.mavo:edit", evt => {
+			$.bind(this.element, "click.mavo:edit keyup.mavo:edit keydown.mavo:edit", evt => {
 				if (evt.type == "click" || evt.key == " " || evt.key == "Enter") {
 					if (evt.type != "keydown") {
 						this.value = !this.value;

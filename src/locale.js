@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 var _ = Mavo.Locale = $.Class({
 	constructor: function(lang, phrases) {
@@ -36,13 +36,11 @@ var _ = Mavo.Locale = $.Class({
 		}
 		else if (vars) {
 			var keys = Mavo.matches(phrase, /\{\w+(?=\})/g).map(v => v.slice(1));
-			keys = Mavo.Functions.unique(keys);
-
-			for (var name of keys) {
+			Mavo.Functions.unique(keys).forEach(name => {
 				if (name in vars) {
 					phrase = phrase.replace(RegExp(`{${name}}`, "gi"), vars[name]);
 				}
-			}
+			});
 		}
 
 		return phrase;
@@ -101,14 +99,14 @@ Mavo.prototype._ = function(id, vars) {
 };
 
 $.ready().then(() => {
-	for (var datalist of $$("datalist.mv-phrases[lang]")) {
+	$$("datalist.mv-phrases[lang]").forEach(datalist => {
 		var phrases = $$("option", datalist).reduce((o, option) => {
 			o[option.value] = option.textContent.trim();
 			return o;
 		}, {});
 
 		Mavo.Locale.register(datalist.lang, phrases);
-	}
+	});
 });
 
-})(Bliss);
+})(Bliss, Bliss.$);

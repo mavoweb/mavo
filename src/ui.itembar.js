@@ -53,9 +53,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 
 		this.element.setAttribute("hidden", "");
 
-		$.events([this.item.element, this.element], "focusin mouseover", this);
+		$.bind([this.item.element, this.element], "focusin mouseover", this);
 
-		$.events(this.element, {
+		$.bind(this.element, {
 			mouseenter: evt => {
 				this.item.element.classList.add("mv-highlight");
 			},
@@ -111,19 +111,19 @@ var _ = Mavo.UI.Itembar = $.Class({
 	},
 
 	show: function(sticky) {
-		for (var instance of _.visible) {
+		_.visible.forEach(instance => {
 			if (instance != this && (!this.sticky || instance.sticky)) {
 				clearTimeout(instance.hideTimeout);
 				instance.hide(sticky, _.DELAY);
 			}
-		}
+		});
 
 		_.visible.add(this);
 
 		if (this.element.hasAttribute("hidden") || sticky && !this.sticky) {
 			this.element.removeAttribute("hidden");
 			this.sticky = this.sticky || sticky;
-			$.events([this.item.element, this.element], "focusout mouseleave", this);
+			$.bind([this.item.element, this.element], "focusout mouseleave", this);
 
 			if (this.adjacent) {
 				// Position

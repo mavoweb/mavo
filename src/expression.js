@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 Mavo.attributes.push("mv-expressions");
 
@@ -135,4 +135,4 @@ _.Syntax = $.Class({
 
 _.Syntax.default = new _.Syntax("[", "]");
 
-})(Bliss);
+})(Bliss, Bliss.$);

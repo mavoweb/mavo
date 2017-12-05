@@ -1,4 +1,4 @@
-(function($) {
+(function($, $$) {
 
 var _ = Mavo.DOMExpression = $.Class({
 	constructor: function(o = {}) {
@@ -281,9 +281,7 @@ var _ = Mavo.DOMExpression = $.Class({
 					this.update(...arguments);
 				}
 
-				for (var domexpression of this.all) {
-					domexpression.update();
-				}
+				this.all.forEach(domexpression => domexpression.update());
 			},
 
 			event: function(name, {type, update, target = document} = {}) {
@@ -335,4 +333,4 @@ _.special.event("$hash", {
 	target: window
 });
 
-})(Bliss);
+})(Bliss, Bliss.$);
