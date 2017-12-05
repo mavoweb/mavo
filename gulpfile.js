@@ -20,7 +20,7 @@ var mavo = `mavo util locale locale.en plugins ui.bar ui.message permissions bac
 			backend.dropbox backend.github`
 	.split(/\s+/).map(path => `src/${path}.js`);
 var versionOptions = {
-	replace: "%%VERSION%%"
+	replace: /%%VERSION%%/g
 };
 
 gulp.task("concat", function () {

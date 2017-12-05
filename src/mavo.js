@@ -632,6 +632,8 @@ var _ = self.Mavo = $.Class({
 	},
 
 	static: {
+		version: "%%VERSION%%",
+
 		all: {},
 
 		get: function(id) {
