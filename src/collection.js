@@ -364,6 +364,7 @@ var _ = Mavo.Collection = $.Class({
 				else {
 					item.dataChanged("delete");
 					this.delete(item, true);
+					i--;
 				}
 			}
 
