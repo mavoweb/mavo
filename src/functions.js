@@ -87,7 +87,7 @@ var _ = Mavo.Functions = {
 			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
 		}
 
-		return ret === null || !id? null : ret[1] || "";
+		return ret === null || !id? null : decodeURIComponent(ret[1]) || "";
 	},
 
 	// TODO return first/last non-null?
