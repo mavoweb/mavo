@@ -1,6 +1,6 @@
 /**
  * Mavo: Create web applications by writing HTML and CSS!
- * @author Lea Verou
+ * @author Lea Verou and contributors
  * @version %%VERSION%%
  */
 (function ($, $$) {

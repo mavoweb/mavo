@@ -1,10 +1,10 @@
 !function(){"use strict";function t(e,r,i){return r=void 0===r?1:r,i=i||r+1,i-r<=1?function(){if(arguments.length<=r||"string"===n.type(arguments[r]))return e.apply(this,arguments);var t,i=arguments[r];for(var s in i){var o=Array.prototype.slice.call(arguments);o.splice(r,1,s,i[s]),t=e.apply(this,o)}return t}:t(t(e,r+1,i),r,i-1)}function e(t,n,i){var s=r(i);if("string"===s){var o=Object.getOwnPropertyDescriptor(n,i);!o||o.writable&&o.configurable&&o.enumerable&&!o.get&&!o.set?t[i]=n[i]:(delete t[i],Object.defineProperty(t,i,o))}else if("array"===s)i.forEach(function(r){r in n&&e(t,n,r)});else for(var a in n)i&&("regexp"===s&&!i.test(a)||"function"===s&&!i.call(n,a))||e(t,n,a);return t}function r(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e}var n=self.Bliss=e(function(t,e){return 2==arguments.length&&!e||!t?null:"string"===n.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(n,{extend:e,overload:t,type:r,property:n.property||"_",sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.prototype.slice.call("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[]},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?n.set(t,e):(1===arguments.length&&("string"===n.type(t)?e={}:(e=t,t=e.tag,e=n.extend({},e,function(t){return"tag"!==t}))),n.set(document.createElement(t||"div"),e))},each:function(t,e,r){r=r||{};for(var n in t)r[n]=e.call(t,n,t[n]);return r},ready:function(t){return t=t||document,new Promise(function(e,r){"loading"!==t.readyState?e():t.addEventListener("DOMContentLoaded",function(){e()})})},Class:function(t){var e,r=["constructor","extends","abstract","static"].concat(Object.keys(n.classProps)),i=t.hasOwnProperty("constructor")?t.constructor:n.noop;2==arguments.length?(e=arguments[0],t=arguments[1]):(e=function(){if(this.constructor.__abstract&&this.constructor===e)throw new Error("Abstract classes cannot be directly instantiated.");e["super"]&&e["super"].apply(this,arguments),i.apply(this,arguments)},e["super"]=t["extends"]||null,e.prototype=n.extend(Object.create(e["super"]?e["super"].prototype:Object),{constructor:e}),e.prototype["super"]=e["super"]?e["super"].prototype:null,e.__abstract=!!t["abstract"]);var s=function(t){return this.hasOwnProperty(t)&&r.indexOf(t)===-1};if(t["static"]){n.extend(e,t["static"],s);for(var o in n.classProps)o in t["static"]&&n.classProps[o](e,t["static"][o])}n.extend(e.prototype,t,s);for(var o in n.classProps)o in t&&n.classProps[o](e.prototype,t[o]);return e},classProps:{lazy:t(function(t,e,r){return Object.defineProperty(t,e,{get:function(){var t=r.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,r){return"function"===n.type(r)&&(r={set:r}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],n=r.get&&r.get.call(this,t);return void 0!==n?n:t},set:function(t){var n=this["_"+e],i=r.set&&r.set.call(this,t,n);this["_"+e]=void 0!==i?i:t},configurable:r.configurable,enumerable:r.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length&&arguments[0],r=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){n.set(r,{async:!0,onload:function(){e(),n.remove(r)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,r){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},r);i.method=i.method.toUpperCase(),n.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var s in r)if(s in i.xhr)try{i.xhr[s]=r[s]}catch(o){self.console&&console.error(o)}"GET"===i.method||i.headers["Content-type"]||i.headers["Content-Type"]||i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var a in i.headers)i.xhr.setRequestHeader(a,i.headers[a]);var c=new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(n.extend(Error(i.xhr.statusText),{xhr:i.xhr,get status(){return this.xhr.status}}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(n.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)});return c.xhr=i.xhr,c},value:function(t){var e="string"!==n.type(t);return n.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),n.Hooks=new n.Class({add:function(t,e,r){if("string"==typeof arguments[0])(Array.isArray(t)?t:[t]).forEach(function(t){this[t]=this[t]||[],e&&this[t][r?"unshift":"push"](e)},this);else for(var t in arguments[0])this.add(t,arguments[0][t],arguments[1])},run:function(t,e){this[t]=this[t]||[],this[t].forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),n.hooks=new n.Hooks;var i=n.property;n.Element=function(t){this.subject=t,this.data={},this.bliss={}},n.Element.prototype={set:t(function(t,e){t in n.setProps?n.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(r,i){if("transition"in this.style){var s=n.extend({},this.style,/^transition(Duration|Property)$/);n.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),n.once(this,"transitionend",function(){clearTimeout(o),n.style(this,s),r(this)});var o=setTimeout(r,e+50,this);n.style(this,t)}else n.style(this,t),r(this)}.bind(this))},fire:function(t,e){var r=document.createEvent("HTMLEvents");return r.initEvent(t,!0,!0),this.dispatchEvent(n.extend(r,e))},unbind:t(function(t,e){(t||"").split(/\s+/).forEach(function(t){if(i in this&&(t.indexOf(".")>-1||!e)){t=(t||"").split(".");var r=t[1];t=t[0];var n=this[i].bliss.listeners=this[i].bliss.listeners||{};for(var s in n)if(!t||s===t)for(var o,a=0;o=n[s][a];a++)r&&r!==o.className||e&&e!==o.callback||(this.removeEventListener(s,o.callback,o.capture),a--)}else this.removeEventListener(t,e)},this)},0)},n.setProps={style:function(t){for(var e in t)e in this.style?this.style[e]=t[e]:this.style.setProperty(e,t[e])},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){n.extend(this,t)},events:function(t){if(t&&t.addEventListener){var e=this;if(t[i]&&t[i].bliss){var r=t[i].bliss.listeners;for(var s in r)r[s].forEach(function(t){e.addEventListener(s,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])}else if(arguments.length>1&&"string"===n.type(t)){var a=arguments[1],c=arguments[2];t.split(/\s+/).forEach(function(t){this.addEventListener(t,a,c)},this)}else for(var u in t)n.events(this,u,t[u])},once:t(function(t,e){t=t.split(/\s+/);var r=this,n=function(){return t.forEach(function(t){r.removeEventListener(t,n)}),e.apply(r,arguments)};t.forEach(function(t){r.addEventListener(t,n)})},0),delegate:t(function(t,e,r){this.addEventListener(t,function(t){t.target.closest(e)&&r.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=n.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=n.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t.appendChild(this)},before:function(t){t.parentNode.insertBefore(this,t)},after:function(t){t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t.insertBefore(this,t.firstChild)},around:function(t){t.parentNode&&n.before(this,t),(/^template$/i.test(this.nodeName)?this.content||this:this).appendChild(t)}},n.Array=function(t){this.subject=t},n.Array.prototype={all:function(t){var e=$$(arguments).slice(1);return this[t].apply(this,e)}},n.add=t(function(t,e,r,i){r=n.extend({$:!0,element:!0,array:!0},r),"function"==n.type(e)&&(!r.element||t in n.Element.prototype&&i||(n.Element.prototype[t]=function(){return this.subject&&n.defined(e.apply(this.subject,arguments),this.subject)}),!r.array||t in n.Array.prototype&&i||(n.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(r){return r&&n.defined(e.apply(r,t),r)})}),r.$&&(n.sources[t]=n[t]=e,(r.array||r.element)&&(n[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),s=r.array&&Array.isArray(i)?"Array":"Element";return n[s].prototype[t].apply({subject:i},e)})))},0),n.add(n.Array.prototype,{element:!1}),n.add(n.Element.prototype),n.add(n.setProps),n.add(n.classProps,{element:!1,array:!1});var s=document.createElement("_");n.add(n.extend({},HTMLElement.prototype,function(t){return"function"===n.type(s[t])}),null,!0)}(),function(t){"use strict";if(Bliss&&!Bliss.shy){var e=Bliss.property;if(t.add({clone:function(){var e=this.cloneNode(!0),r=t.$("*",e).concat(e);return t.$("*",this).concat(this).forEach(function(e,n,i){t.events(r[n],e),r[n]._.data=t.extend({},e._.data)}),e}},{array:!1}),Object.defineProperty(Node.prototype,e,{get:function o(){return Object.defineProperty(Node.prototype,e,{get:void 0}),Object.defineProperty(this,e,{value:new t.Element(this)}),Object.defineProperty(Node.prototype,e,{get:o}),this[e]},configurable:!0}),Object.defineProperty(Array.prototype,e,{get:function(){return Object.defineProperty(this,e,{value:new t.Array(this)}),this[e]},configurable:!0}),self.EventTarget&&"addEventListener"in EventTarget.prototype){var r=EventTarget.prototype.addEventListener,n=EventTarget.prototype.removeEventListener,i=function(t,e,r){return r.callback===t&&r.capture==e},s=function(){return!i.apply(this,arguments)};EventTarget.prototype.addEventListener=function(t,n,s){if(this&&this[e]&&this[e].bliss&&n){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};if(t.indexOf(".")>-1){t=t.split(".");var a=t[1];t=t[0]}o[t]=o[t]||[],0===o[t].filter(i.bind(null,n,s)).length&&o[t].push({callback:n,capture:s,className:a})}return r.call(this,t,n,s)},EventTarget.prototype.removeEventListener=function(t,r,i){if(this&&this[e]&&this[e].bliss&&r){var o=this[e].bliss.listeners=this[e].bliss.listeners||{};o[t]&&(o[t]=o[t].filter(s.bind(null,r,i)))}return n.call(this,t,r,i)}}self.$=self.$||t,self.$$=self.$$||t.$}}(Bliss);
-/* jsep v0.3.1 (http://jsep.from.so/) */
-!function(a){"use strict";var b="Compound",c="Identifier",d="MemberExpression",e="Literal",f="ThisExpression",g="CallExpression",h="UnaryExpression",i="BinaryExpression",j="LogicalExpression",k="ConditionalExpression",l="ArrayExpression",m=46,n=44,o=39,p=34,q=40,r=41,s=91,t=93,u=63,v=59,w=58,x=function(a,b){var c=new Error(a+" at character "+b);throw c.index=b,c.description=a,c},y=!0,z={"-":y,"!":y,"~":y,"+":y},A={"||":1,"&&":2,"|":3,"^":4,"&":5,"==":6,"!=":6,"===":6,"!==":6,"<":7,">":7,"<=":7,">=":7,"<<":8,">>":8,">>>":8,"+":9,"-":9,"*":10,"/":10,"%":10},B=function(a){var b,c=0;for(var d in a)(b=d.length)>c&&a.hasOwnProperty(d)&&(c=b);return c},C=B(z),D=B(A),E={"true":!0,"false":!1,"null":null},F="this",G=function(a){return A[a]||0},H=function(a,b,c){var d="||"===a||"&&"===a?j:i;return{type:d,operator:a,left:b,right:c}},I=function(a){return a>=48&&a<=57},J=function(a){return 36===a||95===a||a>=65&&a<=90||a>=97&&a<=122||a>=128&&!A[String.fromCharCode(a)]},K=function(a){return 36===a||95===a||a>=65&&a<=90||a>=97&&a<=122||a>=48&&a<=57||a>=128&&!A[String.fromCharCode(a)]},L=function(a){for(var i,j,y=0,B=a.charAt,L=a.charCodeAt,M=function(b){return B.call(a,b)},N=function(b){return L.call(a,b)},O=a.length,P=function(){for(var a=N(y);32===a||9===a||10===a||13===a;)a=N(++y)},Q=function(){var a,b,c=S();return P(),N(y)!==u?c:(y++,a=Q(),a||x("Expected expression",y),P(),N(y)===w?(y++,b=Q(),b||x("Expected expression",y),{type:k,test:c,consequent:a,alternate:b}):void x("Expected :",y))},R=function(){P();for(var b=a.substr(y,D),c=b.length;c>0;){if(A.hasOwnProperty(b))return y+=c,b;b=b.substr(0,--c)}return!1},S=function(){var a,b,c,d,e,f,g,h;if(f=T(),b=R(),!b)return f;for(e={value:b,prec:G(b)},g=T(),g||x("Expected expression after "+b,y),d=[f,e,g];(b=R())&&(c=G(b),0!==c);){for(e={value:b,prec:c};d.length>2&&c<=d[d.length-2].prec;)g=d.pop(),b=d.pop().value,f=d.pop(),a=H(b,f,g),d.push(a);a=T(),a||x("Expected expression after "+b,y),d.push(e,a)}for(h=d.length-1,a=d[h];h>1;)a=H(d[h-1].value,d[h-2],a),h-=2;return a},T=function(){var b,c,d;if(P(),b=N(y),I(b)||b===m)return U();if(b===o||b===p)return V();if(J(b)||b===q)return Y();if(b===s)return $();for(c=a.substr(y,C),d=c.length;d>0;){if(z.hasOwnProperty(c))return y+=d,{type:h,operator:c,argument:T(),prefix:!0};c=c.substr(0,--d)}return!1},U=function(){for(var a,b,c="";I(N(y));)c+=M(y++);if(N(y)===m)for(c+=M(y++);I(N(y));)c+=M(y++);if(a=M(y),"e"===a||"E"===a){for(c+=M(y++),a=M(y),"+"!==a&&"-"!==a||(c+=M(y++));I(N(y));)c+=M(y++);I(N(y-1))||x("Expected exponent ("+c+M(y)+")",y)}return b=N(y),J(b)?x("Variable names cannot start with a number ("+c+M(y)+")",y):b===m&&x("Unexpected period",y),{type:e,value:parseFloat(c),raw:c}},V=function(){for(var a,b="",c=M(y++),d=!1;y<O;){if(a=M(y++),a===c){d=!0;break}if("\\"===a)switch(a=M(y++)){case"n":b+="\n";break;case"r":b+="\r";break;case"t":b+="\t";break;case"b":b+="\b";break;case"f":b+="\f";break;case"v":b+="\x0B";break;default:b+="\\"+a}else b+=a}return d||x('Unclosed quote after "'+b+'"',y),{type:e,value:b,raw:c+b+c}},W=function(){var b,d=N(y),g=y;for(J(d)?y++:x("Unexpected "+M(y),y);y<O&&(d=N(y),K(d));)y++;return b=a.slice(g,y),E.hasOwnProperty(b)?{type:e,value:E[b],raw:b}:b===F?{type:f}:{type:c,name:b}},X=function(a){for(var c,d,e=[],f=!1;y<O;){if(P(),c=N(y),c===a){f=!0,y++;break}c===n?y++:(d=Q(),d&&d.type!==b||x("Expected comma",y),e.push(d))}return f||x("Expected "+String.fromCharCode(a),y),e},Y=function(){var a,b;for(a=N(y),b=a===q?Z():W(),P(),a=N(y);a===m||a===s||a===q;)y++,a===m?(P(),b={type:d,computed:!1,object:b,property:W()}):a===s?(b={type:d,computed:!0,object:b,property:Q()},P(),a=N(y),a!==t&&x("Unclosed [",y),y++):a===q&&(b={type:g,arguments:X(r),callee:b}),P(),a=N(y);return b},Z=function(){y++;var a=Q();return P(),N(y)===r?(y++,a):void x("Unclosed (",y)},$=function(){return y++,{type:l,elements:X(t)}},_=[];y<O;)i=N(y),i===v||i===n?y++:(j=Q())?_.push(j):y<O&&x('Unexpected "'+M(y)+'"',y);return 1===_.length?_[0]:{type:b,body:_}};if(L.version="0.3.1",L.toString=function(){return"JavaScript Expression Parser (JSEP) v"+L.version},L.addUnaryOp=function(a){return C=Math.max(a.length,C),z[a]=y,this},L.addBinaryOp=function(a,b){return D=Math.max(a.length,D),A[a]=b,this},L.addLiteral=function(a,b){return E[a]=b,this},L.removeUnaryOp=function(a){return delete z[a],a.length===C&&(C=B(z)),this},L.removeBinaryOp=function(a){return delete A[a],a.length===D&&(D=B(A)),this},L.removeLiteral=function(a){return delete E[a],this},"undefined"==typeof exports){var M=a.jsep;a.jsep=L,L.noConflict=function(){return a.jsep===L&&(a.jsep=M),L}}else"undefined"!=typeof module&&module.exports?exports=module.exports=L:exports.parse=L}(this);
+/* jsep v0.3.2 (http://jsep.from.so/) */
+!function(e){"use strict";var r=function(e,r){var t=new Error(e+" at character "+r);throw t.index=r,t.description=e,t},t={"-":!0,"!":!0,"~":!0,"+":!0},n={"||":1,"&&":2,"|":3,"^":4,"&":5,"==":6,"!=":6,"===":6,"!==":6,"<":7,">":7,"<=":7,">=":7,"<<":8,">>":8,">>>":8,"+":9,"-":9,"*":10,"/":10,"%":10},o=function(e){var r,t=0;for(var n in e)(r=n.length)>t&&e.hasOwnProperty(n)&&(t=r);return t},i=o(t),a=o(n),u={true:!0,false:!1,null:null},s=function(e){return n[e]||0},p=function(e,r,t){return{type:"||"===e||"&&"===e?"LogicalExpression":"BinaryExpression",operator:e,left:r,right:t}},f=function(e){return e>=48&&e<=57},c=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=128&&!n[String.fromCharCode(e)]},l=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=48&&e<=57||e>=128&&!n[String.fromCharCode(e)]},d=function(e){for(var o,d,h=0,v=e.charAt,x=e.charCodeAt,y=function(r){return v.call(e,r)},m=function(r){return x.call(e,r)},b=e.length,E=function(){for(var e=m(h);32===e||9===e||10===e||13===e;)e=m(++h)},g=function(){var e,t,n=w();return E(),63!==m(h)?n:(h++,(e=g())||r("Expected expression",h),E(),58===m(h)?(h++,(t=g())||r("Expected expression",h),{type:"ConditionalExpression",test:n,consequent:e,alternate:t}):void r("Expected :",h))},C=function(){E();for(var r=e.substr(h,a),t=r.length;t>0;){if(n.hasOwnProperty(r))return h+=t,r;r=r.substr(0,--t)}return!1},w=function(){var e,t,n,o,i,a,u,f;if(a=O(),!(t=C()))return a;for(i={value:t,prec:s(t)},(u=O())||r("Expected expression after "+t,h),o=[a,i,u];(t=C())&&0!==(n=s(t));){for(i={value:t,prec:n};o.length>2&&n<=o[o.length-2].prec;)u=o.pop(),t=o.pop().value,a=o.pop(),e=p(t,a,u),o.push(e);(e=O())||r("Expected expression after "+t,h),o.push(i,e)}for(e=o[f=o.length-1];f>1;)e=p(o[f-1].value,o[f-2],e),f-=2;return e},O=function(){var r,n,o;if(E(),r=m(h),f(r)||46===r)return U();if(39===r||34===r)return k();if(91===r)return S();for(o=(n=e.substr(h,i)).length;o>0;){if(t.hasOwnProperty(n))return h+=o,{type:"UnaryExpression",operator:n,argument:O(),prefix:!0};n=n.substr(0,--o)}return!(!c(r)&&40!==r)&&A()},U=function(){for(var e,t,n="";f(m(h));)n+=y(h++);if(46===m(h))for(n+=y(h++);f(m(h));)n+=y(h++);if("e"===(e=y(h))||"E"===e){for(n+=y(h++),"+"!==(e=y(h))&&"-"!==e||(n+=y(h++));f(m(h));)n+=y(h++);f(m(h-1))||r("Expected exponent ("+n+y(h)+")",h)}return t=m(h),c(t)?r("Variable names cannot start with a number ("+n+y(h)+")",h):46===t&&r("Unexpected period",h),{type:"Literal",value:parseFloat(n),raw:n}},k=function(){for(var e,t="",n=y(h++),o=!1;h<b;){if((e=y(h++))===n){o=!0;break}if("\\"===e)switch(e=y(h++)){case"n":t+="\n";break;case"r":t+="\r";break;case"t":t+="\t";break;case"b":t+="\b";break;case"f":t+="\f";break;case"v":t+="\v";break;default:t+=e}else t+=e}return o||r('Unclosed quote after "'+t+'"',h),{type:"Literal",value:t,raw:n+t+n}},L=function(){var t,n=m(h),o=h;for(c(n)?h++:r("Unexpected "+y(h),h);h<b&&(n=m(h),l(n));)h++;return t=e.slice(o,h),u.hasOwnProperty(t)?{type:"Literal",value:u[t],raw:t}:"this"===t?{type:"ThisExpression"}:{type:"Identifier",name:t}},j=function(e){for(var t,n,o=[],i=!1;h<b;){if(E(),(t=m(h))===e){i=!0,h++;break}44===t?h++:((n=g())&&"Compound"!==n.type||r("Expected comma",h),o.push(n))}return i||r("Expected "+String.fromCharCode(e),h),o},A=function(){var e,t;for(t=40===(e=m(h))?P():L(),E(),e=m(h);46===e||91===e||40===e;)h++,46===e?(E(),t={type:"MemberExpression",computed:!1,object:t,property:L()}):91===e?(t={type:"MemberExpression",computed:!0,object:t,property:g()},E(),93!==(e=m(h))&&r("Unclosed [",h),h++):40===e&&(t={type:"CallExpression",arguments:j(41),callee:t}),E(),e=m(h);return t},P=function(){h++;var e=g();if(E(),41===m(h))return h++,e;r("Unclosed (",h)},S=function(){return h++,{type:"ArrayExpression",elements:j(93)}},B=[];h<b;)59===(o=m(h))||44===o?h++:(d=g())?B.push(d):h<b&&r('Unexpected "'+y(h)+'"',h);return 1===B.length?B[0]:{type:"Compound",body:B}};if(d.version="0.3.2",d.toString=function(){return"JavaScript Expression Parser (JSEP) v"+d.version},d.addUnaryOp=function(e){return i=Math.max(e.length,i),t[e]=!0,this},d.addBinaryOp=function(e,r){return a=Math.max(e.length,a),n[e]=r,this},d.addLiteral=function(e,r){return u[e]=r,this},d.removeUnaryOp=function(e){return delete t[e],e.length===i&&(i=o(t)),this},d.removeAllUnaryOps=function(){return t={},i=0,this},d.removeBinaryOp=function(e){return delete n[e],e.length===a&&(a=o(n)),this},d.removeAllBinaryOps=function(){return n={},a=0,this},d.removeLiteral=function(e){return delete u[e],this},d.removeAllLiterals=function(){return u={},this},"undefined"==typeof exports){var h=e.jsep;e.jsep=d,d.noConflict=function(){return e.jsep===d&&(e.jsep=h),d}}else"undefined"!=typeof module&&module.exports?exports=module.exports=d:exports.parse=d}(this);
 //# sourceMappingURL=jsep.min.js.map
-!function(){function e(e,t){return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[])}if(self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null),Element.prototype.matches)){var t=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text url email tel".split(" ").join('"], input[type="')+'"]',filter:"*"},script:document.currentScript||e("script").pop(),resize:function(e){if(t.resizes(e)){var i,n=getComputedStyle(e),o=0;!e.value&&e.placeholder&&(i=!0,e.value=e.placeholder);var l=e.nodeName.toLowerCase();if("textarea"==l)e.style.height="0","border-box"==n.boxSizing?o=e.offsetHeight:"content-box"==n.boxSizing&&(o=-e.clientHeight+parseFloat(n.minHeight)),e.style.height=e.scrollHeight+o+"px";else if("input"==l)if(e.style.width="1000px",
-e.offsetWidth){e.style.width="0","border-box"==n.boxSizing?o=e.offsetWidth:"padding-box"==n.boxSizing?o=e.clientWidth:"content-box"==n.boxSizing&&(o=parseFloat(n.minWidth));var r=Math.max(o,e.scrollWidth-e.clientWidth);e.style.width=r+"px";for(var s=0;s<10&&(e.scrollLeft=1e10,0!=e.scrollLeft);s++)r+=e.scrollLeft,e.style.width=r+"px"}else e.style.width=e.value.length+1+"ch";else if("select"==l){var c=e.selectedIndex>0?e.selectedIndex:0,a=document.createElement("_");a.textContent=e.options[c].textContent,e.parentNode.insertBefore(a,e.nextSibling);var d;for(var h in n){var p=n[h];/^(width|webkitLogicalWidth|length)$/.test(h)||"string"!=typeof p||(a.style[h]=p,/appearance$/i.test(h)&&(d=h))}a.style.width="",a.offsetWidth>0&&(e.style.width=a.offsetWidth+"px",n[d]&&"none"===n[d]||(e.style.width="calc("+e.style.width+" + 2em)")),a.parentNode.removeChild(a),a=null}i&&(e.value="")}},resizeAll:function(i){e(i||t.selectors.base).forEach(function(e){t.resize(e)})},active:!0,resizes:function(e){return e&&e.parentNode&&e.matches&&e.matches(t.selectors.base)&&e.matches(t.selectors.filter);
-},init:function(){t.selectors.filter=t.script.getAttribute("data-filter")||(e("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||Stretchy.selectors.filter||"*",t.resizeAll()},$$:e};"loading"!==document.readyState?t.init():document.addEventListener("DOMContentLoaded",t.init);var i=function(e){t.active&&t.resize(e.target)};document.documentElement.addEventListener("input",i),document.documentElement.addEventListener("change",i),self.MutationObserver&&new MutationObserver(function(e){t.active&&e.forEach(function(e){"childList"==e.type&&Stretchy.resizeAll(e.addedNodes)})}).observe(document.documentElement,{childList:!0,subtree:!0})}}();
+!function(){function e(e,t){return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[])}if(self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null),Element.prototype.matches)){var t=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text number url email tel".split(" ").join('"], input[type="')+'"]',filter:"*"},script:document.currentScript||e("script").pop(),resize:function(e){if(t.resizes(e)){var i,n=getComputedStyle(e),o=0;!e.value&&e.placeholder&&(i=!0,e.value=e.placeholder);var l=e.nodeName.toLowerCase();if("textarea"==l)e.style.height="0","border-box"==n.boxSizing?o=e.offsetHeight:"content-box"==n.boxSizing&&(o=-e.clientHeight+parseFloat(n.minHeight)),
+e.style.height=e.scrollHeight+o+"px";else if("input"==l)if(e.style.width="1000px",e.offsetWidth){e.style.width="0","border-box"==n.boxSizing?o=e.offsetWidth:"padding-box"==n.boxSizing?o=e.clientWidth:"content-box"==n.boxSizing&&(o=parseFloat(n.minWidth));var r=Math.max(o,e.scrollWidth-e.clientWidth);e.style.width=r+"px";for(var s=0;s<10&&(e.scrollLeft=1e10,0!=e.scrollLeft);s++)r+=e.scrollLeft,e.style.width=r+"px"}else e.style.width=e.value.length+1+"ch";else if("select"==l){var c=e.selectedIndex>0?e.selectedIndex:0,a=document.createElement("_");a.textContent=e.options[c].textContent,e.parentNode.insertBefore(a,e.nextSibling);var d;for(var h in n){var p=n[h];/^(width|webkitLogicalWidth|length)$/.test(h)||"string"!=typeof p||(a.style[h]=p,/appearance$/i.test(h)&&(d=h))}a.style.width="",a.offsetWidth>0&&(e.style.width=a.offsetWidth+"px",n[d]&&"none"===n[d]||(e.style.width="calc("+e.style.width+" + 2em)")),a.parentNode.removeChild(a),a=null}i&&(e.value="")}},resizeAll:function(i){
+e(i||t.selectors.base).forEach(function(e){t.resize(e)})},active:!0,resizes:function(e){return e&&e.parentNode&&e.matches&&e.matches(t.selectors.base)&&e.matches(t.selectors.filter)},init:function(){t.selectors.filter=t.script.getAttribute("data-filter")||(e("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||Stretchy.selectors.filter||"*",t.resizeAll()},$$:e};"loading"!==document.readyState?t.init():document.addEventListener("DOMContentLoaded",t.init);var i=function(e){t.active&&t.resize(e.target)};document.documentElement.addEventListener("input",i),document.documentElement.addEventListener("change",i),self.MutationObserver&&new MutationObserver(function(e){t.active&&e.forEach(function(e){"childList"==e.type&&Stretchy.resizeAll(e.addedNodes)})}).observe(document.documentElement,{childList:!0,subtree:!0})}}();
 //# sourceMappingURL=stretchy.min.js.map
 
 "use strict";
@@ -14,10 +14,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 /**
  * Mavo: Create web applications by writing HTML and CSS!
  * @author Lea Verou
- * @version v0.1.3
+ * @version v0.1.4
  */
 (function ($, $$) {
-	
+
 	var _ = self.Mavo = $.Class({
 		constructor: function constructor(element) {
 			var _this = this;
@@ -494,16 +494,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.hooks.run("render-end", env);
 		},
 
-		clear: function clear() {
-			var _this3 = this;
-
-			if (confirm(this._("delete-confirmation"))) {
-				this.store(null).then(function () {
-					return _this3.root.clear();
-				});
-			}
-		},
-
 		edit: function edit() {
 			this.root.edit();
 
@@ -617,7 +607,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * @return {Promise}  A promise that resolves when the data is loaded.
    */
 		load: function load() {
-			var _this4 = this;
+			var _this3 = this;
 
 			var backend = this.source || this.storage;
 
@@ -631,10 +621,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return backend.load();
 			}).catch(function (err) {
 				// Try again with init
-				if (_this4.init && _this4.init != backend) {
-					backend = _this4.init;
-					return _this4.init.ready.then(function () {
-						return _this4.init.load();
+				if (_this3.init && _this3.init != backend) {
+					backend = _this3.init;
+					return _this3.init.ready.then(function () {
+						return _this3.init.load();
 					});
 				}
 
@@ -645,7 +635,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var xhr = err instanceof XMLHttpRequest ? err : err.xhr;
 
 					if (xhr && xhr.status == 404) {
-						_this4.render(null);
+						_this3.render(null);
 					} else {
 						var message = "Problem loading data";
 
@@ -653,20 +643,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							message += xhr.status ? ": HTTP error " + err.status + ": " + err.statusText : ": Can’t connect to the Internet";
 						}
 
-						_this4.error(message, err);
+						_this3.error(message, err);
 					}
 				}
 				return null;
 			}).then(function (data) {
-				return _this4.render(data);
+				return _this3.render(data);
 			}).then(function () {
-				_this4.inProgress = false;
-				$.fire(_this4.element, "mavo:load");
+				_this3.inProgress = false;
+				requestAnimationFrame(function () {
+					$.fire(_this3.element, "mavo:load");
+				});
 			});
 		},
 
 		store: function store() {
-			var _this5 = this;
+			var _this4 = this;
 
 			if (!this.storage) {
 				return Promise.resolve();
@@ -676,24 +668,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			return this.storage.store(this.getData()).catch(function (err) {
 				if (err) {
-					var message = _this5._("problem-saving");
+					var message = _this4._("problem-saving");
 
 					if (err instanceof XMLHttpRequest) {
-						message += ": " + (err.status ? _this5._("http-error", err) : _this5._("cant-connect"));
+						message += ": " + (err.status ? _this4._("http-error", err) : _this4._("cant-connect"));
 					}
 
-					_this5.error(message, err);
+					_this4.error(message, err);
 				}
 
 				return null;
 			}).then(function (saved) {
-				_this5.inProgress = false;
+				_this4.inProgress = false;
 				return saved;
 			});
 		},
 
 		upload: function upload(file) {
-			var _this6 = this;
+			var _this5 = this;
 
 			var path = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : "images/" + file.name;
 
@@ -704,25 +696,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.inProgress = this._("uploading");
 
 			return this.uploadBackend.upload(file, path).then(function (url) {
-				_this6.inProgress = false;
+				_this5.inProgress = false;
 				return url;
 			}).catch(function (err) {
-				_this6.error(_this6._("error-uploading"), err);
-				_this6.inProgress = false;
+				_this5.error(_this5._("error-uploading"), err);
+				_this5.inProgress = false;
 				return null;
 			});
 		},
 
 		save: function save() {
-			var _this7 = this;
+			var _this6 = this;
 
 			return this.store().then(function (saved) {
 				if (saved) {
-					$.fire(_this7.element, "mavo:save", saved);
+					$.fire(_this6.element, "mavo:save", saved);
 
-					_this7.lastSaved = Date.now();
-					_this7.root.save();
-					_this7.unsavedChanges = false;
+					_this6.lastSaved = Date.now();
+					_this6.root.save();
+					_this6.unsavedChanges = false;
 				}
 			});
 		},
@@ -776,12 +768,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				value = value || null;
 
 				if (value != this._primaryBackend) {
-					if (value) {
-						this.element.style.setProperty("--mv-backend", "\"" + value.id + "\"");
-					} else {
-						this.element.style.removeProperty("--mv-backend");
-					}
-
 					return value;
 				}
 			},
@@ -838,7 +824,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			hooks: new $.Hooks(),
 
-			attributes: ["mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format", "mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions", "mv-rel"],
+			attributes: ["mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-multiple-path", "mv-format", "mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions", "mv-rel"],
 
 			lazy: {
 				locale: function locale() {
@@ -873,6 +859,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// "li": "ul, ol",
 				"tr": "table",
 				"option": "select"
+				// "dt": "dl",
+				// "dd": "dl"
 			}
 		};
 
@@ -1429,8 +1417,16 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			if (arguments.length == 3) {
 				// Put
 				if (path.length) {
+					var last = path[path.length - 1];
 					var parent = $.value.apply($, [obj].concat(_toConsumableArray(path.slice(0, -1))));
-					parent[path[path.length - 1]] = value;
+
+					if (Array.isArray(parent) && Array.isArray(value)) {
+						// Merge arrays instead of adding array inside array
+						parent.splice.apply(parent, [last, 1].concat(_toConsumableArray(value)));
+					} else {
+						parent[path[path.length - 1]] = value;
+					}
+
 					return obj;
 				}
 
@@ -1450,6 +1446,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 								return obj[j];
 							}
 						}
+
+						// Not found
+						path[i] = obj.length;
+						return { id: property };
 					}
 
 					return obj;
@@ -1935,7 +1935,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 Mavo.Locale.register("en", {
 	"edit": "Edit",
 	"save": "Save",
-	"clear": "Clear",
 	"logout": "Logout",
 	"login": "Login",
 	"loading": "Loading",
@@ -1952,7 +1951,6 @@ Mavo.Locale.register("en", {
 	"add-item-after": "Add new {name} after",
 	"drag-to-reorder": "Drag to reorder {name}",
 	"delete-item": "Delete this {name}",
-	"delete-confirmation": "This will delete all your data. Are you sure?",
 	"gh-updated-file": "Updated {name}",
 	"gh-edit-suggestion-saved-in-profile": "Your edits are saved to <a href=\"{previewURL}\" target=\"_blank\">your own profile</a>, because you are not allowed to edit this page.",
 	"gh-edit-suggestion-instructions": "Write a short description of your edits below to suggest them to the page admins:",
@@ -2123,9 +2121,24 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.mavo = mavo;
 
 			this.element = $(".mv-bar", this.mavo.element);
+			this.template = this.mavo.element.getAttribute("mv-bar");
 
 			if (this.element) {
 				this.custom = true;
+				this.template = this.element.getAttribute("mv-bar") || this.template || "";
+
+				var selector = Object.keys(_.controls).map(function (id) {
+					return ".mv-" + id;
+				}).join(", ");
+				this.customControls = $$(selector, this.element);
+
+				for (var id in _.controls) {
+					this[id] = $(".mv-" + id, this.element);
+
+					if (this[id]) {
+						this.template += " yes-" + id;
+					}
+				}
 			} else {
 				this.element = $.create({
 					className: "mv-bar mv-ui",
@@ -2149,39 +2162,37 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.element.innerHTML = "";
 			}
 
-			var _loop = function _loop(id) {
-				var o = _.controls[id];
+			var _loop = function _loop(_id) {
+				var o = _.controls[_id];
 
-				_this[id] = $(".mv-" + id, _this.element);
-
-				if (_this[id]) {
+				if (_this[_id]) {
 					// Custom control, remove to not mess up order
-					_this[id].remove();
+					_this[_id].remove();
 				} else if (o.create) {
-					_this[id] = o.create.call(_this.mavo);
+					_this[_id] = o.create.call(_this.mavo);
 				} else {
-					_this[id] = $.create("button", {
-						className: "mv-" + id,
-						textContent: _this.mavo._(id)
+					_this[_id] = $.create("button", {
+						className: "mv-" + _id,
+						textContent: _this.mavo._(_id)
 					});
 				}
 
 				// We initially add all of them to retain order,
 				// then we remove revocably when/if needed
-				_this.add(id);
+				_this.add(_id);
 
 				if (o.permission) {
 					_this.permissions.can(o.permission, function () {
-						_this.toggle(id, !o.condition || o.condition.call(_this.mavo));
+						_this.toggle(_id, !o.condition || o.condition.call(_this.mavo));
 					}, function () {
-						_this.remove(id);
+						_this.remove(_id);
 					});
 				} else if (o.condition && !o.condition.call(_this.mavo)) {
-					_this.remove(id);
+					_this.remove(_id);
 				}
 
 				for (events in o.events) {
-					$.events(_this[id], events, o.events[events].bind(_this.mavo));
+					$.events(_this[_id], events, o.events[events].bind(_this.mavo));
 				}
 			};
 
@@ -2191,10 +2202,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			try {
 				for (var _iterator = this.controls[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-					var id = _step.value;
+					var _id = _step.value;
 					var events;
 
-					_loop(id);
+					_loop(_id);
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -2211,11 +2222,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			}
 
-			var _loop2 = function _loop2(id) {
-				var o = _.controls[id];
+			var _loop2 = function _loop2(_id2) {
+				var o = _.controls[_id2];
 
 				if (o.action) {
-					$.delegate(_this.mavo.element, "click", ".mv-" + id, function (evt) {
+					$.delegate(_this.mavo.element, "click", ".mv-" + _id2, function (evt) {
 						if (!o.permission || _this.permissions.is(o.permission)) {
 							o.action.call(_this.mavo);
 							evt.preventDefault();
@@ -2224,8 +2235,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			};
 
-			for (var id in _.controls) {
-				_loop2(id);
+			for (var _id2 in _.controls) {
+				_loop2(_id2);
 			}
 
 			if (this.controls.length && !this.noResize) {
@@ -2309,31 +2320,34 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		static: {
 			getControls: function getControls(attribute) {
+				var initial = Object.keys(_.controls).filter(function (id) {
+					return !_.controls[id].optional;
+				});
+
 				if (attribute) {
-					var ids = attribute == "none" ? [] : attribute.split(/\s+/);
+					var ids = attribute == "none" ? [] : attribute.trim().split(/\s+/);
 
-					// Is there ANY non-negative key?
-					var excludeOnly = !/(\s+|^)(?!no\-)[a-z]+(\s+|$)/.test(attribute);
+					// Is there ANY non-relative key?
+					var relative = true;
+					var values = {};
 
-					var keys = excludeOnly ? Object.keys(_.controls) : [];
-
+					// Make map of ids and relativeness, dropping duplicates
 					var _iteratorNormalCompletion2 = true;
 					var _didIteratorError2 = false;
 					var _iteratorError2 = undefined;
 
 					try {
 						for (var _iterator2 = ids[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-							var key = _step2.value;
+							var value = _step2.value;
 
-							var negative = /^\s*no\-/i.test(key);
-							var id = Mavo.match(key, /([a-z]+)\s*$/i, 1);
+							var _id3 = Mavo.match(value, /([a-z]+)\s*$/i, 1);
 
-							if (negative) {
-								Mavo.delete(keys, id);
-							} else if (id in _.controls) {
-								keys.push(id);
+							if (_id3 in _.controls) {
+								values[_id3] = Mavo.match(value, /^(no|yes)\-/i, 1);
 							}
 						}
+
+						// Any absolute value left?
 					} catch (err) {
 						_didIteratorError2 = true;
 						_iteratorError2 = err;
@@ -2348,11 +2362,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}
 						}
 					}
-				} else {
-					return Object.keys(_.controls);
+
+					for (var id in values) {
+						if (!values[id]) {
+							relative = false;
+							break;
+						}
+					}
+
+					var keys = relative ? initial : [];
+
+					for (var id in values) {
+						var rel = values[id];
+
+						if (rel == "no" || !rel) {
+							Mavo.delete(keys, id);
+						}
+
+						if (keys.indexOf(id) === -1 && rel != "no") {
+							keys.push(id);
+						}
+					}
+
+					return keys;
 				}
 
-				return keys;
+				return initial;
 			},
 
 			controls: {
@@ -2417,13 +2452,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					condition: function condition() {
 						return !this.autoSave || this.autoSaveDelay > 0;
 					}
-				},
-
-				clear: {
-					action: function action() {
-						this.clear();
-					},
-					permission: "delete"
 				},
 
 				login: {
@@ -3509,6 +3537,33 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (this.template) {
 				Mavo.delete(this.template.copies, this);
 			}
+
+			if (this.expressions) {
+				var _iteratorNormalCompletion = true;
+				var _didIteratorError = false;
+				var _iteratorError = undefined;
+
+				try {
+					for (var _iterator = this.expressions[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+						var expression = _step.value;
+
+						expression.destroy();
+					}
+				} catch (err) {
+					_didIteratorError = true;
+					_iteratorError = err;
+				} finally {
+					try {
+						if (!_iteratorNormalCompletion && _iterator.return) {
+							_iterator.return();
+						}
+					} finally {
+						if (_didIteratorError) {
+							throw _iteratorError;
+						}
+					}
+				}
+			}
 		},
 
 		getData: function getData() {
@@ -3603,12 +3658,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			Mavo.hooks.run("node-done-end", this);
 		},
 
-		clear: function clear() {
-			if (this.modes != "read") {
-				this.propagate("clear");
-			}
-		},
-
 		propagate: function propagate(callback) {
 			for (var i in this.children) {
 				var _node2 = this.children[i];
@@ -3633,27 +3682,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					properties[_key] = arguments[_key];
 				}
 
-				var _iteratorNormalCompletion = true;
-				var _didIteratorError = false;
-				var _iteratorError = undefined;
+				var _iteratorNormalCompletion2 = true;
+				var _didIteratorError2 = false;
+				var _iteratorError2 = undefined;
 
 				try {
-					for (var _iterator = properties[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-						var property = _step.value;
+					for (var _iterator2 = properties[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+						var property = _step2.value;
 
 						this[property] = this.template[property];
 					}
 				} catch (err) {
-					_didIteratorError = true;
-					_iteratorError = err;
+					_didIteratorError2 = true;
+					_iteratorError2 = err;
 				} finally {
 					try {
-						if (!_iteratorNormalCompletion && _iterator.return) {
-							_iterator.return();
+						if (!_iteratorNormalCompletion2 && _iterator2.return) {
+							_iterator2.return();
 						}
 					} finally {
-						if (_didIteratorError) {
-							throw _iteratorError;
+						if (_didIteratorError2) {
+							throw _iteratorError2;
 						}
 					}
 				}
@@ -3740,6 +3789,32 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return !!this.parentGroup && this.parentGroup.isDeleted();
 		},
 
+		// Resolve a property name from this node
+		resolve: function resolve(property) {
+			// First look in descendants
+			var ret = this.find(property);
+
+			if (ret === undefined) {
+				// Still not found, look in ancestors
+				ret = this.walkUp(function (group) {
+					if (group.property == property) {
+						return group;
+					}
+
+					if (property in group.children) {
+						return group.children[property];
+					};
+				});
+			}
+
+			if (ret === undefined) {
+				// Still not found, look anywhere
+				ret = this.mavo.root.find(property);
+			}
+
+			return ret;
+		},
+
 		relativizeData: self.Proxy ? function (data) {
 			var _this2 = this;
 
@@ -3783,25 +3858,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 
 					// First look in descendants
-					var ret = _this2.find(property);
-
-					if (ret === undefined) {
-						// Still not found, look in ancestors
-						ret = _this2.walkUp(function (group) {
-							if (group.property == property) {
-								return group;
-							}
-
-							if (property in group.children) {
-								return group.children[property];
-							};
-						});
-					}
-
-					if (ret === undefined) {
-						// Still not found, look anywhere
-						ret = _this2.mavo.root.find(property);
-					}
+					var ret = _this2.resolve(property);
 
 					if (ret !== undefined) {
 						if (Array.isArray(ret)) {
@@ -3913,13 +3970,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			// Are were only rendering and editing a subset of the data?
 			inPath: function inPath() {
-				if (this.nodeType != "Collection") {
-					return (this.element.getAttribute("mv-path") || "").split("/").filter(function (p) {
-						return p.length;
-					});
-				}
+				var attribute = this.nodeType == "Collection" ? "mv-multiple-path" : "mv-path";
 
-				return [];
+				return (this.element.getAttribute(attribute) || "").split("/").filter(function (p) {
+					return p.length;
+				});
 			},
 
 			properties: function properties() {
@@ -4658,7 +4713,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						env.data = this.relativizeData(env.data);
 					}
 				}
-			} else if (!this.inPath.length) {
+			} else if (this.inPath.length) {
 				env.data = Mavo.subset(this.data, this.inPath, env.data);
 			}
 
@@ -4874,12 +4929,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			}
 		},
 
-		clear: function clear() {
-			if (this.modes != "read") {
-				this.value = this.templateValue;
-			}
-		},
-
 		dataRender: function dataRender(data) {
 			if (data && (typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") {
 				if (Symbol.toPrimitive in data) {
@@ -4956,6 +5005,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				// Convert nulls and undefineds to empty string
 				value = value || value === 0 || value === false ? value : "";
 
+				var oldDatatype = _this5.datatype;
+
 				// If there's no datatype, adopt that of the value
 				if (!_this5.datatype && (typeof value == "number" || typeof value == "boolean")) {
 					_this5.datatype = typeof value === "undefined" ? "undefined" : _typeof(value);
@@ -4963,7 +5014,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 				value = _.safeCast(value, _this5.datatype);
 
-				if (value == _this5._value && !o.force) {
+				if (!o.force && value == _this5._value && oldDatatype == _this5.datatype) {
 					// Do nothing if value didn't actually change, unless forced to
 					return value;
 				}
@@ -5244,7 +5295,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				}
 
 				if ($.type(value) === "number" || o.datatype == "number") {
-					return _.formatNumber(value);
+					var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
+
+					if (!skipNumberFormatting) {
+						return _.formatNumber(value);
+					}
 				}
 
 				if (Array.isArray(value)) {
@@ -6099,6 +6154,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				env.data = this.relativizeData(env.data);
 			}
 
+			if (!env.options.live) {
+				env.data = Mavo.subset(this.data, this.inPath, env.data);
+			}
+
 			Mavo.hooks.run("node-getdata-end", env);
 
 			return env.data;
@@ -6412,28 +6471,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}
 				});
 			}
-		},
-
-		/**
-   * Delete all items in the collection. Not undoable.
-   */
-		clear: function clear() {
-			if (this.modes == "read") {
-				return;
-			}
-
-			if (this.mutable) {
-				for (var i = 1, item; item = this.children[i]; i++) {
-					item.element.remove();
-					item.destroy();
-				}
-
-				this.children = this.children.slice(0, 1);
-
-				this.dataChanged("clear");
-			}
-
-			this.propagate("clear");
 		},
 
 		dataChanged: function dataChanged(action) {
@@ -6917,26 +6954,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 
 		eval: function _eval(data) {
-			this.oldValue = this.value;
-
 			Mavo.hooks.run("expression-eval-beforeeval", this);
 
 			try {
 				if (!this.function) {
 					this.function = Mavo.Script.compile(this.expression);
-					this.identifiers = this.expression.match(/[$a-z][$\w]*/ig) || [];
 				}
 
-				this.value = this.function(data);
+				return this.function(data);
 			} catch (exception) {
 				console.info("%cExpression error!", "color: red; font-weight: bold", exception.message + " in expression " + this.expression, "\nNot an expression? Use mv-expressions=\"none\" to disable expressions on an element and its descendants.");
 
 				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
 
-				this.value = exception;
+				return exception;
 			}
-
-			return this.value;
 		},
 
 		toString: function toString() {
@@ -6945,44 +6977,49 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 
 		changedBy: function changedBy(evt) {
-			if (!evt) {
-				return true;
-			}
-
-			if (!this.identifiers) {
-				return false;
-			}
-
-			if (this.identifiers.indexOf(evt.property) > -1) {
-				return true;
-			}
-
-			if (Mavo.Functions.intersects(evt.properties, this.identifiers)) {
-				return true;
-			}
-
-			if (evt.action != "propertychange") {
-				if (Mavo.Functions.intersects(["$index", "$previous", "$next"], this.identifiers)) {
-					return true;
-				}
-
-				var collection = evt.node.collection || evt.node;
-
-				if (Mavo.Functions.intersects(collection.properties, this.identifiers)) {
-					return true;
-				}
-			}
-
-			return false;
+			return _.changedBy(this.identifiers, evt);
 		},
 
 		live: {
 			expression: function expression(value) {
 				this.function = null;
+				this.identifiers = value.match(/[$a-z][$\w]*/ig) || [];
 			}
 		},
 
-		static: {}
+		static: {
+			changedBy: function changedBy(identifiers, evt) {
+				if (!evt) {
+					return true;
+				}
+
+				if (!identifiers) {
+					return false;
+				}
+
+				if (identifiers.indexOf(evt.property) > -1) {
+					return true;
+				}
+
+				if (Mavo.Functions.intersects(evt.properties, identifiers)) {
+					return true;
+				}
+
+				if (evt.action != "propertychange") {
+					if (Mavo.Functions.intersects(["$index", "$previous", "$next"], identifiers)) {
+						return true;
+					}
+
+					var collection = evt.node.collection || evt.node;
+
+					if (Mavo.Functions.intersects(collection.properties, identifiers)) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
 	});
 
 	_.Syntax = $.Class({
@@ -7135,10 +7172,21 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			_.elements.set(this.element, [].concat(_toConsumableArray(_.elements.get(this.element) || []), [this]));
 		},
 
+		destroy: function destroy() {
+			_.special.delete(this);
+		},
+
 		changedBy: function changedBy(evt) {
-			return !this.parsed.every(function (expr) {
-				return !(expr instanceof Mavo.Expression) || !expr.changedBy(evt);
-			});
+			if (!this.identifiers) {
+				this.identifiers = Mavo.flatten(this.parsed.map(function (x) {
+					return x.identifiers || [];
+				}));
+
+				// Any identifiers that need additional updating?
+				_.special.add(this);
+			}
+
+			return Mavo.Expression.changedBy(this.identifiers, evt);
 		},
 
 		update: function update() {
@@ -7192,7 +7240,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return;
 			}
 
-			env.value = env.value.length === 1 ? env.value[0] : env.value.map(Mavo.Primitive.format).join("");
+			if (env.value.length === 1) {
+				env.value = env.value[0];
+			} else {
+				env.value = env.value.map(function (v) {
+					return Mavo.Primitive.format(v, {
+						attribute: _this2.attribute,
+						element: _this2.element
+					});
+				}).join("");
+			}
 
 			this.output(env.value);
 
@@ -7249,8 +7306,128 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return all;
+			},
+
+			special: {
+				add: function add(domexpression, name) {
+					if (name) {
+						var o = this.vars[name];
+
+						if (o && domexpression.identifiers.indexOf(name) > -1) {
+							o.all = o.all || new Set();
+							o.all.add(domexpression);
+
+							if (o.all.size === 1) {
+								o.observe();
+							} else if (!o.all.size) {
+								o.unobserve();
+							}
+						}
+					} else {
+						// All names
+						for (var name in this.vars) {
+							this.add(domexpression, name);
+						}
+					}
+				},
+
+				delete: function _delete(domexpression, name) {
+					if (name) {
+						var o = this.vars[name];
+
+						o.all = o.all || new Set();
+						o.all.delete(domexpression);
+
+						if (!o.all.size) {
+							o.unobserve();
+						}
+					} else {
+						// All names
+						for (var name in this.vars) {
+							this.delete(domexpression, name);
+						}
+					}
+				},
+
+				update: function update() {
+					if (this.update) {
+						this.update.apply(this, arguments);
+					}
+
+					var _iteratorNormalCompletion = true;
+					var _didIteratorError = false;
+					var _iteratorError = undefined;
+
+					try {
+						for (var _iterator = this.all[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+							var domexpression = _step.value;
+
+							domexpression.update();
+						}
+					} catch (err) {
+						_didIteratorError = true;
+						_iteratorError = err;
+					} finally {
+						try {
+							if (!_iteratorNormalCompletion && _iterator.return) {
+								_iterator.return();
+							}
+						} finally {
+							if (_didIteratorError) {
+								throw _iteratorError;
+							}
+						}
+					}
+				},
+
+				event: function event(name) {
+					var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+					    type = _ref.type,
+					    update = _ref.update,
+					    _ref$target = _ref.target,
+					    target = _ref$target === undefined ? document : _ref$target;
+
+					this.vars[name] = {
+						observe: function observe() {
+							this.callback = this.callback || _.special.update.bind(this);
+							target.addEventListener(type, this.callback);
+						},
+						unobserve: function unobserve() {
+							target.removeEventListener(type, this.callback);
+						}
+					};
+
+					if (update) {
+						this.vars[name].update = function (evt) {
+							Mavo.Functions[name] = update(evt);
+						};
+					}
+				},
+
+				vars: {
+					"$now": {
+						observe: function observe() {
+							this.timer = setInterval(_.special.update.bind(this), 100);
+						},
+						unobserve: function unobserve() {
+							clearInterval(this.timer);
+						}
+					}
+				}
 			}
 		}
+	});
+
+	_.special.event("$mouse", {
+		type: "mousemove",
+		update: function update(evt) {
+			return { x: evt.clientX, y: evt.clientY };
+		}
+	});
+
+	_.special.event("$hash", {
+		type: "hashchange",
+		target: window
 	});
 })(Bliss);
 "use strict";
@@ -7766,6 +7943,22 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return null;
 		},
 
+		url: function url(id) {
+			var _url = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : location;
+
+			if (id === undefined) {
+				return location.href;
+			}
+
+			if (id) {
+				id = str(id).replace(/[^\w-:]/g);
+
+				var ret = _url.search.match(RegExp("[?&]" + id + "(?:=(.+?))?(?=$|&)")) || _url.pathname.match(RegExp("(?:^|\\/)" + id + "\\/([^\\/]*)"));
+			}
+
+			return ret === null || !id ? null : ret[1] || "";
+		},
+
 		// TODO return first/last non-null?
 		first: function first(arr) {
 			return arr && arr[0] || "";
@@ -7864,7 +8057,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			return num + ord;
 		},
 
-		iff: function iff(condition, iftrue) {
+		iff: function iff(condition) {
+			var iftrue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : condition;
 			var iffalse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : "";
 
 			if (Array.isArray(condition)) {
@@ -8015,6 +8209,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		hour: getDateComponent("hour"),
 		minute: getDateComponent("minute"),
 		second: getDateComponent("second"),
+		ms: getDateComponent("ms"),
 
 		date: function date(_date) {
 			return _.year(_date) + "-" + _.month(_date).twodigit + "-" + _.day(_date).twodigit;
@@ -8050,6 +8245,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			(_console = console).log.apply(_console, arguments);
 			return arguments.length <= 0 ? undefined : arguments[0];
+		},
+
+		// Other special variables (some updated via events)
+		$mouse: { x: 0, y: 0 },
+
+		get $hash() {
+			return location.hash.slice(1);
 		},
 
 		// "Private" helpers
@@ -8120,6 +8322,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 	var $u = _.util;
 
 	// $url: Read-only syntactic sugar for URL stuff
+	// Deprecated. Use url() instead.
 	$.lazy(_, "$url", function () {
 		var ret = {};
 		var url = new URL(location);
@@ -8165,28 +8368,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		return ret;
 	});
 
-	var aliases = {
-		average: "avg",
-		iff: "iff IF",
-		subtract: "minus",
-		multiply: "mult product",
-		divide: "div",
-		lt: "lessThan smaller",
-		gt: "moreThan greater greaterThan bigger",
-		eq: "equal equality",
-		th: "ordinal"
-	};
-
-	var _loop = function _loop(name) {
-		aliases[name].split(/\s+/g).forEach(function (alias) {
-			return _[alias] = _[name];
-		});
-	};
-
-	for (var name in aliases) {
-		_loop(name);
-	}
-
 	// Make function names case insensitive
 	_._Trap = self.Proxy ? new Proxy(_, {
 		get: function get(functions, property) {
@@ -8195,17 +8376,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			var canonicalProperty = Mavo.getCanonicalProperty(functions, property) || Mavo.getCanonicalProperty(Math, property);
 
 			if (canonicalProperty) {
-				ret = functions[canonicalProperty] || Math[canonicalProperty];
+				ret = functions[canonicalProperty];
+
+				if (ret === undefined) {
+					ret = Math[canonicalProperty];
+				}
 			}
 
-			if (ret) {
-				// For when function names are used as unquoted strings, see #160
-				ret.toString = function () {
-					return property;
-				};
+			if (ret !== undefined) {
+				if (typeof ret === "function") {
+					// For when function names are used as unquoted strings, see #160
+					ret.toString = function () {
+						return property;
+					};
+				}
+
 				return ret;
 			}
 
+			// Still not found? Maybe it's a global
 			if (property in self) {
 				return self[property];
 			}
@@ -8278,6 +8467,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		},
 		second: function second(d) {
 			return d.getSeconds();
+		},
+		ms: function ms(d) {
+			return d.getMilliseconds();
 		}
 	};
 
@@ -8300,7 +8492,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			}
 
 			if (component != "weekday") {
-				ret.twodigit = (ret < 10 ? "0" : "") + (ret < 1 ? "0" : "") + ret % 100;
+				ret.twodigit = (ret % 100 < 10 ? "0" : "") + ret % 100;
 			}
 
 			return ret;
@@ -8327,7 +8519,9 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					for (var _iterator = Mavo.toArray(o.symbol)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 						var symbol = _step.value;
 
-						Mavo.Script.symbols[symbol] = name;
+						Mavo.Script.unarySymbols[symbol] = name;
+
+						jsep.addUnaryOp(symbol);
 					}
 				} catch (err) {
 					_didIteratorError = true;
@@ -8368,6 +8562,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						var symbol = _step2.value;
 
 						Mavo.Script.symbols[symbol] = name;
+
+						if (o.precedence) {
+							jsep.addBinaryOp(symbol, o.precedence);
+						}
 					}
 				} catch (err) {
 					_didIteratorError2 = true;
@@ -8382,10 +8580,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							throw _iteratorError2;
 						}
 					}
-				}
-
-				if (o.precedence) {
-					jsep.addBinaryOp(o.symbol, o.precedence);
 				}
 			}
 
@@ -8458,9 +8652,10 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
    * Populated via addOperator() and addLogicalOperator()
    */
 		symbols: {},
+		unarySymbols: {},
 
-		getOperatorName: function getOperatorName(op) {
-			return Mavo.Script.symbols[op] || op;
+		getOperatorName: function getOperatorName(op, unary) {
+			return Mavo.Script[unary ? "unarySymbols" : "symbols"][op] || op;
 		},
 
 		/**
@@ -8498,9 +8693,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				},
 				symbol: "+"
 			},
+			"plus": {
+				scalar: function scalar(a) {
+					return +a;
+				},
+				symbol: "+"
+			},
 			"subtract": {
 				scalar: function scalar(a, b) {
 					if (isNaN(a) || isNaN(b)) {
+						// Handle dates
 						var dateA = $u.date(a),
 						    dateB = $u.date(b);
 
@@ -8513,12 +8715,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				},
 				symbol: "-"
 			},
+			"minus": {
+				scalar: function scalar(a) {
+					return -a;
+				},
+				symbol: "-"
+			},
 			"mod": {
 				scalar: function scalar(a, b) {
 					var ret = a % b;
 					ret += ret < 0 ? b : 0;
 					return ret;
-				}
+				},
+				symbol: "mod",
+				precedence: 6
 			},
 			"lte": {
 				logical: true,
@@ -8586,7 +8796,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return a == b;
 				},
 				symbol: ["=", "=="],
-				identity: true
+				identity: true,
+				precedence: 6
 			},
 			"neq": {
 				logical: true,
@@ -8602,7 +8813,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return !!a && !!b;
 				},
 				identity: true,
-				symbol: "&&"
+				symbol: ["&&", "and"],
+				precedence: 2
 			},
 			"or": {
 				logical: true,
@@ -8613,7 +8825,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					return p || r;
 				},
 				identity: false,
-				symbol: "||"
+				symbol: ["||", "or"],
+				precedence: 2
 			},
 			"concatenate": {
 				symbol: "&",
@@ -8708,7 +8921,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 			},
 			"UnaryExpression": function UnaryExpression(node) {
-				var name = Mavo.Script.getOperatorName(node.operator);
+				var name = Mavo.Script.getOperatorName(node.operator, true);
 
 				if (name) {
 					return name + "(" + _.serialize(node.argument) + ")";
@@ -8753,14 +8966,6 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		parse: self.jsep
 	};
 
-	if (self.jsep) {
-		jsep.addBinaryOp("and", 2);
-		jsep.addBinaryOp("or", 2);
-		jsep.addBinaryOp("=", 6);
-		jsep.addBinaryOp("mod", 10);
-		jsep.removeBinaryOp("===");
-	}
-
 	_.serializers.LogicalExpression = _.serializers.BinaryExpression;
 	_.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
@@ -8772,6 +8977,27 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		} else {
 			Mavo.Script.addBinaryOperator(name, details);
 		}
+	}
+
+	var aliases = {
+		average: "avg",
+		iff: "iff IF",
+		multiply: "mult product",
+		divide: "div",
+		lt: "smaller",
+		gt: "larger bigger",
+		eq: "equal equality",
+		th: "ordinal"
+	};
+
+	var _loop2 = function _loop2(_name) {
+		aliases[_name].split(/\s+/g).forEach(function (alias) {
+			return Mavo.Functions[alias] = Mavo.Functions[_name];
+		});
+	};
+
+	for (var _name in aliases) {
+		_loop2(_name);
 	}
 })(Bliss, Mavo.value, Mavo.Functions.util);
 "use strict";
