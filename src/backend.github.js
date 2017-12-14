@@ -9,38 +9,41 @@ var _ = Mavo.Backend.register($.Class({
 		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
 
 		// Extract info for username, repo, branch, filepath from URL
-		var parsedURL = _.parseURL(this.url);
+		var extension = this.format.constructor.extensions[0] || ".json";
 
-		if (parsedURL.username) {
-			$.extend(this, parsedURL);
-			this.repo = this.repo || "mv-data";
-			this.path = this.path || "";
+		this.defaults = {
+			repo: "mv-data",
+			filename: `${this.mavo.id}${extension}`
+		};
 
-			if (!/\.\w+$/.test(this.path)) {
-				var extension = this.format.constructor.extensions[0] || ".json";
-				this.path += `/${this.mavo.id}${extension}`;
-			}
-
-			this.path = this.path.replace(/\/\/|^\/|\/$/g, "");
-
-			this.apiCall = `repos/${this.username}/${this.repo}/contents/${this.path}`;
-		}
-		else {
-			this.apiCall = this.url.pathname.slice(1);
-		}
+		this.info = _.parseURL(this.source, this.defaults);
+		$.extend(this, this.info);
 
 		this.login(true);
 	},
 
-	get: function() {
-		if (this.isAuthenticated() || !this.path) {
+	get: function(url) {
+		if (this.isAuthenticated() || !this.path || url) {
 			// Authenticated or raw API call
-			return this.request(this.apiCall)
-			       .then(response => Promise.resolve(this.repo? _.atob(response.content) : response));
+			var info = url? _.parseURL(url) : this.info;
+
+			if (info.apiData) {
+				// GraphQL
+				return this.request(info.apiCall, info.apiData, "POST")
+					.then(response => {
+						if (response.errors && response.errors.length) {
+							return Promise.reject(response.errors.map(x => x.message).join("\n"));
+						}
+
+						return response.data;
+					});
+			}
+
+			return this.request(info.apiCall).then(response => Promise.resolve(info.repo? _.atob(response.content) : response));
 		}
 		else {
 			// Unauthenticated, use simple GET request to avoid rate limit
-			var url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
+			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
 
 			return this.super.get.call(this, url);
 		}
@@ -317,29 +320,46 @@ var _ = Mavo.Backend.register($.Class({
 		/**
 		 * Parse Github URLs, return username, repo, branch, path
 		 */
-		parseURL: function(url) {
+		parseURL: function(source, defaults = {}) {
 			var ret = {};
-
-			url = new URL(url, Mavo.base);
-
+			var url = new URL(source, Mavo.base);
 			var path = url.pathname.slice(1).split("/");
 
 			ret.username = path.shift();
-			ret.repo = path.shift();
+			ret.repo = path.shift() || defaults.repo;
 
 			if (/raw.githubusercontent.com$/.test(url.host)) {
 				ret.branch = path.shift();
 			}
 			else if (/api.github.com$/.test(url.host)) {
-				// raw API call, stop parsing and just return
-				return {};
+				// Raw API call
+				var apiCall = url.pathname.slice(1);
+				var data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+
+				return {
+					apiCall,
+					apiData: apiCall == "graphql"? {query: data} : data
+				};
 			}
 			else if (path[0] == "blob") {
 				path.shift();
 				ret.branch = path.shift();
 			}
 
-			ret.path = path.join("/");
+			var lastSegment = path[path.length - 1];
+
+			if (/\.\w+$/.test(lastSegment)) {
+				ret.filename = lastSegment;
+				path.splice(path.length - 1, 1);
+			}
+			else {
+				ret.filename = defaults.filename;
+			}
+
+			ret.filepath = path.join("/") || defaults.filepath || "";
+			ret.path = (ret.filepath? ret.filepath + "/" : "") + ret.filename;
+
+			ret.apiCall = `repos/${ret.username}/${ret.repo}/contents/${ret.path}`;
 
 			return ret;
 		},

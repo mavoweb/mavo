@@ -24,15 +24,15 @@ var _ = Mavo.Backend = $.Class({
 		return this.ready
 			.then(() => this.get())
 			.then(response => {
-			if (typeof response != "string") {
-				// Backend did the parsing, we're done here
-				return response;
-			}
+				if (typeof response != "string") {
+					// Backend did the parsing, we're done here
+					return response;
+				}
 
-			response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
+				response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
 
-			return this.format.parse(response);
-		});
+				return this.format.parse(response);
+			});
 	},
 
 	store: function(data, {path, format = this.format} = {}) {
