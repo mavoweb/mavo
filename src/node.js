@@ -269,7 +269,7 @@ var _ = Mavo.Node = $.Class({
 			// We are rendering an array on a singleton, what to do?
 			var properties;
 
-			if (this.isRoot && (properties = Object.keys(this.children)).length === 1 && this.children[properties[0]].nodeType === "Collection") {
+			if (this.isRoot && (properties = this.getNames("Collection")).length === 1) {
 				// If it's root with only one collection property, render on that property
 				env.data = {
 					[properties[0]]: env.data
@@ -513,7 +513,7 @@ var _ = Mavo.Node = $.Class({
 			return this.getClosestItem();
 		},
 
-		// Are were only rendering and editing a subset of the data?
+		// Are we only rendering and editing a subset of the data?
 		inPath: function() {
 			var attribute = this.nodeType == "Collection"? "mv-multiple-path" : "mv-path";
 
