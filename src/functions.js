@@ -272,6 +272,10 @@ var _ = Mavo.Functions = {
 		var i1 = from? haystack[tight? "lastIndexOf" : "indexOf"](from) : -1;
 		var i2 = haystack[tight? "indexOf" : "lastIndexOf"](to);
 
+		if (from && i1 === -1 || i2 === -1) {
+			return "";
+		}
+
 		return haystack.slice(i1 + 1, i2 === -1 || !to? haystack.length : i2);
 	},
 
