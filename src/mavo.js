@@ -211,8 +211,8 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Dynamic ids
-		if (location.hash) {
-			$.bind(this.element, "mv-load.mavo", evt => {
+		$.bind(this.element, "mv-load.mavo", evt => {
+			if (location.hash) {
 				var callback = records => {
 					var target = document.getElementById(location.hash.slice(1));
 
@@ -236,8 +236,11 @@ var _ = self.Mavo = $.Class({
 					// No target, perhaps not yet?
 					var observer = new Mavo.Observer(this.element, "id", callback, {subtree: true});
 				}
-			});
-		}
+			}
+
+			requestAnimationFrame(() => Stretchy.resizeAll());
+		});
+
 
 		if (this.autoSave) {
 			this.dataLoaded.then(evt => {
@@ -660,8 +663,10 @@ var _ = self.Mavo = $.Class({
 		init: function(container = document) {
 			var mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
 
-			return mavos.filter(element => !_.get(element)) // not already inited
+			var ret = mavos.filter(element => !_.get(element)) // not already inited
 				.map(element => new _(element));
+
+			return ret;
 		},
 
 		UI: {},
