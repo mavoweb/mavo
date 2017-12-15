@@ -454,7 +454,7 @@ var _ = $.extend(Mavo, {
 					// Merge arrays instead of adding array inside array
 					parent.splice(last, 1, ...value);
 				}
-				else {
+				else if (parent) {
 					parent[path[path.length - 1]] = value;
 				}
 
