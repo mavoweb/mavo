@@ -406,7 +406,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	find: function(property, o = {}) {
-		var items = this.children.filter(item => !item.deleted);
+		var items = this.children.filter(item => !item.deleted && !item.hidden);
 
 		if (this.property == property) {
 			return o.collections? this : items;
