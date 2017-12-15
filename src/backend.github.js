@@ -39,13 +39,22 @@ var _ = Mavo.Backend.register($.Class({
 					});
 			}
 
-			return this.request(info.apiCall).then(response => Promise.resolve(info.repo? _.atob(response.content) : response));
+			return this.request(info.apiCall, null, "GET", {
+					headers: {
+						"Accept": "application/vnd.github.squirrel-girl-preview"
+					}
+				}).then(response => Promise.resolve(info.repo? _.atob(response.content) : response));
 		}
 		else {
 			// Unauthenticated, use simple GET request to avoid rate limit
 			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
+			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-			return this.super.get.call(this, url);
+			return $.fetch(url.href, {
+				headers: {
+					"Accept": "application/vnd.github.squirrel-girl-preview"
+				}
+			}).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 		}
 	},
 
@@ -333,7 +342,7 @@ var _ = Mavo.Backend.register($.Class({
 			}
 			else if (/api.github.com$/.test(url.host)) {
 				// Raw API call
-				var apiCall = url.pathname.slice(1);
+				var apiCall = url.pathname.slice(1) + url.search;
 				var data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
 
 				return {
