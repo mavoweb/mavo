@@ -482,8 +482,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	find: function(property) {
-		if (this.property == property) {
+	find: function(property, o = {}) {
+		if (this.property == property && o.exclude !== this) {
 			return this;
 		}
 	},

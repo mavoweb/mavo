@@ -132,6 +132,10 @@ var _ = Mavo.Group = $.Class({
 	 * @return {Mavo.Node}
 	 */
 	find: function(property, o = {}) {
+		if (o.exclude === this) {
+			return;
+		}
+
 		if (this.property == property) {
 			return this;
 		}
@@ -233,7 +237,7 @@ var _ = Mavo.Group = $.Class({
 		}
 
 		if (!wasPrimitive) {
-			// Fire datachange events for properties not in the template,
+			// Fire mv-change events for properties not in the template,
 			// since nothing else will and they can still be referenced in expressions
 			var oldData = Mavo.subset(this.oldData, this.inPath);
 

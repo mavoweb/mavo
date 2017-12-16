@@ -406,6 +406,10 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	find: function(property, o = {}) {
+		if (o.exclude === this) {
+			return;
+		}
+
 		var items = this.children.filter(item => !item.deleted && !item.hidden);
 
 		if (this.property == property) {
