@@ -337,9 +337,9 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	// Resolve a property name from this node
-	resolve: function(property) {
+	resolve: function(property, o = {}) {
 		// First look in descendants
-		var ret = this.find(property);
+		var ret = this.find(property, o);
 
 		if (ret === undefined) {
 			// Still not found, look in ancestors
@@ -356,7 +356,7 @@ var _ = Mavo.Node = $.Class({
 
 		if (ret === undefined) {
 			// Still not found, look anywhere
-			ret = this.mavo.root.find(property);
+			ret = this.mavo.root.find(property, o);
 		}
 
 		return ret;

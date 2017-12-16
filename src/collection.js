@@ -14,18 +14,46 @@ var _ = Mavo.Collection = $.Class({
 		this.children = [];
 
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("mutable", "templateElement", "accepts")) {
+		if (!this.fromTemplate("mutable", "templateElement", "accepts", "optional", "like", "likeNode")) {
 			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
+			this.like = this.templateElement.getAttribute("mv-like");
+
+			if (this.like) {
+				this.likeNode = this.resolve(this.like, {exclude: this});
+				this.likeNode = this.likeNode || this.likeNode.template;
+
+				if (!this.likeNode) {
+					this.like = null;
+				}
+			}
+
+			this.optional = !!this.like || this.templateElement.hasAttribute("mv-optional");
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
 			this.templateElement = this.templateElement.cloneNode(true);
 		}
 
-		var item = this.createItem(this.element);
-		this.add(item, undefined, {silent: true});
-		this.itemTemplate = item.template || item;
+		if (this.likeNode) {
+			this.itemTemplate = this.likeNode;
+			var templateElement = $.value(this.likeNode.collection, "templateElement") || this.likeNode.element;
+			this.templateElement = templateElement.cloneNode(true);
+			this.templateElement.setAttribute("property", this.property);
+			this.properties = this.likeNode.properties;
+		}
+		else if (!this.optional || !this.template) {
+			var item = this.createItem(this.element);
+			this.add(item, undefined, {silent: true});
+
+			if (this.optional) {
+				this.delete(item, true);
+			}
+		}
+
+		if (this.optional) {
+			this.element.remove();
+		}
 
 		this.postInit();
 
@@ -89,12 +117,18 @@ var _ = Mavo.Collection = $.Class({
 			element = this.templateElement.cloneNode(true);
 		}
 
+		var template = this.itemTemplate || (this.template? this.template.itemTemplate : null);
+
 		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
-			template: this.itemTemplate || (this.template? this.template.itemTemplate : null),
+			template,
 			property: this.property,
 			type: this.type
 		});
+
+		if (!this.itemTemplate) {
+			this.itemTemplate = template || item;
+		}
 
 		return item;
 	},
@@ -559,7 +593,8 @@ var _ = Mavo.Collection = $.Class({
 
 			if (group) {
 				var button = $$(selector, group).filter(button => {
-					return !this.templateElement.contains(button);
+					return !this.templateElement.contains(button)  // is outside the template element
+						&& !Mavo.data(button, "collection"); // and does not belong to another collection
 				})[0];
 			}
 
