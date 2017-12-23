@@ -22,6 +22,13 @@ var _ = Mavo.Backend.register($.Class({
 		this.login(true);
 	},
 
+	update: function(url, o) {
+		this.super.update.call(this, url, o);
+
+		this.info = _.parseURL(this.source, this.defaults);
+		$.extend(this, this.info);
+	},
+
 	get: function(url) {
 		if (this.isAuthenticated() || !this.path || url) {
 			// Authenticated or raw API call

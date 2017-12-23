@@ -409,7 +409,7 @@ var _ = self.Mavo = $.Class({
 	 * @return {Boolean} true if a change occurred, false otherwise
 	 */
 	updateBackend: function(role) {
-		var previous = this[role], backend;
+		var previous = this[role], backend, changed;
 
 		if (this.index == 1) {
 			backend = _.Functions.url(role);
@@ -432,14 +432,16 @@ var _ = self.Mavo = $.Class({
 			this[role] = backend = _.Backend.create(backend, {
 				mavo: this,
 				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
-			}, this.element.getAttribute(`mv-${role}-type`));
+			}, this.element.getAttribute(`mv-${role}-type`), this[role]);
+
+			changed = true;
 		}
 		else if (!backend) {
 			// We had a backend and now we will un-have it
 			this[role] = null;
 		}
 
-		var changed = backend? !backend.equals(previous) : !!previous;
+		changed = changed || (backend? !backend.equals(previous) : !!previous);
 
 		if (changed) {
 			// A change occured

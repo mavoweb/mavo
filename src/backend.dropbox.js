@@ -8,10 +8,13 @@ var _ = Mavo.Backend.register($.Class({
 
 		this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
 
-		// Transform the dropbox shared URL into something raw and CORS-enabled
-		this.url = _.fixShareURL(this.url);
-
 		this.login(true);
+	},
+
+	update: function(url, o) {
+		this.super.update.call(this, url, o);
+
+		this.url = _.fixShareURL(this.url);
 	},
 
 	upload: function(file, path) {
@@ -93,6 +96,7 @@ var _ = Mavo.Backend.register($.Class({
 			return /dropbox.com/.test(url.host);
 		},
 
+		// Transform the dropbox shared URL into something raw and CORS-enabled
 		fixShareURL: url => {
 			url = new URL(url, Mavo.base);
 			url.hostname = "dl.dropboxusercontent.com";

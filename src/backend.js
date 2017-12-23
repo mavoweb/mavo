@@ -5,13 +5,17 @@
  */
 var _ = Mavo.Backend = $.Class({
 	constructor: function(url, o = {}) {
+		this.update(url, o);
+
+		// Permissions of this particular backend.
+		this.permissions = new Mavo.Permissions();
+	},
+
+	update: function(url, o = {}) {
 		this.source = url;
 		this.url = new URL(this.source, Mavo.base);
 		this.mavo = o.mavo;
 		this.format = Mavo.Formats.create(o.format, this);
-
-		// Permissions of this particular backend.
-		this.permissions = new Mavo.Permissions();
 	},
 
 	get: function(url = new URL(this.url)) {
@@ -204,7 +208,7 @@ var _ = Mavo.Backend = $.Class({
 
 	static: {
 		// Return the appropriate backend(s) for this url
-		create: function(url, o, type) {
+		create: function(url, o, type, existing) {
 			var Backend;
 
 			if (type) {
@@ -213,6 +217,12 @@ var _ = Mavo.Backend = $.Class({
 
 			if (url && !Backend) {
 				Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
+			}
+
+			// Can we re-use the existing object perhaps?
+			if (Backend && existing && existing.constructor === Backend && existing.constructor.prototype.hasOwnProperty("update")) {
+				existing.update(url, o);
+				return existing;
 			}
 
 			return Backend? new Backend(url, o) : null;
@@ -236,6 +246,10 @@ _.register($.Class({
 	extends: _,
 	constructor: function () {
 		this.permissions.on(["read", "edit", "save"]);
+	},
+
+	update: function(url, o) {
+		this.super.update.call(this, url, o);
 
 		this.element = $(this.source) || $.create("script", {
 			type: "application/json",
