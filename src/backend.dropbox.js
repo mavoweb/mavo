@@ -57,6 +57,8 @@ var _ = Mavo.Backend.register($.Class({
 					avatar: info.profile_photo_url,
 					info
 				};
+
+				$.fire(this.mavo.element, "mv-login", { backend: this });
 			});
 	},
 
