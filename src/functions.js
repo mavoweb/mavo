@@ -170,7 +170,7 @@ var _ = Mavo.Functions = {
 		});
 	},
 
-	th: function(num) {
+	ordinal: function(num) {
 		if (empty(num)) {
 			return "";
 		}
@@ -179,9 +179,7 @@ var _ = Mavo.Functions = {
 			var ord = ["th", "st", "nd", "th"][num % 10];
 		}
 
-		ord = ord || "th";
-
-		return num + ord;
+		return ord || "th";
 	},
 
 	iff: function(condition, iftrue=condition, iffalse="") {

@@ -361,7 +361,7 @@ var aliases = {
 	lt: "smaller",
 	gt: "larger bigger",
 	eq: "equal equality",
-	th: "ordinal"
+	ordinal: "th"
 };
 
 for (let name in aliases) {
