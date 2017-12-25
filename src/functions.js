@@ -343,7 +343,7 @@ var _ = Mavo.Functions = {
 		numbers: function(array, args) {
 			array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
-			return array.filter(number => !isNaN(number) && val(number) !== "").map(n => +n);
+			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
 		},
 
 		fixDateString: function(date) {
