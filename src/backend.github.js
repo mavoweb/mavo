@@ -57,11 +57,7 @@ var _ = Mavo.Backend.register($.Class({
 			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-			return $.fetch(url.href, {
-				headers: {
-					"Accept": "application/vnd.github.squirrel-girl-preview"
-				}
-			}).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+			return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 		}
 	},
 
@@ -249,7 +245,11 @@ var _ = Mavo.Backend.register($.Class({
 			})
 			.then(u => {
 				if (this.user) {
-					this.permissions.on(["edit", "save", "logout"]);
+					this.permissions.on("logout");
+
+					if (this.info.path) {
+						this.permissions.on(["edit", "save"]);
+					}
 
 					if (this.repo) {
 						return this.request(`repos/${this.username}/${this.repo}`)

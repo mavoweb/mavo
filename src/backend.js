@@ -74,6 +74,7 @@ var _ = Mavo.Backend = $.Class({
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
 	request: function(call, data, method = "GET", req = {}) {
+		req = $.extend({}, req); // clone
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
 
