@@ -80,7 +80,11 @@ var _ = Mavo.DOMExpression = $.Class({
 		this.mavo.treeBuilt.then(() => {
 			if (!this.template && !this.item) {
 				// Only collection items and groups can have their own expressions arrays
-				this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
+				this.item = Mavo.Node.getClosest(this.element);
+
+				if (this.item.nodeType === "Primitive" && !this.item.collection) {
+					this.item = this.item.parent;
+				}
 			}
 
 			if (this.originalAttribute == "mv-value" && this.mavoNode && this.mavoNode == this.item.collection) {

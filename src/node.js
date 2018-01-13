@@ -697,6 +697,16 @@ var _ = Mavo.Node = $.Class({
 			}
 		},
 
+		getClosest: function(element, prioritizePrimitive) {
+			var node;
+
+			do {
+				node = _.get(element, prioritizePrimitive);
+			} while (!node && (element = element.parentNode));
+
+			return node;
+		},
+
 		/**
 		 * Get all properties that are inside an element but not nested into other properties
 		 */
