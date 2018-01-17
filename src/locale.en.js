@@ -12,6 +12,7 @@ Mavo.Locale.register("en", {
 	"login-to": "Login to {id}",
 	"error-uploading": "Error uploading file",
 	"cannot-load-uploaded-file": "Cannot load uploaded file",
+	"filename": "Filename?",
 	"problem-saving": "Problem saving data",
 	"problem-loading": "Problem loading data",
 	"cannot-parse": "Can’t understand this file",

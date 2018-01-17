@@ -224,9 +224,17 @@ _.register({
 
 						if (item.kind == "file" && item.type.indexOf(type + "/") === 0) {
 							// Is a file of the correct type, upload!
-							var name = `pasted-${type}-${Date.now()}.${item.type.slice(6)}`; // image, video, audio are all 5 chars
-							upload(item.getAsFile(), name);
-							evt.preventDefault();
+							var defaultName = `pasted-${type}-${Date.now()}.${item.type.slice(6)}`; // image, video, audio are all 5 chars
+							var name = prompt(this.mavo._("filename"), defaultName);
+
+							if (name === "") {
+								name = defaultName;
+							}
+
+							if (name !== null) {
+								upload(item.getAsFile(), name);
+								evt.preventDefault();
+							}
 						}
 					},
 					"drag dragstart dragend dragover dragenter dragleave drop": evt => {
