@@ -68,22 +68,29 @@ var _ = Mavo.Collection = $.Class({
 		var env = {
 			context: this,
 			options: o,
-			data: []
+			data: this.liveData
 		};
 
-		this.children.forEach(item => {
+		if (env.options.live) {
+			this.proxyCache = {};
+		}
+
+		for (var i = 0, j = 0; item = this.children[i]; i++) {
 			if (!item.deleted || env.options.live) {
 				var itemData = item.getData(env.options);
 
 				if (env.options.live || Mavo.value(itemData) !== null) {
-					env.data.push(itemData);
+					env.data[j] = itemData;
+					j++;
 				}
 			}
-		});
+		}
+
+		env.data.length = j;
 
 		if (!this.mutable) {
 			// If immutable, drop nulls
-			env.data = env.data.filter(item => Mavo.value(item) !== null);
+			Mavo.filter(env.data, item => Mavo.value(item) !== null);
 
 			if (env.options.live && env.data.length === 1) {
 				// If immutable with only 1 item, return the item
@@ -96,18 +103,13 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		if (env.options.live && Array.isArray(env.data)) {
-			env.data[Mavo.toNode] = this;
-			env.data = this.relativizeData(env.data);
-		}
-
 		if (!env.options.live) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 
 		Mavo.hooks.run("node-getdata-end", env);
 
-		return env.data;
+		return (env.options.live? env.data[Mavo.toProxy] : env.data) || env.data;
 	},
 
 	// Create item but don't insert it anywhere
@@ -437,6 +439,8 @@ var _ = Mavo.Collection = $.Class({
 				}
 			}
 		}
+
+		this.createLiveData(data|| []);
 	},
 
 	find: function(property, o = {}) {
@@ -619,6 +623,10 @@ var _ = Mavo.Collection = $.Class({
 			});
 
 			return button;
+		},
+
+		liveData: function() {
+			return this.createLiveData([]);
 		}
 	},
 

@@ -44,6 +44,8 @@ var _ = Mavo.Group = $.Class({
 			}
 		});
 
+		this.childrenNames = Object.keys(this.children);
+
 		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
 		this.vocab = vocabElement.getAttribute("vocab");
 
@@ -72,11 +74,9 @@ var _ = Mavo.Group = $.Class({
 			return env.data;
 		}
 
-		env.data = (this.data? Mavo.clone(Mavo.subset(this.data, this.inPath)) : {}) || {};
+		env.data = this.liveData;
 
-		var properties = Object.keys(this.children);
-
-		if (properties.length == 1 && properties[0] == this.property) {
+		if (this.childrenNames.length == 1 && this.childrenNames[0] == this.property) {
 			// {foo: {foo: 5}} should become {foo: 5}
 			var options = $.extend($.extend({}, env.options), {forceObjects: true});
 			env.data = this.children[this.property].getData(options);
@@ -87,22 +87,25 @@ var _ = Mavo.Group = $.Class({
 
 				if (obj.saved || env.options.live) {
 					var data = obj.getData(env.options);
+				}
 
-					if (data === null && !env.options.live) {
-						delete env.data[obj.property];
-					}
-					else {
-						env.data[obj.property] = data;
-					}
+				if (env.options.live || obj.saved && Mavo.value(data) !== null) {
+					env.data[obj.property] = data;
+				}
+				else {
+					delete env.data[obj.property];
 				}
 			}
 		}
 
-		if (!env.options.live) { // Stored data again
+		if (env.options.live) {
+			this.proxyCache = {};
+		}
+		else { // Stored data again
 			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 
-			if (!properties.length && !this.isRoot) {
+			if (!this.childrenNames.length && !this.isRoot) {
 				// Avoid {} in the data
 				env.data = null;
 			}
@@ -117,14 +120,10 @@ var _ = Mavo.Group = $.Class({
 				}
 			}
 		}
-		else if (env.data) {
-			env.data[Mavo.toNode] = this;
-			env.data = this.relativizeData(env.data);
-		}
 
 		Mavo.hooks.run("node-getdata-end", env);
 
-		return env.data;
+		return (env.options.live? env.data[Mavo.toProxy] : env.data) || env.data;
 	},
 
 	/**
@@ -250,6 +249,14 @@ var _ = Mavo.Group = $.Class({
 					}
 				}
 			}
+		}
+
+		this.createLiveData(data);
+	},
+
+	lazy: {
+		liveData: function() {
+			return this.createLiveData();
 		}
 	},
 

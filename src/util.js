@@ -106,6 +106,8 @@ var _ = $.extend(Mavo, {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
+	// Delete an element from an array
+	// @param all {Boolean} Delete more than one?
 	delete: (arr, element, all) => {
 		do {
 			var index = arr && arr.indexOf(element);
@@ -134,6 +136,17 @@ var _ = $.extend(Mavo, {
 
 	union: (set1, set2) => {
 		return new Set([...(set1 || []), ...(set2 || [])]);
+	},
+
+	// Filter an array in place
+	// TODO add index to callback
+	filter: (arr, callback) => {
+		for (var i=0; i<arr.length; i++) {
+			if (!callback(arr[i])) {
+				arr.splice(i, 1);
+				i--;
+			}
+		}
 	},
 
 	/**

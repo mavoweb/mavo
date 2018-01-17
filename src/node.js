@@ -363,8 +363,6 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	relativizeData: self.Proxy? function(data, options = {live: true}) {
-		var cache = {};
-
 		return new Proxy(data, {
 			get: (data, property, proxy) => {
 				if (property in data) {
@@ -372,13 +370,13 @@ var _ = Mavo.Node = $.Class({
 				}
 
 				// Checking if property is in proxy might add it to the cache
-				if (property in proxy && property in cache) {
-					return cache[property];
+				if (property in proxy && property in this.proxyCache) {
+					return this.proxyCache[property];
 				}
 			},
 
 			has: (data, property) => {
-				if (property in data || property in cache) {
+				if (property in data || property in this.proxyCache) {
 					return true;
 				}
 
@@ -387,16 +385,16 @@ var _ = Mavo.Node = $.Class({
 				// Special values
 				switch (property) {
 					case "$index":
-						cache[property] = this.index || 0;
+						this.proxyCache[property] = this.index || 0;
 						return true; // if index is 0 it's falsy and has would return false!
 					case "$next":
 					case "$previous":
 						if (this.closestCollection) {
-							cache[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
+							this.proxyCache[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
 							return true;
 						}
 
-						cache[property] = null;
+						this.proxyCache[property] = null;
 						return false;
 				}
 
@@ -412,14 +410,14 @@ var _ = Mavo.Node = $.Class({
 						ret = ret.getData(options);
 					}
 
-					cache[property] = ret;
+					this.proxyCache[property] = ret;
 
 					return true;
 				}
 
 				// Does it reference another Mavo?
-				if (property in Mavo.all && Mavo.all[property].root) {
-					return cache[property] = Mavo.all[property].root.getData(options);
+				if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
+					return this.proxyCache[property] = Mavo.all[property].root.getData(options);
 				}
 
 				return false;
@@ -431,6 +429,13 @@ var _ = Mavo.Node = $.Class({
 			}
 		});
 	} : data => data,
+
+	createLiveData: function(obj = {}) {
+		this.liveData = obj;
+		this.liveData[Mavo.toNode] = this;
+		this.liveData[Mavo.toProxy] = this.relativizeData(this.liveData);
+		return this.liveData;
+	},
 
 	pathFrom: function(node) {
 		var path = this.path;
@@ -537,6 +542,10 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return ret;
+		},
+
+		proxyCache: function() {
+			return {};
 		}
 	},
 

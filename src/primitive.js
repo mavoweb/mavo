@@ -219,12 +219,19 @@ var _ = Mavo.Primitive = $.Class({
 					[Mavo.toNode]: this
 				});
 
+				env.data[Mavo.toProxy] = this.relativizeData(env.data);
+
 				if (this.collection) {
 					// Turn primitive collection items into objects, so we can have $index etc, and their property
 					// name etc resolve relative to them, not their parent group
 					env.data[this.property] = env.data;
-					env.data = this.relativizeData(env.data);
 				}
+
+				Mavo.hooks.run("node-getdata-end", env);
+
+				this.proxyCache = {};
+
+				return env.data[Mavo.toProxy];
 			}
 		}
 		else if (this.inPath.length) {

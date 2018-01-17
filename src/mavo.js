@@ -683,7 +683,8 @@ var _ = self.Mavo = $.Class({
 
 		lazy: {
 			locale: () => document.documentElement.lang || "en-GB",
-			toNode: () => Symbol("toNode")
+			toNode: () => Symbol("toNode"),
+			toProxy: () => Symbol("toProxy")
 		}
 	}
 });
