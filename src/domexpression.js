@@ -5,7 +5,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		this.mavo = o.mavo;
 		this.template = o.template && o.template.template || o.template;
 
-		for (let prop of ["item", "path", "syntax", "fallback", "attribute", "originalAttribute", "expression", "parsed"]) {
+		for (let prop of ["item", "path", "syntax", "fallback", "attribute", "originalAttribute", "expression", "parsed", "identifiers"]) {
 			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
 		}
 
@@ -75,6 +75,12 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
 
+		// Cache identifiers
+		this.identifiers = this.identifiers || Mavo.flatten(this.parsed.map(x => x.identifiers || []));
+
+		// Any identifiers that need additional updating?
+		_.special.add(this);
+
 		this.item = Mavo.Node.get(this.element.closest(Mavo.selectors.item));
 
 		this.mavo.treeBuilt.then(() => {
@@ -91,6 +97,8 @@ var _ = Mavo.DOMExpression = $.Class({
 				Mavo.delete(this.item.expressions, this);
 			}
 
+			this.mavo.expressions.register(this);
+
 			Mavo.hooks.run("domexpression-init-treebuilt", this);
 		});
 
@@ -101,6 +109,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 	destroy: function() {
 		_.special.delete(this);
+		this.mavo.expressions.unregister(this);
 	},
 
 	changedBy: function(evt) {
@@ -109,17 +118,10 @@ var _ = Mavo.DOMExpression = $.Class({
 			return !evt || !this.mavoNode.contains(evt.node);
 		}
 
-		if (!this.identifiers) {
-			this.identifiers = Mavo.flatten(this.parsed.map(x => x.identifiers || []));
-
-			// Any identifiers that need additional updating?
-			_.special.add(this);
-		}
-
 		return Mavo.Expression.changedBy(this.identifiers, evt);
 	},
 
-	update: function(data = this.data, event) {
+	update: function(data = this.data) {
 		var env = {context: this, event};
 		var parentEnv = env;
 
@@ -132,31 +134,26 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		env.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-				if (expr.changedBy(parentEnv.event)) {
-					var env = {context: this, expr, parentEnv};
+				var env = {context: this, expr, parentEnv};
 
-					Mavo.hooks.run("domexpression-update-beforeeval", env);
+				Mavo.hooks.run("domexpression-update-beforeeval", env);
 
-					env.value = Mavo.value(env.expr.eval(data));
+				env.value = Mavo.value(env.expr.eval(data));
 
-					Mavo.hooks.run("domexpression-update-aftereval", env);
+				Mavo.hooks.run("domexpression-update-aftereval", env);
 
-					changed = true;
+				changed = true;
 
-					if (env.value instanceof Error) {
-						return this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
-					}
-
-					if (env.value === undefined || env.value === null) {
-						// Don’t print things like "undefined" or "null"
-						return "";
-					}
-
-					return env.value;
+				if (env.value instanceof Error) {
+					return this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
 				}
-				else {
-					return this.oldValue[i];
+
+				if (env.value === undefined || env.value === null) {
+					// Don’t print things like "undefined" or "null"
+					return "";
 				}
+
+				return env.value;
 			}
 
 			return expr;

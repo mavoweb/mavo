@@ -4,11 +4,11 @@
  * @version %%VERSION%%
  */
 (function ($, $$) {
-
+console.log("local");
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
-		this.treeBuilt = Mavo.defer();
-		this.dataLoaded = Mavo.defer();
+		this.treeBuilt = Mavo.promise();
+		this.dataLoaded = Mavo.promise();
 
 		this.element = element;
 
@@ -341,7 +341,9 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", env);
 
 		if (env.data) {
+			if (this.id == "restaurants") console.time("render");
 			this.root.render(env.data);
+			if (this.id == "restaurants") console.timeEnd("render");
 		}
 
 		this.unsavedChanges = false;
@@ -593,6 +595,16 @@ var _ = self.Mavo = $.Class({
 		}, undefined, {descentReturn: true});
 
 		return needsEdit;
+	},
+
+	changed: function(change) {
+		if (!this.root) {
+			return;
+		}
+
+		if (this.expressions.active) {
+			this.expressions.updateThrottled(change);
+		}
 	},
 
 	live: {

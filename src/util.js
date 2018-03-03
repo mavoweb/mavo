@@ -89,7 +89,7 @@ var _ = $.extend(Mavo, {
 				value[Symbol.toStringTag] = constructor.name;
 			}
 
-			value.valueOf = value[Symbol.toPrimitive] = () => primitive;
+			value.valueOf = value.toJSON = value[Symbol.toPrimitive] = () => primitive;
 		}
 
 		return $.extend(value, properties);
@@ -525,8 +525,6 @@ var _ = $.extend(Mavo, {
 		};
 	},
 
-	timeout: delay => new Promise(resolve => setTimeout(resolve, delay)),
-
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
 
 	matches: (str, regex) => {
@@ -641,7 +639,7 @@ var _ = $.extend(Mavo, {
 		}
 	}),
 
-	defer: function(constructor) {
+	promise: function(constructor) {
 		var res, rej;
 
 		var promise = new Promise((resolve, reject) => {
@@ -665,6 +663,8 @@ var _ = $.extend(Mavo, {
 
 		return promise;
 	},
+
+	defer: delay => new Promise(resolve => delay === undefined? requestAnimationFrame(resolve) : setTimeout(resolve, delay)),
 
 	/**
 	 * Similar to Promise.all() but can handle post-hoc additions

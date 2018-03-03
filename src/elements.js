@@ -183,7 +183,7 @@ _.register({
 					this.mavo.upload(file, path + "/" + name).then(url => {
 						// Backend claims image is uploaded, we should load it from remote to make sure everything went well
 						var attempts = 0;
-						var load = Mavo.rr(() => Mavo.timeout(1000 + attempts * 500).then(() => {
+						var load = Mavo.rr(() => Mavo.defer(1000 + attempts * 500).then(() => {
 							attempts++;
 							this.element.src = url;
 						}));

@@ -10,6 +10,12 @@ var _ = Mavo.Group = $.Class({
 
 		Mavo.hooks.run("group-init-start", this);
 
+		this.liveData = this.createLiveData();
+
+		if (this.parent && !this.collection) {
+			this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
+		}
+
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
 			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
@@ -76,12 +82,7 @@ var _ = Mavo.Group = $.Class({
 
 		env.data = this.liveData;
 
-		if (this.childrenNames.length == 1 && this.childrenNames[0] == this.property) {
-			// {foo: {foo: 5}} should become {foo: 5}
-			var options = $.extend($.extend({}, env.options), {forceObjects: true});
-			env.data = this.children[this.property].getData(options);
-		}
-		else {
+		if (!env.options.live) {
 			for (var property in this.children) {
 				var obj = this.children[property];
 
@@ -96,12 +97,7 @@ var _ = Mavo.Group = $.Class({
 					delete env.data[obj.property];
 				}
 			}
-		}
 
-		if (env.options.live) {
-			this.proxyCache = {};
-		}
-		else { // Stored data again
 			// If storing, use the rendered data too
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 
@@ -245,18 +241,13 @@ var _ = Mavo.Group = $.Class({
 					var value = data[property];
 
 					if (typeof value != "object" && (!oldData || oldData[property] != value)) {
+						// Property actually changed. Why != "object" though?
 						this.dataChanged("propertychange", {property});
 					}
+
+					this.liveData[property] = value;
 				}
 			}
-		}
-
-		this.createLiveData(data);
-	},
-
-	lazy: {
-		liveData: function() {
-			return this.createLiveData();
 		}
 	},
 

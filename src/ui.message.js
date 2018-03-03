@@ -4,7 +4,7 @@ var _ = Mavo.UI.Message = $.Class({
 	constructor: function(mavo, message, o) {
 		this.mavo = mavo;
 		this.message = message;
-		this.closed = Mavo.defer();
+		this.closed = Mavo.promise();
 
 		this.element = $.create({
 			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),

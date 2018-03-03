@@ -20,7 +20,7 @@ var _ = Mavo.Node = $.Class({
 		_.all.set(element, [...(_.all.get(this.element) || []), this]);
 
 		this.mavo = mavo;
-		this.group = this.parentGroup = env.options.group;
+		this.group = this.parent = this.parentGroup = env.options.group;
 
 		this.template = env.options.template;
 
@@ -104,10 +104,6 @@ var _ = Mavo.Node = $.Class({
 		return this.storage !== "none";
 	},
 
-	get parent() {
-		return this.collection || this.parentGroup;
-	},
-
 	/**
 	 * Runs after the constructor is done (including the constructor of the inheriting class), synchronously
 	 */
@@ -135,6 +131,37 @@ var _ = Mavo.Node = $.Class({
 		if (this.isDataNull(o)) {
 			return o.forceObjects? Mavo.objectify(null) : null;
 		}
+	},
+
+	getLiveData: function() {
+		if (this.isDataNull({live: true})) {
+			return this.collection? Mavo.objectify(null) : null;
+		}
+
+		return this.liveData[Mavo.toProxy];
+	},
+
+	updateParentLiveData: function(value) {
+		if (value === undefined) {
+			value = Mavo.in(this.liveData, Mavo.toProxy)? this.liveData[Mavo.toProxy] : this.liveData;
+		}
+
+		var key = this.collection? this.index : this.property;
+
+		if (this.collection && !this.collection.mutable) {
+			// Immutable collections drop nulls
+			var existing = this.parent.liveData[key];
+
+			if (Mavo.value(value) === null) {
+				this.parent.liveData.splice(this.index, 1);
+			}
+			else {
+
+			}
+		}
+
+
+		this.parent.liveData[key] = value;
 	},
 
 	isDataNull: function(o) {
@@ -265,7 +292,7 @@ var _ = Mavo.Node = $.Class({
 
 		Mavo.hooks.run("node-render-start", env);
 
-		if (this.nodeType != "Collection" && Array.isArray(data)) {
+		if (this.nodeType != "Collection" && Array.isArray(env.data)) {
 			// We are rendering an array on a singleton, what to do?
 			var properties;
 
@@ -281,14 +308,22 @@ var _ = Mavo.Node = $.Class({
 				env.data = env.data[0];
 			}
 		}
-
-		if (this.editing) {
-			this.done();
-			this.dataRender(env.data);
-			this.edit();
+		else if (this.childrenNames && this.childrenNames.length == 1 && this.childrenNames[0] === this.property
+		         && env.data !== null && typeof env.data === "object") {
+			// {foo: {foo: 5}} should become {foo: 5}
+			env.data = env.data[this.property];
 		}
-		else {
-			this.dataRender(env.data);
+
+		var editing = this.editing;
+
+		if (editing) {
+			this.done();
+		}
+
+		this.dataRender(env.data);
+
+		if (editing) {
+			this.edit();
 		}
 
 		this.save();
@@ -297,12 +332,15 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	dataChanged: function(action, o = {}) {
-		$.fire(o.element || this.element, "mv-change", $.extend({
-			property: this.property,
+		var change = $.extend({
 			action,
+			property: this.property,
 			mavo: this.mavo,
 			node: this
-		}, o));
+		}, o);
+
+		$.fire(o.element || this.element, "mv-change", change);
+		this.mavo.changed(change);
 	},
 
 	toString: function() {
@@ -321,6 +359,11 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		return this.parentGroup? this.parentGroup.closestItem : null;
+	},
+
+	getPath: function() {
+		var path = this.parent? this.parent.path : [];
+		return this.property? [...path, this.property] : path;
 	},
 
 	/**
@@ -362,65 +405,60 @@ var _ = Mavo.Node = $.Class({
 		return ret;
 	},
 
-	relativizeData: self.Proxy? function(data, options = {live: true}) {
+	resolveAgainstData: function(property, data) {
+		if (property in data) {
+			return data[property];
+		}
+
+		// Property does not exist, look for it elsewhere
+
+		// Special values
+		switch (property) {
+			case "$index":
+				return this.index || 0;
+			case "$next":
+			case "$previous":
+				if (this.closestCollection) {
+					return this.closestCollection.liveData[Mavo.toProxy][this.index + (property == "$next"? 1 : -1)];
+				}
+
+				return null;
+		}
+
+		// First look in descendants
+		var ret = this.resolve(property);
+
+		if (ret !== undefined) {
+			if (Array.isArray(ret)) {
+				ret = ret.map(item => item.getLiveData()).filter(item => Mavo.value(item) !== null);
+			}
+			else if (ret instanceof Mavo.Node) {
+				ret = ret.getLiveData();
+			}
+
+			return ret;
+		}
+
+		// Does it reference another Mavo?
+		if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
+			return Mavo.all[property].root.getLiveData();
+		}
+	},
+
+	relativizeData: self.Proxy? function(data) {
 		return new Proxy(data, {
 			get: (data, property, proxy) => {
 				if (property in data) {
 					return data[property];
 				}
 
-				// Checking if property is in proxy might add it to the cache
-				if (property in proxy && property in this.proxyCache) {
-					return this.proxyCache[property];
-				}
+				return this.resolveAgainstData(property, data);
 			},
 
 			has: (data, property) => {
-				if (property in data || property in this.proxyCache) {
-					return true;
-				}
+				var ret = this.resolveAgainstData(property, data);
 
-				// Property does not exist, look for it elsewhere
-
-				// Special values
-				switch (property) {
-					case "$index":
-						this.proxyCache[property] = this.index || 0;
-						return true; // if index is 0 it's falsy and has would return false!
-					case "$next":
-					case "$previous":
-						if (this.closestCollection) {
-							this.proxyCache[property] = this.closestCollection.getData(options)[this.index + (property == "$next"? 1 : -1)];
-							return true;
-						}
-
-						this.proxyCache[property] = null;
-						return false;
-				}
-
-				// First look in descendants
-				var ret = this.resolve(property);
-
-				if (ret !== undefined) {
-					if (Array.isArray(ret)) {
-						ret = ret.map(item => item.getData(options))
-								 .filter(item => item !== null);
-					}
-					else if (ret instanceof Mavo.Node) {
-						ret = ret.getData(options);
-					}
-
-					this.proxyCache[property] = ret;
-
-					return true;
-				}
-
-				// Does it reference another Mavo?
-				if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
-					return this.proxyCache[property] = Mavo.all[property].root.getData(options);
-				}
-
-				return false;
+				return ret !== undefined;
 			},
 
 			set: function(data, property = "", value) {
@@ -431,10 +469,9 @@ var _ = Mavo.Node = $.Class({
 	} : data => data,
 
 	createLiveData: function(obj = {}) {
-		this.liveData = obj;
-		this.liveData[Mavo.toNode] = this;
-		this.liveData[Mavo.toProxy] = this.relativizeData(this.liveData);
-		return this.liveData;
+		obj[Mavo.toNode] = this;
+		obj[Mavo.toProxy] = this.relativizeData(obj);
+		return obj;
 	},
 
 	pathFrom: function(node) {
@@ -543,10 +580,6 @@ var _ = Mavo.Node = $.Class({
 
 			return ret;
 		},
-
-		proxyCache: function() {
-			return {};
-		}
 	},
 
 	live: {
@@ -649,11 +682,20 @@ var _ = Mavo.Node = $.Class({
 			}
 		},
 
-		path: {
-			get: function() {
-				var path = this.parent? this.parent.path : [];
+		collection: function(value) {
+			// These only change when collection changes
+			this.parent = value || this.parentGroup;
+		},
 
-				return this.property? [...path, this.property] : path;
+		index: function(value) {
+			if (this.collection && this.liveData) {
+				if (this._index > 0) {
+					this.collection.liveData[this._index] = null;
+				}
+
+				if (value >= 0) {
+					this.collection.liveData[value] = this.liveData[Mavo.toProxy];
+				}
 			}
 		}
 	},

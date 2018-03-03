@@ -198,6 +198,36 @@ var _ = Mavo.Primitive = $.Class({
 		this.observer && this.observer.destroy();
 	},
 
+	updateLiveData: function() {
+		var value = this.value;
+
+		if (value === "" || this.isDataNull({live: true})) {
+			value = null;
+		}
+
+		this.liveData = value;
+
+		if (this.collection) {
+			this.liveData = this.createLiveData(Mavo.objectify(value));
+
+			if (this.collection) {
+				// Turn primitive collection items into objects, so we can have $index etc, and their property
+				// name etc resolve relative to them, not their parent group
+				this.liveData[this.property] = this.liveData[Mavo.toProxy];
+			}
+		}
+
+		this.updateParentLiveData();
+	},
+
+	getLiveData: function() {
+		if (this.liveData === undefined) {
+			this.updateLiveData();
+		}
+
+		return this.liveData && typeof this.liveData === "object"? this.liveData[Mavo.toProxy] : this.liveData;
+	},
+
 	getData: function(o = {}) {
 		var env = {
 			context: this,
@@ -214,25 +244,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		if (env.options.live) {
-			if (this.collection || o.forceObjects) {
-				env.data = Mavo.objectify(env.data, {
-					[Mavo.toNode]: this
-				});
-
-				env.data[Mavo.toProxy] = this.relativizeData(env.data);
-
-				if (this.collection) {
-					// Turn primitive collection items into objects, so we can have $index etc, and their property
-					// name etc resolve relative to them, not their parent group
-					env.data[this.property] = env.data;
-				}
-
-				Mavo.hooks.run("node-getdata-end", env);
-
-				this.proxyCache = {};
-
-				return env.data[Mavo.toProxy];
-			}
+			return Mavo.in(this.liveData, Mavo.toProxy)? this.liveData[Mavo.toProxy] : this.liveData;
 		}
 		else if (this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
@@ -367,7 +379,7 @@ var _ = Mavo.Primitive = $.Class({
 			$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
 		}
 
-		this.preEdit = Mavo.defer(resolve => {
+		this.preEdit = Mavo.promise(resolve => {
 			if (o.immediately) {
 				return resolve();
 			}
@@ -569,6 +581,8 @@ var _ = Mavo.Primitive = $.Class({
 			this.empty = !value && value !== 0;
 
 			this._value = value;
+
+			this.updateLiveData();
 
 			if (!o.silent) {
 				if (this.saved) {

@@ -12,6 +12,8 @@ var _ = Mavo.Collection = $.Class({
 		this.templateElement = this.element;
 
 		this.children = [];
+		this.liveData = this.createLiveData([]);
+		this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
 
 		// ALL descendant property names as an array
 		if (!this.fromTemplate("mutable", "templateElement", "accepts", "optional", "like", "likeNode")) {
@@ -70,10 +72,6 @@ var _ = Mavo.Collection = $.Class({
 			options: o,
 			data: this.liveData
 		};
-
-		if (env.options.live) {
-			this.proxyCache = {};
-		}
 
 		for (var i = 0, j = 0; item = this.children[i]; i++) {
 			if (!item.deleted || env.options.live) {
@@ -239,12 +237,15 @@ var _ = Mavo.Collection = $.Class({
 		return changed;
 	},
 
+	// Move item to this collection from another collection
 	adopt: function(item) {
 		if (item.collection) {
 			// It belongs to another collection, delete from there first
 			item.collection.splice({remove: item});
 			item.collection.dataChanged("delete");
 		}
+
+		item.collection = this;
 
 		 // Update collection & closestCollection properties
 		this.walk(obj => {
@@ -254,11 +255,11 @@ var _ = Mavo.Collection = $.Class({
 
 			// Belongs to another Mavo?
 			if (item.mavo != this.mavo) {
-				item.mavo = this.mavo;
+				obj.mavo = this.mavo;
 			}
-		});
 
-		item.collection = this;
+			obj.path = obj.getPath();
+		});
 
 		// Adjust templates and their copies
 		if (item.template) {
@@ -396,6 +397,7 @@ var _ = Mavo.Collection = $.Class({
 
 				if (i < data.length) {
 					item.render(data[i]);
+					this.liveData[i] = item.liveData[Mavo.toProxy] || item.LiveData;
 				}
 				else {
 					item.dataChanged("delete");
@@ -403,6 +405,8 @@ var _ = Mavo.Collection = $.Class({
 					i--;
 				}
 			}
+
+			this.liveData.length = data.length;
 
 			if (data.length > i) {
 				// There are still remaining items
@@ -439,8 +443,6 @@ var _ = Mavo.Collection = $.Class({
 				}
 			}
 		}
-
-		this.createLiveData(data|| []);
 	},
 
 	find: function(property, o = {}) {
@@ -631,6 +633,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	static: {
+		variables: ["$index", "$previous", "$next"],
 		dragulas: [],
 		get: element => {
 			// Is it an add button or a marker?

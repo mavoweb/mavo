@@ -8,6 +8,7 @@ Mavo.Expressions.directive("mv-if", {
 				"hidden": function(value) {
 					if (this._hidden !== value) {
 						this._hidden = value;
+						this.updateParentLiveData(value? null : undefined);
 						this.dataChanged();
 					}
 				}
@@ -20,7 +21,7 @@ Mavo.Expressions.directive("mv-if", {
 									.filter(el => el.closest("[mv-if]") == this.element)
 									.map(el => Mavo.Node.get(el));
 
-					// When the element is detached, datachange events from properties
+					// When the element is detached, mv-change events from properties
 					// do not propagate up to the group so expressions do not recalculate.
 					// We must do this manually.
 					this.element.addEventListener("mv-change", evt => {

@@ -41,43 +41,6 @@ Not an expression? Use mv-expressions="none" to disable expressions on an elemen
 			this.identifiers = value.match(/[$a-z][$\w]*/ig) || [];
 		}
 	},
-
-	static: {
-		changedBy: function(identifiers, evt) {
-			if (!evt) {
-				return true;
-			}
-
-			if (!identifiers) {
-				return false;
-			}
-
-			if (identifiers.indexOf(evt.property) > -1) {
-				return true;
-			}
-
-			if (Mavo.Functions.intersects(evt.properties, identifiers)) {
-				return true;
-			}
-
-			if (evt.action == "propertychange") {
-				return Mavo.Functions.intersects(identifiers, evt.node.path);
-			}
-			else {
-				if (Mavo.Functions.intersects(["$index", "$previous", "$next"], identifiers)) {
-					return true;
-				}
-
-				var collection = evt.node.collection || evt.node;
-
-				if (Mavo.Functions.intersects(collection.properties, identifiers)) {
-					return true;
-				}
-			}
-
-			return false;
-		},
-	}
 });
 
 _.Syntax = $.Class({
