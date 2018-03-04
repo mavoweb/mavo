@@ -252,10 +252,7 @@ var _ = Mavo.Primitive = $.Class({
 			}
 		}
 
-		if (env.options.live) {
-			return Mavo.in(this.liveData, Mavo.toProxy)? this.liveData[Mavo.toProxy] : this.liveData;
-		}
-		else if (this.inPath.length) {
+		if (this.inPath.length) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
 

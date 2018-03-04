@@ -46,39 +46,19 @@ var _ = Mavo.ImplicitCollection = $.Class({
 			data: this.liveData
 		};
 
-		for (var i = 0, j = 0; item = this.children[i]; i++) {
-			if (env.options.live) {
-				var itemData = item.getData(env.options);
-
-				if (env.options.live || Mavo.value(itemData) !== null) {
-					env.data[j] = itemData;
-					j++;
-				}
-			}
-		}
-
-		env.data.length = j;
-
 		// Drop nulls
 		Mavo.filter(env.data, item => Mavo.value(item) !== null);
 
-		if (env.options.live && env.data.length === 1) {
-			// If only 1 item, return the item
-			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-			env.data = env.data[0];
-		}
-		else if (this.data && !env.options.live) {
+		if (this.data) {
 			var rendered = Mavo.subset(this.data, this.inPath);
 			env.data = env.data.concat(rendered.slice(env.data.length));
 		}
 
-		if (!env.options.live) {
-			env.data = Mavo.subset(this.data, this.inPath, env.data);
-		}
+		env.data = Mavo.subset(this.data, this.inPath, env.data);
 
 		Mavo.hooks.run("node-getdata-end", env);
 
-		return (env.options.live? env.data[Mavo.toProxy] : env.data) || env.data;
+		return env.data;
 	},
 
 	/**
@@ -137,14 +117,6 @@ var _ = Mavo.ImplicitCollection = $.Class({
 			return Mavo.flatten(ret);
 		}
 	},
-
-	// live: {
-	// 	element: {
-	// 		get: function(value) {
-	// 			console.warn("Deprecated attempt to get element on ImplicitCollection");
-	// 		}
-	// 	}
-	// },
 
 	lazy: {
 		liveData: function() {

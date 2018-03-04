@@ -130,13 +130,13 @@ var _ = Mavo.Node = $.Class({
 
 	getData: function(o = {}) {
 		if (this.isDataNull(o)) {
-			return o.forceObjects? Mavo.objectify(null) : null;
+			return null;
 		}
 	},
 
-	getLiveData: function() {
+	getLiveData: function(o = {}) {
 		if (this.isDataNull({live: true})) {
-			return this.collection? Mavo.objectify(null) : null;
+			return this.collection || o.forceObjects? Mavo.objectify(null) : null;
 		}
 
 		return this.liveData[Mavo.toProxy];

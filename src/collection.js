@@ -79,10 +79,10 @@ var _ = Mavo.Collection = $.Class({
 		};
 
 		for (var i = 0, j = 0; item = this.children[i]; i++) {
-			if (!item.deleted || env.options.live) {
+			if (!item.deleted) {
 				var itemData = item.getData(env.options);
 
-				if (env.options.live || Mavo.value(itemData) !== null) {
+				if (Mavo.value(itemData) !== null) {
 					env.data[j] = itemData;
 					j++;
 				}
@@ -91,13 +91,11 @@ var _ = Mavo.Collection = $.Class({
 
 		env.data.length = j;
 
-		if (!env.options.live) {
-			env.data = Mavo.subset(this.data, this.inPath, env.data);
-		}
+		env.data = Mavo.subset(this.data, this.inPath, env.data);
 
 		Mavo.hooks.run("node-getdata-end", env);
 
-		return (env.options.live? env.data[Mavo.toProxy] : env.data) || env.data;
+		return env.data;
 	},
 
 	// Create item but don't insert it anywhere

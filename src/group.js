@@ -104,46 +104,47 @@ var _ = Mavo.Group = $.Class({
 			return env.data;
 		}
 
-		env.data = this.liveData;
+		env.data = Mavo.subset(this.data, this.inPath) || {};
 
-		if (!env.options.live) {
-			for (var property in this.children) {
-				var obj = this.children[property];
+		for (var property in this.children) {
+			var obj = this.children[property];
 
-				if (obj.saved || env.options.live) {
-					var data = obj.getData(env.options);
-				}
-
-				if (env.options.live || obj.saved && Mavo.value(data) !== null) {
-					env.data[obj.property] = data;
-				}
-				else {
-					delete env.data[obj.property];
-				}
+			if (obj.saved) {
+				var data = obj.getData(env.options);
 			}
 
-			// If storing, use the rendered data too
-			env.data = Mavo.subset(this.data, this.inPath, env.data);
-
-			if (!this.childrenNames.length && !this.isRoot) {
-				// Avoid {} in the data
-				env.data = null;
+			if (obj.saved && Mavo.value(data) !== null) {
+				env.data[obj.property] = data;
 			}
-			else if (env.data && typeof env.data === "object") {
-				// Add JSON-LD stuff
-				if (this.type && this.type != _.DEFAULT_TYPE) {
-					env.data["@type"] = this.type;
-				}
-
-				if (this.vocab) {
-					env.data["@context"] = this.vocab;
-				}
+			else {
+				delete env.data[obj.property];
 			}
 		}
 
+		if (!this.childrenNames.length && !this.isRoot) {
+			// Avoid {} in the data
+			env.data = null;
+		}
+		else if (this.childrenNames.length === 1 && this.property in this.children) {
+			env.data = env.data[this.property];
+		}
+		else if (env.data && typeof env.data === "object") {
+			// Add JSON-LD stuff
+			if (this.type && this.type != _.DEFAULT_TYPE) {
+				env.data["@type"] = this.type;
+			}
+
+			if (this.vocab) {
+				env.data["@context"] = this.vocab;
+			}
+		}
+
+		// If storing, use the rendered data too
+		env.data = Mavo.subset(this.data, this.inPath, env.data);
+
 		Mavo.hooks.run("node-getdata-end", env);
 
-		return (env.options.live? env.data[Mavo.toProxy] : env.data) || env.data;
+		return env.data;
 	},
 
 	/**

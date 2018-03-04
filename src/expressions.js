@@ -160,7 +160,6 @@ var _ = Mavo.Expressions = $.Class({
 				}
 
 				if (!cache.updated.has(expr)) {
-					// var map = cache.data.has(expr.item)? cache.data : cache.data.set(expr.item, expr.item.getData({live: true}));
 					var data = expr.item.getLiveData();
 					expr.update(data);
 				}
