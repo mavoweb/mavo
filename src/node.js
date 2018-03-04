@@ -34,10 +34,11 @@ var _ = Mavo.Node = $.Class({
 			this.copies = [];
 		}
 
-		if (!this.fromTemplate("property", "type")) {
+		if (!this.fromTemplate("property", "type", "path")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.storage = this.element.getAttribute("mv-storage");
+			this.path = this.getPath();
 		}
 
 		this.modes = this.element.getAttribute("mv-mode");
@@ -148,20 +149,13 @@ var _ = Mavo.Node = $.Class({
 
 		var key = this.collection? this.index : this.property;
 
-		if (this.collection && !this.collection.mutable) {
-			// Immutable collections drop nulls
-			var existing = this.parent.liveData[key];
-
-			if (Mavo.value(value) === null) {
-				this.parent.liveData.splice(this.index, 1);
-			}
-			else {
-
-			}
+		if (this.collection && this.collection instanceof Mavo.ImplicitCollection) {
+			// Implicit collections drop nulls
+			this.collection.updateLiveData();
 		}
-
-
-		this.parent.liveData[key] = value;
+		else {
+			this.parent.liveData[key] = value;
+		}
 	},
 
 	isDataNull: function(o) {
@@ -255,6 +249,10 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-done-end", this);
 	},
 
+	save: function() {
+		this.unsavedChanges = false;
+	},
+
 	propagate: function(callback) {
 		for (let i in this.children) {
 			let node = this.children[i];
@@ -292,7 +290,7 @@ var _ = Mavo.Node = $.Class({
 
 		Mavo.hooks.run("node-render-start", env);
 
-		if (this.nodeType != "Collection" && Array.isArray(env.data)) {
+		if (!/Collection$/.test(this.nodeType) && Array.isArray(env.data)) {
 			// We are rendering an array on a singleton, what to do?
 			var properties;
 
@@ -354,7 +352,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	getClosestItem: function() {
-		if (this.collection && this.collection.mutable) {
+		if (this.collection && /Collection$/.test(this.collection.nodeType)	) {
 			return this;
 		}
 
@@ -386,12 +384,14 @@ var _ = Mavo.Node = $.Class({
 
 		if (ret === undefined) {
 			// Still not found, look in ancestors
+			var isAncestor = this.path.indexOf(property) > -1;
+
 			ret = this.walkUp(group => {
 				if (group.property == property) {
 					return group;
 				}
 
-				if (property in group.children) {
+				if (!isAncestor) {
 					return group.children[property];
 				}
 			});
@@ -399,6 +399,7 @@ var _ = Mavo.Node = $.Class({
 
 		if (ret === undefined) {
 			// Still not found, look anywhere
+			// TODO ideally you want to iteratively step up and branch
 			ret = this.mavo.root.find(property, o);
 		}
 
@@ -415,7 +416,7 @@ var _ = Mavo.Node = $.Class({
 		// Special values
 		switch (property) {
 			case "$index":
-				return this.index || 0;
+				return this.closestItem && this.closestItem.index || 0;
 			case "$next":
 			case "$previous":
 				if (this.closestCollection) {
@@ -425,7 +426,6 @@ var _ = Mavo.Node = $.Class({
 				return null;
 		}
 
-		// First look in descendants
 		var ret = this.resolve(property);
 
 		if (ret !== undefined) {
@@ -608,7 +608,7 @@ var _ = Mavo.Node = $.Class({
 				// result in infinite recursion
 				this._mode = value;
 
-				if (!(this instanceof Mavo.Collection) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
+				if (!/Collection$/.test(this.nodeType) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
 					// If attribute is not one of the recognized values, leave it alone
 					var set = this.modes || value == "edit";
 					Mavo.Observer.sneak(this.mavo.modeObserver, () => {
@@ -737,7 +737,7 @@ var _ = Mavo.Node = $.Class({
 		},
 
 		get: function(element, prioritizePrimitive) {
-			var nodes = (_.all.get(element) || []).filter(node => !(node instanceof Mavo.Collection));
+			var nodes = (_.all.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
 
 			if (nodes.length < 2 || !prioritizePrimitive) {
 				return nodes[0];

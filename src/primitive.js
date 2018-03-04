@@ -225,7 +225,16 @@ var _ = Mavo.Primitive = $.Class({
 			this.updateLiveData();
 		}
 
-		return this.liveData && typeof this.liveData === "object"? this.liveData[Mavo.toProxy] : this.liveData;
+		if (this.liveData && typeof this.liveData === "object") {
+			// Either liveData already created or object rendered on Primitive
+			if (!this.liveData[Mavo.toProxy]) {
+				this.liveData = this.createLiveData(this.value);
+			}
+
+			return this.liveData[Mavo.toProxy];
+		}
+
+		return this.liveData;
 	},
 
 	getData: function(o = {}) {

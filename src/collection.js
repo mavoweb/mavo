@@ -15,9 +15,14 @@ var _ = Mavo.Collection = $.Class({
 		this.liveData = this.createLiveData([]);
 		this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
 
+		// Keep position of the template in the DOM, since we might remove it
+		this.marker = document.createComment("mv-marker");
+		Mavo.data(this.marker, "collection", this);
+
+		$.after(this.marker, this.templateElement);
+
 		// ALL descendant property names as an array
-		if (!this.fromTemplate("mutable", "templateElement", "accepts", "optional", "like", "likeNode")) {
-			this.mutable = this.templateElement.matches(Mavo.selectors.multiple);
+		if (!this.fromTemplate("templateElement", "accepts", "optional", "like", "likeNode")) {
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 			this.like = this.templateElement.getAttribute("mv-like");
 
@@ -86,21 +91,6 @@ var _ = Mavo.Collection = $.Class({
 
 		env.data.length = j;
 
-		if (!this.mutable) {
-			// If immutable, drop nulls
-			Mavo.filter(env.data, item => Mavo.value(item) !== null);
-
-			if (env.options.live && env.data.length === 1) {
-				// If immutable with only 1 item, return the item
-				// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-				env.data = env.data[0];
-			}
-			else if (this.data && !env.options.live) {
-				var rendered = Mavo.subset(this.data, this.inPath);
-				env.data = env.data.concat(rendered.slice(env.data.length));
-			}
-		}
-
 		if (!env.options.live) {
 			env.data = Mavo.subset(this.data, this.inPath, env.data);
 		}
@@ -151,17 +141,12 @@ var _ = Mavo.Collection = $.Class({
 			this.adopt(item);
 		}
 
-		if (this.mutable) {
-			// Add it to the DOM, or fix its place
-			var rel = this.children[index]? this.children[index].element : this.marker;
-			$[this.bottomUp? "after" : "before"](item.element, rel);
+		// Add it to the DOM, or fix its place
+		var rel = this.children[index]? this.children[index].element : this.marker;
+		$[this.bottomUp? "after" : "before"](item.element, rel);
 
-			if (index === undefined) {
-				index = this.bottomUp? 0 : this.length;
-			}
-		}
-		else {
-			index = this.length;
+		if (index === undefined) {
+			index = this.bottomUp? 0 : this.length;
 		}
 
 		var env = {context: this, item};
@@ -308,13 +293,11 @@ var _ = Mavo.Collection = $.Class({
 		var when = o.immediately? Promise.resolve() : Mavo.inView.when(item.element);
 
 		return when.then(() => {
-			if (this.mutable) {
-				if (!item.itembar) {
-					item.itembar = new Mavo.UI.Itembar(item);
-				}
-
-				item.itembar.add();
+			if (!item.itembar) {
+				item.itembar = new Mavo.UI.Itembar(item);
 			}
+
+			item.itembar.add();
 
 			return item.edit(o);
 		});
@@ -325,20 +308,18 @@ var _ = Mavo.Collection = $.Class({
 			return false;
 		}
 
-		if (this.mutable) {
-			// Insert the add button if it's not already in the DOM
-			if (!this.addButton.parentNode) {
-				var tag = this.element.tagName.toLowerCase();
-				var containerSelector = Mavo.selectors.container[tag];
-				var rel = containerSelector? this.marker.parentNode.closest(containerSelector) : this.marker;
-				$[this.bottomUp? "before" : "after"](this.addButton, rel);
-			}
-
-			// Set up drag & drop
-			_.dragula.then(() => {
-				this.getDragula();
-			});
+		// Insert the add button if it's not already in the DOM
+		if (!this.addButton.parentNode) {
+			var tag = this.element.tagName.toLowerCase();
+			var containerSelector = Mavo.selectors.container[tag];
+			var rel = containerSelector? this.marker.parentNode.closest(containerSelector) : this.marker;
+			$[this.bottomUp? "before" : "after"](this.addButton, rel);
 		}
+
+		// Set up drag & drop
+		_.dragula.then(() => {
+			this.getDragula();
+		});
 
 		// Edit items, maybe insert item bar
 		return Promise.all(this.children.map(item => this.editItem(item, o)));
@@ -349,17 +330,15 @@ var _ = Mavo.Collection = $.Class({
 			return false;
 		}
 
-		if (this.mutable) {
-			if (this.addButton.parentNode) {
-				this.addButton.remove();
-			}
-
-			this.propagate(item => {
-				if (item.itembar) {
-					item.itembar.remove();
-				}
-			});
+		if (this.addButton.parentNode) {
+			this.addButton.remove();
 		}
+
+		this.propagate(item => {
+			if (item.itembar) {
+				item.itembar.remove();
+			}
+		});
 	},
 
 	dataChanged: function(action, o = {}) {
@@ -387,62 +366,61 @@ var _ = Mavo.Collection = $.Class({
 
 		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
 
-		if (!this.mutable) {
-			this.children.forEach((item, i) => item.render(data && data[i]));
-		}
-		else {
-			// First render on existing items
-			for (var i = 0; i < this.children.length; i++) {
-				var item = this.children[i];
+		// First render on existing items
+		for (var i = 0; i < this.children.length; i++) {
+			var item = this.children[i];
 
-				if (i < data.length) {
-					item.render(data[i]);
-					this.liveData[i] = item.liveData[Mavo.toProxy] || item.LiveData;
-				}
-				else {
-					item.dataChanged("delete");
-					this.delete(item, true);
-					i--;
-				}
+			if (i < data.length) {
+				item.render(data[i]);
+				this.liveData[i] = item.getLiveData();
+			}
+			else {
+				item.dataChanged("delete");
+				this.delete(item, true);
+				i--;
+			}
+		}
+
+		this.liveData.length = data.length;
+
+		if (data.length > i) {
+			// There are still remaining items
+			// Using document fragments improves performance by 60%
+			var fragment = document.createDocumentFragment();
+
+			for (var j = i; j < data.length; j++) {
+				var item = this.createItem();
+
+				item.render(data[j]);
+
+				this.children.push(item);
+				this.liveData[j] = item.getLiveData();
+				item.index = j;
+
+				fragment.appendChild(item.element);
+
+				var env = {context: this, item};
+				Mavo.hooks.run("collection-add-end", env);
+
 			}
 
-			this.liveData.length = data.length;
+			if (this.bottomUp) {
+				$.after(fragment, i > 0? this.children[i-1].element : this.marker);
+			}
+			else {
+				$.before(fragment, this.marker);
+			}
 
-			if (data.length > i) {
-				// There are still remaining items
-				// Using document fragments improves performance by 60%
-				var fragment = document.createDocumentFragment();
+			for (var j = i; j < this.children.length; j++) {
+				this.children[j].dataChanged("add");
 
-				for (var j = i; j < data.length; j++) {
-					var item = this.createItem();
-
-					item.render(data[j]);
-
-					this.children.push(item);
-					item.index = j;
-
-					fragment.appendChild(item.element);
-
-					var env = {context: this, item};
-					Mavo.hooks.run("collection-add-end", env);
-				}
-
-				if (this.bottomUp) {
-					$.after(fragment, i > 0? this.children[i-1].element : this.marker);
-				}
-				else {
-					$.before(fragment, this.marker);
-				}
-
-				for (var j = i; j < this.children.length; j++) {
-					this.children[j].dataChanged("add");
-
-					if (this.mavo.expressions.active) {
-						requestAnimationFrame(() => this.mavo.expressions.update(this.children[j]));
-					}
+				if (this.mavo.expressions.active) {
+					requestAnimationFrame(() => this.mavo.expressions.update(this.children[j]));
 				}
 			}
 		}
+
+
 	},
 
 	find: function(property, o = {}) {
@@ -467,25 +445,6 @@ var _ = Mavo.Collection = $.Class({
 		return c && this.itemTemplate.nodeType == c.itemTemplate.nodeType && (c === this
 		       || c.template == this || this.template == c || this.template && this.template == c.template
 		       || this.accepts.indexOf(c.property) > -1);
-	},
-
-	live: {
-		mutable: function(value) {
-			if (value && value !== this.mutable) {
-				// Why is all this code here? Because we want it executed
-				// every time mutable changes, not just in the constructor
-				// (think multiple elements with the same property name, where only one has mv-multiple)
-				this._mutable = value;
-
-				// Keep position of the template in the DOM, since we might remove it
-				this.marker = document.createComment("mv-marker");
-				Mavo.data(this.marker, "collection", this);
-
-				var ref = this.templateElement.parentNode? this.templateElement : this.children[this.length - 1].element;
-
-				$.after(this.marker, ref);
-			}
-		}
 	},
 
 	// Make sure to only call after dragula has loaded
@@ -562,13 +521,9 @@ var _ = Mavo.Collection = $.Class({
 
 	lazy: {
 		bottomUp: function() {
-			/*
+			/**
 			 * Add new items at the top or bottom?
 			 */
-
-			if (!this.mutable) {
-				return false;
-			}
 
 			var order = this.templateElement.getAttribute("mv-order");
 

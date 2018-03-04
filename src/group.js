@@ -27,22 +27,46 @@ var _ = Mavo.Group = $.Class({
 			return this.element === element.parentNode.closest(Mavo.selectors.group);
 		});
 
-		var propertyNames = properties.map(element => Mavo.Node.getProperty(element));
+		// Figure out which properties are mv-multiple
+		var collections = {};
+		properties.forEach(element => {
+			var property = Mavo.Node.getProperty(element);
 
+			if (collections[property] !== "multiple") {
+				collections[property] = Mavo.is("multiple", element)? "multiple" : (collections[property] || 0) + 1;
+			}
+		});
+
+		// Now create the node objects
 		properties.forEach((element, i) => {
-			var property = propertyNames[i];
+			var property = Mavo.Node.getProperty(element);
 			var template = this.template? this.template.children[property] : null;
 			var options = {template, group: this};
+			var isCollection = collections[property];
 
-			if (this.children[property]) {
-				// Already exists, must be a collection
-				var collection = this.children[property];
-				collection.add(element);
-				collection.mutable = collection.mutable || Mavo.is("multiple", element);
+			if (isCollection === "multiple") {
+				var existing = this.children[property];
+
+				if (existing instanceof Mavo.Collection) {
+					existing.add(element);
+				}
+				else if (Mavo.is("multiple", element)) {
+					// We must create the collection with the element that actually has mv-multiple
+					// otherwise the template will be all wrong
+					this.children[property] = new Mavo.Collection(element, this.mavo, options);
+					(existing || []).forEach((e, i) => this.children[property].add(e, i));
+				}
+				else {
+					this.children[property] = [...(existing || []), element];
+				}
 			}
-			else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
-				// There are duplicates, so this should be a collection.
-				this.children[property] = new Mavo.Collection(element, this.mavo, options);
+			else if (isCollection > 1) {
+				if (!this.children[property]) {
+					this.children[property] = new Mavo.ImplicitCollection(element, this.mavo, options);
+				}
+				else {
+					this.children[property].add(element);
+				}
 			}
 			else {
 				// Normal case
@@ -168,10 +192,6 @@ var _ = Mavo.Group = $.Class({
 		}
 
 		return Promise.all(Object.keys(this.children).map(prop => this.children[prop].edit(o)));
-	},
-
-	save: function() {
-		this.unsavedChanges = false;
 	},
 
 	propagated: ["save", "import"],
