@@ -138,7 +138,7 @@ var _ = Mavo.UI.Bar = $.Class({
 	},
 
 	add: function(id) {
-		var o =_.controls[id];
+		var o = _.controls[id];
 
 		if (o.prepare) {
 			o.prepare.call(this.mavo);

@@ -157,23 +157,6 @@
 		@include highlight(hsla(80, 50%, 50%, .25), "!important");
 	}
 
-	&.mv-deleted {
-		@include highlight(hsla(0,100%,50%,.2), "!important");
-	}
-
-	&.mv-deleted {
-		display: block;
-
-		button {
-			display: inline-block;
-			margin-left: .4em;
-		}
-	}
-
-	.mv-deleted:not([mv-mode="edit"]) {
-		display: none;
-	}
-
 	// Dragula styles
 	&.gu-mirror {
 		position: fixed !important;
@@ -470,15 +453,18 @@ meter, progress {
 
 .mv-message {
 	position: relative;
-	z-index: 3;
 	padding: .5em 1em;
 	border-radius: .3em;
 	margin: 0;
-	background: #cef;
+	background: hsla(200, 100%, 87%, .8);
 	--dark-color: #379;
 	color: black;
-	text-shadow: 0 1px 1px hsla(0,0%,100%,.5);
 	cursor: pointer;
+	backdrop-filter: blur(2px);
+
+	&::first-letter {
+		text-transform: uppercase;
+	}
 
 	&::before {
 		content: "Notice: ";
@@ -490,6 +476,10 @@ meter, progress {
 
 	.mv-close {
 		background: var(--dark-color);
+		position: absolute;
+		top: .5em;
+		right: .5em;
+		float: none;
 	}
 
 	@keyframes message-appear {
@@ -501,6 +491,7 @@ meter, progress {
 
 	&:not(.mv-inline) {
 		position: fixed;
+		z-index: 3;
 		top: 1em;
 		left: 50%;
 		transform: translateX(-50%);
@@ -530,6 +521,14 @@ meter, progress {
 		margin-bottom: 1em;
 		transform-origin: top;
 		animation: inline-message-appear .5s backwards;
+	}
+
+	@supports (position: sticky) {
+		&.mv-inline {
+			position: sticky;
+			z-index: 2;
+			top: 3em;
+		}
 	}
 
 	form {
@@ -567,6 +566,20 @@ meter, progress {
 		&::before {
 			content: "😳 Oh noes! ";
 		}
+	}
+
+	&.mv-deleted {
+		&::before {
+			content: none;
+		}
+
+		button:not([class]) {
+			margin-left: .5em;
+		}
+	}
+
+	button:not([class]) {
+		padding: .3em .5em;
 	}
 }
 

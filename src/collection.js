@@ -79,13 +79,11 @@ var _ = Mavo.Collection = $.Class({
 		};
 
 		for (var i = 0, j = 0; item = this.children[i]; i++) {
-			if (!item.deleted) {
-				var itemData = item.getData(env.options);
+			var itemData = item.getData(env.options);
 
-				if (Mavo.value(itemData) !== null) {
-					env.data[j] = itemData;
-					j++;
-				}
+			if (Mavo.value(itemData) !== null) {
+				env.data[j] = itemData;
+				j++;
 			}
 		}
 
@@ -202,6 +200,7 @@ var _ = Mavo.Collection = $.Class({
 				action.remove = action.remove || 0;
 				action.add = Mavo.toArray(action.add);
 
+				this.liveData.splice(action.index, +action.remove, ...action.add);
 				this.children.splice(action.index, +action.remove, ...action.add);
 			}
 		});
@@ -252,9 +251,11 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	delete: function(item, hard) {
-		if (hard) {
-			// Hard delete
+	delete: function(item, silent) {
+		item.element.classList.remove("mv-highlight");
+		
+		if (silent) {
+			// Delete immediately, no undo
 			$.remove(item.element);
 			this.splice({remove: item});
 			item.destroy();
@@ -262,10 +263,12 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		return $.transition(item.element, {opacity: 0}).then(() => {
-			item.deleted = true; // schedule for deletion
+			$.remove(item.element);
+			this.splice({remove: item});
+
 			item.element.style.opacity = "";
 
-			item.dataChanged("delete");
+			item.dataChanged("delete", {index: item.index});
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 		});
@@ -345,14 +348,7 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	save: function() {
-		this.children.forEach(item => {
-			if (item.deleted) {
-				this.delete(item, true);
-			}
-			else {
-				item.unsavedChanges = false;
-			}
-		});
+		this.children.forEach(item => item.unsavedChanges = false);
 	},
 
 	propagated: ["save"],
@@ -426,7 +422,7 @@ var _ = Mavo.Collection = $.Class({
 			return;
 		}
 
-		var items = this.children.filter(item => !item.deleted && !item.hidden);
+		var items = this.children.filter(item => !item.hidden);
 
 		if (this.property == property) {
 			return o.collections? this : items;

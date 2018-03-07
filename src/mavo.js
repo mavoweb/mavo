@@ -9,6 +9,7 @@ var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.promise();
 		this.dataLoaded = Mavo.promise();
+		this.deleted = null;
 
 		this.element = element;
 
@@ -318,7 +319,7 @@ var _ = self.Mavo = $.Class({
 		return _.toJSON(this.getData());
 	},
 
-	message: function(message, options) {
+	message: function(message, options = {}) {
 		return new _.UI.Message(this, message, options);
 	},
 
@@ -341,9 +342,7 @@ var _ = self.Mavo = $.Class({
 		_.hooks.run("render-start", env);
 
 		if (env.data) {
-			if (this.id == "restaurants") console.time("render");
 			this.root.render(env.data);
-			if (this.id == "restaurants") console.timeEnd("render");
 		}
 
 		this.unsavedChanges = false;
@@ -599,11 +598,54 @@ var _ = self.Mavo = $.Class({
 
 	changed: function(change) {
 		if (!this.root) {
+			// No tree yet
 			return;
 		}
 
 		if (this.expressions.active) {
 			this.expressions.updateThrottled(change);
+		}
+
+		if (change.node.saved && change.action == "delete") {
+			// Clear previous deleted item
+			this.deleted && this.deleted.node.destroy();
+			this.deletionNotice && this.deletionNotice.close();
+
+			this.deleted = change;
+			var notice = this.deletionNotice = this.message(
+				[
+					this._("item-deleted", {name: change.node.name}),
+					{
+						tag: "button",
+						textContent: this._("undo"),
+						events: {
+							click: evt => {
+								if (this.deleted) {
+									this.deleted.node.collection.add(this.deleted.node, this.deleted.index);
+								}
+
+								this.deletionNotice.close();
+							}
+						}
+					}
+				], {
+					classes: "mv-inline mv-deleted",
+					dismiss: "button"
+				});
+
+			notice.closed.then(() => {
+				var node = this.deleted && this.deleted.node;
+				var stillDeleted = node.collection.children.indexOf(node) == -1;
+
+				if (stillDeleted) {
+					// Gone forever now
+					node.destroy();
+				}
+
+				if (this.deletionNotice == notice) {
+					this.deletionNotice = null;
+				}
+			});
 		}
 	},
 

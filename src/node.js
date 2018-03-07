@@ -162,7 +162,7 @@ var _ = Mavo.Node = $.Class({
 		var env = {
 			context: this,
 			options: o,
-			result: this.deleted || !this.saved && !o.live
+			result: !this.saved && !o.live
 		};
 
 		Mavo.hooks.run("unit-isdatanull", env);
@@ -364,19 +364,6 @@ var _ = Mavo.Node = $.Class({
 		return this.property? [...path, this.property] : path;
 	},
 
-	/**
-	 * Check if this unit is either deleted or inside a deleted group
-	 */
-	isDeleted: function() {
-		var ret = this.deleted;
-
-		if (this.deleted) {
-			return true;
-		}
-
-		return !!this.parentGroup && this.parentGroup.isDeleted();
-	},
-
 	// Resolve a property name from this node
 	resolve: function(property, o = {}) {
 		// First look in descendants
@@ -516,12 +503,12 @@ var _ = Mavo.Node = $.Class({
 
 			var item = collection.children[ind];
 
-			if (!item || !item.isDeleted()) {
+			if (!item) {
 				break;
 			}
 		}
 
-		if (!item || item.isDeleted() || item == this.closestItem) {
+		if (!item || item == this.closestItem) {
 			return null;
 		}
 
@@ -629,56 +616,6 @@ var _ = Mavo.Node = $.Class({
 
 			if (value && this.mode != value) {
 				this.mode = value;
-			}
-		},
-
-		deleted: function(value) {
-			this.element.classList.toggle("mv-deleted", value);
-
-			if (value) {
-				// Soft delete, store element contents in a fragment
-				// and replace them with an undo prompt.
-				this.elementContents = document.createDocumentFragment();
-				$$(this.element.childNodes).forEach(node => {
-					this.elementContents.appendChild(node);
-				});
-
-				$.contents(this.element, [
-					{
-						tag: "button",
-						className: "mv-close mv-ui",
-						textContent: "×",
-						events: {
-							"click": function(evt) {
-								$.remove(this.parentNode);
-							}
-						}
-					},
-					"Deleted " + this.name,
-					{
-						tag: "button",
-						className: "mv-undo mv-ui",
-						textContent: "Undo",
-						events: {
-							"click": evt => this.deleted = false
-						}
-					}
-				]);
-
-				this.element.classList.remove("mv-highlight");
-				this.itembar.remove();
-			}
-			else if (this.deleted) {
-				// Undelete
-				this.element.textContent = "";
-				this.element.appendChild(this.elementContents);
-
-				// otherwise expressions won't update because this will still seem as deleted
-				// Alternatively, we could fire datachange with a timeout.
-				this._deleted = false;
-
-				this.dataChanged("undelete");
-				this.itembar.add();
 			}
 		},
 

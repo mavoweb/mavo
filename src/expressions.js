@@ -24,10 +24,13 @@ var _ = Mavo.Expressions = $.Class({
 		var ids = this.identifiers;
 
 		domexpression.identifiers.forEach(id => {
-			ids[id] = ids[id] || new Set();
+			if (!(ids[id] instanceof Set)) {
+				ids[id] = new Set();
+			}
+
 			ids[id].add(domexpression);
 
-			if (id in Mavo.all && Mavo.all[id] !== this.mavo) {
+			if (Mavo.all[id] instanceof Mavo && Mavo.all[id] !== this.mavo) {
 				// Cross-mavo expressions
 				Mavo.all[id].expressions.register(domexpression);
 			}
@@ -118,7 +121,7 @@ var _ = Mavo.Expressions = $.Class({
 		var allData = rootObject.liveData[Mavo.toProxy];
 
 		rootObject.walk((obj, path) => {
-			if (obj.expressions && obj.expressions.length && !obj.isDeleted()) {
+			if (obj.expressions && obj.expressions.length) {
 				var data = $.value(allData, ...path);
 
 				obj.expressions.forEach(et => et.update(data));
