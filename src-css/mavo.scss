@@ -524,10 +524,12 @@ meter, progress {
 	}
 
 	@supports (position: sticky) {
-		&.mv-inline {
-			position: sticky;
-			z-index: 2;
-			top: 3em;
+		@media (min-width: 600px) and (min-height: 500px) {
+			&.mv-inline {
+				position: sticky;
+				z-index: 2;
+				top: 3em;
+			}
 		}
 	}
 
