@@ -8,6 +8,7 @@ Mavo.Locale.register("en", {
 	"loading": "Loading",
 	"uploading": "Uploading",
 	"saving": "Saving",
+	"dismiss": "Dismiss",
 	"logged-in-as": "Logged in to {id} as ",
 	"login-to": "Login to {id}",
 	"error-uploading": "Error uploading file",

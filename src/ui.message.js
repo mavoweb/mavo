@@ -1,14 +1,14 @@
 (function ($, $$) {
 
 var _ = Mavo.UI.Message = $.Class({
-	constructor: function(mavo, message, o) {
+	constructor: function(mavo, message, o = {}) {
 		this.mavo = mavo;
 		this.message = message;
 		this.closed = Mavo.promise();
 
 		this.element = $.create({
 			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),
-			innerHTML: this.message,
+			[$.type(this.message) == "string"? "innerHTML" : "contents"]: this.message,
 			events: {
 				click: e => Mavo.scrollIntoViewIfNeeded(this.mavo.element)
 			},
@@ -16,7 +16,7 @@ var _ = Mavo.UI.Message = $.Class({
 		});
 
 		if (o.classes) {
-			this.element.classList.add(o.classes);
+			this.element.classList.add(...o.classes.split(/\s+/));
 		}
 
 		if (o.type == "error") {
@@ -34,7 +34,7 @@ var _ = Mavo.UI.Message = $.Class({
 			Mavo.toArray(o.dismiss).forEach(prop => {
 				dismiss[prop] = true;
 			});
-			
+
 			o.dismiss = dismiss;
 		}
 
@@ -45,7 +45,8 @@ var _ = Mavo.UI.Message = $.Class({
 				events: {
 					"click": evt => this.close()
 				},
-				start: this.element
+				start: this.element,
+				title: this.mavo._("dismiss")
 			});
 		}
 
