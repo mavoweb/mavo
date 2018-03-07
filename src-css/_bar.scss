@@ -180,9 +180,6 @@
 
 	// Displaying mv-bar in small spaces
 	&.mv-compact {
-		padding: 0 .5em 0 2.5em;
-		background-image: url("https://mavo.io/favicon.svg");
-
 		.mv-status > span {
 			display: none;
 		}
