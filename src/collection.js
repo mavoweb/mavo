@@ -253,7 +253,7 @@ var _ = Mavo.Collection = $.Class({
 
 	delete: function(item, silent) {
 		item.element.classList.remove("mv-highlight");
-		
+
 		if (silent) {
 			// Delete immediately, no undo
 			$.remove(item.element);
@@ -369,7 +369,6 @@ var _ = Mavo.Collection = $.Class({
 				this.liveData[i] = item.getLiveData();
 			}
 			else {
-				item.dataChanged("delete");
 				this.delete(item, true);
 				i--;
 			}
