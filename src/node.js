@@ -579,7 +579,9 @@ var _ = Mavo.Node = $.Class({
 				value = false;
 			}
 
-			this.element.classList.toggle("mv-unsaved-changes", value);
+			if (!/Collection$/.test(this.nodeType)) {
+				this.element.classList.toggle("mv-unsaved-changes", value);
+			}
 
 			return value;
 		},
