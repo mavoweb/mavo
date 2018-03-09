@@ -226,11 +226,36 @@ var _ = Mavo.Script = {
 			scalar: (a, b) => "" + (a || "") + (b || ""),
 			precedence: 10
 		},
+		"object": {
+			symbol: ":",
+			code: (...operands) => {
+				var i = operands.length - 1;
+				var value = operands[i];
+
+				while (i--) {
+					value = {[operands[i]]: value};
+				}
+
+				return value;
+			},
+			transformation: node => {
+				if (node.left.type == "Identifier") {
+					node.left = {
+						type: "Literal",
+						value: node.left.name,
+						raw: JSON.stringify(node.left.name)
+					};
+				}
+			},
+			precedence: 4
+		},
 		// Filter is listed here because it's an easy way to handle multiple
 		// array filters without having to code it
 		"filter": {
+			symbol: "where",
 			scalar: (a, b) => val(b)? a : null,
-			raw: true
+			raw: true,
+			precedence: 2
 		}
 	},
 
@@ -273,11 +298,16 @@ var _ = Mavo.Script = {
 	transformations: {
 		"BinaryExpression": node => {
 			let name = Mavo.Script.getOperatorName(node.operator);
+			let def = _.operators[name];
 
-			// Flatten same operator calls
+			if (def.transformation) {
+				def.transformation(node);
+			}
+
 			var nodeLeft = node;
 			var args = [];
 
+			// Flatten same operator calls
 			do {
 				args.unshift(nodeLeft.right);
 				nodeLeft = nodeLeft.left;
@@ -302,7 +332,9 @@ var _ = Mavo.Script = {
 					node.callee.name = "iff";
 				}
 
-				node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
+				if (node.callee.name in Mavo.Functions) {
+					node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
+				}
 			}
 		}
 	},
@@ -345,7 +377,7 @@ _.transformations.LogicalExpression = _.transformations.BinaryExpression;
 for (let name in Mavo.Script.operators) {
 	let details = Mavo.Script.operators[name];
 
-	if (details.scalar.length < 2) {
+	if (details.scalar && details.scalar.length < 2) {
 		Mavo.Script.addUnaryOperator(name, details);
 	}
 	else {
