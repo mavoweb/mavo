@@ -199,8 +199,6 @@ var _ = Mavo.Collection = $.Class({
 			if (action.index > -1 && (action.remove || action.add)) {
 				action.remove = action.remove || 0;
 				action.add = Mavo.toArray(action.add);
-
-				this.liveData.splice(action.index, +action.remove, ...action.add);
 				this.children.splice(action.index, +action.remove, ...action.add);
 			}
 		});
@@ -215,6 +213,8 @@ var _ = Mavo.Collection = $.Class({
 				changed.push(item);
 			}
 		}
+
+		this.updateLiveData();
 
 		return changed;
 	},
@@ -353,6 +353,14 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
+	updateLiveData: function() {
+		this.liveData.length = 0;
+
+		for (var i=0; i<this.children.length; i++) {
+			this.liveData[i] = this.children[i].getLiveData();
+		}
+	},
+
 	dataRender: function(data) {
 		if (data === undefined) {
 			return;
@@ -366,15 +374,12 @@ var _ = Mavo.Collection = $.Class({
 
 			if (i < data.length) {
 				item.render(data[i]);
-				this.liveData[i] = item.getLiveData();
 			}
 			else {
 				this.delete(item, true);
 				i--;
 			}
 		}
-
-		this.liveData.length = data.length;
 
 		if (data.length > i) {
 			// There are still remaining items
@@ -387,7 +392,6 @@ var _ = Mavo.Collection = $.Class({
 				item.render(data[j]);
 
 				this.children.push(item);
-				this.liveData[j] = item.getLiveData();
 				item.index = j;
 
 				fragment.appendChild(item.element);
@@ -403,7 +407,11 @@ var _ = Mavo.Collection = $.Class({
 			else {
 				$.before(fragment, this.marker);
 			}
+		}
 
+		this.updateLiveData();
+
+		if (data.length > i) {
 			for (var j = i; j < this.children.length; j++) {
 				this.children[j].dataChanged("add");
 
@@ -412,8 +420,6 @@ var _ = Mavo.Collection = $.Class({
 				}
 			}
 		}
-
-
 	},
 
 	find: function(property, o = {}) {

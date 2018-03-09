@@ -625,18 +625,6 @@ var _ = Mavo.Node = $.Class({
 			// These only change when collection changes
 			this.parent = value || this.parentGroup;
 		},
-
-		index: function(value) {
-			if (this.collection && this.liveData) {
-				if (this._index > 0) {
-					this.collection.liveData[this._index] = null;
-				}
-
-				if (value >= 0) {
-					this.collection.liveData[value] = this.liveData[Mavo.toProxy];
-				}
-			}
-		}
 	},
 
 	static: {
