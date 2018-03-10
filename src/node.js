@@ -366,12 +366,16 @@ var _ = Mavo.Node = $.Class({
 
 	// Resolve a property name from this node
 	resolve: function(property, o = {}) {
+		if (typeof property !== "string" || ["Mavo"].indexOf(property) > -1) {
+			return;
+		}
+
 		// First look in descendants
 		var ret = this.find(property, o);
 
 		if (ret === undefined) {
-			// Still not found, look in ancestors
-			var isAncestor = this.path.indexOf(property) > -1;
+			// Still not found, look in ancestors and their children
+			var isAncestor = this.path.slice(0, -1).indexOf(property) > -1;
 
 			ret = this.walkUp(group => {
 				if (group.property == property) {
@@ -379,15 +383,16 @@ var _ = Mavo.Node = $.Class({
 				}
 
 				if (!isAncestor) {
-					return group.children[property];
+					if (property in group.children) {
+						return group.children[property];
+					}
+
+					if (group.isRoot) {
+						// Last resort, look anywhere
+						return group.find(property, o);
+					}
 				}
 			});
-		}
-
-		if (ret === undefined) {
-			// Still not found, look anywhere
-			// TODO ideally you want to iteratively step up and branch
-			ret = this.mavo.root.find(property, o);
 		}
 
 		return ret;

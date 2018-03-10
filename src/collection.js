@@ -21,17 +21,18 @@ var _ = Mavo.Collection = $.Class({
 
 		$.after(this.marker, this.templateElement);
 
-		// ALL descendant property names as an array
 		if (!this.fromTemplate("templateElement", "accepts", "optional", "like", "likeNode")) {
 			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
 				this.likeNode = this.resolve(this.like, {exclude: this});
-				this.likeNode = this.likeNode || this.likeNode.template;
 
 				if (!this.likeNode) {
 					this.like = null;
+				}
+				else {
+					this.likeNode = this.likeNode.template || this.likeNode;
 				}
 			}
 
@@ -43,8 +44,8 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		if (this.likeNode) {
-			this.itemTemplate = this.likeNode;
-			var templateElement = $.value(this.likeNode.collection, "templateElement") || this.likeNode.element;
+			this.itemTemplate = this.likeNode.itemTemplate || this.likeNode;
+			var templateElement = this.likeNode.templateElement || $.value(this.likeNode.collection, "templateElement") || this.likeNode.element;
 			this.templateElement = templateElement.cloneNode(true);
 			this.templateElement.setAttribute("property", this.property);
 			this.properties = this.likeNode.properties;
@@ -254,23 +255,23 @@ var _ = Mavo.Collection = $.Class({
 	delete: function(item, silent) {
 		item.element.classList.remove("mv-highlight");
 
+		this.splice({remove: item});
+
 		if (silent) {
 			// Delete immediately, no undo
 			$.remove(item.element);
-			this.splice({remove: item});
 			item.destroy();
 			return;
 		}
 
 		return $.transition(item.element, {opacity: 0}).then(() => {
 			$.remove(item.element);
-			this.splice({remove: item});
 
 			item.element.style.opacity = "";
 
-			item.dataChanged("delete", {index: item.index});
-
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
+
+			return item.dataChanged("delete", {index: item.index});
 		});
 	},
 
