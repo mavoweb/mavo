@@ -194,6 +194,8 @@ var _ = Mavo.Functions = {
 		return val(condition)? iftrue : iffalse;
 	},
 
+	group: (...objects) => Object.assign(...objects),
+
 	/*********************
 	 * String functions
 	 *********************/
