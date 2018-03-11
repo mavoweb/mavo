@@ -504,11 +504,14 @@ var _ = Mavo.Node = $.Class({
 
 		for (var i = 0; i<collection.length; i++) {
 			var ind = index + i * direction;
-			ind = o.wrap? Mavo.wrap(ind, collection.length) : ind;
+
+			if (o.wrap) {
+				ind = Mavo.wrap(ind, collection.length);
+			}
 
 			var item = collection.children[ind];
 
-			if (!item) {
+			if (item) {
 				break;
 			}
 		}
