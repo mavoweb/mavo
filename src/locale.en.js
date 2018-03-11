@@ -25,6 +25,7 @@ Mavo.Locale.register("en", {
 	"drag-to-reorder": "Drag to reorder {name}",
 	"delete-item": "Delete this {name}",
 	"item-deleted": "{name} deleted",
+	"n-items": "{n} {name} items",
 	"undo": "Undo",
 	"gh-updated-file": "Updated {name}",
 	"gh-edit-suggestion-saved-in-profile": "Your edits are saved to <a href=\"{previewURL}\" target=\"_blank\">your own profile</a>, because you are not allowed to edit this page.",

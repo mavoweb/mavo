@@ -9,7 +9,7 @@ var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.promise();
 		this.dataLoaded = Mavo.promise();
-		this.deleted = null;
+		this.deleted = [];
 
 		this.element = element;
 
@@ -605,48 +605,76 @@ var _ = self.Mavo = $.Class({
 		if (this.expressions.active) {
 			this.expressions.updateThrottled(change);
 		}
+	},
 
-		if (change.node.saved && change.action == "delete") {
-			// Clear previous deleted item
-			this.deleted && this.deleted.node.destroy();
-			this.deletionNotice && this.deletionNotice.close();
+	setDeleted: function(...nodes) {
+		// Clear previous deleted item(s)
+		this.deleted.forEach(node => node.destroy());
+		this.deleted.length = [];
 
-			this.deleted = change;
-			var notice = this.deletionNotice = this.message(
-				[
-					this._("item-deleted", {name: change.node.name}),
-					{
-						tag: "button",
-						textContent: this._("undo"),
-						events: {
-							click: evt => {
-								if (this.deleted) {
-									this.deleted.node.collection.add(this.deleted.node, this.deleted.index);
-								}
+		if (this.deletionNotice) {
+			this.deletionNotice.close();
+		}
 
-								this.deletionNotice.close();
-							}
+		if (!nodes.length) {
+			return;
+		}
+
+		this.deleted.push(...nodes);
+
+		if (nodes.length == 1) {
+			var phrase = nodes[0].name;
+		}
+		else { // Multiple items deleted, possibly from multiple collections
+			var counts = {}, ret = [];
+
+			nodes.forEach(n => {
+				counts[n.name] = (counts[n.name] || 0) + 1;
+			});
+
+			for (var name in counts) {
+				ret.push(this._("n-items", {name, n: counts[name]}));
+			}
+
+			var phrase = ret.join(", ");
+		}
+
+		var notice = this.deletionNotice = this.message(
+			[
+				this._("item-deleted", {name: phrase}),
+				{
+					tag: "button",
+					textContent: this._("undo"),
+					events: {
+						click: evt => {
+							this.undoDelete();
+							this.deletionNotice.close(true);
 						}
 					}
-				], {
-					classes: "mv-inline mv-deleted",
-					dismiss: "button"
-				});
-
-			notice.closed.then(() => {
-				var node = this.deleted && this.deleted.node;
-				var stillDeleted = node.collection.children.indexOf(node) == -1;
-
-				if (stillDeleted) {
-					// Gone forever now
-					node.destroy();
 				}
-
-				if (this.deletionNotice == notice) {
-					this.deletionNotice = null;
-				}
+			], {
+				classes: "mv-inline mv-deleted",
+				dismiss: "button"
 			});
-		}
+
+		notice.closed.then(undone => {
+			if (!undone && this.deleted.length) {
+				console.log(undone, this.deleted);
+				// Gone forever now
+				this.deleted.forEach(node => node.destroy());
+				this.deleted.length = 0;
+			}
+
+			if (this.deletionNotice == notice) {
+				this.deletionNotice = null;
+			}
+		});
+
+	},
+
+	undoDelete: function() {
+		this.deleted.forEach(node => node.collection.add(node, node.index));
+		this.deleted.length = 0;
 	},
 
 	live: {

@@ -22,7 +22,6 @@ var _ = Mavo.Collection = $.Class({
 		$.after(this.marker, this.templateElement);
 
 		if (!this.fromTemplate("templateElement", "accepts", "optional", "like", "likeNode")) {
-			this.accepts = (this.templateElement.getAttribute("mv-accepts") || "").split(/\s+/);
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
@@ -36,6 +35,9 @@ var _ = Mavo.Collection = $.Class({
 				}
 			}
 
+			this.accepts = this.templateElement.getAttribute("mv-accepts");
+			this.accepts = this.accepts && this.accepts.split(/\s+/) || [];
+
 			this.optional = !!this.like || this.templateElement.hasAttribute("mv-optional");
 
 			// Must clone because otherwise once expressions are parsed on the template element
@@ -45,9 +47,15 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.likeNode) {
 			this.itemTemplate = this.likeNode.itemTemplate || this.likeNode;
+
 			var templateElement = this.likeNode.templateElement || $.value(this.likeNode.collection, "templateElement") || this.likeNode.element;
 			this.templateElement = templateElement.cloneNode(true);
 			this.templateElement.setAttribute("property", this.property);
+
+			if (!this.accepts.length) {
+				this.accepts = this.likeNode.accepts || this.accepts;
+			}
+
 			this.properties = this.likeNode.properties;
 		}
 		else if (!this.optional || !this.template) {
@@ -55,7 +63,7 @@ var _ = Mavo.Collection = $.Class({
 			this.add(item, undefined, {silent: true});
 
 			if (this.optional) {
-				this.delete(item, true);
+				this.delete(item, {silent: true});
 			}
 		}
 
@@ -252,7 +260,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 	},
 
-	delete: function(item, silent) {
+	delete: function(item, {silent, undoable = !silent, transition = !silent} = {}) {
 		item.element.classList.remove("mv-highlight");
 
 		this.splice({remove: item});
@@ -260,18 +268,35 @@ var _ = Mavo.Collection = $.Class({
 		if (silent) {
 			// Delete immediately, no undo
 			$.remove(item.element);
-			item.destroy();
+
+			if (!undoable) {
+				item.destroy();
+			}
+
 			return;
 		}
 
-		return $.transition(item.element, {opacity: 0}).then(() => {
-			$.remove(item.element);
+		if (transition) {
+			var stage2 = $.transition(item.element, {opacity: 0}).then(() => {
+				item.element.style.opacity = "";
+			});
+		}
+		else {
+			var stage2 = Promise.resolve();
+		}
 
-			item.element.style.opacity = "";
+		return stage2.then(() => {
+			$.remove(item.element);
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 
-			return item.dataChanged("delete", {index: item.index});
+			item.dataChanged("delete", {index: item.index});
+
+			if (undoable) {
+				this.mavo.setDeleted(item);
+			}
+
+			return item;
 		});
 	},
 
@@ -377,7 +402,7 @@ var _ = Mavo.Collection = $.Class({
 				item.render(data[i]);
 			}
 			else {
-				this.delete(item, true);
+				this.delete(item, {silent: true});
 				i--;
 			}
 		}
@@ -602,6 +627,21 @@ var _ = Mavo.Collection = $.Class({
 			var item = Mavo.Node.get(element);
 
 			return item && item.collection || null;
+		},
+
+		// Delete multiple items from potentially multiple collections or even multiple mavos
+		delete: nodes => {
+			var deleted = new Mavo.BucketMap({arrays: true});
+
+			var promises = nodes
+				.filter(node => !!node.collection)
+				.map(node => node.collection.delete(node, {undoable: false}).then(node => deleted.set(node.mavo, node)));
+
+			Promise.all(promises).then(() => {
+				deleted.forEach((nodes, mavo) => {
+					mavo.setDeleted(...nodes);
+				});
+			});
 		},
 
 		lazy: {

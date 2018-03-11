@@ -181,6 +181,10 @@ var _ = $.extend(Mavo, {
 	 * Get/set data on an element
 	 */
 	data: function(element, name, value) {
+		if (!element) {
+			return null;
+		}
+		
 		var data = _.elementData.get(element) || {}, ret;
 
 		if (arguments.length == 2) {
@@ -726,6 +730,47 @@ var _ = $.extend(Mavo, {
 		});
 
 		return ret;
+	},
+
+	/**
+	 * Map that can hold multiple values per key
+	 */
+	BucketMap: class BucketMap extends Map {
+		constructor({arrays = false} = {}) {
+			super();
+			this.arrays = arrays;
+		}
+
+		set(key, value) {
+			if (this.arrays) {
+				var values = this.get(key) || [];
+				values.push(value);
+			}
+			else {
+				var values = this.get(key) || new Set();
+				values.add(value);
+			}
+
+			super.set(key, values);
+		}
+
+		delete(key, value) {
+			if (arguments.length == 2) {
+				var values = this.get(key);
+
+				if (values) {
+					if (this.arrays) {
+						_.delete(values, value);
+					}
+					else {
+						values.delete(value);
+					}
+				}
+			}
+			else {
+				super.delete(key);
+			}
+		}
 	}
 });
 
