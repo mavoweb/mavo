@@ -255,8 +255,6 @@ var _ = Mavo.Script = {
 			},
 			precedence: 4
 		},
-		// Filter is listed here because it's an easy way to handle multiple
-		// array filters without having to code it
 		"filter": {
 			symbol: "where",
 			scalar: (a, b) => val(b)? a : null,

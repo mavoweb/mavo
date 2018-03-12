@@ -662,7 +662,6 @@ var _ = self.Mavo = $.Class({
 
 		notice.closed.then(undone => {
 			if (!undone && this.deleted.length) {
-				console.log(undone, this.deleted);
 				// Gone forever now
 				this.deleted.forEach(node => node.destroy());
 				this.deleted.length = 0;
