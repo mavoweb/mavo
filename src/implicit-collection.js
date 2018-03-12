@@ -91,13 +91,13 @@ var _ = Mavo.ImplicitCollection = $.Class({
 	propagated: ["save"],
 
 	dataRender: function(data) {
-		if (data === undefined) {
-			return;
+		if (data !== undefined) {
+			data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
+
+			this.children.forEach((item, i) => item.render(data && data[i]));
 		}
 
-		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
-
-		this.children.forEach((item, i) => item.render(data && data[i]));
+		this.updateLiveData();
 	},
 
 	find: function(property, o = {}) {
