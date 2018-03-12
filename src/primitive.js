@@ -205,16 +205,12 @@ var _ = Mavo.Primitive = $.Class({
 			value = null;
 		}
 
-		this.liveData = value;
+		this.liveData = this.createLiveData(Mavo.objectify(value));
 
 		if (this.collection) {
-			this.liveData = this.createLiveData(Mavo.objectify(value));
-
-			if (this.collection) {
-				// Turn primitive collection items into objects, so we can have $index etc, and their property
-				// name etc resolve relative to them, not their parent group
-				this.liveData[this.property] = this.liveData[Mavo.toProxy];
-			}
+			// In collection items we want their property name
+			// to resolve relative to them, not their parent group
+			this.liveData[this.property] = this.liveData[Mavo.toProxy];
 		}
 
 		this.updateParentLiveData();

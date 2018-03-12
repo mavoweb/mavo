@@ -4,7 +4,7 @@
  * @version %%VERSION%%
  */
 (function ($, $$) {
-
+console.log("local");
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.promise();
@@ -304,6 +304,8 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
+		this.element.addEventListener("click", _.Actions.listener);
+
 		Mavo.hooks.run("init-end", this);
 	},
 
@@ -356,6 +358,7 @@ var _ = self.Mavo = $.Class({
 	edit: function() {
 		this.root.edit();
 
+		// Highlight collection item when item controls are hovered
 		$.bind(this.element, "mouseenter.mavo:edit mouseleave.mavo:edit", evt => {
 			if (evt.target.matches(_.selectors.multiple)) {
 				evt.target.classList.remove("mv-has-hovered-item");
@@ -369,6 +372,13 @@ var _ = self.Mavo = $.Class({
 		}, true);
 
 		this.setUnsavedChanges();
+	},
+
+	// Conclude editing
+	done: function() {
+		this.root.done();
+		$.unbind(this.element, ".mavo:edit");
+		this.unsavedChanges = false;
 	},
 
 	/**
@@ -396,13 +406,6 @@ var _ = self.Mavo = $.Class({
 		}
 
 		return this.unsavedChanges = unsavedChanges;
-	},
-
-	// Conclude editing
-	done: function() {
-		this.root.done();
-		$.unbind(this.element, ".mavo:edit");
-		this.unsavedChanges = false;
 	},
 
 	/**

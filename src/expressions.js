@@ -1,5 +1,7 @@
 (function($, $$) {
 
+Mavo.attributes.push("mv-expressions");
+
 var _ = Mavo.Expressions = $.Class({
 	constructor: function(mavo) {
 		this.mavo = mavo;
@@ -171,7 +173,7 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
-		if (attribute && attribute.name == "mv-expressions") {
+		if (attribute && _.skip.indexOf(attribute.name) > -1) {
 			return;
 		}
 
@@ -238,6 +240,8 @@ var _ = Mavo.Expressions = $.Class({
 		directives: [
 			"mv-value"
 		],
+
+		skip: ["mv-expressions", "mv-action"],
 
 		THROTTLE: 50,
 

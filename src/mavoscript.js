@@ -337,6 +337,9 @@ var _ = Mavo.Script = {
 				if (node.callee.name == "if") {
 					node.callee.name = "iff";
 				}
+				else if (node.callee.name == "delete") {
+					node.callee.name = "clear";
+				}
 
 				if (node.callee.name in Mavo.Functions) {
 					node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
@@ -365,13 +368,21 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	compile: function(code) {
+	compile: function(code, extraContext) {
 		code = _.rewrite(code);
 
+		code = `with (data || {}) {
+			return (${code});
+		}`;
+
+		if (extraContext) {
+			code = `	with (${extraContext}) {
+		${code}
+	}`;
+		}
+
 		return new Function("data", `with(Mavo.Functions._Trap)
-				with (data || {}) {
-					return (${code});
-				}`);
+${code}`);
 	},
 
 	parse: self.jsep,

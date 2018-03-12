@@ -1,18 +1,16 @@
 (function($, $$) {
 
-Mavo.attributes.push("mv-expressions");
-
 var _ = Mavo.Expression = $.Class({
 	constructor: function(expression) {
 		this.expression = expression;
 	},
 
-	eval: function(data) {
+	eval: function(data, extraContext) {
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
 			if (!this.function) {
-				this.function = Mavo.Script.compile(this.expression);
+				this.function = Mavo.Script.compile(this.expression, extraContext);
 			}
 
 			return this.function(data);

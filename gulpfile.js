@@ -18,7 +18,7 @@ var injectVersion = require("gulp-inject-version");
 var dependencies = ["../bliss/bliss.shy.min.js", "../stretchy/stretchy.min.js", "../jsep/build/jsep.min.js"];
 var mavo = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
-			expression domexpression expressions mv-if mv-value functions mavoscript
+			expression domexpression expressions mv-if mv-value functions mavoscript actions
 			backend.dropbox backend.github`
 	.split(/\s+/).map(path => `src/${path}.js`);
 var versionOptions = {
