@@ -3,4 +3,3 @@
 /dist/maps/
 dist/*.js
 dist/*.css
-src/performance.js
