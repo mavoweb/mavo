@@ -1,5 +1,6 @@
 Mavo.Locale.register("en", {
 	"edit": "Edit",
+	"editing": "Editing",
 	"save": "Save",
 	"import": "Import",
 	"export": "Export",

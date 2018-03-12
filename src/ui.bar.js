@@ -239,15 +239,18 @@ var _ = Mavo.UI.Bar = $.Class({
 				action: function() {
 					if (this.editing) {
 						this.done();
+						this.bar.edit.textContent = this._("edit");
 					}
 					else {
 						this.edit();
+						this.bar.edit.textContent = this._("editing");
 					}
 				},
 				permission: ["edit", "add", "delete"],
 				cleanup: function() {
 					if (this.editing) {
 						this.done();
+						this.bar.edit.textContent = this._("edit");
 					}
 				},
 				condition: function() {
