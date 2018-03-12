@@ -134,9 +134,9 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	getLiveData: function(o = {}) {
+	getLiveData: function() {
 		if (this.isDataNull({live: true})) {
-			return this.collection || o.forceObjects? Mavo.objectify(null) : null;
+			return this.collection? Mavo.objectify(null) : null;
 		}
 
 		return this.liveData[Mavo.toProxy];
@@ -406,16 +406,9 @@ var _ = Mavo.Node = $.Class({
 		// Property does not exist, look for it elsewhere
 
 		// Special values
-		switch (property) {
-			case "$index":
-				return this.closestItem && this.closestItem.index || 0;
-			case "$next":
-			case "$previous":
-				if (this.closestCollection) {
-					return this.closestCollection.liveData[Mavo.toProxy][this.index + (property == "$next"? 1 : -1)];
-				}
-
-				return null;
+		if (property in _.special) {
+			if (_.special[property] === undefined) debugger;
+			return _.special[property].call(this);
 		}
 
 		var ret = this.resolve(property);
@@ -710,6 +703,30 @@ var _ = Mavo.Node = $.Class({
 				.map(e => e.collection || e);
 
 			return Mavo.Functions.unique(ret);
+		},
+
+		special: {
+			$index: function() {
+				return this.closestItem ? this.closestItem.index : -1;
+			},
+
+			$item: function() {
+				return this.closestItem ? this.closestItem.getLiveData() : null;
+			},
+
+			$all: function() {
+				return this.closestCollection ? this.closestCollection.getLiveData() : null;
+			},
+
+			$next: function() {
+				var all = _.special.$all.call(this);
+				return all ? all[this.closestItem.index + 1] : null;
+			},
+
+			$previous: function() {
+				var all = _.special.$all.call(this);
+				return all ? all[this.closestItem.index - 1] : null;
+			}
 		}
 	}
 });

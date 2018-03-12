@@ -105,7 +105,7 @@ var _ = Mavo.Expressions = $.Class({
 			}
 			else {
 				// Collection modifications
-				this.updateById(Mavo.Collection.variables, evt, cache);
+				this.updateById(Object.keys(Mavo.Node.special), evt, cache);
 
 				var collection = evt.node.collection || evt.node;
 

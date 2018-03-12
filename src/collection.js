@@ -613,7 +613,6 @@ var _ = Mavo.Collection = $.Class({
 	},
 
 	static: {
-		variables: ["$index", "$previous", "$next"],
 		dragulas: [],
 		get: element => {
 			// Is it an add button or a marker?
