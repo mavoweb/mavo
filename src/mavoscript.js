@@ -13,6 +13,28 @@ var _ = Mavo.Script = {
 		return Mavo.Functions[name] = operand => Array.isArray(operand)? operand.map(val).map(o.scalar) : o.scalar(val(operand));
 	},
 
+	binaryOperation: function(a, b, o = {}) {
+		if (Array.isArray(b)) {
+			if (Array.isArray(a)) {
+				result = [
+					...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
+					...a.slice(b.length)
+				];
+			}
+			else {
+				result = b.map(n => o.scalar(a, n));
+			}
+		}
+		else if (Array.isArray(a)) {
+			result = a.map(n => o.scalar(n, b));
+		}
+		else {
+			result = o.scalar(a, b);
+		}
+
+		return result;
+	},
+
 	/**
 	 * Extend a scalar operator to arrays, or arrays and scalars
 	 * The operation between arrays is applied element-wise.
@@ -51,27 +73,11 @@ var _ = Mavo.Script = {
 				let a = o.logical? operands[i - 1] : prev;
 				let b = operands[i];
 
-				if (Array.isArray(b)) {
-					if (typeof o.identity == "number") {
-						b = $u.numbers(b);
-					}
+				if (Array.isArray(b) && typeof o.identity == "number") {
+					b = $u.numbers(b);
+				}
 
-					if (Array.isArray(a)) {
-						result = [
-							...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-							...a.slice(b.length)
-						];
-					}
-					else {
-						result = b.map(n => o.scalar(a, n));
-					}
-				}
-				else if (Array.isArray(a)) {
-					result = a.map(n => o.scalar(n, b));
-				}
-				else {
-					result = o.scalar(a, b);
-				}
+				result = _.binaryOperation(a, b, o);
 
 				if (o.reduce) {
 					prev = o.reduce(prev, result, a, b);
@@ -120,7 +126,7 @@ var _ = Mavo.Script = {
 			identity: 1,
 			symbol: "/"
 		},
-		"add": {
+		"addition": {
 			scalar: (a, b) => +a + +b,
 			symbol: "+"
 		},
