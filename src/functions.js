@@ -195,6 +195,7 @@ var _ = Mavo.Functions = {
 	},
 
 	group: (...objects) => Object.assign(...objects),
+	list: (...items) => items,
 
 	/*********************
 	 * String functions
