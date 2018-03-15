@@ -238,7 +238,7 @@ var _ = Mavo.Functions = {
 	},
 
 	join: function(array, glue) {
-		return Mavo.toArray(array).join(str(glue));
+		return Mavo.toArray(array).filter(a => !empty(a)).join(str(glue));
 	},
 
 	idify: function(readable) {
