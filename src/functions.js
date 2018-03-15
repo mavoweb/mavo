@@ -421,39 +421,38 @@ var _ = Mavo.Functions = {
 				return null;
 			}
 
-			if ($.type(date) === "string") {
-				date = $u.fixDateString(date);
+			var object = new Date(date);
 
-				if (date === null) {
-					return null;
-				}
-
-				var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
-
-				if (timezone) {
-					// parse as ISO format
-					date = new Date(date);
-				}
-				else {
-					// construct date in local timezone
-					var fields = date.match(/\d+/g);
-					date = new Date(
-						// year, month, date,
-						fields[0], (fields[1] || 1) - 1, fields[2] || 1,
-						// hours, minutes, seconds, milliseconds,
-						fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
-					);
-				}
-			}
-			else {
-				date = new Date(date);
+			// Either arg is not string or is exactly the same as a re-serialization of it as a date
+			if ($.type(date) !== "string" || !isNaN(object) && (object + "" == date)) {
+				return object;
 			}
 
-			if (isNaN(date)) {
+			date = $u.fixDateString(date);
+
+			if (date === null) {
 				return null;
 			}
 
-			return date;
+			var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
+
+			if (timezone) {
+				// parse as ISO format
+				date = new Date(date);
+			}
+			else {
+				// construct date in local timezone
+				var fields = date.match(/\d+/g);
+
+				date = new Date(
+					// year, month, date,
+					fields[0], (fields[1] || 1) - 1, fields[2] || 1,
+					// hours, minutes, seconds, milliseconds,
+					fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
+				);
+			}
+
+			return isNaN(date)? null : date;
 		}
 	}
 };
