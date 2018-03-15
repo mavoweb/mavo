@@ -283,6 +283,17 @@ var _ = Mavo.Functions = {
 
 	json: data => Mavo.safeToJSON(data),
 
+	split: (text, separator = /\s+/) => {
+		return Mavo.Script.binaryOperation(text, separator, {
+			scalar: (text, separator) => {
+
+				text = str(text);
+
+				return text.split(separator);
+			}
+		});
+	},
+
 	/*********************
 	 * Date functions
 	 *********************/
