@@ -197,6 +197,27 @@ var _ = Mavo.Functions = {
 	group: (...objects) => Object.assign(...objects),
 	list: (...items) => items,
 
+	// FIXME if step=0 returns NaN
+	random: function(min = 0, max = 100, step = 1) {
+		if (arguments.length == 1) {
+			max = min;
+			min = 0;
+		}
+
+		var rand = Math.random();
+		var range = (max - min)  / step;
+		return Math.floor(rand * (range + 1)) * step + min;
+	},
+
+	shuffle: list => {
+		if (Array.isArray(list)) {
+			return list.sort(() => Math.random() - 0.5);
+		}
+		else {
+			return list;
+		}
+	},
+
 	/*********************
 	 * String functions
 	 *********************/
