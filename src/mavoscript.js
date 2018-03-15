@@ -10,7 +10,16 @@ var _ = Mavo.Script = {
 			});
 		}
 
-		return Mavo.Functions[name] = operand => Array.isArray(operand)? operand.map(val).map(o.scalar) : o.scalar(val(operand));
+		return Mavo.Functions[name] = operand => _.unaryOperation(operand, operand => o.scalar(val(operand)));
+	},
+
+	unaryOperation: function(operand, scalar) {
+		if (Array.isArray(operand)) {
+			return operand.map(scalar);
+		}
+		else {
+			return scalar(operand);
+		}
 	},
 
 	binaryOperation: function(a, b, o = {}) {
@@ -293,7 +302,7 @@ var _ = Mavo.Script = {
 		"Literal": node => node.raw,
 		"Identifier": node => node.name,
 		"ThisExpression": node => "this",
-		"Compound": node => node.body.map(_.serialize).join(" ")
+		"Compound": node => node.body.map(_.serialize).join(", ")
 	},
 
 	/**
