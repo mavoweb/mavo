@@ -467,7 +467,7 @@ var _ = Mavo.Primitive = $.Class({
 	dataRender: function(data) {
 		if (data && typeof data === "object") {
 			if (Symbol.toPrimitive in data) {
-				data = data[Symbol.toPrimitive]();
+				data = data[Symbol.toPrimitive]("default");
 			}
 			else {
 				// Candidate properties to get a value from
