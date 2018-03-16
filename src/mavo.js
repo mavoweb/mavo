@@ -4,7 +4,7 @@
  * @version %%VERSION%%
  */
 (function ($, $$) {
-console.log("local");
+
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.promise();
