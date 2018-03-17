@@ -544,6 +544,10 @@ var _ = Mavo.Collection = $.Class({
 		return this.dragula;
 	},
 
+	getClosestCollection: function() {
+		return this;
+	},
+
 	lazy: {
 		bottomUp: function() {
 			/**
@@ -566,16 +570,11 @@ var _ = Mavo.Collection = $.Class({
 			return !!(this.addButton.compareDocumentPosition(this.marker) & Node.DOCUMENT_POSITION_FOLLOWING);
 		},
 
-		closestCollection: function() {
-			var parent = this.marker? this.marker.parentNode : this.templateElement.parentNode;
-
-			return parent.closest(Mavo.selectors.multiple);
-		},
-
 		addButton: function() {
 			// Find add button if provided, or generate one
 			var selector = `button.mv-add-${this.property}`;
-			var group = this.closestCollection || this.marker.parentNode.closest(Mavo.selectors.group);
+
+			var group = this.marker.parentNode.closest(Mavo.selectors.item);
 
 			if (group) {
 				var button = $$(selector, group).filter(button => {
