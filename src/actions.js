@@ -50,16 +50,24 @@ var _ = Mavo.Actions = {
 			var nodes = _.getNodes(ref);
 
 			return nodes.map(node => {
-				if (node && node instanceof Mavo.Collection) {
-					// Clear collection
-					var item = node.add(undefined, index);
+				var collection = node.closestCollection;
 
-					if (data !== undefined) {
-						item.render(data);
-					}
-
-					return item.getLiveData();
+				if (!collection) {
+					return;
 				}
+
+				if (index === undefined && !(node instanceof Mavo.Collection)) {
+					// If there is no index, get index from collection item
+					index = node.closestItem.index;
+				}
+
+				var item = collection.add(undefined, index);
+
+				if (data !== undefined) {
+					item.render(data);
+				}
+
+				return item.getLiveData();
 			}).filter(n => n !== undefined);
 		},
 		clear: (...ref) => {
@@ -114,11 +122,10 @@ var _ = Mavo.Actions = {
 
 			var wasArray = Array.isArray(ref);
 			var nodes = _.getNodes(ref);
-			var o = {
-				scalar: (node, value) => node.render(value)
-			};
 
-			Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, o);
+			return Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
+				scalar: (node, value) => node.render(value)
+			});
 		}
 	}
 };
