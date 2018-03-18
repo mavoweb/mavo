@@ -67,6 +67,10 @@ var _ = Mavo.Actions = {
 					item.render(data);
 				}
 
+				if (collection.editing) {
+					collection.editItem(item);
+				}
+
 				return item.getLiveData();
 			}).filter(n => n !== undefined);
 		},
