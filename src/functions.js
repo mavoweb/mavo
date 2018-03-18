@@ -182,6 +182,37 @@ var _ = Mavo.Functions = {
 		return ord || "th";
 	},
 
+	digits: (digits, decimals, num) => {
+		if (num === undefined) {
+			num = decimals;
+			decimals = undefined;
+		}
+
+		if (isNaN(num)) {
+			return null;
+		}
+
+		var parts = (num + "").split(".");
+
+		// If it has more digits than n = digits, only keep the last n digits.
+		parts[0] = parts[0].slice(-digits);
+
+		// Chop extra decimals without rounding
+		if (decimals !== undefined && parts[1]) {
+			parts[1] = parts[1].slice(0, decimals);
+		}
+
+		num = +parts.join(".");
+
+		// This is mainly for padding with zeroes, we've done the rest already
+		return num.toLocaleString("en", {
+			useGrouping: false, // we want something that can be converted to a number again
+			minimumIntegerDigits: digits,
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals || 20
+		});
+	},
+
 	iff: function(condition, iftrue=condition, iffalse="") {
 		if (Array.isArray(condition)) {
 			return condition.map((c, i) => {
@@ -315,49 +346,6 @@ var _ = Mavo.Functions = {
 		});
 	},
 
-	/*********************
-	 * Date functions
-	 *********************/
-
-	get $now() {
-		return new Date();
-	},
-
-	$startup: new Date(), // Like $now, but doesn't update
-
-	get $today() {
-		return _.date(new Date());
-	},
-
-	year: getDateComponent("year"),
-	month: getDateComponent("month"),
-	day: getDateComponent("day"),
-	weekday: getDateComponent("weekday"),
-	hour: getDateComponent("hour"),
-	minute: getDateComponent("minute"),
-	second: getDateComponent("second"),
-	ms: getDateComponent("ms"),
-
-	date: date => {
-		date = $u.date(date);
-
-		return date? `${_.year(date)}-${_.month(date).twodigit}-${_.day(date).twodigit}` : "";
-	},
-	time: date => {
-		date = $u.date(date);
-
-		return date? `${_.hour(date).twodigit}:${_.minute(date).twodigit}:${_.second(date).twodigit}` : "";
-	},
-
-	minutes: seconds => Math.floor(Math.abs(seconds) / 60) || 0,
-	hours: seconds => Math.floor(Math.abs(seconds) / 3600) || 0,
-	days: seconds => Math.floor(Math.abs(seconds) / 86400) || 0,
-	weeks: seconds => Math.floor(Math.abs(seconds) / 604800) || 0,
-	months: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400)) || 0,
-	years: seconds => Math.floor(Math.abs(seconds) / (30.4368 * 86400 * 12)) || 0,
-
-	localTimezone: -(new Date()).getTimezoneOffset(),
-
 	// Log to the console and return
 	log: (...args) => {
 		console.log(...args.map(val));
@@ -378,82 +366,6 @@ var _ = Mavo.Functions = {
 
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
 		},
-
-		fixDateString: function(date) {
-			date = date.trim();
-
-			var hasDate = /^\d{4}-\d{2}(-\d{2})?/.test(date);
-			var hasTime = date.indexOf(":") > -1;
-
-			if (!hasDate && !hasTime) {
-				return null;
-			}
-
-			// Fix up time format
-			if (!hasDate) {
-				// No date, add today’s
-				date = _.$today + " " + date;
-			}
-			else {
-				// Only year-month, add day
-				date = date.replace(/^(\d{4}-\d{2})(?!-\d{2})/, "$1-01");
-			}
-
-			if (!hasTime) {
-				// Add a time if one doesn't exist
-				date += "T00:00:00";
-			}
-			else {
-				// Make sure time starts with T, due to Safari bug
-				date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
-			}
-
-			// Remove all whitespace
-			date = date.replace(/\s+/g, "");
-
-			return date;
-		},
-
-		date: function(date) {
-			date = val(date);
-
-			if (!date) {
-				return null;
-			}
-
-			var object = new Date(date);
-
-			// Either arg is not string or is exactly the same as a re-serialization of it as a date
-			if ($.type(date) !== "string" || !isNaN(object) && (object + "" == date)) {
-				return object;
-			}
-
-			date = $u.fixDateString(date);
-
-			if (date === null) {
-				return null;
-			}
-
-			var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
-
-			if (timezone) {
-				// parse as ISO format
-				date = new Date(date);
-			}
-			else {
-				// construct date in local timezone
-				var fields = date.match(/\d+/g);
-
-				date = new Date(
-					// year, month, date,
-					fields[0], (fields[1] || 1) - 1, fields[2] || 1,
-					// hours, minutes, seconds, milliseconds,
-					fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0
-				);
-			}
-
-			return isNaN(date)? null : date;
-		}
 	}
 };
 
@@ -516,51 +428,6 @@ function empty(v) {
 
 function not(v) {
 	return !val(v);
-}
-
-function toLocaleString(date, options) {
-	var ret = date.toLocaleString(Mavo.locale, options);
-
-	ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
-
-	return ret;
-}
-
-var numeric = {
-	year: d => d.getFullYear(),
-	month: d => d.getMonth() + 1,
-	day: d => d.getDate(),
-	weekday: d => d.getDay() || 7,
-	hour: d => d.getHours(),
-	minute: d => d.getMinutes(),
-	second: d => d.getSeconds(),
-	ms: d => d.getMilliseconds()
-};
-
-function getDateComponent(component) {
-	return function(date) {
-		date = $u.date(date);
-
-		if (!date) {
-			return "";
-		}
-
-		var ret = numeric[component](date);
-
-		// We don't want years to be formatted like 2,017!
-		ret = new self[component == "year"? "String" : "Number"](ret);
-
-		if (component == "month" || component == "weekday") {
-			ret.name = toLocaleString(date, {[component]: "long"});
-			ret.shortname = toLocaleString(date, {[component]: "short"});
-		}
-
-		if (component != "weekday") {
-			ret.twodigit = (ret % 100 < 10? "0" : "") + ret % 100;
-		}
-
-		return ret;
-	};
 }
 
 })(Bliss, Mavo.value);

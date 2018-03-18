@@ -150,7 +150,7 @@ var _ = Mavo.Script = {
 					var dateA = $u.date(a), dateB = $u.date(b);
 
 					if (dateA && dateB) {
-						return (dateA - dateB)/1000;
+						return dateA - dateB;
 					}
 				}
 

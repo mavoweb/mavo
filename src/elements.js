@@ -562,7 +562,7 @@ _.register({
 		defaultFormats: {
 			"date": name => `[day(${name})] [month(${name}).shortname] [year(${name})]`,
 			"month": name => `[month(${name}).name] [year(${name})]`,
-			"time": name => `[hour(${name}).twodigit]:[minute(${name}).twodigit]`,
+			"time": name => `[digits(2, hour(${name}))]:[digits(2, minute(${name}))]`,
 			"datetime-local": function(name) {
 				return this.date(name) + " " + this.time(name);
 			}
