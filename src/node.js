@@ -407,7 +407,6 @@ var _ = Mavo.Node = $.Class({
 
 		// Special values
 		if (property in _.special) {
-			if (_.special[property] === undefined) debugger;
 			return _.special[property].call(this);
 		}
 
