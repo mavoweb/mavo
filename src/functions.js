@@ -75,6 +75,25 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
+	call: function(fn, args, thisArg) {
+		if (!fn) {
+			return;
+		}
+
+		if (typeof fn !== "function") {
+			if (fn[Mavo.toNode]) {
+				// there is a node with the same property as a function name. Fix this. (rel #227)
+				// In the future we may also introduce calling nodes as functions, and the structure is here
+				var node = fn[Mavo.toNode];
+				fn = _._Trap[node.property];
+			}
+		}
+
+		if (typeof fn === "function") {
+			return fn.apply(thisArg, args);
+		}
+	},
+
 	url: (id, url = location) => {
 		if (id === undefined) {
 			return location.href;
@@ -375,6 +394,10 @@ var $u = _.util;
 _._Trap = self.Proxy? new Proxy(_, {
 	get: (functions, property) => {
 		var ret;
+
+		if (typeof property === "symbol") {
+			return;
+		}
 
 		var canonicalProperty = Mavo.getCanonicalProperty(functions, property)
 		                     || Mavo.getCanonicalProperty(Math, property);

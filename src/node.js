@@ -427,6 +427,9 @@ var _ = Mavo.Node = $.Class({
 		if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
 			return Mavo.all[property].root.getLiveData();
 		}
+
+		// If still here, it's not related to nodes
+		return Mavo.Functions._Trap[property];
 	},
 
 	relativizeData: self.Proxy? function(data) {

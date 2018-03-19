@@ -5,7 +5,7 @@ var _ = Mavo.Script = {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
-				Mavo.Script.unarySymbols[symbol] = name;
+				_.unarySymbols[symbol] = name;
 				jsep.addUnaryOp(symbol);
 			});
 		}
@@ -54,7 +54,7 @@ var _ = Mavo.Script = {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
-				Mavo.Script.symbols[symbol] = name;
+				_.symbols[symbol] = name;
 
 				if (o.precedence) {
 					jsep.addBinaryOp(symbol, o.precedence);
@@ -110,7 +110,7 @@ var _ = Mavo.Script = {
 	symbols: {},
 	unarySymbols: {},
 
-	getOperatorName: (op, unary) => Mavo.Script[unary? "unarySymbols" : "symbols"][op] || op,
+	getOperatorName: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
 
 	/**
 	 * Operations for elements and scalars.
@@ -174,7 +174,7 @@ var _ = Mavo.Script = {
 		"lte": {
 			logical: true,
 			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
 			},
 			identity: true,
@@ -183,7 +183,7 @@ var _ = Mavo.Script = {
 		"lt": {
 			logical: true,
 			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
 			},
 			identity: true,
@@ -192,7 +192,7 @@ var _ = Mavo.Script = {
 		"gte": {
 			logical: true,
 			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
 			},
 			identity: true,
@@ -201,7 +201,7 @@ var _ = Mavo.Script = {
 		"gt": {
 			logical: true,
 			scalar: (a, b) => {
-				[a, b] = Mavo.Script.getNumericalOperands(a, b);
+				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
 			},
 			identity: true,
@@ -254,6 +254,7 @@ var _ = Mavo.Script = {
 				return value;
 			},
 			transformation: node => {
+				// Allow unquoted property names, just like JS
 				if (node.left.type == "Identifier") {
 					node.left = {
 						type: "Literal",
@@ -268,7 +269,30 @@ var _ = Mavo.Script = {
 			symbol: "where",
 			scalar: (a, b) => val(b)? a : null,
 			raw: true,
-			precedence: 2
+			precedence: 2,
+			postFlattenTransformation: node => {
+				// Scope all identifiers (likely properties) in the where clause to the thing we're filtering from.
+				// For example, assume you have a list of people and a list of cats, both with names and ages.
+				// Without this, cat where age > 3 would return nonsensical results
+				var object = node.arguments[0];
+
+				for (let i=1; i<node.arguments.length; i++) {
+					_.walk(node.arguments[i], n => {
+						return {
+							type: "MemberExpression",
+							computed: false,
+							object,
+							property: {
+								type: "identifier",
+								name: n.name
+							}
+						};
+					}, {
+						type: "Identifier",
+						ignore: ["property", "callee"]
+					});
+				}
+			}
 		}
 	},
 
@@ -286,13 +310,46 @@ var _ = Mavo.Script = {
 		return [a, b];
 	},
 
+	childProperties: [
+		"arguments", "argument", "callee", "left", "right", "elements",
+		"test", "consequent", "alternate", "object",  "body"
+	],
+
+	/**
+	 * Recursively execute a callback on this node and all its children
+	 */
+	walk: function(node, callback, o = {}, property, parent) {
+		if (!o.type || node.type === o.type) {
+			var ret = callback(node, property, parent);
+		}
+
+		if (!o.ignore || o.ignore.indexOf(node.type) === -1) {
+			_.childProperties.forEach(property => {
+				if (node[property]) {
+					_.walk(node[property], callback, o, property, node);
+				}
+			});
+		}
+
+		if (ret !== undefined) {
+			// Apply transformations after walking, otherwise it may recurse infinitely
+			parent[property] = ret;
+		}
+	},
+
 	/**
 	 * These serializers transform the AST into JS
 	 */
 	serializers: {
 		"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
 		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
-		"CallExpression": node => `${_.serialize(node.callee)}(${node.arguments.map(_.serialize).join(", ")})`,
+		"CallExpression": node => {
+			if (node.callee.type == "MemberExpression") {
+				var thisArg = ", " + _.serialize(node.callee.object);
+			}
+
+			return `call(${_.serialize(node.callee)}, [${node.arguments.map(_.serialize).join(", ")}]${thisArg || ""})`;
+		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
 			var property = node.computed? _.serialize(node.property) : `"${node.property.name}"`;
@@ -310,33 +367,45 @@ var _ = Mavo.Script = {
 	 */
 	transformations: {
 		"BinaryExpression": node => {
-			let name = Mavo.Script.getOperatorName(node.operator);
+			let name = _.getOperatorName(node.operator);
 			let def = _.operators[name];
 
+			// Operator-specific transformations
 			if (def.transformation) {
 				def.transformation(node);
 			}
 
 			var nodeLeft = node;
-			var args = [];
+			var ret = {
+				type: "CallExpression",
+				arguments: [],
+				callee: {type: "Identifier", name}
+			};
 
 			// Flatten same operator calls
 			do {
-				args.unshift(nodeLeft.right);
+				ret.arguments.unshift(nodeLeft.right);
 				nodeLeft = nodeLeft.left;
-			} while (Mavo.Script.getOperatorName(nodeLeft.operator) === name);
+			} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
 
-			args.unshift(nodeLeft);
+			ret.arguments.unshift(nodeLeft);
 
-			if (args.length > 1) {
-				return `${name}(${args.map(_.serialize).join(", ")})`;
+			// Operator-specific transformations
+			if (def.postFlattenTransformation) {
+				def.postFlattenTransformation(ret);
 			}
+
+			return ret;
 		},
 		"UnaryExpression": node => {
-			var name = Mavo.Script.getOperatorName(node.operator, true);
+			var name = _.getOperatorName(node.operator, true);
 
 			if (name) {
-				return `${name}(${_.serialize(node.argument)})`;
+				return {
+					type: "CallExpression",
+					arguments: [node.argument],
+					callee: {type: "Identifier", name}
+				};
 			}
 		},
 		"CallExpression": node => {
@@ -348,9 +417,9 @@ var _ = Mavo.Script = {
 					node.callee.name = "clear";
 				}
 
-				if (node.callee.name in Mavo.Functions) {
-					node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
-				}
+				// if (node.callee.name in Mavo.Functions) {
+				// 	node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
+				// }
 			}
 		}
 	},
@@ -358,7 +427,10 @@ var _ = Mavo.Script = {
 	serialize: node => {
 		var ret = _.transformations[node.type] && _.transformations[node.type](node);
 
-		if (ret !== undefined) {
+		if (typeof ret == "object" && ret && ret.type) {
+			node = ret;
+		}
+		else if (ret !== undefined) {
 			return ret;
 		}
 
@@ -398,14 +470,14 @@ ${code}`);
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
-for (let name in Mavo.Script.operators) {
-	let details = Mavo.Script.operators[name];
+for (let name in _.operators) {
+	let details = _.operators[name];
 
 	if (details.scalar && details.scalar.length < 2) {
-		Mavo.Script.addUnaryOperator(name, details);
+		_.addUnaryOperator(name, details);
 	}
 	else {
-		Mavo.Script.addBinaryOperator(name, details);
+		_.addBinaryOperator(name, details);
 	}
 }
 
