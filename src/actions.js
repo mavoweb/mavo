@@ -17,7 +17,7 @@ var _ = Mavo.Actions = {
 
 			if (node) {
 				var expression = new Mavo.Expression(code);
-				return expression.eval(node.getLiveData(), "Mavo.Actions.Functions");
+				return expression.eval(node.getLiveData(), {actions: true});
 			}
 		}
 	},
@@ -49,7 +49,7 @@ var _ = Mavo.Actions = {
 
 			var nodes = _.getNodes(ref);
 
-			return nodes.map(node => {
+			return Mavo.flatten(nodes.map(node => {
 				var collection = node.closestCollection;
 
 				if (!collection) {
@@ -61,18 +61,36 @@ var _ = Mavo.Actions = {
 					index = node.closestItem.index;
 				}
 
-				var item = collection.add(undefined, index);
+				var items = (Array.isArray(data)? data : [data]).map(datum => {
+					var item = collection.add(undefined, index);
 
-				if (data !== undefined) {
-					item.render(data);
+					if (datum !== undefined) {
+						item.render(datum);
+					}
+
+					if (collection.editing) {
+						collection.editItem(item);
+					}
+
+					return item.getLiveData();
+				});
+
+				return items;
+			}).filter(n => n !== undefined));
+		},
+		move: (from, to, index) => {
+			if (!from || !to) {
+				return;
+			}
+
+			return _.Functions.add(to, Mavo.toArray(from).filter(d => {
+				var node = _.getNode(d);
+
+				if (node.collection) {
+					node.collection.delete(node, {silent: true});
+					return true;
 				}
-
-				if (collection.editing) {
-					collection.editItem(item);
-				}
-
-				return item.getLiveData();
-			}).filter(n => n !== undefined);
+			}));
 		},
 		clear: (...ref) => {
 			if (!ref.length || !ref[0]) {
@@ -127,9 +145,11 @@ var _ = Mavo.Actions = {
 			var wasArray = Array.isArray(ref);
 			var nodes = _.getNodes(ref);
 
-			return Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
+			Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
 				scalar: (node, value) => node.render(value)
 			});
+
+			return values;
 		}
 	}
 };
