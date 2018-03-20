@@ -232,7 +232,7 @@ var _ = Mavo.Functions = {
 		});
 	},
 
-	iff: function(condition, iftrue=condition, iffalse="") {
+	iff: function(condition, iftrue=condition, iffalse=null) {
 		if (Array.isArray(condition)) {
 			return condition.map((c, i) => {
 				var ret = val(c)? iftrue : iffalse;
