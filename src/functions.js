@@ -424,7 +424,8 @@ _._Trap = self.Proxy? new Proxy(_, {
 		}
 
 		// Still not found? Maybe it's a global
-		if (property in self) {
+		if (self && self.hasOwnProperty(property)) {
+			// hasOwnProperty to avoid elements with ids clobbering globals
 			return self[property];
 		}
 
