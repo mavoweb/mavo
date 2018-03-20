@@ -290,7 +290,7 @@ var _ = Mavo.Script = {
 					}, {
 						type: "Identifier",
 						ignore: ["property", "callee"]
-					});
+					}, i, node.arguments);
 				}
 			}
 		}
@@ -331,10 +331,12 @@ var _ = Mavo.Script = {
 			});
 		}
 
-		if (ret !== undefined) {
+		if (ret !== undefined && parent) {
 			// Apply transformations after walking, otherwise it may recurse infinitely
 			parent[property] = ret;
 		}
+
+		return ret;
 	},
 
 	/**
@@ -447,21 +449,25 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	compile: function(code, extraContext) {
+	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with (data || {}) {
-			return (${code});
-		}`;
-
-		if (extraContext) {
-			code = `	with (${extraContext}) {
-		${code}
+		code = `with(Mavo.Functions._Trap)
+	with (data || {}) {
+		return (${code});
 	}`;
-		}
 
-		return new Function("data", `with(Mavo.Functions._Trap)
-${code}`);
+		if (o.actions) {
+			// Yes this is a horrible, horrible hack and I’m truly ashamed.
+			// If you understand the reasons and can think of a better way, be my guest!
+			code = `
+Mavo.Functions._actionRunning = Mavo.Functions.actionRunning;
+Mavo.Functions.actionRunning = true;
+${code}
+Mavo.Functions.actionRunning = Mavo.Functions._actionRunning;`;
+		}
+console.log(code);
+		return new Function("data", code);
 	},
 
 	parse: self.jsep,

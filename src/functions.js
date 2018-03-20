@@ -399,6 +399,10 @@ _._Trap = self.Proxy? new Proxy(_, {
 			return;
 		}
 
+		if (Mavo.Functions.actionRunning && property in Mavo.Actions.Functions) {
+			return Mavo.Actions.Functions[property];
+		}
+
 		var canonicalProperty = Mavo.getCanonicalProperty(functions, property)
 		                     || Mavo.getCanonicalProperty(Math, property);
 

@@ -5,12 +5,12 @@ var _ = Mavo.Expression = $.Class({
 		this.expression = expression;
 	},
 
-	eval: function(data, extraContext) {
+	eval: function(data, o) {
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {
 			if (!this.function) {
-				this.function = Mavo.Script.compile(this.expression, extraContext);
+				this.function = Mavo.Script.compile(this.expression, o);
 			}
 
 			return this.function(data);
