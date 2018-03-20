@@ -466,7 +466,7 @@ Mavo.Functions.actionRunning = true;
 ${code}
 Mavo.Functions.actionRunning = Mavo.Functions._actionRunning;`;
 		}
-console.log(code);
+
 		return new Function("data", code);
 	},
 
