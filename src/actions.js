@@ -156,7 +156,7 @@ var _ = Mavo.Actions = {
 
 			Mavo.Collection.delete(itemsToDelete);
 
-			return nodes;
+			return nodes.map(n => n.getLiveData());
 		},
 
 		/**
