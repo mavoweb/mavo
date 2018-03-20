@@ -42,6 +42,12 @@ var _ = Mavo.Actions = {
 	},
 
 	Functions: {
+		/**
+		 * @param ref Collection to add to
+		 * @param data (Optional) data of new item(s)
+		 * @param index {Number} index of new item(s).
+		 * @returns Newly added item(s)
+		 */
 		add: (ref, data, index) => {
 			if (!ref) {
 				return;
@@ -56,8 +62,8 @@ var _ = Mavo.Actions = {
 					return;
 				}
 
+				// If there is no index, get index from collection item
 				if (index === undefined && !(node instanceof Mavo.Collection)) {
-					// If there is no index, get index from collection item
 					index = node.closestItem.index;
 				}
 
@@ -78,20 +84,42 @@ var _ = Mavo.Actions = {
 				return items;
 			}).filter(n => n !== undefined));
 		},
+
+		/**
+		 * @param from {Mavo.Node|Array<Mavo.Node>} one or more items to move
+		 * @param to where to move to, item or collection. Optional
+		 * @param index {Number} index. Optional
+		 * @returns Moved item(s)
+		 */
 		move: (from, to, index) => {
-			if (!from || !to) {
+			if (!from || to === undefined) {
 				return;
 			}
 
-			return _.Functions.add(to, Mavo.toArray(from).filter(d => {
-				var node = _.getNode(d);
+			if (Array.isArray(from)) {
+				return from.map(f => _.Functions.move(f, to, index))
+				           .filter(n => n !== undefined);
+			}
 
-				if (node.collection) {
-					node.collection.delete(node, {silent: true});
-					return true;
-				}
-			}));
+			var toNode = _.getNode(to);
+
+			if ($.type(to) == "number" && !(toNode && toNode.collection)) {
+				// If to is a number and not a collection item, it's an index
+				index = to;
+				to = undefined;
+			}
+
+			var node = _.getNode(from);
+
+			if (node.collection) {
+				node.collection.delete(node, {silent: true});
+				return _.Functions.add(to || node.collection, from, index);
+			}
 		},
+
+		/**
+		 * @param ref Items to delete
+		 */
 		clear: (...ref) => {
 			if (!ref.length || !ref[0]) {
 				return;
