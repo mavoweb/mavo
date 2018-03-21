@@ -110,8 +110,30 @@ var _ = Mavo.Functions = {
 	},
 
 	// TODO return first/last non-null?
-	first: arr => arr && arr[0] || "",
-	last: arr => arr && arr[arr.length - 1] || "",
+	first: (n, arr) => {
+		if (arr === undefined) {
+			arr = n;
+			n = undefined;
+		}
+
+		if (!Array.isArray(arr)) {
+			return n && n > 1? [arr] : arr;
+		}
+
+		return n && n > 1? arr.slice(0, n) : arr[0];
+	},
+	last: (n, arr) => {
+		if (arr === undefined) {
+			arr = n;
+			n = undefined;
+		}
+
+		if (!Array.isArray(arr)) {
+			return n && n > 1? [arr] : arr;
+		}
+
+		return n && n > 1? arr.slice(-n) : arr[arr.length - 1];
+	},
 
 	unique: function(arr) {
 		if (!Array.isArray(arr)) {
@@ -357,7 +379,6 @@ var _ = Mavo.Functions = {
 	split: (text, separator = /\s+/) => {
 		return Mavo.Script.binaryOperation(text, separator, {
 			scalar: (text, separator) => {
-
 				text = str(text);
 
 				return text.split(separator);
@@ -399,7 +420,7 @@ _._Trap = self.Proxy? new Proxy(_, {
 			return;
 		}
 
-		if (Mavo.Functions.actionRunning && property in Mavo.Actions.Functions) {
+		if (Mavo.Actions.running && property in Mavo.Actions.Functions) {
 			return Mavo.Actions.Functions[property];
 		}
 
