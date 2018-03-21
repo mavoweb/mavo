@@ -350,7 +350,18 @@ var _ = Mavo.Script = {
 				var thisArg = ", " + _.serialize(node.callee.object);
 			}
 
-			return `call(${_.serialize(node.callee)}, [${node.arguments.map(_.serialize).join(", ")}]${thisArg || ""})`;
+			var nameSerialized = _.serialize(node.callee);
+
+			if (node.callee.type == "Identifier") {
+				// Clashes with native prototype methods? If so, look first in Function trap
+				var clashes = [Array, String, Number].some(c => node.callee.name in c.prototype);
+
+				if (clashes) {
+					nameSerialized = `Mavo.Functions.${nameSerialized.toLowerCase()} || ${nameSerialized}`;
+				}
+			}
+
+			return `call(${nameSerialized}, [${node.arguments.map(_.serialize).join(", ")}]${thisArg || ""})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
@@ -485,10 +496,10 @@ var _ = Mavo.Script = {
 			// Yes this is a horrible, horrible hack and I’m truly ashamed.
 			// If you understand the reasons and can think of a better way, be my guest!
 			code = `
-Mavo.Functions._actionRunning = Mavo.Functions.actionRunning;
-Mavo.Functions.actionRunning = true;
+Mavo.Actions._running = Mavo.Actions.running;
+Mavo.Actions.running = true;
 ${code}
-Mavo.Functions.actionRunning = Mavo.Functions._actionRunning;`;
+Mavo.Actions.running = Mavo.Actions._running;`;
 		}
 
 		return new Function("data", code);
