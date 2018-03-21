@@ -656,8 +656,11 @@ var _ = self.Mavo = $.Class({
 					}
 				}
 			], {
-				classes: "mv-inline mv-deleted",
-				dismiss: "button"
+				classes: "mv-deleted",
+				dismiss: {
+					button: true,
+					timeout: 20000
+				}
 			});
 
 		notice.closed.then(undone => {
