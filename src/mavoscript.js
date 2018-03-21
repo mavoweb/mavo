@@ -414,6 +414,30 @@ var _ = Mavo.Script = {
 			if (node.callee.type == "Identifier") {
 				if (node.callee.name == "if") {
 					node.callee.name = "iff";
+
+					// Traverse data actions inside if() and rewrite them to their *if() counterpart
+					var condition = node.arguments[0];
+
+					for (let i=1; i<node.arguments.length; i++) {
+						if (i == 2) {
+							// Else, negate condition
+							condition = _.parse("not()");
+							condition.arguments.push(node.arguments[0]);
+						}
+
+						_.walk(node.arguments[i], n => {
+							var name = n.callee.name;
+
+							if (Mavo.Actions.Functions.hasOwnProperty(name) // is a data action
+							    && !/if$/.test(name) // and not already the *if() version of itself
+							) {
+								n.callee.name += "if";
+
+								// Add condition as first argument of *if() function
+								n.arguments.unshift(condition);
+							}
+						}, {type: "CallExpression"});
+					}
 				}
 				else if (node.callee.name == "delete") {
 					node.callee.name = "clear";

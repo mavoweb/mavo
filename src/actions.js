@@ -159,6 +159,11 @@ var _ = Mavo.Actions = {
 			return nodes.map(n => n.getLiveData());
 		},
 
+		clearif: (condition, ...targets) => {
+			targets = targets.map(t => Mavo.Functions.iff(condition, t));
+			return _.Functions.clear(...targets);
+		},
+
 		/**
 		 * Set node(s) to value(s)
 		 * If ref is a single node, set it to values
@@ -181,5 +186,19 @@ var _ = Mavo.Actions = {
 		}
 	}
 };
+
+// Create *if() versions of data actions
+for (let name in _.Functions) {
+	let nameif = name + "if";
+
+	if (!(nameif in _.Functions)) {
+		_.Functions[nameif] = (condition, target, ...rest) => {
+			target = Mavo.Functions.iff(condition, target);
+			return _.Functions[name](target, ...rest);
+		};
+	}
+}
+
+_.Functions.deleteif = _.Functions.clearif;
 
 })(Bliss, Bliss.$);
