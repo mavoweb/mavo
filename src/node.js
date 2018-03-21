@@ -34,7 +34,7 @@ var _ = Mavo.Node = $.Class({
 			this.copies = [];
 		}
 
-		if (!this.fromTemplate("property", "type", "path")) {
+		if (!this.fromTemplate("property", "type", "storage", "path")) {
 			this.property = _.getProperty(element);
 			this.type = Mavo.Group.normalize(element);
 			this.storage = this.element.getAttribute("mv-storage");
@@ -414,7 +414,12 @@ var _ = Mavo.Node = $.Class({
 
 		if (ret !== undefined) {
 			if (Array.isArray(ret)) {
-				ret = ret.map(item => item.getLiveData()).filter(item => Mavo.value(item) !== null);
+				ret = ret.map(item => item.getLiveData());
+
+				if (!Mavo.Actions.running) {
+					// In Mavo actions we still need references to these
+					ret = ret.filter(item => Mavo.value(item) !== null);
+				}
 			}
 			else if (ret instanceof Mavo.Node) {
 				ret = ret.getLiveData();
