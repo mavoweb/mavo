@@ -309,17 +309,13 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
 			this.editor.addEventListener("keydown", evt => {
 				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
-					var copy = this.getCousin(1);
-
-					if (!copy) {
-						// It's the last item, insert new if top-down
-						if (this.bottomUp) {
-							return;
-						}
-
-						var next = this.closestCollection.add();
-						this.closestCollection.editItem(next, {immediately: true});
+					if (this.bottomUp) {
+						return;
 					}
+
+					var closestItem = this.closestItem;
+					var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
+					this.closestCollection.editItem(next, {immediately: true});
 
 					copy = this.getCousin(1);
 					copy.edit({immediately: true}).then(() => copy.editor.focus());
