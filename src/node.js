@@ -284,7 +284,15 @@ var _ = Mavo.Node = $.Class({
 		this.oldData = this.data;
 		this.data = data;
 
-		data = Mavo.subset(data, this.inPath);
+		var live = Mavo.in(data, Mavo.toNode);
+
+		if (live) {
+			// Drop proxy
+			data = JSON.parse(Mavo.safeToJSON(data));
+		}
+		else {
+			data = Mavo.subset(data, this.inPath);
+		}
 
 		var env = {context: this, data};
 
@@ -318,7 +326,7 @@ var _ = Mavo.Node = $.Class({
 			this.done();
 		}
 
-		this.dataRender(env.data);
+		this.dataRender(env.data, live);
 
 		if (editing) {
 			this.edit();

@@ -464,7 +464,7 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	dataRender: function(data) {
+	dataRender: function(data, live) {
 		if (data && typeof data === "object") {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
@@ -483,11 +483,24 @@ var _ = Mavo.Primitive = $.Class({
 							break;
 						}
 					}
+
+					// Failing that, any property with the same datatype
+					for (let p in data) {
+						type = $.type(data[p]);
+
+						if (type === this.datatype || !this.datatype && type == "string") {
+							property = p;
+							break;
+						}
+					}
 				}
 
 				if (property) {
 					data = data[property];
-					this.inPath.push(property);
+
+					if (!live) {
+						this.inPath.push(property);
+					}
 				}
 			}
 		}
