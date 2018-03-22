@@ -53,36 +53,49 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var nodes = _.getNodes(ref);
+			var collection = _.getNode(ref);
 
-			return Mavo.flatten(nodes.map(node => {
-				var collection = node.closestCollection;
+			if (!(collection instanceof Mavo.Collection)) {
+				if (data) {
+					// no collection, could it be the second argument?
+					var dataNode = _.getNode(data);
 
-				if (!collection) {
-					return;
+					if (dataNode instanceof Mavo.Collection) {
+						// Yup, order of arguments is fucked
+						collection = dataNode;
+						data = ref;
+					}
 				}
 
-				// If there is no index, get index from collection item
-				if (index === undefined && !(node instanceof Mavo.Collection)) {
-					index = node.closestItem.index;
+				if (!(collection instanceof Mavo.Collection) && collection && collection.collection) {
+					// Item provided instead of collection
+					var item = collection;
+					collection = collection.collection;
+
+					// If there is no index, get index from collection item
+					if (index === undefined) {
+						index = collection.index;
+					}
 				}
 
-				var items = (Array.isArray(data)? data : [data]).map(datum => {
-					var item = collection.add(undefined, index);
+				if (!(collection instanceof Mavo.Collection)) {
+					console.warn("The first argument of add() needs to be a collection.");
+				}
+			}
 
-					if (datum !== undefined) {
-						item.render(datum);
-					}
+			return (Array.isArray(data)? data : [data]).map(datum => {
+				var item = collection.add(undefined, index);
 
-					if (collection.editing) {
-						collection.editItem(item);
-					}
+				if (datum !== undefined) {
+					item.render(datum);
+				}
 
-					return item.getLiveData();
-				});
+				if (collection.editing) {
+					collection.editItem(item);
+				}
 
-				return items;
-			}).filter(n => n !== undefined));
+				return item.getLiveData();
+			});
 		},
 
 		/**
@@ -96,11 +109,6 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			if (Array.isArray(from)) {
-				return from.map(f => _.Functions.move(f, to, index))
-				           .filter(n => n !== undefined);
-			}
-
 			var toNode = _.getNode(to);
 
 			if ($.type(to) == "number" && !(toNode && toNode.collection)) {
@@ -109,12 +117,12 @@ var _ = Mavo.Actions = {
 				to = undefined;
 			}
 
-			var node = _.getNode(from);
-
-			if (node.collection) {
-				node.collection.delete(node, {silent: true});
-				return _.Functions.add(to || node.collection, from, index);
-			}
+			var fromNodes = Mavo.toArray(from).map(_.getNode);
+			var ret = _.Functions.add(to || node.collection, from, index);
+			Mavo.Collection.delete(fromNodes);
+			ret.moved = ret.added;
+			delete ret.added;
+			return ret;
 		},
 
 		/**

@@ -628,18 +628,21 @@ var _ = Mavo.Collection = $.Class({
 		},
 
 		// Delete multiple items from potentially multiple collections or even multiple mavos
-		delete: nodes => {
+		delete: (nodes, o = {}) => {
 			var deleted = new Mavo.BucketMap({arrays: true});
 
 			var promises = nodes
 				.filter(node => !!node.collection)
-				.map(node => node.collection.delete(node, {undoable: false}).then(node => deleted.set(node.mavo, node)));
+				.map(node => node.collection.delete(node, $.extend(o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
 
-			Promise.all(promises).then(() => {
-				deleted.forEach((nodes, mavo) => {
-					mavo.setDeleted(...nodes);
+			if (!o.silent && o.undoable) {
+				Promise.all(promises).then(() => {
+
+					deleted.forEach((nodes, mavo) => {
+						mavo.setDeleted(...nodes);
+					});
 				});
-			});
+			}
 		},
 
 		lazy: {
