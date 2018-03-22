@@ -79,7 +79,7 @@ var _ = Mavo.Actions = {
 				}
 
 				if (!(collection instanceof Mavo.Collection)) {
-					console.warn("The first argument of add() needs to be a collection.");
+					console.warn("The first parameter of add() needs to be a collection or collection item.");
 				}
 			}
 
@@ -186,9 +186,14 @@ var _ = Mavo.Actions = {
 			var wasArray = Array.isArray(ref);
 			var nodes = _.getNodes(ref);
 
-			Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
-				scalar: (node, value) => node.render(value)
-			});
+			if (!nodes.length) {
+				console.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
+			}
+			else {
+				Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
+					scalar: (node, value) => node.render(value)
+				});
+			}
 
 			return values;
 		}
