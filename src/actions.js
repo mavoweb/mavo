@@ -117,11 +117,16 @@ var _ = Mavo.Actions = {
 				to = undefined;
 			}
 
-			var fromNodes = Mavo.toArray(from).map(_.getNode);
-			var ret = _.Functions.add(to || node.collection, from, index);
+			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
+
+			if (!fromNodes.length) {
+				console.warn("The first parameter of move() should be a collection or collection item. There is nothing to move here.");
+			}
+
+			var collection = (to || fromNodes[0]).closestCollection;
+
+			var ret = _.Functions.add(collection, from, index);
 			Mavo.Collection.delete(fromNodes);
-			ret.moved = ret.added;
-			delete ret.added;
 			return ret;
 		},
 
