@@ -633,9 +633,9 @@ var _ = Mavo.Collection = $.Class({
 
 			var promises = nodes
 				.filter(node => !!node.collection)
-				.map(node => node.collection.delete(node, $.extend(o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
+				.map(node => node.collection.delete(node, Object.assign({}, o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
 
-			if (!o.silent && o.undoable) {
+			if (!o.silent && o.undoable !== false) {
 				Promise.all(promises).then(() => {
 
 					deleted.forEach((nodes, mavo) => {
