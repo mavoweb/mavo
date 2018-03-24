@@ -273,7 +273,7 @@ var _ = Mavo.Collection = $.Class({
 				item.destroy();
 			}
 
-			return;
+			return Promise.resolve(item);
 		}
 
 		if (transition) {

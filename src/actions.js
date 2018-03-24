@@ -80,6 +80,7 @@ var _ = Mavo.Actions = {
 
 				if (!(collection instanceof Mavo.Collection)) {
 					console.warn("The first parameter of add() needs to be a collection or collection item.");
+					return data;
 				}
 			}
 
@@ -121,12 +122,13 @@ var _ = Mavo.Actions = {
 
 			if (!fromNodes.length) {
 				console.warn("The first parameter of move() should be a collection or collection item. There is nothing to move here.");
+				return from;
 			}
 
-			var collection = (to || fromNodes[0]).closestCollection;
+			var collection = (toNode || fromNodes[0]).closestCollection;
 
 			var ret = _.Functions.add(collection, from, index);
-			Mavo.Collection.delete(fromNodes);
+			Mavo.Collection.delete(fromNodes, {silent: true});
 			return ret;
 		},
 
