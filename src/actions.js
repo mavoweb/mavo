@@ -74,7 +74,7 @@ var _ = Mavo.Actions = {
 
 					// If there is no index, get index from collection item
 					if (index === undefined) {
-						index = collection.index;
+						index = item.index;
 					}
 				}
 
