@@ -371,6 +371,8 @@ var _ = Mavo.Primitive = $.Class({
 			Mavo.revocably.setAttribute(this.element, "tabindex", "0");
 		}
 
+		this.element.classList.add("mv-pending-edit");
+
 		// Prevent default actions while editing
 		// e.g. following links etc
 		if (!this.modes) {
@@ -394,6 +396,8 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		return this.preEdit.then(() => {
+			this.element.classList.remove("mv-pending-edit");
+
 			this.sneak(() => {
 				// Actual edit
 				if (this.initEdit) {
@@ -408,9 +412,9 @@ var _ = Mavo.Primitive = $.Class({
 				if (!this.attribute && !this.popup) {
 					if (this.editor.parentNode != this.element) {
 						this.editorValue = this.value;
-						this.element.textContent = "";
+						_.setText(this.element, "");
 
-						this.element.appendChild(this.editor);
+						this.element.prepend(this.editor);
 					}
 
 					if (!this.collection) {
@@ -450,7 +454,8 @@ var _ = Mavo.Primitive = $.Class({
 					config: this.config,
 					attribute: this.attribute,
 					datatype: this.datatype,
-					map: this.originalEditor || this.editor
+					map: this.originalEditor || this.editor,
+					node: this
 				});
 			}
 		});
@@ -584,7 +589,8 @@ var _ = Mavo.Primitive = $.Class({
 						config: this.config,
 						attribute: this.attribute,
 						datatype: this.datatype,
-						map: this.originalEditor || this.editor
+						map: this.originalEditor || this.editor,
+						node: this
 					});
 				}
 			}
@@ -643,6 +649,28 @@ var _ = Mavo.Primitive = $.Class({
 
 	static: {
 		all: new WeakMap(),
+
+		getText: function(element) {
+			var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
+
+			if (node && node.nodeType === Node.TEXT_NODE) {
+				return node.nodeValue;
+			}
+			else {
+				return "";
+			}
+		},
+
+		setText: function(element, text) {
+			var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
+
+			if (node && node.nodeType === Node.TEXT_NODE) {
+				node.nodeValue = text;
+			}
+			else {
+				element.prepend(text);
+			}
+		},
 
 		getValueAttribute: function (element, config = Mavo.Elements.search(element)) {
 			var ret = element.getAttribute("mv-attribute") || config.attribute;
@@ -724,7 +752,7 @@ var _ = Mavo.Primitive = $.Class({
 				ret = element.getAttribute(attribute);
 			}
 			else {
-				ret = element.getAttribute("content") || element.textContent || null;
+				ret = element.getAttribute("content") || _.getText(element) || null;
 			}
 
 			return _.safeCast(ret, datatype);
@@ -801,15 +829,16 @@ var _ = Mavo.Primitive = $.Class({
 			else {
 				var presentational = _.format(value, o);
 
-				if (presentational !== value) {
-					element.textContent = presentational;
-
-					if (element.setAttribute) {
-						element.setAttribute("content", value);
-					}
+				if (o.node) {
+					_.setText(element, presentational);
 				}
 				else {
-					element.textContent = value;
+					element.textContent = presentational;
+				}
+
+
+				if (presentational !== value && element.setAttribute) {
+					element.setAttribute("content", value);
 				}
 			}
 		},

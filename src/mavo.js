@@ -60,9 +60,7 @@ var _ = self.Mavo = $.Class({
 
 		// Apply heuristic for groups
 		$$(_.selectors.primitive + "," + _.selectors.multiple, this.element).forEach(element => {
-			var hasChildren = $(`${_.selectors.not(_.selectors.formControl)}, ${_.selectors.property}`, element);
-
-			if (hasChildren) {
+			if ($$(_.selectors.property, element).length) { // contains other properties
 				var config = Mavo.Primitive.getConfig(element);
 				var isCollection = Mavo.is("multiple", element);
 
@@ -832,7 +830,8 @@ requestAnimationFrame(() => {
 		"Intl.~locale.en": self.Intl,
 		"IntersectionObserver": self.IntersectionObserver,
 		"Symbol": self.Symbol,
-		"Element.prototype.remove": Element.prototype.remove
+		"Element.prototype.remove": Element.prototype.remove,
+		"Element.prototype.prepend": Element.prototype.prepend
 	}, (id, supported) => {
 		if (!supported) {
 			polyfills.push(id);
