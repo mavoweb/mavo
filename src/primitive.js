@@ -412,7 +412,13 @@ var _ = Mavo.Primitive = $.Class({
 				if (!this.attribute && !this.popup) {
 					if (this.editor.parentNode != this.element) {
 						this.editorValue = this.value;
-						_.setText(this.element, "");
+
+						if (this.config.hasChildren) {
+							this.element.textContent = "";
+						}
+						else {
+							_.setText(this.element, "");
+						}
 
 						this.element.prepend(this.editor);
 					}
@@ -829,7 +835,7 @@ var _ = Mavo.Primitive = $.Class({
 			else {
 				var presentational = _.format(value, o);
 
-				if (o.node) {
+				if (o.node && !o.config.hasChildren) {
 					_.setText(element, presentational);
 				}
 				else {
