@@ -420,20 +420,13 @@ _._Trap = self.Proxy? new Proxy(_, {
 			return;
 		}
 
-		if (Mavo.Actions.running && property in Mavo.Actions.Functions) {
-			return Mavo.Actions.Functions[property];
+		var propertyL = property.toLowerCase && property.toLowerCase() || property;
+
+		if (Mavo.Actions.running && propertyL in Mavo.Actions.Functions) {
+			return Mavo.Actions.Functions[propertyL];
 		}
 
-		var canonicalProperty = Mavo.getCanonicalProperty(functions, property)
-		                     || Mavo.getCanonicalProperty(Math, property);
-
-		if (canonicalProperty) {
-			ret = functions[canonicalProperty];
-
-			if (ret === undefined) {
-				ret = Math[canonicalProperty];
-			}
-		}
+		ret = functions[propertyL] || Math[property] || Math[propertyL];
 
 		if (ret !== undefined) {
 			if (typeof ret === "function") {
