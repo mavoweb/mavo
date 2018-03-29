@@ -81,10 +81,11 @@ var _ = Mavo.Functions = {
 		}
 
 		if (typeof fn !== "function") {
-			if (fn[Mavo.toNode]) {
+			// toArray because the node may be coming from the inside
+			var node = Mavo.toArray(fn)[0][Mavo.toNode];
+			if (node) {
 				// there is a node with the same property as a function name. Fix this. (rel #227)
 				// In the future we may also introduce calling nodes as functions, and the structure is here
-				var node = fn[Mavo.toNode];
 				fn = _._Trap[node.property];
 			}
 		}
