@@ -184,7 +184,7 @@ var _ = $.extend(Mavo, {
 		if (!element) {
 			return null;
 		}
-		
+
 		var data = _.elementData.get(element) || {}, ret;
 
 		if (arguments.length == 2) {
@@ -828,6 +828,7 @@ function updateTargetWithin() {
 	}
 };
 
+document.addEventListener("mv-load", updateTargetWithin);
 addEventListener("hashchange", updateTargetWithin);
 var idObserver = new Mavo.Observer(document.documentElement, "id", updateTargetWithin);
 
