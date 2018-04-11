@@ -281,16 +281,17 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	render: function(data) {
-		this.oldData = this.data;
-		this.data = data;
-
 		var live = Mavo.in(data, Mavo.toNode);
 
 		if (live) {
 			// Drop proxy
-			data = JSON.parse(Mavo.safeToJSON(data));
+			data = Mavo.clone(data);
 		}
-		else {
+
+		this.oldData = this.data;
+		this.data = data;
+
+		if (!live) {
 			data = Mavo.subset(data, this.inPath);
 		}
 

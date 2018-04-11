@@ -104,7 +104,7 @@ var _ = Mavo.Group = $.Class({
 			return env.data;
 		}
 
-		env.data = Mavo.subset(this.data, this.inPath) || {};
+		env.data = Mavo.shallowClone(Mavo.subset(this.data, this.inPath)) || {};
 
 		for (var property in this.children) {
 			var obj = this.children[property];

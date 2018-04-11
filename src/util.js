@@ -506,6 +506,19 @@ var _ = $.extend(Mavo, {
 		return JSON.parse(_.safeToJSON(o));
 	},
 
+	// Will not work for symbols
+	shallowClone: function(o) {
+		if (!o || typeof o !== "object") {
+			return o;
+		}
+
+		if (Array.isArray(o)) {
+			return [...o];
+		}
+
+		return $.extend({}, o);
+	},
+
 	// Credit: https://remysharp.com/2010/07/21/throttling-function-calls
 	debounce: function (fn, delay) {
 		if (!delay) {
