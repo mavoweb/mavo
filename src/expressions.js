@@ -120,11 +120,9 @@ var _ = Mavo.Expressions = $.Class({
 			rootObject = this.mavo.root;
 		}
 
-		var allData = rootObject.liveData[Mavo.toProxy];
-
 		rootObject.walk((obj, path) => {
 			if (obj.expressions && obj.expressions.length) {
-				var data = $.value(allData, ...path);
+				var data = obj.getLiveData();
 
 				obj.expressions.forEach(et => et.update(data));
 			}

@@ -147,13 +147,12 @@ var _ = Mavo.Node = $.Class({
 			value = Mavo.in(this.liveData, Mavo.toProxy)? this.liveData[Mavo.toProxy] : this.liveData;
 		}
 
-		var key = this.collection? this.index : this.property;
-
-		if (this.collection && this.collection instanceof Mavo.ImplicitCollection) {
+		if (this.collection instanceof Mavo.ImplicitCollection) {
 			// Implicit collections drop nulls
 			this.collection.updateLiveData();
 		}
 		else {
+			var key = this.collection? this.index : this.property;
 			this.parent.liveData[key] = value;
 		}
 	},
@@ -700,6 +699,16 @@ var _ = Mavo.Node = $.Class({
 			} while (!node && (element = element.parentNode));
 
 			return node;
+		},
+
+		getClosestItem: function(element) {
+			var item = _.getClosest(element);
+
+			if (item instanceof Mavo.Primitive && !item.collection) {
+				return item.parent;
+			}
+
+			return item;
 		},
 
 		/**
