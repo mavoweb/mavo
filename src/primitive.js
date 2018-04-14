@@ -201,7 +201,7 @@ var _ = Mavo.Primitive = $.Class({
 	updateLiveData: function() {
 		var value = this.value;
 
-		if (value === "" || this.isDataNull({live: true})) {
+		if (this.isDataNull({live: true})) {
 			value = null;
 		}
 
@@ -231,6 +231,11 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		return this.liveData;
+	},
+
+	isDataNull: function(o) {
+		return this.super.isDataNull.call(this, o)
+		       || ["", null, undefined].indexOf(this._value) > -1;
 	},
 
 	getData: function(o = {}) {
