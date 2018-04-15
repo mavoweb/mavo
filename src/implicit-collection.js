@@ -24,34 +24,48 @@ var _ = Mavo.ImplicitCollection = $.Class({
 	updateLiveData: function() {
 		var deleted = 0;
 		this.liveData.length = 0;
+		var values = [];
 
 		for (var i=0; i<this.children.length; i++) {
 			var node = this.children[i];
-			if (node.isDataNull({live: true})) {
-				deleted++;
-			}
-			else {
-				this.liveData[i - deleted] = this.children[i].getLiveData();
+			delete node.liveData[0];
+
+			if (!node.isDataNull({live: true})) {
+				let value = node.getLiveData();
+				this.liveData.push(value);
 			}
 		}
 
 		// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-		this.parent.liveData[this.property] = this.liveData.length == 1? this.liveData[0] : this.liveData;
+		var liveData = this.liveData.length === 1? this.liveData[0] : this.liveData;
+
+		this.parent.liveData[this.property] = liveData[Mavo.toProxy];
 	},
 
 	getData: function(o = {}) {
 		var env = {
 			context: this,
 			options: o,
-			data: this.liveData
+			data: []
 		};
 
-		// Drop nulls
-		Mavo.filter(env.data, item => Mavo.value(item) !== null);
+		this.children.forEach(node => {
+			if (!node.isDataNull()) {
+				env.data.push(node.getData(o));
+			}
+		});
 
 		if (this.data) {
-			var rendered = Mavo.subset(this.data, this.inPath);
-			env.data = env.data.concat(rendered.slice(env.data.length));
+			// Maybe rendered data had more items than we could show? Add it back.
+			var rendered = Mavo.toArray(Mavo.subset(this.data, this.inPath));
+
+			if (rendered.length > env.data.length) {
+				env.data = env.data.concat(rendered.slice(env.data.length));
+			}
+		}
+
+		if (Array.isArray(env.data) && env.data.length <= 1) {
+			env.data = env.data.length === 1? env.data[0] : null;
 		}
 
 		env.data = Mavo.subset(this.data, this.inPath, env.data);
