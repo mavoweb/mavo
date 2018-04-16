@@ -157,7 +157,7 @@ var _ = Mavo.Node = $.Class({
 		}
 	},
 
-	isDataNull: function(o) {
+	isDataNull: function(o = {}) {
 		var env = {
 			context: this,
 			options: o,
