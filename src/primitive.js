@@ -310,7 +310,7 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		// Enter should go to the next item or insert a new one
+		// Enter should insert a new item
 		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
 			this.editor.addEventListener("keydown", evt => {
 				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
@@ -320,10 +320,12 @@ var _ = Mavo.Primitive = $.Class({
 
 					var closestItem = this.closestItem;
 					var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
-					this.closestCollection.editItem(next, {immediately: true});
+					this.closestCollection.editItem(next);
 
 					copy = this.getCousin(1);
-					copy.edit({immediately: true}).then(() => copy.editor.focus());
+					requestAnimationFrame(() => {
+						copy.edit({immediately: true}).then(() => copy.editor.focus());
+					});
 
 					if (multiline) {
 						evt.preventDefault();
