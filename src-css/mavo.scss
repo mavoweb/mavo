@@ -216,7 +216,7 @@ button.mv-close {
 		@include highlight(hsla(180, 50%, 50%, .25), "!important");
 	}
 
-	.mv-empty:not([mv-mode="edit"]) {
+	.mv-empty:not([mv-mode="edit"]):not(td):not(th) {
 		display: none;
 	}
 
