@@ -241,7 +241,7 @@ var _ = Mavo.Script = {
 			scalar: (a, b) => "" + (a || "") + (b || ""),
 			precedence: 10
 		},
-		"object": {
+		"keyvalue": {
 			symbol: ":",
 			code: (...operands) => {
 				var i = operands.length - 1;
