@@ -24,7 +24,7 @@
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "^4.0.0",
     "gulp-babel": "^7.0.0",
-    "gulp-babili": "^0.1.4",
+    "gulp-babel-minify": "^0.4.0",
     "gulp-concat": "^2.6.0",
     "gulp-inject-version": "^1.0.1",
     "gulp-notify": "^3.0.0",
