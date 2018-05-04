@@ -205,6 +205,7 @@ var _ = self.Mavo = $.Class({
 			// No storage or source
 			requestAnimationFrame(() => {
 				this.dataLoaded.resolve();
+				this.expressions.update();
 				$.fire(this.element, "mv-load");
 			});
 		}
