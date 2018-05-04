@@ -395,16 +395,18 @@ var _ = Mavo.Primitive = $.Class({
 
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
 			$.bind(this.element, events, resolve);
-		}).then(() => $.unbind(this.element, ".mavo:preedit"));
+		}).then(evt => {
+			$.unbind(this.element, ".mavo:preedit");
+			this.element.classList.remove("mv-pending-edit");
+			return evt;
+		});
 
 		if (this.config.edit) {
 			this.config.edit.call(this);
 			return;
 		}
 
-		return this.preEdit.then(() => {
-			this.element.classList.remove("mv-pending-edit");
-
+		return this.preEdit.then(evt => {
 			this.sneak(() => {
 				// Actual edit
 				if (this.initEdit) {
@@ -430,11 +432,11 @@ var _ = Mavo.Primitive = $.Class({
 						this.element.prepend(this.editor);
 					}
 
-					if (!this.collection) {
-						if (document.activeElement === this.element) {
-							this.editor.focus();
-						}
+					if (evt && evt.type == "click" || document.activeElement === this.element) {
+						this.editor.focus();
+					}
 
+					if (!this.collection) {
 						Mavo.revocably.restoreAttribute(this.element, "tabindex");
 					}
 				}
