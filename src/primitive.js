@@ -313,7 +313,11 @@ var _ = Mavo.Primitive = $.Class({
 		// Enter should insert a new item
 		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
 			this.editor.addEventListener("keydown", evt => {
-				if (evt.keyCode == 13 && this.closestCollection.editing && (evt.shiftKey || !multiline)) { // Enter
+				if (!this.closestCollection.editing) {
+					return;
+				}
+
+				if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
 					if (this.bottomUp) {
 						return;
 					}
@@ -331,16 +335,18 @@ var _ = Mavo.Primitive = $.Class({
 						evt.preventDefault();
 					}
 				}
-				else if (evt.keyCode == 8 && (this.empty && this.collection || evt[Mavo.superKey])) {
+				else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
+					// Focus on sibling afterwards
+					var sibling = this.getCousin(1) || this.getCousin(-1);
+
 					// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
 					this.closestCollection.delete(this.closestItem);
-
-					// Focus on sibling
-					var sibling = this.getCousin(1) || this.getCousin(-1);
 
 					if (sibling) {
 						sibling.edit({immediately: true}).then(() => sibling.editor.focus());
 					}
+
+					evt.preventDefault();
 				}
 			});
 		}
@@ -369,41 +375,52 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function (o = {}) {
-		if (this.editing || this.super.edit.call(this) === false) {
+		var wasEditing = this.editing;
+
+		if (this.super.edit.call(this) === false) {
+			// Invalid edit
 			return false;
 		}
 
-		// Make element focusable, so it can actually receive focus
-		if (this.element.tabIndex === -1) {
-			Mavo.revocably.setAttribute(this.element, "tabindex", "0");
+		if (wasEditing && !this.initEdit) {
+			// Already being edited
+			return this.preEdit;
 		}
 
-		this.element.classList.add("mv-pending-edit");
-
-		// Prevent default actions while editing
-		// e.g. following links etc
-		if (!this.modes) {
-			$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
-		}
-
-		this.preEdit = Mavo.promise(resolve => {
-			if (o.immediately) {
-				return resolve();
+		if (!wasEditing) {
+			// Make element focusable, so it can actually receive focus
+			if (this.element.tabIndex === -1) {
+				Mavo.revocably.setAttribute(this.element, "tabindex", "0");
 			}
 
-			var timer;
+			this.element.classList.add("mv-pending-edit");
 
+			// Prevent default actions while editing
+			// e.g. following links etc
+			if (!this.modes) {
+				$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
+			}
+		}
+
+		this.preEdit = this.preEdit || Mavo.promise(resolve => {
 			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
 			$.bind(this.element, events, resolve);
-		}).then(evt => {
+		});
+
+		if (o.immediately) {
+			this.preEdit.resolve();
+		}
+
+		this.preEdit.then(evt => {
 			$.unbind(this.element, ".mavo:preedit");
+
 			this.element.classList.remove("mv-pending-edit");
-			return evt;
 		});
 
 		if (this.config.edit) {
 			this.config.edit.call(this);
-			return;
+			this.initEdit = null;
+			return this.preEdit.resolve();
 		}
 
 		return this.preEdit.then(evt => {
