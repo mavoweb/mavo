@@ -369,7 +369,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	edit: function (o = {}) {
-		if (this.super.edit.call(this) === false) {
+		if (this.editing || this.super.edit.call(this) === false) {
 			return false;
 		}
 
