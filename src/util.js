@@ -843,6 +843,6 @@ function updateTargetWithin() {
 
 document.addEventListener("mv-load", updateTargetWithin);
 addEventListener("hashchange", updateTargetWithin);
-var idObserver = new Mavo.Observer(document.documentElement, "id", updateTargetWithin);
+var idObserver = new Mavo.Observer(document.documentElement, "id", updateTargetWithin, {subtree: true});
 
 })(Bliss, Bliss.$);
