@@ -789,15 +789,6 @@ var _ = $.extend(Mavo, {
 
 // Bliss plugins
 
-$.add("toggleAttribute", function(name, value, test = value !== null) {
-	if (test) {
-		this.setAttribute(name, value);
-	}
-	else {
-		this.removeAttribute(name);
-	}
-});
-
 // Provide shortcuts to long property chains
 $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 	Object.defineProperty(obj, property, {
