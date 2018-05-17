@@ -369,7 +369,7 @@ var _ = Mavo.Script = {
 			return `get(${_.serialize(node.object)}, ${property})`;
 		},
 		"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
-		"Literal": node => node.raw,
+		"Literal": node => node.raw.replace(/\r/g, "\\r").replace(/\n/g, "\\n"),
 		"Identifier": node => node.name,
 		"ThisExpression": node => "this",
 		"Compound": node => node.body.map(_.serialize).join(", ")
