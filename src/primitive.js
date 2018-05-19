@@ -310,47 +310,6 @@ var _ = Mavo.Primitive = $.Class({
 			});
 		}
 
-		// Enter should insert a new item
-		if (!this.popup && this.closestCollection && this.editor.matches(Mavo.selectors.textInput)) {
-			this.editor.addEventListener("keydown", evt => {
-				if (!this.closestCollection.editing) {
-					return;
-				}
-
-				if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
-					if (this.bottomUp) {
-						return;
-					}
-
-					var closestItem = this.closestItem;
-					var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
-					this.closestCollection.editItem(next);
-
-					copy = this.getCousin(1);
-					requestAnimationFrame(() => {
-						copy.edit({immediately: true}).then(() => copy.editor.focus());
-					});
-
-					if (multiline) {
-						evt.preventDefault();
-					}
-				}
-				else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
-					// Focus on sibling afterwards
-					var sibling = this.getCousin(1) || this.getCousin(-1);
-
-					// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
-					this.closestCollection.delete(this.closestItem);
-
-					if (sibling) {
-						sibling.edit({immediately: true}).then(() => sibling.editor.focus());
-					}
-
-					evt.preventDefault();
-				}
-			});
-		}
-
 		if ("placeholder" in this.editor) {
 			this.editor.placeholder = "(" + this.label + ")";
 		}
@@ -415,6 +374,52 @@ var _ = Mavo.Primitive = $.Class({
 			$.unbind(this.element, ".mavo:preedit");
 
 			this.element.classList.remove("mv-pending-edit");
+
+			requestAnimationFrame(() => {
+				// Enter should insert a new item and backspace should delete it
+				if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+					$.bind(this.editor, "keydown.mavo:edit", evt => {
+						if (!this.closestCollection.editing || ![8, 13].indexOf(evt.keyCode) === -1) {
+							return;
+						}
+
+						var multiline = this.editor.matches("textarea");
+
+						if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
+							if (this.bottomUp) {
+								return;
+							}
+
+							var closestItem = this.closestItem;
+							var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
+							this.closestCollection.editItem(next);
+
+							copy = this.getCousin(1);
+							requestAnimationFrame(() => {
+								copy.edit({immediately: true}).then(() => copy.editor.focus());
+							});
+
+							if (multiline) {
+								evt.preventDefault();
+							}
+						}
+						else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
+							// Focus on sibling afterwards
+							var sibling = this.getCousin(1) || this.getCousin(-1);
+
+							// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
+							this.closestCollection.delete(this.closestItem);
+
+							if (sibling) {
+								sibling.edit({immediately: true}).then(() => sibling.editor.focus());
+							}
+
+							evt.preventDefault();
+						}
+					});
+				}
+			});
+
 		});
 
 		if (this.config.edit) {
