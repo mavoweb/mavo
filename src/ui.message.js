@@ -40,6 +40,7 @@ var _ = Mavo.UI.Message = $.Class({
 
 		if (o.dismiss.button) {
 			$.create("button", {
+				type: "button",
 				className: "mv-close mv-ui",
 				textContent: "×",
 				events: {

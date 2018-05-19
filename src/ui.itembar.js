@@ -23,10 +23,12 @@ var _ = Mavo.UI.Itembar = $.Class({
 			var buttons = [
 				{
 					tag: "button",
+					type: "button",
 					title: this.mavo._("delete-item", this.item),
 					className: "mv-delete"
 				}, {
 					tag: "button",
+					type: "button",
 					title: this.mavo._(`add-item-${this.collection.bottomUp? "after" : "before"}`, this.item),
 					className: "mv-add"
 				}
@@ -35,6 +37,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 			if (this.item instanceof Mavo.Group) {
 				this.dragHandle = $.create({
 					tag: "button",
+					type: "button",
 					title: this.mavo._("drag-to-reorder", this.item),
 					className: "mv-drag-handle"
 				});

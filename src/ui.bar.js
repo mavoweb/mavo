@@ -64,6 +64,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 			else if (!this[id]) {
 				this[id] = $.create("button", {
+					type: "button",
 					className: `mv-${id}`,
 					textContent: this.mavo._(id)
 				});

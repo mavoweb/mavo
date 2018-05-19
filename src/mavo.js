@@ -646,6 +646,7 @@ var _ = self.Mavo = $.Class({
 				this._("item-deleted", {name: phrase}),
 				{
 					tag: "button",
+					type: "button",
 					textContent: this._("undo"),
 					events: {
 						click: evt => {
