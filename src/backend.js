@@ -19,7 +19,9 @@ var _ = Mavo.Backend = $.Class({
 	},
 
 	get: function(url = new URL(this.url)) {
-		url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
+		if (url.protocol != "data:") {
+			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
+		}		
 
 		return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},
