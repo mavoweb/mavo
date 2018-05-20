@@ -1,6 +1,6 @@
 (function($, $$) {
 
-Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts");
+Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items", "mv-like");
 
 var _ = Mavo.Collection = $.Class({
 	extends: Mavo.Node,
