@@ -90,9 +90,11 @@ var _ = Mavo.Collection = $.Class({
 
 		if (this.initialItems > 1) {
 			// Add extra items
-			for (let i=1; i<this.initialItems; i++) {
-				this.add();
-			}
+			this.mavo.treeBuilt.then(() => {
+				for (let i=1; i<this.initialItems; i++) {
+					this.add();
+				}
+			});
 		}
 
 		Mavo.hooks.run("collection-init-end", this);
