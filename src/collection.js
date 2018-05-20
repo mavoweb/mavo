@@ -21,7 +21,7 @@ var _ = Mavo.Collection = $.Class({
 
 		$.after(this.marker, this.templateElement);
 
-		if (!this.fromTemplate("templateElement", "accepts", "optional", "like", "likeNode")) {
+		if (!this.fromTemplate("templateElement", "accepts", "initialItems", "like", "likeNode")) {
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
@@ -37,8 +37,23 @@ var _ = Mavo.Collection = $.Class({
 
 			this.accepts = this.templateElement.getAttribute("mv-accepts");
 			this.accepts = this.accepts && this.accepts.split(/\s+/) || [];
+			this.initialItems = this.templateElement.getAttribute("mv-initial-items");
 
-			this.optional = !!this.like || this.templateElement.hasAttribute("mv-optional");
+			if (this.initialItems === null) {
+				if (this.like) {
+					this.initialItems = 0;
+				}
+				else if (this.templateElement.hasAttribute("mv-optional")) {
+					console.warn('The mv-optional attribute is deprecated and will be removed. Please use mv-initial-items="0" instead.');
+					this.initialItems = 0;
+				}
+				else {
+					this.initialItems = 1;
+				}
+			}
+			else {
+				this.initialItems = +this.initialItems;
+			}
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
@@ -58,20 +73,27 @@ var _ = Mavo.Collection = $.Class({
 
 			this.properties = this.likeNode.properties;
 		}
-		else if (!this.optional || !this.template) {
+		else if (this.initialItems > 0 || !this.template) {
 			var item = this.createItem(this.element);
 			this.add(item, undefined, {silent: true});
 
-			if (this.optional) {
+			if (!this.initialItems) {
 				this.delete(item, {silent: true});
 			}
 		}
 
-		if (this.optional) {
+		if (!this.initialItems) {
 			this.element.remove();
 		}
 
 		this.postInit();
+
+		if (this.initialItems > 1) {
+			// Add extra items
+			for (let i=1; i<this.initialItems; i++) {
+				this.add();
+			}
+		}
 
 		Mavo.hooks.run("collection-init-end", this);
 	},
