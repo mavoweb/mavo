@@ -4,7 +4,7 @@
  * @version %%VERSION%%
  */
 (function ($, $$) {
-
+console.log("local");
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
 		this.treeBuilt = Mavo.promise();
@@ -791,7 +791,7 @@ let s = _.selectors = {
 	group: "[typeof], [itemscope], [itemtype], [mv-group]",
 	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
-	textInput: ["text", "email", "url", "tel", "search"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
+	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
 	ui: ".mv-ui",
 	container: {
 		// "li": "ul, ol",
