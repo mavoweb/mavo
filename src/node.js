@@ -687,7 +687,7 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			if (nodes[0] instanceof Mavo.Group) {
-				return node[1];
+				return nodes[1];
 			}
 		},
 
