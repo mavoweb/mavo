@@ -346,6 +346,8 @@ var _ = Mavo.Primitive = $.Class({
 			return this.preEdit;
 		}
 
+		this.preEdit = this.preEdit || Mavo.promise();
+
 		if (!wasEditing) {
 			// Make element focusable, so it can actually receive focus
 			if (this.element.tabIndex === -1) {
@@ -359,68 +361,65 @@ var _ = Mavo.Primitive = $.Class({
 			if (!this.modes) {
 				$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
 			}
+
+			this.preEdit.then(evt => {
+				$.unbind(this.element, ".mavo:preedit");
+
+				this.element.classList.remove("mv-pending-edit");
+
+				requestAnimationFrame(() => {
+					// Enter should insert a new item and backspace should delete it
+					if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+						$.bind(this.editor, "keydown.mavo:edit", evt => {
+							if (!this.closestCollection.editing || ![8, 13].indexOf(evt.keyCode) === -1) {
+								return;
+							}
+
+							var multiline = this.editor.matches("textarea");
+
+							if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
+								if (this.bottomUp) {
+									return;
+								}
+
+								var closestItem = this.closestItem;
+								var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
+								this.closestCollection.editItem(next);
+
+								copy = this.getCousin(1);
+								requestAnimationFrame(() => {
+									copy.edit({immediately: true}).then(() => copy.editor.focus());
+								});
+
+								if (multiline) {
+									evt.preventDefault();
+								}
+							}
+							else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
+								// Focus on sibling afterwards
+								var sibling = this.getCousin(1) || this.getCousin(-1);
+
+								// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
+								this.closestCollection.delete(this.closestItem);
+
+								if (sibling) {
+									sibling.edit({immediately: true}).then(() => sibling.editor.focus());
+								}
+
+								evt.preventDefault();
+							}
+						});
+					}
+				});
+			});
 		}
 
-		this.preEdit = this.preEdit || Mavo.promise(resolve => {
-			var events = "click focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
-			$.bind(this.element, events, resolve);
-		});
+		var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
+		$.bind(this.element, events, evt => this.preEdit.resolve(evt));
 
 		if (o.immediately) {
 			this.preEdit.resolve();
 		}
-
-		this.preEdit.then(evt => {
-			$.unbind(this.element, ".mavo:preedit");
-
-			this.element.classList.remove("mv-pending-edit");
-
-			requestAnimationFrame(() => {
-				// Enter should insert a new item and backspace should delete it
-				if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
-					$.bind(this.editor, "keydown.mavo:edit", evt => {
-						if (!this.closestCollection.editing || ![8, 13].indexOf(evt.keyCode) === -1) {
-							return;
-						}
-
-						var multiline = this.editor.matches("textarea");
-
-						if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
-							if (this.bottomUp) {
-								return;
-							}
-
-							var closestItem = this.closestItem;
-							var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
-							this.closestCollection.editItem(next);
-
-							copy = this.getCousin(1);
-							requestAnimationFrame(() => {
-								copy.edit({immediately: true}).then(() => copy.editor.focus());
-							});
-
-							if (multiline) {
-								evt.preventDefault();
-							}
-						}
-						else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
-							// Focus on sibling afterwards
-							var sibling = this.getCousin(1) || this.getCousin(-1);
-
-							// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
-							this.closestCollection.delete(this.closestItem);
-
-							if (sibling) {
-								sibling.edit({immediately: true}).then(() => sibling.editor.focus());
-							}
-
-							evt.preventDefault();
-						}
-					});
-				}
-			});
-
-		});
 
 		if (this.config.edit) {
 			this.config.edit.call(this);
@@ -454,7 +453,7 @@ var _ = Mavo.Primitive = $.Class({
 						this.element.prepend(this.editor);
 					}
 
-					if (evt && evt.type == "click" || document.activeElement === this.element) {
+					if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
 						this.editor.focus();
 					}
 
