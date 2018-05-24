@@ -346,22 +346,8 @@ var _ = Mavo.Primitive = $.Class({
 			return this.preEdit;
 		}
 
-		this.preEdit = this.preEdit || Mavo.promise();
-
-		if (!wasEditing) {
-			// Make element focusable, so it can actually receive focus
-			if (this.element.tabIndex === -1) {
-				Mavo.revocably.setAttribute(this.element, "tabindex", "0");
-			}
-
-			this.element.classList.add("mv-pending-edit");
-
-			// Prevent default actions while editing
-			// e.g. following links etc
-			if (!this.modes) {
-				$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
-			}
-
+		if (!this.preEdit) {
+			this.preEdit = Mavo.promise();
 			this.preEdit.then(evt => {
 				$.unbind(this.element, ".mavo:preedit");
 
@@ -412,6 +398,21 @@ var _ = Mavo.Primitive = $.Class({
 					}
 				});
 			});
+		}
+
+		if (!wasEditing) {
+			// Make element focusable, so it can actually receive focus
+			if (this.element.tabIndex === -1) {
+				Mavo.revocably.setAttribute(this.element, "tabindex", "0");
+			}
+
+			this.element.classList.add("mv-pending-edit");
+
+			// Prevent default actions while editing
+			// e.g. following links etc
+			if (!this.modes) {
+				$.bind(this.element, "click.mavo:edit", evt => evt.preventDefault());
+			}
 		}
 
 		var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
