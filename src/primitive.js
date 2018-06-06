@@ -454,6 +454,8 @@ var _ = Mavo.Primitive = $.Class({
 						this.element.prepend(this.editor);
 					}
 
+					// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
+					// so this ends up focusing even when it shouldn't
 					if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
 						this.editor.focus();
 					}

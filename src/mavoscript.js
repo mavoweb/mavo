@@ -86,7 +86,7 @@ var _ = Mavo.Script = {
 					b = $u.numbers(b);
 				}
 
-				result = _.binaryOperation(a, b, o);
+				var result = _.binaryOperation(a, b, o);
 
 				if (o.reduce) {
 					prev = o.reduce(prev, result, a, b);
