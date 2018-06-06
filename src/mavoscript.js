@@ -23,6 +23,8 @@ var _ = Mavo.Script = {
 	},
 
 	binaryOperation: function(a, b, o = {}) {
+		var result;
+		
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
 				result = [
