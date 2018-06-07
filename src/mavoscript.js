@@ -299,7 +299,7 @@ var _ = Mavo.Script = {
 		"range": {
 			symbol: "..",
 			scalar: (a, b) => {
-				var range = b - a + 1;
+				var range = Math.floor(b - a + 1);
 				return [...Array(range).keys()].map(x => x + a);
 			},
 			precedence: 2
