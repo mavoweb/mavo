@@ -108,9 +108,18 @@ var _ = Mavo.Primitive = $.Class({
 			this.defaultSource = "template";
 		}
 		else { // mv-default with value
-			this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
-				this.default = this.element.getAttribute("mv-default");
-			});
+			var defaultExpression = Mavo.DOMExpression.search(this.element, "mv-default");
+
+			if (defaultExpression) {
+				// To preserve type, e.g. booleans should stay booleans, not become strings
+				defaultExpression.output = value => this.default = value;
+			}
+			else {
+				this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
+					this.default = this.element.getAttribute("mv-default");
+				});
+			}
+
 			this.defaultSource = "attribute";
 		}
 
