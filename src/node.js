@@ -487,6 +487,16 @@ var _ = Mavo.Node = $.Class({
 		return path.reduce((acc, cur) => acc.children[cur], this);
 	},
 
+	getAll: function() {
+		if (this.closestCollection) {
+			var relativePath = this.pathFrom(this.closestItem);
+			return this.closestCollection.children.map(item => item.getDescendant(relativePath));
+		}
+		else {
+			return [this];
+		}
+	},
+
 	/**
 	 * Get same node in other item in same collection
 	 * E.g. for same node in the next item, use an offset of -1
@@ -740,17 +750,17 @@ var _ = Mavo.Node = $.Class({
 			},
 
 			$all: function() {
-				return this.closestCollection ? this.closestCollection.getLiveData() : null;
+				return this.getAll().map(obj => obj.getLiveData());
 			},
 
 			$next: function() {
-				var all = _.special.$all.call(this);
-				return all ? all[this.closestItem.index + 1] : null;
+				var ret = this.getCousin(1);
+				return ret? ret.getLiveData() : null;
 			},
 
 			$previous: function() {
-				var all = _.special.$all.call(this);
-				return all ? all[this.closestItem.index - 1] : null;
+				var ret = this.getCousin(-1);
+				return ret? ret.getLiveData() : null;
 			}
 		}
 	}
