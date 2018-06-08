@@ -489,7 +489,7 @@ var _ = Mavo.Node = $.Class({
 
 	getAll: function() {
 		if (this.closestCollection) {
-			var relativePath = this.pathFrom(this.closestItem);
+			var relativePath = this.pathFrom(this.closestItem || this.closestCollection);
 			return this.closestCollection.children.map(item => item.getDescendant(relativePath));
 		}
 		else {
