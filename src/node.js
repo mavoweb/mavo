@@ -761,6 +761,10 @@ var _ = Mavo.Node = $.Class({
 			$previous: function() {
 				var ret = this.getCousin(-1);
 				return ret? ret.getLiveData() : null;
+			},
+
+			$this: function() {
+				return this.getLiveData();
 			}
 		}
 	}

@@ -281,14 +281,18 @@ var _ = Mavo.Script = {
 				var object = node.arguments[0];
 
 				for (let i=1; i<node.arguments.length; i++) {
-					_.walk(node.arguments[i], n => {
+					_.walk(node.arguments[i], (node) => {
+						if (node.name === "$this") {
+							return node;
+						}
+						
 						return {
 							type: "MemberExpression",
 							computed: false,
 							object,
 							property: {
 								type: "identifier",
-								name: n.name
+								name: node.name
 							}
 						};
 					}, {
@@ -470,6 +474,9 @@ var _ = Mavo.Script = {
 				// 	node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
 				// }
 			}
+		},
+		"ThisExpression": node => {
+			return {type: "Identifier", name: "$this"};
 		}
 	},
 
