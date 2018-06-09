@@ -211,7 +211,9 @@ var _ = Mavo.Script = {
 		},
 		"eq": {
 			logical: true,
-			scalar: (a, b) => a == b,
+			scalar: (a, b) => {
+				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
+			},
 			symbol: ["=", "=="],
 			identity: true,
 			precedence: 6
