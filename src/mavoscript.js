@@ -285,7 +285,7 @@ var _ = Mavo.Script = {
 						if (node.name === "$this") {
 							return node;
 						}
-						
+
 						return {
 							type: "MemberExpression",
 							computed: false,
@@ -367,6 +367,7 @@ var _ = Mavo.Script = {
 			}
 
 			var nameSerialized = _.serialize(node.callee);
+			var argsSerialized = node.arguments.map(_.serialize).join(", ");
 
 			if (node.callee.type == "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
@@ -375,9 +376,13 @@ var _ = Mavo.Script = {
 				if (clashes) {
 					nameSerialized = `Mavo.Functions.${nameSerialized.toLowerCase()} || ${nameSerialized}`;
 				}
+
+				if (clashes || Mavo.properties.has(nameSerialized)) {
+					return `call(${nameSerialized}, [${argsSerialized}]${thisArg || ""})`;
+				}
 			}
 
-			return `call(${nameSerialized}, [${node.arguments.map(_.serialize).join(", ")}]${thisArg || ""})`;
+			return `${nameSerialized}(${argsSerialized})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
@@ -469,10 +474,6 @@ var _ = Mavo.Script = {
 				else if (node.callee.name == "delete") {
 					node.callee.name = "clear";
 				}
-
-				// if (node.callee.name in Mavo.Functions) {
-				// 	node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
-				// }
 			}
 		},
 		"ThisExpression": node => {
@@ -506,8 +507,7 @@ var _ = Mavo.Script = {
 	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with(Mavo.Functions._Trap)
-	with (data || {}) {
+		code = `with (data || {}) {
 		return (${code});
 	}`;
 
@@ -525,6 +525,101 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 	},
 
 	parse: self.jsep,
+
+	stub: self.Proxy? new Proxy(Mavo.Functions, {
+		get: (functions, property) => Mavo.Script.resolve(property, functions),
+		has: () => true
+	}) : Mavo.Functions,
+
+	resolve: function(property, data, node) {
+		if (property in data) {
+			return data[property];
+		}
+
+		// Property does not exist on data, look for it elsewhere
+
+		if (node) {
+			// Special values
+			if (property in Mavo.Node.special) {
+				return Mavo.Node.special[property].call(node);
+			}
+
+			var ret = node.resolve(property);
+
+			if (ret !== undefined) {
+				// Convert Mavo nodes to data for use in expressions
+				if (Array.isArray(ret)) {
+					ret = ret.map(item => item.getLiveData());
+
+					if (!Mavo.Actions.running) {
+						// In Mavo actions we still need references to these
+						ret = ret.filter(item => Mavo.value(item) !== null);
+					}
+				}
+				else if (ret instanceof Mavo.Node) {
+					ret = ret.getLiveData();
+				}
+
+				return ret;
+			}
+		}
+
+		// Does it reference another Mavo?
+		if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
+			return Mavo.all[property].root.getLiveData();
+		}
+
+		// If still here, it's not related to nodes
+		if (typeof property === "symbol") {
+			// It's a Symbol property that was not actually found on the data
+			// We can't help here, abort mission!
+			return;
+		}
+
+		var propertyL = property.toLowerCase && property.toLowerCase() || property;
+		var ret;
+
+		if (propertyL in Mavo.Actions.Functions) {
+			if (Mavo.Actions.running) {
+				ret = Mavo.Actions.Functions[propertyL];
+			}
+			else {
+				ret = Mavo.Actions.nope;
+			}
+		}
+
+		ret = Mavo.Functions[propertyL] || Math[property] || Math[propertyL] || ret;
+
+		if (ret !== undefined) {
+			if (typeof ret === "function") {
+				// For when function names are used as unquoted strings, see #160
+				ret.toString = () => property;
+			}
+
+			return ret;
+		}
+
+		// Still not found? Maybe it's a global
+		if (self && self.hasOwnProperty(property)) {
+			// hasOwnProperty to avoid elements with ids clobbering globals
+			return self[property];
+		}
+
+		// Still not found? Maybe it's a special property used without a $ (see #343)
+		if (propertyL[0] !== "$") {
+			var $property = "$" + propertyL;
+
+			if (node && $property in Mavo.Node.special) {
+				return Mavo.Node.special[$property].call(node);
+			}
+			else if ($property in Mavo.Functions) {
+				return Mavo.Functions[$property];
+			}
+		}
+
+		// Prevent undefined at all costs
+		return property;
+	}
 };
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;

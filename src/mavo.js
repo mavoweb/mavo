@@ -80,6 +80,8 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
+		_.properties = _.union(_.properties, this.root.properties);
+
 		this.permissions = new Mavo.Permissions();
 
 		var backendTypes = ["source", "storage", "init"]; // order is significant!
@@ -761,6 +763,9 @@ var _ = self.Mavo = $.Class({
 		UI: {},
 
 		hooks: new $.Hooks(),
+
+		// Will be filled with a union of all properties across all Mavos
+		properties: new Set(),
 
 		attributes: [
 			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-multiple-path", "mv-format",

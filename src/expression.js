@@ -5,7 +5,7 @@ var _ = Mavo.Expression = $.Class({
 		this.expression = expression;
 	},
 
-	eval: function(data, o) {
+	eval: function(data = Mavo.Script.stub, o) {
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
 		try {

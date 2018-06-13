@@ -406,45 +406,6 @@ var _ = Mavo.Node = $.Class({
 		return ret;
 	},
 
-	resolveAgainstData: function(property, data) {
-		if (property in data) {
-			return data[property];
-		}
-
-		// Property does not exist, look for it elsewhere
-
-		// Special values
-		if (property in _.special) {
-			return _.special[property].call(this);
-		}
-
-		var ret = this.resolve(property);
-
-		if (ret !== undefined) {
-			if (Array.isArray(ret)) {
-				ret = ret.map(item => item.getLiveData());
-
-				if (!Mavo.Actions.running) {
-					// In Mavo actions we still need references to these
-					ret = ret.filter(item => Mavo.value(item) !== null);
-				}
-			}
-			else if (ret instanceof Mavo.Node) {
-				ret = ret.getLiveData();
-			}
-
-			return ret;
-		}
-
-		// Does it reference another Mavo?
-		if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
-			return Mavo.all[property].root.getLiveData();
-		}
-
-		// If still here, it's not related to nodes
-		return Mavo.Functions._Trap[property];
-	},
-
 	relativizeData: self.Proxy? function(data) {
 		return new Proxy(data, {
 			get: (data, property, proxy) => {
@@ -452,11 +413,11 @@ var _ = Mavo.Node = $.Class({
 					return data[property];
 				}
 
-				return this.resolveAgainstData(property, data);
+				return Mavo.Script.resolve(property, data, this);
 			},
 
 			has: (data, property) => {
-				var ret = this.resolveAgainstData(property, data);
+				var ret = Mavo.Script.resolve(property, data, this);
 
 				return ret !== undefined;
 			},
