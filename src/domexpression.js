@@ -119,6 +119,10 @@ var _ = Mavo.DOMExpression = $.Class({
 		var env = {context: this};
 		var parentEnv = env;
 
+		if (data === undefined && this.item) {
+			data = this.item.getLiveData();
+		}
+
 		this.data = data;
 
 		Mavo.hooks.run("domexpression-update-start", env);

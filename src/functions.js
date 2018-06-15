@@ -81,12 +81,18 @@ var _ = Mavo.Functions = {
 		}
 
 		if (typeof fn !== "function") {
-			// toArray because the node may be coming from the inside
-			var node = Mavo.toArray(fn)[0][Mavo.toNode];
-			if (node) {
+			// toArray because the node may be coming from the inside so it may be multiple nodes
+			var node = Mavo.toArray(fn)[0];
+
+			if (node && node[Mavo.toNode]) {
+				node = node[Mavo.toNode];
+
 				// there is a node with the same property as a function name. Fix this. (rel #227)
 				// In the future we may also introduce calling nodes as functions, and the structure is here
-				fn = _._Trap[node.property];
+				fn = Mavo.Script.resolve(node.property, _);
+			}
+			else {
+				console.warn(`You tried to call ${fn} as a function, but it’s not a function`);
 			}
 		}
 
@@ -425,48 +431,6 @@ var _ = Mavo.Functions = {
 };
 
 var $u = _.util;
-
-// Make function names case insensitive
-_._Trap = self.Proxy? new Proxy(_, {
-	get: (functions, property) => {
-		var ret;
-
-		if (typeof property === "symbol") {
-			return;
-		}
-
-		var propertyL = property.toLowerCase && property.toLowerCase() || property;
-
-		if (Mavo.Actions.running && propertyL in Mavo.Actions.Functions) {
-			return Mavo.Actions.Functions[propertyL];
-		}
-
-		ret = functions[propertyL] || Math[property] || Math[propertyL];
-
-		if (ret !== undefined) {
-			if (typeof ret === "function") {
-				// For when function names are used as unquoted strings, see #160
-				ret.toString = () => property;
-			}
-
-			return ret;
-		}
-
-		// Still not found? Maybe it's a global
-		if (self && self.hasOwnProperty(property)) {
-			// hasOwnProperty to avoid elements with ids clobbering globals
-			return self[property];
-		}
-
-		// Prevent undefined at all costs
-		return property;
-	},
-
-	// Super ugly hack, but otherwise data is not
-	// the local variable it should be, but the string "data"
-	// so all property lookups fail.
-	has: (functions, property) => property != "data"
-}) : _;
 
 /**
  * Private helper methods
