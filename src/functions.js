@@ -319,6 +319,20 @@ var _ = Mavo.Functions = {
 	len: text => str(text).length,
 
 	/**
+	 * Return true if group or collection has the needle 
+	 */
+	contains: (haystack, needle) => {
+		if ($.type(haystack) === "array" || $.type(haystack) === "object") {
+			for (var prop in haystack) {
+				if (_.contains(haystack[prop], needle)) return true;
+			}
+		} else {
+			return _.search(haystack, needle) >= 0;
+		}
+		return false;
+	 },
+	 
+	/**
 	 * Case insensitive search
 	 */
 	search: (haystack, needle) => haystack && needle? str(haystack).toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
