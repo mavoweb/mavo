@@ -228,12 +228,24 @@ var _ = Mavo.Group = $.Class({
 
 		var copy; // to handle renaming
 
+		var currentAlias; // store which alias we are copying from
+
 		this.propagate(obj => {
 			var propertyData = data[obj.property];
 
-			if (obj.alias && data[obj.alias] !== undefined) {
-				copy = copy || $.extend({}, data);
-				propertyData = data[obj.alias];
+			// find first alias with data, load that data, and set to be copied
+			if (obj.alias) {
+				aliasesArr = obj.alias.split(" ");
+				var i = 0;
+				while (i<aliasesArr.length){
+					currentAlias = aliasesArr[i]
+					if (data[currentAlias] !== undefined) {
+						copy = copy || $.extend({}, data);
+						propertyData = data[currentAlias];
+						break;
+					}
+					i++;
+				}
 			}
 
 			obj.render(propertyData);
@@ -242,11 +254,11 @@ var _ = Mavo.Group = $.Class({
 		// Rename properties. This needs to be done separately to handle swapping.
 		if (copy) {
 			this.propagate(obj => {
-				if (obj.alias) {
-					data[obj.property] = copy[obj.alias];
+				if (currentAlias) {
+					data[obj.property] = copy[currentAlias];
 
-					if (!(obj.alias in this.children)) {
-						delete data[obj.alias];
+					if (!(currentAlias in this.children)) {
+						delete data[currentAlias];
 					}
 				}
 			});
