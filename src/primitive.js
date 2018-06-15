@@ -4,6 +4,8 @@ var _ = Mavo.Primitive = $.Class({
 	extends: Mavo.Node,
 	nodeType: "Primitive",
 	constructor: function (element, mavo, o) {
+		this.liveData = new Mavo.Data(this);
+
 		if (!this.fromTemplate("config", "attribute", "templateValue", "originalEditor")) {
 			this.config = _.getConfig(element);
 
@@ -205,41 +207,6 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.defaultObserver && this.defaultObserver.destroy();
 		this.observer && this.observer.destroy();
-	},
-
-	updateLiveData: function() {
-		var value = this.value;
-
-		if (this.isDataNull({live: true})) {
-			value = null;
-		}
-
-		this.liveData = this.createLiveData(Mavo.objectify(value));
-
-		if (this.collection) {
-			// In collection items we want their property name
-			// to resolve relative to them, not their parent group
-			this.liveData[this.property] = this.liveData[Mavo.toProxy];
-		}
-
-		this.updateParentLiveData();
-	},
-
-	getLiveData: function() {
-		if (this.liveData === undefined) {
-			this.updateLiveData();
-		}
-
-		if (this.liveData && typeof this.liveData === "object") {
-			// Either liveData already created or object rendered on Primitive
-			if (!this.liveData[Mavo.toProxy]) {
-				this.liveData = this.createLiveData(this.value);
-			}
-
-			return this.liveData[Mavo.toProxy];
-		}
-
-		return this.liveData;
 	},
 
 	isDataNull: function(o) {
@@ -514,7 +481,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	dataRender: function(data, live) {
-		if (data && typeof data === "object") {
+		if ($.type(data) === "object") {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
 			}
@@ -647,7 +614,7 @@ var _ = Mavo.Primitive = $.Class({
 
 			this._value = value;
 
-			this.updateLiveData();
+			this.liveData.update();
 
 			if (!o.silent) {
 				if (this.saved) {

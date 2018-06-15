@@ -12,8 +12,7 @@ var _ = Mavo.Collection = $.Class({
 		this.templateElement = this.element;
 
 		this.children = [];
-		this.liveData = this.createLiveData([]);
-		this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
+		this.liveData = new Mavo.Data(this, []);
 
 		// Keep position of the template in the DOM, since we might remove it
 		this.marker = document.createComment("mv-marker");
@@ -108,7 +107,7 @@ var _ = Mavo.Collection = $.Class({
 		var env = {
 			context: this,
 			options: o,
-			data: this.liveData
+			data: this.liveData.data
 		};
 
 		for (var i = 0, j = 0; item = this.children[i]; i++) {
@@ -247,7 +246,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		this.updateLiveData();
+		this.liveData.update();
 
 		return changed;
 	},
@@ -403,14 +402,6 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
-	updateLiveData: function() {
-		this.liveData.length = 0;
-
-		for (var i=0; i<this.children.length; i++) {
-			this.liveData[i] = this.children[i].getLiveData();
-		}
-	},
-
 	dataRender: function(data) {
 		if (data === undefined) {
 			return;
@@ -459,7 +450,7 @@ var _ = Mavo.Collection = $.Class({
 			}
 		}
 
-		this.updateLiveData();
+		this.liveData.update();
 
 		if (data.length > i) {
 			for (var j = i; j < this.children.length; j++) {
@@ -629,10 +620,6 @@ var _ = Mavo.Collection = $.Class({
 			});
 
 			return button;
-		},
-
-		liveData: function() {
-			return this.createLiveData([]);
 		}
 	},
 

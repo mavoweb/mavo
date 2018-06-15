@@ -8,7 +8,7 @@ Mavo.Expressions.directive("mv-if", {
 				"hidden": function(value) {
 					if (this._hidden !== value) {
 						this._hidden = value;
-						this.updateParentLiveData(value? null : undefined);
+						this.liveData.update();
 						this.dataChanged();
 					}
 				}

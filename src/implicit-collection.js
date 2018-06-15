@@ -8,8 +8,7 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		 * Create the template, remove it from the DOM and store it
 		 */
 		this.children = [];
-		this.liveData = this.createLiveData([]);
-		this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
+		this.liveData = new Mavo.Data(this, []);
 
 		this.add(element);
 		this.postInit();
@@ -19,27 +18,6 @@ var _ = Mavo.ImplicitCollection = $.Class({
 
 	get length() {
 		return this.children.length;
-	},
-
-	updateLiveData: function() {
-		var deleted = 0;
-		this.liveData.length = 0;
-		var values = [];
-
-		for (var i=0; i<this.children.length; i++) {
-			var node = this.children[i];
-			delete node.liveData[0];
-
-			if (!node.isDataNull({live: true})) {
-				let value = node.getLiveData();
-				this.liveData.push(value);
-			}
-		}
-
-		// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
-		var liveData = this.liveData.length === 1? this.liveData[0] : this.liveData;
-
-		this.parent.liveData[this.property] = liveData[Mavo.toProxy];
 	},
 
 	getData: function(o = {}) {
@@ -111,7 +89,7 @@ var _ = Mavo.ImplicitCollection = $.Class({
 			this.children.forEach((item, i) => item.render(data && data[i]));
 		}
 
-		this.updateLiveData();
+		this.liveData.update();
 	},
 
 	find: function(property, o = {}) {
@@ -130,13 +108,7 @@ var _ = Mavo.ImplicitCollection = $.Class({
 
 			return Mavo.flatten(ret);
 		}
-	},
-
-	lazy: {
-		liveData: function() {
-			return this.createLiveData([]);
-		}
-	},
+	}
 });
 
 })(Bliss, Bliss.$);

@@ -89,7 +89,7 @@ var _ = Mavo.Functions = {
 
 				// there is a node with the same property as a function name. Fix this. (rel #227)
 				// In the future we may also introduce calling nodes as functions, and the structure is here
-				fn = Mavo.Script.resolve(node.property, _);
+				fn = Mavo.Data.resolve(node.property, _);
 			}
 			else {
 				console.warn(`You tried to call ${fn} as a function, but it’s not a function`);

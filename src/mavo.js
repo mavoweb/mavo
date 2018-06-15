@@ -774,11 +774,15 @@ var _ = self.Mavo = $.Class({
 		],
 
 		lazy: {
-			locale: () => document.documentElement.lang || "en-GB",
-			toNode: () => Symbol("toNode"),
-			toProxy: () => Symbol("toProxy")
+			locale: () => document.documentElement.lang || "en-GB"
 		}
 	}
+});
+
+// Define symbols
+// These are lazy to give the Symbol polyfill a chance to load if needed
+["toNode", "toProxy", "route", "parent", "dataObject"].forEach(symbol => {
+	$.lazy(_, symbol, () => Symbol(symbol));
 });
 
 Object.defineProperty(_.all, "length", {

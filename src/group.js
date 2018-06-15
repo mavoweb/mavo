@@ -10,11 +10,7 @@ var _ = Mavo.Group = $.Class({
 
 		Mavo.hooks.run("group-init-start", this);
 
-		this.liveData = this.createLiveData();
-
-		if (this.parent && !this.collection) {
-			this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
-		}
+		this.liveData = new Mavo.Data(this, {});
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
@@ -266,7 +262,7 @@ var _ = Mavo.Group = $.Class({
 						this.dataChanged("propertychange", {property});
 					}
 
-					this.liveData[property] = value;
+					this.liveData.set(property, value);
 				}
 			}
 		}
