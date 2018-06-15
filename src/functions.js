@@ -325,12 +325,12 @@ var _ = Mavo.Functions = {
 	len: text => str(text).length,
 
 	/**
-	 * Return true if group or collection has the needle 
+	 * Return true if the group or collection has the needle (text) and false if not
 	 */
 	contains: (haystack, needle) => {
 		if ($.type(haystack) === "array" || $.type(haystack) === "object") {
-			for (var prop in haystack) {
-				if (_.contains(haystack[prop], needle)) return true;
+			for (var property in haystack) {
+				if (_.contains(haystack[property], needle)) return true;
 			}
 		} else {
 			return _.search(haystack, needle) >= 0;
