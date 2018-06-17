@@ -21,7 +21,6 @@
 		"no-useless-call": 1,
 		"brace-style": [1, "stroustrup"],
 		"linebreak-style": [1, "unix"],
-		"no-lonely-if": 1,
 		"no-mixed-spaces-and-tabs": [1, "smart-tabs"],
 		"quotes": [1, "double", "avoid-escape"],
         "spaced-comment": [1, "always", {
