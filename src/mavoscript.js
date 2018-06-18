@@ -524,9 +524,7 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 		return new Function("data", code);
 	},
 
-	parse: self.jsep,
-
-	}
+	parse: self.jsep
 };
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
