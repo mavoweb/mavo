@@ -325,7 +325,9 @@ var _ = Mavo.Functions = {
 	len: text => str(text).length,
 
 	/**
-     * Return true if the group or collection has the needle (text) and false if not
+     * Search if a group, collection, or primitive contains needle
+	 * @returns Boolean if a haystack of object or primitive is passed
+	 * @returns Array of booleans if a haystack of array is passed
      */
     contains: (haystack, needle) => {
 		var ret = false;
