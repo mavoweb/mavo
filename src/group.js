@@ -248,7 +248,6 @@ var _ = Mavo.Group = $.Class({
 			}
 
 			obj.render(propertyData);
-
 		});
 
 		// Rename properties. This needs to be done separately to handle swapping.
