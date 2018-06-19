@@ -110,7 +110,6 @@ var _ = Mavo.Functions = {
 		return ret === null || !id? null : decodeURIComponent(ret[1]) || "";
 	},
 
-	// TODO return first/last non-null?
 	first: (n, arr) => {
 		if (arr === undefined) {
 			arr = n;
@@ -121,7 +120,30 @@ var _ = Mavo.Functions = {
 			return n && n > 1? [arr] : arr;
 		}
 
-		return n && n > 1? arr.slice(0, n) : arr[0];
+		if (n && n > 1) {
+			tempArr = [];
+			var i = 0;
+
+			while (i<arr.length && tempArr.length<n) {
+
+				if (arr[i]) {
+					tempArr.push(arr[i]);
+				}
+
+				i++;
+			}
+
+			return tempArr;
+		} else {
+			var i = 0;
+
+			while (i<arr.length && !arr[i]) {
+				i++;
+			}
+
+			return arr[i];
+		}
+
 	},
 	last: (n, arr) => {
 		if (arr === undefined) {
@@ -131,6 +153,30 @@ var _ = Mavo.Functions = {
 
 		if (!Array.isArray(arr)) {
 			return n && n > 1? [arr] : arr;
+		}
+
+		if (n && n > 1) {
+			tempArr = [];
+			var i = arr.length-1;
+
+			while (i>=0 && tempArr.length<n) {
+
+				if (arr[i]) {
+					tempArr.push(arr[i]);
+				}
+
+				i--;
+			}
+
+			return tempArr;
+		} else {
+			var i = arr.length - 1;
+
+			while (i>=0 && !arr[i]) {
+				i--;
+			}
+			
+			return arr[i];
 		}
 
 		return n && n > 1? arr.slice(-n) : arr[arr.length - 1];
