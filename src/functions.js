@@ -334,7 +334,7 @@ var _ = Mavo.Functions = {
 		if ($.type(haystack) === "object") {
 			for (var property in haystack) {
 				ret = _.contains(haystack[property], needle);
-				if ($.type(ret) === "array") {
+				if (Array.isArray(ret)) {
 					ret = Mavo.Functions.or(ret);
 				}
 				if (ret) { 
@@ -343,10 +343,7 @@ var _ = Mavo.Functions = {
 			}
 		}		
 		else if ($.type(haystack) === "array") {
-			ret = [];
-			for (var i = 0; i < haystack.length; i++) {
-				ret.push(_.contains(haystack[i], needle));
-			}
+			ret = haystack.map(element => _.contains(element, needle));
 		}
 		else {
 			return _.search(haystack, needle) >= 0;
