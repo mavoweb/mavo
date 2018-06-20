@@ -330,26 +330,29 @@ var _ = Mavo.Functions = {
 	 * @returns Array of booleans if a haystack of array is passed
      */
     contains: (haystack, needle) => {
-		var ret = false;
 		var type = $.type(haystack);
-		if (type === "object") {
-			for (var property in haystack) {
-				ret = _.contains(haystack[property], needle);
-				if (Array.isArray(ret)) {
-					ret = Mavo.Functions.or(ret);
+		var ret = Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => {
+				if (type === "object") {
+					for (var property in haystack) {
+						ret = _.contains(haystack[property], needle);
+						if (Array.isArray(ret)) {
+							ret = Mavo.Functions.or(ret);
+						}
+						if (ret) { 
+							return true;
+						}
+					}
 				}
-				if (ret) { 
-					return true; 
+				else if (type === "array") {
+					return _.contains(haystack, needle);
 				}
-			}
-		}		
-		else if (type === "array") {
-			
-			ret = haystack.map(element => _.contains(element, needle));
-		}
-		else {
-			return _.search(haystack, needle) >= 0;
-		}
+				else {
+					return _.search(haystack, needle) >= 0;
+				}
+			}, 
+		});
+
 		return ret;
     },
 
