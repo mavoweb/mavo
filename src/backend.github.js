@@ -148,22 +148,23 @@ var _ = Mavo.Backend.register($.Class({
 			.then(fileInfo => {
 
 				// Storage points to current user's repo (but maybe they want to submit PR) 
-				// if (this.repoInfo.fork) {
-
-				// 	// ASK USER IF THEY WANT TO SEND PR
-				// 	this.forkInfo = this.repoInfo.parent;
-				// 	this.request(`repos/${this.repoInfo.parent.owner.login}/${this.repoInfo.parent.name}/pulls`, {
-				// 		head: `${this.user.username}:${this.branch}`,
-				// 		base: this.repoInfo.parent.default_branch
-				// 	}).then(prs => {
-				// 		this.pullRequest(prs[0]);
-				// 	});
-				// }
+				if (this.repoInfo.fork) {
+					// ASK USER IF THEY WANT TO SEND PR
+					this.forkInfo = this.repoInfo.parent;
+					this.request(`repos/${this.repoInfo.parent.owner.login}/${this.repoInfo.parent.name}/pulls`, {
+						head: `${this.user.username}:${this.branch}`,
+						base: this.repoInfo.parent.default_branch
+					}).then(prs => {
+						this.pullRequest(prs[0]);
+					});
+				}
 
 				// Storage points to another user's repo
-				if (this.forkInfo) {
+				if (!this.repoInfo.fork && this.forkInfo) {
+					var url = window.location.href + "?storage=" + fileInfo.content.download_url;
+					history.pushState(null, null, url);
+
 					// We saved in a fork, do we have a pull request?
-					// console.log(this.username)
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
 						head: `${this.user.username}:${this.branch}`,
 						base: this.branch
@@ -301,8 +302,63 @@ var _ = Mavo.Backend.register($.Class({
 									this.branch = repoInfo.default_branch;
 								}
 
-								console.log(repoInfo.fork)
-								return this.repoInfo = repoInfo;
+								if (repoInfo.fork) {
+									this.forkInfo = repoInfo.parent;
+									this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
+										head: `${this.user.username}:${this.branch}`,
+										base: repoInfo.parent.default_branch
+									}).then(prs => {
+										this.pullRequest(prs[0]);
+									});
+									return this.repoInfo = repoInfo;
+								}
+								// Check if current user has a fork of this repo
+								// else if (this.user.info.public_repos > repoInfo.forks) { 
+								// 	return this.request(this.user.info.repos_url)
+								// 	.then(repos => {
+								// 		for (var i in repos) {
+								// 			if (repos[i].fork) {
+								// 				// HAVE TO CHECK IF FORK OF CURRENT REPO (BUT NEEDS ANOTHER REQUEST)
+								// 				return this.repoInfo = repoInfo;
+								// 			}
+								// 		}
+								// 		return this.repoInfo = repoInfo;
+								// 	});
+								// }
+								else {
+									return this.request(repoInfo.forks_url)
+									.then(forks => {
+										for (var i in forks) {
+											if (forks[i].owner.login === this.user.username) {
+												console.log("DIALOG");
+
+												this.notice = this.mavo.message(`
+												${this.mavo._("gh-login-fork-options")}
+												<form onsubmit="return false">
+													<button>${this.mavo._("gh-use-my-fork")}</button>
+												</form>`, {
+													classes: "mv-inline",
+													dismiss: ["button", "submit"]
+												});
+
+												this.notice.closed.then(form => {
+													if (!form) {
+														return;
+													} 
+
+													var url = window.location.href + "?storage=" + forks[i].html_url + "/" + this.path;
+													history.pushState(null, null, url);
+													window.location.replace(url);
+
+												});
+
+												return this.repoInfo = repoInfo;
+											}
+										}
+										return this.repoInfo = repoInfo;
+									});
+								}
+
 							});
 					}
 				}
