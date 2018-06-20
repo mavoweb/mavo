@@ -120,24 +120,23 @@ var _ = Mavo.Functions = {
 			return n && n > 1? [arr] : arr;
 		}
 
-		if (n && n > 1) {
+		if (n >= 0) {
 			var ret = [];
+			n = Math.floor(n);
 
-			for (i = 0; i<arr.length && ret.length<n; i++) {
-
+			for (var i = 0; i<arr.length && ret.length<n; i++) {
 				if (Mavo.value(arr[i]) !== null) {
 					ret.push(arr[i]);
 				}
-
 			}
 
 			return ret;
 		} 
+		else if (n < 0) {
+			return _.last(Math.abs(n), arr);
+		}
 		else {
-
-			for (i = 0; i<arr.length && Mavo.value(arr[i]) == null; i++) {
-			}
-
+			for (var i = 0; i<arr.length && Mavo.value(arr[i]) === null; i++) {}
 			return arr[i];
 		}
 
@@ -152,24 +151,23 @@ var _ = Mavo.Functions = {
 			return n && n > 1? [arr] : arr;
 		}
 
-		if (n && n > 1) {
+		if (n >= 0) {
 			var ret = [];
+			n = Math.floor(n);
 
-			for (i = arr.length-1; i>=0 && ret.length<n; i--) {
-
+			for (var i = arr.length-1; i>=0 && ret.length<n; i--) {
 				if (Mavo.value(arr[i]) !== null) {
 					ret.push(arr[i]);
 				}
-
 			}
 
 			return ret;
 		} 
+		else if (n < 0) {
+			return _.first(Math.abs(n), arr);
+		}
 		else {
-
-			for (i = arr.length - 1; i>=0 && Mavo.value(arr[i]) == null; i--) {
-			}
-
+			for (var i = arr.length - 1; i>=0 && Mavo.value(arr[i]) === null; i--) {}
 			return arr[i];
 		}
 		
