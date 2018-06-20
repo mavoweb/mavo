@@ -146,8 +146,24 @@ var _ = Mavo.Backend.register($.Class({
 				});
 			})
 			.then(fileInfo => {
+
+				// Storage points to current user's repo (but maybe they want to submit PR) 
+				// if (this.repoInfo.fork) {
+
+				// 	// ASK USER IF THEY WANT TO SEND PR
+				// 	this.forkInfo = this.repoInfo.parent;
+				// 	this.request(`repos/${this.repoInfo.parent.owner.login}/${this.repoInfo.parent.name}/pulls`, {
+				// 		head: `${this.user.username}:${this.branch}`,
+				// 		base: this.repoInfo.parent.default_branch
+				// 	}).then(prs => {
+				// 		this.pullRequest(prs[0]);
+				// 	});
+				// }
+
+				// Storage points to another user's repo
 				if (this.forkInfo) {
 					// We saved in a fork, do we have a pull request?
+					// console.log(this.username)
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
 						head: `${this.user.username}:${this.branch}`,
 						base: this.branch
@@ -185,8 +201,19 @@ var _ = Mavo.Backend.register($.Class({
 					return;
 				}
 
+				var username;
+				var repo;
+				if (this.repoInfo.fork) { // Storage points to current user's repo (but they want to close PR)
+					username = this.repoInfo.parent.owner.login;
+					repo = this.repoInfo.parent.name;
+				}
+				else { // Storage points to another user's repo
+					username = this.username;
+					repo = this.repo;
+				}
+
 				// Close PR
-				this.request(`repos/${this.username}/${this.repo}/pulls/${existing.number}`, {
+				this.request(`repos/${username}/${repo}/pulls/${existing.number}`, {
 					state: "closed"
 				}, "POST").then(prInfo => {
 					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-cancelled")}</a>`, {
@@ -214,15 +241,30 @@ var _ = Mavo.Backend.register($.Class({
 					return;
 				}
 
+				
+				var username;
+				var repo;
+				var base;
+				if (this.repoInfo.fork) { // Storage points to current user's repo (but they want to send PR)
+					username = this.repoInfo.parent.owner.login;
+					repo = this.repoInfo.parent.name;
+					base = this.repoInfo.parent.default_branch;
+				}
+				else { // Storage points to another user's repo
+					username = this.username;
+					repo = this.repo;
+					base = this.branch;
+				}
+
 				// We want to send a pull request
-				this.request(`repos/${this.username}/${this.repo}/pulls`, {
+				this.request(`repos/${username}/${repo}/pulls`, {
 					title: this.mavo._("gh-edit-suggestion-title"),
 					body: this.mavo._("gh-edit-suggestion-body", {
 						description: form.elements.edits.value,
 						previewURL
 					}),
 					head: `${this.user.username}:${this.branch}`,
-					base: this.branch
+					base: base
 				}, "POST").then(prInfo => {
 					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-sent")}</a>`, {
 						dismiss: ["button", "timeout"]
@@ -244,7 +286,8 @@ var _ = Mavo.Backend.register($.Class({
 				}
 			})
 			.then(u => {
-				if (this.user) {
+				if (this.user) {	
+
 					this.permissions.on("logout");
 
 					if (this.info.path) {
@@ -258,6 +301,7 @@ var _ = Mavo.Backend.register($.Class({
 									this.branch = repoInfo.default_branch;
 								}
 
+								console.log(repoInfo.fork)
 								return this.repoInfo = repoInfo;
 							});
 					}
