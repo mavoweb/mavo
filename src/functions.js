@@ -121,23 +121,22 @@ var _ = Mavo.Functions = {
 		}
 
 		if (n && n > 1) {
-			tempArr = [];
-			var i = 0;
+			var ret = [];
 
-			while (i<arr.length && tempArr.length<n) {
+			for (i = 0; i<arr.length && ret.length<n; i++) {
 
-				if (arr[i]) {
-					tempArr.push(arr[i]);
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
 				}
 
-				i++;
 			}
 
-			return tempArr;
-		} else {
+			return ret;
+		} 
+		else {
 			var i = 0;
 
-			while (i<arr.length && !arr[i]) {
+			while (i<arr.length && Mavo.value(arr[i]) == null) {
 				i++;
 			}
 
@@ -156,30 +155,28 @@ var _ = Mavo.Functions = {
 		}
 
 		if (n && n > 1) {
-			tempArr = [];
-			var i = arr.length-1;
+			var ret = [];
 
-			while (i>=0 && tempArr.length<n) {
+			for (i = arr.length-1; i>=0 && ret.length<n; i--) {
 
-				if (arr[i]) {
-					tempArr.push(arr[i]);
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
 				}
 
-				i--;
 			}
 
-			return tempArr;
-		} else {
+			return ret;
+		} 
+		else {
 			var i = arr.length - 1;
 
-			while (i>=0 && !arr[i]) {
+			while (i>=0 && Mavo.value(arr[i]) == null) {
 				i--;
 			}
-			
+
 			return arr[i];
 		}
-
-		return n && n > 1? arr.slice(-n) : arr[arr.length - 1];
+		
 	},
 
 	unique: function(arr) {
