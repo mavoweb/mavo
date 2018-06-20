@@ -134,10 +134,8 @@ var _ = Mavo.Functions = {
 			return ret;
 		} 
 		else {
-			var i = 0;
 
-			while (i<arr.length && Mavo.value(arr[i]) == null) {
-				i++;
+			for (i = 0; i<arr.length && Mavo.value(arr[i]) == null; i++) {
 			}
 
 			return arr[i];
@@ -168,10 +166,8 @@ var _ = Mavo.Functions = {
 			return ret;
 		} 
 		else {
-			var i = arr.length - 1;
 
-			while (i>=0 && Mavo.value(arr[i]) == null) {
-				i--;
+			for (i = arr.length - 1; i>=0 && Mavo.value(arr[i]) == null; i--) {
 			}
 
 			return arr[i];
