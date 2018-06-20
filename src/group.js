@@ -233,18 +233,20 @@ var _ = Mavo.Group = $.Class({
 
 			// find first alias with data, load that data, and set to be copied
 			if (obj.alias) {
-				aliasesArr = obj.alias.split(" ");
-				var i = 0;
-				while (i<aliasesArr.length){
-					currentAlias = aliasesArr[i]
+				var aliasesArr = obj.alias.split(" ");
+					
+				for (i = 0; i < aliasesArr.length; i++) {
+					var currentAlias = aliasesArr[i];
+
 					if (data[currentAlias] !== undefined) {
-						obj.currentAlias = currentAlias
+						obj.currentAlias = currentAlias;
 						copy = copy || $.extend({}, data);
 						propertyData = data[obj.currentAlias];
 						break;
 					}
-					i++;
+
 				}
+
 			}
 
 			obj.render(propertyData);
