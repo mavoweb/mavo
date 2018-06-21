@@ -339,7 +339,7 @@ var _ = Mavo.Functions = {
 						if (Array.isArray(ret)) {
 							ret = Mavo.Functions.or(ret);
 						}
-						if (ret) { 
+						if (ret) {
 							return true;
 						}
 					}
@@ -348,8 +348,13 @@ var _ = Mavo.Functions = {
 					return _.search(haystack, needle) >= 0;
 				}
 				return ret;
-			}, 
+			},
+			identity: null
 		});
+		// if result is an empty array, return false
+		if (ret.length === 0) {
+			return false;
+		}
 		return ret;
     },
 
