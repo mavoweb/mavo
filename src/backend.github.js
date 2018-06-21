@@ -295,66 +295,69 @@ var _ = Mavo.Backend.register($.Class({
 						this.permissions.on(["edit", "save"]);
 					}
 
+					console.log(this.source) // !!!!!!!!!!!!!!!!!!!!!!
+
 					if (this.repo) {
 						return this.request(`repos/${this.username}/${this.repo}`)
-							.then(repoInfo => {
-								if (this.branch === undefined) {
-									this.branch = repoInfo.default_branch;
-								}
+						.then(repoInfo => {
+							if (this.branch === undefined) {
+								this.branch = repoInfo.default_branch;
+							}
 
-								if (repoInfo.fork) {
-									this.forkInfo = repoInfo.parent;
-									this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
-										head: `${this.user.username}:${this.branch}`,
-										base: repoInfo.parent.default_branch
-									}).then(prs => {
-										this.pullRequest(prs[0]);
-									});
-									return this.repoInfo = repoInfo;
-								}
-								// Check if current user has a fork of this repo
-								// else if (this.user.info.public_repos < repoInfo.forks) { 
-								// 	return this.request(this.user.info.repos_url)
-								// 	.then(repos => {
-								// 		console.log(repos)
-								// 		return this.repoInfo = repoInfo;
-								// 	});
-								// }
-								else {
-									return this.request(repoInfo.forks_url)
-									.then(forks => {
-										for (var i in forks) {
-											if (forks[i].owner.login === this.user.username) {
-												console.log("DIALOG");
+							if (repoInfo.fork) {
+								this.forkInfo = repoInfo.parent;
+								this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
+									head: `${this.user.username}:${this.branch}`,
+									base: repoInfo.parent.default_branch
+								}).then(prs => {
+									this.pullRequest(prs[0]);
+								});
+								return this.repoInfo = repoInfo;
+							}
+							// Check if current user has a fork of this repo
+							else if (this.user.info.public_repos < repoInfo.forks) { 
+								var query = `query {
+											  viewer {
+											    name
+											      repositories(last: 100, isFork: true) {
+											      nodes {
+											        url
+											        parent {
+											          nameWithOwner
+											        }
+											      }
+											    }
+											  }
+											}`;
+								return this.request("https://api.github.com/graphql", {query: query}, "POST")
+								.then(data => {
+									var repos = data.data.viewer.repositories.nodes;
 
-												this.notice = this.mavo.message(`
-												${this.mavo._("gh-login-fork-options")}
-												<form onsubmit="return false">
-													<button>${this.mavo._("gh-use-my-fork")}</button>
-												</form>`, {
-													classes: "mv-inline",
-													dismiss: ["button", "submit"]
-												});
+									for (var i in repos) {
+										if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
+											this.switchToMyForkDialog(repos[i].url);
 
-												this.notice.closed.then(form => {
-													if (!form) {
-														return;
-													} 
-
-													var url = window.location.href + "?storage=" + forks[i].html_url + "/" + this.path;
-													history.pushState(null, null, url);
-													window.location.replace(url);
-
-												});
-
-												return this.repoInfo = repoInfo;
-											}
+											return this.repoInfo = repoInfo;
 										}
-										return this.repoInfo = repoInfo;
-									});
-								}
+									}
 
-							});
+									return this.repoInfo = repoInfo;
+								});
+							}
+							else {
+								return this.request(repoInfo.forks_url)
+								.then(forks => {
+									for (var i in forks) {
+										if (forks[i].owner.login === this.user.username) {
+											this.switchToMyForkDialog(forks[i].html_url);
+
+											return this.repoInfo = repoInfo;
+										}
+									}
+									return this.repoInfo = repoInfo;
+								});
+							}
+						});
 					}
 				}
 			});
@@ -417,6 +420,29 @@ var _ = Mavo.Backend.register($.Class({
 					return `https://rawgit.com/${repo}/${this.branch}/${path}`;
 				}
 			});
+	},
+
+	switchToMyForkDialog: function(forkURL) { 
+			this.notice = this.mavo.message(`
+			${this.mavo._("gh-login-fork-options")}
+			<form onsubmit="return false">
+				<button>${this.mavo._("gh-use-my-fork")}</button>
+			</form>`, {
+				classes: "mv-inline",
+				dismiss: ["button", "submit"]
+			});
+
+			this.notice.closed.then(form => {
+				if (!form) {
+					return;
+				} 
+
+				var url = window.location.href + "?storage=" + forkURL + "/" + this.path;
+				history.pushState(null, null, url);
+				window.location.replace(url);
+
+			});
+			return;
 	},
 
 	static: {
