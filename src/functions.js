@@ -117,7 +117,7 @@ var _ = Mavo.Functions = {
 		}
 
 		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+			return n ? [arr] : arr;
 		}
 
 		if (n >= 0) {
@@ -135,9 +135,8 @@ var _ = Mavo.Functions = {
 		else if (n < 0) {
 			return _.last(Math.abs(n), arr);
 		}
-		else {
-			for (var i = 0; i<arr.length && Mavo.value(arr[i]) === null; i++) {}
-			return arr[i];
+		else { // n is undefined
+			return _.first(1, arr)[0];
 		}
 
 	},
@@ -148,7 +147,7 @@ var _ = Mavo.Functions = {
 		}
 
 		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+			return n ? [arr] : arr;
 		}
 
 		if (n >= 0) {
@@ -166,9 +165,8 @@ var _ = Mavo.Functions = {
 		else if (n < 0) {
 			return _.first(Math.abs(n), arr);
 		}
-		else {
-			for (var i = arr.length - 1; i>=0 && Mavo.value(arr[i]) === null; i--) {}
-			return arr[i];
+		else { // n is undefined
+			return _.last(1, arr)[0];
 		}
 		
 	},
