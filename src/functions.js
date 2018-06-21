@@ -361,7 +361,11 @@ var _ = Mavo.Functions = {
 	/**
 	 * Case insensitive search
 	 */
-	search: (haystack, needle) => haystack && needle? str(haystack).toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
+	search: (haystack, needle) => {
+		haystack = str(haystack);
+		needle = str(needle);
+		return haystack && needle? haystack.toLowerCase().indexOf((needle).toLowerCase()) : -1;
+	},
 
 	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
 	ends: function(haystack, needle) {
