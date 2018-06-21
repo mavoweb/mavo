@@ -313,15 +313,10 @@ var _ = Mavo.Backend.register($.Class({
 									return this.repoInfo = repoInfo;
 								}
 								// Check if current user has a fork of this repo
-								// else if (this.user.info.public_repos > repoInfo.forks) { 
+								// else if (this.user.info.public_repos < repoInfo.forks) { 
 								// 	return this.request(this.user.info.repos_url)
 								// 	.then(repos => {
-								// 		for (var i in repos) {
-								// 			if (repos[i].fork) {
-								// 				// HAVE TO CHECK IF FORK OF CURRENT REPO (BUT NEEDS ANOTHER REQUEST)
-								// 				return this.repoInfo = repoInfo;
-								// 			}
-								// 		}
+								// 		console.log(repos)
 								// 		return this.repoInfo = repoInfo;
 								// 	});
 								// }
