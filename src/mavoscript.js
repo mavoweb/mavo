@@ -29,7 +29,7 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [
 					...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-					...a.slice(b.length)
+					...a.slice(b.length).map((n) => o.scalar(o.identity, n))
 				];
 			}
 			else {
