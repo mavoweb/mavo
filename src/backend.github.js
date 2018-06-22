@@ -461,7 +461,7 @@ var _ = Mavo.Backend.register($.Class({
 
 				history.pushState({}, "", `${location.pathname}?${params}`);
 				window.location.replace(`${location.pathname}?${params}`); 
-				
+
 			});
 			return;
 	},
