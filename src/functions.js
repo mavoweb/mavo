@@ -116,29 +116,33 @@ var _ = Mavo.Functions = {
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n ? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		if (n >= 0) {
-			var ret = [];
-			n = Math.floor(n);
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
 
-			for (var i = 0; i<arr.length && ret.length<n; i++) {
+		if (n < 0) {
+			return _.last(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = 0; i<arr.length && ret.length<numReturn; i++) {
 				if (Mavo.value(arr[i]) !== null) {
 					ret.push(arr[i]);
 				}
 			}
 
-			return ret;
-		} 
-		else if (n < 0) {
-			return _.last(Math.abs(n), arr);
-		}
-		else { // n is undefined
-			return _.first(1, arr)[0];
-		}
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
 
+			return ret;
+		}
 	},
 	last: (n, arr) => {
 		if (arr === undefined) {
@@ -146,29 +150,33 @@ var _ = Mavo.Functions = {
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n ? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		if (n >= 0) {
-			var ret = [];
-			n = Math.floor(n);
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
 
-			for (var i = arr.length-1; i>=0 && ret.length<n; i--) {
+		if (n < 0) {
+			return _.first(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = arr.length-1; i>=0 && ret.length<numReturn; i--) {
 				if (Mavo.value(arr[i]) !== null) {
 					ret.push(arr[i]);
 				}
 			}
 
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
+
 			return ret;
-		} 
-		else if (n < 0) {
-			return _.first(Math.abs(n), arr);
 		}
-		else { // n is undefined
-			return _.last(1, arr)[0];
-		}
-		
 	},
 
 	unique: function(arr) {
