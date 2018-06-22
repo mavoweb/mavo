@@ -158,11 +158,17 @@ var _ = Mavo.Backend.register($.Class({
 						this.pullRequest(prs[0]);
 					});
 				}
-
 				// Storage points to another user's repo
-				if (!this.repoInfo.fork && this.forkInfo) {
-					var url = window.location.href + "?storage=" + fileInfo.content.download_url;
-					history.pushState(null, null, url);
+				else if (this.forkInfo) {
+
+					if (!this.mvSource && !window.location.href.includes("?source=")) {
+						var url = window.location.href + "?storage=" + fileInfo.content.download_url;
+						history.pushState(null, null, url);
+					}
+					// else {
+					// 	var url = window.location.href.split("?source=")[0] + "?storage=" + fileInfo.content.download_url;
+					// 	history.pushState(null, null, url);
+					// }
 
 					// We saved in a fork, do we have a pull request?
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
@@ -295,7 +301,9 @@ var _ = Mavo.Backend.register($.Class({
 						this.permissions.on(["edit", "save"]);
 					}
 
-					console.log(this.source) // !!!!!!!!!!!!!!!!!!!!!!
+					// console.log(window.location.href.split("?source=")[1])
+					// console.log(this.mvSource)
+					console.log(this.mavo.source); // !!!!!!!!!!!!!!!!!!!!!!
 
 					if (this.repo) {
 						return this.request(`repos/${this.username}/${this.repo}`)
@@ -304,59 +312,62 @@ var _ = Mavo.Backend.register($.Class({
 								this.branch = repoInfo.default_branch;
 							}
 
-							if (repoInfo.fork) {
-								this.forkInfo = repoInfo.parent;
-								this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
-									head: `${this.user.username}:${this.branch}`,
-									base: repoInfo.parent.default_branch
-								}).then(prs => {
-									this.pullRequest(prs[0]);
-								});
-								return this.repoInfo = repoInfo;
-							}
-							// Check if current user has a fork of this repo
-							else if (this.user.info.public_repos < repoInfo.forks) { 
-								var query = `query {
-											  viewer {
-											    name
-											      repositories(last: 100, isFork: true) {
-											      nodes {
-											        url
-											        parent {
-											          nameWithOwner
-											        }
-											      }
-											    }
-											  }
-											}`;
-								return this.request("https://api.github.com/graphql", {query: query}, "POST")
-								.then(data => {
-									var repos = data.data.viewer.repositories.nodes;
-
-									for (var i in repos) {
-										if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
-											this.switchToMyForkDialog(repos[i].url);
-
-											return this.repoInfo = repoInfo;
-										}
-									}
-
+							if (!this.mvSource && !window.location.href.includes("?source=")) { //UPDATE
+								if (repoInfo.fork) {
+									this.forkInfo = repoInfo.parent;
+									this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
+										head: `${this.user.username}:${this.branch}`,
+										base: repoInfo.parent.default_branch
+									}).then(prs => {
+										this.pullRequest(prs[0]);
+									});
 									return this.repoInfo = repoInfo;
-								});
-							}
-							else {
-								return this.request(repoInfo.forks_url)
-								.then(forks => {
-									for (var i in forks) {
-										if (forks[i].owner.login === this.user.username) {
-											this.switchToMyForkDialog(forks[i].html_url);
+								}
+								// Check if current user has a fork of this repo
+								if (this.user.info.public_repos < repoInfo.forks) { 
+									var query = `query {
+												  viewer {
+												    name
+												      repositories(last: 100, isFork: true) {
+												      nodes {
+												        url
+												        parent {
+												          nameWithOwner
+												        }
+												      }
+												    }
+												  }
+												}`;
+									return this.request("https://api.github.com/graphql", {query: query}, "POST")
+									.then(data => {
+										var repos = data.data.viewer.repositories.nodes;
 
-											return this.repoInfo = repoInfo;
+										for (var i in repos) {
+											if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
+												this.switchToMyForkDialog(repos[i].url);
+
+												return this.repoInfo = repoInfo;
+											}
 										}
-									}
-									return this.repoInfo = repoInfo;
-								});
+
+										return this.repoInfo = repoInfo;
+									});
+								}
+								else {
+									return this.request(repoInfo.forks_url)
+									.then(forks => {
+										for (var i in forks) {
+											if (forks[i].owner.login === this.user.username) {
+												this.switchToMyForkDialog(forks[i].html_url);
+
+												return this.repoInfo = repoInfo;
+											}
+										}
+										return this.repoInfo = repoInfo;
+									});
+								}
 							}
+							return this.repoInfo = repoInfo;
 						});
 					}
 				}
