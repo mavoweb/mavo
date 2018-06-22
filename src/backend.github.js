@@ -149,7 +149,7 @@ var _ = Mavo.Backend.register($.Class({
 
 				// Storage points to current user's repo (but maybe they want to submit PR) 
 				if (this.repoInfo.fork) {
-					// ASK USER IF THEY WANT TO SEND PR
+					// Ask if they want to send PR
 					this.forkInfo = this.repoInfo.parent;
 					this.request(`repos/${this.repoInfo.parent.owner.login}/${this.repoInfo.parent.name}/pulls`, {
 						head: `${this.user.username}:${this.branch}`,
@@ -161,10 +161,15 @@ var _ = Mavo.Backend.register($.Class({
 				// Storage points to another user's repo
 				else if (this.forkInfo) {
 
-					if (!this.mvSource && !window.location.href.includes("?source=")) {
-						var url = window.location.href + "?storage=" + fileInfo.content.download_url;
-						history.pushState(null, null, url);
-					}
+					let params = (new URL(document.location)).searchParams;
+
+					if (!this.mavo.source && !params.get("source")) { // Update url to include storage = their fork
+						let params = (new URL(document.location)).searchParams;
+						params.append("storage", fileInfo.content.download_url);
+						history.pushState({}, "", `${location.pathname}?${params}`);
+						window.location.replace(`${location.pathname}?${params}`); 
+					} //WAITING TO FIGURE OUT PATH TO TAKE
+					//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					// else {
 					// 	var url = window.location.href.split("?source=")[0] + "?storage=" + fileInfo.content.download_url;
 					// 	history.pushState(null, null, url);
@@ -189,6 +194,12 @@ var _ = Mavo.Backend.register($.Class({
 		var message = this.mavo._("gh-edit-suggestion-saved-in-profile", {previewURL});
 
 		if (this.notice) {
+
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			// console.log("here")
+			// this.notice.element.style.animation = "none"; // only in certain cases (have to add to other dialog)
+			// this.notice.element.style.transition = "none"; // only in certain cases (have to add to other dialog)
+			
 			this.notice.close();
 		}
 
@@ -248,10 +259,10 @@ var _ = Mavo.Backend.register($.Class({
 					return;
 				}
 
-				
 				var username;
 				var repo;
 				var base;
+
 				if (this.repoInfo.fork) { // Storage points to current user's repo (but they want to send PR)
 					username = this.repoInfo.parent.owner.login;
 					repo = this.repoInfo.parent.name;
@@ -301,10 +312,6 @@ var _ = Mavo.Backend.register($.Class({
 						this.permissions.on(["edit", "save"]);
 					}
 
-					// console.log(window.location.href.split("?source=")[1])
-					// console.log(this.mvSource)
-					console.log(this.mavo.source); // !!!!!!!!!!!!!!!!!!!!!!
-
 					if (this.repo) {
 						return this.request(`repos/${this.username}/${this.repo}`)
 						.then(repoInfo => {
@@ -312,8 +319,10 @@ var _ = Mavo.Backend.register($.Class({
 								this.branch = repoInfo.default_branch;
 							}
 
-							if (!this.mvSource && !window.location.href.includes("?source=")) { //UPDATE
-								if (repoInfo.fork) {
+							let params = (new URL(document.location)).searchParams;
+
+							if (!this.mavo.source && !params.get("source")) { // if url doesn't have source, check for forks
+								if (repoInfo.fork) { // if current repo is a fork, display PR dialog
 									this.forkInfo = repoInfo.parent;
 									this.request(`repos/${repoInfo.parent.owner.login}/${repoInfo.parent.name}/pulls`, {
 										head: `${this.user.username}:${this.branch}`,
@@ -323,8 +332,8 @@ var _ = Mavo.Backend.register($.Class({
 									});
 									return this.repoInfo = repoInfo;
 								}
-								// Check if current user has a fork of this repo
-								if (this.user.info.public_repos < repoInfo.forks) { 
+								// Check if current user has a fork of this repo, and display dialog to switch
+								if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
 									var query = `query {
 												  viewer {
 												    name
@@ -353,7 +362,7 @@ var _ = Mavo.Backend.register($.Class({
 										return this.repoInfo = repoInfo;
 									});
 								}
-								else {
+								else { // search forks of this repo
 									return this.request(repoInfo.forks_url)
 									.then(forks => {
 										for (var i in forks) {
@@ -448,9 +457,10 @@ var _ = Mavo.Backend.register($.Class({
 					return;
 				} 
 
-				var url = window.location.href + "?storage=" + forkURL + "/" + this.path;
-				history.pushState(null, null, url);
-				window.location.replace(url);
+				let params = (new URL(document.location)).searchParams;
+				params.append("storage", forkURL + "/" + this.path);
+				history.pushState({}, "", `${location.pathname}?${params}`);
+				window.location.replace(`${location.pathname}?${params}`); 
 
 			});
 			return;
