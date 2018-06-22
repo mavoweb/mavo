@@ -116,18 +116,39 @@ var _ = Mavo.Functions = {
 		return ret === null || !id? null : decodeURIComponent(ret[1]) || "";
 	},
 
-	// TODO return first/last non-null?
 	first: (n, arr) => {
 		if (arr === undefined) {
 			arr = n;
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		return n && n > 1? arr.slice(0, n) : arr[0];
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
+
+		if (n < 0) {
+			return _.last(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = 0; i<arr.length && ret.length<numReturn; i++) {
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
+				}
+			}
+
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
+
+			return ret;
+		}
 	},
 	last: (n, arr) => {
 		if (arr === undefined) {
@@ -135,11 +156,33 @@ var _ = Mavo.Functions = {
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		return n && n > 1? arr.slice(-n) : arr[arr.length - 1];
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
+
+		if (n < 0) {
+			return _.first(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = arr.length-1; i>=0 && ret.length<numReturn; i--) {
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
+				}
+			}
+
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
+
+			return ret;
+		}
 	},
 
 	unique: function(arr) {
