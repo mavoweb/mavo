@@ -163,18 +163,12 @@ var _ = Mavo.Backend.register($.Class({
 
 					let params = (new URL(document.location)).searchParams;
 
-					if (!this.mavo.source && !params.get("source")) { // Update url to include storage = their fork
-						let params = (new URL(document.location)).searchParams;
-						params.append("storage", fileInfo.content.download_url);
-						history.pushState({}, "", `${location.pathname}?${params}`);
-						window.location.replace(`${location.pathname}?${params}`); 
-					} //WAITING TO FIGURE OUT PATH TO TAKE
-					//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-					// else {
-					// 	var url = window.location.href.split("?source=")[0] + "?storage=" + fileInfo.content.download_url;
-					// 	history.pushState(null, null, url);
-					// }
-
+					// Update url to include storage = their fork
+					let params = (new URL(document.location)).searchParams;
+					params.append("storage", fileInfo.content.download_url);
+					history.pushState({}, "", `${location.pathname}?${params}`);
+					window.location.replace(`${location.pathname}?${params}`); 
+					
 					// We saved in a fork, do we have a pull request?
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
 						head: `${this.user.username}:${this.branch}`,
@@ -193,25 +187,25 @@ var _ = Mavo.Backend.register($.Class({
 		previewURL.searchParams.set(this.mavo.id + "-storage", `https://github.com/${this.forkInfo.full_name}/${this.path}`);
 		var message = this.mavo._("gh-edit-suggestion-saved-in-profile", {previewURL});
 
-		if (this.notice) {
+		var lastNoticeName = "";
 
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			// console.log("here")
-			// this.notice.element.style.animation = "none"; // only in certain cases (have to add to other dialog)
-			// this.notice.element.style.transition = "none"; // only in certain cases (have to add to other dialog)
-			
-			this.notice.close();
+		if (this.notice) {
+			lastNoticeName = this.notice.o.name;
+			this.notice.nonAnimatedClose();
 		}
 
 		if (existing) {
 			// We already have a pull request, ask about closing it
+			var animationOff = lastNoticeName === "closePR" ?  true : false;
 			this.notice = this.mavo.message(`${message}
 				${this.mavo._("gh-edit-suggestion-notreviewed")}
 				<form onsubmit="return false">
 					<button class="mv-danger">${this.mavo._("gh-edit-suggestion-revoke")}</button>
 				</form>`, {
 					classes: "mv-inline",
-					dismiss: ["button", "submit"]
+					dismiss: ["button", "submit"],
+					animationOff: animationOff,
+					name: "closePR"
 				});
 
 			this.notice.closed.then(form => {
@@ -235,7 +229,8 @@ var _ = Mavo.Backend.register($.Class({
 					state: "closed"
 				}, "POST").then(prInfo => {
 					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-cancelled")}</a>`, {
-						dismiss: ["button", "timeout"]
+						dismiss: ["button", "timeout"],
+					animationOff: animationOff
 					});
 
 					this.pullRequest();
@@ -244,6 +239,7 @@ var _ = Mavo.Backend.register($.Class({
 		}
 		else {
 			// Ask about creating a PR
+			var animationOff = lastNoticeName === "createPR" ?  true : false;
 			this.notice = this.mavo.message(`${message}
 				${this.mavo._("gh-edit-suggestion-instructions")}
 				<form onsubmit="return false">
@@ -251,7 +247,9 @@ var _ = Mavo.Backend.register($.Class({
 					<button>${this.mavo._("gh-edit-suggestion-send")}</button>
 				</form>`, {
 					classes: "mv-inline",
-					dismiss: ["button", "submit"]
+					dismiss: ["button", "submit"],
+					animationOff: animationOff,
+					name: "createPR"
 				});
 
 			this.notice.closed.then(form => {
@@ -285,7 +283,8 @@ var _ = Mavo.Backend.register($.Class({
 					base: base
 				}, "POST").then(prInfo => {
 					new Mavo.UI.Message(this.mavo, `<a href="${prInfo.html_url}">${this.mavo._("gh-edit-suggestion-sent")}</a>`, {
-						dismiss: ["button", "timeout"]
+						dismiss: ["button", "timeout"],
+					animationOff: animationOff
 					});
 
 					this.pullRequest(prInfo);
@@ -443,10 +442,13 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	switchToMyForkDialog: function(forkURL) { 
+			let params = (new URL(document.location)).searchParams;
+			params.append("storage", forkURL + "/" + this.path);
+
 			this.notice = this.mavo.message(`
 			${this.mavo._("gh-login-fork-options")}
 			<form onsubmit="return false">
-				<button>${this.mavo._("gh-use-my-fork")}</button>
+				<a href="${location.pathname}?${params}"><button>${this.mavo._("gh-use-my-fork")}</button></a>
 			</form>`, {
 				classes: "mv-inline",
 				dismiss: ["button", "submit"]
@@ -457,11 +459,9 @@ var _ = Mavo.Backend.register($.Class({
 					return;
 				} 
 
-				let params = (new URL(document.location)).searchParams;
-				params.append("storage", forkURL + "/" + this.path);
 				history.pushState({}, "", `${location.pathname}?${params}`);
 				window.location.replace(`${location.pathname}?${params}`); 
-
+				
 			});
 			return;
 	},
