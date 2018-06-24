@@ -332,8 +332,7 @@ var _ = Mavo.Functions = {
     contains: (haystack, needle) => {
 		var ret = Mavo.Script.binaryOperation(haystack, needle, {
 			scalar: (haystack, needle) => {
-				var type = $.type(haystack);
-				if (type === "object") {
+				if ($.type(haystack) === "object") {
 					for (var property in haystack) {
 						ret = _.contains(haystack[property], needle);
 						if (Array.isArray(ret)) {
@@ -351,10 +350,12 @@ var _ = Mavo.Functions = {
 			},
 			identity: null
 		});
+
 		// if result is an empty array, return false
 		if (ret.length === 0) {
 			return false;
 		}
+
 		return ret;
     },
 
@@ -364,7 +365,7 @@ var _ = Mavo.Functions = {
 	search: (haystack, needle) => {
 		haystack = str(haystack);
 		needle = str(needle);
-		return haystack && needle? haystack.toLowerCase().indexOf((needle).toLowerCase()) : -1;
+		return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
 	},
 
 	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
