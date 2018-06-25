@@ -164,7 +164,7 @@ var _ = Mavo.Backend.register($.Class({
 					let params = (new URL(location)).searchParams;
 					params.append("storage", fileInfo.content.download_url);
 					history.pushState({}, "", `${location.pathname}?${params}`);
-					window.location.replace(`${location.pathname}?${params}`); 
+					location.replace(`${location.pathname}?${params}`); 
 					
 					// We saved in a fork, do we have a pull request?
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
@@ -188,13 +188,12 @@ var _ = Mavo.Backend.register($.Class({
 
 		if (this.notice) {
 			lastNoticeName = this.notice.o.name;
-			this.notice.o.closeTransition = false;
+			this.notice.o.style.transition = "none";
 			this.notice.close();
 		}
 
 		if (existing) {
-			// We already have a pull request, ask about closing it
-			var style = lastNoticeName === "closePR" ?  "animation: none; transition: none;" : "";
+			var style = lastNoticeName === "closePR" ?  {animation: "none", transition: "none"} : {};
 			this.notice = this.mavo.message(`${message}
 				${this.mavo._("gh-edit-suggestion-notreviewed")}
 				<form onsubmit="return false">
@@ -205,6 +204,7 @@ var _ = Mavo.Backend.register($.Class({
 					style: style,
 					name: "closePR"
 				});
+			this.notice.o.style.transition = "";
 
 			this.notice.closed.then(form => {
 				if (!form) {
@@ -237,7 +237,8 @@ var _ = Mavo.Backend.register($.Class({
 		}
 		else {
 			// Ask about creating a PR
-			var style = lastNoticeName === "createPR" ?  "animation: none; transition: none;" : "";
+			// We already have a pull request, ask about closing it
+			var style = lastNoticeName === "createPR" ?  {animation: "none", transition: "none"} : {};
 			this.notice = this.mavo.message(`${message}
 				${this.mavo._("gh-edit-suggestion-instructions")}
 				<form onsubmit="return false">
@@ -249,6 +250,7 @@ var _ = Mavo.Backend.register($.Class({
 					style: style,
 					name: "createPR"
 				});
+			this.notice.o.style.transition = "";
 
 			this.notice.closed.then(form => {
 				if (!form) {
@@ -458,7 +460,7 @@ var _ = Mavo.Backend.register($.Class({
 				} 
 
 				history.pushState({}, "", `${location.pathname}?${params}`);
-				window.location.replace(`${location.pathname}?${params}`); 
+				location.replace(`${location.pathname}?${params}`); 
 
 			});
 			return;

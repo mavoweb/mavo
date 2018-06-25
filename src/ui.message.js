@@ -17,7 +17,7 @@ var _ = Mavo.UI.Message = $.Class({
 		});
 
 		if (o.style) {
-			this.element.style = o.style;
+			$.style(this.element, o.style);
 		}
 
 		if (o.classes) {
@@ -75,16 +75,11 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
-		if (this.o.closeTransition) {
-			$.transition(this.element, {opacity: 0}).then(() => {
-				$.remove(this.element);
-				this.closed.resolve(resolve);
-			});
-		}
-		else {
+		var promise = this.o.style.transition === "none" ? Promise.resolve() : $.transition(this.element, {opacity: 0});
+		promise.then(() => {
 			$.remove(this.element);
 			this.closed.resolve(resolve);
-		}
+		});
 	}
 
 });
