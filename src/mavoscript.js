@@ -27,10 +27,53 @@ var _ = Mavo.Script = {
 
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
-				result = [
-					...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-					...a.slice(b.length)
-				];
+				if (a.length == b.length) {
+                    result= [...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n))];
+                }
+                else if (a.length > b.length) {
+                    if (o.hasOwnProperty("rightScalar")) {
+                        if (o.hasOwnProperty("rightIdentity")) {
+                            result = [
+                                ...b.map((n, i) => o.scalar(a[i] === undefined? o.rightIdentity : a[i], n)),
+                                ...a.slice(b.length).map((n) => o.rightScalar(n, o.rightIdentity))
+                            ];  
+                        }
+                        else {
+                            result = [
+                                ...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
+                                ...a.slice(b.length).map((n) => o.rightScalar(n, o.identity))
+                            ];  
+                        }
+                    }
+                    else if (o.hasOwnProperty("rightIdentity")) {
+                        result = [...a.map((n, i) => o.scalar(n, b[i] === undefined? o.rightIdentity : b[i]))];
+                    }
+                    else {
+                        result= [...a.map((n, i) => o.scalar(n, b[i] === undefined? o.identity : b[i]))];   
+                    }
+                }
+                else {
+                    if (o.hasOwnProperty("leftScalar")) {
+                        if (o.hasOwnProperty("leftIdentity")) {
+                            result = [
+                                ...a.map((n, i) => o.scalar(n, b[i] === undefined? o.leftIdentity : b[i])),
+                                ...b.slice(a.length).map((n) => o.leftScalar(o.leftIdentity, n))
+                            ];  
+                        }
+                        else {
+                            result = [
+                                ...a.map((n, i) => o.scalar(n, b[i] === undefined? o.identity : b[i])),
+                                ...b.slice(a.length).map((n) => o.leftScalar(o.identity, n))
+                            ];  
+                        }
+                    }
+                    else if (o.hasOwnProperty("leftIdentity")) {
+                        result = [...b.map((n, i) => o.scalar(a[i] === undefined? o.rightIdentity : a[i], n))];
+                    }
+                    else {
+                        result= [...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n))];   
+                    }
+                }
 			}
 			else {
 				result = b.map(n => o.scalar(a, n));
