@@ -23,10 +23,11 @@ var _ = Mavo.Script = {
 	},
 
 	binaryOperation: function(a, b, o = {}) {
-		var result = [];
+		var result;
 
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
+				result = [];
 				var max = Math.max(a.length, b.length);
 				for (let i = 0; i < max; i++) {
 					result[i] = o.scalar(
