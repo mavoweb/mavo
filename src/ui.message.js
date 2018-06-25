@@ -16,11 +16,8 @@ var _ = Mavo.UI.Message = $.Class({
 			[this.mavo.bar? "after" : "start"]: (this.mavo.bar || this.mavo).element
 		});
 
-		if (o.animationOff) {
-			this.element.style.WebkitTransition = "none";
-			this.element.style.WebkitAnimation = "none";
-			this.element.style.animation = "none";
-			this.element.style.transition = "none";
+		if (o.style) {
+			this.element.style = o.style;
 		}
 
 		if (o.classes) {
@@ -78,15 +75,18 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
-		$.transition(this.element, {opacity: 0}).then(() => {
+		if (this.o.closeTransition) {
+			$.transition(this.element, {opacity: 0}).then(() => {
+				$.remove(this.element);
+				this.closed.resolve(resolve);
+			});
+		}
+		else {
 			$.remove(this.element);
 			this.closed.resolve(resolve);
-		});
-	},
-
-	nonAnimatedClose: function() {
-		$.remove(this.element);
+		}
 	}
+
 });
 
 })(Bliss, Bliss.$);
