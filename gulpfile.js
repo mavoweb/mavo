@@ -15,7 +15,7 @@ var notify = require("gulp-notify");
 var merge = require("merge2");
 var injectVersion = require("gulp-inject-version");
 
-var dependencies = ["../bliss/bliss.shy.min.js", "../stretchy/stretchy.min.js", "../jsep/build/jsep.min.js"];
+var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
 var mavo = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
 			expression domexpression expressions mv-if mv-value functions functions.date mavoscript actions data
