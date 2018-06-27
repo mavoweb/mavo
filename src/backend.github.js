@@ -187,8 +187,8 @@ var _ = Mavo.Backend.register($.Class({
 		var lastNoticeName = "";
 
 		if (this.notice) {
-			lastNoticeName = this.notice.o.name;
-			this.notice.o.style.transition = "none";
+			lastNoticeName = this.notice.options.name;
+			this.notice.options.style.transition = "none";
 			this.notice.close();
 		}
 
@@ -250,7 +250,7 @@ var _ = Mavo.Backend.register($.Class({
 					style: style,
 					name: "createPR"
 				});
-			this.notice.o.style.transition = "";
+			this.notice.options.style.transition = "";
 
 			this.notice.closed.then(form => {
 				if (!form) {

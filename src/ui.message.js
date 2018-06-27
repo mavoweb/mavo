@@ -5,7 +5,7 @@ var _ = Mavo.UI.Message = $.Class({
 		this.mavo = mavo;
 		this.message = message;
 		this.closed = Mavo.promise();
-		this.o = o;
+		this.options = o;
 
 		this.element = $.create({
 			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),
@@ -75,7 +75,12 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
-		var promise = this.o.style.transition === "none" ? Promise.resolve() : $.transition(this.element, {opacity: 0});
+		if (this.options.style) {
+			var promise = this.options.style.transition === "none" ? Promise.resolve() : $.transition(this.element, {opacity: 0});
+		} 
+		else {
+			var promise = Promise.resolve();
+		}
 		promise.then(() => {
 			$.remove(this.element);
 			this.closed.resolve(resolve);
