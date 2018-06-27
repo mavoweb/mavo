@@ -27,10 +27,14 @@ var _ = Mavo.Script = {
 
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
-				result = [
-					...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-					...a.slice(b.length)
-				];
+				result = [];
+				var max = Math.max(a.length, b.length);
+				for (let i = 0; i < max; i++) {
+					result[i] = o.scalar(
+						a[i] === undefined ? o.identity : a[i],
+						b[i] === undefined ? o.identity : b[i]
+					);
+				}
 			}
 			else {
 				result = b.map(n => o.scalar(a, n));
