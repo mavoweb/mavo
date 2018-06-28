@@ -5,24 +5,49 @@ var _ = Mavo.Expression = $.Class({
 		this.expression = expression;
 	},
 
-	eval: function(data, o) {
+	eval: function(data = Mavo.Data.stub, o) {
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
-		try {
-			if (!this.function) {
+		if (!this.function) {
+			try {
 				this.function = Mavo.Script.compile(this.expression, o);
 			}
+			catch (error) {
+				// Compilation error
+				this.error(`There is something wrong with the expression ${this.expression}`,
+					error.message,
+					'Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions.'
+				);
 
+				Mavo.hooks.run("expression-compile-error", {context: this, error});
+
+				return this.function = error;
+			}
+		}
+		else if (this.function instanceof Error) {
+			// Previous compilation error
+			return this.function;
+		}
+
+		try {
 			return this.function(data);
 		}
-		catch (exception) {
-			console.info("%cExpression error!", "color: red; font-weight: bold", `${exception.message} in expression ${this.expression}`, `
-Not an expression? Use mv-expressions="none" to disable expressions on an element and its descendants.`);
+		catch (error) {
+			// Runtime error
+			this.error(`Something went wrong with the expression ${this.expression}`,
+				error.message,
+				`Data was: ${JSON.stringify(data)}`
+			);
 
-			Mavo.hooks.run("expression-eval-error", {context: this, exception});
+			Mavo.hooks.run("expression-eval-error", {context: this, error});
 
-			return exception;
+			return error;
 		}
+	},
+
+	error(title, ...message) {
+		message = message.join("\n");
+		console.info(`%cOops! 😳 ${title}:`, "color: #c04; font-weight: bold;", message);
 	},
 
 	toString() {

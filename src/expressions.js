@@ -211,7 +211,15 @@ var _ = Mavo.Expressions = $.Class({
 				path = [];
 			}
 
-			$$(node.attributes).forEach(attribute => this.extract(node, attribute, path, syntax));
+			if (node.hasAttribute("mv-expressions-ignore")) {
+				var ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
+			}
+
+			$$(node.attributes).forEach(attribute => {
+				if (!ignore || !ignore.has(attribute.name)) {
+					this.extract(node, attribute, path, syntax);
+				}
+			});
 
 			var index = -1, offset = 0;
 

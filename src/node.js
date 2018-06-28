@@ -135,26 +135,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	getLiveData: function() {
-		if (this.isDataNull({live: true})) {
-			return this.collection? Mavo.objectify(null) : null;
-		}
-
-		return this.liveData[Mavo.toProxy];
-	},
-
-	updateParentLiveData: function(value) {
-		if (value === undefined) {
-			value = Mavo.in(this.liveData, Mavo.toProxy)? this.liveData[Mavo.toProxy] : this.liveData;
-		}
-
-		if (this.collection instanceof Mavo.ImplicitCollection) {
-			// Implicit collections drop nulls
-			this.collection.updateLiveData();
-		}
-		else {
-			var key = this.collection? this.index : this.property;
-			this.parent.liveData[key] = value;
-		}
+		return this.liveData.proxy;
 	},
 
 	isDataNull: function(o = {}) {
@@ -404,74 +385,6 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		return ret;
-	},
-
-	resolveAgainstData: function(property, data) {
-		if (property in data) {
-			return data[property];
-		}
-
-		// Property does not exist, look for it elsewhere
-
-		// Special values
-		if (property in _.special) {
-			return _.special[property].call(this);
-		}
-
-		var ret = this.resolve(property);
-
-		if (ret !== undefined) {
-			if (Array.isArray(ret)) {
-				ret = ret.map(item => item.getLiveData());
-
-				if (!Mavo.Actions.running) {
-					// In Mavo actions we still need references to these
-					ret = ret.filter(item => Mavo.value(item) !== null);
-				}
-			}
-			else if (ret instanceof Mavo.Node) {
-				ret = ret.getLiveData();
-			}
-
-			return ret;
-		}
-
-		// Does it reference another Mavo?
-		if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
-			return Mavo.all[property].root.getLiveData();
-		}
-
-		// If still here, it's not related to nodes
-		return Mavo.Functions._Trap[property];
-	},
-
-	relativizeData: self.Proxy? function(data) {
-		return new Proxy(data, {
-			get: (data, property, proxy) => {
-				if (property in data) {
-					return data[property];
-				}
-
-				return this.resolveAgainstData(property, data);
-			},
-
-			has: (data, property) => {
-				var ret = this.resolveAgainstData(property, data);
-
-				return ret !== undefined;
-			},
-
-			set: function(data, property = "", value) {
-				console.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
-				return value;
-			}
-		});
-	} : data => data,
-
-	createLiveData: function(obj = {}) {
-		obj[Mavo.toNode] = this;
-		obj[Mavo.toProxy] = this.relativizeData(obj);
-		return obj;
 	},
 
 	pathFrom: function(node) {

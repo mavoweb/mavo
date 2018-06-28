@@ -81,12 +81,18 @@ var _ = Mavo.Functions = {
 		}
 
 		if (typeof fn !== "function") {
-			// toArray because the node may be coming from the inside
-			var node = Mavo.toArray(fn)[0][Mavo.toNode];
-			if (node) {
+			// toArray because the node may be coming from the inside so it may be multiple nodes
+			var node = Mavo.toArray(fn)[0];
+
+			if (node && node[Mavo.toNode]) {
+				node = node[Mavo.toNode];
+
 				// there is a node with the same property as a function name. Fix this. (rel #227)
 				// In the future we may also introduce calling nodes as functions, and the structure is here
-				fn = _._Trap[node.property];
+				fn = Mavo.Data.resolve(node.property, _);
+			}
+			else {
+				console.warn(`You tried to call ${fn} as a function, but it’s not a function`);
 			}
 		}
 
@@ -110,18 +116,39 @@ var _ = Mavo.Functions = {
 		return ret === null || !id? null : decodeURIComponent(ret[1]) || "";
 	},
 
-	// TODO return first/last non-null?
 	first: (n, arr) => {
 		if (arr === undefined) {
 			arr = n;
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		return n && n > 1? arr.slice(0, n) : arr[0];
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
+
+		if (n < 0) {
+			return _.last(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = 0; i<arr.length && ret.length<numReturn; i++) {
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
+				}
+			}
+
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
+
+			return ret;
+		}
 	},
 	last: (n, arr) => {
 		if (arr === undefined) {
@@ -129,11 +156,33 @@ var _ = Mavo.Functions = {
 			n = undefined;
 		}
 
-		if (!Array.isArray(arr)) {
-			return n && n > 1? [arr] : arr;
+		if (arr === undefined) {
+			return null;
 		}
 
-		return n && n > 1? arr.slice(-n) : arr[arr.length - 1];
+		if (!Array.isArray(arr)) {
+			return n !== undefined ? [arr] : arr;
+		}
+
+		if (n < 0) {
+			return _.first(Math.abs(n), arr);
+		}
+		else {
+			var ret = [];
+			var numReturn = n === undefined ? 1 : Math.floor(n);
+
+			for (var i = arr.length-1; i>=0 && ret.length<numReturn; i--) {
+				if (Mavo.value(arr[i]) !== null) {
+					ret.push(arr[i]);
+				}
+			}
+
+			if (n === undefined) {
+				return ret[0] !== undefined ? ret[0] : null;
+			}
+
+			return ret;
+		}
 	},
 
 	unique: function(arr) {
@@ -217,7 +266,7 @@ var _ = Mavo.Functions = {
 			return "";
 		}
 
-		if (ord < 10 || ord > 20) {
+		if (num < 10 || num > 20) {
 			var ord = ["th", "st", "nd", "th"][num % 10];
 		}
 
@@ -319,9 +368,48 @@ var _ = Mavo.Functions = {
 	len: text => str(text).length,
 
 	/**
+     * Search if a group, collection, or primitive contains needle
+	 * @returns Boolean if a haystack of object or primitive is passed
+	 * @returns Array of booleans if a haystack of array is passed
+     */
+    contains: (haystack, needle) => {
+		var ret = Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => {
+				if ($.type(haystack) === "object") {
+					for (var property in haystack) {
+						ret = _.contains(haystack[property], needle);
+						if (Array.isArray(ret)) {
+							ret = Mavo.Functions.or(ret);
+						}
+						if (ret) {
+							return true;
+						}
+					}
+				}
+				else {
+					return _.search(haystack, needle) >= 0;
+				}
+				return ret;
+			},
+			identity: null
+		});
+
+		// if result is an empty array, return false
+		if (ret.length === 0) {
+			return false;
+		}
+		
+		return ret;
+    },
+
+	/**
 	 * Case insensitive search
 	 */
-	search: (haystack, needle) => haystack && needle? str(haystack).toLowerCase().indexOf((needle + "").toLowerCase()) : -1,
+	search: (haystack, needle) => {
+		haystack = str(haystack);
+		needle = str(needle);
+		return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
+	},
 
 	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
 	ends: function(haystack, needle) {
@@ -411,48 +499,6 @@ var _ = Mavo.Functions = {
 };
 
 var $u = _.util;
-
-// Make function names case insensitive
-_._Trap = self.Proxy? new Proxy(_, {
-	get: (functions, property) => {
-		var ret;
-
-		if (typeof property === "symbol") {
-			return;
-		}
-
-		var propertyL = property.toLowerCase && property.toLowerCase() || property;
-
-		if (Mavo.Actions.running && propertyL in Mavo.Actions.Functions) {
-			return Mavo.Actions.Functions[propertyL];
-		}
-
-		ret = functions[propertyL] || Math[property] || Math[propertyL];
-
-		if (ret !== undefined) {
-			if (typeof ret === "function") {
-				// For when function names are used as unquoted strings, see #160
-				ret.toString = () => property;
-			}
-
-			return ret;
-		}
-
-		// Still not found? Maybe it's a global
-		if (self && self.hasOwnProperty(property)) {
-			// hasOwnProperty to avoid elements with ids clobbering globals
-			return self[property];
-		}
-
-		// Prevent undefined at all costs
-		return property;
-	},
-
-	// Super ugly hack, but otherwise data is not
-	// the local variable it should be, but the string "data"
-	// so all property lookups fail.
-	has: (functions, property) => property != "data"
-}) : _;
 
 /**
  * Private helper methods

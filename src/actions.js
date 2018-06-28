@@ -47,6 +47,12 @@ var _ = Mavo.Actions = {
 		}
 	},
 
+	// Function to run instead of actions if actions are called outside mv-action
+	nope: () => {
+		var actions = Object.keys(_.Functions).map(name => `${name}()`);
+		console.warn(`Mavo actions (${actions}) can only be used in the mv-action attribute.`);
+	},
+
 	Functions: {
 		/**
 		 * @param ref Collection to add to

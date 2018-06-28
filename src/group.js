@@ -10,11 +10,7 @@ var _ = Mavo.Group = $.Class({
 
 		Mavo.hooks.run("group-init-start", this);
 
-		this.liveData = this.createLiveData();
-
-		if (this.parent && !this.collection) {
-			this.parent.liveData[this.property] = this.liveData[Mavo.toProxy];
-		}
+		this.liveData = new Mavo.Data(this, {});
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
@@ -231,9 +227,22 @@ var _ = Mavo.Group = $.Class({
 		this.propagate(obj => {
 			var propertyData = data[obj.property];
 
-			if (obj.alias && data[obj.alias] !== undefined) {
-				copy = copy || $.extend({}, data);
-				propertyData = data[obj.alias];
+			// find first alias with data, load that data, and set to be copied
+			if (obj.alias) {
+				var aliasesArr = obj.alias.split(" ");
+					
+				for (i = 0; i < aliasesArr.length; i++) {
+					var currentAlias = aliasesArr[i];
+
+					if (data[currentAlias] !== undefined) {
+						obj.currentAlias = currentAlias;
+						copy = copy || $.extend({}, data);
+						propertyData = data[obj.currentAlias];
+						break;
+					}
+
+				}
+
 			}
 
 			obj.render(propertyData);
@@ -242,11 +251,11 @@ var _ = Mavo.Group = $.Class({
 		// Rename properties. This needs to be done separately to handle swapping.
 		if (copy) {
 			this.propagate(obj => {
-				if (obj.alias) {
-					data[obj.property] = copy[obj.alias];
+				if (obj.currentAlias) {
+					data[obj.property] = copy[obj.currentAlias];
 
-					if (!(obj.alias in this.children)) {
-						delete data[obj.alias];
+					if (!(obj.currentAlias in this.children)) {
+						delete data[obj.currentAlias];
 					}
 				}
 			});
@@ -266,7 +275,7 @@ var _ = Mavo.Group = $.Class({
 						this.dataChanged("propertychange", {property});
 					}
 
-					this.liveData[property] = value;
+					this.liveData.set(property, value);
 				}
 			}
 		}

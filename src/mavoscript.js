@@ -27,10 +27,14 @@ var _ = Mavo.Script = {
 
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
-				result = [
-					...b.map((n, i) => o.scalar(a[i] === undefined? o.identity : a[i], n)),
-					...a.slice(b.length)
-				];
+				result = [];
+				var max = Math.max(a.length, b.length);
+				for (let i = 0; i < max; i++) {
+					result[i] = o.scalar(
+						a[i] === undefined ? o.identity : a[i],
+						b[i] === undefined ? o.identity : b[i]
+					);
+				}
 			}
 			else {
 				result = b.map(n => o.scalar(a, n));
@@ -285,7 +289,7 @@ var _ = Mavo.Script = {
 						if (node.name === "$this") {
 							return node;
 						}
-						
+
 						return {
 							type: "MemberExpression",
 							computed: false,
@@ -367,6 +371,7 @@ var _ = Mavo.Script = {
 			}
 
 			var nameSerialized = _.serialize(node.callee);
+			var argsSerialized = node.arguments.map(_.serialize).join(", ");
 
 			if (node.callee.type == "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
@@ -375,9 +380,13 @@ var _ = Mavo.Script = {
 				if (clashes) {
 					nameSerialized = `Mavo.Functions.${nameSerialized.toLowerCase()} || ${nameSerialized}`;
 				}
+
+				if (clashes || Mavo.properties.has(nameSerialized)) {
+					return `call(${nameSerialized}, [${argsSerialized}]${thisArg || ""})`;
+				}
 			}
 
-			return `call(${nameSerialized}, [${node.arguments.map(_.serialize).join(", ")}]${thisArg || ""})`;
+			return `${nameSerialized}(${argsSerialized})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
@@ -469,10 +478,6 @@ var _ = Mavo.Script = {
 				else if (node.callee.name == "delete") {
 					node.callee.name = "clear";
 				}
-
-				// if (node.callee.name in Mavo.Functions) {
-				// 	node.callee.name = "Mavo.Functions._Trap." + node.callee.name;
-				// }
 			}
 		},
 		"ThisExpression": node => {
@@ -506,8 +511,7 @@ var _ = Mavo.Script = {
 	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with(Mavo.Functions._Trap)
-	with (data || {}) {
+		code = `with (data || Mavo.Data.stub) {
 		return (${code});
 	}`;
 
@@ -524,7 +528,7 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 		return new Function("data", code);
 	},
 
-	parse: self.jsep,
+	parse: self.jsep
 };
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;

@@ -80,6 +80,8 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
+		_.properties = _.union(_.properties, this.root.properties);
+
 		this.permissions = new Mavo.Permissions();
 
 		var backendTypes = ["source", "storage", "init"]; // order is significant!
@@ -762,6 +764,9 @@ var _ = self.Mavo = $.Class({
 
 		hooks: new $.Hooks(),
 
+		// Will be filled with a union of all properties across all Mavos
+		properties: new Set(),
+
 		attributes: [
 			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-multiple-path", "mv-format",
 			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-permisssions",
@@ -769,11 +774,15 @@ var _ = self.Mavo = $.Class({
 		],
 
 		lazy: {
-			locale: () => document.documentElement.lang || "en-GB",
-			toNode: () => Symbol("toNode"),
-			toProxy: () => Symbol("toProxy")
+			locale: () => document.documentElement.lang || "en-GB"
 		}
 	}
+});
+
+// Define symbols
+// These are lazy to give the Symbol polyfill a chance to load if needed
+["toNode", "toProxy", "route", "parent", "dataObject"].forEach(symbol => {
+	$.lazy(_, symbol, () => Symbol(symbol));
 });
 
 Object.defineProperty(_.all, "length", {
