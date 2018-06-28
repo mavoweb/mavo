@@ -75,8 +75,9 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
-		var closed = this.options.style && this.options.style.transition !== "none" ?  $.transition(this.element, {opacity: 0}) : Promise.resolve();
-		closed.then(() => {
+		var duration = 1000 * parseFloat(window.getComputedStyle(this.element, null).getPropertyValue("transition-duration"));
+		$.transition(this.element, {opacity: 0}, duration)
+		.then(() => {
 			$.remove(this.element);
 			this.closed.resolve(resolve);
 		});
