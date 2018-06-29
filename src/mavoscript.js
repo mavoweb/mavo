@@ -27,25 +27,13 @@ var _ = Mavo.Script = {
 
 		if (Array.isArray(b)) {
 			if (Array.isArray(a)) {
-				o.leftScalar = o.leftScalar || o.scalar;
-				o.rightScalar = o.rightScalar || o.scalar;
-				o.leftIdentity = o.leftIdentity === undefined ? o.identity: o.leftIdentity;
-				o.rightIdentity = o.rightIdentity === undefined ? o.identity: o.rightIdentity;
-
-				if (a.length == b.length) {
-					result = [...b.map((n, i) => o.scalar(a[i] === undefined ? o.identity : a[i], n))];
-				}
-				else if (a.length > b.length) {
-					result = [
-						...b.map((n, i) => o.scalar(a[i] === undefined ? o.rightIdentity : a[i], n)),
-						...a.slice(b.length).map(n => o.rightScalar(n, o.rightIdentity))
-					];
-				}
-				else {
-					result = [
-						...a.map((n, i) => o.scalar(n, b[i] === undefined ? o.leftIdentity : b[i])),
-						...b.slice(a.length).map(n => o.leftScalar(o.leftIdentity, n))
-					];
+				result = [];
+				var max = Math.max(a.length, b.length);
+				for (let i = 0; i < max; i++) {
+					result[i] = o.scalar(
+						a[i] === undefined ? o.identity : a[i],
+						b[i] === undefined ? o.identity : b[i]
+					);
 				}
 			}
 			else {
