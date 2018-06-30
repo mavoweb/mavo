@@ -134,7 +134,13 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	// Adds items from set2 into set1, turns set1 into a set if it's not
 	union: (set1, set2) => {
+		if (set1 instanceof Set && set2) {
+			set2.forEach(x => set1.add(x));
+			return set1;
+		}
+
 		return new Set([...(set1 || []), ...(set2 || [])]);
 	},
 

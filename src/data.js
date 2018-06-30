@@ -18,16 +18,21 @@ var _ = Mavo.Data = $.Class(class Data {
 		return this.node.collection;
 	}
 
-	createProxy() {
-		return _.createProxy(this.data, this.node);
+	get key() {
+		return this._key = this.collection? this.node.index : this.node.property;
+	}
+
+	proxify() {
+		return _.proxify(this.data);
 	}
 
 	update() {
 		if (this.node instanceof Mavo.Collection || this.node instanceof Mavo.ImplicitCollection) {
+			// TODO eventually we should do more granular updates than this O(N) stuff
 			this.data.length = 0;
 
 			for (var i=0; i<this.node.children.length; i++) {
-				this.data[i] = this.node.children[i].getLiveData();
+				this.data[i] = this.node.children[i].liveData.data;
 			}
 
 			if (this.node instanceof Mavo.ImplicitCollection) {
@@ -47,11 +52,14 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 
 			this.data = Mavo.objectify(value);
+			var type = $.type(value);
 
-			if (this.collection) {
-				// In collection items we want their property name
-				// to resolve relative to them, not their parent group
-				this.data[this.property] = this.proxy;
+			if (type === "object" || type === "array") {
+				// Object rendered on a primitive, we should traverse it and store its properties
+				_.computeRoutes(this.data);
+			}
+			else {
+				_.computeMetadata(this.data, this.key, this.parent);
 			}
 
 			this.updateParent();
@@ -67,21 +75,38 @@ var _ = Mavo.Data = $.Class(class Data {
 			// Is implicit collection
 			// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
 			var data = this.data.length === 1? this.data[0] : this.data;
-			this.parent.data[this.node.property] = data;
+			this.parent.set(this.node.property, data, true);
 		}
 		else if (this.collection instanceof Mavo.ImplicitCollection) {
 			// Is implicit collection *Item*
 			this.parent.update();
 		}
 		else {
-			var key = this.collection? this.node.index : this.node.property;
-			this.parent.data[key] = this.proxy;
+			var key = this.key;
+
+			if (key !== undefined) {
+				this.parent.set(key, this.data, true);
+			}
 		}
 	}
 
-	set(property, value) {
+	set(property, value, shallow) {
 		this.data[property] = value;
-		this.data[Mavo.route].add(property);
+		_["computeRoute" + (shallow? "" : "s")](value, property, this.data);
+	}
+
+	updateKey() {
+		var oldKey = this._key;
+
+		if (this.parent[oldKey] === this.data) {
+			delete this.parent[oldKey];
+		}
+
+		this.updateParent();
+	}
+
+	resolve(property) {
+		return _.resolve(property, this.data);
 	}
 }, {
 	live: {
@@ -89,57 +114,177 @@ var _ = Mavo.Data = $.Class(class Data {
 			if (data !== this._data) {
 				this.isArray = Array.isArray(data);
 
-				data[Mavo.toNode] = this.node;
-
 				this._data = data;
 
-				data[Mavo.dataObject] = this;
+				data[Mavo.toNode] = this.node;
 				data[Mavo.parent] = this.parent && this.parent.data;
-				data[Mavo.route] = new Set();
-				data[Mavo.toProxy] = this.proxy = this.createProxy();
+				this.proxy = this.proxify();
 
 				this.updateParent();
+
+				return this._data;
 			}
 		}
 	},
 
 	static: {
-		stub: self.Proxy? new Proxy(Mavo.Functions, {
-			get: (functions, property) => _.resolve(property, functions),
-			has: () => true
-		}) : Mavo.Functions,
+		unquotedStrings: self.Proxy? new Proxy({[Symbol.unscopables]: {data: true, undefined: true}}, {
+			get: (data, property) => {
 
-		resolve: function(property, data, node) {
-			if (property in data) {
+				if (typeof property === "string") {
+					return property;
+				}
+
+				return Reflect.get(data, property);
+			},
+			has: (data, property) => {
+				return Reflect.has(data, property) || typeof property === "string";
+			}
+		}) : {},
+
+		isItem: function(data) {
+			return Array.isArray($.value(data, Mavo.parent));
+		},
+
+		closest(obj, test) {
+			var path = [];
+			do {
+				if (test(obj)) {
+					return {value: obj, path};
+				}
+
+				path.push(obj[Mavo.property]);
+			} while (obj = obj[Mavo.parent]);
+
+			return {value: null, path};
+		},
+
+		closestItem(obj) {
+			return _.closest(obj, _.isItem);
+		},
+
+		closestArray(obj) {
+			return _.closest(obj, Array.isArray);
+		},
+
+		getProperty: function(data) {
+			var ret = _.isItem(data)? data[Mavo.parent] : data;
+
+			return ret[Mavo.property];
+		},
+
+		find: function(property, data, o = {}) {
+			if (!data || o.exclude === data) {
+				return;
+			}
+
+			if (Mavo.in(data, property) && o.exclude !== data[property]) {
 				return data[property];
 			}
 
-			// Property does not exist on data, look for it elsewhere
-
-			if (node) {
-				// Special values
-				if (property in Mavo.Node.special) {
-					return Mavo.Node.special[property].call(node);
+			if (!data[Mavo.route] || !data[Mavo.route].has(property)) {
+				if (data[Mavo.property] === property) {
+					return data;
 				}
 
-				var ret = node.resolve(property);
+				if (_.isItem(data) && _.getProperty(data) === property) {
+					// Inside collection items we want their property name
+					// to return the current item, not the entire collection
+					return data;
+				}
+
+				if (Array.isArray(data)) {
+					// Perhaps it's an array of nodes, such as the one created with deep references?
+					var ret = data.map(a => _.find(property, a))
+					              .filter(x => x !== undefined);
+
+					if (ret.length) {
+						return Mavo.flatten(ret);
+					}
+				}
+
+				return;
+			}
+
+			var results = [], returnArray = Array.isArray(data), ret;
+
+			results[Mavo.route] = new Set();
+
+			for (var prop in data) {
+				var ret = _.find(property, data[prop], o);
 
 				if (ret !== undefined) {
-					// Convert Mavo nodes to data for use in expressions
+					// FIXME How do we set a sensible Mavo.route when the returned array is empty?
+					// E.g. because we were pointing to inner elements of a collection that currently has no items.
+					Mavo.union(results[Mavo.route], ret[Mavo.route]);
+
 					if (Array.isArray(ret)) {
-						ret = ret.map(item => item.getLiveData());
-
-						if (!Mavo.Actions.running) {
-							// In Mavo actions we still need references to these
-							ret = ret.filter(item => Mavo.value(item) !== null);
-						}
-
-						return ret;
+						results.push(...ret);
+						returnArray = true;
 					}
-					else if (ret instanceof Mavo.Node) {
-						return ret.getLiveData();
+					else {
+						results.push(ret);
 					}
 				}
+			}
+
+			return returnArray || results.length > 1? results : results[0];
+		},
+
+		// First look in descendants, then ancestors and their descendants
+		// one level up at a time (excluding the subtree we've already explored)
+		findUp: function(property, data, ignoreDescendants) {
+			var parent = data;
+			var child;
+
+			do {
+				if (!ignoreDescendants || child) { // If ignoreDescendants, skip first iteration
+
+					var ret = _.find(property, parent, {exclude: child});
+
+					if (ret !== undefined) {
+						return ret;
+					}
+
+					if (_.getProperty(parent) === property) {
+						return parent;
+					}
+				}
+
+				child = parent;
+				parent = parent[Mavo.parent];
+			} while (parent);
+		},
+
+		resolve: function(property, data) {
+			if (property === Mavo.isProxy) {
+				return true;
+			}
+
+			if (typeof property === "symbol") {
+				// We can't do much here, either it's in the data or not
+				return data[property];
+			}
+
+			var ret;
+
+			if (property in data) {
+				ret = data[property];
+			}
+			// Property does not exist on data, look for it elsewhere
+			else if (property in _.special) { // $special properties
+				ret = _.special[property](data);
+			}
+			else {
+				ret = _.findUp(property, data);
+			}
+
+			if (ret !== undefined) {
+				// Should we proxify value before returning it? Is it data?
+				var proxify = ret !== null && typeof ret === "object" // Can be a proxy
+				              && !ret.isProxy // Is not already a proxy
+				              && (Mavo.route in ret || Mavo.toNode in ret); // Either has a route or comes from a node
+				return !proxify? ret : _.proxify(ret);
 			}
 
 			// Does it reference another Mavo?
@@ -148,11 +293,6 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 
 			// If still here, it's not related to nodes
-			if (typeof property === "symbol") {
-				// It's a Symbol property that was not actually found on the data
-				// We can't help here, abort mission!
-				return;
-			}
 
 			var propertyL = property.toLowerCase && property.toLowerCase() || property;
 			var ret;
@@ -166,7 +306,12 @@ var _ = Mavo.Data = $.Class(class Data {
 				}
 			}
 
-			ret = Mavo.Functions[propertyL] || Math[property] || Math[propertyL] || ret;
+			if (propertyL in Mavo.Functions) {
+				ret = Mavo.Functions[propertyL];
+			}
+			else {
+				ret = Math[property] || Math[propertyL] || ret;
+			}
 
 			if (ret !== undefined) {
 				if (typeof ret === "function") {
@@ -187,30 +332,28 @@ var _ = Mavo.Data = $.Class(class Data {
 			if (propertyL[0] !== "$") {
 				var $property = "$" + propertyL;
 
-				if (node && $property in Mavo.Node.special) {
-					return Mavo.Node.special[$property].call(node);
+				if ($property in _.special) {
+					return _.special[$property](data);
 				}
 				else if ($property in Mavo.Functions) {
 					return Mavo.Functions[$property];
 				}
 			}
-
-			// Prevent undefined at all costs
-			return property;
 		},
 
-		createProxy(data, node) {
+		proxify(data) {
+			if (!data || typeof data !== "object" || !self.Proxy) {
+				// Data is a primitive or proxies are not supported, we cannot proxify
+				return data;
+			}
+
 			return new Proxy(data, {
 				get: (data, property, proxy) => {
-					if (property in data) {
-						return data[property];
-					}
-
-					return _.resolve(property, data, node);
+					return _.resolve(property, data);
 				},
 
 				has: (data, property) => {
-					var ret = _.resolve(property, data, node);
+					var ret = _.resolve(property, data);
 
 					return ret !== undefined;
 				},
@@ -220,8 +363,125 @@ var _ = Mavo.Data = $.Class(class Data {
 					return value;
 				}
 			});
+		},
+
+		computeMetadata(object, property, parent) {
+			if (object && typeof object === "object") { // not primitive
+				if (property !== undefined) {
+					object[Mavo.property] = property;
+				}
+
+				if (parent && !object[Mavo.parent]) {
+					object[Mavo.parent] = parent;
+				}
+			}
+		},
+
+		computeRoute(object, property, parent) {
+			var type = $.type(object);
+
+			_.computeMetadata(object, property, parent);
+
+			if (type == "object" || type == "array") {
+				if (!object[Mavo.route]) {
+					object[Mavo.route] = new Set();
+				}
+			}
+
+			if ($.type(property) !== "number") {
+				while (parent) {
+					if (!parent[Mavo.route]) {
+						parent[Mavo.route] = new Set();
+					}
+
+					if (parent[Mavo.route].has(property)) {
+						break;
+					}
+
+					parent[Mavo.route].add(property);
+					parent = parent[Mavo.parent];
+				}
+			}
+		},
+
+		computeRoutes(object, property, parent) {
+			_.traverse(_.computeRoute, object, property, parent);
+		},
+
+		// Recursively traverse a JSON structure
+		// Warning: No cycle detection. Will loop infinitely if there are cycles
+		traverseDown(callback, object, property, parent) {
+			if (Array.isArray(object)) {
+				object.forEach((item, i) => _.traverse(callback, item, i, object));
+			}
+			else if ($.type(object) === "object") {
+				for (var prop in object) {
+					_.traverse(callback, object[prop], prop, object);
+				}
+			}
+		},
+
+		traverse(callback, object, property, parent) {
+			callback(object, property, parent);
+			_.traverseDown(callback, object, property, parent);
+		},
+
+		special: {
+			$index: function(obj) {
+				var closestItem = _.closestItem(obj).value;
+
+				if (!closestItem) {
+					return -1;
+				}
+
+				var property = closestItem[Mavo.property];
+
+				if (isNaN(property)) {
+					// Is an array item but its property is not a number! Search the array.
+					// This happens with Implicit Collections of only 1 item.
+					return closestItem[Mavo.parent].indexOf(closestItem);
+				}
+
+				return property;
+			},
+
+			$item: function(obj) {
+				return _.closestItem(obj).value;
+			},
+
+			$all: function(obj) {
+				var arr = _.closestArray(obj);
+				var path = arr.path.reverse().slice(1); // Drop index
+				return arr.value.map(a => $.value(a, ...path));
+			},
+
+			$next: function(obj) {
+				var arr = _.closestArray(obj);
+				var path = arr.path.reverse();
+				var index = arr.path[0];
+				path = path.slice(1);
+				var nextClosestItem = $.value(arr.value, index + 1);
+
+				return nextClosestItem? $.value(nextClosestItem, ...path) : null;
+			},
+
+			$previous: function(obj) {
+				var arr = _.closestArray(obj);
+				var path = arr.path.reverse();
+				var index = arr.path[0];
+				path = path.slice(1);
+				var prevClosestItem = $.value(arr.value, index - 1);
+
+				return prevClosestItem? $.value(prevClosestItem, ...path) : null;
+			},
+
+			$this: function(obj) {
+				return obj;
+			}
 		}
 	}
 });
+
+_.stub = _.proxify(Mavo.Functions);
 
 })(Bliss, Bliss.$);
