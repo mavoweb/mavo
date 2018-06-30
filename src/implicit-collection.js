@@ -90,24 +90,6 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		}
 
 		this.liveData.update();
-	},
-
-	find: function(property, o = {}) {
-		if (o.exclude === this) {
-			return;
-		}
-
-		var items = this.children.filter(item => !item.deleted && !item.hidden);
-
-		if (this.property == property) {
-			return o.collections? this : items;
-		}
-
-		if (this.properties.has(property)) {
-			var ret = items.map(item => item.find(property, o));
-
-			return Mavo.flatten(ret);
-		}
 	}
 });
 

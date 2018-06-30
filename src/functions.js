@@ -199,8 +199,8 @@ var _ = Mavo.Functions = {
 	 */
 	intersects: function(arr1, arr2) {
 		if (arr1 && arr2) {
-			var set2 = new Set(arr2.map? arr2.map(val): arr2);
-			arr1 = arr1.map? arr1.map(val) : [...arr1];
+			var set2 = new Set(Mavo.toArray(arr2).map(val));
+			arr1 = Mavo.toArray(arr1).map(val);
 
 			return !arr1.every(el => !set2.has(el));
 		}
@@ -398,7 +398,7 @@ var _ = Mavo.Functions = {
 		if (ret.length === 0) {
 			return false;
 		}
-		
+
 		return ret;
     },
 

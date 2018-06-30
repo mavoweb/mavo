@@ -322,24 +322,12 @@ var _ = Mavo.Script = {
 				var object = node.arguments[0];
 
 				for (let i=1; i<node.arguments.length; i++) {
-					_.walk(node.arguments[i], (node) => {
-						if (node.name === "$this") {
-							return node;
-						}
-
-						return {
-							type: "MemberExpression",
-							computed: false,
+					node.arguments[i] = Object.assign(_.parse("scope()"), {
+						arguments: [
 							object,
-							property: {
-								type: "identifier",
-								name: node.name
-							}
-						};
-					}, {
-						type: "Identifier",
-						ignore: ["property", "callee"]
-					}, i, node.arguments);
+							node.arguments[i]
+						]
+					});
 				}
 			}
 		},
@@ -403,12 +391,8 @@ var _ = Mavo.Script = {
 		"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
 		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
 		"CallExpression": node => {
-			if (node.callee.type == "MemberExpression") {
-				var thisArg = ", " + _.serialize(node.callee.object);
-			}
-
 			var nameSerialized = _.serialize(node.callee);
-			var argsSerialized = node.arguments.map(_.serialize).join(", ");
+			var argsSerialized = node.arguments.map(_.serialize);
 
 			if (node.callee.type == "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
@@ -418,12 +402,24 @@ var _ = Mavo.Script = {
 					nameSerialized = `Mavo.Functions.${nameSerialized.toLowerCase()} || ${nameSerialized}`;
 				}
 
+				if (node.callee.name === "scope") {
+					return `(function() {
+						with(Mavo.Script.subScope(${_.serialize(node.arguments[0])})) {
+							return (${_.serialize(node.arguments[1])})
+						}
+					})()`;
+				}
+
 				if (clashes || Mavo.properties.has(nameSerialized)) {
-					return `call(${nameSerialized}, [${argsSerialized}]${thisArg || ""})`;
+					if (node.callee.type == "MemberExpression") {
+						var thisArg = ", " + _.serialize(node.callee.object);
+					}
+
+					return `call(${nameSerialized}, [${argsSerialized.join(", ")}]${thisArg || ""})`;
 				}
 			}
 
-			return `${nameSerialized}(${argsSerialized})`;
+			return `${nameSerialized}(${argsSerialized.join(", ")})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
@@ -548,7 +544,8 @@ var _ = Mavo.Script = {
 	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with (data || Mavo.Data.stub) {
+		code = `with (Mavo.Data.unquotedStrings)
+	with (data || Mavo.Data.stub) {
 		return (${code});
 	}`;
 
@@ -565,7 +562,20 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 		return new Function("data", code);
 	},
 
-	parse: self.jsep
+	parse: self.jsep,
+
+	// This is used for scope() rewriting, to support $this passing through
+	subScope: proxy => {
+		return new Proxy(proxy, {
+			get: (t, property, r) => {
+				if (property === Symbol.unscopables) {
+					return {$this: false};
+				}
+
+				return Reflect.get(t, property, r);
+			}
+		});
+	}
 };
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;

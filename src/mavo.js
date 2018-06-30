@@ -80,7 +80,7 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
-		_.properties = _.union(_.properties, this.root.properties);
+		_.properties = _.union(_.properties, this.root.liveData.data[Mavo.route]);
 
 		this.permissions = new Mavo.Permissions();
 
@@ -781,7 +781,7 @@ var _ = self.Mavo = $.Class({
 
 // Define symbols
 // These are lazy to give the Symbol polyfill a chance to load if needed
-["toNode", "toProxy", "route", "parent", "dataObject"].forEach(symbol => {
+["toNode", "isProxy", "route", "parent", "property"].forEach(symbol => {
 	$.lazy(_, symbol, () => Symbol(symbol));
 });
 

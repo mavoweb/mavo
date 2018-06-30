@@ -5,6 +5,7 @@ var _ = Mavo.UI.Message = $.Class({
 		this.mavo = mavo;
 		this.message = message;
 		this.closed = Mavo.promise();
+		this.options = o;
 
 		this.element = $.create({
 			className: "mv-ui mv-message" + (o.type? " mv-" + o.type : ""),
@@ -14,6 +15,10 @@ var _ = Mavo.UI.Message = $.Class({
 			},
 			[this.mavo.bar? "after" : "start"]: (this.mavo.bar || this.mavo).element
 		});
+
+		if (o.style) {
+			$.style(this.element, o.style);
+		}
 
 		if (o.classes) {
 			this.element.classList.add(...o.classes.split(/\s+/));
@@ -70,11 +75,14 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
-		$.transition(this.element, {opacity: 0}).then(() => {
+		var duration = this.element.style.transition ? 1000 * parseFloat(window.getComputedStyle(this.element, null).transitionDuration) : 400;
+		$.transition(this.element, {opacity: 0}, duration)
+		.then(() => {
 			$.remove(this.element);
 			this.closed.resolve(resolve);
 		});
 	}
+
 });
 
 })(Bliss, Bliss.$);

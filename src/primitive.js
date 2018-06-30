@@ -485,7 +485,7 @@ var _ = Mavo.Primitive = $.Class({
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
 			}
-			else {
+			else if (!this.isHelperVariable) {
 				// Candidate properties to get a value from
 				var properties = Object.keys(data), property;
 

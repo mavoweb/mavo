@@ -10,8 +10,6 @@ var _ = Mavo.Group = $.Class({
 
 		Mavo.hooks.run("group-init-start", this);
 
-		this.liveData = new Mavo.Data(this, {});
-
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
 			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
@@ -143,46 +141,6 @@ var _ = Mavo.Group = $.Class({
 		return env.data;
 	},
 
-	/**
-	 * Search entire subtree for property, return relative value
-	 * @return {Mavo.Node}
-	 */
-	find: function(property, o = {}) {
-		if (o.exclude === this) {
-			return;
-		}
-
-		if (this.property == property) {
-			return this;
-		}
-
-		if (property in this.children) {
-			return this.children[property].find(property, o);
-		}
-
-		if (!this.properties.has(property)) {
-			return;
-		}
-
-		var results = [], returnArray, ret;
-
-		for (var prop in this.children) {
-			ret = this.children[prop].find(property, o);
-
-			if (ret !== undefined) {
-				if (Array.isArray(ret)) {
-					results.push(...ret);
-					returnArray = true;
-				}
-				else {
-					results.push(ret);
-				}
-			}
-		}
-
-		return returnArray || results.length > 1? results : results[0];
-	},
-
 	edit: function(o = {}) {
 		if (this.super.edit.call(this) === false) {
 			return false;
@@ -230,7 +188,7 @@ var _ = Mavo.Group = $.Class({
 			// find first alias with data, load that data, and set to be copied
 			if (obj.alias) {
 				var aliasesArr = obj.alias.split(" ");
-					
+
 				for (i = 0; i < aliasesArr.length; i++) {
 					var currentAlias = aliasesArr[i];
 
@@ -270,14 +228,20 @@ var _ = Mavo.Group = $.Class({
 				if (!(property in this.children)) {
 					var value = data[property];
 
+					this.liveData.set(property, value);
+
 					if (typeof value != "object" && (!oldData || oldData[property] != value)) {
 						// Property actually changed. Why != "object" though?
 						this.dataChanged("propertychange", {property});
 					}
-
-					this.liveData.set(property, value);
 				}
 			}
+		}
+	},
+
+	lazy: {
+		liveData: function() {
+			return new Mavo.Data(this, {});
 		}
 	},
 
