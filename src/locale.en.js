@@ -40,5 +40,7 @@ Mavo.Locale.register("en", {
 	"gh-edit-suggestion-body": `Hello there! I used Mavo to suggest the following edits:
 {description}
 Preview my changes here: {previewURL}`,
-	"gh-edit-suggestion-sent": "Edit suggestion sent successfully!"
+	"gh-edit-suggestion-sent": "Edit suggestion sent successfully!",
+	"gh-login-fork-options": "You have your own copy of this page, would you like to use it?",
+	"gh-use-my-fork": "Yes, show me my data."
 });
