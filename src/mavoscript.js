@@ -29,11 +29,48 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [];
 				var max = Math.max(a.length, b.length);
-				for (let i = 0; i < max; i++) {
-					result[i] = o.scalar(
-						a[i] === undefined ? o.identity : a[i],
-						b[i] === undefined ? o.identity : b[i]
-					);
+				o.leftScalar = o.leftScalar || o.scalar;
+				o.rightScalar = o.rightScalar || o.scalar;
+				o.leftIdentity = o.leftIdentity === undefined ? o.identity: o.leftIdentity;
+				o.rightIdentity = o.rightIdentity === undefined ? o.identity: o.rightIdentity;
+
+				if (a.length == b.length) {
+					for (let i = 0; i < max; i++) {
+						result[i] = o.scalar(
+							a[i] === undefined ? o.identity : a[i],
+							b[i] === undefined ? o.identity : b[i]
+						);
+					}	
+				}
+				else if (a.length > b.length) {
+					for (let i = 0; i < b.length; i++) {
+						result[i] = o.scalar(
+							a[i] === undefined ? o.rightIdentity : a[i],
+							b[i] === undefined ? o.rightIdentity : b[i]
+						);
+					}
+
+					for (let i = b.length; i < max; i++) {
+						result[i] = o.rightScalar(
+							a[i] === undefined ? o.rightIdentity : a[i],
+							o.rightIdentity
+						);						
+					}
+				}
+				else {
+					for (let i = 0; i < a.length; i++) {
+						result[i] = o.scalar(
+							a[i] === undefined ? o.leftIdentity : a[i],
+							b[i] === undefined ? o.leftIdentity : b[i]
+						);
+					}
+					
+					for (let i = a.length; i < max; i++) {
+						result[i] = o.leftScalar(
+							o.leftIdentity,
+							b[i] === undefined ? o.leftIdentity : b[i]
+						);						
+					}
 				}
 			}
 			else {
