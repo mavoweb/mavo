@@ -118,6 +118,8 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				data[Mavo.toNode] = this.node;
 				data[Mavo.parent] = this.parent && this.parent.data;
+				data[Mavo.mavo] = this.node.mavo;
+
 				this.proxy = this.proxify();
 
 				this.updateParent();
@@ -128,18 +130,63 @@ var _ = Mavo.Data = $.Class(class Data {
 	},
 
 	static: {
-		unquotedStrings: self.Proxy? new Proxy({[Symbol.unscopables]: {data: true, undefined: true}}, {
+		stub: self.Proxy? new Proxy({[Symbol.unscopables]: {data: true, undefined: true}}, {
 			get: (data, property) => {
-				if (typeof property === "string") {
-					return property;
+				var ret = Reflect.get(data, property);
+
+				if (ret !== undefined || typeof property !== "string") {
+					return ret;
 				}
 
-				return Reflect.get(data, property);
+				var propertyL = property.toLowerCase();
+
+				if (propertyL in Mavo.Actions.Functions) {
+					if (Mavo.Actions.running) {
+						ret = Mavo.Actions.Functions[propertyL];
+					}
+					else {
+						ret = Mavo.Actions.nope;
+					}
+				}
+
+				if (propertyL in Mavo.Functions) {
+					ret = Mavo.Functions[propertyL];
+				}
+				else {
+					ret = Math[property] || Math[propertyL] || ret;
+				}
+
+				if (ret !== undefined) {
+					if (typeof ret === "function") {
+						// For when function names are used as unquoted strings, see #160
+						ret.toString = () => property;
+					}
+
+					return ret;
+				}
+
+				// Still not found? Maybe it's a global
+				if (typeof window !== "undefined" && window.hasOwnProperty(property)) {
+					// hasOwnProperty to avoid elements with ids clobbering globals
+					return window[property];
+				}
+
+				// Still not found? Maybe it's a special property used without a $ (see #343)
+				if (property[0] !== "$") {
+					var $property = "$" + property.toLowerCase();
+
+					if ($property in Mavo.Functions) {
+						return Mavo.Functions[$property];
+					}
+				}
+
+				// Prevent undefined at all costs
+				return property;
 			},
 			has: (data, property) => {
 				return Reflect.has(data, property) || typeof property === "string";
 			}
-		}) : {},
+		}) : Mavo.Functions,
 
 		isItem: function(data) {
 			return Array.isArray($.value(data, Mavo.parent));
@@ -156,6 +203,10 @@ var _ = Mavo.Data = $.Class(class Data {
 			} while (obj = obj[Mavo.parent]);
 
 			return {value: null, path};
+		},
+
+		root(obj) {
+			return _.closest(obj, o => !o[Mavo.parent]);
 		},
 
 		closestItem(obj) {
@@ -208,6 +259,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			var results = [], returnArray = Array.isArray(data), ret;
 
 			results[Mavo.route] = new Set();
+			results[Mavo.mavo] = data[Mavo.mavo];
 
 			for (var prop in data) {
 				var ret = _.find(property, data[prop], o);
@@ -238,7 +290,6 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			do {
 				if (!ignoreDescendants || child) { // If ignoreDescendants, skip first iteration
-
 					var ret = _.find(property, parent, {exclude: child});
 
 					if (ret !== undefined) {
@@ -260,8 +311,8 @@ var _ = Mavo.Data = $.Class(class Data {
 				return true;
 			}
 
-			if (typeof property === "symbol") {
-				// We can't do much here, either it's in the data or not
+			if (typeof property !== "string" || !isNaN(property)) {
+				// We can't do much for symbols and numeric properties, either they’re in the data or not
 				return data[property];
 			}
 
@@ -274,8 +325,12 @@ var _ = Mavo.Data = $.Class(class Data {
 			else if (property in _.special) { // $special properties
 				ret = _.special[property](data);
 			}
-			else {
-				ret = _.findUp(property, data);
+			else if (data[Mavo.mavo]) {
+				var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
+
+				if (all && all.has(property)) {
+					ret = _.findUp(property, data);
+				}
 			}
 
 			if (ret !== undefined) {
@@ -291,52 +346,49 @@ var _ = Mavo.Data = $.Class(class Data {
 				return Mavo.all[property].root.getLiveData();
 			}
 
-			// If still here, it's not related to nodes
-
-			var propertyL = property.toLowerCase && property.toLowerCase() || property;
-			var ret;
-
-			if (propertyL in Mavo.Actions.Functions) {
-				if (Mavo.Actions.running) {
-					ret = Mavo.Actions.Functions[propertyL];
-				}
-				else {
-					ret = Mavo.Actions.nope;
-				}
-			}
-
-			if (propertyL in Mavo.Functions) {
-				ret = Mavo.Functions[propertyL];
-			}
-			else {
-				ret = Math[property] || Math[propertyL] || ret;
-			}
-
-			if (ret !== undefined) {
-				if (typeof ret === "function") {
-					// For when function names are used as unquoted strings, see #160
-					ret.toString = () => property;
-				}
-
-				return ret;
-			}
-
-			// Still not found? Maybe it's a global
-			if (self && self.hasOwnProperty(property)) {
-				// hasOwnProperty to avoid elements with ids clobbering globals
-				return self[property];
-			}
-
 			// Still not found? Maybe it's a special property used without a $ (see #343)
-			if (propertyL[0] !== "$") {
-				var $property = "$" + propertyL;
+			if (property[0] !== "$") {
+				var $property = "$" + property.toLowerCase();
 
 				if ($property in _.special) {
 					return _.special[$property](data);
 				}
-				else if ($property in Mavo.Functions) {
-					return Mavo.Functions[$property];
+			}
+		},
+
+		has(property, data) {
+			// We don't care about priority here, just whether they exist
+			// so we'll make the fastest searches first.
+			if (property === Mavo.isProxy) {
+				return true;
+			}
+
+			if (typeof property !== "string") {
+				return Reflect.has(data, property);
+			}
+
+			var objects = [data, Mavo.all, _.special];
+
+			if (objects.some(obj => property in obj)) {
+				return true;
+			}
+
+			if (typeof property === "string") {
+				var propertyL = property.toLowerCase();
+
+				if (propertyL !== property && objects.some(obj => propertyL in obj)) {
+					return true;
+				};
+
+				if (propertyL[0] !== "$" && "$" + propertyL in _.special) {
+					return true;
 				}
+			}
+
+			// Slowest search last: Is the property present anywhere in the data?
+			if (data[Mavo.mavo]) {
+				var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
+				return all && all.has(property);
 			}
 		},
 
@@ -352,9 +404,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				},
 
 				has: (data, property) => {
-					var ret = _.resolve(property, data);
-
-					return ret !== undefined;
+					return _.has(property, data);
 				},
 
 				set: function(data, property = "", value) {
@@ -480,7 +530,5 @@ var _ = Mavo.Data = $.Class(class Data {
 		}
 	}
 });
-
-_.stub = _.proxify(Mavo.Functions);
 
 })(Bliss, Bliss.$);

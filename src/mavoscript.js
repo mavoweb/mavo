@@ -507,8 +507,8 @@ var _ = Mavo.Script = {
 	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with (Mavo.Data.unquotedStrings)
-	with (data || Mavo.Data.stub) {
+		code = `with (Mavo.Data.stub)
+	with (data || {}) {
 		return (${code});
 	}`;
 
