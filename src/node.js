@@ -266,7 +266,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	render: function(data) {
-		var live = Mavo.in(data, Mavo.isProxy);
+		var live = Mavo.in(Mavo.isProxy, data);
 
 		if (live) {
 			// Drop proxy

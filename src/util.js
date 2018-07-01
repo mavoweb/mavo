@@ -431,7 +431,7 @@ var _ = $.extend(Mavo, {
 	 * Check if property exists in object. Like the in operator but more robust and does not throw.
 	 * Why not just in? E.g. "foo".length is 3 but "length" in "foo" throws
 	 */
-	in: function(obj, property) {
+	in: function(property, obj) {
 		if (obj) {
 			return (typeof obj === "object" && property in obj) || obj[property] !== undefined;
 		}
@@ -443,7 +443,7 @@ var _ = $.extend(Mavo, {
 	getCanonicalProperty: function(obj, property) {
 		if (obj && (property || property === 0)) {
 			// Property in object?
-			if (_.in(obj, property)) {
+			if (_.in(property, obj)) {
 				return property;
 			}
 
@@ -451,7 +451,7 @@ var _ = $.extend(Mavo, {
 				// Lowercase property in object?
 				var propertyL = property.toLowerCase();
 
-				if (_.in(obj, propertyL)) {
+				if (_.in(propertyL, obj)) {
 					return propertyL;
 				}
 

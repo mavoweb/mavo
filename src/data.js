@@ -228,7 +228,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				return;
 			}
 
-			if (Mavo.in(data, property) && o.exclude !== data[property]) {
+			if (Mavo.in(property, data) && o.exclude !== data[property]) {
 				return data[property];
 			}
 
