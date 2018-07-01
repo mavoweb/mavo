@@ -80,7 +80,9 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
-		_.properties = _.union(_.properties, this.root.liveData.data[Mavo.route]);
+		if (this.root.liveData.data[Mavo.route]) {
+			_.properties = _.union(_.properties, Object.keys(this.root.liveData.data[Mavo.route]));
+		}
 
 		this.permissions = new Mavo.Permissions();
 

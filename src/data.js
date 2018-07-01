@@ -232,7 +232,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				return data[property];
 			}
 
-			if (!data[Mavo.route] || !data[Mavo.route].has(property)) {
+			if (!data[Mavo.route] || !Mavo.in(property, data[Mavo.route])) {
 				if (data[Mavo.property] === property) {
 					return data;
 				}
@@ -258,16 +258,18 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			var results = [], returnArray = Array.isArray(data), ret;
 
-			results[Mavo.route] = new Set();
+			results[Mavo.route] = {};
 			results[Mavo.mavo] = data[Mavo.mavo];
 
-			for (var prop in data) {
+			var findDown = prop => {
 				var ret = _.find(property, data[prop], o);
 
 				if (ret !== undefined) {
 					// FIXME How do we set a sensible Mavo.route when the returned array is empty?
 					// E.g. because we were pointing to inner elements of a collection that currently has no items.
-					Mavo.union(results[Mavo.route], ret[Mavo.route]);
+					for (var p in ret[Mavo.route]) {
+						results[Mavo.route][p] = true;
+					}
 
 					if (Array.isArray(ret)) {
 						results.push(...ret);
@@ -277,6 +279,15 @@ var _ = Mavo.Data = $.Class(class Data {
 						results.push(ret);
 					}
 				}
+			};
+
+			if (Array.isArray(data) || data[Mavo.route][property] === true) {
+				for (var prop in data) {
+					findDown(prop);
+				}
+			}
+			else {
+				data[Mavo.route][property].forEach(findDown);
 			}
 
 			return returnArray || results.length > 1? results : results[0];
@@ -328,7 +339,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			else if (data[Mavo.mavo]) {
 				var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
 
-				if (all && all.has(property)) {
+				if (Mavo.in(property, all)) {
 					ret = _.findUp(property, data);
 				}
 			}
@@ -387,8 +398,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			// Slowest search last: Is the property present anywhere in the data?
 			if (data[Mavo.mavo]) {
-				var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
-				return all && all.has(property);
+				return Mavo.in(property, data[Mavo.mavo].root.liveData.data[Mavo.route]);
 			}
 		},
 
@@ -433,21 +443,36 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			if (type == "object" || type == "array") {
 				if (!object[Mavo.route]) {
-					object[Mavo.route] = new Set();
+					object[Mavo.route] = {};
 				}
 			}
 
 			if ($.type(property) !== "number") {
+				var child = object;
+
 				while (parent) {
 					if (!parent[Mavo.route]) {
-						parent[Mavo.route] = new Set();
+						parent[Mavo.route] = {};
 					}
 
-					if (parent[Mavo.route].has(property)) {
-						break;
+					var up = child && child[Mavo.property];
+
+					if (up && parent[Mavo.route][property] !== true) {
+						if (!parent[Mavo.route][property]) {
+							parent[Mavo.route][property] = new Set();
+						}
+
+						if (parent[Mavo.route][property].has(up)) {
+							break;
+						}
+
+						parent[Mavo.route][property].add(up);
+					}
+					else {
+						parent[Mavo.route][property] = true;
 					}
 
-					parent[Mavo.route].add(property);
+					child = parent;
 					parent = parent[Mavo.parent];
 				}
 			}

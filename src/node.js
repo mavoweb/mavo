@@ -107,7 +107,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get properties() {
-		return this.liveData.data[Mavo.route];
+		return Object.keys(this.liveData.data[Mavo.route]);
 	},
 
 	/**
