@@ -187,6 +187,10 @@ var _ = Mavo.DOMExpression = $.Class({
 
 	output: function(value) {
 		if (this.primitive) {
+			if (Mavo.in(value, Mavo.isProxy)) {
+				value = Mavo.clone(value); // Drop proxy
+			}
+			
 			this.primitive.value = value;
 		}
 		else if (this.mavoNode) {
