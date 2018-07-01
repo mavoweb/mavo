@@ -130,7 +130,6 @@ var _ = Mavo.Data = $.Class(class Data {
 	static: {
 		unquotedStrings: self.Proxy? new Proxy({[Symbol.unscopables]: {data: true, undefined: true}}, {
 			get: (data, property) => {
-
 				if (typeof property === "string") {
 					return property;
 				}
