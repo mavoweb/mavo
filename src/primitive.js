@@ -210,8 +210,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	isDataNull: function(o) {
-		return this.super.isDataNull.call(this, o)
-		       || ["", null, undefined].indexOf(this._value) > -1;
+		return this.super.isDataNull.call(this, o) || this._value === null || this._value === undefined;
 	},
 
 	getData: function(o = {}) {
@@ -572,8 +571,9 @@ var _ = Mavo.Primitive = $.Class({
 
 	setValue: function (value, o = {}) {
 		this.sneak(() => {
-			// Convert nulls and undefineds to empty string
-			value = value || value === 0 || value === false? value : "";
+			if (value === undefined) {
+				value = null;
+			}
 
 			var oldDatatype = this.datatype;
 
