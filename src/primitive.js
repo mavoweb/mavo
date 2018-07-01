@@ -584,7 +584,7 @@ var _ = Mavo.Primitive = $.Class({
 
 			value = _.safeCast(value, this.datatype);
 
-			if (!o.force && value == this._value && oldDatatype == this.datatype) {
+			if (!o.force && value === this._value && oldDatatype == this.datatype) {
 				// Do nothing if value didn't actually change, unless forced to
 				return value;
 			}
@@ -704,12 +704,8 @@ var _ = Mavo.Primitive = $.Class({
 			var existingType = typeof value;
 			var cast = _.cast(value, datatype);
 
-			if (value === null || value === undefined) {
-				return value;
-			}
-
 			if (datatype == "boolean") {
-				if (value === "false" || value === 0 || value === "") {
+				if (!value) {
 					return false;
 				}
 
@@ -725,6 +721,10 @@ var _ = Mavo.Primitive = $.Class({
 					return cast;
 				}
 
+				return value;
+			}
+
+			if (value === null || value === undefined) {
 				return value;
 			}
 
