@@ -295,21 +295,19 @@ var _ = Mavo.Data = $.Class(class Data {
 
 		// First look in descendants, then ancestors and their descendants
 		// one level up at a time (excluding the subtree we've already explored)
-		findUp: function(property, data, ignoreDescendants) {
+		findUp: function(property, data) {
 			var parent = data;
 			var child;
 
 			do {
-				if (!ignoreDescendants || child) { // If ignoreDescendants, skip first iteration
-					var ret = _.find(property, parent, {exclude: child});
+				var ret = _.find(property, parent, {exclude: child});
 
-					if (ret !== undefined) {
-						return ret;
-					}
+				if (ret !== undefined) {
+					return ret;
+				}
 
-					if (_.getProperty(parent) === property) {
-						return parent;
-					}
+				if (_.getProperty(parent) === property) {
+					return parent;
 				}
 
 				child = parent;

@@ -36,15 +36,25 @@ var _ = Mavo.Collection = $.Class({
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
-				this.likeNode = Mavo.Data.findUp(this.like, this.liveData.data, true);
+				var candidates = [];
+				this.mavo.walk(obj => {
+					if (obj instanceof _ && obj.property === this.like && obj !== this) {
+						candidates.push(obj);
+					}
+				});
 
-				if (!this.likeNode) {
-					this.like = null;
+				if (candidates.length > 0) {
+					// If there are multiple collections that match,
+					// compare the paths and select the one that has the most overlap
+					this.likeNode = candidates.sort((a, b) => {
+						return a.pathFrom(this).length - b.pathFrom(this).length
+					})[0];
+
+					this.likeNode = this.likeNode.likeNode || this.likeNode;
+					this.likeNode = this.likeNode.template || this.likeNode;
 				}
 				else {
-					var likeData = this.likeNode;
-					this.likeNode = likeData[Mavo.toNode];
-					this.likeNode = this.likeNode.template || this.likeNode;
+					this.like = null;
 				}
 			}
 
