@@ -320,25 +320,28 @@ var _ = Mavo.Data = $.Class(class Data {
 				return true;
 			}
 
-			if (typeof property !== "string" || !isNaN(property)) {
-				// We can't do much for symbols and numeric properties, either they’re in the data or not
+			if (typeof property === "symbol") {
+				// We can't do much for symbols
 				return data[property];
 			}
 
 			var ret;
+			var propertyIsNumeric = !isNaN(property);
 
 			if (property in data) {
 				ret = data[property];
 			}
-			// Property does not exist on data, look for it elsewhere
-			else if (property in _.special) { // $special properties
-				ret = _.special[property](data);
-			}
-			else if (data[Mavo.mavo]) {
-				var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
+			else if (!propertyIsNumeric) {
+				// Property does not exist on data, if non-numeric, look for it elsewhere
+				if (property in _.special) { // $special properties
+					ret = _.special[property](data);
+				}
+				else if (data[Mavo.mavo]) {
+					var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
 
-				if (Mavo.in(property, all)) {
-					ret = _.findUp(property, data);
+					if (Mavo.in(property, all)) {
+						ret = _.findUp(property, data);
+					}
 				}
 			}
 
@@ -350,17 +353,19 @@ var _ = Mavo.Data = $.Class(class Data {
 				return !proxify? ret : _.proxify(ret);
 			}
 
-			// Does it reference another Mavo?
-			if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
-				return Mavo.all[property].root.getLiveData();
-			}
+			if (!propertyIsNumeric) {
+				// Does it reference another Mavo?
+				if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
+					return Mavo.all[property].root.getLiveData();
+				}
 
-			// Still not found? Maybe it's a special property used without a $ (see #343)
-			if (property[0] !== "$") {
-				var $property = "$" + property.toLowerCase();
+				// Still not found? Maybe it's a special property used without a $ (see #343)
+				if (property[0] !== "$") {
+					var $property = "$" + property.toLowerCase();
 
-				if ($property in _.special) {
-					return _.special[$property](data);
+					if ($property in _.special) {
+						return _.special[$property](data);
+					}
 				}
 			}
 		},
