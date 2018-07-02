@@ -318,6 +318,7 @@ var _ = Mavo.Backend.register($.Class({
 								this.branch = repoInfo.default_branch;
 							}
 
+							this.repoInfo = repoInfo;
 							let params = (new URL(location)).searchParams;
 
 							if (!this.mavo.source) { // if url doesn't have source, check for forks
@@ -329,53 +330,55 @@ var _ = Mavo.Backend.register($.Class({
 									}).then(prs => {
 										this.pullRequest(prs[0]);
 									});
-									return this.repoInfo = repoInfo;
+									return repoInfo;
 								}
-								// Check if current user has a fork of this repo, and display dialog to switch
-								if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
-									var query = `query {
-												  viewer {
-												    name
-												      repositories(last: 100, isFork: true) {
-												      nodes {
-												        url
-												        parent {
-												          nameWithOwner
-												        }
-												      }
-												    }
-												  }
-												}`;
-									return this.request("https://api.github.com/graphql", {query: query}, "POST")
-									.then(data => {
-										var repos = data.data.viewer.repositories.nodes;
 
-										for (var i in repos) {
-											if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
-												this.switchToMyForkDialog(repos[i].url);
+								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch 
+									if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
+										var query = `query {
+													  viewer {
+													    name
+													      repositories(last: 100, isFork: true) {
+													      nodes {
+													        url
+													        parent {
+													          nameWithOwner
+													        }
+													      }
+													    }
+													  }
+													}`;
+										return this.request("https://api.github.com/graphql", {query: query}, "POST")
+										.then(data => {
+											var repos = data.data.viewer.repositories.nodes;
 
-												return this.repoInfo = repoInfo;
+											for (var i in repos) {
+												if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
+													this.switchToMyForkDialog(repos[i].url);
+
+													return repoInfo;
+												}
 											}
-										}
 
-										return this.repoInfo = repoInfo;
-									});
-								}
-								else { // search forks of this repo
-									return this.request(repoInfo.forks_url)
-									.then(forks => {
-										for (var i in forks) {
-											if (forks[i].owner.login === this.user.username) {
-												this.switchToMyForkDialog(forks[i].html_url);
+											return repoInfo;
+										});
+									}
+									else { // search forks of this repo
+										return this.request(repoInfo.forks_url)
+										.then(forks => {
+											for (var i in forks) {
+												if (forks[i].owner.login === this.user.username) {
+													this.switchToMyForkDialog(forks[i].html_url);
 
-												return this.repoInfo = repoInfo;
+													return repoInfo;
+												}
 											}
-										}
-										return this.repoInfo = repoInfo;
-									});
+											return repoInfo;
+										});
+									}
 								}
 							}
-							return this.repoInfo = repoInfo;
+							return repoInfo;
 						});
 					}
 				}
