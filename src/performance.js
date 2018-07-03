@@ -10,10 +10,15 @@ var _ = Mavo.Performance = {
 	},
 
 	time: function callee(ref) {
-		var name = Mavo.match(ref, /[^.]+$/);
-		var objName = Mavo.match(ref, /^.+(?=\.)/);
+		var name = Mavo.match(ref, /[^.#]+$/);
+		var objName = Mavo.match(ref, /^.+(?=[.#])/);
+
+		if (ref.indexOf("#") > -1) {
+			objName += ".prototype"
+		}
+
 		var obj = eval(objName);
-		console.log(`Benchmarking ${ref}(). Run console.table(${ref}.stats) at any time to see stats.`);
+		console.log(`Benchmarking ${ref}(). Run console.table(${objName}.${name}.stats) to see stats or Mavo.Performance.times() to see a summary of all benchmarked functions.`);
 		var callback = obj[name];
 
 		obj[name] = function callee() {
