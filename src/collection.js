@@ -476,10 +476,6 @@ var _ = Mavo.Collection = $.Class({
 		if (data.length > i) {
 			for (var j = i; j < this.children.length; j++) {
 				this.children[j].dataChanged("add");
-
-				if (this.mavo.expressions.active) {
-					requestAnimationFrame(() => this.mavo.expressions.update(this.children[j]));
-				}
 			}
 		}
 

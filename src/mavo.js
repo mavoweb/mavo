@@ -341,8 +341,6 @@ var _ = self.Mavo = $.Class({
 	},
 
 	render: function(data) {
-		this.expressions.active = false;
-
 		var env = {context: this, data};
 		_.hooks.run("render-start", env);
 
@@ -351,9 +349,6 @@ var _ = self.Mavo = $.Class({
 		}
 
 		this.unsavedChanges = false;
-
-		this.expressions.active = true;
-		requestAnimationFrame(() => this.expressions.update());
 
 		_.hooks.run("render-end", env);
 	},

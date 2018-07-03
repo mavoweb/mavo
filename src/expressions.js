@@ -121,6 +121,10 @@ var _ = Mavo.Expressions = $.Class({
 		}
 
 		rootObject.walk((obj, path) => {
+			if (!obj.expressionsEnabled) {
+				return false;
+			}
+
 			if (obj.expressions) {
 				obj.expressions.forEach(et => et.update());
 			}

@@ -312,6 +312,10 @@ var _ = Mavo.Node = $.Class({
 			}
 		}
 
+		if (this === o.root) {
+			this.expressionsEnabled = false;
+		}
+
 		var editing = this.editing;
 
 		if (editing) {
@@ -326,6 +330,12 @@ var _ = Mavo.Node = $.Class({
 
 		if (this === o.root) {
 			this.save();
+
+			this.expressionsEnabled = true;
+
+			if (changed) {
+				requestAnimationFrame(() => this.mavo.expressions.update(this));
+			}
 		}
 
 		Mavo.hooks.run("node-render-end", env);
@@ -522,7 +532,17 @@ var _ = Mavo.Node = $.Class({
 				this._index = value;
 				this.liveData.updateKey();
 			}
+		},
 
+		expressionsEnabled: {
+			get: function() {
+				if (this._expressionsEnabled === false) {
+					return false;
+				}
+				else {
+					return this.parent? this.parent.expressionsEnabled : true;
+				}
+			}
 		}
 	},
 
