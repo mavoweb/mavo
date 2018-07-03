@@ -16,17 +16,21 @@ var merge = require("merge2");
 var injectVersion = require("gulp-inject-version");
 
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
-var mavo = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
+var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
 			expression domexpression expressions mv-if mv-value functions functions.date mavoscript actions data
 			backend.dropbox backend.github`
-	.split(/\s+/).map(path => `src/${path}.js`);
+	.split(/\s+/);
 var versionOptions = {
 	replace: /%%VERSION%%/g
 };
 
+src.push("local");
+
+src = src.map(path => `src/${path}.js`);
+
 gulp.task("concat", function () {
-	var files = ["lib/*.js", ...mavo];
+	var files = ["lib/*.js", ...src];
 
 	return gulp.src(files)
 		.pipe(sourcemaps.init())
@@ -53,7 +57,7 @@ gulp.task("sass", function () {
 		}));
 });
 
-var transpileStream = () => gulp.src(mavo)
+var transpileStream = () => gulp.src(src)
 	.pipe(sourcemaps.init())
 	.pipe(injectVersion(versionOptions))
 	.pipe(babel({
@@ -81,7 +85,7 @@ gulp.task("transpile", function () {
 
 gulp.task("minify", function () {
 	return merge(gulp.src("lib/*.js")
-		, gulp.src(mavo)
+		, gulp.src(src)
 			.pipe(minify())
 	)
 		.pipe(sourcemaps.init())

@@ -73,6 +73,3 @@ var _ = Mavo.Performance = {
 };
 
 })();
-
-// Mavo.Performance.time("Mavo.Data.resolve");
-// Mavo.Performance.time("Mavo.Data.find");
