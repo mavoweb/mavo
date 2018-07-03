@@ -10,7 +10,7 @@ var _ = Mavo.Node = $.Class({
 		var env = {context: this, options};
 
 		// Set these first, for debug reasons
-		this.uid = ++_.maxId;
+		this.uid = _.all.push(this) - 1;
 		this.nodeType = this.nodeType;
 		this.property = null;
 		this.element = element;
@@ -18,7 +18,8 @@ var _ = Mavo.Node = $.Class({
 
 		$.extend(this, env.options);
 
-		_.all.set(element, [...(_.all.get(this.element) || []), this]);
+		_.elements.set(element, [...(_.elements.get(this.element) || []), this]);
+
 
 		this.mavo = mavo;
 		this.group = this.parent = this.parentGroup = env.options.group;
@@ -131,6 +132,8 @@ var _ = Mavo.Node = $.Class({
 		if (this.itembar) {
 			this.itembar.destroy();
 		}
+
+		_.all[this.uid] = null;
 	},
 
 	getData: function(o = {}) {
@@ -519,9 +522,8 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	static: {
-		maxId: 0,
-
-		all: new WeakMap(),
+		all: [],
+		elements: new WeakMap(),
 
 		create: function(element, mavo, o = {}) {
 			if (Mavo.is("multiple", element) && !o.collection) {
@@ -555,7 +557,7 @@ var _ = Mavo.Node = $.Class({
 		},
 
 		get: function(element, prioritizePrimitive) {
-			var nodes = (_.all.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
+			var nodes = (_.elements.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
 
 			if (nodes.length < 2 || !prioritizePrimitive) {
 				return nodes[0];
