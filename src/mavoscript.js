@@ -31,8 +31,8 @@ var _ = Mavo.Script = {
 				var max = Math.max(a.length, b.length);
 				o.leftScalar = o.leftScalar || o.scalar;
 				o.rightScalar = o.rightScalar || o.scalar;
-				o.leftIdentity = o.leftIdentity === undefined ? o.identity: o.leftIdentity;
-				o.rightIdentity = o.rightIdentity === undefined ? o.identity: o.rightIdentity;
+				o.leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
+				o.rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
 
 				if (a.length == b.length) {
 					for (let i = 0; i < max; i++) {
