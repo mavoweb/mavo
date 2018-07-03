@@ -126,7 +126,12 @@ var _ = Mavo.Expressions = $.Class({
 			}
 
 			if (obj.expressions) {
-				obj.expressions.forEach(et => et.update());
+				obj.expressions.forEach(et => {
+					// Prevent mv-value loops
+					if (!evt || et.mavoNode !== evt) {
+						et.update();
+					}
+				});
 			}
 		});
 	},
