@@ -479,7 +479,9 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	dataRender: function(data, live) {
+	dataRender: function(data, {live, root} = {}) {
+		var previousValue = this._value;
+
 		if ($.type(data) === "object") {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
@@ -529,6 +531,8 @@ var _ = Mavo.Primitive = $.Class({
 		else {
 			this.value = data;
 		}
+
+		return this._value !== previousValue;
 	},
 
 	find: function(property, o = {}) {

@@ -421,21 +421,23 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
-	dataRender: function(data) {
+	dataRender: function(data, o = {}) {
 		if (data === undefined) {
 			return;
 		}
 
 		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
+		var changed = false;
 
 		// First render on existing items
 		for (var i = 0; i < this.children.length; i++) {
 			var item = this.children[i];
 
 			if (i < data.length) {
-				item.render(data[i]);
+				changed = item.render(data[i], o) || changed;
 			}
 			else {
+				changed = true;
 				this.delete(item, {silent: true});
 				i--;
 			}
@@ -449,7 +451,7 @@ var _ = Mavo.Collection = $.Class({
 			for (var j = i; j < data.length; j++) {
 				var item = this.createItem();
 
-				item.render(data[j]);
+				changed = item.render(data[j], o) || changed;
 
 				this.children.push(item);
 				item.index = j;
@@ -480,6 +482,8 @@ var _ = Mavo.Collection = $.Class({
 				}
 			}
 		}
+
+		return changed;
 	},
 
 	isCompatible: function(c) {

@@ -268,10 +268,11 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
-	render: function(data) {
-		var live = Mavo.in(Mavo.isProxy, data);
+	render: function(data, o = {}) {
+		o.live = o.live || Mavo.in(Mavo.isProxy, data);
+		o.root = o.root || this;
 
-		if (live) {
+		if (o.live) {
 			// Drop proxy
 			data = Mavo.clone(data);
 		}
@@ -279,11 +280,11 @@ var _ = Mavo.Node = $.Class({
 		this.oldData = this.data;
 		this.data = data;
 
-		if (!live) {
+		if (!o.live) {
 			data = Mavo.subset(data, this.inPath);
 		}
 
-		var env = {context: this, data};
+		var env = {context: this, data, options: o};
 
 		Mavo.hooks.run("node-render-start", env);
 
@@ -317,15 +318,19 @@ var _ = Mavo.Node = $.Class({
 			this.done();
 		}
 
-		this.dataRender(env.data, live);
+		var changed = this.dataRender(env.data, o);
 
 		if (editing) {
 			this.edit();
 		}
 
-		this.save();
+		if (this === o.root) {
+			this.save();
+		}
 
 		Mavo.hooks.run("node-render-end", env);
+
+		return changed;
 	},
 
 	dataChanged: function(action, o = {}) {

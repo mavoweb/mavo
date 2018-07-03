@@ -82,11 +82,12 @@ var _ = Mavo.ImplicitCollection = $.Class({
 
 	propagated: ["save"],
 
-	dataRender: function(data) {
+	dataRender: function(data, o = {}) {
 		if (data !== undefined) {
 			data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
+			var changed = data.length !== this.liveData.length;
 
-			this.children.forEach((item, i) => item.render(data && data[i]));
+			this.children.forEach((item, i) => changed = item.render(data && data[i], o) || changed);
 		}
 
 		this.liveData.update();
