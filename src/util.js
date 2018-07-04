@@ -509,6 +509,10 @@ var _ = $.extend(Mavo, {
 	},
 
 	clone: function(o) {
+		if (!o || typeof o !== "object") {
+			return o;
+		}
+
 		return JSON.parse(_.safeToJSON(o));
 	},
 
