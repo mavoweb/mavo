@@ -301,6 +301,26 @@ var _ = Mavo.Script = {
 				return [...Array(range).keys()].map(x => x + a);
 			},
 			precedence: 2
+		},
+		"has": {
+			symbol: "in",
+			code: function(needle, ...haystacks) {
+				var ret;
+				haystacks.map(b => {
+					if (Array.isArray(b)) {
+						var op =  a => b.map(val).indexOf(val(a)) > -1;
+
+					}
+					else {
+						var op = a => Mavo.in(val(a), b);
+					};
+
+					var result = Mavo.Script.unaryOperation(needle, op);
+					ret = ret === undefined? result : Mavo.Functions.and(result, ret);
+				});
+				return ret;
+			},
+			precedence: 3
 		}
 	},
 
