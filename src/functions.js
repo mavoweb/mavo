@@ -500,6 +500,16 @@ var _ = Mavo.Functions = {
 
 var $u = _.util;
 
+for (let i = 0; i < 2; i++) {
+	Mavo.Functions.foo = (operand) => {
+		return ret = Mavo.Script.unaryOperation(operand,
+			(operand) => {
+
+			}
+		);
+	};
+}
+
 /**
  * Private helper methods
  */
