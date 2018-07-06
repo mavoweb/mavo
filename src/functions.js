@@ -272,7 +272,7 @@ var _ = Mavo.Functions = {
 	},
 
 	hypot: function(base, exponent) {
-		
+
 	},
 
 	pow: function() {
@@ -538,7 +538,7 @@ var _ = Mavo.Functions = {
 var $u = _.util;
 
 for (const property of Object.getOwnPropertyNames(Math)) {
-	if (Math[property].length === 1) {
+	if (Math[property].length === 1 && !Mavo.Functions.hasOwnProperty(property)) {
 		Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, operand => Math[property](operand));
 	}
 }
