@@ -267,6 +267,18 @@ var _ = Mavo.Functions = {
 		return Math.max(...$u.numbers(array, arguments));
 	},
 
+	atan2: function(dividend, divisor) {
+
+	},
+
+	hypot: function(base, exponent) {
+		
+	},
+
+	pow: function() {
+
+	},
+
 	count: function(array) {
 		return Mavo.toArray(array).filter(a => !empty(a)).length;
 	},
