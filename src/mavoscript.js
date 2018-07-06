@@ -29,15 +29,15 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [];
 				var max = Math.max(a.length, b.length);
-				o.leftScalar = o.leftScalar || o.scalar;
-				o.rightScalar = o.rightScalar || o.scalar;
-				o.leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
-				o.rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
+				var leftScalar = o.leftScalar || o.scalar;
+				var rightScalar = o.rightScalar || o.scalar;
+				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
+				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
 
 				for (let i = 0; i < max; i++) {
 					result[i] = a[i] === undefined
-						? o.leftScalar(o.leftIdentity, b[i])
-						: o.rightScalar(a[i], b[i] === undefined ? o.rightIdentity : b[i]);
+						? leftScalar(leftIdentity, b[i])
+						: rightScalar(a[i], b[i] === undefined ? rightIdentity : b[i]);
 				}
 			}
 			else {
