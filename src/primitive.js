@@ -210,8 +210,7 @@ var _ = Mavo.Primitive = $.Class({
 	},
 
 	isDataNull: function(o) {
-		return this.super.isDataNull.call(this, o)
-		       || ["", null, undefined].indexOf(this._value) > -1;
+		return this.super.isDataNull.call(this, o) || this._value === null || this._value === undefined;
 	},
 
 	getData: function(o = {}) {
@@ -480,12 +479,14 @@ var _ = Mavo.Primitive = $.Class({
 		}
 	},
 
-	dataRender: function(data, live) {
+	dataRender: function(data, {live, root} = {}) {
+		var previousValue = this._value;
+
 		if ($.type(data) === "object") {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
 			}
-			else {
+			else if (!this.isHelperVariable) {
 				// Candidate properties to get a value from
 				var properties = Object.keys(data), property;
 
@@ -530,6 +531,8 @@ var _ = Mavo.Primitive = $.Class({
 		else {
 			this.value = data;
 		}
+
+		return this._value !== previousValue;
 	},
 
 	find: function(property, o = {}) {
@@ -572,8 +575,9 @@ var _ = Mavo.Primitive = $.Class({
 
 	setValue: function (value, o = {}) {
 		this.sneak(() => {
-			// Convert nulls and undefineds to empty string
-			value = value || value === 0 || value === false? value : "";
+			if (value === undefined) {
+				value = null;
+			}
 
 			var oldDatatype = this.datatype;
 
@@ -584,7 +588,7 @@ var _ = Mavo.Primitive = $.Class({
 
 			value = _.safeCast(value, this.datatype);
 
-			if (!o.force && value == this._value && oldDatatype == this.datatype) {
+			if (!o.force && value === this._value && oldDatatype == this.datatype) {
 				// Do nothing if value didn't actually change, unless forced to
 				return value;
 			}
@@ -704,12 +708,8 @@ var _ = Mavo.Primitive = $.Class({
 			var existingType = typeof value;
 			var cast = _.cast(value, datatype);
 
-			if (value === null || value === undefined) {
-				return value;
-			}
-
 			if (datatype == "boolean") {
-				if (value === "false" || value === 0 || value === "") {
+				if (!value) {
 					return false;
 				}
 
@@ -725,6 +725,10 @@ var _ = Mavo.Primitive = $.Class({
 					return cast;
 				}
 
+				return value;
+			}
+
+			if (value === null || value === undefined) {
 				return value;
 			}
 

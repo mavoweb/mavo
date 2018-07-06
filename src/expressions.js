@@ -92,7 +92,7 @@ var _ = Mavo.Expressions = $.Class({
 			rootObject = Mavo.Node.get(root);
 		}
 		else if (evt) {
-			// Change
+			// Specific data change
 			var cache = {
 				updated: new Set()
 			};
@@ -101,13 +101,13 @@ var _ = Mavo.Expressions = $.Class({
 
 			if (evt.action == "propertychange") {
 				if (evt.node && evt.node.path) {
-					// Ensure that [collectioName] updates when changing children
+					// Ensure that [collectionName] updates when changing children
 					this.updateByIdThrottled(evt.node.path, evt, cache);
 				}
 			}
 			else {
-				// Collection modifications
-				this.updateById(Object.keys(Mavo.Node.special), evt, cache);
+				// Collection modifications (add, delete, move etc)
+				this.updateById(Object.keys(Mavo.Data.special), evt, cache);
 
 				var collection = evt.node.collection || evt.node;
 
@@ -121,10 +121,17 @@ var _ = Mavo.Expressions = $.Class({
 		}
 
 		rootObject.walk((obj, path) => {
-			if (obj.expressions && obj.expressions.length) {
-				var data = obj.getLiveData();
+			if (!obj.expressionsEnabled) {
+				return false;
+			}
 
-				obj.expressions.forEach(et => et.update(data));
+			if (obj.expressions) {
+				obj.expressions.forEach(et => {
+					// Prevent mv-value loops
+					if (!evt || et.mavoNode !== evt) {
+						et.update();
+					}
+				});
 			}
 		});
 	},
@@ -163,8 +170,7 @@ var _ = Mavo.Expressions = $.Class({
 				}
 
 				if (!cache.updated.has(expr)) {
-					var data = expr.item.getLiveData();
-					expr.update(data);
+					expr.update();
 				}
 			});
 		}

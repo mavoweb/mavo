@@ -70,7 +70,7 @@ var _ = Mavo.DOMExpression = $.Class({
 				this.expression = this.node.textContent;
 			}
 
-			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
+			this.parsed = this.template? this.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
@@ -106,8 +106,14 @@ var _ = Mavo.DOMExpression = $.Class({
 		this.mavo.expressions.unregister(this);
 	},
 
+	get isDynamicObject() {
+		return this.originalAttribute == "mv-value"
+		       && this.mavoNode
+			   && !(this.mavoNode instanceof Mavo.Primitive);
+	},
+
 	changedBy: function(evt) {
-		if (this.originalAttribute == "mv-value" && this.mavoNode && !(this.mavoNode instanceof Mavo.Primitive)) {
+		if (this.isDynamicObject) {
 			// Just prevent the same node from triggering changes, everything else is game
 			return !evt || !this.mavoNode.contains(evt.node);
 		}
@@ -115,15 +121,17 @@ var _ = Mavo.DOMExpression = $.Class({
 		return Mavo.Expression.changedBy(this.identifiers, evt);
 	},
 
-	update: function(data = this.data) {
+	update: function() {
 		var env = {context: this};
 		var parentEnv = env;
 
-		if (data === undefined && this.item) {
-			data = this.item.getLiveData();
+		if (this.item) {
+			var scope = this.isDynamicObject? this.item.parent : this.item;
+			var data = this.data = scope.getLiveData();
 		}
-
-		this.data = data;
+		else {
+			var data = this.data === undefined? Mavo.Data.stub : this.data;
+		}
 
 		Mavo.hooks.run("domexpression-update-start", env);
 
@@ -179,6 +187,10 @@ var _ = Mavo.DOMExpression = $.Class({
 
 	output: function(value) {
 		if (this.primitive) {
+			if (Mavo.in(Mavo.isProxy, value)) {
+				value = Mavo.clone(value); // Drop proxy
+			}
+
 			this.primitive.value = value;
 		}
 		else if (this.mavoNode) {

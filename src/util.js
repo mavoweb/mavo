@@ -134,7 +134,13 @@ var _ = $.extend(Mavo, {
 		}
 	},
 
+	// Adds items from set2 into set1, turns set1 into a set if it's not
 	union: (set1, set2) => {
+		if (set1 instanceof Set && set2) {
+			set2.forEach(x => set1.add(x));
+			return set1;
+		}
+
 		return new Set([...(set1 || []), ...(set2 || [])]);
 	},
 
@@ -425,7 +431,7 @@ var _ = $.extend(Mavo, {
 	 * Check if property exists in object. Like the in operator but more robust and does not throw.
 	 * Why not just in? E.g. "foo".length is 3 but "length" in "foo" throws
 	 */
-	in: function(obj, property) {
+	in: function(property, obj) {
 		if (obj) {
 			return (typeof obj === "object" && property in obj) || obj[property] !== undefined;
 		}
@@ -437,7 +443,7 @@ var _ = $.extend(Mavo, {
 	getCanonicalProperty: function(obj, property) {
 		if (obj && (property || property === 0)) {
 			// Property in object?
-			if (_.in(obj, property)) {
+			if (_.in(property, obj)) {
 				return property;
 			}
 
@@ -445,7 +451,7 @@ var _ = $.extend(Mavo, {
 				// Lowercase property in object?
 				var propertyL = property.toLowerCase();
 
-				if (_.in(obj, propertyL)) {
+				if (_.in(propertyL, obj)) {
 					return propertyL;
 				}
 
@@ -503,6 +509,10 @@ var _ = $.extend(Mavo, {
 	},
 
 	clone: function(o) {
+		if (!o || typeof o !== "object") {
+			return o;
+		}
+
 		return JSON.parse(_.safeToJSON(o));
 	},
 

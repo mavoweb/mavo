@@ -21,7 +21,7 @@ var _ = Mavo.Backend = $.Class({
 	get: function(url = new URL(this.url)) {
 		if (url.protocol != "data:") {
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
-		}		
+		}
 
 		return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
 	},

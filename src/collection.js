@@ -20,22 +20,46 @@ var _ = Mavo.Collection = $.Class({
 
 		$.after(this.marker, this.templateElement);
 
+		if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
+			// Synchronous init
+			this.init();
+		}
+		else {
+			// Async init, we're borrowing the template from elsewhere so we need
+			// to give the rest of the tree a chance to initialize
+			this.mavo.treeBuilt.then(() => this.init());
+		}
+	},
+
+	init: function() {
 		if (!this.fromTemplate("templateElement", "accepts", "initialItems", "like", "likeNode")) {
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
-				this.likeNode = this.resolve(this.like, {exclude: this});
+				var candidates = [];
+				this.mavo.walk(obj => {
+					if (obj instanceof _ && obj.property === this.like && obj !== this) {
+						candidates.push(obj);
+					}
+				});
 
-				if (!this.likeNode) {
-					this.like = null;
+				if (candidates.length > 0) {
+					// If there are multiple collections that match,
+					// compare the paths and select the one that has the most overlap
+					this.likeNode = candidates.sort((a, b) => {
+						return a.pathFrom(this).length - b.pathFrom(this).length
+					})[0];
+
+					this.likeNode = this.likeNode.likeNode || this.likeNode;
+					this.likeNode = this.likeNode.template || this.likeNode;
 				}
 				else {
-					this.likeNode = this.likeNode.template || this.likeNode;
+					this.like = null;
 				}
 			}
 
 			this.accepts = this.templateElement.getAttribute("mv-accepts");
-			this.accepts = this.accepts && this.accepts.split(/\s+/) || [];
+			this.accepts = new Set(this.accepts && this.accepts.split(/\s+/) || []);
 			this.initialItems = this.templateElement.getAttribute("mv-initial-items");
 
 			if (this.initialItems === null) {
@@ -66,11 +90,9 @@ var _ = Mavo.Collection = $.Class({
 			this.templateElement = templateElement.cloneNode(true);
 			this.templateElement.setAttribute("property", this.property);
 
-			if (!this.accepts.length) {
+			if (!this.accepts.size) {
 				this.accepts = this.likeNode.accepts || this.accepts;
 			}
-
-			this.properties = this.likeNode.properties;
 		}
 		else if (this.initialItems > 0 || !this.template) {
 			var item = this.createItem(this.element);
@@ -107,19 +129,16 @@ var _ = Mavo.Collection = $.Class({
 		var env = {
 			context: this,
 			options: o,
-			data: this.liveData.data
+			data: []
 		};
 
-		for (var i = 0, j = 0; item = this.children[i]; i++) {
+		for (var i = 0; item = this.children[i]; i++) {
 			var itemData = item.getData(env.options);
 
 			if (Mavo.value(itemData) !== null) {
-				env.data[j] = itemData;
-				j++;
+				env.data.push(itemData);
 			}
 		}
-
-		env.data.length = j;
 
 		env.data = Mavo.subset(this.data, this.inPath, env.data);
 
@@ -402,21 +421,23 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
-	dataRender: function(data) {
+	dataRender: function(data, o = {}) {
 		if (data === undefined) {
 			return;
 		}
 
 		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
+		var changed = false;
 
 		// First render on existing items
 		for (var i = 0; i < this.children.length; i++) {
 			var item = this.children[i];
 
 			if (i < data.length) {
-				item.render(data[i]);
+				changed = item.render(data[i], o) || changed;
 			}
 			else {
+				changed = true;
 				this.delete(item, {silent: true});
 				i--;
 			}
@@ -430,7 +451,7 @@ var _ = Mavo.Collection = $.Class({
 			for (var j = i; j < data.length; j++) {
 				var item = this.createItem();
 
-				item.render(data[j]);
+				changed = item.render(data[j], o) || changed;
 
 				this.children.push(item);
 				item.index = j;
@@ -455,36 +476,16 @@ var _ = Mavo.Collection = $.Class({
 		if (data.length > i) {
 			for (var j = i; j < this.children.length; j++) {
 				this.children[j].dataChanged("add");
-
-				if (this.mavo.expressions.active) {
-					requestAnimationFrame(() => this.mavo.expressions.update(this.children[j]));
-				}
 			}
 		}
-	},
 
-	find: function(property, o = {}) {
-		if (o.exclude === this) {
-			return;
-		}
-
-		var items = this.children.filter(item => !item.hidden);
-
-		if (this.property == property) {
-			return o.collections? this : items;
-		}
-
-		if (this.properties.has(property)) {
-			var ret = items.map(item => item.find(property, o));
-
-			return Mavo.flatten(ret);
-		}
+		return changed;
 	},
 
 	isCompatible: function(c) {
 		return c && this.itemTemplate.nodeType == c.itemTemplate.nodeType && (c === this
 		       || c.template == this || this.template == c || this.template && this.template == c.template
-		       || this.accepts.indexOf(c.property) > -1);
+		       || this.accepts.has(c.property) > -1);
 	},
 
 	// Make sure to only call after dragula has loaded
@@ -502,11 +503,12 @@ var _ = Mavo.Collection = $.Class({
 		this.dragula = dragula({
 			containers: [this.marker.parentNode],
 			isContainer: el => {
-				if (this.accepts.length) {
-					return Mavo.flatten(this.accepts.map(property => this.mavo.root.find(property, {collections: true})))
-								.filter(c => c && c instanceof _)
-								.map(c => c.marker.parentNode)
-								.indexOf(el) > -1;
+				if (this.accepts.size) {
+					return Array.from(el.childNodes).some(child => {
+						var collection = _.get(child);  // Map children to any associated collections
+
+						return collection && this.accepts.has(collection.property);
+					});
 				}
 
 				return false;

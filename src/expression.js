@@ -16,7 +16,7 @@ var _ = Mavo.Expression = $.Class({
 				// Compilation error
 				this.error(`There is something wrong with the expression ${this.expression}`,
 					error.message,
-					'Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions.'
+					"Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions."
 				);
 
 				Mavo.hooks.run("expression-compile-error", {context: this, error});
