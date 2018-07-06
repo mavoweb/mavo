@@ -240,7 +240,7 @@ var _ = Mavo.Functions = {
 				// transpose 2D array
 				for (let i = 0; i < Math.max(...args.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
 					var row = [];
-					for (element of args) {
+					for (const element of args) {
 						if (element[i] !== undefined) {
 							row.push(element[i]);
 						}
