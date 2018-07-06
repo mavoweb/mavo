@@ -525,6 +525,12 @@ var _ = Mavo.Functions = {
 
 var $u = _.util;
 
+for (const property of Object.getOwnPropertyNames(Math)) {
+	if (Math[property].length === 1) {
+		Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, operand => Math[property](operand));
+	}
+}
+
 /**
  * Private helper methods
  */
