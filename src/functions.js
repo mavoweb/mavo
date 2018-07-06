@@ -232,15 +232,15 @@ var _ = Mavo.Functions = {
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		var arr = Object.keys(arguments).map(key => arguments[key]);
-		for (element of arr) {
-			if ($.type(element) === "array" && arr.length > 1) {
+		var args = [...arguments];
+		for (element of args) {
+			if ($.type(element) === "array" && args.length > 1) {
 				var ret = [];
 
 				// transpose 2D array
-				for (let i = 0; i < Math.max(...arr.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
+				for (let i = 0; i < Math.max(...args.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
 					var row = [];
-					for (element of arr) {
+					for (element of args) {
 						if (element[i] !== undefined) {
 							row.push(element[i]);
 						}
