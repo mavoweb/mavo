@@ -326,7 +326,7 @@ var _ = Mavo.Script = {
 			symbol: "by",
 			code: (array, key) => {
 				if ($.type(array) === "array" && $.type(key) === "array" && array.length <= key.length)  { 
-					var propName = key["$as"] === Mavo.as && key["$name"] !== undefined ? key["$name"] : $.value(key[0], Mavo.toNode, "property");
+					var propName = key["$as"] === Mavo.as ? key["$name"] : $.value(key[0], Mavo.toNode, "property");
 					var temp = new Mavo.BucketMap({arrays: true});
 					var ret = [];
 
