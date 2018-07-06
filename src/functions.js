@@ -297,15 +297,21 @@ var _ = Mavo.Functions = {
 	},
 
 	atan2: function(dividend, divisor) {
+		return Mavo.Script.binaryOperation(dividend, divisor, {
+			scalar: (dividend, divisor) => Math.atan2(dividend, divisor),
+			identity: 1
+		});
+	},
+
+	hypot: function() { // MULTI-ARG
 
 	},
 
-	hypot: function(base, exponent) {
-
-	},
-
-	pow: function() {
-
+	pow: function(base, exponent) {
+		return Mavo.Script.binaryOperation(base, exponent, {
+			scalar: (base, exponent) => Math.pow(base, exponent),
+			identity: 1
+		});
 	},
 
 	count: function(array) {
@@ -472,17 +478,32 @@ var _ = Mavo.Functions = {
 	 * Case insensitive search
 	 */
 	search: (haystack, needle) => {
-		haystack = str(haystack);
-		needle = str(needle);
-		return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => {
+				haystack = str(haystack);
+				needle = str(needle);
+				return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;		
+			},
+			identity: null
+		});
 	},
 
-	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
+	starts: (haystack, needle) => {
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
+			identity: null
+		});
+	},
 	ends: function(haystack, needle) {
-		[haystack, needle] = [str(haystack), str(needle)];
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => {
+				[haystack, needle] = [str(haystack), str(needle)];
 
-		var i = _.search(haystack, needle);
-		return  i > -1 && i === haystack.length - needle.length;
+				var i = _.search(haystack, needle);
+				return  i > -1 && i === haystack.length - needle.length;		
+			},
+			identity: null
+		});
 	},
 
 	join: function(array, glue) {
