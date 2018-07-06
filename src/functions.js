@@ -233,29 +233,28 @@ var _ = Mavo.Functions = {
 	 */
 	min: function(array) {
 		var args = [...arguments];
-		for (element of args) {
-			if ($.type(element) === "array" && args.length > 1) {
-				var ret = [];
 
-				// transpose 2D array
-				for (let i = 0; i < Math.max(...args.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
-					var row = [];
-					for (const element of args) {
-						if (element[i] !== undefined) {
-							row.push(element[i]);
-						}
-						else if ($.type(element) !== "array") {
-							row.push(element);
-						}
-						else {
-							continue;
-						}
+		if (args.some(n => $.type(n) === "array") && args.length > 1) {
+			var ret = [];
+
+			// transpose 2D array
+			for (let i = 0; i < Math.max(...args.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
+				var row = [];
+				for (const element of args) {
+					if (element[i] !== undefined) {
+						row.push(element[i]);
 					}
-					ret.push(row);
+					else if ($.type(element) !== "array") {
+						row.push(element);
+					}
+					else {
+						continue;
+					}
 				}
-
-				return ret.map(n => Math.min(...$u.numbers(n, arguments)));
+				ret.push(row);
 			}
+
+			return ret.map(n => Math.min(...$u.numbers(n, arguments)));
 		}
 		return Math.min(...$u.numbers(array, arguments));
 	},
@@ -264,7 +263,37 @@ var _ = Mavo.Functions = {
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		return Math.max(...$u.numbers(array, arguments));
+		if (arguments.length > 1) {
+			return (function(operands, scalar) {
+				var args = [...operands];
+				if (args.every(n => !Array.isArray(n))) {
+					return scalar(args);
+				}
+				else {
+					var max = Math.max(...args.filter(n => Array.isArray(n)).map(n => n.length));
+					var result = [];
+					for (let i = 0; i < max; i++) {
+						var scalarArgs = [];
+						for (const element of args) {
+							if (element[i] !== undefined) {
+								scalarArgs.push(element[i]);
+							}
+							else if (!Array.isArray(element)) {
+								scalarArgs.push(element);
+							}
+							else {
+								continue;
+							}	
+						}
+						result.push(scalarArgs);
+					}
+					return result.map(n => scalar(n));
+				}
+			})(arguments, arguments => Math.max(...arguments));
+		}
+		else {
+			return Math.max(...$u.numbers(array, arguments));
+		}
 	},
 
 	atan2: function(dividend, divisor) {
