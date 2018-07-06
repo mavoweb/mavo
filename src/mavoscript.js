@@ -321,7 +321,66 @@ var _ = Mavo.Script = {
 				return ret;
 			},
 			precedence: 3
-		}
+		},
+		"groupby": {
+			symbol: "by",
+			code: (array, key) => {
+				if ($.type(array) === "array" && $.type(key) === "array" && array.length <= key.length)  { 
+					var propName = key["$as"] === Mavo.as && key["$name"] !== undefined ? key["$name"] : $.value(key[0], Mavo.toNode, "property");
+					var temp = new Mavo.BucketMap({arrays: true});
+					var ret = [];
+
+					for (var i = 0; i < array.length; i++) {
+						temp.set(Mavo.value(key[i]), Mavo.value(array[i]));
+					}	
+
+					for (var [value, items] of temp) {
+						var obj = {"$value": value};
+						Object.defineProperty(obj, "$groupedBy", {value: Mavo.groupedBy, enumerable: false});
+						
+
+						if (propName !== undefined) {
+							obj[propName] = value;
+						}
+						
+						obj["$items"] = items;
+						ret.push(obj);
+					}
+
+					return ret;
+				}
+				else { // invalid arguments (might want to return else but this is what I thought of for now)
+					var ret = [{"$value": key}];
+					Object.defineProperty(ret[0], "$groupedBy", {value: Mavo.groupedBy, enumerable: false});
+
+					ret[0]["$items"] = array;
+					return ret;
+				}
+			},
+			precedence: 2
+		},
+		"as": {
+			symbol: "as",
+			code: (property, name) => {
+				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
+					if ($.type(name) === "string" || $.value(name[0], Mavo.toNode, "property") !== undefined) {
+						var ret = property.slice(0);
+						Object.defineProperty(ret, "$name", {value: $.type(name) === "string" ? name : $.value(name[0], Mavo.toNode, "property"), enumerable: false});
+						Object.defineProperty(ret, "$as", {value: Mavo.as, enumerable: false});
+						return ret;
+					}
+
+					return property;
+				}
+				else if (property !== undefined) {
+					return property;
+				}
+				else {
+					return null;
+				}
+			},
+			precedence: 3
+		},
 	},
 
 	getNumericalOperands: function(a, b) {
