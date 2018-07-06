@@ -323,13 +323,18 @@ var _ = Mavo.Functions = {
 	},
 
 	round: function(num, decimals) {
-		if (not(num) || not(decimals) || !isFinite(num)) {
-			return Math.round(num);
-		}
-
-		return +num.toLocaleString("en-US", {
-			useGrouping: false,
-			maximumFractionDigits: decimals
+		return Mavo.Script.binaryOperation(num, decimals, {
+			scalar: (num, decimals) => {
+				if (not(num) || not(decimals) || !isFinite(num)) {
+					return Math.round(num);
+				}
+		
+				return +num.toLocaleString("en-US", {
+					useGrouping: false,
+					maximumFractionDigits: decimals
+				});
+			},
+			identity: 0
 		});
 	},
 
@@ -530,11 +535,35 @@ var _ = Mavo.Functions = {
 	uppercase: text => str(text).toUpperCase(),
 	lowercase: text => str(text).toLowerCase(),
 
-	from: (haystack, needle) => _.between(haystack, needle),
-	fromlast: (haystack, needle) => _.between(haystack, needle, "", true),
-	to: (haystack, needle) => _.between(haystack, "", needle),
-	tofirst: (haystack, needle) => _.between(haystack, "", needle, true),
+	from: (haystack, needle) => {
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => _.between(haystack, needle),
+			identity: null
+		});
+	},
+	
+	fromlast: (haystack, needle) => {
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => _.between(haystack, needle, "", true),
+			identity: null
+		});
+	},
 
+	to: (haystack, needle) => {
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => _.between(haystack, "", needle),
+			identity: null
+		});
+	},
+
+	tofirst: (haystack, needle) => {
+		return Mavo.Script.binaryOperation(haystack, needle, {
+			scalar: (haystack, needle) => _.between(haystack, "", needle, true),
+			identity: null
+		});
+
+	},
+	
 	between: (haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
 
