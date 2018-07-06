@@ -44,9 +44,11 @@ Mavo.Expressions.directive("mv-if", {
 				return;
 			}
 
-			this.expression = this.element.getAttribute("mv-if");
-			this.parsed = [new Mavo.Expression(this.expression)];
-			this.expression = this.syntax.start + this.expression + this.syntax.end;
+			if (!Mavo.Node.prototype.fromTemplate.call(this, "parsed", "expression")) {
+				this.expression = this.element.getAttribute("mv-if");
+				this.parsed = [new Mavo.Expression(this.expression)];
+				this.expression = this.syntax.start + this.expression + this.syntax.end;
+			}
 
 			this.parentIf = this.element.parentNode && Mavo.DOMExpression.search(this.element.parentNode.closest("[mv-if]"), "mv-if");
 

@@ -121,8 +121,17 @@ var _ = Mavo.Expressions = $.Class({
 		}
 
 		rootObject.walk((obj, path) => {
+			if (!obj.expressionsEnabled) {
+				return false;
+			}
+
 			if (obj.expressions) {
-				obj.expressions.forEach(et => et.update());
+				obj.expressions.forEach(et => {
+					// Prevent mv-value loops
+					if (!evt || et.mavoNode !== evt) {
+						et.update();
+					}
+				});
 			}
 		});
 	},

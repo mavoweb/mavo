@@ -70,7 +70,7 @@ var _ = Mavo.DOMExpression = $.Class({
 				this.expression = this.node.textContent;
 			}
 
-			this.parsed = o.template? o.template.parsed : this.syntax.tokenize(this.expression);
+			this.parsed = this.template? this.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
@@ -187,6 +187,10 @@ var _ = Mavo.DOMExpression = $.Class({
 
 	output: function(value) {
 		if (this.primitive) {
+			if (Mavo.in(Mavo.isProxy, value)) {
+				value = Mavo.clone(value); // Drop proxy
+			}
+
 			this.primitive.value = value;
 		}
 		else if (this.mavoNode) {

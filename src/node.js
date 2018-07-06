@@ -10,7 +10,7 @@ var _ = Mavo.Node = $.Class({
 		var env = {context: this, options};
 
 		// Set these first, for debug reasons
-		this.uid = ++_.maxId;
+		this.uid = _.all.push(this) - 1;
 		this.nodeType = this.nodeType;
 		this.property = null;
 		this.element = element;
@@ -18,7 +18,8 @@ var _ = Mavo.Node = $.Class({
 
 		$.extend(this, env.options);
 
-		_.all.set(element, [...(_.all.get(this.element) || []), this]);
+		_.elements.set(element, [...(_.elements.get(this.element) || []), this]);
+
 
 		this.mavo = mavo;
 		this.group = this.parent = this.parentGroup = env.options.group;
@@ -107,7 +108,7 @@ var _ = Mavo.Node = $.Class({
 	},
 
 	get properties() {
-		return this.liveData.data[Mavo.route];
+		return Object.keys(this.liveData.data[Mavo.route]);
 	},
 
 	/**
@@ -131,6 +132,8 @@ var _ = Mavo.Node = $.Class({
 		if (this.itembar) {
 			this.itembar.destroy();
 		}
+
+		_.all[this.uid] = null;
 	},
 
 	getData: function(o = {}) {
@@ -265,10 +268,11 @@ var _ = Mavo.Node = $.Class({
 		return !!this.template;
 	},
 
-	render: function(data) {
-		var live = Mavo.in(data, Mavo.toNode);
+	render: function(data, o = {}) {
+		o.live = o.live || Mavo.in(Mavo.isProxy, data);
+		o.root = o.root || this;
 
-		if (live) {
+		if (o.live) {
 			// Drop proxy
 			data = Mavo.clone(data);
 		}
@@ -276,11 +280,11 @@ var _ = Mavo.Node = $.Class({
 		this.oldData = this.data;
 		this.data = data;
 
-		if (!live) {
+		if (!o.live) {
 			data = Mavo.subset(data, this.inPath);
 		}
 
-		var env = {context: this, data};
+		var env = {context: this, data, options: o};
 
 		Mavo.hooks.run("node-render-start", env);
 
@@ -308,21 +312,35 @@ var _ = Mavo.Node = $.Class({
 			}
 		}
 
+		if (this === o.root) {
+			this.expressionsEnabled = false;
+		}
+
 		var editing = this.editing;
 
 		if (editing) {
 			this.done();
 		}
 
-		this.dataRender(env.data, live);
+		var changed = this.dataRender(env.data, o);
 
 		if (editing) {
 			this.edit();
 		}
 
-		this.save();
+		if (this === o.root) {
+			this.save();
+
+			this.expressionsEnabled = true;
+
+			if (changed) {
+				requestAnimationFrame(() => this.mavo.expressions.update(this));
+			}
+		}
 
 		Mavo.hooks.run("node-render-end", env);
+
+		return changed;
 	},
 
 	dataChanged: function(action, o = {}) {
@@ -514,14 +532,23 @@ var _ = Mavo.Node = $.Class({
 				this._index = value;
 				this.liveData.updateKey();
 			}
+		},
 
+		expressionsEnabled: {
+			get: function() {
+				if (this._expressionsEnabled === false) {
+					return false;
+				}
+				else {
+					return this.parent? this.parent.expressionsEnabled : true;
+				}
+			}
 		}
 	},
 
 	static: {
-		maxId: 0,
-
-		all: new WeakMap(),
+		all: [],
+		elements: new WeakMap(),
 
 		create: function(element, mavo, o = {}) {
 			if (Mavo.is("multiple", element) && !o.collection) {
@@ -555,7 +582,7 @@ var _ = Mavo.Node = $.Class({
 		},
 
 		get: function(element, prioritizePrimitive) {
-			var nodes = (_.all.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
+			var nodes = (_.elements.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
 
 			if (nodes.length < 2 || !prioritizePrimitive) {
 				return nodes[0];

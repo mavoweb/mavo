@@ -305,6 +305,26 @@ var _ = Mavo.Script = {
 				return [...Array(range).keys()].map(x => x + a);
 			},
 			precedence: 2
+		},
+		"has": {
+			symbol: "in",
+			code: function(needle, ...haystacks) {
+				var ret;
+				haystacks.map(b => {
+					if (Array.isArray(b)) {
+						var op =  a => b.map(val).indexOf(val(a)) > -1;
+
+					}
+					else {
+						var op = a => Mavo.in(val(a), b);
+					};
+
+					var result = Mavo.Script.unaryOperation(needle, op);
+					ret = ret === undefined? result : Mavo.Functions.and(result, ret);
+				});
+				return ret;
+			},
+			precedence: 3
 		}
 	},
 
@@ -370,10 +390,16 @@ var _ = Mavo.Script = {
 				}
 
 				if (node.callee.name === "scope") {
+					var withCode = `with (Mavo.Script.subScope(scope) || {}) { return (${_.serialize(node.arguments[1])}); }`;
 					return `(function() {
-						with(Mavo.Script.subScope(${_.serialize(node.arguments[0])})) {
-							return (${_.serialize(node.arguments[1])})
+						var scope = ${_.serialize(node.arguments[0])};
+						if (Array.isArray(scope)) {
+							return scope.map(scope => {
+								${withCode}
+							});
 						}
+
+						${withCode}
 					})()`;
 				}
 
@@ -511,8 +537,8 @@ var _ = Mavo.Script = {
 	compile: function(code, o = {}) {
 		code = _.rewrite(code);
 
-		code = `with (Mavo.Data.unquotedStrings)
-	with (data || Mavo.Data.stub) {
+		code = `with (Mavo.Data.stub)
+	with (data || {}) {
 		return (${code});
 	}`;
 
@@ -533,10 +559,14 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
 	// This is used for scope() rewriting, to support $this passing through
 	subScope: proxy => {
+		if (!proxy || typeof proxy !== "object") {
+			return proxy;
+		}
+
 		return new Proxy(proxy, {
 			get: (t, property, r) => {
 				if (property === Symbol.unscopables) {
-					return {$this: false};
+					return {$this: true};
 				}
 
 				return Reflect.get(t, property, r);

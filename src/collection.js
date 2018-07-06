@@ -36,15 +36,25 @@ var _ = Mavo.Collection = $.Class({
 			this.like = this.templateElement.getAttribute("mv-like");
 
 			if (this.like) {
-				this.likeNode = Mavo.Data.findUp(this.like, this.liveData.data, true);
+				var candidates = [];
+				this.mavo.walk(obj => {
+					if (obj instanceof _ && obj.property === this.like && obj !== this) {
+						candidates.push(obj);
+					}
+				});
 
-				if (!this.likeNode) {
-					this.like = null;
+				if (candidates.length > 0) {
+					// If there are multiple collections that match,
+					// compare the paths and select the one that has the most overlap
+					this.likeNode = candidates.sort((a, b) => {
+						return a.pathFrom(this).length - b.pathFrom(this).length
+					})[0];
+
+					this.likeNode = this.likeNode.likeNode || this.likeNode;
+					this.likeNode = this.likeNode.template || this.likeNode;
 				}
 				else {
-					var likeData = this.likeNode;
-					this.likeNode = likeData[Mavo.toNode];
-					this.likeNode = this.likeNode.template || this.likeNode;
+					this.like = null;
 				}
 			}
 
@@ -411,21 +421,23 @@ var _ = Mavo.Collection = $.Class({
 
 	propagated: ["save"],
 
-	dataRender: function(data) {
+	dataRender: function(data, o = {}) {
 		if (data === undefined) {
 			return;
 		}
 
 		data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
+		var changed = false;
 
 		// First render on existing items
 		for (var i = 0; i < this.children.length; i++) {
 			var item = this.children[i];
 
 			if (i < data.length) {
-				item.render(data[i]);
+				changed = item.render(data[i], o) || changed;
 			}
 			else {
+				changed = true;
 				this.delete(item, {silent: true});
 				i--;
 			}
@@ -439,7 +451,7 @@ var _ = Mavo.Collection = $.Class({
 			for (var j = i; j < data.length; j++) {
 				var item = this.createItem();
 
-				item.render(data[j]);
+				changed = item.render(data[j], o) || changed;
 
 				this.children.push(item);
 				item.index = j;
@@ -464,12 +476,10 @@ var _ = Mavo.Collection = $.Class({
 		if (data.length > i) {
 			for (var j = i; j < this.children.length; j++) {
 				this.children[j].dataChanged("add");
-
-				if (this.mavo.expressions.active) {
-					requestAnimationFrame(() => this.mavo.expressions.update(this.children[j]));
-				}
 			}
 		}
+
+		return changed;
 	},
 
 	isCompatible: function(c) {

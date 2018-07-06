@@ -151,11 +151,12 @@ var _ = Mavo.Group = $.Class({
 
 	propagated: ["save", "import"],
 
-	// Do not call directly, call this.render() instead
-	dataRender: function(data) {
+	dataRender: function(data, o = {}) {
 		if (!data) {
 			return;
 		}
+
+		var changed = false;
 
 		// What if data is not an object?
 		if (typeof data !== "object") {
@@ -203,7 +204,7 @@ var _ = Mavo.Group = $.Class({
 
 			}
 
-			obj.render(propertyData);
+			changed = obj.render(propertyData, o) || changed;
 		});
 
 		// Rename properties. This needs to be done separately to handle swapping.
@@ -227,6 +228,7 @@ var _ = Mavo.Group = $.Class({
 			for (var property in data) {
 				if (!(property in this.children)) {
 					var value = data[property];
+					changed = changed || data[property] !== this.liveData.data[property];
 
 					this.liveData.set(property, value);
 
@@ -237,6 +239,8 @@ var _ = Mavo.Group = $.Class({
 				}
 			}
 		}
+
+		return changed;
 	},
 
 	lazy: {
