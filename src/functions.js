@@ -264,7 +264,7 @@ var _ = Mavo.Functions = {
 	 */
 	max: function(array) {
 		if (arguments.length > 1) {
-			return Mavo.Script.polynaryOperation(arguments, arguments => Math.max(...arguments));
+			return Mavo.Script.polynaryOperation(arguments, args => Math.max(...args));
 		}
 		else {
 			return Math.max(...$u.numbers(array, arguments));
