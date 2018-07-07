@@ -214,7 +214,7 @@ var _ = Mavo.Functions = {
 	 * Aggregate sum
 	 */
 	sum: function(array) {
-		if (array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
+		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
 			var ret = [];
 
 			for (i in array) {
@@ -253,7 +253,7 @@ var _ = Mavo.Functions = {
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		if (array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
+		if (array[0] &&array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
 			var ret = [];
 
 			for (i in array) {
@@ -271,7 +271,7 @@ var _ = Mavo.Functions = {
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		if (array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
+		if (array[0] &&array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
 			var ret = [];
 
 			for (i in array) {
@@ -286,7 +286,7 @@ var _ = Mavo.Functions = {
 	},
 
 	count: function(array) {
-		if (array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
+		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
 			var ret = [];
 
 			for (i in array) {
