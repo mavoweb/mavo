@@ -234,7 +234,8 @@ var _ = Mavo.Functions = {
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		if (array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
+		array = $u.numbers(array, arguments);
+		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
 			var ret = [];
 
 			for (i in array) {
@@ -244,8 +245,6 @@ var _ = Mavo.Functions = {
 			return ret;
 		}
 		else {
-			array = $u.numbers(array, arguments);
-
 			return array.length && _.sum(array) / array.length;
 		}
 	},
