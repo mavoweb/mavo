@@ -278,8 +278,8 @@ var _ = Mavo.Functions = {
 		});
 	},
 
-	hypot: function() { // MULTI-ARG
-
+	hypot: function() {
+		return Mavo.Script.polynaryOperation(arguments, args => Math.hypot(...args));
 	},
 
 	pow: function(base, exponent) {
