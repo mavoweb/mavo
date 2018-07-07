@@ -264,32 +264,7 @@ var _ = Mavo.Functions = {
 	 */
 	max: function(array) {
 		if (arguments.length > 1) {
-			return (function(operands, scalar) {
-				var args = [...operands];
-				if (args.every(n => !Array.isArray(n))) {
-					return scalar(args);
-				}
-				else {
-					var max = Math.max(...args.filter(n => Array.isArray(n)).map(n => n.length));
-					var result = [];
-					for (let i = 0; i < max; i++) {
-						var scalarArgs = [];
-						for (const element of args) {
-							if (element[i] !== undefined) {
-								scalarArgs.push(element[i]);
-							}
-							else if (!Array.isArray(element)) {
-								scalarArgs.push(element);
-							}
-							else {
-								continue;
-							}	
-						}
-						result.push(scalarArgs);
-					}
-					return result.map(n => scalar(n));
-				}
-			})(arguments, arguments => Math.max(...arguments));
+			return Mavo.Script.polynaryOperation(arguments, arguments => Math.max(...arguments));
 		}
 		else {
 			return Math.max(...$u.numbers(array, arguments));
