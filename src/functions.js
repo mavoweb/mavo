@@ -232,31 +232,20 @@ var _ = Mavo.Functions = {
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		var args = [...arguments];
-
-		if (args.some(n => $.type(n) === "array") && args.length > 1) {
-			var ret = [];
-
-			// transpose 2D array
-			for (let i = 0; i < Math.max(...args.filter(n => $.type(n) === "array").map(n => n.length)); i++) {
-				var row = [];
-				for (const element of args) {
-					if (element[i] !== undefined) {
-						row.push(element[i]);
-					}
-					else if ($.type(element) !== "array") {
-						row.push(element);
-					}
-					else {
-						continue;
-					}
-				}
-				ret.push(row);
+		if (arguments.length > 1) {
+			var ret = arguments[0];
+			for (let i = 0; i < arguments.length; i++) {
+				var b = arguments[i] || null;
+				ret = Mavo.Script.binaryOperation(ret, b, {
+					scalar: (ret, b) => Math.min(ret, b),
+					identity: null
+				});
 			}
-
-			return ret.map(n => Math.min(...$u.numbers(n, arguments)));
+			return ret;
 		}
-		return Math.min(...$u.numbers(array, arguments));
+		else {
+			return Math.min(...$u.numbers(array, arguments));
+		}
 	},
 
 	/**
@@ -264,7 +253,15 @@ var _ = Mavo.Functions = {
 	 */
 	max: function(array) {
 		if (arguments.length > 1) {
-			return Mavo.Script.polynaryOperation(arguments, args => Math.max(...args));
+			var ret = arguments[0];
+			for (let i = 0; i < arguments.length; i++) {
+				var b = arguments[i+1] || null;
+				ret = Mavo.Script.binaryOperation(ret, b, {
+					scalar: (ret, b) => Math.max(ret, b),
+					identity: null
+				});
+			}
+			return ret;
 		}
 		else {
 			return Math.max(...$u.numbers(array, arguments));
@@ -279,8 +276,16 @@ var _ = Mavo.Functions = {
 	},
 
 	hypot: function() {
-		return Mavo.Script.polynaryOperation(arguments, args => Math.hypot(...args));
-	},
+		var ret = arguments[0];
+		for (let i = 0; i < arguments.length; i++) {
+			var b = arguments[i+1] || null;
+			ret = Mavo.Script.binaryOperation(ret, b, {
+				scalar: (ret, b) => Math.hypot(ret, b),
+				identity: null
+			});
+		}
+		return ret;
+},
 
 	pow: function(base, exponent) {
 		return Mavo.Script.binaryOperation(base, exponent, {
