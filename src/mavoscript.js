@@ -50,33 +50,6 @@ var _ = Mavo.Script = {
 		return result;
 	},
 
-	polynaryOperation: function(operands, scalar) {
-		var args = [...operands];
-		if (args.every(n => !Array.isArray(n))) {
-			return scalar(args);
-		}
-		else {
-			var max = Math.max(...args.filter(n => Array.isArray(n)).map(n => n.length));
-			var result = [];
-			for (let i = 0; i < max; i++) {
-				var scalarArgs = [];
-				for (const element of args) {
-					if (element[i] !== undefined) {
-						scalarArgs.push(element[i]);
-					}
-					else if (!Array.isArray(element)) {
-						scalarArgs.push(element);
-					}
-					else {
-						continue;
-					}	
-				}
-				result.push(scalarArgs);
-			}
-			return result.map(n => scalar(n));
-		}
-	},
-
 	/**
 	 * Extend a scalar operator to arrays, or arrays and scalars
 	 * The operation between arrays is applied element-wise.
