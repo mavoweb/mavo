@@ -29,8 +29,6 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [];
 				var max = Math.max(a.length, b.length);
-				var leftScalar = o.leftScalar || o.scalar;
-				var rightScalar = o.rightScalar || o.scalar;
 				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
 				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
 
@@ -39,10 +37,10 @@ var _ = Mavo.Script = {
 						result[i] = o.scalar(a[i], b[i]);
 					}
 					else if (a[i] === undefined) {
-						result[i] = leftScalar === o.leftScalar ? leftScalar(b[i]) : o.scalar(leftIdentity, b[i]);
+						result[i] = o.leftScalar === undefined ? o.scalar(leftIdentity, b[i]) : o.leftScalar(b[i]);
 					}
 					else {
-						result[i] = rightScalar === o.rightScalar ? rightScalar(a[i]) : o.scalar(a[i], rightIdentity);
+						result[i] = o.rightScalar === undefined ? o.scalar(a[i], rightIdentity) : o.rightScalar(a[i]);
 					}
 				}
 			}
