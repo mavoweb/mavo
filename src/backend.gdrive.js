@@ -12,7 +12,7 @@ var _ = Mavo.Backend.register($.Class({
         this.url; // URL object from this.source
         this.mavo; // Mavo instance
         this.format; // Current format
-        this.permissions; // Permissions of this particular backend.
+        this.permissions.on(["login", "read"]); // Permissions of this particular backend.
     },
 
     // Low-level functions for reading data. You don’t need to implement this
@@ -65,9 +65,11 @@ var _ = Mavo.Backend.register($.Class({
     },
 
     static: {
+        apiDomain: "https://www.googleapis.com",
+        oAuth: "https://accounts.google.com/o/oauth2/v2/auth",
         // Mandatory and very important! This determines when your backend is used.
         // value: The mv-storage/mv-source/mv-init value
-        test: function(value) {
+        test: function(url) {
             // Returns true if this value applies to this backend
         }
     }
