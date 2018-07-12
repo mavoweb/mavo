@@ -54,15 +54,14 @@
                 return Promise.resolve(this.user);
             }
             
-            return this.request("about")
+            return this.request("drive/v3/about", {fields: "user"})
                 .then(info => {
                     this.user = {
-                        username: user.emailAddress,
-                        name: user.displayName,
-                        avatar: user.photoLink,
+                        username: info.user.emailAddress,
+                        name: info.user.displayName,
+                        avatar: info.user.photoLink,
                         info
                     };
-    
                     $.fire(this.mavo.element, "mv-login", { backend: this });
                 });
         },
@@ -73,9 +72,11 @@
         login: function(passive) {
             return this.oAuthenticate(passive)
                 .then(() => this.getUser())
-                .then();
-    
-            // Returns promise that resolves when the user has successfully authenticated
+                .then(u => {
+                    if (this.user) {
+                        this.permissions.logout = true;
+                    }
+                });
         },
     
         logout: function() {
@@ -83,7 +84,7 @@
         },
     
         static: {
-            apiDomain: "https://www.googleapis.com/drive/v3/",
+            apiDomain: "https://www.googleapis.com/",
             oAuth: "https://accounts.google.com/o/oauth2/v2/auth",
             // Mandatory and very important! This determines when your backend is used.
             // value: The mv-storage/mv-source/mv-init value
