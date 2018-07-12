@@ -6,7 +6,7 @@
     
         constructor: function() {
             console.log(this.mavo.id);
-            this.permissions.on(["login", "read"]); // Permissions of this particular backend.
+            this.permissions.on(["login", "read"]);
     
             this.key = this.mavo.element.getAttribute("mv-gdrive-key") || "447389063766-ipvdoaoqdds9tlcmr8pjdo5oambcj7va.apps.googleusercontent.com";
     
@@ -47,8 +47,26 @@
             // Should return a promise that resolves when the data is saved successfully
         },
     
-        oAuthParams: () => `&scope=https://www.googleapis.com/auth/drive&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=token`,
-
+        oAuthParams: () => `&scope=https://www.googleapis.com/auth/drive&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=code`,
+    
+        getUser: function() {
+            if (this.user) {
+                return Promise.resolve(this.user);
+            }
+            
+            return this.request("about")
+                .then(info => {
+                    this.user = {
+                        username: user.emailAddress,
+                        name: user.displayName,
+                        avatar: user.photoLink,
+                        info
+                    };
+    
+                    $.fire(this.mavo.element, "mv-login", { backend: this });
+                });
+        },
+    
         // Takes care of authentication. If passive is true, only checks if
         // the user is already logged in, but does not present any login UI.
         // Typically, you’d call this.login(true) in the constructor
@@ -60,25 +78,24 @@
             // Returns promise that resolves when the user has successfully authenticated
         },
     
-        // Log current user out
         logout: function() {
             return this.oAuthLogout();
         },
     
         static: {
-            apiDomain: "https://www.googleapis.com",
+            apiDomain: "https://www.googleapis.com/drive/v3/",
             oAuth: "https://accounts.google.com/o/oauth2/v2/auth",
             // Mandatory and very important! This determines when your backend is used.
             // value: The mv-storage/mv-source/mv-init value
             test: function (url) {
                 if (url.indexOf("drive") !== -1) {
                     return url;
-                } 
+                }
                 else {
                     return false;
                 }
             }
         }
     }));
-    
+        
     })(Bliss, Bliss.$);
