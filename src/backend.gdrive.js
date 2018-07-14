@@ -9,21 +9,21 @@
             this.permissions.on(["login", "read"]);
     
             this.key = this.mavo.element.getAttribute("mv-gdrive-key") || "447389063766-ipvdoaoqdds9tlcmr8pjdo5oambcj7va.apps.googleusercontent.com";
+            this.extension = this.format.constructor.extensions[0] || ".json";
     
             this.login(true);
         },
     
-        // Low-level functions for reading data. You don’t need to implement this
-        // if the mv-storage/mv-source value is a URL and reading the data is just
-        // a GET request to that URL.
-        get: function(url) {
-            // Should return a promise that resolves to the data as a string or object
+        update: function(url, o) {
+            this.super.update.call(this, url, o);
         },
     
-        // High level function for reading data. Calls this.get().
-        // You rarely need to override this.
-        load: function() {
-            // Should return a promise that resolves to the data as an object
+        get: function(url = this.source) {
+            var filename = Mavo.Functions.filename(url);
+            var queryVal = filename.indexOf(this.extension) !== -1 ? `'${filename}'` : `'${this.mavo.id}${this.extension}'`;
+            // Searches for storage file and returns its metadata
+            return this.request("drive/v3/files", {q: `name=${queryVal} and trashed=false`, orderBy: "recency"});
+            // Should return a promise that resolves to the data as a string or object
         },
     
         // Low-level saving code.
@@ -41,12 +41,6 @@
             // Upload code. Should call this.put()
         },
     
-        // High level function for storing data.
-        // You rarely need to override this, except to avoid serialization.
-        store: function(data, {path, format = this.format} = {}) {
-            // Should return a promise that resolves when the data is saved successfully
-        },
-    
         oAuthParams: () => `&scope=https://www.googleapis.com/auth/drive&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=code`,
     
         getUser: function() {
@@ -62,25 +56,52 @@
                         avatar: info.user.photoLink,
                         info
                     };
+    
                     $.fire(this.mavo.element, "mv-login", { backend: this });
                 });
         },
     
-        // Takes care of authentication. If passive is true, only checks if
-        // the user is already logged in, but does not present any login UI.
-        // Typically, you’d call this.login(true) in the constructor
         login: function(passive) {
             return this.oAuthenticate(passive)
                 .then(() => this.getUser())
-                .then(u => {
+                .catch(xhr => {
+                    if (xhr.status == 401) {
+                        this.logout();
+                    }
+                })
+                .then(() => {
                     if (this.user) {
                         this.permissions.logout = true;
+                        return this.get();
                     }
+                })
+                .then(response => {
+                    // Need to check if the user has edit permission to the storage file.
+                    var fileMeta = response.files[0];
+                    if (fileMeta === undefined) {
+                        this.request("drive/v3/files", {name: `${this.mavo.id}${this.extension}`}, "POST")
+                            .then(info => {
+                                console.log(info);
+                            })
+                            .catch(() => {
+                                console.log("NANI!?");
+                            });
+                    }
+                    else {
+                        this.load();
+                    }
+    
+                    this.permissions.on(["edit", "save"]);
                 });
         },
     
         logout: function() {
             return this.oAuthLogout();
+        },
+    
+        parseSource: function(url) {
+            var filename = Mavo.Functions.filename(url);
+            var queryVal = filename.indexOf(this.extension) !== -1 ? `'${filename}'` : `'${this.mavo.id}${this.extension}'`;
         },
     
         static: {
@@ -89,7 +110,7 @@
             // Mandatory and very important! This determines when your backend is used.
             // value: The mv-storage/mv-source/mv-init value
             test: function (url) {
-                if (url.indexOf("drive") !== -1) {
+                if (url.indexOf("gdrive") !== -1) {
                     return url;
                 }
                 else {
