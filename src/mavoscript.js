@@ -33,14 +33,14 @@ var _ = Mavo.Script = {
 				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
 
 				for (let i = 0; i < max; i++) {
-					if (a[i] !== undefined && b[i] !== undefined) {
-						result[i] = o.scalar(a[i], b[i]);
+					if (a[i] === undefined) {
+						result[i] = o.leftScalar ? o.scalar(leftIdentity, b[i]) : o.leftScalar(b[i]);
 					}
-					else if (a[i] === undefined) {
-						result[i] = o.leftScalar === undefined ? o.scalar(leftIdentity, b[i]) : o.leftScalar(b[i]);
+					else if (b[i] === undefined) {
+						result[i] = o.rightScalar ? o.scalar(a[i], rightIdentity) : o.rightScalar(a[i]);
 					}
 					else {
-						result[i] = o.rightScalar === undefined ? o.scalar(a[i], rightIdentity) : o.rightScalar(a[i]);
+						result[i] = o.scalar(a[i], b[i]);
 					}
 				}
 			}
