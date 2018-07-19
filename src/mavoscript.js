@@ -29,15 +29,17 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [];
 				var max = Math.max(a.length, b.length);
+				var leftUnary = o.leftUnary || o.unary;
+				var rightUnary = o.rightUnary || o.unary;
 				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
 				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
 
 				for (let i = 0; i < max; i++) {
 					if (a[i] === undefined) {
-						result[i] = o.leftScalar ? o.leftScalar(b[i]) : o.scalar(leftIdentity, b[i]);
+						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(leftIdentity, b[i]);
 					}
 					else if (b[i] === undefined) {
-						result[i] = o.rightScalar ? o.rightScalar(a[i]) : o.scalar(a[i], rightIdentity);
+						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(a[i], rightIdentity);
 					}
 					else {
 						result[i] = o.scalar(a[i], b[i]);
