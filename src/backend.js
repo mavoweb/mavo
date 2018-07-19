@@ -89,26 +89,24 @@ var _ = Mavo.Backend = $.Class({
 		}
 
 		req.data = data;
-		var dataParam;
+
+		call = new URL(call, this.constructor.apiDomain);
 
 		// Prevent getting a cached response. Cache-control is often not allowed via CORS
 		if (req.method == "GET") {
-			dataParam = new URL("https://mavo.io");
-			dataParam.searchParams.set("timestamp", Date.now());
+			call.searchParams.set("timestamp", Date.now());
 		}
 
 		if ($.type(req.data) === "object") {
 			if (req.method == "GET") {
-				Object.keys(req.data).map(p => dataParam.searchParams.set(p, req.data[p]));
+				Object.keys(req.data).map(p => call.searchParams.set(p, req.data[p]));
+				req.data = call.search;
+				call.search = "";
 			}
 			else {
 				req.data = JSON.stringify(req.data);
 			}
 		}
-
-		req.data = dataParam ? dataParam.search : req.data;
-
-		call = new URL(call, this.constructor.apiDomain);
 
 		return $.fetch(call, req)
 			.catch(err => {
