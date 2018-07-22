@@ -20,7 +20,6 @@ var _ = Mavo.Node = $.Class({
 
 		_.elements.set(element, [...(_.elements.get(this.element) || []), this]);
 
-
 		this.mavo = mavo;
 		this.group = this.parent = this.parentGroup = env.options.group;
 
@@ -569,8 +568,8 @@ var _ = Mavo.Node = $.Class({
 					property = element.name || element.id || element.classList[0];
 				}
 				else if (element.matches(Mavo.selectors.multiple)) {
-					// mv-multiple used without property, generate name
-					property = element.getAttribute("mv-multiple") || "collection";
+					// mv-multiple used without property attribute
+					property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection");
 				}
 			}
 
@@ -579,6 +578,16 @@ var _ = Mavo.Node = $.Class({
 			}
 
 			return property;
+		},
+
+		generatePropertyName(prefix) {
+			for (var i=""; i<10000; i++) { // 1000 is just a failsafe
+				var name = prefix + i;
+
+				if (!$(Mavo.selectors.specificProperty(name))) {
+					return name;
+				}
+			}
 		},
 
 		get: function(element, prioritizePrimitive) {

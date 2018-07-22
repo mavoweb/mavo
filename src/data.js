@@ -345,7 +345,21 @@ var _ = Mavo.Data = $.Class(class Data {
 				}
 			}
 
+			if (!propertyIsNumeric) {
+				var propertyL = property.toLowerCase();
+			}
+
 			if (ret !== undefined) {
+				if (typeof ret !== "function") {
+					var func = Mavo.Functions[propertyL] || Mavo.Actions.Functions[propertyL] || Math[propertyL];
+
+					if (func) {
+						// Data and property of the same name, which one do we need? (rel #227)
+						// Must make the returned value callable to prevent errors!
+						ret = Mavo.primitivify((...args) => func(...args), ret);
+					}
+				}
+
 				// Should we proxify value before returning it? Is it data?
 				var proxify = ret !== null && typeof ret === "object" // Can be a proxy
 				              && !ret.isProxy // Is not already a proxy
@@ -361,7 +375,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				// Still not found? Maybe it's a special property used without a $ (see #343)
 				if (property[0] !== "$") {
-					var $property = "$" + property.toLowerCase();
+					var $property = "$" + propertyL;
 
 					if ($property in _.special) {
 						return _.special[$property](data);

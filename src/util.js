@@ -73,6 +73,15 @@ var _ = $.extend(Mavo, {
 		});
 	},
 
+	// Specifiy a primitive fallback for an object
+	primitivify: (object, primitive) => {
+		if (object) {
+			object.valueOf = object.toJSON = object[Symbol.toPrimitive] = () => primitive;
+		}
+
+		return object;
+	},
+
 	objectify: (value, properties) => {
 		var primitive = Mavo.value(value);
 
@@ -89,7 +98,7 @@ var _ = $.extend(Mavo, {
 				value[Symbol.toStringTag] = constructor.name;
 			}
 
-			value.valueOf = value.toJSON = value[Symbol.toPrimitive] = () => primitive;
+			_.primitivify(value, primitive);
 		}
 
 		return $.extend(value, properties);

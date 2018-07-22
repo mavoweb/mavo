@@ -80,24 +80,11 @@ var _ = Mavo.Functions = {
 			return;
 		}
 
-		if (typeof fn !== "function") {
-			// toArray because the node may be coming from the inside so it may be multiple nodes
-			var node = Mavo.toArray(fn)[0];
-
-			if (node && node[Mavo.toNode]) {
-				node = node[Mavo.toNode];
-
-				// there is a node with the same property as a function name. Fix this. (rel #227)
-				// In the future we may also introduce calling nodes as functions, and the structure is here
-				fn = Mavo.Data.resolve(node.property, _);
-			}
-			else {
-				console.warn(`You tried to call ${fn} as a function, but it’s not a function`);
-			}
-		}
-
 		if (typeof fn === "function") {
 			return fn.apply(thisArg, args);
+		}
+		else {
+			console.warn(`You tried to call ${fn} as a function, but it’s not a function`);
 		}
 	},
 
@@ -295,7 +282,7 @@ var _ = Mavo.Functions = {
 	},
 
 	count: function(array) {
-		return Mavo.toArray(array).filter(a => !empty(a)).length;
+		return Mavo.toArray(val(array)).filter(a => !empty(a)).length;
 	},
 
 	reverse: function(array) {

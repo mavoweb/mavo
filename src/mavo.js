@@ -80,10 +80,6 @@ var _ = self.Mavo = $.Class({
 
 		Mavo.hooks.run("init-tree-after", this);
 
-		if (this.root.liveData.data[Mavo.route]) {
-			_.properties = _.union(_.properties, Object.keys(this.root.liveData.data[Mavo.route]));
-		}
-
 		this.permissions = new Mavo.Permissions();
 
 		var backendTypes = ["source", "storage", "init"]; // order is significant!
