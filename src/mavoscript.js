@@ -139,7 +139,7 @@ var _ = Mavo.Script = {
 	operators: {
 		"not": {
 			symbol: "!",
-			scalar: a => !a
+			scalar: a => !val(a)
 		},
 		"multiply": {
 			scalar: (a, b) => a * b,
