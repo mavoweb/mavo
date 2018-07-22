@@ -99,11 +99,10 @@ var _ = Mavo.Backend = $.Class({
 
 		if ($.type(req.data) === "object") {
 			if (req.method == "GET") {
-				req.data = call.search;
-				call.search = "";
 				for (const p in req.data) {
 					call.searchParams.set(p, req.data[p]);
 				}
+				req.data = "";
 			}
 			else {
 				req.data = JSON.stringify(req.data);
