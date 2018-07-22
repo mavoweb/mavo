@@ -409,7 +409,7 @@ var _ = Mavo.Script = {
 					})()`;
 				}
 
-				if (clashes || Mavo.properties.has(nameSerialized)) {
+				if (clashes) {
 					if (node.callee.type == "MemberExpression") {
 						var thisArg = ", " + _.serialize(node.callee.object);
 					}
