@@ -598,11 +598,9 @@ for (let name in _.operators) {
 var aliases = {
 	average: "avg",
 	iff: "iff IF",
-	multiply: "mult product",
+	multiply: "mult",
 	divide: "div",
-	lt: "smaller",
-	gt: "larger bigger",
-	eq: "equal equality",
+	eq: "equal",
 	ordinal: "th"
 };
 
