@@ -148,6 +148,7 @@ var _ = Mavo.Script = {
 		},
 		"divide": {
 			scalar: (a, b) => a / b,
+			leftUnary: b => b,
 			identity: 1,
 			symbol: "/"
 		},
@@ -240,7 +241,18 @@ var _ = Mavo.Script = {
 		},
 		"and": {
 			logical: true,
-			scalar: (a, b) => !!a && !!b,
+			scalar: (a, b) => {
+				if (typeof a !== "boolean" && a !== 0) {
+					return !!b && a;
+				}
+				else if (typeof b !== "boolean" && b !== 0) {
+					return !!a && b;
+				}
+				else {
+					return !!a && !!b;
+				}
+			},
+			unary: () => false,
 			identity: true,
 			symbol: ["&&", "and"],
 			precedence: 2
