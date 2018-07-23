@@ -225,7 +225,7 @@ var _ = Mavo.Functions = {
 				var b = arguments[i] || null;
 				ret = Mavo.Script.binaryOperation(ret, b, {
 					scalar: (ret, b) => Math.min(ret, b),
-					identity: null
+					identity: Infinity
 				});
 			}
 			return ret;
@@ -245,7 +245,7 @@ var _ = Mavo.Functions = {
 				var b = arguments[i+1] || null;
 				ret = Mavo.Script.binaryOperation(ret, b, {
 					scalar: (ret, b) => Math.max(ret, b),
-					identity: null
+					identity: -Infinity
 				});
 			}
 			return ret;
@@ -258,6 +258,7 @@ var _ = Mavo.Functions = {
 	atan2: function(dividend, divisor) {
 		return Mavo.Script.binaryOperation(dividend, divisor, {
 			scalar: (dividend, divisor) => Math.atan2(dividend, divisor),
+			leftUnary: b => b,
 			identity: 1
 		});
 	},
@@ -301,6 +302,7 @@ var _ = Mavo.Functions = {
 					maximumFractionDigits: decimals
 				});
 			},
+			leftUnary: b => b,
 			identity: 0
 		});
 	},
@@ -583,6 +585,8 @@ var _ = Mavo.Functions = {
 
 var $u = _.util;
 
+// Converts all unary Math functions that haven't been defined 
+// in Mavo.Functions to accept an array argument.
 for (const property of Object.getOwnPropertyNames(Math)) {
 	if (Math[property].length === 1 && !Mavo.Functions.hasOwnProperty(property)) {
 		Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, operand => Math[property](operand));
