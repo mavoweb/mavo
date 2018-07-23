@@ -102,7 +102,7 @@ var _ = Mavo.Backend = $.Class({
 				for (const p in req.data) {
 					call.searchParams.set(p, req.data[p]);
 				}
-				req.data = "";
+				delete req.data;
 			}
 			else {
 				req.data = JSON.stringify(req.data);
