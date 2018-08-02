@@ -214,90 +214,44 @@ var _ = Mavo.Functions = {
 	 * Aggregate sum
 	 */
 	sum: function(array) {
-		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
-			var ret = [];
-
-			for (i in array) {
-				ret.push(_.sum(array[i]["$items"]));
-			}
-
-			return ret;
-		}
-		else {
+		return $u.aggregateCaller(array, (array) => {
 			return $u.numbers(array, arguments).reduce((prev, current) => {
 				return +prev + (+current || 0);
 			}, 0);
-		}
+		});
 	},
 
 	/**
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		array = $u.numbers(array, arguments);
-		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
-			var ret = [];
-
-			for (i in array) {
-				ret.push(_.average(array[i]["$items"]));
-			}
-
-			return ret;
-		}
-		else {
+		return $u.aggregateCaller(array, (array) => {
 			return array.length && _.sum(array) / array.length;
-		}
+		});
 	},
 
 	/**
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		if (array[0] &&array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
-			var ret = [];
-
-			for (i in array) {
-				ret.push(_.min(array[i]["$items"]));
-			}
-
-			return ret;
-		}
-		else {
+		return $u.aggregateCaller(array, (array) => {
 			return Math.min(...$u.numbers(array, arguments));
-		}
+		});
 	},
 
 	/**
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		if (array[0] &&array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
-			var ret = [];
-
-			for (i in array) {
-				ret.push(_.max(array[i]["$items"]));
-			}
-
-			return ret;
-		}
-		else {
+		return $u.aggregateCaller(array, (array) => {
 			return Math.max(...$u.numbers(array, arguments));
-		}
+		});
 	},
 
 	count: function(array) {
-		if (array[0] && array[0]["$groupedBy"] === Mavo.groupedBy) { // grouped structures
-			var ret = [];
-
-			for (i in array) {
-				ret.push(_.count(array[i]["$items"]));
-			}
-
-			return ret;
-		}
-		else {
+		return $u.aggregateCaller(array, (array) => {
 			return Mavo.toArray(array).filter(a => !empty(a)).length;
-		}
+		});
 	},
 
 	reverse: function(array) {
@@ -548,6 +502,18 @@ var _ = Mavo.Functions = {
 			array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
+		},
+		aggregateCaller: function(array, aggregateFunction) {
+			if (array[Mavo.groupedBy] === true) { // grouped structures
+				var ret = [];
+
+				array.forEach((e) => {
+					ret.push(aggregateFunction(e["$items"]));
+				});
+
+				return ret;
+			} 
+			return aggregateFunction(array);
 		},
 	}
 };

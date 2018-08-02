@@ -778,7 +778,7 @@ var _ = self.Mavo = $.Class({
 
 // Define symbols
 // These are lazy to give the Symbol polyfill a chance to load if needed
-["toNode", "isProxy", "route", "parent", "property", "mavo", "groupedBy", "as"].forEach(symbol => {
+["toNode", "isProxy", "route", "parent", "property", "mavo", "groupedBy", "as", "name"].forEach(symbol => {
 	$.lazy(_, symbol, () => Symbol(symbol));
 });
 

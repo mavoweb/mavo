@@ -325,19 +325,19 @@ var _ = Mavo.Script = {
 		"groupby": {
 			symbol: "by",
 			code: (array, key) => {
-				if ($.type(array) === "array" && $.type(key) === "array" && array.length <= key.length)  { 
-					var propName = key["$as"] === Mavo.as ? key["$name"] : $.value(key[0], Mavo.toNode, "property");
+				if (Array.isArray(array) && Array.isArray(key))  { 
+					var propName = key[Mavo.as] === true ? key[Mavo.name] : $.value(key[0], Mavo.toNode, "property");
 					var temp = new Mavo.BucketMap({arrays: true});
 					var ret = [];
+					ret[Mavo.groupedBy] = true;
 
 					for (var i = 0; i < array.length; i++) {
-						temp.set(Mavo.value(key[i]), Mavo.value(array[i]));
+						const k = i < key.length ? Mavo.value(key[i]) : null;
+						temp.set(k, Mavo.value(array[i]));
 					}	
 
 					for (var [value, items] of temp) {
 						var obj = {"$value": value};
-						Object.defineProperty(obj, "$groupedBy", {value: Mavo.groupedBy, enumerable: false});
-						
 
 						if (propName !== undefined) {
 							obj[propName] = value;
@@ -349,12 +349,8 @@ var _ = Mavo.Script = {
 
 					return ret;
 				}
-				else { // invalid arguments (might want to return else but this is what I thought of for now)
-					var ret = [{"$value": key}];
-					Object.defineProperty(ret[0], "$groupedBy", {value: Mavo.groupedBy, enumerable: false});
-
-					ret[0]["$items"] = array;
-					return ret;
+				else { // invalid arguments, convert to arrays
+					// return (Mavo.toArray(array), Mavo.toArray(key));
 				}
 			},
 			precedence: 2
@@ -365,8 +361,8 @@ var _ = Mavo.Script = {
 				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
 					if ($.type(name) === "string" || $.value(name[0], Mavo.toNode, "property") !== undefined) {
 						var ret = property.slice(0);
-						Object.defineProperty(ret, "$name", {value: $.type(name) === "string" ? name : $.value(name[0], Mavo.toNode, "property"), enumerable: false});
-						Object.defineProperty(ret, "$as", {value: Mavo.as, enumerable: false});
+						ret[Mavo.name] = $.type(name) === "string" ? name : $.value(name[0], Mavo.toNode, "property");
+						ret[Mavo.as] = true;
 						return ret;
 					}
 
