@@ -219,40 +219,14 @@ var _ = Mavo.Functions = {
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		if (arguments.length > 1) {
-			var ret = arguments[0];
-			for (let i = 0; i < arguments.length; i++) {
-				var b = arguments[i] || null;
-				ret = Mavo.Script.binaryOperation(ret, b, {
-					scalar: (ret, b) => Math.min(ret, b),
-					identity: Infinity
-				});
-			}
-			return ret;
-		}
-		else {
-			return Math.min(...$u.numbers(array, arguments));
-		}
+		return Math.min(...$u.numbers(array, arguments));
 	},
 
 	/**
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		if (arguments.length > 1) {
-			var ret = arguments[0];
-			for (let i = 0; i < arguments.length; i++) {
-				var b = arguments[i+1] || null;
-				ret = Mavo.Script.binaryOperation(ret, b, {
-					scalar: (ret, b) => Math.max(ret, b),
-					identity: -Infinity
-				});
-			}
-			return ret;
-		}
-		else {
-			return Math.max(...$u.numbers(array, arguments));
-		}
+		return Math.max(...$u.numbers(array, arguments));
 	},
 
 	atan2: function(dividend, divisor) {
@@ -262,18 +236,6 @@ var _ = Mavo.Functions = {
 			identity: 1
 		});
 	},
-
-	hypot: function() {
-		var ret = arguments[0];
-		for (let i = 0; i < arguments.length; i++) {
-			var b = arguments[i+1] || null;
-			ret = Mavo.Script.binaryOperation(ret, b, {
-				scalar: (ret, b) => Math.hypot(ret, b),
-				identity: null
-			});
-		}
-		return ret;
-},
 
 	pow: function(base, exponent) {
 		return Mavo.Script.binaryOperation(base, exponent, {
