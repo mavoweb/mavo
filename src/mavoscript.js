@@ -36,10 +36,10 @@ var _ = Mavo.Script = {
 
 				for (let i = 0; i < max; i++) {
 					if (a[i] === undefined) {
-						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(leftIdentity, b[i]);
+						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftIdentity, b[i]);
 					}
 					else if (b[i] === undefined) {
-						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(a[i], rightIdentity);
+						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightIdentity);
 					}
 					else {
 						result[i] = o.scalar(a[i], b[i]);
