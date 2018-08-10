@@ -504,7 +504,7 @@ var _ = Mavo.Functions = {
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
 		},
 		aggregateCaller: function(array, aggregateFunction) {
-			if (array[Mavo.groupedBy] === true) { // grouped structures
+			if (array[Mavo.groupedBy]) { // grouped structures
 				var ret = [];
 
 				array.forEach((e) => {

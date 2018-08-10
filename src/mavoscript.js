@@ -325,33 +325,26 @@ var _ = Mavo.Script = {
 		"groupby": {
 			symbol: "by",
 			code: (array, key) => {
-				if (Array.isArray(array) && Array.isArray(key))  { 
-					var propName = key[Mavo.as] === true ? key[Mavo.name] : $.value(key[0], Mavo.toNode, "property");
-					var temp = new Mavo.BucketMap({arrays: true});
-					var ret = [];
-					ret[Mavo.groupedBy] = true;
+				array = Array.isArray(array) ? array : Mavo.toArray(array);
+				key = Array.isArray(key) ? key : Mavo.toArray(key);
+				var property = key[Mavo.as] ? key[Mavo.as] : $.value(key[0], Mavo.toNode, "property");
+				var temp = new Mavo.BucketMap({arrays: true});
+				var ret = [];
+				ret[Mavo.groupedBy] = true;
 
-					for (var i = 0; i < array.length; i++) {
-						const k = i < key.length ? Mavo.value(key[i]) : null;
-						temp.set(k, Mavo.value(array[i]));
-					}	
+				for (var i = 0; i < array.length; i++) {
+					const k = i < key.length ? Mavo.value(key[i]) : null;
+					temp.set(k, Mavo.value(array[i]));
+				}	
 
-					for (var [value, items] of temp) {
-						var obj = {"$value": value};
+				temp.forEach((items, value) => {
+					var obj = {$value: value, [property || "$value"]: value};
+					
+					obj.$items = items;
+					ret.push(obj);
+				});
 
-						if (propName !== undefined) {
-							obj[propName] = value;
-						}
-						
-						obj["$items"] = items;
-						ret.push(obj);
-					}
-
-					return ret;
-				}
-				else { // invalid arguments, convert to arrays
-					// return (Mavo.toArray(array), Mavo.toArray(key));
-				}
+				return ret;
 			},
 			precedence: 2
 		},
@@ -359,21 +352,23 @@ var _ = Mavo.Script = {
 			symbol: "as",
 			code: (property, name) => {
 				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
-					if ($.type(name) === "string" || $.value(name[0], Mavo.toNode, "property") !== undefined) {
-						var ret = property.slice(0);
-						ret[Mavo.name] = $.type(name) === "string" ? name : $.value(name[0], Mavo.toNode, "property");
-						ret[Mavo.as] = true;
+					var ret = property.slice();
+					if (!Array.isArray(name) && $.value(name, Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name, Mavo.toNode, "property");
+						return ret;
+					}
+					if ($.type(name) === "string") {
+						ret[Mavo.as] = name;
+						return ret;
+					}
+					if ($.value(name[0], Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name[0], Mavo.toNode, "property");
 						return ret;
 					}
 
 					return property;
 				}
-				else if (property !== undefined) {
-					return property;
-				}
-				else {
-					return null;
-				}
+				return property;
 			},
 			precedence: 3
 		},
