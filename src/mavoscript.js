@@ -148,7 +148,7 @@ var _ = Mavo.Script = {
 		},
 		"divide": {
 			scalar: (a, b) => a / b,
-			leftUnary: b => b,
+			rightUnary: b => b,
 			identity: 1,
 			symbol: "/"
 		},
