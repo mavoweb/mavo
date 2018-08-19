@@ -29,11 +29,21 @@ var _ = Mavo.Script = {
 			if (Array.isArray(a)) {
 				result = [];
 				var max = Math.max(a.length, b.length);
+				var leftUnary = o.leftUnary || o.unary;
+				var rightUnary = o.rightUnary || o.unary;
+				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
+				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
+
 				for (let i = 0; i < max; i++) {
-					result[i] = o.scalar(
-						a[i] === undefined ? o.identity : a[i],
-						b[i] === undefined ? o.identity : b[i]
-					);
+					if (a[i] === undefined) {
+						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftIdentity, b[i]);
+					}
+					else if (b[i] === undefined) {
+						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightIdentity);
+					}
+					else {
+						result[i] = o.scalar(a[i], b[i]);
+					}
 				}
 			}
 			else {
@@ -129,7 +139,7 @@ var _ = Mavo.Script = {
 	operators: {
 		"not": {
 			symbol: "!",
-			scalar: a => !a
+			scalar: a => !val(a)
 		},
 		"multiply": {
 			scalar: (a, b) => a * b,
@@ -449,7 +459,7 @@ var _ = Mavo.Script = {
 					})()`;
 				}
 
-				if (clashes || Mavo.properties.has(nameSerialized)) {
+				if (clashes) {
 					if (node.callee.type == "MemberExpression") {
 						var thisArg = ", " + _.serialize(node.callee.object);
 					}
@@ -638,11 +648,9 @@ for (let name in _.operators) {
 var aliases = {
 	average: "avg",
 	iff: "iff IF",
-	multiply: "mult product",
+	multiply: "mult",
 	divide: "div",
-	lt: "smaller",
-	gt: "larger bigger",
-	eq: "equal equality",
+	eq: "equal",
 	ordinal: "th"
 };
 
