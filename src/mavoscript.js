@@ -331,7 +331,57 @@ var _ = Mavo.Script = {
 				return ret;
 			},
 			precedence: 3
-		}
+		},
+		"groupby": {
+			symbol: "by",
+			code: (array, key) => {
+				array = Array.isArray(array) ? array : Mavo.toArray(array);
+				key = Array.isArray(key) ? key : Mavo.toArray(key);
+				var property = key[Mavo.as] ? key[Mavo.as] : $.value(key[0], Mavo.toNode, "property");
+				var temp = new Mavo.BucketMap({arrays: true});
+				var ret = [];
+				ret[Mavo.groupedBy] = true;
+
+				for (var i = 0; i < array.length; i++) {
+					const k = i < key.length ? Mavo.value(key[i]) : null;
+					temp.set(k, Mavo.value(array[i]));
+				}	
+
+				temp.forEach((items, value) => {
+					var obj = {$value: value, [property || "$value"]: value};
+					
+					obj.$items = items;
+					ret.push(obj);
+				});
+
+				return ret;
+			},
+			precedence: 2
+		},
+		"as": {
+			symbol: "as",
+			code: (property, name) => {
+				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
+					var ret = property.slice();
+					if (!Array.isArray(name) && $.value(name, Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name, Mavo.toNode, "property");
+						return ret;
+					}
+					if ($.type(name) === "string") {
+						ret[Mavo.as] = name;
+						return ret;
+					}
+					if ($.value(name[0], Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name[0], Mavo.toNode, "property");
+						return ret;
+					}
+
+					return property;
+				}
+				return property;
+			},
+			precedence: 3
+		},
 	},
 
 	getNumericalOperands: function(a, b) {
