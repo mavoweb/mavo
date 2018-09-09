@@ -185,7 +185,7 @@ var _ = Mavo.Script = {
 			precedence: 6
 		},
 		"lte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
@@ -194,7 +194,7 @@ var _ = Mavo.Script = {
 			symbol: "<="
 		},
 		"lt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
@@ -203,7 +203,7 @@ var _ = Mavo.Script = {
 			symbol: "<"
 		},
 		"gte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
@@ -212,7 +212,7 @@ var _ = Mavo.Script = {
 			symbol: ">="
 		},
 		"gt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
@@ -221,7 +221,7 @@ var _ = Mavo.Script = {
 			symbol: ">"
 		},
 		"eq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
 			},
@@ -230,22 +230,19 @@ var _ = Mavo.Script = {
 			precedence: 6
 		},
 		"neq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => a != b,
 			symbol: ["!="],
 			identity: true
 		},
 		"and": {
-			logical: true,
-			scalar: (a, b) => !!a && !!b,
-			identity: true,
+			scalar: (a, b) => a && b,
+			identity: false,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
 		"or": {
-			logical: true,
 			scalar: (a, b) => a || b,
-			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: ["||", "or"],
 			precedence: 2
