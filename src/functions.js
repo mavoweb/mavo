@@ -212,7 +212,8 @@ var _ = Mavo.Functions = {
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		return $u.aggregateCaller(array, (array) => {
+		return $u.aggregateCaller(array, array => {
+			array = $u.numbers(array, arguments);
 			return array.length && _.sum(array) / array.length;
 		});
 	},
