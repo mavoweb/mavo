@@ -92,10 +92,10 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.logical? o.identity : operands[0], result;
+			var prev = o.comparison ? o.identity : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
-				let a = o.logical? operands[i - 1] : prev;
+				let a = o.comparison? operands[i - 1] : prev;
 				let b = operands[i];
 
 				if (Array.isArray(b) && typeof o.identity == "number") {
@@ -104,10 +104,7 @@ var _ = Mavo.Script = {
 
 				var result = _.binaryOperation(a, b, o);
 
-				if (o.reduce) {
-					prev = o.reduce(prev, result, a, b);
-				}
-				else if (o.logical) {
+				if (o.comparison) {
 					prev = prev && result;
 				}
 				else {
