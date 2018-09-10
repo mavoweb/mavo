@@ -237,7 +237,7 @@ var _ = Mavo.Script = {
 		},
 		"and": {
 			scalar: (a, b) => a && b,
-			identity: false,
+			identity: true,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
