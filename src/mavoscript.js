@@ -92,7 +92,7 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.comparison ? o.identity : operands[0], result;
+			var prev = o.comparison ? o.default : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
 				let a = o.comparison? operands[i - 1] : prev;
@@ -237,13 +237,13 @@ var _ = Mavo.Script = {
 		},
 		"and": {
 			scalar: (a, b) => a && b,
-			identity: true,
+			default: true,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
 		"or": {
 			scalar: (a, b) => a || b,
-			identity: false,
+			default: false,
 			symbol: ["||", "or"],
 			precedence: 2
 		},
