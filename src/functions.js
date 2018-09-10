@@ -212,7 +212,8 @@ var _ = Mavo.Functions = {
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		return $u.aggregateCaller(array, (array) => {
+		return $u.aggregateCaller(array, array => {
+			array = $u.numbers(array, arguments);
 			return array.length && _.sum(array) / array.length;
 		});
 	},
@@ -490,17 +491,14 @@ var _ = Mavo.Functions = {
 
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
 		},
-		aggregateCaller: function(array, aggregateFunction) {
+		aggregateCaller: function(array, computation) {
 			if (array[Mavo.groupedBy]) { // grouped structures
-				var ret = [];
+				return array.map(e => $u.aggregateCaller(e.$items, computation));
+			}
 
-				array.forEach((e) => {
-					ret.push(aggregateFunction(e["$items"]));
-				});
+			var ret = computation(array);
 
-				return ret;
-			} 
-			return aggregateFunction(array);
+			return ret === undefined? array : ret;
 		},
 	}
 };

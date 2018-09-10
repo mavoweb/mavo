@@ -160,6 +160,12 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	updateById: function(property, evt, cache) {
+		if (property.forEach) {
+			// Multiple properties
+			property.forEach(p => this.updateById(p, evt, cache));
+			return;
+		}
+
 		var exprs = this.identifiers[property];
 
 		if (exprs) {
