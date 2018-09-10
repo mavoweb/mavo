@@ -92,10 +92,10 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.logical? o.identity : operands[0], result;
+			var prev = o.comparison ? o.identity : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
-				let a = o.logical? operands[i - 1] : prev;
+				let a = o.comparison? operands[i - 1] : prev;
 				let b = operands[i];
 
 				if (Array.isArray(b) && typeof o.identity == "number") {
@@ -104,10 +104,7 @@ var _ = Mavo.Script = {
 
 				var result = _.binaryOperation(a, b, o);
 
-				if (o.reduce) {
-					prev = o.reduce(prev, result, a, b);
-				}
-				else if (o.logical) {
+				if (o.comparison) {
 					prev = prev && result;
 				}
 				else {
@@ -188,7 +185,7 @@ var _ = Mavo.Script = {
 			precedence: 6
 		},
 		"lte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
@@ -197,7 +194,7 @@ var _ = Mavo.Script = {
 			symbol: "<="
 		},
 		"lt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
@@ -206,7 +203,7 @@ var _ = Mavo.Script = {
 			symbol: "<"
 		},
 		"gte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
@@ -215,7 +212,7 @@ var _ = Mavo.Script = {
 			symbol: ">="
 		},
 		"gt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
@@ -224,7 +221,7 @@ var _ = Mavo.Script = {
 			symbol: ">"
 		},
 		"eq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
 			},
@@ -233,22 +230,19 @@ var _ = Mavo.Script = {
 			precedence: 6
 		},
 		"neq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => a != b,
 			symbol: ["!="],
 			identity: true
 		},
 		"and": {
-			logical: true,
-			scalar: (a, b) => !!a && !!b,
+			scalar: (a, b) => a && b,
 			identity: true,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
 		"or": {
-			logical: true,
 			scalar: (a, b) => a || b,
-			reduce: (p, r) => p || r,
 			identity: false,
 			symbol: ["||", "or"],
 			precedence: 2
