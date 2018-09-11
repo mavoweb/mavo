@@ -387,7 +387,7 @@ var _ = Mavo.Functions = {
 				}
 				return ret;
 			},
-			identity: null
+			default: null
 		});
 
 		// if result is an empty array, return false

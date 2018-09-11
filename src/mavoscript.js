@@ -31,15 +31,15 @@ var _ = Mavo.Script = {
 				var max = Math.max(a.length, b.length);
 				var leftUnary = o.leftUnary || o.unary;
 				var rightUnary = o.rightUnary || o.unary;
-				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
-				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
+				var leftDefault = o.leftDefault === undefined ? o.default : o.leftDefault;
+				var rightDefault = o.rightDefault === undefined ? o.default : o.rightDefault;
 
 				for (let i = 0; i < max; i++) {
 					if (a[i] === undefined) {
-						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftIdentity, b[i]);
+						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftDefault, b[i]);
 					}
 					else if (b[i] === undefined) {
-						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightIdentity);
+						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightDefault);
 					}
 					else {
 						result[i] = o.scalar(a[i], b[i]);
@@ -78,7 +78,7 @@ var _ = Mavo.Script = {
 			});
 		}
 
-		o.identity = o.identity === undefined? 0 : o.identity;
+		o.default = o.default === undefined? 0 : o.default;
 
 		return Mavo.Functions[name] = o.code || function(...operands) {
 			if (operands.length === 1) {
@@ -92,13 +92,13 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.comparison ? o.identity : operands[0], result;
+			var prev = o.comparison ? o.default : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
 				let a = o.comparison? operands[i - 1] : prev;
 				let b = operands[i];
 
-				if (Array.isArray(b) && typeof o.identity == "number") {
+				if (Array.isArray(b) && typeof o.default == "number") {
 					b = $u.numbers(b);
 				}
 
@@ -131,7 +131,7 @@ var _ = Mavo.Script = {
 	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
 	 * Ordered by precedence (higher to lower)
 	 * @param scalar {Function} The operation between two scalars
-	 * @param identity The operation’s identity element. Defaults to 0.
+	 * @param default The operation’s default/identity element. Defaults to 0.
 	 */
 	operators: {
 		"not": {
@@ -140,12 +140,12 @@ var _ = Mavo.Script = {
 		},
 		"multiply": {
 			scalar: (a, b) => a * b,
-			identity: 1,
+			default: 1,
 			symbol: "*"
 		},
 		"divide": {
 			scalar: (a, b) => a / b,
-			identity: 1,
+			default: 1,
 			symbol: "/"
 		},
 		"addition": {
@@ -190,7 +190,7 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
 			},
-			identity: true,
+			default: true,
 			symbol: "<="
 		},
 		"lt": {
@@ -199,7 +199,7 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
 			},
-			identity: true,
+			default: true,
 			symbol: "<"
 		},
 		"gte": {
@@ -208,7 +208,7 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
 			},
-			identity: true,
+			default: true,
 			symbol: ">="
 		},
 		"gt": {
@@ -217,7 +217,7 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
 			},
-			identity: true,
+			default: true,
 			symbol: ">"
 		},
 		"eq": {
@@ -226,30 +226,30 @@ var _ = Mavo.Script = {
 				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
 			},
 			symbol: ["=", "=="],
-			identity: true,
+			default: true,
 			precedence: 6
 		},
 		"neq": {
 			comparison: true,
 			scalar: (a, b) => a != b,
 			symbol: ["!="],
-			identity: true
+			default: true
 		},
 		"and": {
 			scalar: (a, b) => a && b,
-			identity: true,
+			default: true,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
 		"or": {
 			scalar: (a, b) => a || b,
-			identity: false,
+			default: false,
 			symbol: ["||", "or"],
 			precedence: 2
 		},
 		"concatenate": {
 			symbol: "&",
-			identity: "",
+			default: "",
 			scalar: (a, b) => "" + (a || "") + (b || ""),
 			precedence: 10
 		},
