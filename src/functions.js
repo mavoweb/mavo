@@ -329,7 +329,15 @@ var _ = Mavo.Functions = {
 
 	shuffle: list => {
 		if (Array.isArray(list)) {
-			return list.sort(() => Math.random() - 0.5);
+			// Fisher-Yates shuffle
+			var ret = list.slice();
+
+			for (var i = ret.length - 1; i > 0; i--) {
+				var j = Math.floor(Math.random() * (i + 1));
+				[ret[i], ret[j]] = [ret[j], ret[i]];
+			}
+
+			return ret;
 		}
 		else {
 			return list;
