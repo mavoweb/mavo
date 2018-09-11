@@ -201,32 +201,39 @@ var _ = Mavo.Functions = {
 	 * Aggregate sum
 	 */
 	sum: function(array) {
-		return $u.numbers(array, arguments).reduce((prev, current) => {
-			return +prev + (+current || 0);
-		}, 0);
+		return $u.aggregateCaller(array, (array) => {
+			return $u.numbers(array, arguments).reduce((prev, current) => {
+				return +prev + (+current || 0);
+			}, 0);
+		});
 	},
 
 	/**
 	 * Average of an array of numbers
 	 */
 	average: function(array) {
-		array = $u.numbers(array, arguments);
-
-		return array.length && _.sum(array) / array.length;
+		return $u.aggregateCaller(array, array => {
+			array = $u.numbers(array, arguments);
+			return array.length && _.sum(array) / array.length;
+		});
 	},
 
 	/**
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
-		return Math.min(...$u.numbers(array, arguments));
+		return $u.aggregateCaller(array, (array) => {
+			return Math.min(...$u.numbers(array, arguments));
+		});
 	},
 
 	/**
 	 * Max of an array of numbers
 	 */
 	max: function(array) {
-		return Math.max(...$u.numbers(array, arguments));
+		return $u.aggregateCaller(array, (array) => {
+			return Math.max(...$u.numbers(array, arguments));
+		});
 	},
 
 	atan2: function(dividend, divisor) {
@@ -245,7 +252,9 @@ var _ = Mavo.Functions = {
 	},
 
 	count: function(array) {
-		return Mavo.toArray(val(array)).filter(a => !empty(a)).length;
+		return $u.aggregateCaller(array, (array) => {
+			return Mavo.toArray(array).filter(a => !empty(a)).length;
+		});
 	},
 
 	reverse: function(array) {
@@ -341,7 +350,15 @@ var _ = Mavo.Functions = {
 
 	shuffle: list => {
 		if (Array.isArray(list)) {
-			return list.sort(() => Math.random() - 0.5);
+			// Fisher-Yates shuffle
+			var ret = list.slice();
+
+			for (var i = ret.length - 1; i > 0; i--) {
+				var j = Math.floor(Math.random() * (i + 1));
+				[ret[i], ret[j]] = [ret[j], ret[i]];
+			}
+
+			return ret;
 		}
 		else {
 			return list;
@@ -399,7 +416,7 @@ var _ = Mavo.Functions = {
 				}
 				return ret;
 			},
-			identity: null
+			default: null
 		});
 
 		// if result is an empty array, return false
@@ -541,6 +558,15 @@ var _ = Mavo.Functions = {
 			array = Array.isArray(array)? array : (args? $$(args) : [array]);
 
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
+		},
+		aggregateCaller: function(array, computation) {
+			if (array[Mavo.groupedBy]) { // grouped structures
+				return array.map(e => $u.aggregateCaller(e.$items, computation));
+			}
+
+			var ret = computation(array);
+
+			return ret === undefined? array : ret;
 		},
 	}
 };

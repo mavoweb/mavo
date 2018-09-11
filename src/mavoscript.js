@@ -31,15 +31,15 @@ var _ = Mavo.Script = {
 				var max = Math.max(a.length, b.length);
 				var leftUnary = o.leftUnary || o.unary;
 				var rightUnary = o.rightUnary || o.unary;
-				var leftIdentity = o.leftIdentity === undefined ? o.identity : o.leftIdentity;
-				var rightIdentity = o.rightIdentity === undefined ? o.identity : o.rightIdentity;
+				var leftDefault = o.leftDefault === undefined ? o.default : o.leftDefault;
+				var rightDefault = o.rightDefault === undefined ? o.default : o.rightDefault;
 
 				for (let i = 0; i < max; i++) {
 					if (a[i] === undefined) {
-						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftIdentity, b[i]);
+						result[i] = rightUnary ? rightUnary(a[i]) : o.scalar(leftDefault, b[i]);
 					}
 					else if (b[i] === undefined) {
-						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightIdentity);
+						result[i] = leftUnary ? leftUnary(b[i]) : o.scalar(a[i], rightDefault);
 					}
 					else {
 						result[i] = o.scalar(a[i], b[i]);
@@ -78,7 +78,7 @@ var _ = Mavo.Script = {
 			});
 		}
 
-		o.identity = o.identity === undefined? 0 : o.identity;
+		o.default = o.default === undefined? 0 : o.default;
 
 		return Mavo.Functions[name] = o.code || function(...operands) {
 			if (operands.length === 1) {
@@ -92,22 +92,19 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.logical? o.identity : operands[0], result;
+			var prev = o.comparison ? o.default : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
-				let a = o.logical? operands[i - 1] : prev;
+				let a = o.comparison? operands[i - 1] : prev;
 				let b = operands[i];
 
-				if (Array.isArray(b) && typeof o.identity == "number") {
+				if (Array.isArray(b) && typeof o.default == "number") {
 					b = $u.numbers(b);
 				}
 
 				var result = _.binaryOperation(a, b, o);
 
-				if (o.reduce) {
-					prev = o.reduce(prev, result, a, b);
-				}
-				else if (o.logical) {
+				if (o.comparison) {
 					prev = prev && result;
 				}
 				else {
@@ -134,7 +131,7 @@ var _ = Mavo.Script = {
 	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
 	 * Ordered by precedence (higher to lower)
 	 * @param scalar {Function} The operation between two scalars
-	 * @param identity The operation’s identity element. Defaults to 0.
+	 * @param default The operation’s default/identity element. Defaults to 0.
 	 */
 	operators: {
 		"not": {
@@ -143,13 +140,12 @@ var _ = Mavo.Script = {
 		},
 		"multiply": {
 			scalar: (a, b) => a * b,
-			identity: 1,
+			default: 1,
 			symbol: "*"
 		},
 		"divide": {
 			scalar: (a, b) => a / b,
-			rightUnary: b => b,
-			identity: 1,
+			default: 1,
 			symbol: "/"
 		},
 		"addition": {
@@ -189,75 +185,71 @@ var _ = Mavo.Script = {
 			precedence: 6
 		},
 		"lte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
 			},
-			identity: true,
+			default: true,
 			symbol: "<="
 		},
 		"lt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
 			},
-			identity: true,
+			default: true,
 			symbol: "<"
 		},
 		"gte": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
 			},
-			identity: true,
+			default: true,
 			symbol: ">="
 		},
 		"gt": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
 			},
-			identity: true,
+			default: true,
 			symbol: ">"
 		},
 		"eq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => {
 				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
 			},
 			symbol: ["=", "=="],
-			identity: true,
+			default: true,
 			precedence: 6
 		},
 		"neq": {
-			logical: true,
+			comparison: true,
 			scalar: (a, b) => a != b,
 			symbol: ["!="],
-			identity: true
+			default: true
 		},
 		"and": {
-			logical: true,
-			scalar: (a, b) => !val(a) ? a : b,
-			unary: () => false,
-			identity: true,
+			scalar: (a, b) => a && b,
+			default: true,
 			symbol: ["&&", "and"],
 			precedence: 2
 		},
 		"or": {
-			logical: true,
 			scalar: (a, b) => a || b,
-			reduce: (p, r) => p || r,
-			identity: false,
+			default: false,
 			symbol: ["||", "or"],
 			precedence: 2
 		},
 		"concatenate": {
 			symbol: "&",
-			identity: "",
+			default: "",
 			scalar: (a, b) => "" + (a || "") + (b || ""),
 			precedence: 10
 		},
@@ -333,7 +325,57 @@ var _ = Mavo.Script = {
 				return ret;
 			},
 			precedence: 3
-		}
+		},
+		"groupby": {
+			symbol: "by",
+			code: (array, key) => {
+				array = Array.isArray(array) ? array : Mavo.toArray(array);
+				key = Array.isArray(key) ? key : Mavo.toArray(key);
+				var property = key[Mavo.as] ? key[Mavo.as] : $.value(key[0], Mavo.toNode, "property");
+				var temp = new Mavo.BucketMap({arrays: true});
+				var ret = [];
+				ret[Mavo.groupedBy] = true;
+
+				for (var i = 0; i < array.length; i++) {
+					const k = i < key.length ? Mavo.value(key[i]) : null;
+					temp.set(k, Mavo.value(array[i]));
+				}	
+
+				temp.forEach((items, value) => {
+					var obj = {$value: value, [property || "$value"]: value};
+					
+					obj.$items = items;
+					ret.push(obj);
+				});
+
+				return ret;
+			},
+			precedence: 2
+		},
+		"as": {
+			symbol: "as",
+			code: (property, name) => {
+				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
+					var ret = property.slice();
+					if (!Array.isArray(name) && $.value(name, Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name, Mavo.toNode, "property");
+						return ret;
+					}
+					if ($.type(name) === "string") {
+						ret[Mavo.as] = name;
+						return ret;
+					}
+					if ($.value(name[0], Mavo.toNode, "property") !== undefined) {
+						ret[Mavo.as] = $.value(name[0], Mavo.toNode, "property");
+						return ret;
+					}
+
+					return property;
+				}
+				return property;
+			},
+			precedence: 3
+		},
 	},
 
 	getNumericalOperands: function(a, b) {
