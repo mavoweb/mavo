@@ -193,7 +193,7 @@ var _ = Mavo.Actions = {
 
 		/**
 		 * Set node(s) to value(s)
-		 * If ref is a single node, set it to values
+		 * If ref is a single node or a collection, render values on it
 		 * If ref is multiple nodes, set it to corresponding value
 		 * If ref is multiple nodes and values is not an array, set all nodes to values
 		 */
@@ -202,17 +202,28 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var wasArray = Array.isArray(ref);
-			var nodes = _.getNodes(ref);
+			var node = _.getNode(ref);
 
-			if (!nodes.length) {
-				console.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
+			if (node) {
+				// Single node, render values on it
+				node.render(values);
 			}
 			else {
-				Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
-					scalar: (node, value) => node.render(value)
-				});
+				var wasArray = Array.isArray(ref);
+				var nodes = _.getNodes(ref);
+
+				if (!nodes.length) {
+					console.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
+				}
+				else {
+					Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
+						scalar: (node, value) => {
+							return node.render(value);
+						}
+					});
+				}
 			}
+
 
 			return values;
 		}
