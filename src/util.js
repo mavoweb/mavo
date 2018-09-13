@@ -767,28 +767,29 @@ var _ = $.extend(Mavo, {
 	/**
 	 * Map that can hold multiple values per key
 	 */
-	BucketMap: class BucketMap extends Map {
+	BucketMap: class BucketMap {
 		constructor({arrays = false} = {}) {
-			super();
+			this.map = new Map();
+			this[Symbol.iterator] = this.map[Symbol.iterator];
 			this.arrays = arrays;
 		}
 
 		set(key, value) {
 			if (this.arrays) {
-				var values = this.get(key) || [];
+				var values = this.map.get(key) || [];
 				values.push(value);
 			}
 			else {
-				var values = this.get(key) || new Set();
+				var values = this.map.get(key) || new Set();
 				values.add(value);
 			}
 
-			super.set(key, values);
+			this.map.set(key, values);
 		}
 
 		delete(key, value) {
 			if (arguments.length == 2) {
-				var values = this.get(key);
+				var values = this.map.get(key);
 
 				if (values) {
 					if (this.arrays) {
@@ -800,8 +801,12 @@ var _ = $.extend(Mavo, {
 				}
 			}
 			else {
-				super.delete(key);
+				this.map.delete(key);
 			}
+		}
+
+		forEach(...args) {
+			return this.map.forEach(...args);
 		}
 	}
 });
