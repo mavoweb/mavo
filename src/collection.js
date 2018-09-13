@@ -18,7 +18,7 @@ var _ = Mavo.Collection = $.Class({
 		this.marker = document.createComment("mv-marker");
 		Mavo.data(this.marker, "collection", this);
 
-		$.after(this.marker, this.templateElement);
+		this.templateElement.after(this.marker);
 
 		if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
 			// Synchronous init
@@ -464,10 +464,10 @@ var _ = Mavo.Collection = $.Class({
 			}
 
 			if (this.bottomUp) {
-				$.after(fragment, i > 0? this.children[i-1].element : this.marker);
+				(i > 0? this.children[i-1].element : this.marker).after(fragment);
 			}
 			else {
-				$.before(fragment, this.marker);
+				this.marker.before(fragment);
 			}
 		}
 

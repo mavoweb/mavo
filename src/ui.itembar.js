@@ -187,7 +187,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 			if (!Mavo.revocably.add(this.element)) {
 				if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
 					this.adjacent = true;
-					$.after(this.element, this.item.element);
+					this.item.element.after(this.element);
 				}
 				else {
 					this.item.element.appendChild(this.element);

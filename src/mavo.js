@@ -835,6 +835,8 @@ requestAnimationFrame(() => {
 		"IntersectionObserver": self.IntersectionObserver,
 		"Symbol": self.Symbol,
 		"Element.prototype.remove": Element.prototype.remove,
+		"Element.prototype.before": Element.prototype.before,
+		"Element.prototype.after": Element.prototype.after,
 		"Element.prototype.prepend": Element.prototype.prepend
 	}, (id, supported) => {
 		if (!supported) {
