@@ -224,7 +224,6 @@ var _ = Mavo.Actions = {
 				}
 			}
 
-
 			return values;
 		}
 	}
