@@ -18,7 +18,7 @@ var injectVersion = require("gulp-inject-version");
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
-			expression domexpression expressions mv-if mv-value functions functions.date mavoscript actions data
+			expression domexpression expressions mv-if functions functions.date mavoscript actions data
 			backend.dropbox backend.github`
 	.split(/\s+/);
 var versionOptions = {
@@ -29,16 +29,27 @@ src.push("local");
 
 src = src.map(path => `src/${path}.js`);
 
-gulp.task("concat", function () {
+gulp.task("concat-parts", function () {
 	var files = ["lib/*.js", ...src];
 
-	return gulp.src(files)
+	return Promise.all([
+		gulp.src("lib/*.js").pipe(concat("lib.js")).pipe(sourcemaps.write("maps")).pipe(gulp.dest("dist")),
+		gulp.src(src)
 		.pipe(sourcemaps.init())
 		.pipe(injectVersion(versionOptions))
+		.pipe(concat("mavo-nodeps.js"))
+		.pipe(sourcemaps.write("maps"))
+		.pipe(gulp.dest("dist"))
+	]);
+});
+
+gulp.task("concat", gulp.series("concat-parts", function() {
+	return gulp.src(["dist/lib.js", "dist/mavo-nodeps.js"])
+		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
-});
+}));
 
 gulp.task("sass", function () {
 	return gulp.src(["src-css/*.scss", "!**/_*.scss"])
@@ -57,9 +68,8 @@ gulp.task("sass", function () {
 		}));
 });
 
-var transpileStream = () => gulp.src(src)
+var transpileStream = () => gulp.src("dist/mavo-nodeps.js")
 	.pipe(sourcemaps.init())
-	.pipe(injectVersion(versionOptions))
 	.pipe(babel({
 		"presets": [
 			["env", {
@@ -76,43 +86,38 @@ var transpileStream = () => gulp.src(src)
 		this.emit("end");
 	});
 
-gulp.task("transpile", function () {
-	return merge(gulp.src(["lib/*.js"]), transpileStream())
+gulp.task("transpile", gulp.series("concat-parts", function () {
+	return merge(gulp.src("dist/lib.js"), transpileStream())
 		.pipe(concat("mavo.es5.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
-});
+}));
 
-gulp.task("minify", function () {
-	return merge(gulp.src("lib/*.js")
-		, gulp.src(src)
-			.pipe(minify())
-	)
+gulp.task("minify", gulp.series("concat-parts", function () {
+	return merge(gulp.src("dist/lib.js"), gulp.src("dist/mavo-nodeps.js").pipe(minify()))
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.min.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
-});
+}));
 
-gulp.task("minify-es5", function () {
-	return merge(gulp.src("lib/*.js")
-		, transpileStream()
-			.pipe(minify())
-	)
+gulp.task("minify-es5", gulp.series("concat-parts", function () {
+	return merge(gulp.src("dist/lib.js"), transpileStream().pipe(minify()))
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.es5.min.js"))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
-});
+}));
 
 gulp.task("lib", function () {
 	gulp.src(dependencies).pipe(gulp.dest("lib"));
 });
 
 gulp.task("watch", function () {
-	gulp.watch(dependencies, ["lib"]);
-	gulp.watch(["src/*.js", "lib/*.js"], ["concat"]);
-	gulp.watch(["dist/mavo.js"], ["transpile"]);
-	gulp.watch(["**/*.scss"], ["sass"]);
+	gulp.watch(dependencies, gulp.series("lib"));
+	gulp.watch(["src/*.js", "lib/*.js"], gulp.series("concat"));
+	gulp.watch(["dist/mavo-nodeps.js"], gulp.series("transpile"));
+	gulp.watch(["**/*.scss"], gulp.series("sass"));
 });
-gulp.task("default", ["concat", "sass", "transpile", "minify", "minify-es5"]);
+
+gulp.task("default", gulp.parallel("concat", "transpile", "minify", "minify-es5", "sass"));
