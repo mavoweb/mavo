@@ -4,12 +4,17 @@ Mavo.attributes.push("mv-action");
 
 var _ = Mavo.Actions = {
 	listener: evt => {
-		var element = evt.target.closest("[mv-action]");
+		var tag = evt.type === "submit"? "form" : ":not(form)";
+		var element = evt.target.closest(tag + "[mv-action]");
 		var node = Mavo.Node.get(element);
 
 		if (node && node.editing) {
 			// If this is a node, and being edited, we don't want to have the action interfering.
 			return;
+		}
+
+		if (evt.type === "submit") {
+			evt.preventDefault();
 		}
 
 		if (element) {

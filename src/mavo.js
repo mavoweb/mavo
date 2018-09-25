@@ -303,7 +303,7 @@ var _ = self.Mavo = $.Class({
 			}
 		});
 
-		this.element.addEventListener("click", _.Actions.listener);
+		$.bind(this.element, "click submit", _.Actions.listener);
 
 		Mavo.hooks.run("init-end", this);
 	},
