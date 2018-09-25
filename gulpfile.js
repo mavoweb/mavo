@@ -34,7 +34,7 @@ gulp.task("concat-parts", function () {
 
 	return Promise.all([
 		gulp.src("lib/*.js").pipe(concat("lib.js")).pipe(sourcemaps.write("maps")).pipe(gulp.dest("dist")),
-		gulp.src(src)
+		gulp.src(src, {allowEmpty: true})
 		.pipe(sourcemaps.init())
 		.pipe(injectVersion(versionOptions))
 		.pipe(concat("mavo-nodeps.js"))
