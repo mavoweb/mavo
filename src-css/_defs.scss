@@ -83,6 +83,6 @@ circle {\
 </svg>');
 
 [mv-app] {
-	--mv-loader: $loader;
-	--mv-rubbish-bin: $rubbish-bin;
+	--mv-loader: #{$loader};
+	--mv-rubbish-bin: #{$rubbish-bin};
 }
