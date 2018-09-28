@@ -35,7 +35,9 @@
 
 	&[hidden] {
 		opacity: 0;
+		pointer-events: none;
 	}
+	
 	&:not([hidden]) {
 		transition: .4s opacity;
 	}
