@@ -102,7 +102,8 @@ _.Syntax = $.Class({
 
 			if (/\S/.test(match[1])) {
 				ret.push(new Mavo.Expression(match[1]));
-			} else {
+			}
+			else {
 				// If the matched expression is empty or consists only of
 				// whitespace, don't treat it as an expression.
 				ret.push(match[0]);
