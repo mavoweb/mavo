@@ -585,6 +585,14 @@ var _ = Mavo.Script = {
 	},
 
 	compile: function(code, o = {}) {
+		if (!/\S/.test(code)) {
+			// If code contains only whitespace, including in particular if
+			// code is just the empty string, treat it as an expression that
+			// evaluates to an empty string. This is consistent with
+			// interpreting bare words as their corresponding strings.
+			return () => "";
+		}
+
 		code = _.rewrite(code);
 
 		code = `with (Mavo.Data.stub)
