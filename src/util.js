@@ -5,28 +5,7 @@ var _ = $.extend(Mavo, {
 	 * Load a file, only once
 	 */
 	load: (url, base = document.currentScript? document.currentScript.src : location) => {
-		_.loaded = _.loaded || new Set();
-
-		if (_.loaded.has(url + "")) {
-			return;
-		}
-
-		url = new URL(url, base);
-
-		if (/\.css$/.test(url.pathname)) {
-			// CSS file
-			$.create("link", {
-				"href": url,
-				"rel": "stylesheet",
-				"inside": document.head
-			});
-
-			// No need to wait for stylesheets
-			return Promise.resolve();
-		}
-
-		// JS file
-		return $.include(url);
+		return $.load(url, base);
 	},
 
 	readFile: (file, format = "DataURL") => {

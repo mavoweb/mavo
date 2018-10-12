@@ -111,7 +111,7 @@ gulp.task("minify-es5", function () {
 });
 
 gulp.task("lib", function () {
-	gulp.src(dependencies).pipe(gulp.dest("lib"));
+	return gulp.src(dependencies).pipe(gulp.dest("lib"));
 });
 
 gulp.task("watch", function () {
