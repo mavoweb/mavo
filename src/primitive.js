@@ -326,8 +326,6 @@ var _ = Mavo.Primitive = $.Class({
 			this.preEdit.then(evt => {
 				$.unbind(this.element, ".mavo:preedit");
 
-				this.element.classList.remove("mv-pending-edit");
-
 				requestAnimationFrame(() => {
 					// Enter should insert a new item and backspace should delete it
 					if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
@@ -444,6 +442,8 @@ var _ = Mavo.Primitive = $.Class({
 		return this.preEdit.then(evt => {
 			this.sneak(() => {
 				// Actual edit
+				this.element.classList.remove("mv-pending-edit");
+
 				if (this.initEdit) {
 					this.initEdit();
 				}
