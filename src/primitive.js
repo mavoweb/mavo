@@ -326,19 +326,55 @@ var _ = Mavo.Primitive = $.Class({
 			this.preEdit.then(evt => {
 				$.unbind(this.element, ".mavo:preedit");
 
-				this.element.classList.remove("mv-pending-edit");
-
 				requestAnimationFrame(() => {
 					// Enter should insert a new item and backspace should delete it
 					if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+						// If pasting text with line breaks and this is a single-line input
+						// Insert them as multiple items
+						var multiline = this.editor.matches("textarea");
+
+						if (!multiline) {
+							$.bind(this.editor, "paste.mavo:edit", evt => {
+								if (!this.closestCollection.editing || !evt.clipboardData) {
+									return;
+								}
+
+								var text = evt.clipboardData.getData("text/plain");
+								const CRLF = /\r?\n|\r/;
+
+								if (CRLF.test(text)) {
+									evt.preventDefault();
+
+									var lines = text.split(CRLF);
+
+									// "Paste" first line where the cursor is
+									this.editor.setRangeText(lines[0]);
+									$.fire(this.editor, "input");
+
+									// Insert the rest of the lines as new items
+									// FIXME DRYfy the repetition between this code and the one below
+									var collection = this.closestCollection;
+									var index = closestItem && closestItem.index || 0;
+
+									for (var i=1; i<lines.length; i++) {
+										var closestItem = this.closestItem;
+										var next = collection.add(undefined, index + i);
+										collection.editItem(next); // TODO add() should take care of this
+
+										copy = this.getCousin(i);
+										copy.render(lines[i]);
+									}
+
+								}
+							});
+						}
+
 						$.bind(this.editor, "keydown.mavo:edit", evt => {
-							if (!this.closestCollection.editing || ![8, 13].indexOf(evt.keyCode) === -1) {
+							if (!this.closestCollection.editing || !["Backspace", "Enter"].indexOf(evt.key) === -1) {
 								return;
 							}
 
-							var multiline = this.editor.matches("textarea");
-
-							if (evt.keyCode == 13 && (evt.shiftKey || !multiline)) { // Enter
+							if (evt.key == "Enter" && (evt.shiftKey || !multiline)) {
 								if (this.bottomUp) {
 									return;
 								}
@@ -356,7 +392,7 @@ var _ = Mavo.Primitive = $.Class({
 									evt.preventDefault();
 								}
 							}
-							else if (evt.keyCode == 8 && (this.empty || evt[Mavo.superKey])) {
+							else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
 								// Focus on sibling afterwards
 								var sibling = this.getCousin(1) || this.getCousin(-1);
 
@@ -406,6 +442,8 @@ var _ = Mavo.Primitive = $.Class({
 		return this.preEdit.then(evt => {
 			this.sneak(() => {
 				// Actual edit
+				this.element.classList.remove("mv-pending-edit");
+
 				if (this.initEdit) {
 					this.initEdit();
 				}

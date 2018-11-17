@@ -70,7 +70,15 @@ _.Syntax = $.Class({
 	constructor: function(start, end) {
 		this.start = start;
 		this.end = end;
-		this.regex = RegExp(`${Mavo.escapeRegExp(start)}([\\S\\s]+?)${Mavo.escapeRegExp(end)}`, "gi");
+		// Try to parse anything between start and end as an expression. Note
+		// that this parses text that we don't want to treat as expressions,
+		// including the empty expression, but we want to parse them out anyway
+		// and only later decide not to evaluate them as expressions so that we
+		// don't parse, say, [][1] as a single expression containing "][1".
+
+		// Regex note: "[\S\s]" matches all characters, unlike ".", which
+		// doesn't match newlines.
+		this.regex = RegExp(`${Mavo.escapeRegExp(start)}([\\S\\s]*?)${Mavo.escapeRegExp(end)}`, "gi");
 	},
 
 	test: function(str) {
@@ -92,7 +100,14 @@ _.Syntax = $.Class({
 
 			lastIndex = this.regex.lastIndex;
 
-			ret.push(new Mavo.Expression(match[1]));
+			if (/\S/.test(match[1])) {
+				ret.push(new Mavo.Expression(match[1]));
+			}
+			else {
+				// If the matched expression is empty or consists only of
+				// whitespace, don't treat it as an expression.
+				ret.push(match[0]);
+			}
 		}
 
 		// Literal at the end

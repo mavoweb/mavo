@@ -68,6 +68,11 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		item.index = this.length;
 		this.children.push(item);
 
+		// item may have tried to propagate updates to us when we created it,
+		// but that wouldn't have worked since item was not yet in
+		// this.children, so we need to update manually.
+		this.liveData.update();
+
 		return item;
 	},
 

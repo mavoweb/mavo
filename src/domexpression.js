@@ -58,7 +58,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 					if (whitespace[1]) {
 						this.node.firstChild.splitText(this.node.firstChild.textContent.length - whitespace[1].length);
-						$.after(this.node.lastChild, this.node);
+						this.node.after(this.node.lastChild);
 					}
 
 					if (whitespace[0]) {
