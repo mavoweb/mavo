@@ -148,17 +148,6 @@ var _ = Mavo.Primitive = $.Class({
 			Mavo.setAttributeShy(this.element, "mv-attribute", "none");
 		}
 
-		if (this.config.observer !== false) {
-			// Observe future mutations to this property, if possible
-			// Properties like input.checked or input.value cannot be observed that way
-			// so we cannot depend on mutation observers for everything :(
-			this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-				if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
-					this.value = this.getValue();
-				}
-			}, {subtree: this.config.subtree, childList: this.config.subtree});
-		}
-
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
@@ -678,6 +667,31 @@ var _ = Mavo.Primitive = $.Class({
 		default: function (value) {
 			if (this.value == this._default) {
 				this.value = value;
+			}
+		},
+
+		config: function(config) {
+			if (this._config !== config) {
+				if (config.observer === false) {
+					if (this.observer) {
+						this.observer.stop();
+					}
+				}
+				else {
+					// Observe future mutations to this property, if possible
+					// Properties like input.checked or input.value cannot be observed that way
+					// so we cannot depend on mutation observers for everything :(
+					if (this.observer) {
+						this.observer.run();
+					}
+					else {
+						this.observer = new Mavo.Observer(this.element, this.attribute, records => {
+							if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
+								this.value = this.getValue();
+							}
+						}, {subtree: config.subtree, childList: config.subtree});
+					}
+				}
 			}
 		},
 
