@@ -312,6 +312,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (!this.preEdit) {
 			this.preEdit = Mavo.promise();
+			this.afterPreEdit = null;
 			this.preEdit.then(evt => {
 				$.unbind(this.element, ".mavo:preedit");
 
@@ -428,52 +429,58 @@ var _ = Mavo.Primitive = $.Class({
 			return this.preEdit.resolve();
 		}
 
-		return this.preEdit.then(evt => {
-			this.sneak(() => {
-				// Actual edit
-				this.element.classList.remove("mv-pending-edit");
+		if (!this.afterPreEdit) {
+			this.afterPreEdit = this.preEdit.then(evt => {
+				this.sneak(() => {
+					// Actual edit
+					this.element.classList.remove("mv-pending-edit");
 
-				if (this.initEdit) {
-					this.initEdit();
-				}
+					if (this.initEdit) {
+						this.initEdit();
+					}
 
-				if (this.popup) {
-					this.popup.prepare();
-					this.popup.show();
-				}
+					if (this.popup) {
+						this.popup.prepare();
+						this.popup.show();
+					}
 
-				if (!this.attribute && !this.popup) {
-					if (this.editor.parentNode != this.element) {
-						this.editorValue = this.value;
+					if (!this.attribute && !this.popup) {
+						if (this.editor.parentNode != this.element) {
+							this.editorValue = this.value;
 
-						if (this.config.hasChildren) {
-							this.element.textContent = "";
+							if (this.config.hasChildren) {
+								this.element.textContent = "";
+							}
+							else {
+								_.setText(this.element, "");
+							}
+
+							this.element.prepend(this.editor);
 						}
-						else {
-							_.setText(this.element, "");
+
+						// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
+						// so this ends up focusing even when it shouldn't
+						if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
+							this.editor.focus();
 						}
 
-						this.element.prepend(this.editor);
+						if (!this.collection) {
+							Mavo.revocably.restoreAttribute(this.element, "tabindex");
+						}
 					}
-
-					// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
-					// so this ends up focusing even when it shouldn't
-					if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
-						this.editor.focus();
-					}
-
-					if (!this.collection) {
-						Mavo.revocably.restoreAttribute(this.element, "tabindex");
-					}
-				}
+				});
 			});
-		});
+		}
+
+		return this.afterPreEdit;
 	}, // edit
 
 	done: function () {
 		if (this.super.done.call(this) === false) {
 			return false;
 		}
+
+		this.afterPreEdit = null;
 
 		if ("preEdit" in this) {
 			$.unbind(this.element, ".mavo:preedit .mavo:edit");
