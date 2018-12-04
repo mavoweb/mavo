@@ -148,17 +148,6 @@ var _ = Mavo.Primitive = $.Class({
 			Mavo.setAttributeShy(this.element, "mv-attribute", "none");
 		}
 
-		if (this.config.observer !== false) {
-			// Observe future mutations to this property, if possible
-			// Properties like input.checked or input.value cannot be observed that way
-			// so we cannot depend on mutation observers for everything :(
-			this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-				if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
-					this.value = this.getValue();
-				}
-			}, {subtree: this.config.subtree, childList: this.config.subtree});
-		}
-
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
@@ -323,6 +312,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		if (!this.preEdit) {
 			this.preEdit = Mavo.promise();
+			this.afterPreEdit = null;
 			this.preEdit.then(evt => {
 				$.unbind(this.element, ".mavo:preedit");
 
@@ -439,52 +429,58 @@ var _ = Mavo.Primitive = $.Class({
 			return this.preEdit.resolve();
 		}
 
-		return this.preEdit.then(evt => {
-			this.sneak(() => {
-				// Actual edit
-				this.element.classList.remove("mv-pending-edit");
+		if (!this.afterPreEdit) {
+			this.afterPreEdit = this.preEdit.then(evt => {
+				this.sneak(() => {
+					// Actual edit
+					this.element.classList.remove("mv-pending-edit");
 
-				if (this.initEdit) {
-					this.initEdit();
-				}
+					if (this.initEdit) {
+						this.initEdit();
+					}
 
-				if (this.popup) {
-					this.popup.prepare();
-					this.popup.show();
-				}
+					if (this.popup) {
+						this.popup.prepare();
+						this.popup.show();
+					}
 
-				if (!this.attribute && !this.popup) {
-					if (this.editor.parentNode != this.element) {
-						this.editorValue = this.value;
+					if (!this.attribute && !this.popup) {
+						if (this.editor.parentNode != this.element) {
+							this.editorValue = this.value;
 
-						if (this.config.hasChildren) {
-							this.element.textContent = "";
+							if (this.config.hasChildren) {
+								this.element.textContent = "";
+							}
+							else {
+								_.setText(this.element, "");
+							}
+
+							this.element.prepend(this.editor);
 						}
-						else {
-							_.setText(this.element, "");
+
+						// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
+						// so this ends up focusing even when it shouldn't
+						if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
+							requestAnimationFrame(() => this.editor.focus());
 						}
 
-						this.element.prepend(this.editor);
+						if (!this.collection) {
+							Mavo.revocably.restoreAttribute(this.element, "tabindex");
+						}
 					}
-
-					// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
-					// so this ends up focusing even when it shouldn't
-					if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
-						this.editor.focus();
-					}
-
-					if (!this.collection) {
-						Mavo.revocably.restoreAttribute(this.element, "tabindex");
-					}
-				}
+				});
 			});
-		});
+		}
+
+		return this.afterPreEdit;
 	}, // edit
 
 	done: function () {
 		if (this.super.done.call(this) === false) {
 			return false;
 		}
+
+		this.afterPreEdit = null;
 
 		if ("preEdit" in this) {
 			$.unbind(this.element, ".mavo:preedit .mavo:edit");
@@ -678,6 +674,31 @@ var _ = Mavo.Primitive = $.Class({
 		default: function (value) {
 			if (this.value == this._default) {
 				this.value = value;
+			}
+		},
+
+		config: function(config) {
+			if (this._config !== config) {
+				if (config.observer === false) {
+					if (this.observer) {
+						this.observer.stop();
+					}
+				}
+				else {
+					// Observe future mutations to this property, if possible
+					// Properties like input.checked or input.value cannot be observed that way
+					// so we cannot depend on mutation observers for everything :(
+					if (this.observer) {
+						this.observer.run();
+					}
+					else {
+						this.observer = new Mavo.Observer(this.element, this.attribute, records => {
+							if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
+								this.value = this.getValue();
+							}
+						}, {subtree: config.subtree, childList: config.subtree});
+					}
+				}
 			}
 		},
 

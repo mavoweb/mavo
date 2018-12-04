@@ -284,7 +284,7 @@ var _ = Mavo.Functions = {
 		}
 
 		if (num < 10 || num > 20) {
-			var ord = ["th", "st", "nd", "th"][num % 10];
+			var ord = ["th", "st", "nd", "rd", "th"][num % 10];
 		}
 
 		return ord || "th";

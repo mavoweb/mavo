@@ -23,6 +23,7 @@ var _ = Mavo.Script = {
 	},
 
 	binaryOperation: function(a, b, o = {}) {
+		o.scalar = typeof o === "function" ? o : o.scalar;
 		var result;
 
 		if (Array.isArray(b)) {
