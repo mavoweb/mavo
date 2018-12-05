@@ -89,7 +89,7 @@ This file has utility functions used throughout the codebase. All functions are 
 * `load()` loads CSS or JS files asynchronously and returns a promise.
 * `readFile()` reads and returns the file content.
 * `toJSON()` converts to JSON with a given format.
-* `saveToJSON()` convert to JSON even if you have loops.
+* `safeToJSON()` convert to JSON even if you have loops.
     * When an object has a circular reference, this function will drop the reference.
 * `objectify()` takes a primitive and returns an object that functions as closely as possible to the primitive.
     * Allows Mavo primitives to have metadata/properties (e.g. toNode) to make them work in Mavo expressions.
