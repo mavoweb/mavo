@@ -67,18 +67,18 @@ var _ = Mavo.UI.Popup = $.Class({
 		if (this.editor.matches("select")) {
 			this.editor.size = Math.min(10, this.editor.children.length);
 		}
+		var _popup = this;
+		this.hideCallback = evt => {
+			if (!_popup.element.contains(evt.target) && !_popup.primitive.element.contains(evt.target)) {
+				_popup.hide();
+			}
+		};
 	},
 
 	show: function() {
 		$.unbind([this.primitive.element, this.element], ".mavo:showpopup");
 
 		this.shown = true;
-
-		this.hideCallback = evt => {
-			if (!this.element.contains(evt.target) && !this.primitive.element.contains(evt.target)) {
-				this.hide();
-			}
-		};
 
 		this.element.style.transition = "none";
 		this.element.removeAttribute("hidden");
