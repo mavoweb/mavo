@@ -223,9 +223,9 @@ var _ = self.Mavo = $.Class({
 							});
 						}
 
-						if (this.observer) {
-							this.observer.destroy();
-							this.observer = null;
+						if (this.idObserver) {
+							this.idObserver.destroy();
+							this.idObserver = null;
 						}
 					}
 
@@ -234,7 +234,7 @@ var _ = self.Mavo = $.Class({
 
 				if (!callback()) {
 					// No target, perhaps not yet?
-					this.observer = new Mavo.Observer(this.element, "id", callback, {subtree: true});
+					this.idObserver = new Mavo.Observer(this.element, "id", callback, {subtree: true});
 				}
 			}
 
