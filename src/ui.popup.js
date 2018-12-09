@@ -67,10 +67,9 @@ var _ = Mavo.UI.Popup = $.Class({
 		if (this.editor.matches("select")) {
 			this.editor.size = Math.min(10, this.editor.children.length);
 		}
-		var _popup = this;
 		this.hideCallback = evt => {
-			if (!_popup.element.contains(evt.target) && !_popup.primitive.element.contains(evt.target)) {
-				_popup.hide();
+			if (!this.element.contains(evt.target) && !this.primitive.element.contains(evt.target)) {
+				this.hide();
 			}
 		};
 	},
