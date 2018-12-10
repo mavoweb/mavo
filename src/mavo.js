@@ -17,7 +17,7 @@ var _ = self.Mavo = $.Class({
 
 		// Index among other mavos in the page, 1 is first
 		this.index = Object.keys(_.all).length + 1;
-		Object.defineProperty(_.all, this.index - 1, {value: this});
+		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
 		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
