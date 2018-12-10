@@ -118,7 +118,7 @@ var _ = Mavo.Script = {
 	},
 
 	/**
-	 * Mapping of operator symbols to function name.
+	 * Mapping of operator symbols (strings) to function names (strings).
 	 * Populated via addOperator() and addLogicalOperator()
 	 */
 	symbols: {},
@@ -126,6 +126,13 @@ var _ = Mavo.Script = {
 
 	getOperatorName: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
 
+	isComparisonOperator: (op) => {
+		// decides if op, a string, is a comparison operator like < or <=
+		if (op) {
+			let operatorDefinition = _.operators[_.symbols[op]];
+			return operatorDefinition && operatorDefinition.comparison;
+		}
+	},
 	/**
 	 * Operations for elements and scalars.
 	 * Operations between arrays happen element-wise.
@@ -498,11 +505,28 @@ var _ = Mavo.Script = {
 				callee: {type: "Identifier", name}
 			};
 
-			// Flatten same operator calls
-			do {
-				ret.arguments.unshift(nodeLeft.right);
-				nodeLeft = nodeLeft.left;
-			} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
+			if (def.comparison) {
+				ret.callee.name = "compare";
+				// Flatten comparison operator calls: assemble an argument list like:
+				// 3 < 4 < 5 becomes compare(3, "lt", 4, "lt", 5)
+				do {
+					ret.arguments.unshift(nodeLeft.right);
+					let operatorName = _.getOperatorName(nodeLeft.operator); // e.g. "lt"
+					ret.arguments.unshift({
+						type: "Literal",
+						value: operatorName,
+						raw: `"${operatorName}"`,
+					});
+					nodeLeft = nodeLeft.left;
+				} while (def.flatten !== false && _.isComparisonOperator(nodeLeft.operator));
+			}
+ else {
+				// Flatten same operator calls
+				do {
+					ret.arguments.unshift(nodeLeft.right);
+					nodeLeft = nodeLeft.left;
+				} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
+			}
 
 			ret.arguments.unshift(nodeLeft);
 
@@ -648,6 +672,24 @@ for (let name in _.operators) {
 		_.addBinaryOperator(name, details);
 	}
 }
+
+// Takes a list of arguments that consist of interleaved operands and strings
+// representing comparison operations, and returns the result of evaluating the
+// chained comparison.
+// e.g. compare(3, "lt", 4, "lt", 5) means 3 < 4 < 5, or (3 < 4) && (4 < 5)
+Mavo.Functions["compare"] = function(...operands) {
+	let result = true;
+
+	for (let i = 2; i < operands.length; i += 2) {
+		let a = operands[i - 2];
+		let op = operands[i - 1];
+		let b = operands[i];
+		let term = _.binaryOperation(a, b, Mavo.Script.operators[op]);
+		result = _.binaryOperation(result, term, Mavo.Script.operators["and"]);
+	}
+
+	return result;
+};
 
 var aliases = {
 	average: "avg",
