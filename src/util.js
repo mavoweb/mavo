@@ -195,7 +195,7 @@ var _ = $.extend(Mavo, {
 		return ret;
 	},
 
-	elementData: new WeakMap(),
+	elementData: new Map(),
 
 	/**
 	 * Get node from path or get path of a node to an ancestor
