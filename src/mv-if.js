@@ -24,7 +24,7 @@ Mavo.Expressions.directive("mv-if", {
 					// When the element is detached, mv-change events from properties
 					// do not propagate up to the group so expressions do not recalculate.
 					// We must do this manually.
-					this.element.addEventListener("mv-change", evt => {
+					$.bind(this.element, "mv-change", evt => {
 						// Cannot redispatch synchronously [why??]
 						requestAnimationFrame(() => {
 							if (!this.element.parentNode) { // out of the DOM?

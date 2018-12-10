@@ -84,7 +84,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			else if (o.condition && !o.condition.call(this.mavo)) {
 				this.remove(id);
 			}
-
+			this[id].setAttribute('data-mavo-id', this.mavo.id);
 			for (var events in o.events) {
 				$.bind(this[id], events, o.events[events].bind(this.mavo));
 			}

@@ -151,6 +151,7 @@ var _ = Mavo.Primitive = $.Class({
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
+		this.element.setAttribute('data-mavo-id', (this.mavo || mavo).id);
 	},
 
 	get editorValue() {
@@ -253,7 +254,7 @@ var _ = Mavo.Primitive = $.Class({
 			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
 			this.editorValue = this.value;
 		}
-
+		this.editor.setAttribute('data-mavo-id', this.mavo.id);
 		$.bind(this.editor, {
 			"input change": evt => {
 				this.value = this.editorValue;
@@ -269,7 +270,7 @@ var _ = Mavo.Primitive = $.Class({
 		var multiline = this.editor.matches("textarea");
 
 		if (!multiline) {
-			this.editor.addEventListener("focus", evt => {
+			$.bind(this.editor, "focus", evt => {
 				this.editor.select && this.editor.select();
 			});
 		}
@@ -845,7 +846,7 @@ var _ = Mavo.Primitive = $.Class({
 				attribute = null;
 			}
 
-			isAttributeDefault = attribute === undefined || attribute == _.getValueAttribute(element);
+			var isAttributeDefault = attribute === undefined || attribute == _.getValueAttribute(element);
 
 			if (!datatype && isAttributeDefault) {
 				datatype = element.getAttribute("datatype") || undefined;

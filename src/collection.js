@@ -614,8 +614,8 @@ var _ = Mavo.Collection = $.Class({
 			if (this.property) {
 				button.classList.add(`mv-add-${this.property}`);
 			}
-
-			button.addEventListener("click", evt => {
+			button.setAttribute('data-mavo-id', this.mavo.id);
+			$.bind(button, "click", evt => {
 				evt.preventDefault();
 
 				this.editItem(this.add());

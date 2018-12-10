@@ -363,12 +363,12 @@ var _ = $.extend(Mavo, {
 				observer.observe(element);
 
 				var callback = evt => {
-					element.removeEventListener("mv-inview", callback);
+					$.unbind(element, "mv-inview", callback);
 					evt.stopPropagation();
 					resolve();
 				};
 
-				element.addEventListener("mv-inview", callback);
+				$.bind(element, "mv-inview", callback);
 			});
 		}
 	},

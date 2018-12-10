@@ -213,8 +213,8 @@ _.register({
 						};
 
 						mainInput.value = url;
-						this.element.addEventListener("load", onload);
-						this.element.addEventListener("error", onerror);
+						$.bind(this.element, "load", onload);
+						$.bind(this.element, "error", onerror);
 					});
 				};
 
@@ -253,7 +253,7 @@ _.register({
 						upload(evt.dataTransfer.files[0]);
 					}
 				};
-
+				this.element.setAttribute('data-mavo-id', this.mavo.id);
 				$.bind(this.element, uploadEvents);
 
 				return popup = $.create({
@@ -398,7 +398,7 @@ _.register({
 			$.properties(toCheck, {checked: true});
 		},
 		init: function(element) {
-			this.mavo.element.addEventListener("change", evt => {
+			$.bind(this.mavo.element, "change", evt => {
 				if (evt.target.name == element.name) {
 					this.value = this.getValue();
 				}
@@ -415,7 +415,7 @@ _.register({
 			if (this.attribute === "mv-clicked") {
 				element.setAttribute("mv-clicked", "0");
 
-				element.addEventListener("click", evt => {
+				$.bind(element, "click", evt => {
 					let clicked = +element.getAttribute("mv-clicked") || 0;
 					this.value = ++clicked;
 				});

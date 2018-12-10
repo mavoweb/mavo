@@ -55,7 +55,8 @@ var _ = Mavo.UI.Itembar = $.Class({
 		}
 
 		this.element.setAttribute("hidden", "");
-
+		this.element.setAttribute('data-mavo-id', this.mavo.id);
+		this.item.element.setAttribute('data-mavo-id', this.mavo.id);
 		$.bind([this.item.element, this.element], "focusin mouseover", this);
 
 		$.bind(this.element, {
@@ -66,8 +67,8 @@ var _ = Mavo.UI.Itembar = $.Class({
 				this.item.element.classList.remove("mv-highlight");
 			}
 		});
-
-		this.dragHandle.addEventListener("keydown", evt => {
+		this.dragHandle.setAttribute('data-mavo-id', this.mavo.id);
+		$.bind(this.dragHandle, "keydown", evt => {
 			if (evt.target === this.dragHandle && this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
 				// Arrow keys
 				this.collection.move(this.item, evt.keyCode <= 38? -1 : 1);
@@ -84,7 +85,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 			drag: this.buttonSelector("drag")
 		};
 
-		this.element.addEventListener("click", evt => {
+		$.bind(this.element, "click", evt => {
 			if (this.item.collection.editing) {
 				if (evt.target.matches(selectors.add)) {
 					var newItem = this.collection.add(null, this.item.index);

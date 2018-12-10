@@ -60,6 +60,9 @@ var _ = Mavo.UI.Popup = $.Class({
 					}
 				},
 				transitionend: this.position
+			},
+			attributes: {
+				"data-mavo-id": this.primitive.mavo.id
 			}
 		});
 
@@ -67,18 +70,17 @@ var _ = Mavo.UI.Popup = $.Class({
 		if (this.editor.matches("select")) {
 			this.editor.size = Math.min(10, this.editor.children.length);
 		}
+		this.hideCallback = evt => {
+			if (!this.element.contains(evt.target) && !this.primitive.element.contains(evt.target)) {
+				this.hide();
+			}
+		};
 	},
 
 	show: function() {
 		$.unbind([this.primitive.element, this.element], ".mavo:showpopup");
 
 		this.shown = true;
-
-		this.hideCallback = evt => {
-			if (!this.element.contains(evt.target) && !this.primitive.element.contains(evt.target)) {
-				this.hide();
-			}
-		};
 
 		this.element.style.transition = "none";
 		this.element.removeAttribute("hidden");

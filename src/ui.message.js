@@ -15,7 +15,7 @@ var _ = Mavo.UI.Message = $.Class({
 			},
 			[this.mavo.bar? "after" : "start"]: (this.mavo.bar || this.mavo).element
 		});
-
+		this.element.setAttribute('data-mavo-id', this.mavo.id);
 		if (o.style) {
 			$.style(this.element, o.style);
 		}
@@ -52,22 +52,24 @@ var _ = Mavo.UI.Message = $.Class({
 					"click": evt => this.close()
 				},
 				start: this.element,
-				title: this.mavo._("dismiss")
+				title: this.mavo._("dismiss"),
+				attributes:{
+					"data-mavo-id": this.mavo.id
+				}
 			});
 		}
 
 		if (o.dismiss.timeout) {
 			var timeout = typeof o.dismiss.timeout === "number"? o.dismiss.timeout : 5000;
-			var closeTimeout;
 
 			$.bind(this.element, {
-				mouseenter: e => clearTimeout(closeTimeout),
-				mouseleave: Mavo.rr(e => closeTimeout = setTimeout(() => this.close(), timeout)),
+				mouseenter: e => clearTimeout(this.closeTimeout),
+				mouseleave: Mavo.rr(e => this.closeTimeout = setTimeout(() => this.close(), timeout)),
 			});
 		}
 
 		if (o.dismiss.submit) {
-			this.element.addEventListener("submit", evt => {
+			$.bind(this.element, "submit", evt => {
 				evt.preventDefault();
 				this.close(evt.target);
 			});
@@ -75,6 +77,9 @@ var _ = Mavo.UI.Message = $.Class({
 	},
 
 	close: function(resolve) {
+		// clearTimeout, make the callback available for garbage collection, and make it easier to debug memory issues
+		// it does nothing if there is no timeout callback.
+		clearTimeout(this.closeTimeout);
 		var duration = this.element.style.transition ? 1000 * parseFloat(window.getComputedStyle(this.element, null).transitionDuration) : 400;
 		$.transition(this.element, {opacity: 0}, duration)
 		.then(() => {

@@ -17,7 +17,7 @@ var _ = self.Mavo = $.Class({
 
 		// Index among other mavos in the page, 1 is first
 		this.index = Object.keys(_.all).length + 1;
-		Object.defineProperty(_.all, this.index - 1, {value: this});
+		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
 		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
@@ -129,7 +129,7 @@ var _ = self.Mavo = $.Class({
 
 		// Prevent editing properties inside <summary> to open and close the summary (fix bug #82)
 		if ($("summary [property]:not([typeof])")) {
-			this.element.addEventListener("click", evt => {
+			$.bind(this.element, "click", evt => {
 				if (evt.target != document.activeElement) {
 					evt.preventDefault();
 				}
@@ -223,9 +223,9 @@ var _ = self.Mavo = $.Class({
 							});
 						}
 
-						if (observer) {
-							observer.destroy();
-							observer = null;
+						if (this.idObserver) {
+							this.idObserver.destroy();
+							this.idObserver = null;
 						}
 					}
 
@@ -233,8 +233,8 @@ var _ = self.Mavo = $.Class({
 				};
 
 				if (!callback()) {
-					// No target, perhaps not yet?
-					var observer = new Mavo.Observer(this.element, "id", callback, {subtree: true});
+					// No target, perhaps not yet? keep track of this observer to delete later.
+					this.idObserver = new Mavo.Observer(this.element, "id", callback, {subtree: true});
 				}
 			}
 
@@ -265,7 +265,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		// Keyboard navigation
-		this.element.addEventListener("keydown", evt => {
+		$.bind(this.element, "keydown", evt => {
 			// Ctrl + S or Cmd + S to save
 			if (this.permissions.save && evt.keyCode == 83 && evt[_.superKey] && !evt.altKey) {
 				evt.preventDefault();
@@ -648,6 +648,9 @@ var _ = self.Mavo = $.Class({
 							this.undoDelete();
 							this.deletionNotice.close(true);
 						}
+					},
+					attributes: {
+						"data-mavo-id": this.id
 					}
 				}
 			], {
@@ -852,8 +855,8 @@ requestAnimationFrame(() => {
 		$.include(!polyfills.length, polyfillURL)
 	);
 
-	_.inited = $.ready().then(() => {
-		$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+	_.inited = $.ready().then(() => { //gm custom code: skip attribute update for activating apps manually.
+		//$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
 		return _.ready;
 	})
 	.catch(console.error)
