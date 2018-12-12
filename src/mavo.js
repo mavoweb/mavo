@@ -853,7 +853,7 @@ requestAnimationFrame(() => {
 	);
 
 	_.inited = $.ready().then(() => {
-		$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+		//$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
 		return _.ready;
 	})
 	.catch(console.error)
