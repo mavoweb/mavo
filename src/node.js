@@ -132,7 +132,7 @@ var _ = Mavo.Node = $.Class({
 			this.itembar.destroy();
 		}
 
-		_.all[this.uid] = null;
+		delete _.all[this.uid];
 	},
 
 	getData: function(o = {}) {
