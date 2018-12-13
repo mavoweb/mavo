@@ -855,8 +855,13 @@ requestAnimationFrame(() => {
 		$.include(!polyfills.length, polyfillURL)
 	);
 
-	_.inited = $.ready().then(() => { //gm custom code: skip attribute update for activating apps manually.
-		//$.attributes($$(_.selectors.init), {"mv-progress": "Loading"});
+	_.inited = $.ready().then(() => {
+		$$(_.selectors.init).forEach(function(elem) {
+			// skip if an instance has been created, for example by another script.
+			if (!Mavo.get(elem)) {
+				elem.setAttribute("mv-progress", "Loading");
+			}
+		});
 		return _.ready;
 	})
 	.catch(console.error)
