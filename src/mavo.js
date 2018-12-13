@@ -308,6 +308,87 @@ var _ = self.Mavo = $.Class({
 		Mavo.hooks.run("init-end", this);
 	},
 
+	destroy: function(){
+		// first remove observers.
+		this.backendObserver.destroy();
+		this.modeObserver.destroy();
+		this.idObserver && this.idObserver.destroy();
+		this.backendObserver = this.modeObserver = this.observer = null;
+
+		if (this.bar && this.bar.resizeObserver) {
+			this.bar.resizeObserver.disconnect();
+				this.bar.resizeObserver = null;
+		}
+		//remove global observer, it will be created again next time the "InView.when" method is called
+		if (Mavo.inView.observer) {
+			Mavo.inView.observer.disconnect();
+			Mavo.inView.observer = null;
+		}
+
+		//remove drag and drop instances. node mavoId should be inserted when creating the instance.
+		var dragulas = Mavo.Collection.dragulas;
+		for (var dr = 0; dr < dragulas.length; dr ++){
+			if(dragulas[dr].mavoId === this.id) {
+				var ddi = dragulas.splice(dr, 1);
+				ddi[0].destroy();
+				dr --;
+			}
+		}
+
+		//walk through nodes to remove reference to dragula
+		// this seems to cause problem in certain versions of OS Chrome, possibly other browsers
+		this.root.walk(function(node){
+			if(node.dragula) {
+				delete node.dragula;
+			}
+		});
+
+		// $.listeners needs to be a Map and allow iterating.
+		for (var [key, value] of $.listeners) {
+			//pupup message such as delete notice is appended to body,
+			//not children root of element, data-mavo-id is required to identify it
+			var dataRoot = key.getAttribute &&
+			key.getAttribute('data-mavo-id') == this.id && this.element;
+
+			// avoid lookup by attribute in ancestors if possible.
+			if(!dataRoot) {
+				dataRoot = document === key && document
+				|| window === key && window
+				|| document.documentElement === key && document.documentElement
+				|| key.closest && key.closest('[mv-app]');
+			}
+
+			if(dataRoot === this.element) {
+				$.unbind(key);
+				$.listeners.delete(key);
+			} else if(!dataRoot){
+				//console.log('unknown entry in Bliss.listeners', key, value, 'while destroying mavo:', this.id, 'element has mavo-id:', key.getAttribute &&
+				//key.getAttribute('data-mavo-id'))
+				//remove entry created by dismiss timeout callback function.
+				// the timeout should have been cleared with bug fix in message.close
+				if(key.classList && key.classList.contains('mv-deleted')){
+					$.unbind(key);
+					$.listeners.delete(key);
+				}
+			}
+		}
+		//failsafe unbind popup listeners. this may not be necessary with $.unbind bug fixed
+		$.unbind(document, "." + this.id);
+
+		// destroy root node will destroy all children too
+		// give sometime for this.root.walk to finish removing reference to dragula.
+		// the next frame is roughly 15-30ms later.
+		requestAnimationFrame(() => {
+			delete Mavo.all[this.id];
+			//.index starts from 1, .all starts from 0
+			delete Mavo.all[this.index - 1];
+			//placeholder to avoid clashes in mavo app index
+			Mavo.all['z_' + this.id] = false;
+			this.root.destroy();
+		});
+
+	},
+
 	get editing() {
 		return this.root.editing;
 	},

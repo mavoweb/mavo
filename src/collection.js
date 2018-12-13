@@ -534,7 +534,8 @@ var _ = Mavo.Collection = $.Class({
 				return item && item.collection.isCompatible(collection);
 			}
 		});
-
+		//insert mavoId to be able to identify and remove this instance
+		this.dragula.mavoId = this.mavo.id;
 		this.dragula.on("drop", (el, target, source) => {
 			var item = Mavo.Node.get(el);
 			var oldIndex = item && item.index;
