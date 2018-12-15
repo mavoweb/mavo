@@ -309,6 +309,11 @@ var _ = self.Mavo = $.Class({
 	},
 
 	destroy: function(){
+		Mavo.hooks.run("mavo-destroy-start", this);
+
+		if (this.editing) {
+			this.done();
+		}
 		// first remove observers.
 		this.backendObserver.destroy();
 		this.modeObserver.destroy();
@@ -334,14 +339,6 @@ var _ = self.Mavo = $.Class({
 				dr --;
 			}
 		}
-
-		//walk through nodes to remove reference to dragula
-		// this seems to cause problem in certain versions of OS Chrome, possibly other browsers
-		this.root.walk(function(node){
-			if(node.dragula) {
-				delete node.dragula;
-			}
-		});
 
 		// $.listeners needs to be a Map and allow iterating.
 		for (var [key, value] of $.listeners) {
@@ -385,6 +382,7 @@ var _ = self.Mavo = $.Class({
 			//placeholder to avoid clashes in mavo app index
 			Mavo.all['z_' + this.id] = false;
 			this.root.destroy();
+			Mavo.hooks.run("mavo-destroy-end", this);
 		});
 
 	},

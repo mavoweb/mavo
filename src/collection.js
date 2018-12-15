@@ -487,6 +487,14 @@ var _ = Mavo.Collection = $.Class({
 		       || c.template == this || this.template == c || this.template && this.template == c.template
 		       || this.accepts.has(c.property) > -1);
 	},
+	
+	// Make sure to remove reference to .dragula
+	// it seems to cause problem on OS chrome.
+	destroy: function(){
+		this.super.destroy.call(this);
+		this.dragula && this.dragula.destroy();
+		this.dragula = null;
+	},
 
 	// Make sure to only call after dragula has loaded
 	getDragula: function() {
