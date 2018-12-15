@@ -55,8 +55,8 @@ var _ = Mavo.UI.Itembar = $.Class({
 		}
 
 		this.element.setAttribute("hidden", "");
-		this.element.setAttribute('data-mavo-id', this.mavo.id);
-		this.item.element.setAttribute('data-mavo-id', this.mavo.id);
+		this.element.setAttribute('mv-ownerapp', this.mavo.id);
+		this.item.element.setAttribute('mv-ownerapp', this.mavo.id);
 		$.bind([this.item.element, this.element], "focusin mouseover", this);
 
 		$.bind(this.element, {
@@ -67,7 +67,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 				this.item.element.classList.remove("mv-highlight");
 			}
 		});
-		this.dragHandle.setAttribute('data-mavo-id', this.mavo.id);
+		this.dragHandle.setAttribute('mv-ownerapp', this.mavo.id);
 		$.bind(this.dragHandle, "keydown", evt => {
 			if (evt.target === this.dragHandle && this.item.editing && evt.keyCode >= 37 && evt.keyCode <= 40) {
 				// Arrow keys

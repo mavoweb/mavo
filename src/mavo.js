@@ -346,9 +346,9 @@ var _ = self.Mavo = $.Class({
 		// $.listeners needs to be a Map and allow iterating.
 		for (var [key, value] of $.listeners) {
 			//pupup message such as delete notice is appended to body,
-			//not children root of element, data-mavo-id is required to identify it
+			//not children root of element, mv-ownerapp is required to identify it
 			var dataRoot = key.getAttribute &&
-			key.getAttribute('data-mavo-id') == this.id && this.element;
+			key.getAttribute('mv-ownerapp') == this.id && this.element;
 
 			// avoid lookup by attribute in ancestors if possible.
 			if(!dataRoot) {
@@ -363,7 +363,7 @@ var _ = self.Mavo = $.Class({
 				$.listeners.delete(key);
 			} else if(!dataRoot){
 				//console.log('unknown entry in Bliss.listeners', key, value, 'while destroying mavo:', this.id, 'element has mavo-id:', key.getAttribute &&
-				//key.getAttribute('data-mavo-id'))
+				//key.getAttribute('mv-ownerapp'))
 				//remove entry created by dismiss timeout callback function.
 				// the timeout should have been cleared with bug fix in message.close
 				if(key.classList && key.classList.contains('mv-deleted')){
@@ -731,7 +731,7 @@ var _ = self.Mavo = $.Class({
 						}
 					},
 					attributes: {
-						"data-mavo-id": this.id
+						"mv-ownerapp": this.id
 					}
 				}
 			], {

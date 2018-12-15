@@ -15,7 +15,7 @@ var _ = Mavo.UI.Message = $.Class({
 			},
 			[this.mavo.bar? "after" : "start"]: (this.mavo.bar || this.mavo).element
 		});
-		this.element.setAttribute('data-mavo-id', this.mavo.id);
+		this.element.setAttribute('mv-ownerapp', this.mavo.id);
 		if (o.style) {
 			$.style(this.element, o.style);
 		}
@@ -54,7 +54,7 @@ var _ = Mavo.UI.Message = $.Class({
 				start: this.element,
 				title: this.mavo._("dismiss"),
 				attributes:{
-					"data-mavo-id": this.mavo.id
+					"mv-ownerapp": this.mavo.id
 				}
 			});
 		}

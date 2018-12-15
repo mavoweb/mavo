@@ -615,7 +615,7 @@ var _ = Mavo.Collection = $.Class({
 			if (this.property) {
 				button.classList.add(`mv-add-${this.property}`);
 			}
-			button.setAttribute('data-mavo-id', this.mavo.id);
+			button.setAttribute('mv-ownerapp', this.mavo.id);
 			$.bind(button, "click", evt => {
 				evt.preventDefault();
 

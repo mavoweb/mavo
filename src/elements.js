@@ -253,7 +253,7 @@ _.register({
 						upload(evt.dataTransfer.files[0]);
 					}
 				};
-				this.element.setAttribute('data-mavo-id', this.mavo.id);
+				this.element.setAttribute('mv-ownerapp', this.mavo.id);
 				$.bind(this.element, uploadEvents);
 
 				return popup = $.create({

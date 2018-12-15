@@ -62,7 +62,7 @@ var _ = Mavo.UI.Popup = $.Class({
 				transitionend: this.position
 			},
 			attributes: {
-				"data-mavo-id": this.primitive.mavo.id
+				"mv-ownerapp": this.primitive.mavo.id
 			}
 		});
 
