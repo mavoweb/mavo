@@ -233,7 +233,7 @@ var _ = self.Mavo = $.Class({
 				};
 
 				if (!callback()) {
-					// No target, perhaps not yet? keep track of this observer to delete later.
+					// No target, perhaps not yet?
 					this.idObserver = new Mavo.Observer(this.element, "id", callback, {subtree: true});
 				}
 			}
