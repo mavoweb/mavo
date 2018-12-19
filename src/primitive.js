@@ -196,6 +196,7 @@ var _ = Mavo.Primitive = $.Class({
 
 		this.defaultObserver && this.defaultObserver.destroy();
 		this.observer && this.observer.destroy();
+		this.originalEditorObserver && this.originalEditorObserver.destroy();
 	},
 
 	isDataNull: function(o) {
