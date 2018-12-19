@@ -490,7 +490,7 @@ var _ = Mavo.Collection = $.Class({
 
 	// Make sure to remove reference to .dragula
 	// it seems to cause problem on OS chrome.
-	destroy: function(){
+	destroy: function() {
 		this.super.destroy.call(this);
 		this.dragula && this.dragula.destroy();
 		this.dragula = null;
