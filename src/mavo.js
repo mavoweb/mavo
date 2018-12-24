@@ -372,15 +372,16 @@ var _ = self.Mavo = $.Class({
 		//failsafe unbind popup listeners. this may not be necessary with $.unbind bug fixed
 		$.unbind(document, "." + this.id);
 
+		delete Mavo.all[this.id];
+		//.index starts from 1, .all starts from 0
+		delete Mavo.all[this.index - 1];
+		//placeholder to avoid clashes in mavo app index
+		Mavo.all['z_' + this.id] = false;
+
 		// destroy root node will destroy all children too
-		// give sometime for this.root.walk to finish removing reference to dragula.
+		// give some time for this.root.walk to finish removing reference to dragula.
 		// the next frame is roughly 15-30ms later.
 		requestAnimationFrame(() => {
-			delete Mavo.all[this.id];
-			//.index starts from 1, .all starts from 0
-			delete Mavo.all[this.index - 1];
-			//placeholder to avoid clashes in mavo app index
-			Mavo.all['z_' + this.id] = false;
 			this.root.destroy();
 			Mavo.hooks.run("mavo-destroy-end", this);
 		});
