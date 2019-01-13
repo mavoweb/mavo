@@ -552,6 +552,13 @@ requestAnimationFrame(() => {
 			}
 		});		
 
+		// Converts all unary Math functions that haven't been defined
+		// in Mavo.Functions to accept a multi-valued argument.
+		Object.getOwnPropertyNames(Math).forEach(property => {
+			if (Math[property].length === 1 && !Mavo.Functions.hasOwnProperty(property)) {
+				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, operand => Math[property](operand));
+			}
+		});
 	});
 });
 
