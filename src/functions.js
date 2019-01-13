@@ -513,32 +513,36 @@ var _ = Mavo.Functions = {
 
 var $u = _.util;
 
-Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
-	const FN = Mavo.Functions[property];
-	const ARRAYS = FN.arrays;
-
-	if (ARRAYS) {
-		if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
-			Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
-		}
-		else if (FN.length === 2 && ARRAYS === true || ARRAYS.length === 2) {
-			Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
-		}
-		else {
-			Mavo.Functions[property] = (...args) => {
-				// Create a list of array arguments to compute element-wise
-				var acceptedArrays = (Array.isArray(ARRAYS) ? ARRAYS.map(n => args[n]) : args).filter(n => Array.isArray(n));
-				var max = Math.max(1, ...acceptedArrays.map(n => n.length));
-				var result = [];
-
-				for (let i = 0; i < max; i++) {
-					result[i] = FN(...args.map(n => acceptedArrays.includes(n) ? n[i] : n));
+requestAnimationFrame(() => {
+	Mavo.dependencies[0].then(() => {
+		Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
+			const FN = Mavo.Functions[property];
+			const ARRAYS = FN.multiValued;
+		
+			if (ARRAYS) {
+				if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
+					Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
 				}
+				else if (FN.length === 2 && ARRAYS === true || ARRAYS.length === 2) {
+					Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
+				}
+				else {
+					Mavo.Functions[property] = (...args) => {
+						var acceptedArrays = (Array.isArray(ARRAYS) ? ARRAYS.map(n => args[n]) : args).filter(n => Array.isArray(n));
+						var max = Math.max(1, ...acceptedArrays.map(n => n.length));
+						var result = [];
+		
+						for (let i = 0; i < max; i++) {
+							result[i] = FN(...args.map(n => acceptedArrays.includes(n) ? n[i] : n));
+						}
+		
+						return max === 1 ? result[0] : result;
+					};
+				}
+			}
+		});		
 
-				return acceptedArrays.length !== 0 ? result : result[0];
-			};
-		}
-	}
+	});
 });
 
 /**
