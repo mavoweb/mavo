@@ -475,8 +475,7 @@ var _ = self.Mavo = $.Class({
 
 		this.inProgress = "Loading";
 
-		return backend.ready.then(() => backend.load())
-		.catch(err => {
+		const load_from_init = async () => {
 			// Try again with init
 			if (this.init && this.init != backend) {
 				backend = this.init;
@@ -484,7 +483,17 @@ var _ = self.Mavo = $.Class({
 			}
 
 			// No init, propagate error
-			return Promise.reject(err);
+			return Promise.reject(err);		
+		}
+
+		return backend.ready.then(() => backend.load())
+		.then(data => {
+			// if we get null data try to load from init 
+			return data === null? load_from_init() : data;
+		})
+		.catch(err => {
+			// if we get an error try to load from init
+			return load_from_init();
 		})
 		.catch(err => {
 			if (err) {
