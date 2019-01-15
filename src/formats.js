@@ -34,7 +34,8 @@ var base = _.Base = $.Class({
 var json = _.JSON = $.Class({
 	extends: _.Base,
 	static: {
-		parse: serialized => Promise.resolve(serialized? JSON.parse(serialized) : null),
+		parse: serialized => Promise.resolve(serialized && (serialized + "").trim() ? 
+			JSON.parse((serialized + "").trim()) : null),
 		stringify: data => Promise.resolve(Mavo.toJSON(data)),
 		extensions: [".json", ".jsonld"]
 	}
