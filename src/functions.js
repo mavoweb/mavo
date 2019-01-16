@@ -530,28 +530,8 @@ requestAnimationFrame(() => {
 				else if (FN.length === 2 && ARRAYS === true || ARRAYS.length === 2) {
 					Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
 				}
-				// Enable support for:
-				// 1. multi-valued arguments in multi-argument functions (arguments.length > 2)
-				// 2. A subset of arguments in a function to be multi valued
-				else {
-					Mavo.Functions[property] = (...args) => {
-						// Create a list of array arguments to compute element-wise
-						var acceptedArrays = (Array.isArray(ARRAYS) ? ARRAYS.map(n => args[n]) : args).filter(n => Array.isArray(n));
-						var max = Math.max(1, ...acceptedArrays.map(n => n.length));
-						var result = [];
-		
-						for (let i = 0; i < max; i++) {
-							// If argument n is multi-valued, return its element at index i, otherwise return n
-							result[i] = FN(...args.map(n => acceptedArrays.includes(n) ? n[i] : n));
-						}
-		
-						// Avoid returning an array if all arguments are single-valued
-						return max === 1 ? result[0] : result;
-					};
-				}
 			}
 		});		
-
 	});
 });
 
