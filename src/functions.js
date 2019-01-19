@@ -527,7 +527,7 @@ requestAnimationFrame(() => {
 				if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
 					Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
 				}
-				else if (FN.length === 2 && ARRAYS === true || ARRAYS.length === 2) {
+				else if (FN.length >= 2 && ARRAYS === true || ARRAYS.length === 2) {
 					Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
 				}
 			}
