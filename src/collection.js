@@ -332,7 +332,7 @@ var _ = Mavo.Collection = $.Class({
 
 			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 
-			item.dataChanged("delete", {index: item.index});
+			item.collection.dataChanged("delete", {index: item.index});
 
 			if (undoable) {
 				this.mavo.setDeleted(item);
