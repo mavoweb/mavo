@@ -251,7 +251,8 @@ var _ = Mavo.UI.Bar = $.Class({
 				cleanup: function() {
 					if (this.editing) {
 						this.done();
-						if (this.bar) {
+						
+						if (this.bar && this.bar.edit) {
 							this.bar.edit.textContent = this._("edit");
 						}
 					}
