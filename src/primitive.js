@@ -878,6 +878,10 @@ var _ = Mavo.Primitive = $.Class({
 					return o.config.setValue(element, value, o.attribute);
 				}
 			}
+			
+			if (value === null) {
+				value = "";
+			}
 
 			if (o.attribute) {
 				if (o.attribute in element && _.useProperty(element, o.attribute) && element[o.attribute] !== value) {
