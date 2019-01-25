@@ -15,7 +15,18 @@ $.extend(_, {
 		return _.date(new Date());
 	},
 
-	year: getDateComponent("year"),
+	year: date => {
+		if (date) {
+			var dateO = $u.date(date);
+
+			// Why +""? We don't want years to be formatted like 2,017!
+			// Why the .match()? For incomplete dates, see #226
+			return dateO? dateO.getFullYear() + "" : (val(date).match(/\b[1-9]\d\d\b|\d+/) || [])[0];
+		}
+
+		return "";
+	},
+
 	month: getDateComponent("month"),
 	day: getDateComponent("day"),
 	weekday: getDateComponent("weekday"),
