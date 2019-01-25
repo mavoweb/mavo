@@ -550,6 +550,12 @@ _.register({
 					// TODO what about mv-expressions?
 					this.element.textContent = this.config.defaultFormats[this.dateType](this.property);
 					this.mavo.expressions.extract(this.element, null);
+
+					if (dateFormat = Mavo.DOMExpression.search(this.element, null)) {
+						this.mavo.treeBuilt.then(() => {
+							dateFormat.update();
+						});
+					}
 				}
 			}
 		},
