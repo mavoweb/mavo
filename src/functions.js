@@ -517,22 +517,20 @@ var $u = _.util;
  * After plugins are loaded, enable
  * multi-valued arguments of Mavo and Math functions
  */
-requestAnimationFrame(() => {
-	Mavo.dependencies[0].then(() => {
-		Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
-			const FN = Mavo.Functions[property];
-			const ARRAYS = FN.multiValued;
-		
-			if (ARRAYS) {
-				if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
-					Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
-				}
-				else if (FN.length >= 2 && ARRAYS === true || ARRAYS.length === 2) {
-					Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
-				}
+Promise.all(Mavo.dependencies).then(() => {
+	Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
+		const FN = Mavo.Functions[property];
+		const ARRAYS = FN.multiValued;
+	
+		if (ARRAYS) {
+			if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
+				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
 			}
-		});		
-	});
+			else if (FN.length >= 2 && ARRAYS === true || ARRAYS.length === 2) {
+				Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
+			}
+		}
+	});		
 });
 
 /**
