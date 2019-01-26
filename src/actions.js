@@ -146,7 +146,7 @@ var _ = Mavo.Actions = {
 
 			var collection = (toNode || fromNodes[0]).closestCollection;
 
-			var ret = _.Functions.add(collection, from, index);
+			var ret = _.Functions.add(from, collection, index);
 			Mavo.Collection.delete(fromNodes, {silent: true});
 			return ret;
 		},
