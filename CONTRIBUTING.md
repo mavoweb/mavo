@@ -1,11 +1,16 @@
-# Reporting a bug?
+# Reporting a bug or asking a question?
 
-- Is your bug about the Mavo **website**? Then you should report it here: https://github.com/mavoweb/mavo.io/issues
-- Is your bug about the [Plugin Directory](https://plugins.mavo.io)? Then please report it here: https://github.com/mavoweb/plugins/issues
+## Is your bug or questiion about Mavo?
+
+- If your bug or question is about the Mavo **website**, you should report it here: https://github.com/mavoweb/mavo.io/issues
+- If your bug or question is about a [plugin](https://plugins.mavo.io), please report it here: https://github.com/mavoweb/plugins/issues
 - Do you want to request a new feature? Unless you’re convinced it's essential and should be in the core, please consider [posting a plugin request](https://github.com/mavoweb/plugins/issues/new) instead.
 
-If you’re reporting a bug, please include a link to an HTML page (or a [codepen](https://codepen.io), [jsbin](http://jsbin.com) etc) that reproduces the issue. Try to make that as small and simple as possible. This is not strictly required, but will greatly improve the chances of us being able to reproduce and fix the bug as soon as possible.
+## Getting a faster and better answer
 
+- It *really* helps us figure out what's wrong if you include a *reduced testcase*. You can go to play.mavo.io, paste in your HTML that is between `<body>` and `</body>` and remove one thing at a time, see if the bug still occurs, and add it back if not. Repeat until there's nothing more that can be removed without making the bug disappear.
+- If you cannot make a reduced testcase, at the very least, include your HTML. It's almost impossible to understand what's going on without being able to see any of your HTML.
+- If you’re asking a question, please mention your level of familiarity with JavaScript (Nothing, beginner, intermediate, expert). Mavo does not require familiarity with JS to be used, but there are JS developers that use Mavo instead of a JS framework, and we need to know what kind of support you need so we can speak your language!
 
 # Want to contribute?
 
