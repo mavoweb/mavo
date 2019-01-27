@@ -2,7 +2,7 @@ Mavo is an HTML-based language for building small scale data-driven websites wit
 
 Useful links:
 
-- mavo.io for info on what Mavo is, demos, usage etc
-- plugins.mavo.io to extend what Mavo can do with plugins
-- play.mavo.io to experiment with Mavo, make bug testcases etc
+- [mavo.io](https://mavo.io) for info on what Mavo is, demos, usage etc
+- [plugins.mavo.io](https://plugins.mavo.io) to extend what Mavo can do with plugins
+- [play.mavo.io](https://play.mavo.io) to experiment with Mavo, make bug testcases etc
 - [CONTRIBUTING.md](https://github.com/mavoweb/mavo/blob/master/CONTRIBUTING.md) for info on asking questions, filing bug reports, and contributing to Mavo’s development
