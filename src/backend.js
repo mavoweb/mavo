@@ -99,9 +99,11 @@ var _ = Mavo.Backend = $.Class({
 
 		if ($.type(req.data) === "object") {
 			if (req.method == "GET") {
-				for (const p in req.data) {
-					call.searchParams.set(p, req.data[p]);
+				for (let p in req.data) {
+					let action = req.data[p] === undefined? "delete" : "set";
+					call.searchParams[action](p, req.data[p]);
 				}
+				
 				delete req.data;
 			}
 			else {
