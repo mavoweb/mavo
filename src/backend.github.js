@@ -435,13 +435,8 @@ var _ = Mavo.Backend.register($.Class({
 
 		return repoInfo.pagesInfo.then(pagesInfo => pagesInfo.html_url + path)
 			.catch(xhr => {
-				// No Github Pages, return rawgit URL
-				if (sha) {
-					return `https://cdn.rawgit.com/${repo}/${sha}/${path}`;
-				}
-				else {
-					return `https://rawgit.com/${repo}/${this.branch}/${path}`;
-				}
+				// No Github Pages, return jsdelivr URLs
+				return `https://cdn.jsdelivr.net/gh/${repo}@${sha || this.branch || "latest"}/${path}`;
 			});
 	},
 
