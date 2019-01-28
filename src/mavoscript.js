@@ -191,7 +191,7 @@ var _ = Mavo.Script = {
 				return ret;
 			},
 			symbol: "mod",
-			precedence: 6
+			precedence: 10
 		},
 		"lte": {
 			comparison: true,
@@ -236,13 +236,14 @@ var _ = Mavo.Script = {
 			},
 			symbol: ["=", "=="],
 			default: true,
-			precedence: 6
+			precedence: 7 // to match other comparison operators in jsep
 		},
 		"neq": {
 			comparison: true,
 			scalar: (a, b) => a != b,
 			symbol: ["!="],
-			default: true
+			default: true,
+			precedence: 7 // to match other comparison operators in jsep
 		},
 		"and": {
 			scalar: (a, b) => a && b,
