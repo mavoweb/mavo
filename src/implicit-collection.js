@@ -1,12 +1,9 @@
 (function($, $$) {
 
-var _ = Mavo.ImplicitCollection = $.Class({
-	extends: Mavo.Node,
-	nodeType: "ImplicitCollection",
-	constructor: function (element, mavo, o) {
-		/*
-		 * Create the template, remove it from the DOM and store it
-		 */
+var _ = Mavo.ImplicitCollection = class ImplicitCollection extends Mavo.Node {
+	constructor (element, mavo, o) {
+		super(element, mavo, o);
+
 		this.children = [];
 		this.liveData = new Mavo.Data(this, []);
 
@@ -14,13 +11,13 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		this.postInit();
 
 		Mavo.hooks.run("implicit-collection-init-end", this);
-	},
+	}
 
 	get length() {
 		return this.children.length;
-	},
+	}
 
-	getData: function(o = {}) {
+	getData (o = {}) {
 		var env = {
 			context: this,
 			options: o,
@@ -51,13 +48,13 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
-	},
+	}
 
 	/**
 	 * Add a new item to this collection
 	 * @param item Element or Mavo object for the new item
 	 */
-	add: function(element) {
+	add (element) {
 		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
 			template: this.template && this.template.children[this.length] || null,
@@ -74,18 +71,18 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		this.liveData.update();
 
 		return item;
-	},
+	}
 
-	edit: function(o = {}) {
-		if (this.super.edit.call(this) === false) {
+	edit (o = {}) {
+		if (super.edit() === false) {
 			return false;
 		}
 
 		// Edit items
 		return Promise.all(this.children.map(item => item.edit(o)));
-	},
+	}
 
-	dataRender: function(data, o = {}) {
+	dataRender (data, o = {}) {
 		if (data !== undefined) {
 			data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
 			var changed = data.length !== this.liveData.length;
@@ -95,6 +92,6 @@ var _ = Mavo.ImplicitCollection = $.Class({
 
 		this.liveData.update();
 	}
-});
+};
 
 })(Bliss, Bliss.$);

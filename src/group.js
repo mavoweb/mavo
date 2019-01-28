@@ -1,9 +1,9 @@
 (function($, $$) {
 
-var _ = Mavo.Group = $.Class({
-	extends: Mavo.Node,
-	nodeType: "Group",
-	constructor: function (element, mavo, o) {
+var _ = Mavo.Group = class Group extends Mavo.Node {
+	constructor (element, mavo, o) {
+		super(element, mavo, o);
+
 		this.children = {};
 
 		this.group = this;
@@ -75,21 +75,21 @@ var _ = Mavo.Group = $.Class({
 		this.postInit();
 
 		Mavo.hooks.run("group-init-end", this);
-	},
+	}
 
 	get isRoot() {
 		return !this.property;
-	},
+	}
 
-	getNames: function(type = "Node") {
+	getNames (type = "Node") {
 		return Object.keys(this.children).filter(p => this.children[p] instanceof Mavo[type]);
-	},
+	}
 
-	getData: function(o = {}) {
+	getData (o = {}) {
 		var env = {
 			context: this,
 			options: o,
-			data: this.super.getData.call(this, o)
+			data: super.getData(o)
 		};
 
 		if (env.data !== undefined) {
@@ -138,17 +138,17 @@ var _ = Mavo.Group = $.Class({
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
-	},
+	}
 
-	edit: function(o = {}) {
-		if (this.super.edit.call(this) === false) {
+	edit (o = {}) {
+		if (super.edit() === false) {
 			return false;
 		}
 
 		return Promise.all(Object.keys(this.children).map(prop => this.children[prop].edit(o)));
-	},
+	}
 
-	dataRender: function(data, o = {}) {
+	dataRender (data, o = {}) {
 		if (!data) {
 			return;
 		}
@@ -238,8 +238,23 @@ var _ = Mavo.Group = $.Class({
 		}
 
 		return changed;
-	},
+	}
 
+	static normalize (element) {
+		// Get & normalize typeof name, if exists
+		if (Mavo.is("group", element)) {
+			var type = Mavo.getAttribute(element, "typeof", "itemtype") || _.DEFAULT_TYPE;
+
+			element.setAttribute("typeof", type);
+
+			return type;
+		}
+
+		return null;
+	}
+};
+
+$.Class(_, {
 	lazy: {
 		liveData: function() {
 			return new Mavo.Data(this, {});
@@ -249,20 +264,7 @@ var _ = Mavo.Group = $.Class({
 	static: {
 		all: new WeakMap(),
 
-		DEFAULT_TYPE: "Item",
-
-		normalize: function(element) {
-			// Get & normalize typeof name, if exists
-			if (Mavo.is("group", element)) {
-				var type = Mavo.getAttribute(element, "typeof", "itemtype") || _.DEFAULT_TYPE;
-
-				element.setAttribute("typeof", type);
-
-				return type;
-			}
-
-			return null;
-		}
+		DEFAULT_TYPE: "Item"
 	}
 });
 

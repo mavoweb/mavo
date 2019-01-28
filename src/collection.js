@@ -2,10 +2,10 @@
 
 Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items", "mv-like");
 
-var _ = Mavo.Collection = $.Class({
-	extends: Mavo.Node,
-	nodeType: "Collection",
-	constructor: function (element, mavo, o) {
+var _ = Mavo.Collection = class Collection extends Mavo.Node {
+	constructor (element, mavo, o) {
+		super(element, mavo, o);
+
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
@@ -29,9 +29,9 @@ var _ = Mavo.Collection = $.Class({
 			// to give the rest of the tree a chance to initialize
 			this.mavo.treeBuilt.then(() => this.init());
 		}
-	},
+	}
 
-	init: function() {
+	init () {
 		if (!this.fromTemplate("templateElement", "accepts", "initialItems", "like", "likeNode")) {
 			this.like = this.templateElement.getAttribute("mv-like");
 
@@ -119,37 +119,30 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		Mavo.hooks.run("collection-init-end", this);
-	},
+	}
 
 	get length() {
 		return this.children.length;
-	},
+	}
 
-	getData: function(o = {}) {
+	getData (o = {}) {
 		var env = {
 			context: this,
-			options: o,
-			data: []
+			options: o
 		};
 
-		for (var i = 0; item = this.children[i]; i++) {
-			var itemData = item.getData(env.options);
-
-			if (Mavo.value(itemData) !== null) {
-				env.data.push(itemData);
-			}
-		}
-
+		env.data = this.children.map(item => item.getData(env.options))
+		                     .filter(itemData => Mavo.value(itemData) !== null)
 		env.data = Mavo.subset(this.data, this.inPath, env.data);
 
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
-	},
+	}
 
 	// Create item but don't insert it anywhere
 	// Mostly used internally
-	createItem: function (element) {
+	createItem (element) {
 		if (!element) {
 			element = this.templateElement.cloneNode(true);
 		}
@@ -168,7 +161,7 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		return item;
-	},
+	}
 
 	/**
 	 * Add a new item to this collection
@@ -176,7 +169,7 @@ var _ = Mavo.Collection = $.Class({
 	 * @param index {Number} Optional. Index of existing item, will be added opposite to list direction
 	 * @param silent {Boolean} Optional. Throw a datachange event? Mainly used internally.
 	 */
-	add: function(item, index, o = {}) {
+	add (item, index, o = {}) {
 		if (item instanceof Node) {
 			item = Mavo.Node.get(item) || this.createItem(item);
 		}
@@ -228,9 +221,9 @@ var _ = Mavo.Collection = $.Class({
 		Mavo.hooks.run("collection-add-end", env);
 
 		return env.item;
-	},
+	}
 
-	splice: function(...actions) {
+	splice (...actions) {
 		actions.forEach(action => {
 			if (action.index === undefined && action.remove && isNaN(action.remove)) {
 				// Remove is an item
@@ -268,10 +261,10 @@ var _ = Mavo.Collection = $.Class({
 		this.liveData.update();
 
 		return changed;
-	},
+	}
 
 	// Move item to this collection from another collection
-	adopt: function(item) {
+	adopt (item) {
 		if (item.collection) {
 			// It belongs to another collection, delete from there first
 			item.collection.splice({remove: item});
@@ -300,9 +293,9 @@ var _ = Mavo.Collection = $.Class({
 
 			item.template = this.itemTemplate;
 		}
-	},
+	}
 
-	delete: function(item, {silent, undoable = !silent, transition = !silent} = {}) {
+	delete (item, {silent, undoable = !silent, transition = !silent} = {}) {
 		item.element.classList.remove("mv-highlight");
 
 		this.splice({remove: item});
@@ -340,13 +333,13 @@ var _ = Mavo.Collection = $.Class({
 
 			return item;
 		});
-	},
+	}
 
 	/**
 	 * Move existing item to a new position. Wraps around if position is out of bounds.
 	 * @offset relative position
 	 */
-	move: function(item, offset) {
+	move (item, offset) {
 		var index = item.index + offset + (offset > 0);
 
 		index = Mavo.wrap(index, this.children.length + 1);
@@ -356,9 +349,9 @@ var _ = Mavo.Collection = $.Class({
 		if (item instanceof Mavo.Primitive && item.itembar) {
 			item.itembar.reposition();
 		}
-	},
+	}
 
-	editItem: function(item, o = {}) {
+	editItem (item, o = {}) {
 		var when = o.immediately? Promise.resolve() : Mavo.inView.when(item.element);
 
 		return when.then(() => {
@@ -370,10 +363,10 @@ var _ = Mavo.Collection = $.Class({
 
 			return item.edit(o);
 		});
-	},
+	}
 
-	edit: function(o = {}) {
-		if (this.super.edit.call(this) === false) {
+	edit (o = {}) {
+		if (super.edit() === false) {
 			return false;
 		}
 
@@ -392,10 +385,10 @@ var _ = Mavo.Collection = $.Class({
 
 		// Edit items, maybe insert item bar
 		return Promise.all(this.children.map(item => this.editItem(item, o)));
-	},
+	}
 
-	done: function() {
-		if (this.super.done.call(this) === false) {
+	done () {
+		if (super.done() === false) {
 			return false;
 		}
 
@@ -408,14 +401,14 @@ var _ = Mavo.Collection = $.Class({
 				item.itembar.remove();
 			}
 		});
-	},
+	}
 
-	dataChanged: function(action, o = {}) {
+	dataChanged (action, o = {}) {
 		o.element = o.element || this.marker;
-		return this.super.dataChanged.call(this, action, o);
-	},
+		return super.dataChanged(action, o);
+	}
 
-	dataRender: function(data, o = {}) {
+	dataRender (data, o = {}) {
 		if (data === undefined) {
 			return;
 		}
@@ -474,18 +467,18 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		return changed;
-	},
+	}
 
-	isCompatible: function(c) {
-		return c && this.itemTemplate.nodeType == c.itemTemplate.nodeType && (c === this
+	isCompatible (c) {
+		return c && this.itemTemplate.constructor == c.itemTemplate.constructor && (c === this
 		       || c.template == this || this.template == c || this.template && this.template == c.template
 		       || this.accepts.has(c.property) > -1);
-	},
+	}
 
 	// Make sure to remove reference to .dragula
 	// it seems to cause problem on OS chrome.
-	destroy: function() {
-		this.super.destroy.call(this);
+	destroy () {
+		super.destroy();
 
 		if (this.dragula) {
 			this.dragula.destroy();
@@ -493,10 +486,10 @@ var _ = Mavo.Collection = $.Class({
 		}
 
 		this.propagate("destroy");
-	},
+	}
 
 	// Make sure to only call after dragula has loaded
-	getDragula: function() {
+	getDragula () {
 		if (this.dragula) {
 			return this.dragula;
 		}
@@ -566,12 +559,46 @@ var _ = Mavo.Collection = $.Class({
 		_.dragulas.push(this.dragula);
 
 		return this.dragula;
-	},
+	}
 
-	getClosestCollection: function() {
+	getClosestCollection () {
 		return this;
-	},
+	}
 
+	static get (element) {
+		// Is it an add button or a marker?
+		var collection = Mavo.data(element, "collection");
+
+		if (collection) {
+			return collection;
+		}
+
+		// Maybe it's a collection item?
+		var item = Mavo.Node.get(element);
+
+		return item && item.collection || null;
+	}
+
+	// Delete multiple items from potentially multiple collections or even multiple mavos
+	static delete (nodes, o = {}) {
+		var deleted = new Mavo.BucketMap({arrays: true});
+
+		var promises = nodes
+			.filter(node => !!node.collection)
+			.map(node => node.collection.delete(node, Object.assign({}, o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
+
+		if (!o.silent && o.undoable !== false) {
+			Promise.all(promises).then(() => {
+
+				deleted.forEach((nodes, mavo) => {
+					mavo.setDeleted(...nodes);
+				});
+			});
+		}
+	}
+};
+
+$.Class(_, {
 	lazy: {
 		bottomUp: function() {
 			/**
@@ -634,37 +661,6 @@ var _ = Mavo.Collection = $.Class({
 
 	static: {
 		dragulas: [],
-		get: element => {
-			// Is it an add button or a marker?
-			var collection = Mavo.data(element, "collection");
-
-			if (collection) {
-				return collection;
-			}
-
-			// Maybe it's a collection item?
-			var item = Mavo.Node.get(element);
-
-			return item && item.collection || null;
-		},
-
-		// Delete multiple items from potentially multiple collections or even multiple mavos
-		delete: (nodes, o = {}) => {
-			var deleted = new Mavo.BucketMap({arrays: true});
-
-			var promises = nodes
-				.filter(node => !!node.collection)
-				.map(node => node.collection.delete(node, Object.assign({}, o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
-
-			if (!o.silent && o.undoable !== false) {
-				Promise.all(promises).then(() => {
-
-					deleted.forEach((nodes, mavo) => {
-						mavo.setDeleted(...nodes);
-					});
-				});
-			}
-		},
 
 		lazy: {
 			dragula: () => $.include(self.dragula, "https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js")

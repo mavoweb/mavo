@@ -585,7 +585,7 @@ var _ = self.Mavo = $.Class({
 			}
 
 			// True if both modes are allowed and node is not group
-			needsEdit = !obj.modes && obj.nodeType != "Group";
+			needsEdit = !obj.modes && !(obj instanceof Mavo.Group);
 
 			return !obj.modes;
 		}, undefined, {descentReturn: true});

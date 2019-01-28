@@ -1,9 +1,9 @@
 (function($, $$) {
 
-var _ = Mavo.Primitive = $.Class({
-	extends: Mavo.Node,
-	nodeType: "Primitive",
-	constructor: function (element, mavo, o) {
+var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
+	constructor(element, mavo, o) {
+		super(element, mavo, o);
+
 		this.liveData = new Mavo.Data(this);
 
 		if (!this.fromTemplate("config", "attribute", "templateValue", "originalEditor")) {
@@ -151,7 +151,7 @@ var _ = Mavo.Primitive = $.Class({
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
-	},
+	}
 
 	get editorValue() {
 		var editor = this.editor || this.originalEditor;
@@ -168,7 +168,7 @@ var _ = Mavo.Primitive = $.Class({
 				return _.getValue(output);
 			}
 		}
-	},
+	}
 
 	set editorValue(value) {
 		if (this.config.setEditorValue && this.datatype !== "boolean") {
@@ -189,25 +189,25 @@ var _ = Mavo.Primitive = $.Class({
 				}
 			}
 		}
-	},
+	}
 
-	destroy: function() {
-		this.super.destroy.call(this);
+	destroy() {
+		super.destroy();
 
 		this.defaultObserver && this.defaultObserver.destroy();
 		this.observer && this.observer.destroy();
 		this.originalEditorObserver && this.originalEditorObserver.destroy();
-	},
+	}
 
-	isDataNull: function(o) {
-		return this.super.isDataNull.call(this, o) || this._value === null || this._value === undefined;
-	},
+	isDataNull(o) {
+		return super.isDataNull(o) || this._value === null || this._value === undefined;
+	}
 
-	getData: function(o = {}) {
+	getData(o = {}) {
 		var env = {
 			context: this,
 			options: o,
-			data: this.super.getData.call(this, o)
+			data: super.getData(o)
 		};
 
 		if (env.data === undefined) {
@@ -225,19 +225,19 @@ var _ = Mavo.Primitive = $.Class({
 		Mavo.hooks.run("node-getdata-end", env);
 
 		return env.data;
-	},
+	}
 
-	sneak: function(callback) {
+	sneak(callback) {
 		return Mavo.Observer.sneak(this.observer, callback);
-	},
+	}
 
-	save: function() {
+	save() {
 		this.savedValue = this.value;
 		this.unsavedChanges = false;
-	},
+	}
 
 	// Called only the first time this primitive is edited
-	initEdit: function () {
+	initEdit () {
 		if (!this.editor && this.originalEditor) {
 			this.editor = this.originalEditor.cloneNode(true);
 		}
@@ -296,12 +296,12 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		this.initEdit = null;
-	},
+	}
 
-	edit: function (o = {}) {
+	edit (o = {}) {
 		var wasEditing = this.editing;
 
-		if (this.super.edit.call(this) === false) {
+		if (super.edit() === false) {
 			// Invalid edit
 			return false;
 		}
@@ -474,10 +474,10 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		return this.afterPreEdit;
-	}, // edit
+	} // edit
 
-	done: function () {
-		if (this.super.done.call(this) === false) {
+	done () {
+		if (super.done() === false) {
 			return false;
 		}
 
@@ -512,9 +512,9 @@ var _ = Mavo.Primitive = $.Class({
 		if (!this.collection) {
 			Mavo.revocably.restoreAttribute(this.element, "tabindex");
 		}
-	},
+	}
 
-	dataRender: function(data, {live, root} = {}) {
+	dataRender(data, {live, root} = {}) {
 		var previousValue = this._value;
 
 		if ($.type(data) === "object") {
@@ -568,47 +568,26 @@ var _ = Mavo.Primitive = $.Class({
 		}
 
 		return this._value !== previousValue;
-	},
+	}
 
-	find: function(property, o = {}) {
+	find(property, o = {}) {
 		if (this.property == property && o.exclude !== this) {
 			return this;
 		}
-	},
+	}
 
 	/**
 	 * Get value from the DOM
 	 */
-	getValue: function(o) {
+	getValue(o) {
 		return _.getValue(this.element, {
 			config: this.config,
 			attribute: this.attribute,
 			datatype: this.datatype
 		});
-	},
+	}
 
-	lazy: {
-		label: function() {
-			return Mavo.Functions.readable(this.property);
-		},
-
-		emptyValue: function() {
-			switch (this.datatype) {
-				case "boolean":
-					return false;
-				case "number":
-					return 0;
-			}
-
-			return "";
-		},
-
-		editorDefaults: function() {
-			return this.editor && _.getConfig(this.editor);
-		}
-	},
-
-	setValue: function (value, o = {}) {
+	setValue (value, o = {}) {
 		this.sneak(() => {
 			if (value === undefined) {
 				value = null;
@@ -665,10 +644,277 @@ var _ = Mavo.Primitive = $.Class({
 		});
 
 		return value;
-	},
+	}
 
-	dataChanged: function(action = "propertychange", o) {
-		return this.super.dataChanged.call(this, action, o);
+	dataChanged (action = "propertychange", o) {
+		return super.dataChanged(action, o);
+	}
+
+	static getText (element) {
+		var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
+
+		if (node && node.nodeType === Node.TEXT_NODE) {
+			return node.nodeValue;
+		}
+		else {
+			return "";
+		}
+	}
+
+	static setText (element, text) {
+		var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
+
+		if (node && node.nodeType === Node.TEXT_NODE) {
+			node.nodeValue = text;
+		}
+		else {
+			element.prepend(text);
+		}
+	}
+
+	static getValueAttribute (element, config = Mavo.Elements.search(element)) {
+		var ret = element.getAttribute("mv-attribute") || config.attribute;
+
+		if (!ret || ret === "null" || ret === "none") {
+			ret = null;
+		}
+
+		return ret;
+	}
+
+	/**
+	 * Only cast if conversion is lossless
+	 */
+	static safeCast (value, datatype) {
+		var existingType = typeof value;
+		var cast = _.cast(value, datatype);
+
+		if (datatype == "boolean") {
+			if (!value) {
+				return false;
+			}
+
+			if (value === "true" || value > 0) {
+				return true;
+			}
+
+			return value;
+		}
+
+		if (datatype == "number") {
+			if (/^[-+]?[0-9.e]+$/i.test(value + "")) {
+				return cast;
+			}
+
+			return value;
+		}
+
+		if (value === null || value === undefined) {
+			return value;
+		}
+
+		return cast;
+	}
+
+	/**
+	 * Cast to a different primitive datatype
+	 */
+	static cast (value, datatype) {
+		switch (datatype) {
+			case "number": return +value;
+			case "boolean": return !!value;
+			case "string": return value + "";
+		}
+
+		return value;
+	}
+
+	static getValue (element, {config, attribute, datatype} = {}) {
+		if (!config) {
+			config = _.getConfig(element, attribute);
+		}
+
+		attribute = config.attribute;
+		datatype = config.datatype;
+
+		if (config.getValue && attribute == config.attribute) {
+			return config.getValue(element);
+		}
+
+		var ret;
+
+		if (attribute in element && _.useProperty(element, attribute)) {
+			// Returning properties (if they exist) instead of attributes
+			// is needed for dynamic elements such as checkboxes, sliders etc
+			ret = element[attribute];
+		}
+		else if (attribute) {
+			ret = element.getAttribute(attribute);
+		}
+		else {
+			ret = element.getAttribute("content") || _.getText(element) || null;
+		}
+
+		return _.safeCast(ret, datatype);
+	}
+
+	static getConfig (element, attribute, datatype) {
+		if (attribute === undefined) {
+			attribute = element.getAttribute("mv-attribute") || undefined;
+		}
+
+		if (attribute == "null" || attribute == "none") {
+			attribute = null;
+		}
+
+		var isAttributeDefault = attribute === undefined || attribute == _.getValueAttribute(element);
+
+		if (!datatype && isAttributeDefault) {
+			datatype = element.getAttribute("datatype") || undefined;
+		}
+
+		var config = Mavo.Elements.search(element, attribute, datatype);
+
+		if (config.attribute === undefined) {
+			config.attribute = attribute || null;
+		}
+
+		if (config.datatype === undefined) {
+			config.datatype = datatype;
+		}
+
+		return config;
+	}
+
+	static setValue (element, value, o = {}) {
+		if (element.nodeType === 1) {
+			if (!o.config) {
+				o.config = _.getConfig(element, o.attribute);
+			}
+
+			o.attribute = o.attribute !== undefined? o.attribute : o.config.attribute;
+			o.datatype = o.datatype !== undefined? o.datatype : o.config.datatype;
+
+			if (o.config.setValue && o.attribute == o.config.attribute) {
+				return o.config.setValue(element, value, o.attribute);
+			}
+		}
+
+		if (value === null && !o.datatype) {
+			value = "";
+		}
+
+		if (o.attribute) {
+			if (o.attribute in element && _.useProperty(element, o.attribute) && element[o.attribute] !== value) {
+				// Setting properties (if they exist) instead of attributes
+				// is needed for dynamic elements such as checkboxes, sliders etc
+				try {
+					var previousValue = element[o.attribute];
+					var newValue = element[o.attribute] = value;
+				}
+				catch (e) {}
+
+				if (previousValue != newValue && o.config.changeEvents) {
+					o.config.changeEvents.split(/\s+/).forEach(type => $.fire(element, type));
+				}
+			}
+
+			// Set attribute anyway, even if we set a property because when
+			// they're not in sync it gets really fucking confusing.
+			if (o.datatype == "boolean") {
+				if (value != element.hasAttribute(o.attribute)) {
+					$.toggleAttribute(element, o.attribute, value, value);
+				}
+			}
+			else if (element.getAttribute(o.attribute) != value) {  // intentionally non-strict, e.g. "3." !== 3
+				element.setAttribute(o.attribute, value);
+			}
+		}
+		else {
+			var presentational = _.format(value, o);
+
+			if (o.node && !o.config.hasChildren) {
+				_.setText(element, presentational);
+			}
+			else {
+				element.textContent = presentational;
+			}
+
+
+			if (presentational !== value && element.setAttribute) {
+				element.setAttribute("content", value);
+			}
+		}
+	}
+
+	/**
+	 *  Set/get a property or an attribute?
+	 * @return {Boolean} true to use a property, false to use the attribute
+	 */
+	static useProperty (element, attribute) {
+		if (["href", "src"].indexOf(attribute) > -1) {
+			// URL properties resolve "" as location.href, fucking up emptiness checks
+			return false;
+		}
+
+		if (element.namespaceURI == "http://www.w3.org/2000/svg") {
+			// SVG has a fucked up DOM, do not use these properties
+			return false;
+		}
+
+		return true;
+	}
+
+	static format (value, o = {}) {
+		if (o.map && /^select$/i.test(o.map.nodeName)) {
+			for (var i=0, option; option = o.map.options[i]; i++) {
+				if (option.value == value) {
+					return option.textContent;
+				}
+			}
+		}
+
+		if (($.type(value) === "number" || o.datatype == "number")) {
+			var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
+
+			if (!skipNumberFormatting) {
+				return _.formatNumber(value);
+			}
+		}
+
+		if (Array.isArray(value)) {
+			return value.map(_.format).join(", ");
+		}
+
+		if ($.type(value) === "object") {
+			// Oops, we have an object. Print something more useful than [object Object]
+			return Mavo.toJSON(value);
+		}
+
+		return value;
+	}
+};
+
+$.Class(_, {
+	lazy: {
+		label: function() {
+			return Mavo.Functions.readable(this.property);
+		},
+
+		emptyValue: function() {
+			switch (this.datatype) {
+				case "boolean":
+					return false;
+				case "number":
+					return 0;
+			}
+
+			return "";
+		},
+
+		editorDefaults: function() {
+			return this.editor && _.getConfig(this.editor);
+		}
 	},
 
 	live: {
@@ -728,250 +974,6 @@ var _ = Mavo.Primitive = $.Class({
 
 	static: {
 		all: new WeakMap(),
-
-		getText: function(element) {
-			var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
-
-			if (node && node.nodeType === Node.TEXT_NODE) {
-				return node.nodeValue;
-			}
-			else {
-				return "";
-			}
-		},
-
-		setText: function(element, text) {
-			var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
-
-			if (node && node.nodeType === Node.TEXT_NODE) {
-				node.nodeValue = text;
-			}
-			else {
-				element.prepend(text);
-			}
-		},
-
-		getValueAttribute: function (element, config = Mavo.Elements.search(element)) {
-			var ret = element.getAttribute("mv-attribute") || config.attribute;
-
-			if (!ret || ret === "null" || ret === "none") {
-				ret = null;
-			}
-
-			return ret;
-		},
-
-		/**
-		 * Only cast if conversion is lossless
-		 */
-		safeCast: function(value, datatype) {
-			var existingType = typeof value;
-			var cast = _.cast(value, datatype);
-
-			if (datatype == "boolean") {
-				if (!value) {
-					return false;
-				}
-
-				if (value === "true" || value > 0) {
-					return true;
-				}
-
-				return value;
-			}
-
-			if (datatype == "number") {
-				if (/^[-+]?[0-9.e]+$/i.test(value + "")) {
-					return cast;
-				}
-
-				return value;
-			}
-
-			if (value === null || value === undefined) {
-				return value;
-			}
-
-			return cast;
-		},
-
-		/**
-		 * Cast to a different primitive datatype
-		 */
-		cast: function(value, datatype) {
-			switch (datatype) {
-				case "number": return +value;
-				case "boolean": return !!value;
-				case "string": return value + "";
-			}
-
-			return value;
-		},
-
-		getValue: function (element, {config, attribute, datatype} = {}) {
-			if (!config) {
-				config = _.getConfig(element, attribute);
-			}
-
-			attribute = config.attribute;
-			datatype = config.datatype;
-
-			if (config.getValue && attribute == config.attribute) {
-				return config.getValue(element);
-			}
-
-			var ret;
-
-			if (attribute in element && _.useProperty(element, attribute)) {
-				// Returning properties (if they exist) instead of attributes
-				// is needed for dynamic elements such as checkboxes, sliders etc
-				ret = element[attribute];
-			}
-			else if (attribute) {
-				ret = element.getAttribute(attribute);
-			}
-			else {
-				ret = element.getAttribute("content") || _.getText(element) || null;
-			}
-
-			return _.safeCast(ret, datatype);
-		},
-
-		getConfig: function(element, attribute, datatype) {
-			if (attribute === undefined) {
-				attribute = element.getAttribute("mv-attribute") || undefined;
-			}
-
-			if (attribute == "null" || attribute == "none") {
-				attribute = null;
-			}
-
-			var isAttributeDefault = attribute === undefined || attribute == _.getValueAttribute(element);
-
-			if (!datatype && isAttributeDefault) {
-				datatype = element.getAttribute("datatype") || undefined;
-			}
-
-			var config = Mavo.Elements.search(element, attribute, datatype);
-
-			if (config.attribute === undefined) {
-				config.attribute = attribute || null;
-			}
-
-			if (config.datatype === undefined) {
-				config.datatype = datatype;
-			}
-
-			return config;
-		},
-
-		setValue: function (element, value, o = {}) {
-			if (element.nodeType === 1) {
-				if (!o.config) {
-					o.config = _.getConfig(element, o.attribute);
-				}
-
-				o.attribute = o.attribute !== undefined? o.attribute : o.config.attribute;
-				o.datatype = o.datatype !== undefined? o.datatype : o.config.datatype;
-
-				if (o.config.setValue && o.attribute == o.config.attribute) {
-					return o.config.setValue(element, value, o.attribute);
-				}
-			}
-
-			if (value === null && !o.datatype) {
-				value = "";
-			}
-
-			if (o.attribute) {
-				if (o.attribute in element && _.useProperty(element, o.attribute) && element[o.attribute] !== value) {
-					// Setting properties (if they exist) instead of attributes
-					// is needed for dynamic elements such as checkboxes, sliders etc
-					try {
-						var previousValue = element[o.attribute];
-						var newValue = element[o.attribute] = value;
-					}
-					catch (e) {}
-
-					if (previousValue != newValue && o.config.changeEvents) {
-						o.config.changeEvents.split(/\s+/).forEach(type => $.fire(element, type));
-					}
-				}
-
-				// Set attribute anyway, even if we set a property because when
-				// they're not in sync it gets really fucking confusing.
-				if (o.datatype == "boolean") {
-					if (value != element.hasAttribute(o.attribute)) {
-						$.toggleAttribute(element, o.attribute, value, value);
-					}
-				}
-				else if (element.getAttribute(o.attribute) != value) {  // intentionally non-strict, e.g. "3." !== 3
-					element.setAttribute(o.attribute, value);
-				}
-			}
-			else {
-				var presentational = _.format(value, o);
-
-				if (o.node && !o.config.hasChildren) {
-					_.setText(element, presentational);
-				}
-				else {
-					element.textContent = presentational;
-				}
-
-
-				if (presentational !== value && element.setAttribute) {
-					element.setAttribute("content", value);
-				}
-			}
-		},
-
-		/**
-		 *  Set/get a property or an attribute?
-		 * @return {Boolean} true to use a property, false to use the attribute
-		 */
-		useProperty: function(element, attribute) {
-			if (["href", "src"].indexOf(attribute) > -1) {
-				// URL properties resolve "" as location.href, fucking up emptiness checks
-				return false;
-			}
-
-			if (element.namespaceURI == "http://www.w3.org/2000/svg") {
-				// SVG has a fucked up DOM, do not use these properties
-				return false;
-			}
-
-			return true;
-		},
-
-		format: (value, o = {}) => {
-			if (o.map && /^select$/i.test(o.map.nodeName)) {
-				for (var i=0, option; option = o.map.options[i]; i++) {
-					if (option.value == value) {
-						return option.textContent;
-					}
-				}
-			}
-
-			if (($.type(value) === "number" || o.datatype == "number")) {
-				var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
-
-				if (!skipNumberFormatting) {
-					return _.formatNumber(value);
-				}
-			}
-
-			if (Array.isArray(value)) {
-				return value.map(_.format).join(", ");
-			}
-
-			if ($.type(value) === "object") {
-				// Oops, we have an object. Print something more useful than [object Object]
-				return Mavo.toJSON(value);
-			}
-
-			return value;
-		},
 
 		lazy: {
 			formatNumber: () => {
