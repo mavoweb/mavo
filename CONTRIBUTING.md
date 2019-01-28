@@ -260,8 +260,10 @@ This file has utility functions used throughout the codebase. All functions are 
 
 - Change the version in package.json but don't commit yet.
 - Generate files so they get the new version
+- Run `gulp minify` since `gulp watch` doesn't run that
 - Move `mavo.css`, `mavo.js`, `mavo.es5.js`, `mavo.min.js` and `mavo.es5.min.js` to a new folder in `dist`, with the name of the version you’re releasing
 - Delete the `dist/stable` folder
 - Copy the new folder, and name it `stable`
 - Commit and push
 - Create new release on Github
+- `npm publish`

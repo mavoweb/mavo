@@ -133,6 +133,8 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		delete _.all[this.uid];
+
+		this.propagate("destroy");
 	},
 
 	getData: function(o = {}) {
@@ -238,6 +240,8 @@ var _ = Mavo.Node = $.Class({
 
 	save: function() {
 		this.unsavedChanges = false;
+
+		this.propagate("save");
 	},
 
 	propagate: function(callback) {
@@ -254,8 +258,6 @@ var _ = Mavo.Node = $.Class({
 			}
 		}
 	},
-
-	propagated: ["save", "destroy"],
 
 	toJSON: Mavo.prototype.toJSON,
 

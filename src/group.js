@@ -148,8 +148,6 @@ var _ = Mavo.Group = $.Class({
 		return Promise.all(Object.keys(this.children).map(prop => this.children[prop].edit(o)));
 	},
 
-	propagated: ["save", "import"],
-
 	dataRender: function(data, o = {}) {
 		if (!data) {
 			return;

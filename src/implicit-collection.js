@@ -85,8 +85,6 @@ var _ = Mavo.ImplicitCollection = $.Class({
 		return Promise.all(this.children.map(item => item.edit(o)));
 	},
 
-	propagated: ["save"],
-
 	dataRender: function(data, o = {}) {
 		if (data !== undefined) {
 			data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);

@@ -813,20 +813,6 @@ $.proxy = $.classProps.proxy = $.overload(function(obj, property, proxy) {
 	return obj;
 });
 
-$.classProps.propagated = function(proto, names) {
-	Mavo.toArray(names).forEach(name => {
-		var existing = proto[name];
-
-		proto[name] = function() {
-			var ret = existing && existing.apply(this, arguments);
-
-			if (this.propagate && ret !== false) {
-				this.propagate(name);
-			}
-		};
-	});
-};
-
 // :target-within shim
 function updateTargetWithin() {
 	var element = _.getTarget();

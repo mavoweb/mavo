@@ -415,12 +415,6 @@ var _ = Mavo.Collection = $.Class({
 		return this.super.dataChanged.call(this, action, o);
 	},
 
-	save: function() {
-		this.children.forEach(item => item.unsavedChanges = false);
-	},
-
-	propagated: ["save"],
-
 	dataRender: function(data, o = {}) {
 		if (data === undefined) {
 			return;
@@ -492,8 +486,13 @@ var _ = Mavo.Collection = $.Class({
 	// it seems to cause problem on OS chrome.
 	destroy: function() {
 		this.super.destroy.call(this);
-		this.dragula && this.dragula.destroy();
-		this.dragula = null;
+
+		if (this.dragula) {
+			this.dragula.destroy();
+			this.dragula = null;
+		}
+
+		this.propagate("destroy");
 	},
 
 	// Make sure to only call after dragula has loaded
