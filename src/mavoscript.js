@@ -507,29 +507,61 @@ var _ = Mavo.Script = {
 			};
 
 			if (def.comparison) {
-				ret.callee.name = "compare";
-				// Flatten comparison operator calls: assemble an argument list like:
-				// 3 < 4 < 5 becomes compare(3, "lt", 4, "lt", 5)
+				// Flatten comparison operator calls. If all comparison
+				// operators are the same, flatten into one call (to maintain
+				// simplicity of output):
+				// 3 < 4 < 5 becomes lt(3, 4, 5).
+				// Otherwise, assemble an argument list like so:
+				// 3 < 4 = 5 becomes compare(3, "lt", 4, "eq", 5).
+
+				// Create list of {comparison, operand} objects
+				let comparisonOperands = [];
 				do {
-					ret.arguments.unshift(nodeLeft.right);
 					let operatorName = _.getOperatorName(nodeLeft.operator); // e.g. "lt"
-					ret.arguments.unshift({
-						type: "Literal",
-						value: operatorName,
-						raw: `"${operatorName}"`,
+					comparisonOperands.unshift({
+						comparison: operatorName,
+						operand: nodeLeft.right
 					});
 					nodeLeft = nodeLeft.left;
 				} while (def.flatten !== false && _.isComparisonOperator(nodeLeft.operator));
+
+				// Determine if all comparison operators are the same
+				let comparisonsHeterogeneous = false;
+				for (let i = 0; i < comparisonOperands.length - 1; i++) {
+					if (comparisonOperands[i].comparison != comparisonOperands[i+1].comparison) {
+						comparisonsHeterogeneous = true;
+						break;
+					}
+				}
+
+				// Assemble final callee and argument list
+				ret.arguments.push(nodeLeft); // first operand
+				if (comparisonsHeterogeneous) {
+					ret.callee.name = "compare";
+					comparisonOperands.forEach(co => {
+						ret.arguments.push({
+							type: "Literal",
+							value: co.comparison,
+							raw: `"${co.comparison}"`,
+						});
+						ret.arguments.push(co.operand);
+					});
+				}
+				else {
+					comparisonOperands.forEach(co => {
+						ret.arguments.push(co.operand);
+					});
+				}
 			}
- else {
+			else {
 				// Flatten same operator calls
 				do {
 					ret.arguments.unshift(nodeLeft.right);
 					nodeLeft = nodeLeft.left;
 				} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
-			}
 
-			ret.arguments.unshift(nodeLeft);
+				ret.arguments.unshift(nodeLeft);
+			}
 
 			// Operator-specific transformations
 			if (def.postFlattenTransformation) {
