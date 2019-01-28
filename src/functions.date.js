@@ -16,12 +16,14 @@ $.extend(_, {
 	},
 
 	year: date => {
+		date = val(date);
+;
 		if (date) {
 			var dateO = $u.date(date);
 
 			// Why +""? We don't want years to be formatted like 2,017!
 			// Why the .match()? For incomplete dates, see #226
-			return dateO? dateO.getFullYear() + "" : (val(date).match(/\b[1-9]\d\d\b|\d+/) || [])[0];
+			return dateO? dateO.getFullYear() + "" : (date.match(/\b[1-9]\d\d\b|\d+/) || [])[0];
 		}
 
 		return "";
