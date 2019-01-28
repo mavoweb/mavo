@@ -70,8 +70,7 @@ var _ = Mavo.Group = $.Class({
 
 		this.childrenNames = Object.keys(this.children);
 
-		var vocabElement = (this.isRoot? this.element.closest("[vocab]") : null) || this.element;
-		this.vocab = vocabElement.getAttribute("vocab");
+		this.vocab = Mavo.getClosestAttribute(this.element, "vocab");
 
 		this.postInit();
 

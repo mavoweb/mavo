@@ -403,6 +403,11 @@ var _ = $.extend(Mavo, {
 		return null;
 	},
 
+	getClosestAttribute: function(element, attribute) {
+		element = element.closest(`[${attribute}]`);
+		return element? element.getAttribute(attribute) : null;
+	},
+
 	/**
 	 * Get the element identified by the URL hash
 	 */
