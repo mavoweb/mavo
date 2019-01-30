@@ -521,16 +521,32 @@ Promise.all(Mavo.dependencies).then(() => {
 	Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
 		const FN = Mavo.Functions[property];
 		const ARRAYS = FN.multiValued;
-	
+
 		if (ARRAYS) {
 			if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
 				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
 			}
-			else if (FN.length >= 2 && ARRAYS === true || ARRAYS.length === 2) {
-				Mavo.Functions[property] = (a, b) => Mavo.Script.binaryOperation(a, b, FN);
+			else if (ARRAYS === true || ARRAYS.length === 2) {
+				Mavo.Functions[property] = (...args) => {
+					// Define index of multiValued arguments
+					// Fallback to first 2 arguments if not explicitly defined
+					var idxA = ARRAYS[0] || 0;
+					var idxB = ARRAYS[1] || 1;
+
+					return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
+						scalar: (a, b) => {
+							// Replace multiValued argument with its individual elements
+							args[idxA] = a;
+							args[idxB] = b;
+
+							return FN(...args);
+						},
+						...FN
+					});
+				};
 			}
 		}
-	});		
+	});
 });
 
 /**
