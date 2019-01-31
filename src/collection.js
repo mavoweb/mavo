@@ -19,6 +19,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		Mavo.data(this.marker, "collection", this);
 
 		this.templateElement.after(this.marker);
+		this.addButton = this.createAddButton();
 
 		if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
 			// Synchronous init
@@ -29,6 +30,41 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			// to give the rest of the tree a chance to initialize
 			this.mavo.treeBuilt.then(() => this.init());
 		}
+	}
+
+	createAddButton() {
+		// Find add button if provided, or generate one
+		var selector = `button.mv-add-${this.property}`;
+		var group = this.parentGroup.element;
+
+		var button = $$(selector, group).filter(button => {
+			return !this.templateElement.contains(button)  // is outside the template element
+				&& !Mavo.data(button, "collection"); // and does not belong to another collection
+		})[0];
+
+		if (button) {
+			// Custom add button
+			if (button.compareDocumentPosition(this.marker) & Node.DOCUMENT_POSITION_FOLLOWING) {
+				// Button precedes collection, make collection bottom-up if no mv-order is set
+				Mavo.setAttributeShy(this.templateElement, "mv-order", "desc");
+			}
+
+			Mavo.revocably.remove(button);
+		}
+		else {
+			button = $.create("button", {
+				type: "button",
+				className: "mv-ui",
+				textContent: this.mavo._("add-item", this)
+			});
+		};
+
+		button.classList.add("mv-add", `mv-add-${this.property}`);
+		Mavo.data(button, "collection", this);
+
+		button.setAttribute("mv-action", `add(${this.property}${this.bottomUp? ", 0" : ""})`);
+
+		return button;
 	}
 
 	init () {
@@ -181,13 +217,13 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			this.adopt(item);
 		}
 
-		// Add it to the DOM, or fix its place
-		var rel = this.children[index]? this.children[index].element : this.marker;
-		$[this.bottomUp? "after" : "before"](item.element, rel);
-
 		if (index === undefined) {
 			index = this.bottomUp? 0 : this.length;
 		}
+
+		// Add it to the DOM, or fix its place
+		var rel = this.children[index]? this.children[index].element : this.marker;
+		$.before(item.element, rel);
 
 		var env = {context: this, item};
 
@@ -373,9 +409,16 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
 			var tag = this.element.tagName.toLowerCase();
-			var containerSelector = Mavo.selectors.container[tag];
-			var rel = containerSelector? this.marker.parentNode.closest(containerSelector) : this.marker;
-			$[this.bottomUp? "before" : "after"](this.addButton, rel);
+
+			if (tag in Mavo.selectors.container) {
+				var rel = this.marker.parentNode.closest(Mavo.selectors.container[tag]);
+			}
+			else if (this.bottomUp && this.children[0]) {
+				var rel = this.children[0].element;
+			}
+
+			rel = rel || this.marker;
+			Mavo.revocably.add(this.addButton, e => $[this.bottomUp? "before" : "after"](e, rel));
 		}
 
 		// Set up drag & drop
@@ -392,9 +435,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			return false;
 		}
 
-		if (this.addButton.parentNode) {
-			this.addButton.remove();
-		}
+		Mavo.revocably.remove(this.addButton);
 
 		this.propagate(item => {
 			if (item.itembar) {
@@ -450,12 +491,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 			}
 
-			if (this.bottomUp) {
-				(i > 0? this.children[i-1].element : this.marker).after(fragment);
-			}
-			else {
-				this.marker.before(fragment);
-			}
+			this.marker.before(fragment);
 		}
 
 		this.liveData.update();
@@ -605,57 +641,7 @@ $.Class(_, {
 			 * Add new items at the top or bottom?
 			 */
 
-			var order = this.templateElement.getAttribute("mv-order");
-
-			if (order !== null) {
-				// Attribute has the highest priority and overrides any heuristics
-				return /^desc\b/i.test(order);
-			}
-
-			if (!this.addButton.parentNode) {
-				// If add button not in DOM, do the default
-				return false;
-			}
-
-			// If add button is already in the DOM and *before* our template, then we default to prepending
-			return !!(this.addButton.compareDocumentPosition(this.marker) & Node.DOCUMENT_POSITION_FOLLOWING);
-		},
-
-		addButton: function() {
-			// Find add button if provided, or generate one
-			var selector = `button.mv-add-${this.property}`;
-
-			var group = this.marker.parentNode.closest(Mavo.selectors.item);
-
-			if (group) {
-				var button = $$(selector, group).filter(button => {
-					return !this.templateElement.contains(button)  // is outside the template element
-						&& !Mavo.data(button, "collection"); // and does not belong to another collection
-				})[0];
-			}
-
-			if (!button) {
-				button = $.create("button", {
-					type: "button",
-					className: "mv-add",
-					textContent: this.mavo._("add-item", this)
-				});
-			};
-
-			button.classList.add("mv-ui", "mv-add");
-			Mavo.data(button, "collection", this);
-
-			if (this.property) {
-				button.classList.add(`mv-add-${this.property}`);
-			}
-
-			button.addEventListener("click", evt => {
-				evt.preventDefault();
-
-				this.editItem(this.add());
-			});
-
-			return button;
+			return /^desc\b/i.test(this.templateElement.getAttribute("mv-order"));
 		}
 	},
 
