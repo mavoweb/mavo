@@ -352,7 +352,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 										var next = collection.add(undefined, index + i);
 										collection.editItem(next); // TODO add() should take care of this
 
-										copy = this.getCousin(i);
+										var copy = this.getCousin(i);
 										copy.render(lines[i]);
 									}
 
@@ -374,7 +374,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 								var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
 								this.closestCollection.editItem(next);
 
-								copy = this.getCousin(1);
+								var copy = this.getCousin(1);
 								requestAnimationFrame(() => {
 									copy.edit({immediately: true}).then(() => copy.editor.focus());
 								});
