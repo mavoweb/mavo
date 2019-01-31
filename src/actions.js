@@ -98,7 +98,7 @@ var _ = Mavo.Actions = {
 				}
 
 				if (!(collection instanceof Mavo.Collection)) {
-					console.warn("The first parameter of add() needs to be a collection or collection item.");
+					console.warn("No collection or collection item provided to add().");
 					return data;
 				}
 			}
@@ -133,8 +133,7 @@ var _ = Mavo.Actions = {
 
 			if ($.type(to) == "number" && !(toNode && toNode.collection)) {
 				// If to is a number and not a collection item, it's an index
-				index = to;
-				to = undefined;
+				[index, to] = [to];
 			}
 
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
