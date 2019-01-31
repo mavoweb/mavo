@@ -269,15 +269,20 @@ var _ = $.extend(Mavo, {
 	 * Revocably add/remove elements from the DOM
 	 */
 	revocably: {
-		add: function(element, parent) {
+		add: function(element, insert) {
 			var comment = _.revocably.isRemoved(element);
 
 			if (comment && comment.parentNode) {
 				comment.parentNode.replaceChild(element, comment);
 			}
-			else if (element && parent && !element.parentNode) {
+			else if (element && insert && !element.parentNode) {
 				// Has not been revocably removed because it has never even been added
-				parent.appendChild(element);
+				if (typeof insert === "function") {
+					insert(element);
+				}
+				else {
+					insert.appendChild(element);
+				}
 			}
 
 			return comment;
