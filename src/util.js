@@ -664,58 +664,6 @@ var _ = $.extend(Mavo, {
 		}
 	}),
 
-	promise: function(constructor) {
-		var res, rej;
-
-		var promise = new Promise((resolve, reject) => {
-			if (constructor) {
-				constructor(resolve, reject);
-			}
-
-			res = resolve;
-			rej = reject;
-		});
-
-		promise.resolve = a => {
-			res(a);
-			return promise;
-		};
-
-		promise.reject = a => {
-			rej(a);
-			return promise;
-		};
-
-		return promise;
-	},
-
-	defer: delay => new Promise(resolve => delay === undefined? requestAnimationFrame(resolve) : setTimeout(resolve, delay)),
-
-	/**
-	 * Similar to Promise.all() but can handle post-hoc additions
-	 * and does not reject if one promise rejects.
-	 */
-	thenAll: function(iterable) {
-		// Turn rejected promises into resolved ones
-		$$(iterable).forEach(promise => {
-			if ($.type(promise) == "promise") {
-				promise = promise.catch(err => err);
-			}
-		});
-
-		return Promise.all(iterable).then(resolved => {
-			if (iterable.length != resolved.length) {
-				// The list of promises or values changed. Return a new Promise.
-				// The original promise won't resolve until the new one does.
-				return _.thenAll(iterable);
-			}
-
-			// The list of promises or values stayed the same.
-			// Return results immediately.
-			return resolved;
-		});
-	},
-
 	/**
 	 * Run & Return a function
 	 */

@@ -742,7 +742,11 @@ var _ = self.Mavo = $.Class({
 
 		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
 		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
-		dependencies: [],
+		dependencies: [
+			// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
+			$.ready().then(() => _.Plugins.load()),
+		],
+		polyfills: [],
 
 		init: function(container = document) {
 			var mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
@@ -752,6 +756,58 @@ var _ = self.Mavo = $.Class({
 
 			return ret;
 		},
+
+		/**
+		 * Similar to Promise.all() but can handle post-hoc additions
+		 * and does not reject if one promise rejects.
+		 */
+		thenAll: function(iterable) {
+			// Turn rejected promises into resolved ones
+			$$(iterable).forEach(promise => {
+				if ($.type(promise) == "promise") {
+					promise = promise.catch(err => err);
+				}
+			});
+
+			return Promise.all(iterable).then(resolved => {
+				if (iterable.length != resolved.length) {
+					// The list of promises or values changed. Return a new Promise.
+					// The original promise won't resolve until the new one does.
+					return _.thenAll(iterable);
+				}
+
+				// The list of promises or values stayed the same.
+				// Return results immediately.
+				return resolved;
+			});
+		},
+
+		promise: function(constructor) {
+			var res, rej;
+
+			var promise = new Promise((resolve, reject) => {
+				if (constructor) {
+					constructor(resolve, reject);
+				}
+
+				res = resolve;
+				rej = reject;
+			});
+
+			promise.resolve = a => {
+				res(a);
+				return promise;
+			};
+
+			promise.reject = a => {
+				rej(a);
+				return promise;
+			};
+
+			return promise;
+		},
+
+		defer: delay => new Promise(resolve => delay === undefined? requestAnimationFrame(resolve) : setTimeout(resolve, delay)),
 
 		UI: {},
 
@@ -825,47 +881,48 @@ $.extend(_.selectors, {
 
 }
 
+$.each({
+	"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+	"Intl.~locale.en": self.Intl,
+	"IntersectionObserver": self.IntersectionObserver,
+	"Symbol": self.Symbol,
+	"Element.prototype.remove": Element.prototype.remove,
+	"Element.prototype.before": Element.prototype.before,
+	"Element.prototype.after": Element.prototype.after,
+	"Element.prototype.prepend": Element.prototype.prepend
+}, (id, supported) => {
+	if (!supported) {
+		_.polyfills.push(id);
+	}
+});
+
 // Init mavo. Async to give other scripts a chance to modify stuff.
-requestAnimationFrame(() => {
-	var polyfills = [];
-
-	$.each({
-		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
-		"Intl.~locale.en": self.Intl,
-		"IntersectionObserver": self.IntersectionObserver,
-		"Symbol": self.Symbol,
-		"Element.prototype.remove": Element.prototype.remove,
-		"Element.prototype.before": Element.prototype.before,
-		"Element.prototype.after": Element.prototype.after,
-		"Element.prototype.prepend": Element.prototype.prepend
-	}, (id, supported) => {
-		if (!supported) {
-			polyfills.push(id);
-		}
-	});
-
-	var polyfillURL = "https://cdn.polyfill.io/v2/polyfill.min.js?unknown=polyfill&features=" + polyfills.map(a => a + "|gated").join(",");
+_.dependencies.push(_.defer().then(() => {
+	var polyfillURL = "https://cdn.polyfill.io/v2/polyfill.min.js?unknown=polyfill&features=" + _.polyfills.map(a => a + "|gated").join(",");
 
 	_.dependencies.push(
-		// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
-		$.ready().then(() => _.Plugins.load()),
-		$.include(!polyfills.length, polyfillURL)
+		$.include(!_.polyfills.length, polyfillURL)
 	);
 
-	_.inited = $.ready().then(() => {
+	$.ready().then(() => {
 		$$(_.selectors.init).forEach(function(elem) {
-			// skip if an instance has been created, for example by another script.
-			if (!Mavo.get(elem)) {
+			// Skip if an instance has been created, for example by another script.
+			if (!_.get(elem)) {
 				elem.setAttribute("mv-progress", "Loading");
 			}
 		});
+
 		return _.ready;
 	})
 	.catch(console.error)
-	.then(() => Mavo.init());
+	.then(() => {
+		_.init();
+		_.inited.resolve();
+	});
+}));
 
-	_.ready = _.thenAll(_.dependencies);
-});
+_.ready = _.thenAll(_.dependencies);
+_.inited = _.promise();
 
 Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
