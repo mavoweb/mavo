@@ -17,7 +17,7 @@ $.extend(_, {
 
 	year: date => {
 		date = val(date);
-;
+
 		if (date) {
 			var dateO = $u.date(date);
 

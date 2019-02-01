@@ -5,7 +5,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 		this.item = item;
 
 		this.element = $$(`.mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel="${this.item.property}"]`, this.item.element).filter(el => {
-				// Remove item controls meant for other collections
+				// Ignore item controls meant for other collections
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
 
@@ -127,16 +127,6 @@ var _ = Mavo.UI.Itembar = $.Class({
 			this.element.removeAttribute("hidden");
 			this.sticky = this.sticky || sticky;
 			$.bind([this.item.element, this.element], "focusout mouseleave", this);
-
-			if (this.adjacent) {
-				// Position
-				$.style(this.element, {
-					"--mv-item-width": this.item.element.offsetWidth + "px",
-					"--mv-item-height": this.item.element.offsetHeight + "px",
-					"--mv-item-left": this.item.element.offsetLeft + "px",
-					"--mv-item-top": this.item.element.offsetTop + "px"
-				});
-			}
 		}
 	},
 
@@ -183,16 +173,8 @@ var _ = Mavo.UI.Itembar = $.Class({
 	},
 
 	add: function() {
-		if (!this.element.parentNode) {
-			if (!Mavo.revocably.add(this.element)) {
-				if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
-					this.adjacent = true;
-					this.item.element.after(this.element);
-				}
-				else {
-					this.item.element.appendChild(this.element);
-				}
-			}
+		if (!this.element.parentNode && !Mavo.revocably.add(this.element)) {
+			this.item.element.appendChild(this.element);
 		}
 
 		if (this.dragHandle == this.item.element) {
@@ -225,10 +207,6 @@ var _ = Mavo.UI.Itembar = $.Class({
 	live: {
 		sticky: function(v) {
 			this.element.classList.toggle("mv-sticky", v);
-		},
-
-		adjacent: function(v) {
-			this.element.classList.toggle("mv-adjacent", v);
 		}
 	},
 
