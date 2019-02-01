@@ -237,10 +237,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			add: env.item
 		});
 
-		if (env.item.itembar) {
-			env.item.itembar.reposition();
-		}
-
 		if (this.mavo.expressions.active && !o.silent) {
 			requestAnimationFrame(() => {
 				env.changed.forEach(i => {
@@ -381,10 +377,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		index = Mavo.wrap(index, this.children.length + 1);
 
 		this.add(item, index);
-
-		if (item instanceof Mavo.Primitive && item.itembar) {
-			item.itembar.reposition();
-		}
 	}
 
 	editItem (item, o = {}) {

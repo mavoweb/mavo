@@ -173,16 +173,6 @@ var _ = Mavo.UI.Itembar = $.Class({
 		}
 	},
 
-	reposition: function() {
-		if (this.item instanceof Mavo.Primitive) {
-			// This is only needed for lists of primitives, because the item element
-			// does not contain the minibar. In lists of groups, this can be harmful
-			// because it will remove custom positioning
-			this.element.remove();
-			this.add();
-		}
-	},
-
 	live: {
 		sticky: function(v) {
 			this.element.classList.toggle("mv-sticky", v);
