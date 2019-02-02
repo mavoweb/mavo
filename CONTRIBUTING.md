@@ -1,6 +1,6 @@
 # Reporting a bug or asking a question?
 
-## Is your bug or questiion about Mavo?
+## Is your bug or question about Mavo?
 
 - If your bug or question is about the Mavo **website**, you should report it here: https://github.com/mavoweb/mavo.io/issues
 - If your bug or question is about a [plugin](https://plugins.mavo.io), please report it here: https://github.com/mavoweb/plugins/issues
