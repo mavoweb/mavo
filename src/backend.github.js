@@ -90,12 +90,13 @@ var _ = Mavo.Backend.register($.Class({
 		var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
 
 		// Create repo if it doesn’t exist
-		var repoInfo = this.repoInfo || this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
+		var repoInfo = this.repoInfo?
+		               Promise.resolve(this.repoInfo)
+		             : this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
 
 		serialized = o.isEncoded? serialized : _.btoa(serialized);
 
-		return Promise.resolve(repoInfo)
-			.then(repoInfo => {
+		return repoInfo.then(repoInfo => {
 				if (!this.canPush()) {
 					// Does not have permission to commit, create a fork
 					return this.request(`${repoCall}/forks`, {name: this.repo}, "POST")
@@ -147,7 +148,7 @@ var _ = Mavo.Backend.register($.Class({
 			})
 			.then(fileInfo => {
 
-				// Storage points to current user's repo (but maybe they want to submit PR) 
+				// Storage points to current user's repo (but maybe they want to submit PR)
 				if (this.repoInfo.fork) {
 					// Ask if they want to send PR
 					this.forkInfo = this.repoInfo.parent;
@@ -164,8 +165,8 @@ var _ = Mavo.Backend.register($.Class({
 					let params = (new URL(location)).searchParams;
 					params.append("storage", fileInfo.content.download_url);
 					history.pushState({}, "", `${location.pathname}?${params}`);
-					location.replace(`${location.pathname}?${params}`); 
-					
+					location.replace(`${location.pathname}?${params}`);
+
 					// We saved in a fork, do we have a pull request?
 					this.request(`repos/${this.username}/${this.repo}/pulls`, {
 						head: `${this.user.username}:${this.branch}`,
@@ -303,7 +304,7 @@ var _ = Mavo.Backend.register($.Class({
 				}
 			})
 			.then(u => {
-				if (this.user) {	
+				if (this.user) {
 
 					this.permissions.on("logout");
 
@@ -333,7 +334,7 @@ var _ = Mavo.Backend.register($.Class({
 									return repoInfo;
 								}
 
-								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch 
+								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch
 									if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
 										var query = `query {
 													  viewer {
@@ -434,17 +435,12 @@ var _ = Mavo.Backend.register($.Class({
 
 		return repoInfo.pagesInfo.then(pagesInfo => pagesInfo.html_url + path)
 			.catch(xhr => {
-				// No Github Pages, return rawgit URL
-				if (sha) {
-					return `https://cdn.rawgit.com/${repo}/${sha}/${path}`;
-				}
-				else {
-					return `https://rawgit.com/${repo}/${this.branch}/${path}`;
-				}
+				// No Github Pages, return jsdelivr URLs
+				return `https://cdn.jsdelivr.net/gh/${repo}@${sha || this.branch || "latest"}/${path}`;
 			});
 	},
 
-	switchToMyForkDialog: function(forkURL) { 
+	switchToMyForkDialog: function(forkURL) {
 			let params = (new URL(location)).searchParams;
 			params.append("storage", forkURL + "/" + this.path);
 
@@ -460,10 +456,10 @@ var _ = Mavo.Backend.register($.Class({
 			this.notice.closed.then(form => {
 				if (!form) {
 					return;
-				} 
+				}
 
 				history.pushState({}, "", `${location.pathname}?${params}`);
-				location.replace(`${location.pathname}?${params}`); 
+				location.replace(`${location.pathname}?${params}`);
 
 			});
 			return;

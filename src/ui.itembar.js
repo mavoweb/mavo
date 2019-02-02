@@ -5,7 +5,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 		this.item = item;
 
 		this.element = $$(`.mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel="${this.item.property}"]`, this.item.element).filter(el => {
-				// Remove item controls meant for other collections
+				// Ignore item controls meant for other collections
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
 
@@ -20,17 +20,24 @@ var _ = Mavo.UI.Itembar = $.Class({
 				className: "mv-item-bar mv-ui"
 			});
 
+			var bottomUp = this.collection.bottomUp;
 			var buttons = [
 				{
 					tag: "button",
 					type: "button",
 					title: this.mavo._("delete-item", this.item),
-					className: "mv-delete"
+					className: "mv-delete",
+					// Why $item and not this.collection.property?
+					// If there's a nested property with the same name, the name will refer to that
+					// However, this means that if we place the item bar inside another item, the button will not work anymore
+					// It's a tradeoff, and perhaps if it proves to be a problem we can start detecting which one is best
+					"mv-action": "delete($item)"
 				}, {
 					tag: "button",
 					type: "button",
-					title: this.mavo._(`add-item-${this.collection.bottomUp? "after" : "before"}`, this.item),
-					className: "mv-add"
+					title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
+					className: "mv-add",
+					"mv-action": `add($item${bottomUp? ", $index + 1" : ""})`
 				}
 			];
 
@@ -78,33 +85,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 			}
 		});
 
-		var selectors = {
-			add: this.buttonSelector("add"),
-			delete: this.buttonSelector("delete"),
-			drag: this.buttonSelector("drag")
-		};
-
-		this.element.addEventListener("click", evt => {
-			if (this.item.collection.editing) {
-				if (evt.target.matches(selectors.add)) {
-					var newItem = this.collection.add(null, this.item.index);
-
-					if (evt[Mavo.superKey]) {
-						newItem.render(this.item.getData());
-					}
-
-					Mavo.scrollIntoViewIfNeeded(newItem.element);
-
-					return this.collection.editItem(newItem);
-				}
-				else if (evt.target.matches(selectors.delete)) {
-					this.item.collection.delete(item);
-				}
-				else if (evt.target.matches(selectors["drag-handle"])) {
-					evt => evt.target.focus();
-				}
-			}
-		});
+		if (this.dragHandle !== this.item.element) {
+			this.dragHandle.addEventListener("click", evt => evt.target.focus());
+		}
 
 		Mavo.data(this.element, "item", this.item);
 	},
@@ -127,16 +110,6 @@ var _ = Mavo.UI.Itembar = $.Class({
 			this.element.removeAttribute("hidden");
 			this.sticky = this.sticky || sticky;
 			$.bind([this.item.element, this.element], "focusout mouseleave", this);
-
-			if (this.adjacent) {
-				// Position
-				$.style(this.element, {
-					"--mv-item-width": this.item.element.offsetWidth + "px",
-					"--mv-item-height": this.item.element.offsetHeight + "px",
-					"--mv-item-left": this.item.element.offsetLeft + "px",
-					"--mv-item-top": this.item.element.offsetTop + "px"
-				});
-			}
 		}
 	},
 
@@ -183,16 +156,8 @@ var _ = Mavo.UI.Itembar = $.Class({
 	},
 
 	add: function() {
-		if (!this.element.parentNode) {
-			if (!Mavo.revocably.add(this.element)) {
-				if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
-					this.adjacent = true;
-					this.item.element.after(this.element);
-				}
-				else {
-					this.item.element.appendChild(this.element);
-				}
-			}
+		if (!this.element.parentNode && !Mavo.revocably.add(this.element)) {
+			this.item.element.appendChild(this.element);
 		}
 
 		if (this.dragHandle == this.item.element) {
@@ -208,27 +173,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 		}
 	},
 
-	reposition: function() {
-		if (this.item instanceof Mavo.Primitive) {
-			// This is only needed for lists of primitives, because the item element
-			// does not contain the minibar. In lists of groups, this can be harmful
-			// because it will remove custom positioning
-			this.element.remove();
-			this.add();
-		}
-	},
-
-	buttonSelector: function(type) {
-		return `.mv-${type}[mv-rel="${this.item.property}"], [mv-rel="${this.item.property}"] > .mv-${type}`;
-	},
-
 	live: {
 		sticky: function(v) {
 			this.element.classList.toggle("mv-sticky", v);
-		},
-
-		adjacent: function(v) {
-			this.element.classList.toggle("mv-adjacent", v);
 		}
 	},
 

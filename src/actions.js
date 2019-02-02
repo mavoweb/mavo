@@ -60,12 +60,25 @@ var _ = Mavo.Actions = {
 
 	Functions: {
 		/**
-		 * @param ref Collection to add to
 		 * @param data (Optional) data of new item(s)
+		 * @param ref Collection to add to
 		 * @param index {Number} index of new item(s).
 		 * @returns Newly added item(s)
 		 */
-		add: (ref, data, index) => {
+		add: function(data, ref, index) {
+			if (arguments.length < 3) {
+				if (arguments.length <= 1) {
+					// add(ref) signature used
+					[data, ref] = [undefined, data];
+				}
+				else if (arguments.length === 2) {
+					if (ref >= 0 || ref < 0) {
+						// add(ref, index) signature used
+						[data, ref, index] = [undefined, data, ref];
+					}
+				}
+			}
+
 			if (!ref) {
 				return;
 			}
@@ -73,17 +86,6 @@ var _ = Mavo.Actions = {
 			var collection = _.getNode(ref);
 
 			if (!(collection instanceof Mavo.Collection)) {
-				if (data) {
-					// no collection, could it be the second argument?
-					var dataNode = _.getNode(data);
-
-					if (dataNode instanceof Mavo.Collection) {
-						// Yup, order of arguments is fucked
-						collection = dataNode;
-						data = ref;
-					}
-				}
-
 				if (!(collection instanceof Mavo.Collection) && collection && collection.collection) {
 					// Item provided instead of collection
 					var item = collection;
@@ -96,7 +98,7 @@ var _ = Mavo.Actions = {
 				}
 
 				if (!(collection instanceof Mavo.Collection)) {
-					console.warn("The first parameter of add() needs to be a collection or collection item.");
+					console.warn("No collection or collection item provided to add().");
 					return data;
 				}
 			}
@@ -131,8 +133,7 @@ var _ = Mavo.Actions = {
 
 			if ($.type(to) == "number" && !(toNode && toNode.collection)) {
 				// If to is a number and not a collection item, it's an index
-				index = to;
-				to = undefined;
+				[index, to] = [to];
 			}
 
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
@@ -144,7 +145,7 @@ var _ = Mavo.Actions = {
 
 			var collection = (toNode || fromNodes[0]).closestCollection;
 
-			var ret = _.Functions.add(collection, from, index);
+			var ret = _.Functions.add(from, collection, index);
 			Mavo.Collection.delete(fromNodes, {silent: true});
 			return ret;
 		},

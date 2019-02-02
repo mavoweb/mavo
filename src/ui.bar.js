@@ -35,11 +35,6 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.noResize = true;
 		}
 
-		// yes- is deprecated and will be removed
-		if (/\byes-\w+/.test(this.template)) {
-			console.warn(`${this.mavo.id}: You used mv-bar="${this.template}". Note that yes-* in mv-bar is deprecated and will be removed in v0.1.6. Please use the new syntax: http://mavo.io/docs/ui/#bar`);
-		}
-
 		this.controls = _.getControls(this.template);
 
 		if (this.controls.length) {
@@ -251,7 +246,8 @@ var _ = Mavo.UI.Bar = $.Class({
 				cleanup: function() {
 					if (this.editing) {
 						this.done();
-						if (this.bar) {
+
+						if (this.bar && this.bar.edit) {
 							this.bar.edit.textContent = this._("edit");
 						}
 					}

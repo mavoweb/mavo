@@ -100,7 +100,11 @@ var _ = Mavo.Functions = {
 			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
 		}
 
-		return ret === null || !id? null : decodeURIComponent(ret[1]) || "";
+		if (ret === null || !id) {
+			return null;
+		}
+
+		return decodeURIComponent(ret[1] || "");
 	},
 
 	first: (n, arr) => {

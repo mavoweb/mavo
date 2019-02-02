@@ -27,7 +27,6 @@
 	right: 0;
 	margin: .2em 0;
 
-	&.mv-adjacent,
 	tr[mv-multiple] > & { // Table rows cannot be relative, hack to fix that
 		bottom: auto;
 		right: auto;
@@ -37,7 +36,7 @@
 		opacity: 0;
 		pointer-events: none;
 	}
-	
+
 	&:not([hidden]) {
 		transition: .4s opacity;
 	}
@@ -49,12 +48,6 @@
 
 	&:focus-within {
 		opacity: 1;
-	}
-
-	&.mv-adjacent {
-		transform: translate(-100%, -100%) translateX(-.3em);
-		top: var(--mv-item-top);
-		left: calc(var(--mv-item-left) + var(--mv-item-width));
 	}
 
 	button {

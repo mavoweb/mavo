@@ -1,8 +1,7 @@
 (function($, $$) {
 
-var _ = Mavo.Node = $.Class({
-	abstract: true,
-	constructor: function (element, mavo, options = {}) {
+var _ = Mavo.Node = class Node {
+	constructor (element, mavo, options = {}) {
 		if (!element || !mavo) {
 			throw new Error("Mavo.Node constructor requires an element argument and a mavo object");
 		}
@@ -11,7 +10,6 @@ var _ = Mavo.Node = $.Class({
 
 		// Set these first, for debug reasons
 		this.uid = _.all.push(this) - 1;
-		this.nodeType = this.nodeType;
 		this.property = null;
 		this.element = element;
 		this.isHelperVariable = this.element.matches("meta");
@@ -88,38 +86,38 @@ var _ = Mavo.Node = $.Class({
 		}
 
 		Mavo.hooks.run("node-init-end", env);
-	},
+	}
 
 	get editing() {
 		return this.mode == "edit";
-	},
+	}
 
 	get isRoot() {
 		return !this.property;
-	},
+	}
 
 	get name() {
 		return Mavo.Functions.readable(this.property || this.type).toLowerCase();
-	},
+	}
 
 	get saved() {
 		return this.storage !== "none";
-	},
+	}
 
 	get properties() {
 		return Object.keys(this.liveData.data[Mavo.route]);
-	},
+	}
 
 	/**
 	 * Runs after the constructor is done (including the constructor of the inheriting class), synchronously
 	 */
-	postInit: function() {
+	postInit () {
 		if (this.modes == "edit") {
 			this.edit();
 		}
-	},
+	}
 
-	destroy: function() {
+	destroy () {
 		if (this.template) {
 			Mavo.delete(this.template.copies, this);
 		}
@@ -132,20 +130,22 @@ var _ = Mavo.Node = $.Class({
 			this.itembar.destroy();
 		}
 
-		_.all[this.uid] = null;
-	},
+		delete _.all[this.uid];
 
-	getData: function(o = {}) {
+		this.propagate("destroy");
+	}
+
+	getData (o = {}) {
 		if (this.isDataNull(o)) {
 			return null;
 		}
-	},
+	}
 
-	getLiveData: function() {
+	getLiveData () {
 		return this.liveData.proxy;
-	},
+	}
 
-	isDataNull: function(o = {}) {
+	isDataNull (o = {}) {
 		var env = {
 			context: this,
 			options: o,
@@ -155,7 +155,7 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("unit-isdatanull", env);
 
 		return env.result;
-	},
+	}
 
 	/**
 	 * Execute a callback on every node of the Mavo tree
@@ -166,7 +166,7 @@ var _ = Mavo.Node = $.Class({
 	 * 			- descentReturn {Boolean} If callback returns false, just don't descend
 	 * @return false if was stopped via a false return value, true otherwise
 	 */
-	walk: function(callback, path = [], o = {}) {
+	walk (callback, path = [], o = {}) {
 		var walker = (obj, path) => {
 			var ret = callback(obj, path);
 
@@ -188,9 +188,9 @@ var _ = Mavo.Node = $.Class({
 		};
 
 		return walker(this, path);
-	},
+	}
 
-	walkUp: function(callback) {
+	walkUp (callback) {
 		var group = this;
 
 		while (group = group.parentGroup) {
@@ -200,9 +200,9 @@ var _ = Mavo.Node = $.Class({
 				return ret;
 			}
 		}
-	},
+	}
 
-	edit: function() {
+	edit () {
 		this.mode = "edit";
 
 		if (this.mode != "edit") {
@@ -215,9 +215,9 @@ var _ = Mavo.Node = $.Class({
 		});
 
 		Mavo.hooks.run("node-edit-end", this);
-	},
+	}
 
-	done: function() {
+	done () {
 		this.mode = Mavo.getStyle(this.element.parentNode, "--mv-mode") || "read";
 
 		if (this.mode != "read") {
@@ -234,13 +234,15 @@ var _ = Mavo.Node = $.Class({
 		this.propagate("done");
 
 		Mavo.hooks.run("node-done-end", this);
-	},
+	}
 
-	save: function() {
+	save () {
 		this.unsavedChanges = false;
-	},
 
-	propagate: function(callback) {
+		this.propagate("save");
+	}
+
+	propagate (callback) {
 		for (let i in this.children) {
 			let node = this.children[i];
 
@@ -253,21 +255,17 @@ var _ = Mavo.Node = $.Class({
 				}
 			}
 		}
-	},
+	}
 
-	propagated: ["save", "destroy"],
-
-	toJSON: Mavo.prototype.toJSON,
-
-	fromTemplate: function(...properties) {
+	fromTemplate (...properties) {
 		if (this.template) {
 			properties.forEach(property => this[property] = this.template[property]);
 		}
 
 		return !!this.template;
-	},
+	}
 
-	render: function(data, o = {}) {
+	render (data, o = {}) {
 		o.live = o.live || Mavo.in(Mavo.isProxy, data);
 		o.root = o.root || this;
 
@@ -288,7 +286,7 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-render-start", env);
 
 		if (!this.isHelperVariable) {
-			if (!/Collection$/.test(this.nodeType) && Array.isArray(env.data)) {
+			if (!Array.isArray(this.children) && Array.isArray(env.data)) {
 				// We are rendering an array on a singleton, what to do?
 				var properties;
 
@@ -340,9 +338,9 @@ var _ = Mavo.Node = $.Class({
 		Mavo.hooks.run("node-render-end", env);
 
 		return changed;
-	},
+	}
 
-	dataChanged: function(action, o = {}) {
+	dataChanged (action, o = {}) {
 		var change = $.extend({
 			action,
 			property: this.property,
@@ -352,49 +350,49 @@ var _ = Mavo.Node = $.Class({
 
 		$.fire(o.element || this.element, "mv-change", change);
 		this.mavo.changed(change);
-	},
+	}
 
-	toString: function() {
-		return `#${this.uid}: ${this.nodeType} (${this.property})`;
-	},
+	toString () {
+		return `#${this.uid}: ${this.constructor.name} (${this.property})`;
+	}
 
-	getClosestCollection: function() {
+	getClosestCollection () {
 		var closestItem = this.closestItem;
 
 		return closestItem? closestItem.collection : null;
-	},
+	}
 
-	getClosestItem: function() {
-		if (this.collection && /Collection$/.test(this.collection.nodeType)	) {
+	getClosestItem () {
+		if (this.collection && Array.isArray(this.collection.children)) {
 			return this;
 		}
 
 		return this.parentGroup? this.parentGroup.closestItem : null;
-	},
+	}
 
-	getPath: function() {
+	getPath () {
 		var path = this.parent? this.parent.path : [];
 		return this.property? [...path, this.property] : path;
-	},
+	}
 
-	pathFrom: function(node) {
+	pathFrom (node) {
 		var path = this.path;
 		var nodePath = node.path;
 
 		for (var i = 0; i<path.length && nodePath[i] == path[i]; i++) {}
 
 		return path.slice(i);
-	},
+	}
 
-	getDescendant: function(path) {
+	getDescendant (path) {
 		return path.reduce((acc, cur) => acc.children[cur], this);
-	},
+	}
 
 	/**
 	 * Get same node in other item in same collection
 	 * E.g. for same node in the next item, use an offset of -1
 	 */
-	getCousin: function(offset, o = {}) {
+	getCousin (offset, o = {}) {
 		if (!this.closestCollection) {
 			return null;
 		}
@@ -437,9 +435,9 @@ var _ = Mavo.Node = $.Class({
 
 		var relativePath = this.pathFrom(this.closestItem);
 		return item.getDescendant(relativePath);
-	},
+	}
 
-	contains: function(node) {
+	contains (node) {
 		do {
 			if (node === this) {
 				return true;
@@ -450,7 +448,103 @@ var _ = Mavo.Node = $.Class({
 		while (node);
 
 		return false;
-	},
+	}
+
+	static create (element, mavo, o = {}) {
+		if (Mavo.is("multiple", element) && !o.collection) {
+			return new Mavo.Collection(element, mavo, o);
+		}
+
+		return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
+	}
+
+	/**
+	 * Get & normalize property name, if exists
+	 */
+	static getProperty (element) {
+		var property = element.getAttribute("property") || element.getAttribute("itemprop");
+
+		if (!property) {
+			if (element.hasAttribute("property")) { // property used without a value
+				property = element.name || element.id || element.classList[0];
+			}
+			else if (element.matches(Mavo.selectors.multiple)) {
+				// mv-multiple used without property attribute
+				property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection");
+			}
+		}
+
+		if (property) {
+			element.setAttribute("property", property);
+		}
+
+		return property;
+	}
+
+	static generatePropertyName(prefix) {
+		for (var i=""; i<10000; i++) { // 1000 is just a failsafe
+			var name = prefix + i;
+
+			if (!$(Mavo.selectors.specificProperty(name))) {
+				return name;
+			}
+		}
+	}
+
+	static get (element, prioritizePrimitive) {
+		var nodes = (_.elements.get(element) || []).filter(node => !(Array.isArray(node.children)));
+
+		if (nodes.length < 2 || !prioritizePrimitive) {
+			return nodes[0];
+		}
+
+		if (nodes[0] instanceof Mavo.Group) {
+			return nodes[1];
+		}
+	}
+
+	static getClosest (element, prioritizePrimitive) {
+		var node;
+
+		do {
+			node = _.get(element, prioritizePrimitive);
+		} while (!node && (element = element.parentNode));
+
+		return node;
+	}
+
+	static getClosestItem (element) {
+		var item = _.getClosest(element);
+
+		if (item instanceof Mavo.Primitive && !item.collection) {
+			return item.parent;
+		}
+
+		return item;
+	}
+
+	/**
+	 * Get all properties that are inside an element but not nested into other properties
+	 */
+	static children (element) {
+		var ret = Mavo.Node.get(element);
+
+		if (ret) {
+			// element is a Mavo node
+			return [ret];
+		}
+
+		ret = $$(Mavo.selectors.property, element)
+			.map(e => Mavo.Node.get(e))
+			.filter(e => !element.contains(e.parentGroup.element)) // drop nested properties
+			.map(e => e.collection || e);
+
+		return Mavo.Functions.unique(ret);
+	}
+};
+
+$.Class(_, {
+	toJSON: Mavo.prototype.toJSON,
 
 	lazy: {
 		closestCollection: function() {
@@ -463,7 +557,7 @@ var _ = Mavo.Node = $.Class({
 
 		// Are we only rendering and editing a subset of the data?
 		inPath: function() {
-			var attribute = this.nodeType == "Collection"? "mv-multiple-path" : "mv-path";
+			var attribute = this instanceof Mavo.Collection? "mv-multiple-path" : "mv-path";
 
 			return (this.element.getAttribute(attribute) || "").split("/").filter(p => p.length);
 		}
@@ -479,7 +573,7 @@ var _ = Mavo.Node = $.Class({
 				value = false;
 			}
 
-			if (!/Collection$/.test(this.nodeType)) {
+			if (!Array.isArray(this.children)) {
 				this.element.classList.toggle("mv-unsaved-changes", value);
 			}
 
@@ -497,7 +591,7 @@ var _ = Mavo.Node = $.Class({
 				// result in infinite recursion
 				this._mode = value;
 
-				if (!/Collection$/.test(this.nodeType) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
+				if (!Array.isArray(this.children) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
 					// If attribute is not one of the recognized values, leave it alone
 					var set = this.modes || value == "edit";
 					Mavo.Observer.sneak(this.mavo.modeObserver, () => {
@@ -547,99 +641,7 @@ var _ = Mavo.Node = $.Class({
 
 	static: {
 		all: [],
-		elements: new WeakMap(),
-
-		create: function(element, mavo, o = {}) {
-			if (Mavo.is("multiple", element) && !o.collection) {
-				return new Mavo.Collection(element, mavo, o);
-			}
-
-			return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
-		},
-
-		/**
-		 * Get & normalize property name, if exists
-		 */
-		getProperty: function(element) {
-			var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-			if (!property) {
-				if (element.hasAttribute("property")) { // property used without a value
-					property = element.name || element.id || element.classList[0];
-				}
-				else if (element.matches(Mavo.selectors.multiple)) {
-					// mv-multiple used without property attribute
-					property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection");
-				}
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
-
-			return property;
-		},
-
-		generatePropertyName(prefix) {
-			for (var i=""; i<10000; i++) { // 1000 is just a failsafe
-				var name = prefix + i;
-
-				if (!$(Mavo.selectors.specificProperty(name))) {
-					return name;
-				}
-			}
-		},
-
-		get: function(element, prioritizePrimitive) {
-			var nodes = (_.elements.get(element) || []).filter(node => !(/Collection$/.test(node.nodeType)));
-
-			if (nodes.length < 2 || !prioritizePrimitive) {
-				return nodes[0];
-			}
-
-			if (nodes[0] instanceof Mavo.Group) {
-				return nodes[1];
-			}
-		},
-
-		getClosest: function(element, prioritizePrimitive) {
-			var node;
-
-			do {
-				node = _.get(element, prioritizePrimitive);
-			} while (!node && (element = element.parentNode));
-
-			return node;
-		},
-
-		getClosestItem: function(element) {
-			var item = _.getClosest(element);
-
-			if (item instanceof Mavo.Primitive && !item.collection) {
-				return item.parent;
-			}
-
-			return item;
-		},
-
-		/**
-		 * Get all properties that are inside an element but not nested into other properties
-		 */
-		children: function(element) {
-			var ret = Mavo.Node.get(element);
-
-			if (ret) {
-				// element is a Mavo node
-				return [ret];
-			}
-
-			ret = $$(Mavo.selectors.property, element)
-				.map(e => Mavo.Node.get(e))
-				.filter(e => !element.contains(e.parentGroup.element)) // drop nested properties
-				.map(e => e.collection || e);
-
-			return Mavo.Functions.unique(ret);
-		}
+		elements: new WeakMap()
 	}
 });
 

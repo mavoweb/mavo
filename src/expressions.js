@@ -24,7 +24,7 @@ var _ = Mavo.Expressions = $.Class({
 
 	register: function(domexpression) {
 		var ids = this.identifiers;
-
+		domexpression.registeredApp = domexpression.registeredApp || new Set();
 		domexpression.identifiers.forEach(id => {
 			if (!(ids[id] instanceof Set)) {
 				ids[id] = new Set();
@@ -32,8 +32,9 @@ var _ = Mavo.Expressions = $.Class({
 
 			ids[id].add(domexpression);
 
-			if (Mavo.all[id] instanceof Mavo && Mavo.all[id] !== this.mavo) {
-				// Cross-mavo expressions
+			if (Mavo.all[id] instanceof Mavo && Mavo.all[id] !== this.mavo && !domexpression.registeredApp.has(id) ) {
+				// Cross-mavo expressions, make sure to track app id before calling register.
+				domexpression.registeredApp.add(id);
 				Mavo.all[id].expressions.register(domexpression);
 			}
 		});
@@ -46,8 +47,9 @@ var _ = Mavo.Expressions = $.Class({
 			if (ids[id]) {
 				ids[id].delete(this);
 			}
-
-			if (id in Mavo.all) {
+			// just in case domexpresssion has been destroyed by another app during the loop
+			// when another app is destroyed.
+			if (id in Mavo.all && typeof domexpresssion !== "undefined") {
 				// Cross-mavo expressions
 				Mavo.all[id].expressions.unregister(domexpresssion);
 			}
