@@ -239,6 +239,22 @@ var _ = Mavo.Functions = {
 			return Math.max(...$u.numbers(array, arguments));
 		});
 	},
+	
+	atan2: $.extend((dividend, divisor) => Math.atan2(dividend, divisor), {
+		multiValued: true,
+		rightUnary: b => b,
+		default: 1
+	}),
+
+	pow: $.extend((base, exponent) => Math.pow(base, exponent), {
+		multiValued: true,
+		default: 1
+	}),
+
+	imul: $.extend((a, b) => Math.imul(a, b), {
+		multiValued: true,
+		default: 1
+	}),
 
 	count: function(array) {
 		return $u.aggregateCaller(array, (array) => {
@@ -250,7 +266,7 @@ var _ = Mavo.Functions = {
 		return Mavo.toArray(array).slice().reverse();
 	},
 
-	round: function(num, decimals) {
+	round: $.extend((num, decimals) => {
 		if (not(num) || not(decimals) || !isFinite(num)) {
 			return Math.round(num);
 		}
@@ -259,9 +275,13 @@ var _ = Mavo.Functions = {
 			useGrouping: false,
 			maximumFractionDigits: decimals
 		});
-	},
+	}, {
+		multiValued: true,
+		rightUnary: b => b,
+		default: 0
+	}),
 
-	ordinal: function(num) {
+	ordinal: $.extend((num) => {
 		if (empty(num)) {
 			return "";
 		}
@@ -271,9 +291,11 @@ var _ = Mavo.Functions = {
 		}
 
 		return ord || "th";
-	},
+	}, {
+		multiValued: true
+	}),
 
-	digits: (digits, decimals, num) => {
+	digits: $.extend((digits, decimals, num) => {
 		if (num === undefined) {
 			num = decimals;
 			decimals = undefined;
@@ -302,7 +324,9 @@ var _ = Mavo.Functions = {
 			minimumFractionDigits: decimals,
 			maximumFractionDigits: decimals || 20
 		});
-	},
+	}, {
+		multiValued: true
+	}),
 
 	iff: function(condition, iftrue=condition, iffalse=null) {
 		if (Array.isArray(condition)) {
@@ -320,7 +344,7 @@ var _ = Mavo.Functions = {
 	list: (...items) => items,
 
 	// FIXME if step=0 returns NaN
-	random: function(min = 0, max = 100, step = 1) {
+	random: $.extend((min = 0, max = 100, step = 1) => {
 		if (arguments.length == 1) {
 			max = min;
 			min = 0;
@@ -329,7 +353,9 @@ var _ = Mavo.Functions = {
 		var rand = Math.random();
 		var range = (max - min)  / step;
 		return Math.floor(rand * (range + 1)) * step + min;
-	},
+	}, {
+		multiValued: true
+	}),
 
 	shuffle: list => {
 		if (Array.isArray(list)) {
@@ -355,7 +381,7 @@ var _ = Mavo.Functions = {
 	/**
 	 * Replace all occurences of a string with another string
 	 */
-	replace: function(haystack, needle, replacement = "", iterations = 1) {
+	replace: $.extend((haystack, needle, replacement = "", iterations = 1) => {
 		if (Array.isArray(haystack)) {
 			return haystack.map(item => _.replace(item, needle, replacement));
 		}
@@ -371,9 +397,13 @@ var _ = Mavo.Functions = {
 		}
 
 		return ret;
-	},
+	}, {
+		multiValued: true
+	}),
 
-	len: text => str(text).length,
+	len: $.extend(text => str(text).length, {
+		multiValued: true
+	}),
 
 	/**
      * Search if a group, collection, or primitive contains needle
@@ -413,50 +443,83 @@ var _ = Mavo.Functions = {
 	/**
 	 * Case insensitive search
 	 */
-	search: (haystack, needle) => {
+	search: $.extend((haystack, needle) => {
 		haystack = str(haystack);
 		needle = str(needle);
 		return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
-	},
+	}, {
+		multiValued: true,
+		default: null
+	}),
 
-	starts: (haystack, needle) => _.search(str(haystack), str(needle)) === 0,
-	ends: function(haystack, needle) {
+	starts: $.extend((haystack, needle) => _.search(str(haystack), str(needle)) === 0, {
+		multiValued: true,
+		default: null
+	}),
+
+	ends: $.extend((haystack, needle) => {
 		[haystack, needle] = [str(haystack), str(needle)];
 
 		var i = _.search(haystack, needle);
 		return  i > -1 && i === haystack.length - needle.length;
-	},
+	}, {
+		multiValued: true,
+		default: null
+	}),
 
 	join: function(array, glue) {
 		return Mavo.toArray(array).filter(a => !empty(a)).join(str(glue));
 	},
 
-	idify: function(readable) {
+	idify: $.extend(readable => {
 		return str(readable)
 			.normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Convert accented letters to ASCII
 			.replace(/[^\w\s-]/g, "") // Remove remaining non-ASCII characters
 			.trim().replace(/\s+/g, "-") // Convert whitespace to hyphens
 			.toLowerCase();
-	},
+	}, {
+		multiValued: true
+	}),
 
 	// Convert an identifier to readable text that can be used as a label
-	readable: function (identifier) {
+	readable: $.extend(identifier => {
 		// Is it camelCase?
 		return str(identifier)
 				.replace(/([a-z])([A-Z])(?=[a-z])/g, ($0, $1, $2) => $1 + " " + $2.toLowerCase()) // camelCase?
 				.replace(/([a-z0-9])[_\/-](?=[a-z0-9])/g, "$1 ") // Hyphen-separated / Underscore_separated?
 				.replace(/^[a-z]/, $0 => $0.toUpperCase()); // Capitalize
-	},
+	}, {
+		multiValued: true
+	}),
 
-	uppercase: text => str(text).toUpperCase(),
-	lowercase: text => str(text).toLowerCase(),
+	uppercase: $.extend(text => str(text).toUpperCase(), {
+		multiValued: true
+	}),
+	lowercase: $.extend(text => str(text).toLowerCase(), {
+		multiValued: true
+	}),
 
-	from: (haystack, needle) => _.between(haystack, needle),
-	fromlast: (haystack, needle) => _.between(haystack, needle, "", true),
-	to: (haystack, needle) => _.between(haystack, "", needle),
-	tofirst: (haystack, needle) => _.between(haystack, "", needle, true),
+	from: $.extend((haystack, needle) => _.between(haystack, needle), {
+		multiValued: true,
+		default: null
+	}),
 
-	between: (haystack, from, to, tight) => {
+	fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+		multiValued: true,
+		default: null
+	}),
+
+	to: $.extend((haystack, needle) => _.between(haystack, "", needle), {
+		multiValued: true,
+		default: null
+	}),
+
+	tofirst: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
+		multiValued: true,
+		default: null
+	}),
+
+	between: $.extend((haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
 
 		var i1 = from? haystack[tight? "lastIndexOf" : "indexOf"](from) : -1;
@@ -467,21 +530,23 @@ var _ = Mavo.Functions = {
 		}
 
 		return haystack.slice(i1 + 1, i2 === -1 || !to? haystack.length : i2);
-	},
+	}, {
+		multiValued: true
+	}),
 
-	filename: url => Mavo.match(new URL(str(url), Mavo.base).pathname, /[^/]+?$/),
+	filename: $.extend(url => Mavo.match(new URL(str(url), Mavo.base).pathname, /[^/]+?$/), {
+		multiValued: true
+	}),
 
 	json: data => Mavo.safeToJSON(data),
 
-	split: (text, separator = /\s+/) => {
-		return Mavo.Script.binaryOperation(text, separator, {
-			scalar: (text, separator) => {
-				text = str(text);
+	split: $.extend((text, separator = /\s+/) => {
+		text = str(text);
 
-				return text.split(separator);
-			}
-		});
-	},
+		return text.split(separator);
+	}, {
+		multiValued: true
+	}),
 
 	// Log to the console and return
 	log: (...args) => {
@@ -527,10 +592,7 @@ Promise.all(Mavo.dependencies).then(() => {
 		const ARRAYS = FN.multiValued;
 
 		if (ARRAYS) {
-			if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
-				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
-			}
-			else if (ARRAYS === true || ARRAYS.length === 2) {
+			if (ARRAYS === true || ARRAYS.length === 2) {
 				Mavo.Functions[property] = (...args) => {
 					// Define index of multiValued arguments
 					// Fallback to first 2 arguments if not explicitly defined
@@ -548,6 +610,9 @@ Promise.all(Mavo.dependencies).then(() => {
 						...FN
 					});
 				};
+			}
+			else if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
+				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
 			}
 		}
 	});
