@@ -429,7 +429,6 @@ var _ = Mavo.Functions = {
 				}
 				return ret;
 			},
-			default: null
 		});
 
 		// if result is an empty array, return false
@@ -449,12 +448,10 @@ var _ = Mavo.Functions = {
 		return haystack && needle? haystack.toLowerCase().indexOf(needle.toLowerCase()) : -1;
 	}, {
 		multiValued: true,
-		default: null
 	}),
 
 	starts: $.extend((haystack, needle) => _.search(str(haystack), str(needle)) === 0, {
 		multiValued: true,
-		default: null
 	}),
 
 	ends: $.extend((haystack, needle) => {
@@ -464,7 +461,6 @@ var _ = Mavo.Functions = {
 		return  i > -1 && i === haystack.length - needle.length;
 	}, {
 		multiValued: true,
-		default: null
 	}),
 
 	join: function(array, glue) {
@@ -501,22 +497,18 @@ var _ = Mavo.Functions = {
 
 	from: $.extend((haystack, needle) => _.between(haystack, needle), {
 		multiValued: true,
-		default: null
 	}),
 
 	fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
 		multiValued: true,
-		default: null
 	}),
 
 	to: $.extend((haystack, needle) => _.between(haystack, "", needle), {
 		multiValued: true,
-		default: null
 	}),
 
 	tofirst: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
 		multiValued: true,
-		default: null
 	}),
 
 	between: $.extend((haystack, from, to, tight) => {
