@@ -603,9 +603,6 @@ Promise.all(Mavo.dependencies).then(() => {
 					});
 				};
 			}
-			else if (FN.length === 1 && ARRAYS === true || ARRAYS.length === 1) {
-				Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, FN);
-			}
 		}
 	});
 });
