@@ -36,7 +36,10 @@ var _ = Mavo.Script = {
 				var rightDefault = o.rightDefault === undefined ? o.default : o.rightDefault;
 
 				for (let i = 0; i < max; i++) {
-					if (a[i] === undefined) {
+					if (o.comparison && (a[i] === undefined || b[i] === undefined)) {
+						result[i] = true;
+					}
+					else if (a[i] === undefined) {
 						result[i] = rightUnary ? rightUnary(b[i]) : o.scalar(leftDefault, b[i]);
 					}
 					else if (b[i] === undefined) {
@@ -93,7 +96,7 @@ var _ = Mavo.Script = {
 				operands = operands.map(val);
 			}
 
-			var prev = o.comparison ? o.default : operands[0], result;
+			var prev = o.comparison ? true : operands[0], result;
 
 			for (let i = 1; i < operands.length; i++) {
 				let a = o.comparison? operands[i - 1] : prev;
@@ -199,7 +202,6 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a <= b;
 			},
-			default: true,
 			symbol: "<="
 		},
 		"lt": {
@@ -208,7 +210,6 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a < b;
 			},
-			default: true,
 			symbol: "<"
 		},
 		"gte": {
@@ -217,7 +218,6 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a >= b;
 			},
-			default: true,
 			symbol: ">="
 		},
 		"gt": {
@@ -226,7 +226,6 @@ var _ = Mavo.Script = {
 				[a, b] = _.getNumericalOperands(a, b);
 				return a > b;
 			},
-			default: true,
 			symbol: ">"
 		},
 		"eq": {
@@ -235,7 +234,6 @@ var _ = Mavo.Script = {
 				return a == b || Mavo.safeToJSON(a) === Mavo.safeToJSON(b);
 			},
 			symbol: ["=", "=="],
-			default: true,
 			precedence: 7 // to match other comparison operators in jsep
 		},
 		"neq": {
@@ -244,7 +242,6 @@ var _ = Mavo.Script = {
 				return a != b && Mavo.safeToJSON(a) !== Mavo.safeToJSON(b);
 			},
 			symbol: ["!="],
-			default: true,
 			precedence: 7 // to match other comparison operators in jsep
 		},
 		"and": {
