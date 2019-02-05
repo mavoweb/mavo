@@ -106,7 +106,7 @@ var _ = Mavo.Script = {
 				var result = _.binaryOperation(a, b, o);
 
 				if (o.comparison) {
-					prev = prev && result;
+					prev = _.binaryOperation(prev, result, _.operators["and"]);
 				}
 				else {
 					prev = result;
