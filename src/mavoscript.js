@@ -240,7 +240,9 @@ var _ = Mavo.Script = {
 		},
 		"neq": {
 			comparison: true,
-			scalar: (a, b) => a != b,
+			scalar: (a, b) => {
+				return a != b && Mavo.safeToJSON(a) !== Mavo.safeToJSON(b);
+			},
 			symbol: ["!="],
 			default: true,
 			precedence: 7 // to match other comparison operators in jsep
