@@ -247,8 +247,11 @@ var _ = Mavo.DOMExpression = $.Class({
 			add: function(domexpression, name) {
 				if (name) {
 					var o = this.vars[name];
+					var hasName = domexpression.identifiers.indexOf(name) > -1;
+					var hasUnprefixedName = (name.startsWith("$") &&
+						domexpression.identifiers.indexOf(name.substr(1)) > -1);
 
-					if (o && domexpression.identifiers.indexOf(name) > -1) {
+					if (o && (hasName || hasUnprefixedName)) {
 						o.all = o.all || new Set();
 						o.all.add(domexpression);
 
