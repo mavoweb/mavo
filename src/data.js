@@ -140,6 +140,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				var propertyL = property.toLowerCase();
 
+				// Is this a data action function?
 				if (propertyL in Mavo.Actions.Functions) {
 					if (Mavo.Actions.running) {
 						ret = Mavo.Actions.Functions[propertyL];
@@ -149,10 +150,12 @@ var _ = Mavo.Data = $.Class(class Data {
 					}
 				}
 
+				// Is this a Mavo function?
 				if (propertyL in Mavo.Functions) {
 					ret = Mavo.Functions[propertyL];
 				}
 				else {
+					// Maybe it's a Math function?
 					ret = Math[property] || Math[propertyL] || ret;
 				}
 
@@ -364,6 +367,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				var proxify = ret !== null && typeof ret === "object" // Can be a proxy
 				              && !ret.isProxy // Is not already a proxy
 				              && (Mavo.route in ret || Mavo.toNode in ret); // Either has a route or comes from a node
+
 				return !proxify? ret : _.proxify(ret);
 			}
 
@@ -378,7 +382,7 @@ var _ = Mavo.Data = $.Class(class Data {
 					var $property = "$" + propertyL;
 
 					if ($property in _.special) {
-						return _.special[$property](data);
+						return _.resolve($property, data);
 					}
 				}
 			}
