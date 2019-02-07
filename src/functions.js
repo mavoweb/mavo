@@ -496,6 +496,22 @@ var _ = Mavo.Functions = {
 		return location.hash.slice(1);
 	},
 
+	get $alt() {
+		return _.$evt? _.$evt.altKey : false;
+	},
+
+	get $ctrl() {
+		return _.$evt? _.$evt.ctrlKey : false;
+	},
+
+	get $shift() {
+		return _.$evt? _.$evt.shiftKey : false;
+	},
+
+	get $cmd() {
+		return _.$evt? _.$evt[Mavo.superKey] : false;
+	},
+
 	// "Private" helpers
 	util: {
 		numbers: function(array, args) {

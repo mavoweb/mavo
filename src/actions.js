@@ -18,17 +18,25 @@ var _ = Mavo.Actions = {
 		}
 
 		if (element) {
-			_.run(element.getAttribute("mv-action"), element);
+			_.run(element.getAttribute("mv-action"), element, evt);
 		}
 	},
 
-	run: (code, element) => {
+	run: (code, element, evt) => {
 		if (code) {
 			var node = Mavo.Node.getClosest(element);
 
 			if (node) {
 				var expression = new Mavo.Expression(code);
-				return expression.eval(node.getLiveData(), {actions: true});
+
+				var previousEvt = Mavo.Functions.$evt;
+				Mavo.Functions.$evt = evt;
+
+				var ret = expression.eval(node.getLiveData(), {actions: true});
+
+				Mavo.Functions.$evt = previousEvt;
+				
+				return ret;
 			}
 		}
 	},

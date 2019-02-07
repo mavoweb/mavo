@@ -37,7 +37,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 					type: "button",
 					title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
 					className: "mv-add",
-					"mv-action": `add($item${bottomUp? ", $index + 1" : ""})`
+					"mv-action": `add(if($cmd, $item, null), $item${bottomUp? ", $index + 1" : ""})`
 				}
 			];
 
