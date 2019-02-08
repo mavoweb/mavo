@@ -130,6 +130,7 @@ var _ = Mavo.Data = $.Class(class Data {
 	},
 
 	static: {
+		// The context for expression evaluation
 		stub: self.Proxy? new Proxy({[Symbol.unscopables]: {data: true, undefined: true}}, {
 			get: (data, property) => {
 				var ret = Reflect.get(data, property);
@@ -476,6 +477,7 @@ var _ = Mavo.Data = $.Class(class Data {
 						parent[Mavo.route] = {};
 					}
 
+					// parent[up] = child
 					var up = child && child[Mavo.property];
 
 					if (up && parent[Mavo.route][property] !== true) {
@@ -484,6 +486,7 @@ var _ = Mavo.Data = $.Class(class Data {
 						}
 
 						if (parent[Mavo.route][property].has(up)) {
+							// We've already computed routes on this subtree
 							break;
 						}
 
@@ -547,7 +550,14 @@ var _ = Mavo.Data = $.Class(class Data {
 			$all: function(obj) {
 				var arr = _.closestArray(obj);
 				var path = arr.path.reverse().slice(1); // Drop index
-				return arr.value.map(a => $.value(a, ...path));
+				var ret = arr.value.map(a => $.value(a, ...path));
+
+				if (ret.length > 0 && ret[0][Mavo.route]) {
+					ret[Mavo.route] = $.each(ret[0][Mavo.route], (p, v) => true);
+					ret[Mavo.mavo] = ret[0][Mavo.mavo];
+				}
+
+				return ret;
 			},
 
 			$next: function(obj) {
