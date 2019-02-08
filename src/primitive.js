@@ -144,6 +144,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		Mavo.setAttributeShy(this.element, "aria-label", this.label);
 
+		// Make attribute explicit in the HTML in certain cases (because our CSS needs this)
 		if (!this.attribute) {
 			Mavo.setAttributeShy(this.element, "mv-attribute", "none");
 		}
@@ -966,7 +967,9 @@ $.Class(_, {
 		empty: function (value) {
 			var hide = value && // is empty
 			           !this.modes && // and supports both modes
-			           !(this.attribute && $(Mavo.selectors.property, this.element)); // and has no property inside
+			           !(this.attribute && $(Mavo.selectors.property, this.element)) && // and has no property inside
+					   // and is not boolean OR if it is, its attribute is the default boolean attribute (see #464)
+			           (this.datatype !== "boolean" || this.attribute === Mavo.Elements.defaultConfig.boolean.attribute);
 
 			this.element.classList.toggle("mv-empty", !!hide);
 		}
