@@ -142,7 +142,16 @@ var _ = Mavo.Script = {
 	 * Operations between a scalar and an array will result in the operation being performed between the scalar and every array element.
 	 * Ordered by precedence (higher to lower)
 	 * @param scalar {Function} The operation between two scalars
+	 * @param unary/leftUnary/rightUnary Custom versions of scalar for when there is only 1 operand.
+	 * @param precedence {Number}
+	 * @param symbol {String} The operator's symbol
 	 * @param default The operation’s default/identity element. Defaults to 0.
+	 *                There are also leftDefault and rightDefault options if needed.
+	 * @param export {Boolean} Whether to add the resulting function to Mavo.Functions. It will always be available on Mavo.Script.operators[name].code anyway. Default: true
+	 * @param code {Function} The full implementation of the operator (including handling for array operands), if one prefers to provide instead of have it be generated.
+	 * @param transformation {Function}
+	 * @param postFlattenTransformation {Function}
+	 * @param raw {Boolean} If true, do not use Mavo.value() on operands
 	 */
 	operators: {
 		"not": {
@@ -706,6 +715,8 @@ for (let name in _.operators) {
 	else {
 		var ret = _.addBinaryOperator(name, details);
 	}
+
+	details.code = details.code || ret;
 
 	if (ret && details.export !== false) {
 		Mavo.Functions[name] = ret;
