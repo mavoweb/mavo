@@ -94,7 +94,7 @@ Mavo.Expressions.directive("mv-if", {
 				}
 			});
 		},
-		"unit-isdatanull": function(env) {
+		"node-isdatanull": function(env) {
 			env.result = env.result || (this.hidden && env.options.live);
 		}
 	}

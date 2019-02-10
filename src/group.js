@@ -88,13 +88,11 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 	getData (o = {}) {
 		var env = {
 			context: this,
-			options: o,
-			data: super.getData(o)
+			options: o
 		};
 
-		if (env.data !== undefined) {
-			// Super method returned something
-			return env.data;
+		if (this.isDataNull(o)) {
+			return null;
 		}
 
 		env.data = Mavo.shallowClone(Mavo.subset(this.data, this.inPath)) || {};

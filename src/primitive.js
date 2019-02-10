@@ -204,19 +204,20 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return super.isDataNull(o) || this._value === null || this._value === undefined;
 	}
 
-	getData(o = {}) {
+	getData (o = {}) {
 		var env = {
 			context: this,
-			options: o,
-			data: super.getData(o)
+			options: o
 		};
 
-		if (env.data === undefined) {
-			env.data = this.value;
+		if (this.isDataNull(o)) {
+			return null;
+		}
 
-			if (env.data === "") {
-				env.data = null;
-			}
+		env.data = this.value;
+
+		if (env.data === "" && (!this.templateValue || this.initialValue !== this.templateValue)) {
+			env.data = null;
 		}
 
 		if (this.inPath.length) {

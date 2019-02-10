@@ -135,12 +135,6 @@ var _ = Mavo.Node = class Node {
 		this.propagate("destroy");
 	}
 
-	getData (o = {}) {
-		if (this.isDataNull(o)) {
-			return null;
-		}
-	}
-
 	getLiveData () {
 		return this.liveData.proxy;
 	}
@@ -152,7 +146,7 @@ var _ = Mavo.Node = class Node {
 			result: !this.saved && !o.live
 		};
 
-		Mavo.hooks.run("unit-isdatanull", env);
+		Mavo.hooks.run("node-isdatanull", env);
 
 		return env.result;
 	}
