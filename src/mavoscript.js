@@ -10,7 +10,7 @@ var _ = Mavo.Script = {
 			});
 		}
 
-		return Mavo.Functions[name] = operand => _.unaryOperation(operand, operand => o.scalar(val(operand)));
+		return operand => _.unaryOperation(operand, operand => o.scalar(val(operand)));
 	},
 
 	unaryOperation: function(operand, scalar) {
@@ -84,7 +84,7 @@ var _ = Mavo.Script = {
 
 		o.default = o.default === undefined? 0 : o.default;
 
-		return Mavo.Functions[name] = o.code || function(...operands) {
+		return o.code || function(...operands) {
 			if (operands.length === 1) {
 				if (Array.isArray(operands[0])) {
 					// Operand is an array of operands, expand it out
@@ -315,11 +315,9 @@ var _ = Mavo.Script = {
 		},
 		"range": {
 			symbol: "..",
-			scalar: (a, b) => {
-				var range = Math.floor(b - a + 1);
-				return [...Array(range).keys()].map(x => x + a);
-			},
-			precedence: 2
+			scalar: (a, b) => Mavo.Functions.range(a, b),
+			precedence: 2,
+			export: false
 		},
 		"has": {
 			symbol: "in",
@@ -328,7 +326,6 @@ var _ = Mavo.Script = {
 				haystacks.map(b => {
 					if (Array.isArray(b)) {
 						var op =  a => b.map(val).indexOf(val(a)) > -1;
-
 					}
 					else {
 						var op = a => Mavo.in(val(a), b);
@@ -704,10 +701,14 @@ for (let name in _.operators) {
 	let details = _.operators[name];
 
 	if (details.scalar && details.scalar.length < 2) {
-		_.addUnaryOperator(name, details);
+		var ret = _.addUnaryOperator(name, details);
 	}
 	else {
-		_.addBinaryOperator(name, details);
+		var ret = _.addBinaryOperator(name, details);
+	}
+
+	if (ret && details.export !== false) {
+		Mavo.Functions[name] = ret;
 	}
 }
 
@@ -715,7 +716,7 @@ for (let name in _.operators) {
 // representing comparison operations, and returns the result of evaluating the
 // chained comparison.
 // e.g. compare(3, "lt", 4, "lt", 5) means 3 < 4 < 5, or (3 < 4) && (4 < 5)
-Mavo.Functions["compare"] = function(...operands) {
+Mavo.Functions.compare = function(...operands) {
 	let result = true;
 
 	for (let i = 2; i < operands.length; i += 2) {

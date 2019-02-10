@@ -331,6 +331,31 @@ var _ = Mavo.Functions = {
 		return Math.floor(rand * (range + 1)) * step + min;
 	},
 
+	range: (a, b, step) => {
+		if (step === undefined) {
+			if (b === undefined) {
+				b = a;
+				a = b >= 0? 1 : -1;
+			}
+
+			step = a <= b? 1 : -1;
+		}
+
+		var steps = Math.floor((b - a)/step + 1);
+
+		if (steps <= 0 || !isFinite(steps)) {
+			return [a];
+		}
+
+		var ret = [];
+
+		for (let i = 0, n = a; i++ < steps; n += step) {
+			ret.push(n);
+		}
+
+		return ret;
+	},
+
 	shuffle: list => {
 		if (Array.isArray(list)) {
 			// Fisher-Yates shuffle
