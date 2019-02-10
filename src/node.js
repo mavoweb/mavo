@@ -164,6 +164,7 @@ var _ = Mavo.Node = class Node {
 	 * @param path {Array} Initial path. Mostly used internally.
 	 * @param o {Object} Options:
 	 * 			- descentReturn {Boolean} If callback returns false, just don't descend
+	 * 			                Otherwise, if callback returns false, it stops.
 	 * @return false if was stopped via a false return value, true otherwise
 	 */
 	walk (callback, path = [], o = {}) {
