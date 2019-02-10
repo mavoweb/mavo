@@ -185,7 +185,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 			if (obj.alias) {
 				var aliasesArr = obj.alias.split(" ");
 
-				for (i = 0; i < aliasesArr.length; i++) {
+				for (let i = 0; i < aliasesArr.length; i++) {
 					var currentAlias = aliasesArr[i];
 
 					if (data[currentAlias] !== undefined) {
