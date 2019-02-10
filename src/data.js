@@ -358,7 +358,7 @@ var _ = Mavo.Data = $.Class(class Data {
 					var func = Mavo.Functions[propertyL] || Mavo.Actions.Functions[propertyL] || Math[propertyL];
 
 					if (func) {
-						// Data and property of the same name, which one do we need? (rel #227)
+						// Function and property of the same name, which one do we need? (rel #227)
 						// Must make the returned value callable to prevent errors!
 						ret = Mavo.primitivify((...args) => func(...args), ret);
 					}

@@ -55,6 +55,12 @@ var _ = $.extend(Mavo, {
 	// Specifiy a primitive fallback for an object
 	primitivify: (object, primitive) => {
 		if (object) {
+			if (primitive && typeof primitive === "object") {
+				// Primitive is objectified, must copy its metadata to avoid losing it
+				Object.assign(object, primitive);
+				primitive = Mavo.value(primitive);
+			}
+
 			object.valueOf = object.toJSON = object[Symbol.toPrimitive] = () => primitive;
 		}
 
