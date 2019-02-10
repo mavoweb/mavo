@@ -152,50 +152,49 @@ var _ = self.Mavo = $.Class({
 			this.element.setAttribute("mv-permissions", permissions.join(" "));
 		});
 
-		if (this.needsEdit) {
-			this.permissions.can(["edit", "add", "delete"], () => {
-				// Observe entire tree for mv-mode changes
-				this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-					records.forEach(record => {
-						let element = record.target;
-						let nodes = _.Node.children(element);
+		this.permissions.can(["edit", "add", "delete"], () => {
+			// Observe entire tree for mv-mode changes
+			this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
+				records.forEach(record => {
+					let element = record.target;
+					let nodes = _.Node.children(element);
 
-						nodeloop: for (let i=0; i<nodes.length; i++) {
-							let node = nodes[i];
-							let previousMode = node.mode, mode;
+					nodeloop: for (let i=0; i<nodes.length; i++) {
+						let node = nodes[i];
+						let previousMode = node.mode, mode;
 
-							if (node.element == element) {
-								// If attribute set directly on a Mavo node, then it forces it into that mode
-								// otherwise, descendant nodes still inherit, unless they are also mode-restricted
-								mode = node.element.getAttribute("mv-mode");
-								node.modes = mode;
-							}
-							else {
-								// Inherited
-								if (node.modes) {
-									// Mode-restricted, we cannot change to the other mode
-									continue nodeloop;
-								}
-
-								mode = _.getStyle(node.element.parentNode, "--mv-mode");
-							}
-
-							node.mode = mode;
-
-							if (previousMode != node.mode) {
-								node[node.mode == "edit"? "edit" : "done"]();
-							}
+						if (node.element == element) {
+							// If attribute set directly on a Mavo node, then it forces it into that mode
+							// otherwise, descendant nodes still inherit, unless they are also mode-restricted
+							mode = node.element.getAttribute("mv-mode");
+							node.modes = mode;
 						}
-					});
-				}, {subtree: true});
+						else {
+							// Inherited
+							if (node.modes) {
+								// Mode-restricted, we cannot change to the other mode
+								continue nodeloop;
+							}
 
-				if (this.autoEdit) {
-					this.edit();
-				}
-			}, () => { // cannot
-				this.modeObserver && this.modeObserver.destroy();
-			});
-		}
+							mode = _.getStyle(node.element.parentNode, "--mv-mode");
+						}
+
+						node.mode = mode;
+
+						if (previousMode != node.mode) {
+							node[node.mode == "edit"? "edit" : "done"]();
+						}
+					}
+				});
+			}, {subtree: true});
+
+			if (this.autoEdit) {
+				this.edit();
+			}
+		}, () => { // cannot
+			this.modeObserver && this.modeObserver.destroy();
+		});
+
 
 		if (this.storage || this.source) {
 			// Fetch existing data
