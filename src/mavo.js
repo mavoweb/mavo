@@ -875,7 +875,7 @@ let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2))
 
 $.extend(_.selectors, {
 	primitive: andNot(s.property, s.group),
-	rootGroup: andNot(s.group, s.property),
+	childGroup: and(s.group, s.property),
 	item: or(s.multiple, s.group),
 	output: or(s.specificProperty("output"), ".mv-output")
 });
