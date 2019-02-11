@@ -537,7 +537,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 					// Failing that, any property with the same datatype
 					for (let p in data) {
-						type = $.type(data[p]);
+						let type = $.type(data[p]);
 
 						if (type === this.datatype || !this.datatype && type == "string") {
 							property = p;
