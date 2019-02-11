@@ -856,7 +856,7 @@ Object.defineProperty(_.all, "length", {
 {
 
 let s = _.selectors = {
-	init: ".mv-app, [mv-app], [data-mv-app]",
+	init: "[mv-app], [data-mv-app]",
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], [mv-group]",
