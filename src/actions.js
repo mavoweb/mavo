@@ -35,7 +35,7 @@ var _ = Mavo.Actions = {
 				var ret = expression.eval(node.getLiveData(), {actions: true});
 
 				Mavo.Functions.$evt = previousEvt;
-				
+
 				return ret;
 			}
 		}
@@ -63,7 +63,7 @@ var _ = Mavo.Actions = {
 	// Function to run instead of actions if actions are called outside mv-action
 	nope: () => {
 		var actions = Object.keys(_.Functions).map(name => `${name}()`);
-		console.warn(`Mavo actions (${actions}) can only be used in the mv-action attribute.`);
+		Mavo.warn(`Mavo actions (${actions}) can only be used in the mv-action attribute.`);
 	},
 
 	Functions: {
@@ -106,7 +106,7 @@ var _ = Mavo.Actions = {
 				}
 
 				if (!(collection instanceof Mavo.Collection)) {
-					console.warn("No collection or collection item provided to add().");
+					Mavo.warn("No collection or collection item provided to add().");
 					return data;
 				}
 			}
@@ -147,7 +147,7 @@ var _ = Mavo.Actions = {
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
 
 			if (!fromNodes.length) {
-				console.warn("The first parameter of move() should be a collection or collection item. There is nothing to move here.");
+				Mavo.warn("The first parameter of move() should be a collection or collection item. There is nothing to move here.", {once: true});
 				return from;
 			}
 
@@ -227,7 +227,7 @@ var _ = Mavo.Actions = {
 				var nodes = _.getNodes(ref);
 
 				if (!nodes.length) {
-					console.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
+					Mavo.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
 				}
 				else {
 					Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {

@@ -103,7 +103,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 					this.initialItems = 0;
 				}
 				else if (this.templateElement.hasAttribute("mv-optional")) {
-					console.warn('The mv-optional attribute is deprecated and will be removed. Please use mv-initial-items="0" instead.');
+					Mavo.warn('The mv-optional attribute is deprecated and will be removed. Please use mv-initial-items="0" instead.');
 					this.initialItems = 0;
 				}
 				else {

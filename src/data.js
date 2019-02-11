@@ -440,7 +440,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				},
 
 				set: function(data, property = "", value) {
-					console.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
+					Mavo.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
 					return value;
 				}
 			});

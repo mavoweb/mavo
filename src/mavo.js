@@ -758,6 +758,18 @@ var _ = self.Mavo = $.Class({
 			return ret;
 		},
 
+		warn: function warn(message, o = {}) {
+			warn.history = warn.history || new Set();
+
+			if (!_.warn.history.has(message)) {
+				console.warn(message);
+			}
+
+			if (o.once !== false) {
+				warn.history.add(message);
+			}
+		},
+
 		/**
 		 * Similar to Promise.all() but can handle post-hoc additions
 		 * and does not reject if one promise rejects.

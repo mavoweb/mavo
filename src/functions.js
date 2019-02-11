@@ -84,7 +84,7 @@ var _ = Mavo.Functions = {
 			return fn.apply(thisArg, args);
 		}
 		else {
-			console.warn(`You tried to call ${fn} as a function, but it’s not a function`);
+			Mavo.warn(`You tried to call ${fn} as a function, but it’s not a function`);
 		}
 	},
 
