@@ -282,12 +282,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		// Copy any mv-edit-* attributes from the element to the editor
-		var dataInput = /^mv-edit-/i;
-		$$(this.element.attributes).forEach(function (attribute) {
-			if (dataInput.test(attribute.name)) {
-				this.editor.setAttribute(attribute.name.replace(dataInput, ""), attribute.value);
-			}
-		}, this);
+		Mavo.attributeStartsWith("mv-edit-", this.element).forEach(attribute => {
+			this.editor.setAttribute(attribute.name.replace("mv-edit-", ""), attribute.value);
+		});
 
 		if (this.attribute || this.config.popup) {
 			this.popup = new Mavo.UI.Popup(this);

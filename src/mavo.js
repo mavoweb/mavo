@@ -20,16 +20,13 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
-		var selector = _.attributes.map(attribute => `[data-${attribute}]`).join(", ");
+		Mavo.attributeStartsWith("data-mv-", this.element).forEach(attribute => {
+			var element = attribute.ownerElement;
+			var name = attribute.name.replace("data-", "");
 
-		[this.element, ...$$(selector, this.element)].forEach(element => {
-			_.attributes.forEach(attribute => {
-				var value = element.getAttribute("data-" + attribute);
-
-				if (value !== null) {
-					element.setAttribute(attribute, value);
-				}
-			});
+			if (!element.attributes[name]) {
+				element.setAttribute(name, attribute.value);
+			}
 		});
 
 		// Assign a unique (for the page) id to this mavo instance

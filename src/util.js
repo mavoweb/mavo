@@ -427,6 +427,24 @@ var _ = $.extend(Mavo, {
 		return document.getElementById(id);
 	},
 
+	XPath: function(query, context = document) {
+		var doc = context.ownerDocument || context;
+		var result = doc.evaluate(query, context);
+		var ret = [], node;
+
+		while (node = result.iterateNext()) {
+			ret.push(node);
+		}
+
+		return ret;
+	},
+
+	// Returns attribute nodes that start with str
+	// Use .ownerElement to get element
+	attributeStartsWith: function(str, context) {
+		return _.XPath(`.//@*[starts-with(name(), "${str}")]`, context);
+	},
+
 	/**
 	 * Object utilities
 	 */
