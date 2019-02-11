@@ -157,7 +157,14 @@ var _ = Mavo.UI.Itembar = $.Class({
 
 	add: function() {
 		if (!this.element.parentNode && !Mavo.revocably.add(this.element)) {
-			this.item.element.appendChild(this.element);
+			// Has not been added before
+			var tag = this.item.element.nodeName.toLowerCase();
+			
+			if (tag in _.container) {
+				var rel = $(_.container[tag], this.item.element);
+			}
+
+			(rel || this.item.element).appendChild(this.element);
 		}
 
 		if (this.dragHandle == this.item.element) {
@@ -186,7 +193,10 @@ var _ = Mavo.UI.Itembar = $.Class({
 
 	static: {
 		DELAY: 100,
-		visible: new Set()
+		visible: new Set(),
+		container: {
+			"details": "summary"
+		}
 	}
 });
 
