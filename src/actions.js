@@ -80,7 +80,7 @@ var _ = Mavo.Actions = {
 					[data, ref] = [undefined, data];
 				}
 				else if (arguments.length === 2) {
-					if (ref >= 0 || ref < 0) {
+					if ((ref >= 0 || ref < 0) && !Array.isArray(ref)) {
 						// add(ref, index) signature used
 						[data, ref, index] = [undefined, data, ref];
 					}
