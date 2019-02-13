@@ -570,7 +570,7 @@ function str(str = "") {
 
 function empty(v) {
 	v = Mavo.value(v);
-	return v === null || v === false || v === "";
+	return v === undefined || v === null || v === false || v === "";
 }
 
 function not(v) {
