@@ -106,7 +106,7 @@ var _ = Mavo.Actions = {
 				}
 
 				if (!(collection instanceof Mavo.Collection)) {
-					Mavo.warn("No collection or collection item provided to add().");
+					Mavo.warn("No collection or collection item provided to add().", {once: false});
 					return data;
 				}
 			}
@@ -145,13 +145,18 @@ var _ = Mavo.Actions = {
 			}
 
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
+			var collection = (toNode || fromNodes[0]).closestCollection;
 
 			if (!fromNodes.length) {
-				Mavo.warn("The first parameter of move() should be a collection or collection item. There is nothing to move here.", {once: true});
-				return from;
+				if (collection) {
+					Mavo.warn("First parameter of move() was not a collection or collection item, using add() instead.", {once: false});
+					return _.Functions.add(from, collection, index);
+				}
+				else {
+					Mavo.warn("You need to provide at least one collection or collection item for move() to have something to do.", {once: false});
+					return from;
+				}
 			}
-
-			var collection = (toNode || fromNodes[0]).closestCollection;
 
 			var ret = _.Functions.add(from, collection, index);
 			Mavo.Collection.delete(fromNodes, {silent: true});
