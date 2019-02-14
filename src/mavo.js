@@ -857,6 +857,8 @@ let s = _.selectors = {
 	property: "[property], [itemprop]",
 	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
 	group: "[typeof], [itemscope], [itemtype], [mv-group]",
+	primitive: "[property]:not([typeof]), [property]:not([mv-group]), [itemprop]:not([itemscope]):not([itemtype])",
+	childGroup: "[typeof][property], [mv-group][property], [itemscope][itemprop], [itemtype][itemprop]",
 	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
@@ -870,23 +872,9 @@ let s = _.selectors = {
 	}
 };
 
-let arr = s.arr = selector => selector.split(/\s*,\s*/g);
-let not = s.not = selector => arr(selector).map(s => `:not(${s})`).join("");
-let or = s.or = (selector1, selector2) => selector1 + ", " + selector2;
-let and = s.and = (selector1, selector2) => {
-	var ret = [], arr2 = arr(selector2);
-
-	arr(selector1).forEach(s1 => ret.push(...arr2.map(s2 => s1 + s2)));
-
-	return ret.join(", ");
-};
-let andNot = s.andNot = (selector1, selector2) => and(selector1, not(selector2));
-
 $.extend(_.selectors, {
-	primitive: andNot(s.property, s.group),
-	childGroup: and(s.group, s.property),
-	item: or(s.multiple, s.group),
-	output: or(s.specificProperty("output"), ".mv-output")
+	item: s.multiple + ", " + s.group,
+	output: s.specificProperty("output") + ", .mv-output"
 });
 
 }
