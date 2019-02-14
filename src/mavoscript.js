@@ -303,9 +303,33 @@ var _ = Mavo.Script = {
 		},
 		"filter": {
 			symbol: "where",
-			scalar: (a, b) => val(b)? a : null,
-			raw: true,
-			precedence: 2,
+			code: (a, ...filters) => {
+				for (let b of filters) {
+					if (Array.isArray(a)) {
+						if (Array.isArray(b)) {
+							a = a.map((v, i) => val(b[i])? v : null);
+						}
+						else {
+							b = val(b);
+
+							if (typeof b === "boolean") {
+								// foo where true/false should equal foo/null respectively
+								a = b? a : a.map(v => null);
+							}
+							else {
+								// foo where 5 should equal foo where foo = 5
+								a = a.map(v => v == b? v : null);
+							}
+						}
+					}
+					else {
+						a = val(b)? a : null;
+					}
+				}
+
+				return a;
+			},
+			precedence: 1,
 			postFlattenTransformation: node => {
 				// Scope all identifiers (likely properties) in the where clause to the thing we're filtering from.
 				// For example, assume you have a list of people and a list of cats, both with names and ages.
@@ -313,12 +337,14 @@ var _ = Mavo.Script = {
 				var object = node.arguments[0];
 
 				for (let i=1; i<node.arguments.length; i++) {
-					node.arguments[i] = Object.assign(_.parse("scope()"), {
-						arguments: [
-							object,
-							node.arguments[i]
-						]
-					});
+					if (node.arguments[i].type != "Literal") {
+						node.arguments[i] = Object.assign(_.parse("scope()"), {
+							arguments: [
+								object,
+								node.arguments[i]
+							]
+						});
+					}
 				}
 			}
 		},
@@ -465,7 +491,7 @@ var _ = Mavo.Script = {
 					return `(function() {
 						var scope = ${_.serialize(node.arguments[0])};
 						if (Array.isArray(scope)) {
-							return scope.map(scope => {
+							return scope.map(function(scope) {
 								${withCode}
 							});
 						}
