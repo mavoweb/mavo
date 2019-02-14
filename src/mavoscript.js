@@ -136,6 +136,23 @@ var _ = Mavo.Script = {
 			return operatorDefinition && operatorDefinition.comparison;
 		}
 	},
+
+	isStatic: node => {
+		if (node.type === "Identifier") {
+			return false;
+		}
+
+		for (let property of _.childProperties) {
+			if (node[property] && property !== "callee") {
+				if (!_.isStatic(node[property])) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+	},
+
 	/**
 	 * Operations for elements and scalars.
 	 * Operations between arrays happen element-wise.
@@ -337,7 +354,7 @@ var _ = Mavo.Script = {
 				var object = node.arguments[0];
 
 				for (let i=1; i<node.arguments.length; i++) {
-					if (node.arguments[i].type != "Literal") {
+					if (!_.isStatic(node.arguments[i])) {
 						node.arguments[i] = Object.assign(_.parse("scope()"), {
 							arguments: [
 								object,
