@@ -271,8 +271,10 @@ var _ = Mavo.Data = $.Class(class Data {
 				if (ret !== undefined) {
 					// FIXME How do we set a sensible Mavo.route when the returned array is empty?
 					// E.g. because we were pointing to inner elements of a collection that currently has no items.
-					for (var p in ret[Mavo.route]) {
-						results[Mavo.route][p] = true;
+					if (Mavo.in(Mavo.route, ret)) {
+						for (var p in ret[Mavo.route]) {
+							results[Mavo.route][p] = true;
+						}
 					}
 
 					if (Array.isArray(ret)) {
@@ -440,8 +442,12 @@ var _ = Mavo.Data = $.Class(class Data {
 				},
 
 				set: function(data, property = "", value) {
-					Mavo.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
-					return value;
+					if (typeof property !== "symbol") {
+						Mavo.warn(`You cannot set data via expressions. Attempt to set ${property.toString()} to ${value} ignored.`);
+						return value;
+					}
+
+					return Reflect.set(data, property, value);
 				}
 			});
 		},

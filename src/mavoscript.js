@@ -393,22 +393,25 @@ var _ = Mavo.Script = {
 		"groupby": {
 			symbol: "by",
 			code: (array, key) => {
-				array = Array.isArray(array) ? array : Mavo.toArray(array);
-				key = Array.isArray(key) ? key : Mavo.toArray(key);
-				var property = key[Mavo.as] ? key[Mavo.as] : $.value(key[0], Mavo.toNode, "property");
-				var temp = new Mavo.BucketMap({arrays: true});
+				array = Mavo.toArray(array);
+				key = Mavo.toArray(key);
+				var property = key[Mavo.as] || $.value(key[0], Mavo.toNode, "property");
+				var groups = new Mavo.BucketMap({arrays: true});
 				var ret = [];
 				ret[Mavo.groupedBy] = true;
 
-				for (var i = 0; i < array.length; i++) {
-					const k = i < key.length ? Mavo.value(key[i]) : null;
-					temp.set(k, Mavo.value(array[i]));
-				}
+				array.forEach((item, i) => {
+					let k = i < key.length ? Mavo.value(key[i]) : null;
+					groups.set(k, item);
+				});
 
-				temp.forEach((items, value) => {
-					var obj = {$value: value, [property || "$value"]: value};
+				groups.forEach((items, value) => {
+					var obj = {
+						$value: value,
+						[property || "$value"]: value,
+						$items: items
+					};
 
-					obj.$items = items;
 					ret.push(obj);
 				});
 
