@@ -349,6 +349,9 @@ var _ = Mavo.Data = $.Class(class Data {
 						ret = _.findUp(property, data);
 					}
 				}
+				else if (Mavo.in(Mavo.route, data) && Mavo.in(property, data[Mavo.route])) {
+					ret = _.find(property, data);
+				}
 			}
 
 			if (!propertyIsNumeric) {

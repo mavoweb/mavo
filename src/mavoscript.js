@@ -405,6 +405,10 @@ var _ = Mavo.Script = {
 					groups.set(k, item);
 				});
 
+				if (Mavo.in(Mavo.route, array)) {
+					ret[Mavo.route] = Object.assign({}, array[Mavo.route]);
+				}
+
 				groups.forEach((items, value) => {
 					var obj = {
 						$value: value,
@@ -412,10 +416,15 @@ var _ = Mavo.Script = {
 						$items: items
 					};
 
+					if (Mavo.in(Mavo.route, array)) {
+						items[Mavo.route] = obj[Mavo.route] = Object.assign({}, array[Mavo.route]);
+						obj[Mavo.route] = $.each(items[Mavo.route], (p, v) => new Set(["$items"]));
+					}
+
 					ret.push(obj);
 				});
 
-				return ret;
+				return Mavo.Data.proxify(ret);
 			},
 			precedence: 2
 		},
