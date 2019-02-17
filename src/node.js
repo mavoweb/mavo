@@ -445,6 +445,11 @@ var _ = Mavo.Node = class Node {
 		return false;
 	}
 
+	// Evaluate expression on the fly with this node as context
+	eval(expr, o) {
+		return new Mavo.Expression(expr).eval(this.getLiveData(), o);
+	}
+
 	static create (element, mavo, o = {}) {
 		if (Mavo.is("multiple", element) && !o.collection) {
 			return new Mavo.Collection(element, mavo, o);
