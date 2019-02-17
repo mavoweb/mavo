@@ -470,7 +470,7 @@ var _ = Mavo.Node = class Node {
 			}
 			else if (element.matches(Mavo.selectors.multiple)) {
 				// mv-multiple used without property attribute
-				property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection");
+				property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection", element);
 			}
 		}
 
@@ -481,11 +481,13 @@ var _ = Mavo.Node = class Node {
 		return property;
 	}
 
-	static generatePropertyName(prefix) {
+	static generatePropertyName(prefix, element = document.documentElement) {
+		var root = element.closest(Mavo.selectors.init);
+
 		for (var i=""; i<10000; i++) { // 1000 is just a failsafe
 			var name = prefix + i;
 
-			if (!$(Mavo.selectors.specificProperty(name))) {
+			if (!$(Mavo.selectors.specificProperty(name), root)) {
 				return name;
 			}
 		}
