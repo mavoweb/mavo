@@ -301,7 +301,7 @@ button.mv-close {
 	&[mv-attribute="null"] {
 		cursor: text;
 
-		&.mv-empty.mv-pending-edit::before {
+		&.mv-empty.mv-pending-edit:not([datatype="boolean"])::before {
 			content: "(" attr(aria-label) ")";
 			opacity: .5;
 		}
