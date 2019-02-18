@@ -57,9 +57,15 @@ var _ = self.Mavo = $.Class({
 
 		// Apply heuristic for groups
 		$$(_.selectors.primitive + "," + _.selectors.multiple, this.element).forEach(element => {
+			// Add property attributes to mv-multiple elements without one
+			var isCollection = Mavo.is("multiple", element);
+
+			if (isCollection) {
+				_.setAttributeShy(element, "property");
+			}
+
 			if ($$(_.selectors.property, element).length) { // contains other properties
 				var config = Mavo.Primitive.getConfig(element);
-				var isCollection = Mavo.is("multiple", element);
 
 				if (isCollection || !config.attribute && !config.hasChildren) {
 					element.setAttribute("typeof", "");

@@ -465,12 +465,14 @@ var _ = Mavo.Node = class Node {
 		var property = element.getAttribute("property") || element.getAttribute("itemprop");
 
 		if (!property) {
+			var multiple = element.getAttribute("mv-multiple");
+
 			if (element.hasAttribute("property")) { // property used without a value
-				property = element.name || element.id || element.classList[0];
+				property = multiple || element.name || element.id || element.classList[0];
 			}
-			else if (element.matches(Mavo.selectors.multiple)) {
-				// mv-multiple used without property attribute
-				property = element.getAttribute("mv-multiple") || _.generatePropertyName("collection", element);
+
+			if (!property) {
+				property = _.generatePropertyName(multiple === null? "prop" : "collection", element);
 			}
 		}
 
