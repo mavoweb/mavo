@@ -371,7 +371,6 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				// Should we proxify value before returning it? Is it data?
 				var proxify = ret !== null && typeof ret === "object" // Can be a proxy
-				              && !ret.isProxy // Is not already a proxy
 				              && (Mavo.route in ret || Mavo.toNode in ret); // Either has a route or comes from a node
 
 				return !proxify? ret : _.proxify(ret);
@@ -430,8 +429,8 @@ var _ = Mavo.Data = $.Class(class Data {
 		},
 
 		proxify(data) {
-			if (!data || typeof data !== "object" || !self.Proxy) {
-				// Data is a primitive or proxies are not supported, we cannot proxify
+			if (!data || typeof data !== "object" || !self.Proxy || data[Mavo.isProxy]) {
+				// Data is a primitive, proxies are not supported, or is already a proxy
 				return data;
 			}
 
