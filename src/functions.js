@@ -681,7 +681,7 @@ var $u = _.util;
  * After plugins are loaded, enable
  * multi-valued arguments of Mavo and Math functions
  */
-Promise.all(Mavo.dependencies).then(() => {
+Mavo.ready.then(() => {
 	Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
 		var newCallback = $u.postProcess(Mavo.Functions[property]);
 
