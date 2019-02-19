@@ -223,6 +223,18 @@ var _ = Mavo.Functions = {
 	},
 
 	/**
+	 * Median of an array of numbers
+	 */
+	median: function(array) {
+		return $u.aggregateCaller(array, array => {
+			array = $u.numbers(array, arguments).sort((a, b) => a - b);
+			var mi = (array.length - 1) / 2;
+			[m1, m2] = [array[Math.floor(mi)], array[Math.ceil(mi)]];
+			return (m1 + m2) / 2 || 0;
+		});
+	},
+
+	/**
 	 * Min of an array of numbers
 	 */
 	min: function(array) {
