@@ -796,17 +796,4 @@ Mavo.Functions.compare = function(...operands) {
 	return result;
 };
 
-var aliases = {
-	average: "avg",
-	iff: "iff IF",
-	multiply: "mult",
-	divide: "div",
-	eq: "equal",
-	ordinal: "th"
-};
-
-for (let name in aliases) {
-	aliases[name].split(/\s+/g).forEach(alias => Mavo.Functions[alias] = Mavo.Functions[name]);
-}
-
 })(Bliss, Mavo.value, Mavo.Functions.util);

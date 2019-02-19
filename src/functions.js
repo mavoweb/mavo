@@ -204,54 +204,55 @@ var _ = Mavo.Functions = {
 	/**
 	 * Aggregate sum
 	 */
-	sum: function(array) {
-		return $u.aggregateCaller(array, (array) => {
-			return $u.numbers(array, arguments).reduce((prev, current) => {
-				return +prev + (+current || 0);
-			}, 0);
-		});
-	},
+	sum: $.extend(function(array) {
+		return $u.numbers(array, arguments).reduce((prev, current) => {
+			return +prev + (+current || 0);
+		}, 0);
+	}, {
+		isAggregate: true
+	}),
 
 	/**
 	 * Average of an array of numbers
 	 */
-	average: function(array) {
-		return $u.aggregateCaller(array, array => {
-			array = $u.numbers(array, arguments);
-			return array.length && _.sum(array) / array.length;
-		});
-	},
+	average: $.extend(function(array) {
+		array = $u.numbers(array, arguments);
+		return array.length && _.sum(array) / array.length;
+	}, {
+		isAggregate: true,
+		alias: "avg"
+	}),
 
 	/**
 	 * Median of an array of numbers
 	 */
-	median: function(array) {
-		return $u.aggregateCaller(array, array => {
-			array = $u.numbers(array, arguments).sort((a, b) => a - b);
-			var mi = (array.length - 1) / 2;
-			[m1, m2] = [array[Math.floor(mi)], array[Math.ceil(mi)]];
-			return (m1 + m2) / 2 || 0;
-		});
-	},
+	median: $.extend(function(array) {
+		array = $u.numbers(array, arguments).sort((a, b) => a - b);
+		var mi = (array.length - 1) / 2;
+		[m1, m2] = [array[Math.floor(mi)], array[Math.ceil(mi)]];
+		return (m1 + m2) / 2 || 0;
+	}, {
+		isAggregate: true
+	}),
 
 	/**
 	 * Min of an array of numbers
 	 */
-	min: function(array) {
-		return $u.aggregateCaller(array, (array) => {
-			return Math.min(...$u.numbers(array, arguments));
-		});
-	},
+	min: $.extend(function(array) {
+		return Math.min(...$u.numbers(array, arguments));
+	}, {
+		isAggregate: true
+	}),
 
 	/**
 	 * Max of an array of numbers
 	 */
-	max: function(array) {
-		return $u.aggregateCaller(array, (array) => {
-			return Math.max(...$u.numbers(array, arguments));
-		});
-	},
-	
+	max: $.extend(function(array) {
+		return Math.max(...$u.numbers(array, arguments));
+	}, {
+		isAggregate: true
+	}),
+
 	atan2: $.extend((dividend, divisor) => Math.atan2(dividend, divisor), {
 		multiValued: true,
 		rightUnary: b => b,
@@ -268,11 +269,11 @@ var _ = Mavo.Functions = {
 		default: 1
 	}),
 
-	count: function(array) {
-		return $u.aggregateCaller(array, (array) => {
-			return Mavo.toArray(array).filter(a => !empty(a)).length;
-		});
-	},
+	count: $.extend(function(array) {
+		return Mavo.toArray(array).filter(a => !empty(a)).length;
+	}, {
+		isAggregate: true
+	}),
 
 	reverse: function(array) {
 		return Mavo.toArray(array).slice().reverse();
@@ -304,7 +305,8 @@ var _ = Mavo.Functions = {
 
 		return ord || "th";
 	}, {
-		multiValued: true
+		multiValued: true,
+		alias: "th"
 	}),
 
 	digits: $.extend((digits, decimals, num) => {
@@ -563,6 +565,12 @@ var _ = Mavo.Functions = {
 		multiValued: true
 	}),
 
+	phrase: $.extend((id) => {
+		console.log(this);
+	}, {
+		needsContext: true
+	}),
+
 	filename: $.extend(url => Mavo.match(new URL(str(url), Mavo.base).pathname, /[^/]+?$/), {
 		multiValued: true
 	}),
@@ -613,15 +621,57 @@ var _ = Mavo.Functions = {
 
 			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
 		},
-		aggregateCaller: function(array, computation) {
-			if (Mavo.in(Mavo.groupedBy, array)) { // grouped structures
-				return array.map(e => $u.aggregateCaller(e.$items, computation));
+
+		// Implement function metadata
+		postProcess: function(callback) {
+			var multiValued = callback.multiValued;
+			var newCallback;
+
+			if (multiValued === true || multiValued && multiValued.length === 2) {
+				newCallback = (...args) => {
+					// Define index of multiValued arguments
+					// Fallback to first 2 arguments if not explicitly defined
+					var idxA = multiValued[0] || 0;
+					var idxB = multiValued[1] || 1;
+
+					return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
+						scalar: (a, b) => {
+							// Replace multiValued argument with its individual elements
+							args[idxA] = a;
+							args[idxB] = b;
+
+							return callback(...args);
+						},
+						...callback
+					});
+				};
+			}
+			else if (callback.isAggregate) {
+				newCallback = function(array) {
+					if (Mavo.in(Mavo.groupedBy, array)) { // grouped structures
+						return array.map(e => newCallback(e.$items));
+					}
+
+					var ret = callback.call(this, ...arguments);
+
+					return ret === undefined? array : ret;
+				}
 			}
 
-			var ret = computation(array);
+			if (newCallback) {
+				// Preserve function metadata
+				$.extend(newCallback, callback);
+				newCallback.original = callback;
+			}
 
-			return ret === undefined? array : ret;
-		},
+			if (callback.alias) {
+				for (let alias of Mavo.toArray(callback.alias)) {
+					Mavo.Functions[alias] = newCallback || callback;
+				}
+			}
+
+			return newCallback;
+		}
 	}
 };
 
@@ -633,32 +683,14 @@ var $u = _.util;
  */
 Promise.all(Mavo.dependencies).then(() => {
 	Object.getOwnPropertyNames(Mavo.Functions).forEach(property => {
-		const FN = Mavo.Functions[property];
-		const ARRAYS = FN.multiValued;
+		var newCallback = $u.postProcess(Mavo.Functions[property]);
 
-		if (ARRAYS) {
-			if (ARRAYS === true || ARRAYS.length === 2) {
-				Mavo.Functions[property] = (...args) => {
-					// Define index of multiValued arguments
-					// Fallback to first 2 arguments if not explicitly defined
-					var idxA = ARRAYS[0] || 0;
-					var idxB = ARRAYS[1] || 1;
-
-					return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
-						scalar: (a, b) => {
-							// Replace multiValued argument with its individual elements
-							args[idxA] = a;
-							args[idxB] = b;
-
-							return FN(...args);
-						},
-						...FN
-					});
-				};
-			}
+		if (newCallback) {
+			Mavo.Functions[property] = newCallback;
 		}
 	});
 
+	// Deal with Math functions that have 1 argument
 	Object.getOwnPropertyNames(Math).forEach(property => {
 		if (Math[property].length === 1 && !Mavo.Functions.hasOwnProperty(property)) {
 			Mavo.Functions[property] = operand => Mavo.Script.unaryOperation(operand, operand => Math[property](operand));
