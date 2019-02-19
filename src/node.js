@@ -469,10 +469,10 @@ var _ = Mavo.Node = class Node {
 
 			if (element.hasAttribute("property")) { // property used without a value
 				property = multiple || element.name || element.id || element.classList[0];
-			}
 
-			if (!property) {
-				property = _.generatePropertyName(multiple === null? "prop" : "collection", element);
+				if (!property) {
+					property = _.generatePropertyName(multiple === null? "prop" : "collection", element);
+				}
 			}
 		}
 
