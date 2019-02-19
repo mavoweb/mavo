@@ -572,7 +572,7 @@ var _ = Mavo.Functions = {
 
 		var locale = lang? Mavo.Locale.get(lang) : $this[Mavo.mavo].locale;
 
-		return locale.phrase(id, vars)
+		return locale.phrase(id, vars);
 	}, {
 		needsContext: true
 	}),

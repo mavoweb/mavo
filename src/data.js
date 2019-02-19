@@ -393,7 +393,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		},
 
-		has(property, data) {
+		has (property, data) {
 			// We don't care about priority here, just whether they exist
 			// so we'll make the fastest searches first.
 			if (property === Mavo.isProxy) {

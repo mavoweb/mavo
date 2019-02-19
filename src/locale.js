@@ -71,10 +71,12 @@ var _ = Mavo.Locale = $.Class({
 			}
 		},
 
+		// Get locale for a given language, use its base as fallback
 		match: function(lang = "") {
 			return _.all[lang] || _.all[_.getBaseLang(lang)];
 		},
 
+		// Get locale for a given language, use its base as fallback, and the default locale if nothing exists
 		get: function(lang) {
 			return _.match(lang) || _.default;
 		},
