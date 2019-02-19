@@ -61,10 +61,31 @@ s.years  = s.months  * 12;
 
 _.msTo = (what, ms) => Math.floor(Math.abs(ms) / (s[what] * 1000)) || 0;
 
-for (let what in s) {
-	_[what] = ms => _.msTo(what, ms);
+for (let unit in s) {
+	_[unit] = ms => _.msTo(unit, ms);
 }
 
+_.duration = $.extend(function($this, ms) {
+	var count = ms || 0;
+	var unit = "ms";
+
+	for (let nextUnit in s) {
+		var nextCount = _.msTo(nextUnit, ms);
+
+		if (nextCount === 0) {
+			break;
+		}
+
+		count = nextCount;
+		unit = nextUnit;
+	}
+
+	unit = count === 1 && unit !== "ms"? unit.slice(0, -1) : unit;
+
+	return count + " " + _.phrase($this, unit);
+}, {
+	needsContext: true
+});
 
 $.extend(_.util, {
 	fixDateString: function(date) {
