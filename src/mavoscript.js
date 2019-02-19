@@ -679,6 +679,14 @@ var _ = Mavo.Script = {
 				else if (node.callee.name == "delete") {
 					node.callee.name = "clear";
 				}
+				else {
+					var def = Mavo.Functions[node.callee.name];
+
+					if (def && def.needsContext) {
+						// Why not function.call(...)? Because it's a more drastic change.
+						node.arguments.unshift({type: "Identifier", name: "$this"})
+					}
+				}
 			}
 		},
 		"ThisExpression": node => {
