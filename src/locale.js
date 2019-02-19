@@ -32,7 +32,7 @@ var _ = Mavo.Locale = $.Class({
 
 		if (phrase === undefined) {
 			// Everything failed, use id
-			phrase = Mavo.Functions.readable(key);
+			phrase = key.replace(/\b-\b/g, " ");
 		}
 		else if (vars) {
 			var keys = Mavo.matches(phrase, /\{\w+(?=\})/g).map(v => v.slice(1));
