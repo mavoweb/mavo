@@ -61,7 +61,7 @@ var _ = self.Mavo = $.Class({
 			var isCollection = Mavo.is("multiple", element);
 
 			if (isCollection) {
-				_.setAttributeShy(element, "property");
+				_.setAttributeShy(element, "property", "");
 			}
 
 			if ($$(_.selectors.property, element).length) { // contains other properties
