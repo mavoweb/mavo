@@ -142,7 +142,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		this.setValue(this.initialValue, {silent: true});
 
-		Mavo.setAttributeShy(this.element, "aria-label", this.label);
+		if (this.element.hasAttribute("aria-label")) {
+			// Already has a custom label, make it lazy to give expressions a chance
+			$.lazy(this, "label", () => this.element.getAttribute("aria-label"));
+		}
+		else {
+			this.label = Mavo.Functions.readable(this.property);
+			this.element.setAttribute("aria-label", this.label);
+		}
 
 		// Make attribute explicit in the HTML in certain cases (because our CSS needs this)
 		if (!this.attribute) {
@@ -896,10 +903,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 $.Class(_, {
 	lazy: {
-		label: function() {
-			return Mavo.Functions.readable(this.property);
-		},
-
 		emptyValue: function() {
 			switch (this.datatype) {
 				case "boolean":
