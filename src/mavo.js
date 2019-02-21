@@ -49,7 +49,7 @@ var _ = self.Mavo = $.Class({
 
 		// Should we save automatically?
 		this.autoSave = this.element.hasAttribute("mv-autosave");
-		this.autoSaveDelay = (this.element.getAttribute("mv-autosave") || 3) * 1000;
+		this.autoSaveDelay = (this.element.getAttribute("mv-autosave") || 0) * 1000;
 
 		this.element.setAttribute("typeof", "");
 
