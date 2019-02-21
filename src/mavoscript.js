@@ -750,7 +750,7 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
 	// This is used for scope() rewriting, to support $this passing through
 	subScope: (proxy, $this) => {
-		var unscopables = Object.keys($this[Mavo.route] || $this).reduce((o, k) => {
+		var unscopables = Object.keys($this).reduce((o, k) => {
 			o[k] = true;
 			return o;
 		}, {$this: true});
