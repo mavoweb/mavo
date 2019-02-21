@@ -96,14 +96,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 			this.accepts = this.templateElement.getAttribute("mv-accepts");
 			this.accepts = new Set(this.accepts && this.accepts.split(/\s+/) || []);
-			this.initialItems = this.templateElement.getAttribute("mv-initial-items");
 
-			if (this.initialItems === null) {
-				this.initialItems = this.like? 0 : 1;
-			}
-			else {
-				this.initialItems = +this.initialItems;
-			}
+			this.initialItems = +(this.templateElement.getAttribute("mv-initial-items") || (this.like? 0 : 1));
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
