@@ -143,8 +143,18 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.setValue(this.initialValue, {silent: true});
 
 		if (this.element.hasAttribute("aria-label")) {
-			// Already has a custom label, make it lazy to give expressions a chance
-			$.lazy(this, "label", () => this.element.getAttribute("aria-label"));
+			// Custom label, make it lazy to give expressions a chance and then observe changes
+			$.lazy(this, "label", () => {
+				new Mavo.Observer(this.element, "aria-label", () => {
+					this.label = this.element.getAttribute("aria-label");
+
+					if ("placeholder" in this.editor) {
+						this.editor.placeholder = `(${this.label})`;
+					}
+				});
+
+				return this.element.getAttribute("aria-label");
+			});
 		}
 		else {
 			this.label = Mavo.Functions.readable(this.property);
@@ -284,9 +294,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			});
 		}
 
-		if ("placeholder" in this.editor) {
-			this.editor.placeholder = "(" + this.label + ")";
-		}
+		this.label; // Invoke lazy evaluaton
 
 		// Copy any mv-edit-* attributes from the element to the editor
 		Mavo.attributeStartsWith("mv-edit-", this.element).forEach(attribute => {
