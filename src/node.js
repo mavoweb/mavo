@@ -285,8 +285,8 @@ var _ = Mavo.Node = class Node {
 				// We are rendering an array on a singleton, what to do?
 				var properties;
 
-				if (this.isRoot && (properties = this.getNames("Collection")).length === 1) {
-					// If it's root with only one collection property, render on that property
+				if (this.isRoot && (properties = this.getNames("Collection")).length > 1) {
+					// If it's root render on the first collection property
 					env.data = {
 						[properties[0]]: env.data
 					};
