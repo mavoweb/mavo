@@ -533,7 +533,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 	}
 
-	dataRender(data, {live, root} = {}) {
+	dataRender (data, {live, root} = {}) {
 		var previousValue = this._value;
 
 		if ($.type(data) === "object") {
@@ -578,7 +578,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (data === undefined) {
 			// New property has been added to the schema and nobody has saved since
-			if (!this.modes) {
+			if (!this.modes && !this.value) {
 				this.value = this.closestCollection? this.default : this.templateValue;
 			}
 		}
