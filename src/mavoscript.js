@@ -516,7 +516,7 @@ var _ = Mavo.Script = {
 				}
 
 				if (node.callee.name === "scope") {
-					var withCode = `with (Mavo.Script.subScope(scope, $item) || {}) { return (${_.serialize(node.arguments[1])}); }`;
+					var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_.serialize(node.arguments[1])}); }`;
 					return `(function() {
 						var scope = ${_.serialize(node.arguments[0])};
 						if (Array.isArray(scope) && !Mavo.in(Mavo.isProxy, scope)) {
@@ -749,8 +749,8 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 	parse: self.jsep,
 
 	// This is used for scope() rewriting, to support $this passing through
-	subScope: (proxy, $item) => {
-		var unscopables = Object.keys($item[Mavo.route] || $item).reduce((o, k) => {
+	subScope: (proxy, $this) => {
+		var unscopables = Object.keys($this[Mavo.route] || $this).reduce((o, k) => {
 			o[k] = true;
 			return o;
 		}, {$this: true});
