@@ -145,7 +145,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		if (this.element.hasAttribute("aria-label")) {
 			// Custom label, make it lazy to give expressions a chance and then observe changes
 			$.lazy(this, "label", () => {
-				new Mavo.Observer(this.element, "aria-label", () => {
+				this.labelObserver = new Mavo.Observer(this.element, "aria-label", () => {
 					this.label = this.element.getAttribute("aria-label");
 
 					if ("placeholder" in this.editor) {
@@ -212,9 +212,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	destroy() {
 		super.destroy();
 
-		this.defaultObserver && this.defaultObserver.destroy();
-		this.observer && this.observer.destroy();
-		this.originalEditorObserver && this.originalEditorObserver.destroy();
+		[
+			"defaultObserver",
+			"observer",
+			"originalEditorObserver",
+			"labelObserver"
+		].forEach(observer => {
+			this[observer] && this[observer].destroy();
+		});
 	}
 
 	isDataNull(o) {
