@@ -299,7 +299,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			});
 		}
 
-		this.label; // Invoke lazy evaluaton
+		if ("placeholder" in this.editor) {
+			this.editor.placeholder = `(${this.label})`;
+		}
 
 		// Copy any mv-edit-* attributes from the element to the editor
 		Mavo.attributeStartsWith("mv-edit-", this.element).forEach(attribute => {
