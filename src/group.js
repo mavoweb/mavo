@@ -82,7 +82,8 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 	}
 
 	getNames (type = "Node") {
-		return Object.keys(this.children).filter(p => this.children[p] instanceof Mavo[type]);
+		var filter = typeof type === "function"? type : (p, n) => n instanceof Mavo[type];
+		return Object.keys(this.children).filter(p => filter(p, this.children[p]));
 	}
 
 	getData (o = {}) {
