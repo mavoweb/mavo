@@ -643,8 +643,13 @@ var _ = Mavo.Functions = {
 					return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
 						scalar: (a, b) => {
 							// Replace multiValued argument with its individual elements
-							args[idxA] = a;
-							args[idxB] = b;
+							if (idxA in args) {
+								args[idxA] = a;
+							}
+
+							if (idxB in args) {
+								args[idxB] = b;
+							}
 
 							return callback(...args);
 						},
