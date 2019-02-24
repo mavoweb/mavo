@@ -4,6 +4,24 @@
 
 (function($, val, _, $u = _.util) {
 
+var s = {seconds: 1, minutes: 60};
+s.hours  = s.minutes * 60;
+s.days   = s.hours   * 24;
+s.weeks  = s.days    * 7;
+s.months = s.days    * 30.4368;
+s.years  = s.weeks  * 52;
+
+var numeric = {
+	year: d => d.getFullYear(),
+	month: d => d.getMonth() + 1,
+	day: d => d.getDate(),
+	weekday: d => d.getDay() || 7,
+	hour: d => d.getHours(),
+	minute: d => d.getMinutes(),
+	second: d => d.getSeconds(),
+	ms: d => d.getMilliseconds()
+};
+
 $.extend(_, {
 	get $now() {
 		return new Date();
@@ -15,54 +33,65 @@ $.extend(_, {
 		return _.date(new Date());
 	},
 
-	year: date => {
-		date = val(date);
+	year: $.extend(function() {
+		return $u.dateComponent("year", ...arguments);
+	}, {multiValued: true}),
 
-		if (date) {
-			var dateO = $u.date(date);
+	month: $.extend(function() {
+		return $u.dateComponent("month", ...arguments);
+	}, {multiValued: true}),
 
-			// Why +""? We don't want years to be formatted like 2,017!
-			// Why the .match()? For incomplete dates, see #226
-			return dateO? dateO.getFullYear() + "" : (date.match(/\b[1-9]\d\d\b|\d+/) || [])[0];
-		}
+	week: () => s.weeks * 1000,
 
-		return "";
-	},
+	day: $.extend(function() {
+		return $u.dateComponent("day", ...arguments);
+	}, {multiValued: true}),
 
-	month: getDateComponent("month"),
-	day: getDateComponent("day"),
-	weekday: getDateComponent("weekday"),
-	hour: getDateComponent("hour"),
-	minute: getDateComponent("minute"),
-	second: getDateComponent("second"),
-	ms: getDateComponent("ms"),
+	weekday: $.extend(function() {
+		return $u.dateComponent("weekday", ...arguments);
+	}, {multiValued: true}),
 
-	date: date => {
+	hour: $.extend(function() {
+		return $u.dateComponent("hour", ...arguments);
+	}, {multiValued: true}),
+
+	minute: $.extend(function() {
+		return $u.dateComponent("minute", ...arguments);
+	}, {multiValued: true}),
+
+	second: $.extend(function() {
+		return $u.dateComponent("second", ...arguments);
+	}, {multiValued: true}),
+
+	ms: $.extend(function() {
+		return $u.dateComponent("ms", ...arguments);
+	}, {multiValued: true}),
+
+	date: $.extend(date => {
 		date = $u.date(date);
 
-		return date? `${_.year(date)}-${_.digits(2, _.month(date))}-${_.digits(2, _.day(date))}` : "";
-	},
+		return date? `${_.year(date)}-${_.month(date, "00")}-${_.day(date, "00")}` : "";
+	}, {multiValued: true}),
 
-	time: date => {
+	time: $.extend(date => {
 		date = $u.date(date);
 
-		return date? `${_.digits(2, _.hour(date))}:${_.digits(2, _.minute(date))}:${_.digits(2, _.second(date))}` : "";
-	},
+		return date? `${_.hour(date, "00")}:${_.minute(date, "00")}:${_.second(date, "00")}` : "";
+	}, {multiValued: true}),
 
 	localTimezone: -(new Date()).getTimezoneOffset(),
 });
 
-var s = {seconds: 1, minutes: 60};
-s.hours  = s.minutes * 60;
-s.days   = s.hours   * 24;
-s.weeks  = s.days    * 7;
-s.months = s.days    * 30.4368;
-s.years  = s.months  * 12;
-
 _.msTo = (what, ms) => Math.floor(Math.abs(ms) / (s[what] * 1000)) || 0;
 
 for (let unit in s) {
-	_[unit] = ms => _.msTo(unit, ms);
+	_[unit] = $.extend(function(ms) {
+		if (arguments.length === 0) {
+			return s[unit] * 1000;
+		}
+
+		return _.msTo(unit, ms);
+	}, {multiValued: true});
 }
 
 _.duration = $.extend(function($this, ms) {
@@ -123,6 +152,42 @@ $.extend(_.util, {
 		return date;
 	},
 
+	dateComponent: function(component, date, format) {
+		if (arguments.length === 1 && component + "s" in s) {
+			return _[component + "s"]();
+		}
+
+		var dateO = $u.date(date);
+
+		if (component === "year") {
+			// Why +""? We don't want years to be formatted like 2,017!
+			// Why the .match()? For incomplete dates, see #226
+			var ret = dateO? dateO.getFullYear() + "" : (date.match(/\b[1-9]\d\d\b|\d+/) || [])[0];
+		}
+
+		if (!ret && !dateO) {
+			return "";
+		}
+
+		var ret = ret || numeric[component](dateO);
+
+		if (format) {
+			if (/^0+$/.test(format)) {
+				// Leading zeroes
+				return (ret + "").padStart(format.length, "0").slice(-format.length);
+			}
+			else {
+				format = {name: "long", shortname: "short"}[format] || format;
+				ret = dateO.toLocaleString(Mavo.locale, {[component]: format});
+				ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
+
+				return ret;
+			}
+		}
+
+		return component === "year"? ret : +ret;
+	},
+
 	date: function(date) {
 		date = val(date);
 
@@ -164,46 +229,5 @@ $.extend(_.util, {
 		return isNaN(date)? null : date;
 	}
 });
-
-function toLocaleString(date, options) {
-	var ret = date.toLocaleString(Mavo.locale, options);
-
-	ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
-
-	return ret;
-}
-
-var numeric = {
-	year: d => d.getFullYear(),
-	month: d => d.getMonth() + 1,
-	day: d => d.getDate(),
-	weekday: d => d.getDay() || 7,
-	hour: d => d.getHours(),
-	minute: d => d.getMinutes(),
-	second: d => d.getSeconds(),
-	ms: d => d.getMilliseconds()
-};
-
-function getDateComponent(component) {
-	return function(date) {
-		date = $u.date(date);
-
-		if (!date) {
-			return "";
-		}
-
-		var ret = numeric[component](date);
-
-		// We don't want years to be formatted like 2,017!
-		ret = new self[component == "year"? "String" : "Number"](ret);
-
-		if (component == "month" || component == "weekday") {
-			ret.name = toLocaleString(date, {[component]: "long"});
-			ret.shortname = toLocaleString(date, {[component]: "short"});
-		}
-
-		return ret;
-	};
-}
 
 })(Bliss, Mavo.value, Mavo.Functions);
