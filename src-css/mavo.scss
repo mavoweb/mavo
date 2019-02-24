@@ -310,7 +310,8 @@ button.mv-close {
 
 // Specific styling per element type
 
-meta[property][mv-mode="edit"] {
+meta[property][mv-mode="edit"],
+link[property][mv-mode="edit"] {
 	display: inline-block;
 	padding: .15em .4em;
 	border: 1px dashed;
