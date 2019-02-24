@@ -429,11 +429,14 @@ var _ = $.extend(Mavo, {
 
 	XPath: function(query, context = document) {
 		var doc = context.ownerDocument || context;
-		var result = doc.evaluate(query, context, null, XPathResult.ANY_TYPE, null);
 		var ret = [], node;
 
-		while (node = result.iterateNext()) {
-			ret.push(node);
+		if (doc.evaluate) {
+			var result = doc.evaluate(query, context, null, XPathResult.ANY_TYPE, null);
+
+			while (node = result.iterateNext()) {
+				ret.push(node);
+			}
 		}
 
 		return ret;
