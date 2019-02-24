@@ -566,9 +566,9 @@ _.register({
 			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 		},
 		defaultFormats: {
-			"date": name => `[day(${name})] [month(${name}).shortname] [year(${name})]`,
-			"month": name => `[month(${name}).name] [year(${name})]`,
-			"time": name => `[digits(2, hour(${name}))]:[digits(2, minute(${name}))]`,
+			"date": name => `[day(${name})] [month(${name}, 'shortname')] [year(${name})]`,
+			"month": name => `[month(${name}, 'name')] [year(${name})]`,
+			"time": name => `[hour(${name}, '00'))]:[minute(${name}, '00')]`,
 			"datetime-local": function(name) {
 				return this.date(name) + " " + this.time(name);
 			}
