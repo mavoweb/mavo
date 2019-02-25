@@ -685,6 +685,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		var relative = path + "/" + name;
 
 		this.mavo.upload(file, relative).then(url => {
+			// Do we have a URL override?
+			var base = Mavo.getClosestAttribute(this.element, "mv-upload-url");
+
+			if (base) {
+				// Throw away backend-provided URL and use the override instead
+				url = new URL(relative, new URL(base, location)) + "";
+			}
+
 			this.value = url;
 
 			if (!this.element.matches("a")) {
