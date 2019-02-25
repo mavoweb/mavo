@@ -187,7 +187,18 @@ var _ = Mavo.Script = {
 			symbol: "/"
 		},
 		"addition": {
-			scalar: (a, b) => +a + +b,
+			scalar: (a, b) => {
+				if (isNaN(a) || isNaN(b)) {
+					// Handle dates
+					var dateA = $u.date(a), dateB = $u.date(b);
+
+					if (dateA || dateB) {
+						return +dateA + +dateB;
+					}
+				}
+
+				return +a + +b;
+			},
 			symbol: "+"
 		},
 		"plus": {
