@@ -242,7 +242,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 	static normalize (element) {
 		// Get & normalize typeof name, if exists
 		if (Mavo.is("group", element)) {
-			var type = Mavo.getAttribute(element, "typeof", "itemtype") || _.DEFAULT_TYPE;
+			var type = Mavo.getAttribute(element, "typeof", "mv-group") || _.DEFAULT_TYPE;
 
 			element.setAttribute("typeof", type);
 

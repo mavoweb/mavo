@@ -51,7 +51,7 @@ var _ = self.Mavo = $.Class({
 		this.autoSave = this.element.hasAttribute("mv-autosave");
 		this.autoSaveDelay = (this.element.getAttribute("mv-autosave") || 0) * 1000;
 
-		this.element.setAttribute("typeof", "");
+		Mavo.setAttributeShy(this.element, "typeof", "");
 
 		Mavo.hooks.run("init-start", this);
 
@@ -68,7 +68,7 @@ var _ = self.Mavo = $.Class({
 				var config = Mavo.Primitive.getConfig(element);
 
 				if (isCollection || !config.attribute && !config.hasChildren) {
-					element.setAttribute("typeof", "");
+					Mavo.setAttributeShy(element, "typeof", "");
 				}
 			}
 		});
@@ -860,11 +860,11 @@ Object.defineProperty(_.all, "length", {
 
 let s = _.selectors = {
 	init: "[mv-app], [data-mv-app]",
-	property: "[property], [itemprop]",
-	specificProperty: name => `[property=${name}], [itemprop=${name}]`,
-	group: "[typeof], [itemscope], [itemtype], [mv-group]",
-	primitive: "[property]:not([typeof]), [property]:not([mv-group]), [itemprop]:not([itemscope]):not([itemtype])",
-	childGroup: "[typeof][property], [mv-group][property], [itemscope][itemprop], [itemtype][itemprop]",
+	property: "[property]",
+	specificProperty: name => `[property=${name}]`,
+	group: "[typeof], [mv-group]",
+	primitive: "[property]:not([typeof]):not([mv-group])",
+	childGroup: "[typeof][property], [mv-group][property]",
 	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
