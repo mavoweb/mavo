@@ -158,134 +158,26 @@ _.register({
 		selector: "img, video, audio",
 		attribute: "src",
 		editor: function() {
-			var mainInput = $.create("input", {
-				"type": "url",
-				"placeholder": "http://example.com/image.png",
-				"className": "mv-output",
-				"aria-label": "URL to image"
-			});
+			var kind = this.element.nodeName.toLowerCase();
+			kind = kind == "img"? "image" : kind;
+			Mavo.setAttributeShy(this.element, "mv-uploads", kind + "s");
 
-			if (this.mavo.uploadBackend && self.FileReader) {
-				var popup;
-				var type = this.element.nodeName.toLowerCase();
-				type = type == "img"? "image" : type;
-				var path = this.element.getAttribute("mv-uploads") || type + "s";
+			return this.createUploadPopup(kind + "/*", kind, "png");
+		}
+	},
 
-				var upload = (file, name = file.name) => {
-					if (!file || file.type.indexOf(type + "/") !== 0) {
-						return;
-					}
+	"a, link": {
+		default: true,
+		attribute: "href"
+	},
 
-					var tempURL = URL.createObjectURL(file);
-
-					this.sneak(() => this.element.src = tempURL);
-
-					this.mavo.upload(file, path + "/" + name).then(url => {
-						// Backend claims image is uploaded, we should load it from remote to make sure everything went well
-						var attempts = 0;
-						var load = Mavo.rr(() => Mavo.defer(1000 + attempts * 500).then(() => {
-							attempts++;
-							this.element.src = url;
-						}));
-						var cleanup = () => {
-							URL.revokeObjectURL(tempURL);
-							this.element.removeEventListener("load", onload);
-							this.element.removeEventListener("error", onload);
-						};
-						var onload = evt => {
-							if (this.element.src != tempURL) {
-								// Actual uploaded image has loaded, yay!
-								this.element.src = url;
-								cleanup();
-							}
-						};
-						var onerror = evt => {
-							// Oops, failed. Put back temp URL and try again
-							if (attempts <= 10) {
-								this.sneak(() => this.element.src = tempURL);
-								load();
-							}
-							else {
-								// 11 + 0.5*10*11/2 = 38.5 seconds later, giving up
-								this.mavo.error(this.mavo._("cannot-load-uploaded-file") + " " + url);
-								cleanup();
-							}
-						};
-
-						mainInput.value = url;
-						this.element.addEventListener("load", onload);
-						this.element.addEventListener("error", onerror);
-					});
-				};
-
-				var uploadEvents = {
-					"paste": evt => {
-						var item = evt.clipboardData.items[0];
-
-						if (item.kind == "file" && item.type.indexOf(type + "/") === 0) {
-							// Is a file of the correct type, upload!
-							var defaultName = `pasted-${type}-${Date.now()}.${item.type.slice(6)}`; // image, video, audio are all 5 chars
-							var name = prompt(this.mavo._("filename"), defaultName);
-
-							if (name === "") {
-								name = defaultName;
-							}
-
-							if (name !== null) {
-								upload(item.getAsFile(), name);
-								evt.preventDefault();
-							}
-						}
-					},
-					"drag dragstart dragend dragover dragenter dragleave drop": evt => {
-						evt.preventDefault();
-						evt.stopPropagation();
-					},
-					"dragover dragenter": evt => {
-						popup.classList.add("mv-dragover");
-						this.element.classList.add("mv-dragover");
-					},
-					"dragleave dragend drop": evt => {
-						popup.classList.remove("mv-dragover");
-						this.element.classList.remove("mv-dragover");
-					},
-					"drop": evt => {
-						upload(evt.dataTransfer.files[0]);
-					}
-				};
-
-				$.bind(this.element, uploadEvents);
-
-				return popup = $.create({
-					className: "mv-upload-popup",
-					contents: [
-						mainInput, {
-							tag: "input",
-							type: "file",
-							"aria-label": "Upload image",
-							accept: type + "/*",
-							events: {
-								change: evt => {
-									var file = evt.target.files[0];
-
-									if (!file) {
-										return;
-									}
-
-									upload(file);
-								}
-							}
-						}, {
-							className: "mv-tip",
-							innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
-						}
-					],
-					events: uploadEvents
-				});
-			}
-			else {
-				return mainInput;
-			}
+	"a[mv-uploads], link[mv-uploads]": {
+		default: true,
+		attribute: "href",
+		editor: function() {
+			var type = this.element.getAttribute("type");
+			var ext = type && !/\/\*$/.test(type)? type.split("/")[1] : "pdf";
+			return this.createUploadPopup(type, undefined, ext);
 		}
 	},
 
@@ -297,11 +189,6 @@ _.register({
 	"details": {
 		attribute: "open",
 		datatype: "boolean"
-	},
-
-	"a, link": {
-		default: true,
-		attribute: "href"
 	},
 
 	"input, select, button, textarea": {

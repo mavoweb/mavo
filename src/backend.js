@@ -103,7 +103,7 @@ var _ = Mavo.Backend = $.Class({
 					let action = req.data[p] === undefined? "delete" : "set";
 					call.searchParams[action](p, req.data[p]);
 				}
-				
+
 				delete req.data;
 			}
 			else {

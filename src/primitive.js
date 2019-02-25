@@ -671,6 +671,116 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return super.dataChanged(action, o);
 	}
 
+	upload (file, name = file.name) {
+		if (!this.mavo.uploadBackend || !self.FileReader) {
+			return;
+		}
+
+		var tempURL = URL.createObjectURL(file);
+
+		// FIXME what if there's no attribute?
+		this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
+
+		var path = this.element.getAttribute("mv-uploads") || "";
+		var relative = path + "/" + name;
+
+		this.mavo.upload(file, relative).then(url => {
+			this.value = url;
+
+			if (!this.element.matches("a")) {
+				// <a> should get the proper URL immediately, because hovering would reveal what it is
+				// for other types, we should keep the temporary URL because the real one may not have deployed yet
+				// If the editor is manually edited, this will change anyway
+				this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
+			}
+		});
+	}
+
+	createUploadPopup (type, kind = "file", ext) {
+		var mainInput = $.create("input", {
+			"type": "url",
+			"placeholder": `http://example.com/${kind}.${ext}`,
+			"className": "mv-output",
+			"aria-label": `URL to ${kind}`
+		});
+
+		if (this.mavo.uploadBackend && self.FileReader) {
+			var popup;
+			var checkType = file => file && (!type || file.type.indexOf(type.replace("*", "")) === 0);
+
+			var uploadEvents = {
+				"paste": evt => {
+					var item = evt.clipboardData.items[0];
+					var ext = item.type.split("/")[1];
+
+					if (item.kind == "file" && checkType(item)) {
+						// Is a file of the correct type, upload!
+						var defaultName = `pasted-${kind}-${Date.now()}.${ext}`;
+						var name = prompt(this.mavo._("filename"), defaultName);
+
+						if (name === "") {
+							name = defaultName;
+						}
+
+						if (name !== null) {
+							this.upload(item.getAsFile(), name, type);
+							evt.preventDefault();
+						}
+					}
+				},
+				"drag dragstart dragend dragover dragenter dragleave drop": evt => {
+					evt.preventDefault();
+					evt.stopPropagation();
+				},
+				"dragover dragenter": evt => {
+					popup.classList.add("mv-dragover");
+					this.element.classList.add("mv-dragover");
+				},
+				"dragleave dragend drop": evt => {
+					popup.classList.remove("mv-dragover");
+					this.element.classList.remove("mv-dragover");
+				},
+				"drop": evt => {
+					var file = evt.dataTransfer.files[0];
+
+					if (file && checkType(file)) {
+						this.upload(file);
+					}
+				}
+			};
+
+			$.bind(this.element, uploadEvents);
+
+			return popup = $.create({
+				className: "mv-upload-popup",
+				contents: [
+					mainInput, {
+						tag: "input",
+						type: "file",
+						"aria-label": `Upload ${kind}`,
+						accept: type,
+						events: {
+							change: evt => {
+								var file = evt.target.files[0];
+
+								if (file && checkType(file)) {
+									this.upload(file);
+								}
+							}
+						}
+					}, {
+						className: "mv-tip",
+						innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
+					}
+				],
+				events: uploadEvents
+			});
+		}
+		else {
+			return mainInput;
+		}
+	}
+
 	static getText (element) {
 		var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
 
@@ -983,7 +1093,7 @@ $.Class(_, {
 		empty: function (value) {
 			var hide = value && // is empty
 			           !this.modes && // and supports both modes
-			           !(this.attribute && $(Mavo.selectors.property, this.element)) && // and has no property inside
+			           (!this.attribute || !$(Mavo.selectors.property, this.element)) && // and has no property inside
 					   // and is not boolean OR if it is, its attribute is the default boolean attribute (see #464)
 			           (this.datatype !== "boolean" || this.attribute === Mavo.Elements.defaultConfig.boolean.attribute);
 
