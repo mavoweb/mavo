@@ -301,9 +301,16 @@ button.mv-close {
 	&[mv-attribute="null"] {
 		cursor: text;
 
-		&.mv-empty.mv-pending-edit:not([datatype="boolean"])::before {
-			content: "(" attr(aria-label) ")";
+		&.mv-empty.mv-pending-edit:not([datatype="boolean"]) {
 			opacity: .5;
+
+			&::before {
+				content: "(" attr(aria-label) ")";
+			}
+
+			&[mv-edit-placeholder]::before {
+				content: attr(mv-edit-placeholder);
+			}
 		}
 	}
 }
