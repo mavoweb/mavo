@@ -162,6 +162,7 @@ $.extend(_.util, {
 		if (component === "year") {
 			// Why +""? We don't want years to be formatted like 2,017!
 			// Why the .match()? For incomplete dates, see #226
+			date = date && date.match? date : date + "";
 			var ret = dateO? dateO.getFullYear() + "" : (date.match(/\b[1-9]\d\d\b|\d+/) || [])[0];
 		}
 
