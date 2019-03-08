@@ -628,13 +628,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				return value;
 			}
 
-			if (this.editor && document.activeElement != this.editor) {
-				// If external forces are changing the value (i.e. not the editor)
-				// and an editor is present, set its value to match
+			if (this.editor && this.editorValue != value) {
+				// If an editor is present, set its value to match
 				this.editorValue = value;
 			}
 
-			if (this.popup || !this.editor || this.editor !== document.activeElement) { // Prevent loops
+			if (this.popup || !this.editor) {
 				if (this.config.setValue) {
 					this.config.setValue.call(this, this.element, value);
 				}
