@@ -100,7 +100,7 @@ Mavo.prototype._ = function(id, vars) {
 	return this.locale && id? this.locale.phrase(id, vars) : id;
 };
 
-$.ready().then(() => {
+Mavo.ready.then(() => {
 	$$("datalist.mv-phrases[lang]").forEach(datalist => {
 		var phrases = $$("option", datalist).reduce((o, option) => {
 			o[option.value] = option.textContent.trim();
