@@ -62,7 +62,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		button.classList.add("mv-add", `mv-add-${this.property}`);
 		Mavo.data(button, "collection", this);
 
-		button.setAttribute("mv-action", `add(${this.property})`);
+		Mavo.setAttributeShy(button, "mv-action", `add(${this.property})`);
 
 		return button;
 	}
