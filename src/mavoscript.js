@@ -695,7 +695,7 @@ var _ = Mavo.Script = {
 
 					if (def && def.needsContext) {
 						// Why not function.call(...)? Because it's a more drastic change.
-						node.arguments.unshift({type: "Identifier", name: "$this"})
+						node.arguments.unshift({type: "Identifier", name: "$this"});
 					}
 				}
 			}
