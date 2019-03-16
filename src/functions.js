@@ -445,38 +445,34 @@ var _ = Mavo.Functions = {
 	}),
 
 	/**
-     * Search if a group, collection, or primitive contains needle
-	 * @returns Boolean if a haystack of object or primitive is passed
-	 * @returns Array of booleans if a haystack of array is passed
-     */
-    contains: (haystack, needle) => {
-		var ret = Mavo.Script.binaryOperation(haystack, needle, {
-			scalar: (haystack, needle) => {
-				if ($.type(haystack) === "object") {
-					for (var property in haystack) {
-						ret = _.contains(haystack[property], needle);
-						if (Array.isArray(ret)) {
-							ret = Mavo.Functions.or(ret);
-						}
-						if (ret) {
-							return true;
-						}
-					}
-				}
-				else {
-					return _.search(haystack, needle) >= 0;
-				}
-				return ret;
-			},
-		});
+	 * Search if a group, collection, or primitive contains a string
+	 * @returns Boolean if a haystack AND needle of object or primitive are passed
+	 * @returns Array of booleans if either a haystack OR needle of array is passed
+	 */
+	contains: $.extend((haystack, needle) => {
+		let result;
+		let haystackType = $.type(haystack);
 
-		// if result is an empty array, return false
-		if (ret.length === 0) {
-			return false;
+		if (haystackType === "object" || haystackType === "array") {
+			for (let property in haystack) {
+				result = _.contains(haystack[property], needle);
+
+				if (Array.isArray(result)) {
+					result = Mavo.Functions.or(result);
+				}
+				if (result) {
+					return true;
+				}
+			}
+		}
+		else {
+			return _.search(haystack, needle) >= 0;
 		}
 
-		return ret;
-    },
+		return result;
+	}, {
+		multiValued: true
+	}),
 
 	/**
 	 * Case insensitive search
@@ -666,7 +662,7 @@ var _ = Mavo.Functions = {
 					var ret = callback.call(this, ...arguments);
 
 					return ret === undefined? array : ret;
-				}
+				};
 			}
 
 			if (newCallback) {
