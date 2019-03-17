@@ -633,7 +633,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.editorValue = value;
 			}
 
-			if (this.popup || !this.editor) {
+			// Also set DOM value if either using a popup, or there's no editor
+			// or the editor is not inside the element (e.g. it could be a nested editor that is now detached)
+			if (this.popup || !this.editor || (this.editor !== document.activeElement && !this.element.contains(this.editor))) {
 				if (this.config.setValue) {
 					this.config.setValue.call(this, this.element, value);
 				}
