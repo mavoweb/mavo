@@ -272,7 +272,7 @@ for (let name in _.Functions) {
 	if (!(nameif in _.Functions)) {
 		_.Functions[nameif] = (condition, target, ...rest) => {
 			target = Mavo.Functions.iff(condition, target);
-			return _.Functions[name](target, ...rest);
+			return Mavo.value(condition)? _.Functions[name](target, ...rest) : null;
 		};
 	}
 }

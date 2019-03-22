@@ -21,6 +21,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 			});
 
 			var bottomUp = this.collection.bottomUp;
+			var args = `$item${bottomUp? ", $index + 1" : ""}`;
 			var buttons = [
 				{
 					tag: "button",
@@ -37,7 +38,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 					type: "button",
 					title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
 					className: "mv-add",
-					"mv-action": `add(if($cmd, $item, null), $item${bottomUp? ", $index + 1" : ""})`
+					"mv-action": `if($cmd, add($item, ${args}), add(${args}))`
 				}
 			];
 
@@ -159,7 +160,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 		if (!this.element.parentNode && !Mavo.revocably.add(this.element)) {
 			// Has not been added before
 			var tag = this.item.element.nodeName.toLowerCase();
-			
+
 			if (tag in _.container) {
 				var rel = $(_.container[tag], this.item.element);
 			}
