@@ -60,6 +60,17 @@ var _ = Mavo.Actions = {
 		}
 	},
 
+	getCollection: ref => {
+		var collection = _.getNode(ref);
+
+		if (collection instanceof Mavo.Collection) {
+			return collection;
+		}
+
+		// ref is not a collection. Either it's an item or we don't have a collection
+		return collection? collection.collection : null;
+	},
+
 	// Function to run instead of actions if actions are called outside mv-action
 	nope: () => {
 		var actions = Object.keys(_.Functions).map(name => `${name}()`);
@@ -81,9 +92,17 @@ var _ = Mavo.Actions = {
 				}
 				else if (arguments.length === 2) {
 					// Is it (data, ref) or (ref, index)?
-					if ((ref >= 0 || ref < 0) && !Array.isArray(ref)) {
-						// add(ref, index) signature used
-						[data, ref, index] = [undefined, data, ref];
+					// ref might be a number, if collection of numbers!
+					var collection = _.getCollection(ref);
+
+					if (!collection) {
+						// No collection from ref, must be (ref, index)
+						collection = _.getCollection(data);
+
+						if (collection) {
+							// Yup, it's (ref, index)
+							[data, ref, index] = [undefined, data, ref];
+						}
 					}
 				}
 			}
@@ -92,23 +111,20 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var collection = _.getNode(ref);
+			collection = collection || _.getCollection(ref);
 
-			if (!(collection instanceof Mavo.Collection)) {
-				if (!(collection instanceof Mavo.Collection) && collection && collection.collection) {
-					// Item provided instead of collection
-					var item = collection;
-					collection = collection.collection;
+			if (!collection) {
+				Mavo.warn("No collection or collection item provided to add().", {once: false});
+				return data;
+			}
 
-					// If there is no index, get index from collection item
-					if (index === undefined) {
-						index = item.index;
-					}
-				}
+			if (index === undefined) {
+				// If there is no index and item provided instead of collection,
+				// get index from collection item
+				var node = _.getNode(ref);
 
-				if (!(collection instanceof Mavo.Collection)) {
-					Mavo.warn("No collection or collection item provided to add().", {once: false});
-					return data;
+				if (node !== collection) {
+					index = node.index;
 				}
 			}
 
