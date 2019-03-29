@@ -45,8 +45,9 @@ var _ = Mavo.Expressions = $.Class({
 
 		domexpression.identifiers.forEach(id => {
 			if (ids[id]) {
-				ids[id].delete(this);
+				ids[id].delete(domexpression);
 			}
+
 			// just in case domexpresssion has been destroyed by another app during the loop
 			// when another app is destroyed.
 			if (id in Mavo.all && typeof domexpresssion !== "undefined") {

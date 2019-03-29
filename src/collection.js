@@ -118,26 +118,27 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		else if (this.initialItems > 0 || !this.template) {
 			var item = this.createItem(this.element);
 			this.add(item, undefined, {silent: true});
+		}
 
+		this.mavo.treeBuilt.then(() => {
 			if (!this.initialItems) {
-				this.delete(item, {silent: true});
+				if (item) {
+					this.delete(item, {silent: true});
+				}
+				else {
+					// No item to delete
+					this.element.remove();
+				}
 			}
-		}
-
-		if (!this.initialItems) {
-			this.element.remove();
-		}
-
-		this.postInit();
-
-		if (this.initialItems > 1) {
-			// Add extra items
-			this.mavo.treeBuilt.then(() => {
+			else if (this.initialItems > 1) {
+				// Add extra items
 				for (let i=1; i<this.initialItems; i++) {
 					this.add();
 				}
-			});
-		}
+			}
+		});
+
+		this.postInit();
 
 		Mavo.hooks.run("collection-init-end", this);
 	}
@@ -252,6 +253,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		// Sort in reverse index order
 		actions.sort((a, b) => b.index - a.index);
 
+		var changed = [], deleted = [];
+
 		// FIXME this could still result in buggy behavior.
 		// Think of e.g. adding items on i, then removing > 1 items on i-1.
 		// The new items would get removed instead of the old ones.
@@ -260,20 +263,31 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			if (action.index > -1 && (action.remove || action.add)) {
 				action.remove = action.remove || 0;
 				action.add = Mavo.toArray(action.add);
-				this.children.splice(action.index, +action.remove, ...action.add);
+				deleted.push(...this.children.splice(action.index, +action.remove, ...action.add));
 			}
 		});
 
-		var changed = [];
+		deleted = new Set(deleted);
 
+		// Update indices
 		for (let i = 0; i < this.length; i++) {
 			let item = this.children[i];
+			deleted.delete(item);
 
 			if (item && item.index !== i) {
 				item.index = i;
 				changed.push(item);
 			}
 		}
+
+		// Unregister expressions for deleted items
+		deleted.forEach(item => {
+			if (item.expressions) {
+				item.expressions.forEach(domexpression => {
+					item.mavo.expressions.unregister(domexpression);
+				});
+			}
+		});
 
 		this.liveData.update();
 
