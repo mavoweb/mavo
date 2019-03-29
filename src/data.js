@@ -82,9 +82,14 @@ var _ = Mavo.Data = $.Class(class Data {
 			this.parent.update();
 		}
 		else {
-			var key = this.key;
+			var key = this.key, isDeleted = false;
 
-			if (key !== undefined) {
+			if (this.collection instanceof Mavo.Collection) {
+				// Is collection item, check if deleted
+				isDeleted = this.collection.children[this.node.index] !== this.node;
+			}
+
+			if (key !== undefined && !isDeleted) {
 				this.parent.set(key, this.data, true);
 			}
 		}
