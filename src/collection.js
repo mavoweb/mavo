@@ -326,23 +326,12 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		}
 	}
 
-	delete (item, {silent, undoable = !silent, transition = !silent} = {}) {
+	delete (item, {silent, undoable = !silent, transition = !silent, destroy = !undoable} = {}) {
 		item.element.classList.remove("mv-highlight");
 
 		this.splice({remove: item});
 
-		if (silent) {
-			// Delete immediately, no undo
-			$.remove(item.element);
-
-			if (!undoable) {
-				item.destroy();
-			}
-
-			return Promise.resolve(item);
-		}
-
-		if (transition) {
+		if (!silent && transition) {
 			var stage2 = $.transition(item.element, {opacity: 0}).then(() => {
 				item.element.style.opacity = "";
 			});
@@ -354,12 +343,17 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		return stage2.then(() => {
 			$.remove(item.element);
 
-			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
+			if (!silent) {
+				this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 
-			item.collection.dataChanged("delete", {index: item.index});
+				item.collection.dataChanged("delete", {index: item.index});
+			}
 
 			if (undoable) {
 				this.mavo.setDeleted(item);
+			}
+			else if (destroy) {
+				item.destroy();
 			}
 
 			return item;
@@ -608,18 +602,28 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 	// Delete multiple items from potentially multiple collections or even multiple mavos
 	static delete (nodes, o = {}) {
-		var deleted = new Mavo.BucketMap({arrays: true});
-
+		var deleted = new Mavo.BucketMap({arrays: true}); // Mavos and deleted items
+		var collections = new Set(); // Collections items were deleted from
+		var options = {silent: true, undoable: false, destroy: false};
 		var promises = nodes
-			.filter(node => !!node.collection)
-			.map(node => node.collection.delete(node, Object.assign({}, o, {undoable: false})).then(node => deleted.set(node.mavo, node)));
+			.filter(node => !!node.collection) // Drop nodes that are not collection items
+			.map(node => {
+				collections.add(node.collection);
+				return node.collection.delete(node, options)
+				           .then(node => deleted.set(node.mavo, node))
+			});
 
-		if (!o.silent && o.undoable !== false) {
+		if (!o.silent) {
 			Promise.all(promises).then(() => {
-
-				deleted.forEach((nodes, mavo) => {
-					mavo.setDeleted(...nodes);
+				collections.forEach(collection => {
+					collection.dataChanged("delete");
 				});
+
+				if (o.undoable !== false) {
+					deleted.forEach((nodes, mavo) => {
+						mavo.setDeleted(...nodes);
+					});
+				}
 			});
 		}
 	}
