@@ -12,6 +12,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			// Which attribute holds the data, if any?
 			// "null" or null for none (i.e. data is in content).
 			this.attribute = this.config.attribute;
+
+			// HTML attribute names are case insensitive (Fix for #515)
+			if (this.attribute && !document.xmlVersion) {
+				this.attribute = this.attribute.toLowerCase();
+			}
 		}
 
 		this.datatype = this.config.datatype;

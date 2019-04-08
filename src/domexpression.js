@@ -230,6 +230,11 @@ var _ = Mavo.DOMExpression = $.Class({
 				return element;
 			}
 
+			// HTML attributes are case-insensitive (fix for #515)
+			if (attribute && !element.ownerDocument.xmlVersion) {
+				attribute = attribute.toLowerCase();
+			}
+
 			var all = _.elements.get(element) || [];
 
 			if (arguments.length > 1) {
