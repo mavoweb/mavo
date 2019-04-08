@@ -1080,11 +1080,14 @@ $.Class(_, {
 						this.observer.run();
 					}
 					else {
-						this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-							if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
-								this.value = this.getValue();
-							}
-						}, {subtree: config.subtree, childList: config.subtree});
+						// We do it asynchronously because the first time this.config is set, this.attribute is not yet defined
+						Mavo.defer().then(() => {
+							this.observer = new Mavo.Observer(this.element, this.attribute, records => {
+								if (this.observer.running && (this.attribute || !this.editing || this.config.subtree)) {
+									this.value = this.getValue();
+								}
+							}, {subtree: config.subtree, childList: config.subtree});
+						});
 					}
 				}
 			}
