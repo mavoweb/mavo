@@ -234,7 +234,7 @@ button.mv-close {
 	}
 }
 
-[mv-progress="Loading"] [mv-multiple] {
+[mv-progress="Loading"]:not(.mv-no-hiding-during-loading) [mv-multiple] {
 	display: none;
 }
 
