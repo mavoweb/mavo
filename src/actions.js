@@ -6,6 +6,11 @@ var _ = Mavo.Actions = {
 	listener: evt => {
 		var tag = evt.type === "submit"? "form" : ":not(form)";
 		var element = evt.target.closest(tag + "[mv-action]");
+
+		if (!element) {
+			return; // Not an action
+		}
+
 		var node = Mavo.Node.get(element);
 
 		if (node && node.editing) {
