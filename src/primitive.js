@@ -200,7 +200,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
-
 				_.setValue(this.editor, value, {config: this.editorDefaults});
 			}
 			else {
@@ -645,6 +644,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this.config.setValue.call(this, this.element, value);
 				}
 				else if (!o.dataOnly) {
+
 					_.setValue(this.element, value, {
 						config: this.config,
 						attribute: this.attribute,
@@ -919,6 +919,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		var config = Mavo.Elements.search(element, attribute, datatype);
+		config = Object.assign({}, config);
 
 		if (config.attribute === undefined) {
 			config.attribute = attribute || null;
