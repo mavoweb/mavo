@@ -120,6 +120,13 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
+		// Remove pointless tooltips
+		$$("button, .mv-button", this.element).forEach(button => {
+			if (button.title === button.textContent) {
+				button.title = "";
+			}
+		});
+
 		// Exceeded single row?
 		if (this.element.offsetHeight > this.targetHeight * 1.6) {
 			this.element.classList.add("mv-compact");
@@ -127,6 +134,13 @@ var _ = Mavo.UI.Bar = $.Class({
 			if (this.element.offsetHeight > this.targetHeight * 1.2) {
 				// Still too tall
 				this.element.classList.add("mv-tiny");
+
+				// Add tooltips, since only icons will be visible
+				$$("button, .mv-button", this.element).forEach(button => {
+					if (!button.title) {
+						button.title = button.textContent;
+					}
+				});
 			}
 		}
 

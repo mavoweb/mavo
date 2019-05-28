@@ -182,8 +182,8 @@
 	}
 
 	&.mv-tiny {
-		& > button:not(.mv-login),
-		& > .mv-button:not(.mv-login) {
+		& > button,
+		& > .mv-button {
 			// Hide text
 			width: 1em;
 			position: relative;
