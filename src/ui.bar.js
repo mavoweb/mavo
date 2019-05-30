@@ -229,17 +229,29 @@ var _ = Mavo.UI.Bar = $.Class({
 
 					if (backend && backend.user) {
 						var user = backend.user;
-						var html = user.name || "";
+						var html = [user.name || ""];
 
 						if (user.avatar) {
-							html = `<img class="mv-avatar" src="${user.avatar}" /> ${html}`;
+							html.unshift($.create("img", {
+								className: "mv-avatar",
+								src: user.avatar
+							}), " ");
 						}
 
 						if (user.url) {
-							html = `<a href="${user.url}" target="_blank">${html}</a>`;
+							html = [$.create("a", {
+								href: user.url,
+								target: "_blank",
+								contents: html
+							})];
 						}
 
-						this.bar.status.innerHTML = `<span>${this._("logged-in-as", backend)}</span> ` + html;
+						this.bar.status.textContent = "";
+						$.contents(this.bar.status, [
+							{tag: "span", innerHTML: this._("logged-in-as", backend)},
+							" ",
+							...html
+						]);
 					}
 				},
 				permission: "logout"
