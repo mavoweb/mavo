@@ -213,7 +213,48 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 	}
 
-	destroy() {
+	// Add mutation observer to observe future mutations to this property, if possible
+	// Properties like input.checked or input.value cannot be observed that way
+	// so we cannot depend on mutation observers for everything :(
+	updateObserver () {
+		if (!this.config) {
+			return;
+		}
+
+		if (this.config.observer === false) {
+			if (this.observer) {
+				this.observer.stop();
+			}
+		}
+		else {
+			var options = {subtree: this.config.subtree, childList: this.config.subtree};
+
+			if (this.observer) {
+				if (this.observer.attribute !== this.attribute
+				   || this.observer.options.subtree !== options.subtree
+				) {
+					// Options changed since last time, we need to recreate observer
+					this.observer.update(this.element, this.attribute, options);
+				}
+
+				if (!this.observer.running) {
+					this.observer.run();
+				}
+			}
+			else {
+				this.observer = new Mavo.Observer(this.element, this.attribute, records => {
+					if (this._config.observer === false) {
+						this.observer.stop();
+					}
+					else if (this.attribute || !this.editing || this.config.subtree) {
+						this.value = this.getValue();
+					}
+				}, options);
+			}
+		}
+	}
+
+	destroy () {
 		super.destroy();
 
 		[
@@ -1068,32 +1109,15 @@ $.Class(_, {
 
 		config: function(config) {
 			if (this._config !== config) {
-				if (config.observer === false) {
-					if (this.observer) {
-						this.observer.stop();
-					}
-				}
-				else {
-					// Observe future mutations to this property, if possible
-					// Properties like input.checked or input.value cannot be observed that way
-					// so we cannot depend on mutation observers for everything :(
-					if (this.observer) {
-						this.observer.run();
-					}
-					else {
-						// We do it asynchronously because the first time this.config is set, this.attribute is not yet defined
-						Mavo.defer().then(() => {
-							this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-								if (this._config.observer === false) {
-									this.observer.stop();
-								}
-								else if (this.attribute || !this.editing || this.config.subtree) {
-									this.value = this.getValue();
-								}
-							}, {subtree: config.subtree, childList: config.subtree});
-						});
-					}
-				}
+				this._config = config;
+				this.updateObserver();
+			}
+		},
+
+		attribute: function(attribute) {
+			if (this._attribute !== attribute) {
+				this._attribute = attribute;
+				this.updateObserver();
 			}
 		},
 

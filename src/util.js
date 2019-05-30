@@ -618,17 +618,22 @@ var _ = $.extend(Mavo, {
 			}
 
 			this.observer = this.observer || new MutationObserver(callback);
-			this.element = element;
 			this.callback = callback;
+			this.update(element, attribute, o)
+
+			this.run();
+		},
+
+		update: function(element, attribute, options) {
+			this.element = element;
 			this.attribute = attribute;
+			this.options = $.extend({}, options);
 
-			this.options = $.extend({}, o);
-
-			if (attribute) {
+			if (this.attribute) {
 				$.extend(this.options, {
 					attributes: true,
 					attributeFilter: this.attribute == "all"? undefined : Mavo.toArray(this.attribute),
-					attributeOldValue: !!o.oldValue
+					attributeOldValue: !!options.oldValue
 				});
 			}
 
@@ -637,11 +642,14 @@ var _ = $.extend(Mavo, {
 					characterData: true,
 					childList: true,
 					subtree: true,
-					characterDataOldValue: !!o.oldValue
+					characterDataOldValue: !!options.oldValue
 				});
 			}
 
-			this.run();
+			if (this.observer && this.observer.running) {
+				this.stop();
+				this.run();
+			}
 		},
 
 		stop: function() {
