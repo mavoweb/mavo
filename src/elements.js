@@ -66,6 +66,11 @@ Object.defineProperties(_, {
 		value: function(element, attribute, datatype) {
 			var matches = _.matches(element, attribute, datatype);
 
+			if (matches.length === 0 && datatype) {
+				// 0 matches, try again without datatype
+				matches = _.matches(element, attribute);
+			}
+
 			var lastMatch = matches[matches.length - 1];
 
 			if (lastMatch) {
