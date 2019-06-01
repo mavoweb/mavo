@@ -450,7 +450,7 @@ var _ = Mavo.Functions = {
 	 * @returns Array of booleans if either a haystack OR needle of array is passed
 	 */
 	contains: $.extend((haystack, needle) => {
-		let result;
+		let ret;
 		let haystackType = $.type(haystack);
 
 		if ($.type(needle) === "object") {
@@ -459,12 +459,12 @@ var _ = Mavo.Functions = {
 
 		if (haystackType === "object" || haystackType === "array") {
 			for (let property in haystack) {
-				result = _.contains(haystack[property], needle);
+				ret = _.contains(haystack[property], needle);
 
-				if (Array.isArray(result)) {
-					result = Mavo.Functions.or(result);
+				if (Array.isArray(ret)) {
+					ret = Mavo.Functions.or(ret);
 				}
-				if (result) {
+				if (ret) {
 					return true;
 				}
 			}
