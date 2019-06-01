@@ -453,6 +453,10 @@ var _ = Mavo.Functions = {
 		let result;
 		let haystackType = $.type(haystack);
 
+		if ($.type(needle) === "object") {
+			return JSON.stringify(haystack).indexOf(JSON.stringify(needle)) >= 0;
+		}
+
 		if (haystackType === "object" || haystackType === "array") {
 			for (let property in haystack) {
 				result = _.contains(haystack[property], needle);
@@ -469,7 +473,7 @@ var _ = Mavo.Functions = {
 			return _.search(haystack, needle) >= 0;
 		}
 
-		return result;
+		return ret;
 	}, {
 		multiValued: true
 	}),
