@@ -530,7 +530,7 @@ var _ = Mavo.Script = {
 					var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_.serialize(node.arguments[1])}); }`;
 					return `(function() {
 						var scope = ${_.serialize(node.arguments[0])};
-						if (Array.isArray(scope) && !Mavo.in(Mavo.isProxy, scope)) {
+						if (Array.isArray(scope)) {
 							return scope.map(function(scope) {
 								${withCode}
 							});
