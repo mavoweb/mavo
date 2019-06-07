@@ -259,7 +259,7 @@ var _ = Mavo.Actions = {
 				else {
 					Mavo.Script.binaryOperation(wasArray? nodes : nodes[0], values, {
 						scalar: (node, value) => {
-							return node.render(value);
+							return node ? node.render(value) : null;
 						}
 					});
 				}
