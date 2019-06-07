@@ -636,7 +636,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return this._value !== previousValue;
 	}
 
-	find(property, o = {}) {
+	find (property, o = {}) {
 		if (this.property == property && o.exclude !== this) {
 			return this;
 		}
@@ -645,7 +645,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	/**
 	 * Get value from the DOM
 	 */
-	getValue(o) {
+	getValue (o) {
 		return _.getValue(this.element, {
 			config: this.config,
 			attribute: this.attribute,
@@ -685,7 +685,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this.config.setValue.call(this, this.element, value);
 				}
 				else if (!o.dataOnly) {
-
 					_.setValue(this.element, value, {
 						config: this.config,
 						attribute: this.attribute,
@@ -1062,6 +1061,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (($.type(value) === "number" || o.datatype == "number")) {
+			if (value === null) {
+				return "";
+			}
+			
 			var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
 
 			if (!skipNumberFormatting) {
