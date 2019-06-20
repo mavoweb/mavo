@@ -751,7 +751,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	createUploadPopup (type, kind = "file", ext) {
-		var mainInput = $.create("input", {
+		var env = { context: this, type, kind, ext };
+
+		env.mainInput = $.create("input", {
 			"type": "url",
 			"placeholder": `http://example.com/${kind}.${ext}`,
 			"className": "mv-output",
@@ -759,10 +761,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		});
 
 		if (this.mavo.uploadBackend && self.FileReader) {
-			var popup;
 			var checkType = file => file && (!type || file.type.indexOf(type.replace("*", "")) === 0);
 
-			var uploadEvents = {
+			env.events = {
 				"paste": evt => {
 					var item = evt.clipboardData.items[0];
 					var ext = item.type.split("/")[1];
@@ -787,11 +788,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					evt.stopPropagation();
 				},
 				"dragover dragenter": evt => {
-					popup.classList.add("mv-dragover");
+					env.popup.classList.add("mv-dragover");
 					this.element.classList.add("mv-dragover");
 				},
 				"dragleave dragend drop": evt => {
-					popup.classList.remove("mv-dragover");
+					env.popup.classList.remove("mv-dragover");
 					this.element.classList.remove("mv-dragover");
 				},
 				"drop": evt => {
@@ -803,12 +804,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				}
 			};
 
-			$.bind(this.element, uploadEvents);
+			Mavo.hooks.run("primitive-createuploadpopup-beforecreate", env);
 
-			return popup = $.create({
+			env.popup = $.create({
 				className: "mv-upload-popup",
 				contents: [
-					mainInput, {
+					env.mainInput, {
 						tag: "input",
 						type: "file",
 						"aria-label": `Upload ${kind}`,
@@ -827,11 +828,18 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 						innerHTML: "<strong>Tip:</strong> You can also drag & drop or paste!"
 					}
 				],
-				events: uploadEvents
+				events: env.events
 			});
+
+			// Drag & Drop should also work on the <img> element itself
+			$.bind(this.element, env.events);
+
+			Mavo.hooks.run("primitive-createuploadpopup-beforereturn", env);
+
+			return env.popup;
 		}
 		else {
-			return mainInput;
+			return env.mainInput;
 		}
 	}
 
@@ -1064,7 +1072,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			if (value === null) {
 				return "";
 			}
-			
+
 			var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
 
 			if (!skipNumberFormatting) {
