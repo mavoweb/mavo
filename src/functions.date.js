@@ -95,6 +95,10 @@ for (let unit in s) {
 }
 
 _.duration = $.extend(function($this, ms) {
+	if (arguments.length === 1) {
+		[ms, $this] = [$this, null];
+	}
+
 	var count = ms || 0;
 	var unit = "ms";
 

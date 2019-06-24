@@ -570,7 +570,7 @@ var _ = Mavo.Functions = {
 			[lang, vars] = [vars];
 		}
 
-		var locale = lang? Mavo.Locale.get(lang) : $this[Mavo.mavo].locale;
+		var locale = lang? Mavo.Locale.get(lang) : ($this && $this[Mavo.mavo]? $this[Mavo.mavo].locale : Mavo.Locale.default);
 
 		return locale.phrase(id, vars);
 	}, {
