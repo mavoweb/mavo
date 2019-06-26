@@ -258,11 +258,20 @@ This file has utility functions used throughout the codebase. All functions are 
 
 # Steps for new release
 
-- Change the version in package.json but don't commit yet.
-- Generate files so they get the new version
-- Run `gulp minify` since `gulp watch` doesn't run that
-- Move `mavo.css`, `mavo.js`, `mavo.es5.js`, `mavo.min.js` and `mavo.es5.min.js` to a new folder in `dist`, with the name of the version you’re releasing
-- In the `_redirects` file, change where `stable` points to
+Change the version in package.json, save but don't commit yet.
+
+Start from the repo root and run the following commands (replace X.Y.Z with the new version number e.g. 0.2.0):
+```shell
+mv src/local.js src/local1.js # prevent local.js from being included in generated files
+gulp # generate files (remember gulp watch doesn't minify!)
+mv src/local1.js src/local.js # restore local.js
+cd dist
+mkdir -m 777 X.Y.Z
+mv mavo.css mavo.js mavo.es5.js mavo.es5.min.js mavo.min.js X.Y.Z
+cd .. && gulp # regenerate local files
+```
+Then:
+- in the `dist/_redirects` file replace `/stable/* /U.V.W/:splat 302` with `/stable/* /X.Y.Z/:splat 302` and any X.Y and X rules as needed.
 - Commit and push
 - Create new release on Github
 - `npm publish`
