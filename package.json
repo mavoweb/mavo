@@ -15,7 +15,8 @@
   "bugs": {
     "url": "https://github.com/mavoweb/mavo/issues"
   },
-  "homepage": "https://github.com/mavoweb/mavo",
+  "homepage": "https://mavo.io",
+  "browserslist": ["last 4 versions", "IE 11"],
   "devDependencies": {
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
