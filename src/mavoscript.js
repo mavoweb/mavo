@@ -395,10 +395,13 @@ var _ = Mavo.Script = {
 							return b.map(fn).indexOf(fn(a)) > -1;
 						};
 					}
-					else {
+					else if ($.type(b) === "object") {
 						// Mimic JS' in operator
 						var op = a => Mavo.in(val(a), b);
-					};
+					}
+					else {
+						var op = a => Mavo.Functions.eq(a, b);
+					}
 
 					var result = Mavo.Script.unaryOperation(needle, op);
 					ret = ret === undefined? result : Mavo.Functions.and(result, ret);
