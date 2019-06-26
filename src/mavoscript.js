@@ -388,9 +388,15 @@ var _ = Mavo.Script = {
 				var ret;
 				haystacks.map(b => {
 					if (Array.isArray(b)) {
-						var op =  a => b.map(val).indexOf(val(a)) > -1;
+						var op =  a => {
+							// If object, comparison will fail because references. Must serialize first.
+							var fn = $.type(val(a)) === "object"? Mavo.safeToJSON : val;
+
+							return b.map(fn).indexOf(fn(a)) > -1;
+						};
 					}
 					else {
+						// Mimic JS' in operator
 						var op = a => Mavo.in(val(a), b);
 					};
 
