@@ -1,6 +1,42 @@
 (function($, val, $u) {
 
 var _ = Mavo.Script = {
+	$fn: self.Proxy? new Proxy({[Symbol.unscopables]: {undefined: true}}, {
+		get: (data, property) => {
+			var propertyL = property.toLowerCase(), ret;
+
+			// Is this a data action function?
+			if (propertyL in Mavo.Actions.Functions) {
+				if (Mavo.Actions.running) {
+					ret = Mavo.Actions.Functions[propertyL];
+				}
+				else {
+					ret = Mavo.Actions.nope;
+				}
+			}
+
+			// Is this a Mavo function?
+			if (ret === undefined) {
+				if (propertyL in Mavo.Functions) {
+					ret = Mavo.Functions[propertyL];
+				}
+				else {
+					// Maybe it's a Math function?
+					ret = Math[property] || Math[propertyL];
+				}
+			}
+
+			return ret;
+		},
+
+		has: (data, property) => {
+			var propertyL = property.toLowerCase();
+
+			return propertyL in Mavo.Functions || propertyL in Mavo.Actions.Functions
+				   || property in Math || propertyL in Math;
+		}
+	}) : Mavo.Functions,
+
 	addUnaryOperator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
@@ -529,32 +565,13 @@ var _ = Mavo.Script = {
 
 			if (node.callee.type == "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
-				var clashes = [Array, String, Number].some(c => node.callee.name in c.prototype);
+				var name = node.callee.name;
 
-				if (clashes) {
-					nameSerialized = `Mavo.Functions.${nameSerialized.toLowerCase()} || ${nameSerialized}`;
+				if (name === "scope") {
+					return _.serializeScopeCall(node.arguments);
 				}
-
-				if (node.callee.name === "scope") {
-					var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_.serialize(node.arguments[1])}); }`;
-					return `(function() {
-						var scope = ${_.serialize(node.arguments[0])};
-						if (Array.isArray(scope)) {
-							return scope.map(function(scope) {
-								${withCode}
-							});
-						}
-
-						${withCode}
-					})()`;
-				}
-
-				if (clashes) {
-					if (node.callee.type == "MemberExpression") {
-						var thisArg = ", " + _.serialize(node.callee.object);
-					}
-
-					return `call(${nameSerialized}, [${argsSerialized.join(", ")}]${thisArg || ""})`;
+				else if (name in Mavo.Script.$fn) {
+					return `$fn.${name}(${argsSerialized.join(", ")})`;
 				}
 			}
 
@@ -562,8 +579,13 @@ var _ = Mavo.Script = {
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
 		"MemberExpression": node => {
+			if (node.object.type === "Identifier" && node.object.name === "$fn") {
+				var property = node.computed? `[${_.serialize(node.property)}]` : `.${node.property.name}`;
+				return `$fn${property}`;
+			}
+
 			var property = node.computed? _.serialize(node.property) : `"${node.property.name}"`;
-			return `get(${_.serialize(node.object)}, ${property})`;
+			return `$fn.get(${_.serialize(node.object)}, ${property})`;
 		},
 		"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
 		"Literal": node => node.raw.replace(/\r/g, "\\r").replace(/\n/g, "\\n"),
@@ -715,6 +737,10 @@ var _ = Mavo.Script = {
 	},
 
 	serialize: node => {
+		if (typeof node === "string") {
+			return node; // already serialized
+		}
+
 		var ret = _.transformations[node.type] && _.transformations[node.type](node);
 
 		if (typeof ret == "object" && ret && ret.type) {
@@ -767,6 +793,21 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 	},
 
 	parse: self.jsep,
+
+	// scope() rewriting
+	serializeScopeCall: (args) => {
+		var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_.serialize(args[1])}); }`;
+		return `(function() {
+	var scope = ${_.serialize(args[0])};
+	if (Array.isArray(scope)) {
+		return scope.map(function(scope) {
+			${withCode}
+		});
+	}
+
+	${withCode}
+})()`;
+	},
 
 	// This is used for scope() rewriting, to support $this passing through
 	subScope: (proxy, $this) => {

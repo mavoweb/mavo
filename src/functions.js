@@ -75,19 +75,6 @@ var _ = Mavo.Functions = {
 		return null;
 	},
 
-	call: function(fn, args, thisArg) {
-		if (!fn) {
-			return;
-		}
-
-		if (typeof fn === "function") {
-			return fn.apply(thisArg, args);
-		}
-		else {
-			Mavo.warn(`You tried to call ${fn} as a function, but it’s not a function`);
-		}
-	},
-
 	url: (id, url = location) => {
 		if (id === undefined) {
 			return location.href;

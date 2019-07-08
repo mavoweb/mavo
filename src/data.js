@@ -146,32 +146,19 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				var propertyL = property.toLowerCase();
 
-				// Is this a data action function?
-				if (propertyL in Mavo.Actions.Functions) {
-					if (Mavo.Actions.running) {
-						ret = Mavo.Actions.Functions[propertyL];
-					}
-					else {
-						ret = Mavo.Actions.nope;
-					}
+				if (property === "$fn") {
+					return Mavo.Script.$fn;
 				}
-
-				// Is this a Mavo function?
-				if (propertyL in Mavo.Functions) {
-					ret = Mavo.Functions[propertyL];
+				else if (propertyL[0] === "$" && propertyL in Mavo.Functions) {
+					// Non-data $specialProperty
+					return Mavo.Functions[propertyL];
 				}
 				else {
-					// Maybe it's a Math function?
-					ret = Math[property] || Math[propertyL] || ret;
-				}
-
-				if (ret !== undefined) {
-					if (typeof ret === "function") {
-						// For when function names are used as unquoted strings, see #160
-						ret.toString = () => property;
+					var propertyU = property.toUpperCase();
+					if (propertyU in Math) {
+						// Math constants
+						return Math[propertyU];
 					}
-
-					return ret;
 				}
 
 				// Still not found? Maybe it's a global
@@ -364,16 +351,6 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 
 			if (ret !== undefined) {
-				if (typeof ret !== "function") {
-					var func = Mavo.Functions[propertyL] || Mavo.Actions.Functions[propertyL] || Math[propertyL];
-
-					if (func) {
-						// Function and property of the same name, which one do we need? (rel #227)
-						// Must make the returned value callable to prevent errors!
-						ret = Mavo.primitivify((...args) => func(...args), ret);
-					}
-				}
-
 				// Should we proxify value before returning it? Is it data?
 				var proxify = ret !== null && typeof ret === "object" // Can be a proxy
 				              && (Mavo.route in ret || Mavo.toNode in ret); // Either has a route or comes from a node
