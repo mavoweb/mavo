@@ -373,7 +373,7 @@ _.register({
 
 	"block": {
 		default: true,
-		selector: "p, div, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address",
+		selector: "p, div, dt, dd, h1, h2, h3, h4, h5, h6, article, section, address, pre",
 		editor: function() {
 			var cs = getComputedStyle(this.element);
 			var display = cs.display;
