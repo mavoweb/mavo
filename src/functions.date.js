@@ -73,10 +73,24 @@ $.extend(_, {
 		return date? `${_.year(date)}-${_.month(date, "00")}-${_.day(date, "00")}` : "";
 	}, {multiValued: true}),
 
-	time: $.extend(date => {
+	time: $.extend((date, precision = "seconds") => {
 		date = $u.date(date);
 
-		return date? `${_.hour(date, "00")}:${_.minute(date, "00")}:${_.second(date, "00")}` : "";
+		if (!date) {
+			return "";
+		}
+
+		var ret = `${_.hour(date, "00")}:${_.minute(date, "00")}`;
+
+		if (precision == "seconds" || precision == "ms") {
+			ret += `:${_.second(date, "00")}`;
+
+			if (precision == "ms") {
+				ret += `.${_.ms(date)}`
+			}
+		}
+
+		return ret;
 	}, {multiValued: true}),
 
 	localTimezone: -(new Date()).getTimezoneOffset(),
