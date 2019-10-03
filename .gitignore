@@ -4,3 +4,4 @@
 dist/*.js
 dist/*.css
 local.js
+.DS_Store

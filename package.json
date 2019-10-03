@@ -16,7 +16,10 @@
     "url": "https://github.com/mavoweb/mavo/issues"
   },
   "homepage": "https://mavo.io",
-  "browserslist": ["last 4 versions", "IE 11"],
+  "browserslist": [
+    "last 4 versions",
+    "IE 11"
+  ],
   "devDependencies": {
     "@babel/core": "^7.4.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
@@ -30,6 +33,7 @@
     "gulp-babel": "^8.0.0",
     "gulp-babel-minify": "^0.5.0",
     "gulp-concat": "^2.6.0",
+    "gulp-csso": "^3.0.1",
     "gulp-inject-version": "^1.0.1",
     "gulp-notify": "^3.2.0",
     "gulp-rename": "^1.4.0",
