@@ -113,8 +113,10 @@ gulp.task("minify-es5", function () {
 
 gulp.task("minify-css", function () {
 	return gulp.src("dist/mavo.css")
+		.pipe(sourcemaps.init())
 		.pipe(csso())
 		.pipe(concat("mavo.min.css"))
+		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
 });
 
