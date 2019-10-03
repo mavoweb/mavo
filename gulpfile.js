@@ -14,7 +14,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var notify = require("gulp-notify");
 var merge = require("merge2");
 var injectVersion = require("gulp-inject-version");
-var csso = require('gulp-csso');
+var csso = require("gulp-csso");
 
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
