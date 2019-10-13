@@ -14,6 +14,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var notify = require("gulp-notify");
 var merge = require("merge2");
 var injectVersion = require("gulp-inject-version");
+var csso = require("gulp-csso");
 
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
@@ -110,6 +111,15 @@ gulp.task("minify-es5", function () {
 		.pipe(gulp.dest("dist"));
 });
 
+gulp.task("minify-css", function () {
+	return gulp.src("dist/mavo.css")
+		.pipe(sourcemaps.init())
+		.pipe(csso())
+		.pipe(concat("mavo.min.css"))
+		.pipe(sourcemaps.write("maps"))
+		.pipe(gulp.dest("dist"));
+});
+
 gulp.task("lib", function () {
 	return gulp.src(dependencies).pipe(gulp.dest("lib"));
 });
@@ -121,4 +131,4 @@ gulp.task("watch", function () {
 	gulp.watch(["**/*.scss"], gulp.series("sass"));
 });
 
-gulp.task("default", gulp.parallel(gulp.series("concat", gulp.parallel("transpile", "minify", "minify-es5")), "sass"));
+gulp.task("default", gulp.parallel(gulp.series("concat", gulp.parallel("transpile", "minify", "minify-es5")), gulp.series("sass", "minify-css")));
