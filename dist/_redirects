@@ -1,10 +1,13 @@
 /stable/* /0.2.0/:splat 302
 
-# We let users specify what Mavo version use. Not only 0.1.6. but any available 0.1.x.
-/v0.1*    /0.1:splat 302
-
 /v0.1/*    /0.1.6/:splat 302
 /0.1/*    /0.1.6/:splat 302
 
+# We let users specify what Mavo version use. Not only 0.1.6. but any available 0.1.x.
+/v0.1*    /0.1:splat 302
+
 /v0.2/*    /0.2.0/:splat 302
 /0.2/*    /0.2.0/:splat 302
+
+# We need a separate rule for the addresses like 0.2.x.
+/v0.2*    /0.2:splat 302
