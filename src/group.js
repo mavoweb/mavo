@@ -113,7 +113,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 			}
 		}
 
-		if (!this.childrenNames.length && !this.isRoot) {
+		if (!this.childrenNames.length && !this.isRoot && !this.collection) {
 			// Avoid {} in the data
 			env.data = null;
 		}
