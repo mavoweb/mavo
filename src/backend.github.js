@@ -46,7 +46,7 @@ var _ = Mavo.Backend.register($.Class({
 					});
 			}
 
-			return this.request(info.apiCall, null, "GET", {
+			return this.request(info.apiCall, {ref:this.branch}, "GET", {
 					headers: {
 						"Accept": "application/vnd.github.squirrel-girl-preview"
 					}
