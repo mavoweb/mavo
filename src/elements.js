@@ -217,6 +217,7 @@ _.register({
 	"select": {
 		extend: "formControl",
 		selector: "select",
+		modes: "read",
 		subtree: true
 	},
 
