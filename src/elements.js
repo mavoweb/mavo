@@ -220,6 +220,12 @@ _.register({
 		subtree: true
 	},
 
+	"option": {
+		extend: "formControl",
+		selector: "option",
+		modes: "read"
+	},
+
 	"textarea": {
 		extend: "formControl",
 		selector: "textarea",
