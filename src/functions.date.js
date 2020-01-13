@@ -80,7 +80,7 @@ $.extend(_, {
 			return "";
 		}
 
-		var ret = `${_.hour(date, "00")}:${precision == "hour"? "00" : _.minute(date, "00")}`;
+		var ret = `${_.hour(date, "00")}:${precision == "hours"? "00" : _.minute(date, "00")}`;
 
 		if (precision == "seconds" || precision == "ms") {
 			ret += `:${_.second(date, "00")}`;
