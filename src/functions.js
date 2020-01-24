@@ -271,7 +271,7 @@ var _ = Mavo.Functions = {
 			return Math.round(num);
 		}
 
-		return +num.toLocaleString("en-US", {
+		return +(+num).toLocaleString("en-US", {
 			useGrouping: false,
 			maximumFractionDigits: decimals
 		});
