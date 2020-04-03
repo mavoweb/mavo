@@ -172,6 +172,12 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 					.reverse()[0];
 			}
 
+			if (!property) {
+				// No appropriate property found, use this.property
+				property = this.property;
+				var noWriteableProperty = true;
+			}
+			
 			data = {[property]: data};
 
 			this.data = Mavo.subset(this.data, this.inPath, data);
@@ -216,7 +222,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 			});
 		}
 
-		if (!wasPrimitive) {
+		if (!wasPrimitive || noWriteableProperty) {
 			// Fire mv-change events for properties not in the template,
 			// since nothing else will and they can still be referenced in expressions
 			var oldData = Mavo.subset(this.oldData, this.inPath);
