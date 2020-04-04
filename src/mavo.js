@@ -85,7 +85,7 @@ var _ = self.Mavo = $.Class({
 
 		this.permissions = new Mavo.Permissions();
 
-		var backendTypes = ["source", "storage", "init"]; // order is significant!
+		var backendTypes = ["source", "storage", "init", "upload-backend"]; // order is significant!
 
 		// Figure out backends for storage, data reads, and initialization respectively
 		backendTypes.forEach(role => this.updateBackend(role));
@@ -713,7 +713,18 @@ var _ = self.Mavo = $.Class({
 		},
 
 		uploadBackend: {
-			get: function() {
+			get: function () {
+				const backend = this["upload-backend"];
+
+				if (backend && backend.upload) {
+					// We need to authenticate a user if we haven't done that earlier
+					if (backend.permissions.login) {
+						backend.login();
+					}
+						
+					return this["upload-backend"];
+				}
+
 				if (this.storage && this.storage.upload) {
 					// Prioritize storage
 					return this.storage;
