@@ -220,6 +220,39 @@ _.register({
 		subtree: true
 	},
 
+	"select[multiple]": {
+		extend: "select",
+		selector: "select[multiple]",
+		getValue: element => {
+			const selected = element.selectedOptions;
+			const value = [];
+
+			if (selected.length) {
+				for (const option of selected) {
+					value.push(option.value);
+				}
+			}
+
+			return value;
+		},
+		setValue: (element, value) => {
+			value = Array.isArray(value)? value : [value];
+
+			$$("option", element).forEach(option => {
+				// Why? If the value is being set via mv-value,
+				// we want the element to reflect the changes properly.
+				option.selected = false;
+
+				// Why +""? Options' values are strings, so we want "1" instead of 1.
+				value = value.map(v => v + "");
+
+				if (value.includes(option.value)) {
+					option.selected = true;
+				}
+			});
+		}
+	},
+
 	"textarea": {
 		extend: "formControl",
 		selector: "textarea",
