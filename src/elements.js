@@ -165,7 +165,7 @@ _.register({
 		editor: function() {
 			var kind = this.element.nodeName.toLowerCase();
 			kind = kind == "img"? "image" : kind;
-			Mavo.setAttributeShy(this.element, "mv-uploads", kind + "s");
+			Mavo.setAttributeShy(this.element, "mv-upload-path", kind + "s");
 
 			return this.createUploadPopup(kind + "/*", kind, "png");
 		}
@@ -176,7 +176,7 @@ _.register({
 		attribute: "href"
 	},
 
-	"a[mv-uploads], link[mv-uploads]": {
+	"a[mv-upload-path], link[mv-upload-path]": {
 		default: true,
 		attribute: "href",
 		editor: function() {
