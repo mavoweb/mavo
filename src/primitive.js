@@ -727,7 +727,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		// FIXME what if there's no attribute?
 		this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
 
-		var path = this.element.getAttribute("mv-uploads") || "";
+		var path = this.element.getAttribute("mv-upload-path") || "";
 		var relative = path + "/" + name;
 
 		this.mavo.upload(file, relative).then(url => {
