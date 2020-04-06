@@ -220,6 +220,32 @@ _.register({
 		subtree: true
 	},
 
+	"select[multiple]": {
+		extend: "select",
+		selector: "select[multiple]",
+		getValue: element => {
+			return Array.from(element.selectedOptions).map(option => option.value).join();
+		},
+		setValue: (element, value) => {
+			// Why +""? If the value is being set via mv-value and is a number,
+			// we must convert it to a string to avoid extra checks.
+			value = Array.isArray(value)? value : (value + "").split(/\s*,/);
+
+			Array.from(element.options).forEach(option => {
+				// Why? If the value is being set via mv-value,
+				// we want the element to reflect the changes properly.
+				option.selected = false;
+
+				// Why +""? Options' values are strings, so we want "1" instead of 1.
+				value = value.map(v => v + "");
+
+				if (value.includes(option.value)) {
+					option.selected = true;
+				}
+			});
+		}
+	},
+
 	"textarea": {
 		extend: "formControl",
 		selector: "textarea",
