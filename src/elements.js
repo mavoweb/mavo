@@ -224,10 +224,12 @@ _.register({
 		extend: "select",
 		selector: "select[multiple]",
 		getValue: element => {
-			return Array.from(element.selectedOptions).map(option => option.value);
+			return Array.from(element.selectedOptions).map(option => option.value).join();
 		},
 		setValue: (element, value) => {
-			value = Array.isArray(value)? value : [value];
+			// Why +""? If the value is being set via mv-value and is a number,
+			// we must convert it to a string to avoid extra checks.
+			value = Array.isArray(value)? value : (value + "").split(/\s*,/);
 
 			Array.from(element.options).forEach(option => {
 				// Why? If the value is being set via mv-value,
