@@ -229,7 +229,7 @@ _.register({
 		setValue: (element, value) => {
 			value = Array.isArray(value)? value : [value];
 
-			$$("option", element).forEach(option => {
+			Array.from(element.options).forEach(option => {
 				// Why? If the value is being set via mv-value,
 				// we want the element to reflect the changes properly.
 				option.selected = false;
