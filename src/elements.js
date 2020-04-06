@@ -224,16 +224,7 @@ _.register({
 		extend: "select",
 		selector: "select[multiple]",
 		getValue: element => {
-			const selected = element.selectedOptions;
-			const value = [];
-
-			if (selected.length) {
-				for (const option of selected) {
-					value.push(option.value);
-				}
-			}
-
-			return value;
+			return Array.from(element.selectedOptions).map(option => option.value);
 		},
 		setValue: (element, value) => {
 			value = Array.isArray(value)? value : [value];
