@@ -162,6 +162,10 @@ var _ = Mavo.Functions = {
 			return ret;
 		}
 	},
+	// Get rid of empty values in array. Same as first(count(arr), arr)
+	condense: (arr) => {
+		return _.first(arr.length, arr);
+	},
 
 	unique: function(arr) {
 		if (!Array.isArray(arr)) {
