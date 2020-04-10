@@ -96,7 +96,7 @@ gulp.task("transpile", function () {
 });
 
 gulp.task("minify", function () {
-	return merge(gulp.src("dist/deps.js"), gulp.src("dist/mavo-nodeps.js").pipe(minify()))
+	return merge(gulp.src("dist/deps.js"), gulp.src("dist/mavo-nodeps.js").pipe(minify({mangle: false})))
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.min.js"))
 		.pipe(sourcemaps.write("maps"))
@@ -104,7 +104,7 @@ gulp.task("minify", function () {
 });
 
 gulp.task("minify-es5", function () {
-	return merge(gulp.src("dist/deps.js"), transpileStream().pipe(minify()))
+	return merge(gulp.src("dist/deps.js"), transpileStream().pipe(minify({mangle: false})))
 		.pipe(sourcemaps.init())
 		.pipe(concat("mavo.es5.min.js"))
 		.pipe(sourcemaps.write("maps"))
