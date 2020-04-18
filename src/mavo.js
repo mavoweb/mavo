@@ -326,8 +326,10 @@ var _ = self.Mavo = $.Class({
 		return new _.UI.Message(this, message, options);
 	},
 
-	error: function(message, ...log) {
-		this.message(message, {
+	error: function (message, ...log) {
+		// If a custom error message is provided (in an element with class mv-error),
+		// show it to an end-user (Fix for #101)
+		this.message($(".mv-error", this.element) || message, {
 			type: "error",
 			dismiss: ["button", "timeout"]
 		});
