@@ -329,7 +329,16 @@ var _ = self.Mavo = $.Class({
 	error: function (message, ...log) {
 		// If a custom error message is provided (in an element with class mv-error),
 		// show it to an end-user (Fix for #101)
-		this.message($(".mv-error:not(.mv-ui):not(.mv-message)", this.element) || message, {
+		let customMessage = message;
+		const template = $(".mv-error:not(.mv-ui):not(.mv-message)", this.element);
+
+		if (template) {
+			// If a custom error message template IS an actual template element,
+			// we need to grab its content
+			customMessage = template.content || template;
+		}
+
+		this.message(customMessage, {
 			type: "error",
 			dismiss: ["button", "timeout"]
 		});
