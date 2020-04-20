@@ -200,7 +200,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				ids = Mavo.Functions.unique(ids.reverse()).reverse();
 
 				if (relative) {
-					return all.filter(id => {
+					all = all.filter(id => {
 						var positive = ids.lastIndexOf(id);
 						var negative = ids.lastIndexOf("no-" + id);
 						var keep = positive > Math.max(-1, negative);
@@ -208,6 +208,18 @@ var _ = Mavo.UI.Bar = $.Class({
 
 						return keep || (!_.controls[id].optional && !drop);
 					});
+
+					ids = ids.filter(id => {
+						const positive = all.lastIndexOf(id);
+						const negative = all.lastIndexOf("no-" + id);
+
+						return positive > Math.max(-1, negative);
+					});
+
+					ids.forEach(id => all.splice(all.indexOf(id), 1, undefined));
+					ids.forEach(id => all.splice(all.indexOf(undefined), 1, id));
+
+					return all;
 				}
 
 				return ids;
