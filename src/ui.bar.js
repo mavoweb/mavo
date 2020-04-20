@@ -209,7 +209,7 @@ var _ = Mavo.UI.Bar = $.Class({
 						return keep || (!_.controls[id].optional && !drop);
 					});
 
-					ids = ids.filter(id => all.contains(id));
+					ids = ids.filter(id => all.includes(id));
 
 					ids.forEach(id => all.splice(all.indexOf(id), 1, undefined));
 					ids.forEach(id => all.splice(all.indexOf(undefined), 1, id));
