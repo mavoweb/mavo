@@ -209,12 +209,7 @@ var _ = Mavo.UI.Bar = $.Class({
 						return keep || (!_.controls[id].optional && !drop);
 					});
 
-					ids = ids.filter(id => {
-						const positive = all.lastIndexOf(id);
-						const negative = all.lastIndexOf("no-" + id);
-
-						return positive > Math.max(-1, negative);
-					});
+					ids = ids.filter(id => all.contains(id));
 
 					ids.forEach(id => all.splice(all.indexOf(id), 1, undefined));
 					ids.forEach(id => all.splice(all.indexOf(undefined), 1, id));
