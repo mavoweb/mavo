@@ -159,6 +159,18 @@ var _ = Mavo.DOMExpression = $.Class({
 					return "";
 				}
 
+				if (env.value instanceof Promise) {
+					env.value
+						.then(value => {
+							this.expression = this.syntax.start + value + this.syntax.end;
+							this.parsed = this.syntax.tokenize(this.expression);
+						})
+						.catch(error => env.expr.error(`A promise in the expression ${this.expression} was rejected with the reason`, error));
+					
+					// Don’t print "[object Promise]"
+					return "";
+				}
+
 				return env.value;
 			}
 
