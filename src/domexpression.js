@@ -162,12 +162,15 @@ var _ = Mavo.DOMExpression = $.Class({
 				if (env.value instanceof Promise) {
 					env.value
 						.then(value => {
-							this.expression = this.syntax.start + value + this.syntax.end;
-							this.parsed = this.syntax.tokenize(this.expression);
+							env.expr.function = () => value;
+							this.update();
 						})
 						.catch(error => env.expr.error(`A promise in the expression [${env.expr.expression}] was rejected with the reason`, error));
-					
-					// Don’t print "[object Promise]"
+
+					// Nothing changed. We simply have a promise to work with later
+					change = false;
+
+					// We don't want "[object Promise]" to become the expression's value
 					return "";
 				}
 
