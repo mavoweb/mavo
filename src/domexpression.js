@@ -168,7 +168,7 @@ var _ = Mavo.DOMExpression = $.Class({
 						.catch(error => env.expr.error(`A promise in the expression [${env.expr.expression}] was rejected with the reason`, error));
 
 					// Nothing changed. We simply have a promise to work with later
-					change = false;
+					changed = false;
 
 					// We don't want "[object Promise]" to become the expression's value
 					return "";
