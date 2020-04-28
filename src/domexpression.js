@@ -162,10 +162,28 @@ var _ = Mavo.DOMExpression = $.Class({
 				if (env.value instanceof Promise) {
 					env.value
 						.then(value => {
-							env.expr.function = () => value;
-							this.update();
+							env.value = Mavo.Primitive.format(value, {
+								attribute: this.attribute,
+								element: this.element
+							});
+
+							this.output(env.value);
+
+							Mavo.hooks.run("domexpression-update-end", env);
 						})
-						.catch(error => env.expr.error(`A promise in the expression [${env.expr.expression}] was rejected with the reason`, error));
+						.catch(error => {
+							env.expr.error(`A promise in the expression [${env.expr.expression}] was rejected with the reason`, error);
+
+							// Return empty string if a promise is rejected
+							env.value = Mavo.Primitive.format("", {
+								attribute: this.attribute,
+								element: this.element
+							});
+
+							this.output(env.value);
+
+							Mavo.hooks.run("domexpression-update-end", env);
+						});
 
 					// Nothing changed. We simply have a promise to work with later
 					changed = false;
