@@ -200,7 +200,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				ids = Mavo.Functions.unique(ids.reverse()).reverse();
 
 				if (relative) {
-					// For every control in a default set, we decide whether to drop it or not and add an extra property to it—the pos property.
+					// For every control in the default set, we decide whether to drop it or not and add an extra property to it—the pos property.
 					// Controls specified by a user have pos >= 0 (their relative position in a user's set).
 					// Not optional buttons of the default set that are not specified and not dropped have pos = -1.
 					// Then filter out not picked up optional controls (their value will be undefined)
