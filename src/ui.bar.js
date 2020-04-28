@@ -202,7 +202,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				if (relative) {
 					// For every control in the default set, we decide whether to drop it or not and add an extra property to it—the pos property.
 					// Controls specified by a user have pos >= 0 (their relative position in a user's set).
-					// Not optional buttons of the default set that are not specified and not dropped have pos = -1.
+					// Not optional controls of the default set that are not specified and not dropped have pos = -1.
 					// Then filter out not picked up optional controls (their value will be undefined)
 					all = all.map(id => {
 						var positive = ids.lastIndexOf(id);
@@ -223,7 +223,7 @@ var _ = Mavo.UI.Bar = $.Class({
 					let pos = -1;
 
 					// Return the result set of controls: default controls not specified by a user stay untucked,
-					// specified—take their proper position
+					// specified—take their proper positions
 					return all.map(id => {
 						if (id.pos === -1) {
 							return id.name;
