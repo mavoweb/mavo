@@ -200,21 +200,39 @@ var _ = Mavo.UI.Bar = $.Class({
 				ids = Mavo.Functions.unique(ids.reverse()).reverse();
 
 				if (relative) {
-					all = all.filter(id => {
+					// For every control in a default set, we decide whether to drop it or not and add an extra property to it—the pos property.
+					// Controls specified by a user have pos >= 0 (their relative position in a user's set).
+					// Not optional buttons of the default set that are not specified and not dropped have pos = -1.
+					// Then filter out not picked up optional controls (their value will be undefined)
+					all = all.map(id => {
 						var positive = ids.lastIndexOf(id);
 						var negative = ids.lastIndexOf("no-" + id);
 						var keep = positive > Math.max(-1, negative);
 						var drop = negative > Math.max(-1, positive);
 
-						return keep || (!_.controls[id].optional && !drop);
+						if (keep) {
+							return { name: id, pos: positive };
+						}
+						else if (!_.controls[id].optional && !drop) {
+							return { name: id, pos: -1 };
+						}
+					}).filter(id => id);
+
+					// Filter out controls specified by a user and re-arrange them to retain the user's order
+					const positioned = all.filter(id => id.pos >= 0).sort((a, b) => a.pos - b.pos);
+					let pos = -1;
+
+					// Return the result set of controls: default controls not specified by a user stay untucked,
+					// specified—take their proper position
+					return all.map(id => {
+						if (id.pos === -1) {
+							return id.name;
+						}
+						else {
+							pos += 1;
+							return positioned[pos].name;
+						}
 					});
-
-					ids = ids.filter(id => all.includes(id));
-
-					ids.forEach(id => all.splice(all.indexOf(id), 1, undefined));
-					ids.forEach(id => all.splice(all.indexOf(undefined), 1, id));
-
-					return all;
 				}
 
 				return ids;
