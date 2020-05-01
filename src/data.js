@@ -53,7 +53,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			this.data = Mavo.objectify(value);
 
-			if (Object.getPrototypeOf(value) === Object.prototype || Array.isArray(value)) {
+			if (Mavo.isPlainObject(value) || Array.isArray(value)) {
 				// Object rendered on a primitive, we should traverse it and store its properties
 				// Why check prototype instead of just type == "object"? Because instances of ES6 classes also return "object"
 				_.computeRoutes(this.data);
@@ -455,7 +455,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			_.computeMetadata(object, property, parent);
 
-			if (Object.getPrototypeOf(object) === Object.prototype || Array.isArray(object)) {
+			if (Mavo.isPlainObject(object) === Object.prototype || Array.isArray(object)) {
 				if (!object[Mavo.route]) {
 					object[Mavo.route] = {};
 				}

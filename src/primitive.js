@@ -587,7 +587,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
 			}
-			else if (!this.isHelperVariable) {
+			else if (!this.isHelperVariable && Mavo.isPlainObject(data)) {
 				// Candidate properties to get a value from
 				var properties = Object.keys(data), property;
 

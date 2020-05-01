@@ -52,6 +52,18 @@ var _ = $.extend(Mavo, {
 		});
 	},
 
+	// Detect if this is a plain object, not an instance of some other class
+	isPlainObject: o => {
+		if ($.type(o) !== "object") {
+			return false;
+		}
+
+		return Object.getPrototypeOf(o) === Object.prototype;
+
+		// TODO Get its corresponding object constructor (all objects end there eventually)
+		// Why can't we just use Object? Because it won't work when the object comes from another frame
+	},
+
 	// Specifiy a primitive fallback for an object
 	primitivify: (object, primitive) => {
 		if (object) {
