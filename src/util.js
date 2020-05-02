@@ -28,7 +28,12 @@ var _ = $.extend(Mavo, {
 			return data;
 		}
 
-		return JSON.stringify(data, null, "\t");
+		try {
+			return JSON.stringify(data, null, "\t");
+		}
+		catch (e) {
+			return e;
+		}
 	},
 
 	/**
@@ -58,10 +63,8 @@ var _ = $.extend(Mavo, {
 			return false;
 		}
 
-		return Object.getPrototypeOf(o) === Object.prototype;
-
-		// TODO Get its corresponding object constructor (all objects end there eventually)
-		// Why can't we just use Object? Because it won't work when the object comes from another frame
+		var proto = Object.getPrototypeOf(o);
+		return proto.constructor && proto.constructor.name === "Object";
 	},
 
 	// Specifiy a primitive fallback for an object

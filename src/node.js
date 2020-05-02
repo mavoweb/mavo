@@ -84,7 +84,7 @@ var _ = Mavo.Node = class Node {
 				}
 			}
 		}
-		
+
 		// Handle dynamic mv-storage on Mavo nodes (Fix for #576)
 		if (this.element.hasAttribute("mv-storage")) {
 			this.storageObserver = new Mavo.Observer(this.element, "mv-storage", record => {
@@ -311,7 +311,7 @@ var _ = Mavo.Node = class Node {
 				}
 			}
 			else if (this.childrenNames && this.childrenNames.length == 1 && this.childrenNames[0] === this.property
-			         && env.data !== null && typeof env.data === "object") {
+			         && env.data !== null && Mavo.isPlainObject(env.data)) {
 				// {foo: {foo: 5}} should become {foo: 5}
 				env.data = env.data[this.property];
 			}
