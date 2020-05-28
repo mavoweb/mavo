@@ -267,7 +267,7 @@ gulp # generate files (remember gulp watch doesn't minify!)
 mv src/local1.js src/local.js # restore local.js
 cd dist
 mkdir -m 777 X.Y.Z
-mv mavo.css mavo.js mavo.es5.js mavo.es5.min.js mavo.min.js X.Y.Z
+mv mavo.css mavo.min.css mavo.js mavo.es5.js mavo.es5.min.js mavo.min.js X.Y.Z
 cd .. && gulp # regenerate local files
 ```
 Then:
