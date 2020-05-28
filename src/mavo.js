@@ -476,22 +476,15 @@ var _ = self.Mavo = $.Class({
 		this.inProgress = "Loading";
 
 		return backend.ready.then(() => backend.load())
-		.then(data => {
-			// if we get null data throw an error
-			return data === null? Promise.reject(new Error('backend loaded null data')) : data;
-		})
 		.catch(err => {
-			// if there is an init backend then return null and don't propagate the error
+			// Try again with init
 			if (this.init && this.init != backend) {
 				backend = this.init;
-				return null;
+				return this.init.ready.then(() => this.init.load());
 			}
 
 			// No init, propagate error
 			return Promise.reject(err);
-		}).then(data => {
-			// if data is null we have an init backend so try to load from the init backend
-			return data === null ? this.init.ready.then(() => this.init.load()) : data;
 		})
 		.catch(err => {
 			if (err) {
