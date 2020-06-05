@@ -376,8 +376,10 @@ var _ = $.extend(Mavo, {
 		when: element => {
 			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries, observer) {
 				entries.forEach(entry => {
-					observer.unobserve(entry.target);
-					$.fire(entry.target, "mv-inview", {entry});
+					if (entry.intersectionRatio > 0) {
+						observer.unobserve(entry.target);
+						$.fire(entry.target, "mv-inview", {entry});
+					}
 				});
 			});
 
