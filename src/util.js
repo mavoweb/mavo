@@ -373,7 +373,7 @@ var _ = $.extend(Mavo, {
 			       && (0 <= r.right && r.right <= innerWidth || 0 <= r.left && r.left <= innerWidth); // horizontal
 		},
 
-		when: element => {
+		when: (element, rootMargin = `${innerHeight / 2}px ${innerWidth/2}px`) => {
 			var observer = _.inView.observer = _.inView.observer || new IntersectionObserver(function(entries, observer) {
 				entries.forEach(entry => {
 					if (entry.intersectionRatio > 0) {
@@ -381,7 +381,7 @@ var _ = $.extend(Mavo, {
 						$.fire(entry.target, "mv-inview", {entry});
 					}
 				});
-			});
+			}, {rootMargin});
 
 			return new Promise(resolve => {
 				if (_.is(element)) {
