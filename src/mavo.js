@@ -268,16 +268,16 @@ var _ = self.Mavo = $.Class({
 
 		// Keyboard navigation
 		this.element.addEventListener("keydown", evt => {
+			var element = evt.target;
+
 			// Ctrl + S or Cmd + S to save
-			if (this.permissions.save && evt.keyCode == 83 && evt[_.superKey] && !evt.altKey) {
+			if (this.permissions.save && evt.key == "S" && evt[_.superKey] && !evt.altKey) {
 				evt.preventDefault();
 				this.save();
 			}
-			else if (evt.keyCode == 38 || evt.keyCode == 40) {
-				var element = evt.target;
-
+			else if (evt.key === "ArrowUp" || evt.key === "ArrowDown") {
 				if (element.matches("textarea, input[type=range], input[type=number]")) {
-					// Arrow keys are meaningful here
+					// Up/down arrow keys are meaningful here
 					return;
 				}
 
@@ -289,11 +289,12 @@ var _ = self.Mavo = $.Class({
 				var node = Mavo.Node.get(element);
 
 				if (node && node.closestCollection) {
-					var nextNode = node.getCousin(evt.keyCode == 38? -1 : 1, {wrap: true});
+					var nextNode = node.getCousin(evt.key === "ArrowUp"? -1 : 1, {wrap: true});
 
 					if (nextNode) {
 						if (editor && nextNode.editing) {
-							nextNode.edit({immediately: true}).then(() => nextNode.editor.focus());
+							nextNode.edit();
+							nextNode.editor.focus();
 						}
 						else {
 							nextNode.element.focus();
@@ -721,7 +722,7 @@ var _ = self.Mavo = $.Class({
 					if (backend.permissions.login) {
 						backend.login();
 					}
-						
+
 					return this["uploads"];
 				}
 
@@ -813,8 +814,12 @@ var _ = self.Mavo = $.Class({
 			var res, rej;
 
 			var promise = new Promise((resolve, reject) => {
-				if (constructor) {
+				if (typeof constructor === "function") {
 					constructor(resolve, reject);
+				}
+				else if (constructor instanceof Promise) {
+					constructor.then(resolve);
+					constructor.catch(reject);
 				}
 
 				res = resolve;

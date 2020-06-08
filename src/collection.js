@@ -373,9 +373,17 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	}
 
 	editItem (item, o = {}) {
-		var when = o.immediately? Promise.resolve() : Mavo.inView.when(item.element);
+		if (item.preEdit) {
+			item.preEdit.resolve("abort");
+		}
 
-		return when.then(() => {
+		item.preEdit = Mavo.promise(o.immediately? Promise.resolve() : Mavo.inView.when(item.element));
+
+		return item.preEdit.then(value => {
+			if (value === "abort") {
+				return;
+			}
+
 			if (!item.itembar) {
 				item.itembar = new Mavo.UI.Itembar(item);
 			}
@@ -384,6 +392,16 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 			return item.edit(o);
 		});
+	}
+
+	doneItem (item) {
+		if (item.itembar) {
+			item.itembar.remove();
+		}
+
+		if (item.preEdit) {
+			item.preEdit.resolve("abort");
+		}
 	}
 
 	edit (o = {}) {
@@ -422,11 +440,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		Mavo.revocably.remove(this.addButton);
 
-		this.propagate(item => {
-			if (item.itembar) {
-				item.itembar.remove();
-			}
-		});
+		this.propagate(item => this.doneItem(item));
 	}
 
 	dataChanged (action, o = {}) {

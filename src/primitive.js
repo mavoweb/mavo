@@ -374,98 +374,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (wasEditing && !this.initEdit) {
 			// Already being edited
-			return this.preEdit;
-		}
-
-		if (!this.preEdit) {
-			this.preEdit = Mavo.promise();
-			this.afterPreEdit = null;
-			this.preEdit.then(evt => {
-				$.unbind(this.element, ".mavo:preedit");
-
-				requestAnimationFrame(() => {
-					// Enter should insert a new item and backspace should delete it
-					if (!this.popup && this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
-						// If pasting text with line breaks and this is a single-line input
-						// Insert them as multiple items
-						var multiline = this.editor.matches("textarea");
-
-						if (!multiline) {
-							$.bind(this.editor, "paste.mavo:edit", evt => {
-								if (!this.closestCollection.editing || !evt.clipboardData) {
-									return;
-								}
-
-								var text = evt.clipboardData.getData("text/plain");
-								const CRLF = /\r?\n|\r/;
-
-								if (CRLF.test(text)) {
-									evt.preventDefault();
-
-									var lines = text.split(CRLF);
-
-									// "Paste" first line where the cursor is
-									this.editor.setRangeText(lines[0]);
-									$.fire(this.editor, "input");
-
-									// Insert the rest of the lines as new items
-									// FIXME DRYfy the repetition between this code and the one below
-									var collection = this.closestCollection;
-									var index = closestItem && closestItem.index || 0;
-
-									for (var i=1; i<lines.length; i++) {
-										var closestItem = this.closestItem;
-										var next = collection.add(undefined, index + i);
-										collection.editItem(next); // TODO add() should take care of this
-
-										var copy = this.getCousin(i);
-										copy.render(lines[i]);
-									}
-
-								}
-							});
-						}
-
-						$.bind(this.editor, "keydown.mavo:edit", evt => {
-							if (!this.closestCollection.editing || !["Backspace", "Enter"].indexOf(evt.key) === -1) {
-								return;
-							}
-
-							if (evt.key == "Enter" && (evt.shiftKey || !multiline)) {
-								if (this.bottomUp) {
-									return;
-								}
-
-								var closestItem = this.closestItem;
-								var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
-								this.closestCollection.editItem(next);
-
-								var copy = this.getCousin(1);
-								requestAnimationFrame(() => {
-									copy.edit({immediately: true}).then(() => copy.editor.focus());
-								});
-
-								if (multiline) {
-									evt.preventDefault();
-								}
-							}
-							else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
-								// Focus on sibling afterwards
-								var sibling = this.getCousin(1) || this.getCousin(-1);
-
-								// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
-								this.closestCollection.delete(this.closestItem);
-
-								if (sibling) {
-									sibling.edit({immediately: true}).then(() => sibling.editor.focus());
-								}
-
-								evt.preventDefault();
-							}
-						});
-					}
-				});
-			});
+			return true;
 		}
 
 		if (!wasEditing) {
@@ -474,8 +383,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				Mavo.revocably.setAttribute(this.element, "tabindex", "0");
 			}
 
-			this.element.classList.add("mv-pending-edit");
-
 			// Prevent default actions while editing
 			// e.g. following links etc
 			if (!this.modes) {
@@ -483,63 +390,131 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		}
 
-		var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:preedit").join(" ");
-		$.bind(this.element, events, evt => this.preEdit.resolve(evt));
-
-		if (o.immediately) {
-			this.preEdit.resolve();
-		}
-
 		if (this.config.edit) {
 			this.config.edit.call(this);
 			this.initEdit = null;
-			return this.preEdit.resolve();
+			return true;
 		}
 
-		if (!this.afterPreEdit) {
-			this.afterPreEdit = this.preEdit.then(evt => {
-				this.sneak(() => {
-					// Actual edit
-					this.element.classList.remove("mv-pending-edit");
+		this.sneak(() => {
+			// Actual edit
 
-					if (this.initEdit) {
-						this.initEdit();
+			if (this.initEdit) {
+				this.initEdit();
+			}
+
+			if (this.popup) {
+				this.popup.prepare();
+
+				var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
+
+				$.bind(this.element, events, _ => this.popup.show());
+			}
+			else {
+				if (!this.attribute) {
+					if (this.editor.parentNode != this.element) {
+						this.editorValue = this.value;
+
+						if (this.config.hasChildren) {
+							this.element.textContent = "";
+						}
+						else {
+							_.setText(this.element, "");
+						}
+
+						this.element.prepend(this.editor);
 					}
 
-					if (this.popup) {
-						this.popup.prepare();
-						this.popup.show();
+					if (!this.collection) {
+						Mavo.revocably.restoreAttribute(this.element, "tabindex");
 					}
+				}
 
-					if (!this.attribute && !this.popup) {
-						if (this.editor.parentNode != this.element) {
-							this.editorValue = this.value;
+				if (this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+					// If pasting text with line breaks and this is a single-line input
+					// Insert them as multiple items
+					var multiline = this.editor.matches("textarea");
 
-							if (this.config.hasChildren) {
-								this.element.textContent = "";
+					if (!multiline) {
+						$.bind(this.editor, "paste.mavo:edit", evt => {
+							if (!this.closestCollection.editing || !evt.clipboardData) {
+								return;
 							}
-							else {
-								_.setText(this.element, "");
+
+							var text = evt.clipboardData.getData("text/plain");
+							const CRLF = /\r?\n|\r/;
+
+							if (CRLF.test(text)) {
+								evt.preventDefault();
+
+								var lines = text.split(CRLF);
+
+								// "Paste" first line where the cursor is
+								this.editor.setRangeText(lines[0]);
+								$.fire(this.editor, "input");
+
+								// Insert the rest of the lines as new items
+								// FIXME DRYfy the repetition between this code and the one below
+								var collection = this.closestCollection;
+								var index = closestItem && closestItem.index || 0;
+
+								for (var i=1; i<lines.length; i++) {
+									var closestItem = this.closestItem;
+									var next = collection.add(undefined, index + i);
+									collection.editItem(next); // TODO add() should take care of this
+
+									var copy = this.getCousin(i);
+									copy.render(lines[i]);
+								}
+
+							}
+						});
+					}
+
+					$.bind(this.editor, "keydown.mavo:edit", evt => {
+						if (!this.closestCollection.editing || !["Backspace", "Enter"].indexOf(evt.key) === -1) {
+							return;
+						}
+
+						if (evt.key == "Enter" && (evt.shiftKey || !multiline)) {
+							if (this.bottomUp) {
+								return;
 							}
 
-							this.element.prepend(this.editor);
-						}
+							var closestItem = this.closestItem;
+							var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
+							this.closestCollection.editItem(next);
 
-						// FIXME Once this is resolved with mousedown, every time we edit, evt is still mousedown regardless
-						// so this ends up focusing even when it shouldn't
-						if (evt && evt.type == "mousedown" || document.activeElement === this.element) {
-							requestAnimationFrame(() => this.editor.focus());
-						}
+							var copy = this.getCousin(1);
+							requestAnimationFrame(() => {
+								copy.edit();
+								copy.editor.focus();
+							});
 
-						if (!this.collection) {
-							Mavo.revocably.restoreAttribute(this.element, "tabindex");
+							if (multiline) {
+								evt.preventDefault();
+							}
 						}
-					}
-				});
-			});
-		}
+						else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
+							// Focus on sibling afterwards
+							var sibling = this.getCousin(1) || this.getCousin(-1);
 
-		return this.afterPreEdit;
+							// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
+							this.closestCollection.delete(this.closestItem);
+
+							if (sibling) {
+								sibling.edit();
+								sibling.editor.focus();
+							}
+
+							evt.preventDefault();
+						}
+					});
+				}
+			}
+		});
+
+		return true;
 	} // edit
 
 	done () {
@@ -547,11 +522,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return false;
 		}
 
-		this.afterPreEdit = null;
-
-		if ("preEdit" in this) {
-			$.unbind(this.element, ".mavo:preedit .mavo:edit");
-		}
+		$.unbind(this.element, ".mavo:edit");
 
 		this.sneak(() => {
 			if (this.config.done) {
@@ -1065,7 +1036,20 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				if (option.value == value) {
 					return option.textContent;
 				}
+
+				if (option.classList.contains("mv-volatile")) {
+					option.remove();
+				}
 			}
+
+			// If we're here, the option is not present, add it
+			$.create("option", {
+				className: "mv-volatile",
+				textContent: value,
+				inside: o.map
+			});
+
+			return value;
 		}
 
 		if (($.type(value) === "number" || o.datatype == "number")) {
