@@ -396,7 +396,7 @@ var _ = Mavo.Backend.register($.Class({
 		return this.user && this.user.username.toLowerCase() == this.username.toLowerCase();
 	},
 
-	oAuthParams: () => "&scope=repo,gist",
+	oAuthParams: () => "&scope=repo",
 
 	logout: function() {
 		return this.oAuthLogout().then(() => {
@@ -471,7 +471,7 @@ var _ = Mavo.Backend.register($.Class({
 
 		test: function(url) {
 			url = new URL(url, Mavo.base);
-			return /\bgithub.com|raw.githubusercontent.com/.test(url.host);
+			return /^(github.com|raw.githubusercontent.com)/.test(url.host);
 		},
 
 		/**
