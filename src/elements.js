@@ -246,6 +246,12 @@ _.register({
 		}
 	},
 
+	"option": {
+		attribute: null,
+		modes: "read",
+		default: true
+	},
+
 	"textarea": {
 		extend: "formControl",
 		selector: "textarea",
