@@ -26,26 +26,23 @@ var _ = Mavo.Plugins = {
 			return Mavo.thenAll(xhr.response.plugin
 				.filter(plugin => _.plugins.has(plugin.id))
 				.map(plugin => {
+					if (_.loaded[plugin.id]) {
+						return Promise.resolve();
+					}
+
 					// Load plugin
 					var filename = `mavo-${plugin.id}.js`;
 
 					if (plugin.repo) {
 						// Plugin hosted in a separate repo
-						var url = `https://raw.githubusercontent.com/${plugin.repo}/master/${filename}`;
-
-						return _.loaded[plugin.id]? Promise.resolve() : $.fetch(url).then(xhr => {
-							$.create("script", {
-								textContent: xhr.responseText,
-								inside: document.head
-							});
-						});
+						var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}/${filename}`;
 					}
 					else {
 						// Plugin hosted in the mavo-plugins repo
 						var url = `${_.url}/${plugin.id}/${filename}`;
-
-						return $.include(_.loaded[plugin.id], url);
 					}
+
+					return $.include(_.loaded[plugin.id], url);
 				}));
 		});
 	},
