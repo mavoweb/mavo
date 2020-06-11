@@ -316,7 +316,10 @@ var _ = self.Mavo = $.Class({
 	},
 
 	getData: function(o) {
-		return this.root.getData(o);
+		let env = {context: this, options: o};
+		env.data = this.root.getData(o);
+		_.hooks.run("getdata-end", env);
+		return env.data;
 	},
 
 	toJSON: function() {
