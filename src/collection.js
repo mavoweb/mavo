@@ -374,10 +374,13 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 	editItem (item, o = {}) {
 		if (item.preEdit) {
+			// Get rid of old promise and replace it with new promise
 			item.preEdit.resolve("abort");
 		}
 
-		item.preEdit = Mavo.promise(o.immediately? Promise.resolve() : Mavo.inView.when(item.element));
+		let immediately = o.immediately || Mavo.inView.is(item.element);
+
+		item.preEdit = Mavo.promise(immediately? Promise.resolve() : Mavo.inView.when(item.element));
 
 		return item.preEdit.then(value => {
 			if (value === "abort") {
