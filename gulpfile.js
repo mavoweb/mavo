@@ -74,11 +74,7 @@ var transpileStream = () => gulp.src("dist/mavo-nodeps.js")
 	.pipe(sourcemaps.init())
 	.pipe(babel({
 		"presets": [
-			["@babel/env", {
-				"targets": {
-					"browsers": ["last 4 versions", "IE 11"]
-				}
-			}
+			["@babel/env", {}
 			]
 		],
 		compact: false
