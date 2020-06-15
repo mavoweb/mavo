@@ -73,7 +73,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.parsed = this.template? this.template.parsed : this.syntax.tokenize(this.expression);
 		}
 
-		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? x.expression : x);
+		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? "" : x);
 
 		// Cache identifiers
 		this.identifiers = this.identifiers || Mavo.flatten(this.parsed.map(x => x.identifiers || []));

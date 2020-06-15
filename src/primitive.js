@@ -102,68 +102,73 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			});
 		}
 
-		this.templateValue = this.getValue();
-
-		this._default = this.element.getAttribute("mv-default");
-
-		if (this.default === null) { // no mv-default
-			this._default = this.modes? this.templateValue : editorValue;
-			this.defaultSource = this.modes? "template" : "editor";
+		if (this.expressionText) {
+			this.setValue(this.expressionText.value, {silent: true});
 		}
-		else if (this.default === "") { // mv-default exists, no value, default is template value
-			this._default = this.templateValue;
-			this.defaultSource = "template";
-		}
-		else { // mv-default with value
-			var defaultExpression = Mavo.DOMExpression.search(this.element, "mv-default");
+		else {
+			this.templateValue = this.getValue();
 
-			if (defaultExpression) {
-				// To preserve type, e.g. booleans should stay booleans, not become strings
-				defaultExpression.output = value => this.default = value;
+			this._default = this.element.getAttribute("mv-default");
+
+			if (this.default === null) { // no mv-default
+				this._default = this.modes? this.templateValue : editorValue;
+				this.defaultSource = this.modes? "template" : "editor";
+			}
+			else if (this.default === "") { // mv-default exists, no value, default is template value
+				this._default = this.templateValue;
+				this.defaultSource = "template";
+			}
+			else { // mv-default with value
+				var defaultExpression = Mavo.DOMExpression.search(this.element, "mv-default");
+
+				if (defaultExpression) {
+					// To preserve type, e.g. booleans should stay booleans, not become strings
+					defaultExpression.output = value => this.default = value;
+				}
+				else {
+					this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
+						this.default = this.element.getAttribute("mv-default");
+					});
+				}
+
+				this.defaultSource = "attribute";
+			}
+
+			var keepTemplateValue = !this.template // not in a collection or first item
+			                        || this.template.templateValue != this.templateValue // or different template value than first item
+									|| this.modes == "edit"; // or is always edited
+
+			if (this.default === undefined && keepTemplateValue) {
+				this.initialValue = this.templateValue;
 			}
 			else {
-				this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
-					this.default = this.element.getAttribute("mv-default");
-				});
+				this.initialValue = this.default;
 			}
 
-			this.defaultSource = "attribute";
-		}
+			if (this.initialValue === undefined) {
+				this.initialValue = this.emptyValue;
+			}
 
-		var keepTemplateValue = !this.template // not in a collection or first item
-		                        || this.template.templateValue != this.templateValue // or different template value than first item
-								|| this.modes == "edit"; // or is always edited
+			this.setValue(this.initialValue, {silent: true});
 
-		if (this.default === undefined && keepTemplateValue) {
-			this.initialValue = this.templateValue;
-		}
-		else {
-			this.initialValue = this.default;
-		}
+			if (this.element.hasAttribute("aria-label")) {
+				// Custom label, make it lazy to give expressions a chance and then observe changes
+				$.lazy(this, "label", () => {
+					this.labelObserver = new Mavo.Observer(this.element, "aria-label", () => {
+						this.label = this.element.getAttribute("aria-label");
 
-		if (this.initialValue === undefined) {
-			this.initialValue = this.emptyValue;
-		}
+						if ("placeholder" in this.editor) {
+							this.editor.placeholder = `(${this.label})`;
+						}
+					});
 
-		this.setValue(this.initialValue, {silent: true});
-
-		if (this.element.hasAttribute("aria-label")) {
-			// Custom label, make it lazy to give expressions a chance and then observe changes
-			$.lazy(this, "label", () => {
-				this.labelObserver = new Mavo.Observer(this.element, "aria-label", () => {
-					this.label = this.element.getAttribute("aria-label");
-
-					if ("placeholder" in this.editor) {
-						this.editor.placeholder = `(${this.label})`;
-					}
+					return this.element.getAttribute("aria-label");
 				});
-
-				return this.element.getAttribute("aria-label");
-			});
-		}
-		else {
-			this.label = Mavo.Functions.readable(this.property);
-			this.element.setAttribute("aria-label", this.label);
+			}
+			else {
+				this.label = Mavo.Functions.readable(this.property);
+				this.element.setAttribute("aria-label", this.label);
+			}
 		}
 
 		this.postInit();
