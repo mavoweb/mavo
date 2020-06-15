@@ -166,11 +166,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.element.setAttribute("aria-label", this.label);
 		}
 
-		// Make attribute explicit in the HTML in certain cases (because our CSS needs this)
-		if (!this.attribute) {
-			Mavo.setAttributeShy(this.element, "mv-attribute", "none");
-		}
-
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
