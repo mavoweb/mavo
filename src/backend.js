@@ -18,37 +18,41 @@ var _ = Mavo.Backend = $.Class({
 		this.format = Mavo.Formats.create(o.format, this);
 	},
 
-	get: function(url = new URL(this.url)) {
+	async get (url = new URL(this.url)) {
 		if (url.protocol != "data:") {
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 		}
 
-		return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+		try {
+			let xhr = await $.fetch(url.href);
+			return xhr.responseText;
+		}
+		catch (e) {
+			return null;
+		}
 	},
 
-	load: function() {
-		return this.ready
-			.then(() => this.get())
-			.then(response => {
-				if (typeof response != "string") {
-					// Backend did the parsing, we're done here
-					return response;
-				}
+	async load () {
+		await this.ready;
+		let response = await this.get();
 
-				response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
+		if (typeof response != "string") {
+			// Backend did the parsing, we're done here
+			return response;
+		}
 
-				return this.format.parse(response);
-			});
+		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
+
+		return this.format.parse(response);
 	},
 
-	store: function(data, {path, format = this.format} = {}) {
-		return this.ready.then(() => {
-			var serialize = typeof data === "string"? Promise.resolve(data) : format.stringify(data);
+	async store (data, {path, format = this.format} = {}) {
+		await this.ready;
 
-			return serialize.then(serialized => this.put(serialized, path).then(() => {
-				return {data, serialized};
-			}));
-		});
+		var serialized = typeof data === "string"? data : await format.stringify(data);
+		await this.put(serialized, path);
+
+		return {data, serialized};
 	},
 
 	// To be be overriden by subclasses

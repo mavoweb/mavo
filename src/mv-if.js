@@ -56,8 +56,8 @@ Mavo.Expressions.directive("mv-if", {
 				this.parentIf.childIfs = (this.parentIf.childIfs || new Set()).add(this);
 			}
 		},
-		"domexpression-update-end": function() {
-			if (this.attribute != "mv-if") {
+		"domexpression-update-end": async function() {
+			if (this.attribute !== "mv-if") {
 				return;
 			}
 
@@ -65,34 +65,34 @@ Mavo.Expressions.directive("mv-if", {
 			var oldValue = this.oldValue[0];
 
 			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
-			this.item.mavo.treeBuilt.then(() => {
-				if (this.parentIf) {
-					var parentValue = this.parentIf.value[0];
-					this.value[0] = value = value && parentValue;
+			await this.item.mavo.treeBuilt;
+
+			if (this.parentIf) {
+				var parentValue = this.parentIf.value[0];
+				this.value[0] = value = value && parentValue;
+			}
+
+			if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
+				if (value) {
+					// Is removed from the DOM and needs to get back
+					Mavo.revocably.add(this.element);
+				}
+				else if (this.element.parentNode) {
+					// Is in the DOM and needs to be removed
+					Mavo.revocably.remove(this.element, "mv-if");
+				}
+			}
+
+			if (value !== oldValue) {
+				// Mark any properties inside as hidden or not
+				if (this.childProperties) {
+					this.childProperties.forEach(property => property.hidden = !value);
 				}
 
-				if (parentValue !== false) { // If parent if was false, it wouldn't matter whether this is in the DOM or not
-					if (value) {
-						// Is removed from the DOM and needs to get back
-						Mavo.revocably.add(this.element);
-					}
-					else if (this.element.parentNode) {
-						// Is in the DOM and needs to be removed
-						Mavo.revocably.remove(this.element, "mv-if");
-					}
+				if (this.childIfs) {
+					this.childIfs.forEach(childIf => childIf.update());
 				}
-
-				if (value !== oldValue) {
-					// Mark any properties inside as hidden or not
-					if (this.childProperties) {
-						this.childProperties.forEach(property => property.hidden = !value);
-					}
-
-					if (this.childIfs) {
-						this.childIfs.forEach(childIf => childIf.update());
-					}
-				}
-			});
+			}
 		},
 		"node-isdatanull": function(env) {
 			env.result = env.result || (this.hidden && env.options.live);

@@ -3,7 +3,7 @@
 Mavo.attributes.push("mv-expressions");
 
 var _ = Mavo.Expressions = $.Class({
-	constructor: function(mavo) {
+	async constructor (mavo) {
 		this.mavo = mavo;
 		this.active = true;
 
@@ -15,11 +15,10 @@ var _ = Mavo.Expressions = $.Class({
 
 		this.scheduled = {};
 
-		this.mavo.treeBuilt.then(() => {
-			this.expressions = [];
+		await this.mavo.treeBuilt;
 
-			this.update();
-		});
+		this.expressions = [];
+		this.update();
 	},
 
 	register: function(domexpression) {

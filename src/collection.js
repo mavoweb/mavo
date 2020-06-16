@@ -83,7 +83,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 					// If there are multiple collections that match,
 					// compare the paths and select the one that has the most overlap
 					this.likeNode = candidates.sort((a, b) => {
-						return a.pathFrom(this).length - b.pathFrom(this).length
+						return a.pathFrom(this).length - b.pathFrom(this).length;
 					})[0];
 
 					this.likeNode = this.likeNode.likeNode || this.likeNode;
@@ -154,7 +154,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		};
 
 		env.data = this.children.map(item => item.getData(env.options))
-		                     .filter(itemData => Mavo.value(itemData) !== null)
+		                     .filter(itemData => Mavo.value(itemData) !== null);
 		env.data = Mavo.subset(this.data, this.inPath, env.data);
 
 		Mavo.hooks.run("node-getdata-end", env);
@@ -326,38 +326,32 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		}
 	}
 
-	delete (item, {silent, undoable = !silent, transition = !silent, destroy = !undoable} = {}) {
+	async delete (item, {silent, undoable = !silent, transition = !silent, destroy = !undoable} = {}) {
 		item.element.classList.remove("mv-highlight");
 
 		this.splice({remove: item});
 
 		if (!silent && transition) {
-			var stage2 = $.transition(item.element, {opacity: 0}).then(() => {
-				item.element.style.opacity = "";
-			});
-		}
-		else {
-			var stage2 = Promise.resolve();
+			await $.transition(item.element, {opacity: 0});
+			item.element.style.opacity = "";
 		}
 
-		return stage2.then(() => {
-			$.remove(item.element);
+		$.remove(item.element);
 
-			if (!silent) {
-				this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
+		if (!silent) {
+			this.unsavedChanges = item.unsavedChanges = this.mavo.unsavedChanges = true;
 
-				item.collection.dataChanged("delete", {index: item.index});
-			}
+			item.collection.dataChanged("delete", {index: item.index});
+		}
 
-			if (undoable) {
-				this.mavo.setDeleted(item);
-			}
-			else if (destroy) {
-				item.destroy();
-			}
+		if (undoable) {
+			this.mavo.setDeleted(item);
+		}
+		else if (destroy) {
+			item.destroy();
+		}
 
-			return item;
-		});
+		return item;
 	}
 
 	/**
@@ -537,7 +531,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			return this.dragula = this.template.dragula || this.template.getDragula();
 		}
 
-		var me = this;
 		this.dragula = dragula({
 			containers: [this.marker.parentNode],
 			isContainer: el => {
@@ -575,7 +568,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		this.dragula.on("drop", (el, target, source) => {
 			var item = Mavo.Node.get(el);
-			var oldIndex = item && item.index;
+			// var oldIndex = item && item.index;
 			var next = el.nextElementSibling;
 			var previous = el.previousElementSibling;
 			var collection = _.get(previous) || _.get(next);
@@ -627,7 +620,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			.map(node => {
 				collections.add(node.collection);
 				return node.collection.delete(node, options)
-				           .then(node => deleted.set(node.mavo, node))
+				           .then(node => deleted.set(node.mavo, node));
 			});
 
 		if (!o.silent) {

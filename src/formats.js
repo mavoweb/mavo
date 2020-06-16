@@ -72,7 +72,8 @@ var csv = _.CSV = $.Class({
 			url: "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.4/papaparse.min.js"
 		}],
 		ready: base.ready,
-		parse: (serialized, me) => csv.ready().then(() => {
+		parse: async (serialized, me) => {
+			await csv.ready();
 			var data = Papa.parse(serialized, csv.defaultOptions);
 			var property = me? me.property : "content";
 
@@ -89,13 +90,14 @@ var csv = _.CSV = $.Class({
 			return {
 				[property]: data.data
 			};
-		}),
+		},
 
-		stringify: (data, me) => csv.ready().then(() => {
+		stringify: async (data, me) => {
+			await csv.ready();
 			var property = me? me.property : "content";
 			var options = me? me.options : csv.defaultOptions;
 			return Papa.unparse(data[property], options);
-		})
+		}
 	}
 });
 

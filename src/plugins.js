@@ -5,7 +5,7 @@ Mavo.attributes.push("mv-plugins");
 var _ = Mavo.Plugins = {
 	loaded: {},
 
-	load: function() {
+	async load () {
 		_.plugins = new Set();
 
 		$$("[mv-plugins]").forEach(element => {
@@ -15,36 +15,36 @@ var _ = Mavo.Plugins = {
 		});
 
 		if (!_.plugins.size) {
-			return Promise.resolve();
+			return;
 		}
 
 		// Fetch plugin index
-		return $.fetch(_.url + "/plugins.json", {
-			responseType: "json"
-		}).then(xhr => {
-			// Fetch plugins
-			return Mavo.thenAll(xhr.response.plugin
-				.filter(plugin => _.plugins.has(plugin.id))
-				.map(plugin => {
-					if (_.loaded[plugin.id]) {
-						return Promise.resolve();
-					}
+		let response = await fetch(_.url + "/plugins.json");
+		let json = await response.json();
+		let plugin = json.plugin;
 
-					// Load plugin
-					var filename = `mavo-${plugin.id}.js`;
+		// Fetch plugins
+		return Mavo.thenAll(plugin
+			.filter(plugin => _.plugins.has(plugin.id))
+			.map(plugin => {
+				if (_.loaded[plugin.id]) {
+					return Promise.resolve();
+				}
 
-					if (plugin.repo) {
-						// Plugin hosted in a separate repo
-						var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
-					}
-					else {
-						// Plugin hosted in the mavo-plugins repo
-						var url = `${_.url}/${plugin.id}/${filename}`;
-					}
+				// Load plugin
+				var filename = `mavo-${plugin.id}.js`;
 
-					return $.include(_.loaded[plugin.id], url);
-				}));
-		});
+				if (plugin.repo) {
+					// Plugin hosted in a separate repo
+					var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
+				}
+				else {
+					// Plugin hosted in the mavo-plugins repo
+					var url = `${_.url}/${plugin.id}/${filename}`;
+				}
+
+				return $.include(_.loaded[plugin.id], url);
+			}));
 	},
 
 	register: function(name, o = {}) {

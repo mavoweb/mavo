@@ -688,7 +688,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return super.dataChanged(action, o);
 	}
 
-	upload (file, name = file.name) {
+	async upload (file, name = file.name) {
 		if (!this.mavo.uploadBackend || !self.FileReader) {
 			return;
 		}
@@ -701,24 +701,23 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		var path = this.element.getAttribute("mv-upload-path") || "";
 		var relative = path + "/" + name;
 
-		this.mavo.upload(file, relative).then(url => {
-			// Do we have a URL override?
-			var base = Mavo.getClosestAttribute(this.element, "mv-upload-url");
+		let url = await this.mavo.upload(file, relative);
+		// Do we have a URL override?
+		var base = Mavo.getClosestAttribute(this.element, "mv-upload-url");
 
-			if (base) {
-				// Throw away backend-provided URL and use the override instead
-				url = new URL(relative, new URL(base, location)) + "";
-			}
+		if (base) {
+			// Throw away backend-provided URL and use the override instead
+			url = new URL(relative, new URL(base, location)) + "";
+		}
 
-			this.value = url;
+		this.value = url;
 
-			if (!this.element.matches("a")) {
-				// <a> should get the proper URL immediately, because hovering would reveal what it is
-				// for other types, we should keep the temporary URL because the real one may not have deployed yet
-				// If the editor is manually edited, this will change anyway
-				this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
-			}
-		});
+		if (!this.element.matches("a")) {
+			// <a> should get the proper URL immediately, because hovering would reveal what it is
+			// for other types, we should keep the temporary URL because the real one may not have deployed yet
+			// If the editor is manually edited, this will change anyway
+			this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
+		}
 	}
 
 	createUploadPopup (type, kind = "file", ext) {

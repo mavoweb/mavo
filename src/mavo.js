@@ -470,16 +470,18 @@ var _ = self.Mavo = $.Class({
 	 *
 	 * @return {Promise}  A promise that resolves when the data is loaded.
 	 */
-	load: function() {
+	async load () {
 		var backend = this.source || this.storage;
 
 		if (!backend) {
-			return Promise.resolve();
+			return;
 		}
 
 		this.inProgress = "Loading";
 
-		return backend.ready.then(() => backend.load())
+		await backend.ready;
+
+		let data = await backend.load()
 		.catch(err => {
 			// Try again with init
 			if (this.init && this.init != backend) {
@@ -508,42 +510,46 @@ var _ = self.Mavo = $.Class({
 				}
 			}
 			return null;
-		})
-		.then(data => this.render(data))
-		.then(() => {
-			this.inProgress = false;
-			requestAnimationFrame(() => {
-				this.dataLoaded.resolve();
-				$.fire(this.element, "mv-load");
-			});
 		});
+
+		this.render(data);
+
+		this.inProgress = false;
+
+		await Mavo.defer();
+
+		this.dataLoaded.resolve();
+		$.fire(this.element, "mv-load");
 	},
 
-	store: function() {
+	async store () {
 		if (!this.storage) {
-			return Promise.resolve();
+			return;
 		}
 
 		this.inProgress = "Saving";
 
-		return this.storage.store(this.getData())
-			.catch(err => {
-				if (err) {
-					var message = this._("problem-saving");
+		let saved;
 
-					if (err instanceof XMLHttpRequest) {
-						message += ": " + (err.status? this._("http-error", err) : this._("cant-connect"));
-					}
+		try {
+			saved = await this.storage.store(this.getData());
+		}
+		catch (err) {
+			if (err) {
+				var message = this._("problem-saving");
 
-					this.error(message, err);
+				if (err instanceof XMLHttpRequest) {
+					message += ": " + (err.status? this._("http-error", err) : this._("cant-connect"));
 				}
 
-				return null;
-			})
-			.then(saved => {
-				this.inProgress = false;
-				return saved;
-			});
+				this.error(message, err);
+			}
+
+			saved = null;
+		}
+
+		this.inProgress = false;
+		return saved;
 	},
 
 	upload: function(file, path = "images/" + file.name) {
@@ -565,23 +571,23 @@ var _ = self.Mavo = $.Class({
 			});
 	},
 
-	save: function() {
-		return this.store().then(saved => {
-			if (saved) {
-				$.fire(this.element, "mv-save", saved);
+	async save () {
+		let saved = await this.store();
 
-				this.lastSaved = Date.now();
-				this.root.save();
-				this.unsavedChanges = false;
-			}
-		});
+		if (saved) {
+			$.fire(this.element, "mv-save", saved);
+
+			this.lastSaved = Date.now();
+			this.root.save();
+			this.unsavedChanges = false;
+		}
 	},
 
 	walk: function() {
 		return this.root.walk(...arguments);
 	},
 
-	calculateNeedsEdit: function(test) {
+	calculateNeedsEdit: function() {
 		var needsEdit = false;
 
 		this.walk((obj, path) => {
@@ -675,7 +681,6 @@ var _ = self.Mavo = $.Class({
 				this.deletionNotice = null;
 			}
 		});
-
 	},
 
 	undoDelete: function() {

@@ -73,18 +73,16 @@ var _ = Mavo.UI.Message = $.Class({
 		}
 	},
 
-	close: function(resolve) {
+	async close (resolve) {
 		// clearTimeout, make the callback available for garbage collection, and make it easier to debug memory issues
 		// it does nothing if there is no timeout callback.
 		clearTimeout(this.closeTimeout);
 		var duration = this.element.style.transition ? 1000 * parseFloat(window.getComputedStyle(this.element, null).transitionDuration) : 400;
-		$.transition(this.element, {opacity: 0}, duration)
-		.then(() => {
-			$.remove(this.element);
-			this.closed.resolve(resolve);
-		});
-	}
+		await $.transition(this.element, {opacity: 0}, duration);
 
+		$.remove(this.element);
+		this.closed.resolve(resolve);
+	}
 });
 
 })(Bliss, Bliss.$);
