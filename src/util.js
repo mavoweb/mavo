@@ -127,15 +127,6 @@ var _ = $.extend(Mavo, {
 		} while (index > -1 && all);
 	},
 
-	// Recursively flatten a multi-dimensional array
-	flatten: arr => {
-		if (!Array.isArray(arr)) {
-			return [arr];
-		}
-
-		return arr.reduce((prev, c) => _.toArray(prev).concat(_.flatten(c)), []);
-	},
-
 	// Push an item to an array iff it's not already in there
 	pushUnique: (arr, item) => {
 		if (arr.indexOf(item) === -1) {

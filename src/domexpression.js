@@ -76,7 +76,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		this.oldValue = this.value = this.parsed.map(x => x instanceof Mavo.Expression? "" : x);
 
 		// Cache identifiers
-		this.identifiers = this.identifiers || Mavo.flatten(this.parsed.map(x => x.identifiers || []));
+		this.identifiers = this.identifiers || this.parsed.flatMap(x => x.identifiers || []);
 
 		// Any identifiers that need additional updating?
 		_.special.add(this);

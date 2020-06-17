@@ -245,7 +245,7 @@ var _ = Mavo.Data = $.Class(class Data {
 					              .filter(x => x !== undefined);
 
 					if (ret.length) {
-						return Mavo.flatten(ret);
+						return ret.flat();
 					}
 				}
 

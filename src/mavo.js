@@ -723,7 +723,7 @@ var _ = self.Mavo = $.Class({
 
 		uploadBackend: {
 			get: function () {
-				const backend = this["uploads"];
+				const backend = this.uploads;
 
 				if (backend && backend.upload) {
 					// We need to authenticate a user if we haven't done that earlier
@@ -731,7 +731,7 @@ var _ = self.Mavo = $.Class({
 						backend.login();
 					}
 
-					return this["uploads"];
+					return this.uploads;
 				}
 
 				if (this.storage && this.storage.upload) {
@@ -917,7 +917,9 @@ $.each({
 	"Element.prototype.remove": Element.prototype.remove,
 	"Element.prototype.before": Element.prototype.before,
 	"Element.prototype.after": Element.prototype.after,
-	"Element.prototype.prepend": Element.prototype.prepend
+	"Element.prototype.prepend": Element.prototype.prepend,
+	"Array.prototype.flat": Array.prototype.flat,
+	"Array.prototype.flatMap": Array.prototype.flatMap,
 }, (id, supported) => {
 	if (!supported) {
 		_.polyfills.push(id);

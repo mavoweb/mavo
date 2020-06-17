@@ -192,7 +192,7 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var nodes = _.getNodes(Mavo.flatten(ref));
+			var nodes = _.getNodes(ref.flat());
 			var itemsToDelete = [];
 
 			nodes.forEach(node => {

@@ -346,7 +346,7 @@ var _ = Mavo.Functions = {
 	},
 
 	group: (...objects) => Object.assign(...objects),
-	list: (...items) => Mavo.flatten(items),
+	list: (...items) => items.flat(),
 
 	// FIXME if step=0 returns NaN
 	random: $.extend((min = 0, max = 100, step = 1) => {
