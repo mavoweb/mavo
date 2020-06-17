@@ -40,7 +40,7 @@ var _ = $.extend(Mavo, {
 	 * toJSON without cycles
 	 */
 	safeToJSON: function(o) {
-		var cache = self.WeakSet? new WeakSet() : new Set();
+		var cache = new WeakSet();
 
 		return JSON.stringify(o, (key, value) => {
 			if (typeof value === "object" && value !== null) {
