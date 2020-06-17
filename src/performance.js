@@ -14,7 +14,7 @@ var _ = Mavo.Performance = {
 		var objName = Mavo.match(ref, /^.+(?=[.#])/);
 
 		if (ref.indexOf("#") > -1) {
-			objName += ".prototype"
+			objName += ".prototype";
 		}
 
 		var obj = eval(objName);

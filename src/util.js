@@ -627,7 +627,7 @@ var _ = $.extend(Mavo, {
 
 			this.observer = this.observer || new MutationObserver(callback);
 			this.callback = callback;
-			this.update(element, attribute, o)
+			this.update(element, attribute, o);
 
 			this.run();
 		},
