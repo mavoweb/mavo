@@ -149,7 +149,7 @@ var _ = Mavo.Backend.register($.Class({
 			.then(fileInfo => {
 				const env = {context: this, fileInfo};
 
-				Mavo.hooks.run("gh-put-pr", env);
+				Mavo.hooks.run("gh-after-commit", env);
 
 				return env.fileInfo;
 			});
