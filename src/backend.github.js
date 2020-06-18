@@ -65,6 +65,7 @@ var _ = Mavo.Backend.register($.Class({
 		return Mavo.readFile(file).then(dataURL => {
 				var base64 = dataURL.slice(5); // remove data:
 				var media = base64.match(/^\w+\/[\w+]+/)[0];
+				media = media.replace("+", "\\+"); // Fix for #608
 				base64 = base64.replace(RegExp(`^${media}(;base64)?,`), "");
 				path = this.path.replace(/[^/]+$/, "") + path; // make upload path relative to existing path
 
