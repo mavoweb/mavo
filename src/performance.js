@@ -10,8 +10,8 @@ var _ = Mavo.Performance = {
 	},
 
 	time: function callee(ref) {
-		var name = Mavo.match(ref, /[^.#]+$/);
-		var objName = Mavo.match(ref, /^.+(?=[.#])/);
+		var name = ref.match(/[^.#]+$/)?.[0];
+		var objName = ref.match(/^.+(?=[.#])/)?.[0];
 
 		if (ref.indexOf("#") > -1) {
 			objName += ".prototype";

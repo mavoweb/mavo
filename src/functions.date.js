@@ -227,7 +227,7 @@ $.extend(_.util, {
 			return null;
 		}
 
-		var timezone = Mavo.match(date, /[+-]\d{2}:?\d{2}|Z$/);
+		var timezone = date.match(/[+-]\d{2}:?\d{2}|Z$/)?.[0];
 
 		if (timezone) {
 			// parse as ISO format

@@ -222,9 +222,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (this.config.observer === false) {
-			if (this.observer) {
-				this.observer.stop();
-			}
+			this.observer?.stop();
 		}
 		else {
 			var options = {subtree: this.config.subtree, childList: this.config.subtree};
@@ -263,7 +261,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			"originalEditorObserver",
 			"labelObserver"
 		].forEach(observer => {
-			this[observer] && this[observer].destroy();
+			this[observer]?.destroy();
 		});
 	}
 
@@ -340,7 +338,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (!multiline) {
 			this.editor.addEventListener("focus", evt => {
-				this.editor.select && this.editor.select();
+				this.editor.select?.();
 			});
 		}
 
@@ -456,7 +454,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 								// Insert the rest of the lines as new items
 								// FIXME DRYfy the repetition between this code and the one below
 								var collection = this.closestCollection;
-								var index = closestItem && closestItem.index || 0;
+								var index = closestItem?.index || 0;
 
 								for (var i=1; i<lines.length; i++) {
 									var closestItem = this.closestItem;
@@ -482,7 +480,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 							}
 
 							var closestItem = this.closestItem;
-							var next = this.closestCollection.add(undefined, closestItem && closestItem.index + 1);
+							var next = this.closestCollection.add(undefined, closestItem?.index + 1);
 							this.closestCollection.editItem(next);
 
 							var copy = this.getCousin(1);
@@ -816,7 +814,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	static getText (element) {
 		var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
 
-		if (node && node.nodeType === Node.TEXT_NODE) {
+		if (node?.nodeType === Node.TEXT_NODE) {
 			return node.nodeValue;
 		}
 		else {
@@ -827,7 +825,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	static setText (element, text) {
 		var node = element.nodeType === Node.TEXT_NODE? element : element.firstChild;
 
-		if (node && node.nodeType === Node.TEXT_NODE) {
+		if (node?.nodeType === Node.TEXT_NODE) {
 			node.nodeValue = text;
 		}
 		else {
@@ -1056,7 +1054,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				return "";
 			}
 
-			var skipNumberFormatting = o.attribute || o.element && o.element.matches("style, pre");
+			var skipNumberFormatting = o.attribute || o.element?.matches("style, pre");
 
 			if (!skipNumberFormatting) {
 				return _.formatNumber(value);

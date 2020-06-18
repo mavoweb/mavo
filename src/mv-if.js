@@ -85,13 +85,8 @@ Mavo.Expressions.directive("mv-if", {
 
 			if (value !== oldValue) {
 				// Mark any properties inside as hidden or not
-				if (this.childProperties) {
-					this.childProperties.forEach(property => property.hidden = !value);
-				}
-
-				if (this.childIfs) {
-					this.childIfs.forEach(childIf => childIf.update());
-				}
+				this.childProperties?.forEach(property => property.hidden = !value);
+				this.childIfs?.forEach(childIf => childIf.update());
 			}
 		},
 		"node-isdatanull": function(env) {

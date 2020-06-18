@@ -57,7 +57,7 @@ var _ = Mavo.ImplicitCollection = class ImplicitCollection extends Mavo.Node {
 	add (element) {
 		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
-			template: this.template && this.template.children[this.length] || null,
+			template: this.template?.children?.[this.length] ?? null,
 			property: this.property,
 			type: this.type
 		});
@@ -87,7 +87,7 @@ var _ = Mavo.ImplicitCollection = class ImplicitCollection extends Mavo.Node {
 			data = data === null? [] : Mavo.toArray(data).filter(i => i !== null);
 			var changed = data.length !== this.liveData.length;
 
-			this.children.forEach((item, i) => changed = item.render(data && data[i], o) || changed);
+			this.children.forEach((item, i) => changed = item.render(data?.[i], o) ?? changed);
 		}
 
 		this.liveData.update();

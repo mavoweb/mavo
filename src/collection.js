@@ -95,7 +95,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			}
 
 			this.accepts = this.templateElement.getAttribute("mv-accepts");
-			this.accepts = new Set(this.accepts && this.accepts.split(/\s+/) || []);
+			this.accepts = new Set(this.accepts?.split(/\s+/));
 
 			this.initialItems = +(this.templateElement.getAttribute("mv-initial-items") || (this.like? 0 : 1));
 
@@ -107,7 +107,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		if (this.likeNode) {
 			this.itemTemplate = this.likeNode.itemTemplate || this.likeNode;
 
-			var templateElement = this.likeNode.templateElement || $.value(this.likeNode.collection, "templateElement") || this.likeNode.element;
+			var templateElement = this.likeNode.templateElement || this.likeNode.collection?.templateElement || this.likeNode.element;
 			this.templateElement = templateElement.cloneNode(true);
 			this.templateElement.setAttribute("property", this.property);
 
@@ -169,7 +169,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			element = this.templateElement.cloneNode(true);
 		}
 
-		var template = this.itemTemplate || (this.template? this.template.itemTemplate : null);
+		var template = this.itemTemplate || this.template?.itemTemplate || null;
 
 		var item = Mavo.Node.create(element, this.mavo, {
 			collection: this,
@@ -208,7 +208,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		}
 
 		// Add it to the DOM, or fix its place
-		var rel = this.children[index]? this.children[index].element : this.marker;
+		var rel = this.children?.[index]?.element ?? this.marker;
 		$.before(item.element, rel);
 
 		var env = {context: this, item};
@@ -282,11 +282,9 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		// Unregister expressions for deleted items
 		deleted.forEach(item => {
-			if (item.expressions) {
-				item.expressions.forEach(domexpression => {
-					item.mavo.expressions.unregister(domexpression);
-				});
-			}
+			item.expressions?.forEach(domexpression => {
+				item.mavo.expressions.unregister(domexpression);
+			});
 		});
 
 		this.liveData.update();
@@ -367,10 +365,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	}
 
 	editItem (item, o = {}) {
-		if (item.preEdit) {
-			// Get rid of old promise and replace it with new promise
-			item.preEdit.resolve("abort");
-		}
+		// Get rid of old promise and replace it with new promise
+		item.preEdit?.resolve("abort");
 
 		let immediately = o.immediately || Mavo.inView.is(item.element);
 
@@ -392,13 +388,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	}
 
 	doneItem (item) {
-		if (item.itembar) {
-			item.itembar.remove();
-		}
-
-		if (item.preEdit) {
-			item.preEdit.resolve("abort");
-		}
+		item.itembar?.remove();
+		item.preEdit?.resolve("abort");
 	}
 
 	edit (o = {}) {
@@ -512,10 +503,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	destroy () {
 		super.destroy();
 
-		if (this.dragula) {
-			this.dragula.destroy();
-			this.dragula = null;
-		}
+		this.dragula?.destroy();
+		this.dragula = null;
 
 		this.propagate("destroy");
 	}
@@ -552,7 +541,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 					return false;
 				}
 
-				var previous = next? next.previousElementSibling : target.lastElementChild;
+				var previous = next?.previousElementSibling ?? target.lastElementChild;
 
 				var collection = _.get(previous) || _.get(next);
 
@@ -562,7 +551,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 				var item = Mavo.Node.get(el);
 
-				return item && item.collection.isCompatible(collection);
+				return item?.collection.isCompatible(collection);
 			}
 		});
 
@@ -607,7 +596,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		// Maybe it's a collection item?
 		var item = Mavo.Node.get(element);
 
-		return item && item.collection || null;
+		return item?.collection || null;
 	}
 
 	// Delete multiple items from potentially multiple collections or even multiple mavos

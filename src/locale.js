@@ -35,7 +35,7 @@ var _ = Mavo.Locale = $.Class({
 			phrase = key.replace(/\b-\b/g, " ");
 		}
 		else if (vars) {
-			var keys = Mavo.matches(phrase, /\{\w+(?=\})/g).map(v => v.slice(1));
+			var keys = phrase.match(/\{\w+(?=\})/g)?.map(v => v.slice(1)) ?? [];
 			Mavo.Functions.unique(keys).forEach(name => {
 				if (name in vars) {
 					phrase = phrase.replace(RegExp(`{${name}}`, "gi"), vars[name]);

@@ -3,7 +3,7 @@
 var _ = Mavo.DOMExpression = $.Class({
 	constructor: function(o = {}) {
 		this.mavo = o.mavo;
-		this.template = o.template && o.template.template || o.template;
+		this.template = o.template?.template || o.template;
 
 		for (let prop of ["item", "path", "syntax", "fallback", "attribute", "originalAttribute", "expression", "parsed", "identifiers"]) {
 			this[prop] = o[prop] === undefined && this.template? this.template[prop] : o[prop];
@@ -53,7 +53,7 @@ var _ = Mavo.DOMExpression = $.Class({
 				// Move whitespace outside to prevent it from messing with types
 				this.node.normalize();
 
-				if (this.node.firstChild && this.node.childNodes.length === 1 && this.node.firstChild.nodeType === 3) {
+				if (this.node.childNodes.length === 1 && this.node?.firstChild?.nodeType === 3) {
 					var whitespace = this.node.firstChild.textContent.match(/^\s*|\s*$/g);
 
 					if (whitespace[1]) {
@@ -296,9 +296,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			},
 
 			update: function() {
-				if (this.update) {
-					this.update(...arguments);
-				}
+				this.update?.(...arguments);
 
 				this.all.forEach(domexpression => domexpression.update());
 			},

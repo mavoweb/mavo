@@ -11,7 +11,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 	get parent() {
 		var parent = this.node.parent;
-		return parent? parent.liveData : null;
+		return parent?.liveData ?? null;
 	}
 
 	get collection() {
@@ -122,7 +122,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				this._data = data;
 
 				data[Mavo.toNode] = this.node;
-				data[Mavo.parent] = this.parent && this.parent.data;
+				data[Mavo.parent] = this.parent?.data;
 				data[Mavo.mavo] = this.node.mavo;
 
 				this.proxy = this.proxify();
@@ -185,7 +185,7 @@ var _ = Mavo.Data = $.Class(class Data {
 		}) : Mavo.Functions,
 
 		isItem: function(data) {
-			return Array.isArray($.value(data, Mavo.parent));
+			return Array.isArray(data?.[Mavo.parent]);
 		},
 
 		closest(obj, test) {
@@ -360,7 +360,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			if (!propertyIsNumeric) {
 				// Does it reference another Mavo?
-				if (property in Mavo.all && isNaN(property) && Mavo.all[property].root) {
+				if (isNaN(property) && Mavo.all?.[property]?.root) {
 					return Mavo.all[property].root.getLiveData();
 				}
 
@@ -470,7 +470,7 @@ var _ = Mavo.Data = $.Class(class Data {
 					}
 
 					// parent[up] = child
-					var up = child && child[Mavo.property];
+					var up = child?.[Mavo.property];
 
 					if (up && parent[Mavo.route][property] !== true) {
 						if (!parent[Mavo.route][property]) {
@@ -557,7 +557,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				var path = arr.path.reverse();
 				var index = arr.path[0];
 				path = path.slice(1);
-				var nextClosestItem = $.value(arr.value, index + 1);
+				var nextClosestItem = arr.value?.[index + 1];
 
 				return nextClosestItem? $.value(nextClosestItem, ...path) : null;
 			},
@@ -567,7 +567,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				var path = arr.path.reverse();
 				var index = arr.path[0];
 				path = path.slice(1);
-				var prevClosestItem = $.value(arr.value, index - 1);
+				var prevClosestItem = arr.value?.[index - 1];
 
 				return prevClosestItem? $.value(prevClosestItem, ...path) : null;
 			},

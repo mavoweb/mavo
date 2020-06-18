@@ -56,7 +56,7 @@ var _ = Mavo.Node = class Node {
 		// Must run before collections have a marker which messes up paths
 		var template = this.template;
 
-		if (template && template.expressions) {
+		if (template?.expressions) {
 			// We know which expressions we have, don't traverse again
 			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
 				template: et,
@@ -294,7 +294,7 @@ var _ = Mavo.Node = class Node {
 					// Get the name of the first property that is a collection without mv-value
 					// OR if there is a collection with property="main", prioritize that
 					var mainProperty = this.children.main instanceof Mavo.Collection? "main" : this.getNames((p, n) => {
-						return n instanceof Mavo.Collection && !$.value(n.expressions, 0, "isDynamicObject");
+						return n instanceof Mavo.Collection && !n.expressions?.[0]?.isDynamicObject;
 					})[0];
 
 					if (mainProperty) {
@@ -310,7 +310,7 @@ var _ = Mavo.Node = class Node {
 					env.data = env.data[0];
 				}
 			}
-			else if (this.childrenNames && this.childrenNames.length == 1 && this.childrenNames[0] === this.property
+			else if (this.childrenNames?.length == 1 && this.childrenNames[0] === this.property
 			         && env.data !== null && Mavo.isPlainObject(env.data)) {
 				// {foo: {foo: 5}} should become {foo: 5}
 				env.data = env.data[this.property];
@@ -371,15 +371,15 @@ var _ = Mavo.Node = class Node {
 	}
 
 	getClosestItem () {
-		if (this.collection && Array.isArray(this.collection.children)) {
+		if (Array.isArray(this.collection?.children)) {
 			return this;
 		}
 
-		return this.parentGroup? this.parentGroup.closestItem : null;
+		return this.parentGroup?.closestItem || null;
 	}
 
 	getPath () {
-		var path = this.parent? this.parent.path : [];
+		var path = this.parent?.path || [];
 		return this.property? [...path, this.property] : path;
 	}
 

@@ -561,14 +561,14 @@ var _ = Mavo.Functions = {
 			[lang, vars] = [vars];
 		}
 
-		var locale = lang? Mavo.Locale.get(lang) : ($this && $this[Mavo.mavo]? $this[Mavo.mavo].locale : Mavo.Locale.default);
+		var locale = lang? Mavo.Locale.get(lang) : ($this?.[Mavo.mavo]?.locale ?? Mavo.Locale.default);
 
 		return locale.phrase(id, vars);
 	}, {
 		needsContext: true
 	}),
 
-	filename: $.extend(url => Mavo.match(new URL(str(url), Mavo.base).pathname, /[^/]+?$/), {
+	filename: $.extend(url => new URL(str(url), Mavo.base).pathname.match(/[^/]+?$/)?.[0], {
 		multiValued: true
 	}),
 
@@ -624,7 +624,7 @@ var _ = Mavo.Functions = {
 			var multiValued = callback.multiValued;
 			var newCallback;
 
-			if (multiValued === true || multiValued && multiValued.length === 2) {
+			if (multiValued === true || multiValued?.length === 2) {
 				newCallback = (...args) => {
 					// Define index of multiValued arguments
 					// Fallback to first 2 arguments if not explicitly defined

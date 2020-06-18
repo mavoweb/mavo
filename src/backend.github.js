@@ -38,7 +38,7 @@ var _ = Mavo.Backend.register($.Class({
 				// GraphQL
 				return this.request(info.apiCall, info.apiData, "POST")
 					.then(response => {
-						if (response.errors && response.errors.length) {
+						if (response.errors?.length) {
 							return Promise.reject(response.errors.map(x => x.message).join("\n"));
 						}
 
@@ -393,7 +393,7 @@ var _ = Mavo.Backend.register($.Class({
 
 		// Repo does not exist so we can't check permissions
 		// Just check if authenticated user is the same as our URL username
-		return this.user && this.user.username.toLowerCase() == this.username.toLowerCase();
+		return this.user?.username?.toLowerCase() == this.username.toLowerCase();
 	},
 
 	oAuthParams: () => "&scope=repo",

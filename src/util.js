@@ -4,7 +4,7 @@ var _ = $.extend(Mavo, {
 	/**
 	 * Load a file, only once
 	 */
-	load: (url, base = document.currentScript? document.currentScript.src : location) => {
+	load: (url, base = document.currentScript?.src ?? location) => {
 		return $.load(url, base);
 	},
 
@@ -64,7 +64,7 @@ var _ = $.extend(Mavo, {
 		}
 
 		var proto = Object.getPrototypeOf(o);
-		return proto.constructor && proto.constructor.name === "Object";
+		return proto.constructor?.name === "Object";
 	},
 
 	// Specifiy a primitive fallback for an object
@@ -104,7 +104,7 @@ var _ = $.extend(Mavo, {
 		return $.extend(value, properties);
 	},
 
-	value: value => value && value.valueOf? value.valueOf() : value,
+	value: value => value?.valueOf? value.valueOf() : value,
 
 	/**
 	 * Array & set utlities
@@ -161,9 +161,7 @@ var _ = $.extend(Mavo, {
 
 	is: function(thing, ...elements) {
 		for (let i=0, element; i < elements.length; i++) {
-			element = elements[i];
-
-			if (element && element.matches && element.matches(_.selectors[thing])) {
+			if (elements?.[i]?.matches?.(_.selectors[thing])) {
 				return true;
 			}
 		}
@@ -178,9 +176,7 @@ var _ = $.extend(Mavo, {
 		if (element) {
 			var value = getComputedStyle(element).getPropertyValue(property);
 
-			if (value) {
-				return value.trim();
-			}
+			return value?.trim();
 		}
 	},
 	/**
@@ -284,7 +280,7 @@ var _ = $.extend(Mavo, {
 		add: function(element, insert) {
 			var comment = _.revocably.isRemoved(element);
 
-			if (comment && comment.parentNode) {
+			if (comment?.parentNode) {
 				comment.parentNode.replaceChild(element, comment);
 			}
 			else if (element && insert && !element.parentNode) {
@@ -327,7 +323,7 @@ var _ = $.extend(Mavo, {
 
 			var comment = _.data(element, "commentstub");
 
-			if (comment && comment.parentNode) {
+			if (comment?.parentNode) {
 				return comment;
 			}
 
@@ -423,8 +419,7 @@ var _ = $.extend(Mavo, {
 	},
 
 	getClosestAttribute: function(element, attribute) {
-		element = element.closest(`[${attribute}]`);
-		return element? element.getAttribute(attribute) : null;
+		return element.closest(`[${attribute}]`)?.getAttribute(attribute) ?? null;
 	},
 
 	/**
@@ -519,7 +514,7 @@ var _ = $.extend(Mavo, {
 
 			return value;
 		}
-		else if (typeof obj == "object" && path && path.length) { // Get
+		else if (typeof obj == "object" && path?.length) { // Get
 			return path.reduce((obj, property, i) => {
 				var meta = {};
 				var ret = Mavo.Functions.get(obj, property, meta);
@@ -587,13 +582,6 @@ var _ = $.extend(Mavo, {
 
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
 
-	matches: (str, regex) => {
-		var ret = (str + "").match(regex);
-		return ret? ret : [];
-	},
-
-	match: (str, regex, i=0) => _.matches(str, regex)[i] || "",
-
 	observeResize: function(element, callbackOrObserver) {
 		if (!self.ResizeObserver) {
 			return;
@@ -654,19 +642,15 @@ var _ = $.extend(Mavo, {
 				});
 			}
 
-			if (this.observer && this.observer.running) {
+			if (this.observer?.running) {
 				this.stop();
 				this.run();
 			}
 		},
 
 		stop: function() {
-			if (this.observer) {
-				this.observer.disconnect();
-			}
-
+			this.observer?.disconnect();
 			this.running = false;
-
 			return this;
 		},
 
@@ -726,7 +710,7 @@ var _ = $.extend(Mavo, {
 	options: str => {
 		var ret = {};
 
-		(str.trim().match(/(?:\\[,;]|[^,;])+/g) || []).forEach(option => {
+		str.trim().match(/(?:\\[,;]|[^,;])+/g)?.forEach(option => {
 			if (option) {
 				option = option.trim().replace(/\\([,;])/g, "$1");
 				var pair = option.match(/^\s*((?:\\:|[^:])+?)\s*:\s*(.+)$/);
@@ -816,7 +800,7 @@ function updateTargetWithin() {
 
 	$$("." + cl).forEach(el => el.classList.remove(cl));
 
-	while (element && element.classList) {
+	while (element?.classList) {
 		element.classList.add(cl);
 		element = element.parentNode;
 	}

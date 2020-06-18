@@ -117,7 +117,7 @@ var _ = Mavo.Backend = $.Class({
 
 		return $.fetch(call, req)
 			.catch(err => {
-				if (err && err.xhr) {
+				if (err?.xhr) {
 					return Promise.reject(err.xhr);
 				}
 				else {
@@ -232,7 +232,7 @@ var _ = Mavo.Backend = $.Class({
 			}
 
 			// Can we re-use the existing object perhaps?
-			if (Backend && existing && existing.constructor === Backend && existing.constructor.prototype.hasOwnProperty("update")) {
+			if (Backend && existing?.constructor === Backend && existing.constructor.prototype.hasOwnProperty("update")) {
 				existing.update(url, o);
 				return existing;
 			}

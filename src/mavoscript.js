@@ -451,7 +451,7 @@ var _ = Mavo.Script = {
 			code: (array, key) => {
 				array = Mavo.toArray(array);
 				key = Mavo.toArray(key);
-				var property = key[Mavo.as] || $.value(key[0], Mavo.toNode, "property");
+				var property = key[Mavo.as] || key[0]?.[Mavo.toNode]?.property;
 				var groups = new Mavo.BucketMap({arrays: true});
 				var ret = [];
 				ret[Mavo.groupedBy] = true;
@@ -489,16 +489,19 @@ var _ = Mavo.Script = {
 			code: (property, name) => {
 				if (property !== undefined && $.type(property) === "array" && name !== undefined) {
 					var ret = property.slice();
-					if (!Array.isArray(name) && $.value(name, Mavo.toNode, "property") !== undefined) {
-						ret[Mavo.as] = $.value(name, Mavo.toNode, "property");
+
+					if (!Array.isArray(name) && name?.[Mavo.toNode]?.property !== undefined) {
+						ret[Mavo.as] = name?.[Mavo.toNode]?.property;
 						return ret;
 					}
+
 					if ($.type(name) === "string") {
 						ret[Mavo.as] = name;
 						return ret;
 					}
-					if ($.value(name[0], Mavo.toNode, "property") !== undefined) {
-						ret[Mavo.as] = $.value(name[0], Mavo.toNode, "property");
+
+					if (name[0]?.[Mavo.toNode]?.property !== undefined) {
+						ret[Mavo.as] = name[0]?.[Mavo.toNode]?.property;
 						return ret;
 					}
 
@@ -743,7 +746,7 @@ var _ = Mavo.Script = {
 
 		var ret = _.transformations[node.type] && _.transformations[node.type](node);
 
-		if (typeof ret == "object" && ret && ret.type) {
+		if (typeof ret == "object" && ret?.type) {
 			node = ret;
 		}
 		else if (ret !== undefined) {
@@ -838,7 +841,7 @@ _.transformations.LogicalExpression = _.transformations.BinaryExpression;
 for (let name in _.operators) {
 	let details = _.operators[name];
 
-	if (details.scalar && details.scalar.length < 2) {
+	if (details.scalar?.length < 2) {
 		var ret = _.addUnaryOperator(name, details);
 	}
 	else {

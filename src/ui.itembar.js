@@ -9,7 +9,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
 
-		if (!this.element && this.item.template && this.item.template.itembar) {
+		if (!this.element && this.item.template?.itembar) {
 			// We can clone the buttons from the template
 			this.element = this.item.template.itembar.element.cloneNode(true);
 			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;

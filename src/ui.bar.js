@@ -116,7 +116,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			return;
 		}
 
-		this.resizeObserver && this.resizeObserver.disconnect();
+		this.resizeObserver?.disconnect();
 
 		this.element.classList.remove("mv-compact", "mv-tiny");
 
@@ -144,7 +144,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			}
 		}
 
-		this.resizeObserver && this.resizeObserver.observe(this.element);
+		this.resizeObserver?.observe(this.element);
 	},
 
 	add: function(id) {
@@ -227,7 +227,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				prepare: function() {
 					var backend = this.primaryBackend;
 
-					if (backend && backend.user) {
+					if (backend?.user) {
 						var user = backend.user;
 						var html = [user.name || ""];
 
@@ -273,7 +273,7 @@ var _ = Mavo.UI.Bar = $.Class({
 					if (this.editing) {
 						this.done();
 
-						if (this.bar && this.bar.edit) {
+						if (this.bar?.edit) {
 							this.bar.edit.textContent = this._("edit");
 						}
 					}

@@ -195,7 +195,7 @@ var _ = self.Mavo = $.Class({
 				this.edit();
 			}
 		}, () => { // cannot
-			this.modeObserver && this.modeObserver.destroy();
+			this.modeObserver?.destroy();
 		});
 
 
@@ -288,7 +288,7 @@ var _ = self.Mavo = $.Class({
 
 				var node = Mavo.Node.get(element);
 
-				if (node && node.closestCollection) {
+				if (node?.closestCollection) {
 					var nextNode = node.getCousin(evt.key === "ArrowUp"? -1 : 1, {wrap: true});
 
 					if (nextNode) {
@@ -456,7 +456,7 @@ var _ = self.Mavo = $.Class({
 			}
 
 			var permissions = this.storage? this.storage.permissions : new Mavo.Permissions({edit: true, save: false});
-			permissions.parent = this.source && this.source.permissions;
+			permissions.parent = this.source?.permissions;
 			this.permissions.parent = permissions;
 
 			this.primaryBackend = this.storage || this.source;
@@ -496,7 +496,7 @@ var _ = self.Mavo = $.Class({
 			if (err) {
 				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
 
-				if (xhr && xhr.status == 404) {
+				if (xhr?.status == 404) {
 					this.render(null);
 				}
 				else {
@@ -621,9 +621,7 @@ var _ = self.Mavo = $.Class({
 		this.deleted.forEach(node => node.destroy());
 		this.deleted.length = [];
 
-		if (this.deletionNotice) {
-			this.deletionNotice.close();
-		}
+		this.deletionNotice?.close();
 
 		if (!nodes.length) {
 			return;
@@ -725,7 +723,7 @@ var _ = self.Mavo = $.Class({
 			get: function () {
 				const backend = this.uploads;
 
-				if (backend && backend.upload) {
+				if (backend?.upload) {
 					// We need to authenticate a user if we haven't done that earlier
 					if (backend.permissions.login) {
 						backend.login();
@@ -734,7 +732,7 @@ var _ = self.Mavo = $.Class({
 					return this.uploads;
 				}
 
-				if (this.storage && this.storage.upload) {
+				if (this.storage?.upload) {
 					// Prioritize storage
 					return this.storage;
 				}

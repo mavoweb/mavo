@@ -102,7 +102,7 @@ var _ = Mavo.Expressions = $.Class({
 			this.updateByIdThrottled(evt.property, evt, cache);
 
 			if (evt.action == "propertychange") {
-				if (evt.node && evt.node.path) {
+				if (evt.node?.path) {
 					// Ensure that [collectionName] updates when changing children
 					this.updateByIdThrottled(evt.node.path, evt, cache);
 				}
@@ -127,14 +127,12 @@ var _ = Mavo.Expressions = $.Class({
 				return false;
 			}
 
-			if (obj.expressions) {
-				obj.expressions.forEach(et => {
-					// Prevent mv-value loops
-					if (!evt || et.mavoNode !== evt) {
-						et.update();
-					}
-				});
-			}
+			obj.expressions?.forEach(et => {
+				// Prevent mv-value loops
+				if (!evt || et.mavoNode !== evt) {
+					et.update();
+				}
+			});
 		});
 	},
 
@@ -198,7 +196,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			this.expressions.push(new Mavo.DOMExpression({
 				node, syntax, path,
-				attribute: attribute && attribute.name,
+				attribute: attribute?.name,
 				mavo: this.mavo
 			}));
 		}

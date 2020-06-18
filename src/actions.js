@@ -13,7 +13,7 @@ var _ = Mavo.Actions = {
 
 		var node = Mavo.Node.get(element);
 
-		if (node && node.editing) {
+		if (node?.editing) {
 			// If this is a node, and being edited, we don't want to have the action interfering.
 			return;
 		}
@@ -60,7 +60,7 @@ var _ = Mavo.Actions = {
 		if (node instanceof Mavo.Node) {
 			return node;
 		}
-		else if (node && node[Mavo.toNode]) {
+		else if (node?.[Mavo.toNode]) {
 			return node[Mavo.toNode];
 		}
 	},
@@ -73,7 +73,7 @@ var _ = Mavo.Actions = {
 		}
 
 		// ref is not a collection. Either it's an item or we don't have a collection
-		return collection? collection.collection : null;
+		return collection?.collection ?? null;
 	},
 
 	// Function to run instead of actions if actions are called outside mv-action
@@ -159,13 +159,13 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			if ($.type(to) == "number" && !(toNode && toNode.collection)) {
+			if ($.type(to) == "number" && !(toNode?.collection)) {
 				// If to is a number and not a collection item, it's an index
 				[index, to] = [to];
 			}
 
 			var toNode = _.getNode(to);
-			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n && n.closestCollection);
+			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
 			var collection = (toNode || fromNodes[0]).closestCollection;
 
 			if (!fromNodes.length) {
