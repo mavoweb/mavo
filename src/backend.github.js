@@ -181,7 +181,6 @@ var _ = Mavo.Backend.register($.Class({
 							}
 
 							this.repoInfo = repoInfo;
-							let params = (new URL(location)).searchParams;
 
 							if (!this.mavo.source) { // if url doesn't have source, check for forks
 								if (repoInfo.fork) { // if current repo is a fork, we can display PR dialog
