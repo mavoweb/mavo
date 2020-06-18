@@ -183,14 +183,6 @@ var _ = Mavo.Backend.register($.Class({
 							this.repoInfo = repoInfo;
 
 							if (!this.mavo.source) { // if url doesn't have source, check for forks
-								if (repoInfo.fork) { // if current repo is a fork, we can display PR dialog
-									const env = { context: this, repoInfo };
-								
-									Mavo.hooks.run("gh-login-no-source-pr", env);
-
-									return env.repoInfo;
-								}
-
 								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch
 									if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
 										var query = `query {
