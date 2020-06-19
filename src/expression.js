@@ -59,7 +59,7 @@ var _ = Mavo.Expression = class Expression {
 	}
 };
 
-$.Class(_, {
+Bliss.Class(_, {
 	live: {
 		expression: function(value) {
 			this.function = null;
