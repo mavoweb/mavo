@@ -327,7 +327,7 @@ var _ = Mavo.Backend.register($.Class({
 
 		test: function(url) {
 			url = new URL(url, Mavo.base);
-			return /^(github.com|raw.githubusercontent.com)/.test(url.host);
+			return /^((api\.)?github\.com|raw\.githubusercontent\.com)/.test(url.host);
 		},
 
 		/**
