@@ -778,6 +778,28 @@ var _ = self.Mavo = $.Class({
 		this.deleted.length = 0;
 	},
 
+	// A lot of this is inspired by @hopeful2's work in https://github.com/mavoweb/mavo/pull/430
+	destroy () {
+		Mavo.hooks.run("mavo-destroy-start", this);
+
+		if (this.editing) {
+			this.done();
+		}
+
+		// first remove observers.
+		this.observer.destroy();
+
+		this.bar?.destroy();
+
+		// .index starts from 1, .all starts from 0
+		// ISSUE Should we just delete this and rearrange the other indices?
+		Mavo.all[this.id] = Mavo.all[this.index - 1] = null;
+
+		this.root.destroy();
+
+		Mavo.hooks.run("mavo-destroy-end", this);
+	},
+
 	live: {
 		inProgress: function(value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);

@@ -183,6 +183,11 @@ var _ = Mavo.UI.Bar = $.Class({
 		"permissions": "mavo"
 	},
 
+	destroy () {
+		this.resizeObserver.disconnect();
+		this.resizeObserver = null;
+	},
+
 	static: {
 		getControls: function(template) {
 			var all = Object.keys(_.controls);
