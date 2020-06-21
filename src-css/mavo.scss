@@ -375,10 +375,6 @@ meter, progress {
 	& > fieldset {
 		border: none;
 		padding: 0;
-
-		legend {
-
-		}
 	}
 
 	&[hidden] {
@@ -572,6 +568,17 @@ meter, progress {
 
 time[property][aria-label][mv-mode="edit"].mv-empty::before {
 	content: "(No " attr(aria-label) ")";
+}
+
+img[property][mv-mode="edit"]:not([alt]) {
+	&[src=""],
+	&:not([src]) {
+		min-width: 1.2em;
+		min-height: 1.2em;
+		background: inline-svg('<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 100 100" fill="rgb(200,0,0)">\
+			<text y="1em" font-size="90">🖼</text>\
+			</svg>') center / contain no-repeat;
+	}
 }
 
 @import 'bar';
