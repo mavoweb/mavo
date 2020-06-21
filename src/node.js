@@ -85,13 +85,6 @@ var _ = Mavo.Node = class Node {
 			}
 		}
 
-		// Handle dynamic mv-storage on Mavo nodes (Fix for #576)
-		if (this.element.hasAttribute("mv-storage")) {
-			this.storageObserver = new Mavo.Observer(this.element, "mv-storage", record => {
-				this.storage = this.element.getAttribute("mv-storage");
-			});
-		}
-
 		Mavo.hooks.run("node-init-end", env);
 	}
 
@@ -611,7 +604,7 @@ $.Class(_, {
 				if (!Array.isArray(this.children) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
 					// If attribute is not one of the recognized values, leave it alone
 					var set = this.modes || value == "edit";
-					Mavo.Observer.sneak(this.mavo.modeObserver, () => {
+					this.mavo.sneak({attribute: "mv-mode"}, () => {
 						$.toggleAttribute(this.element, "mv-mode", value, set);
 					});
 				}
@@ -659,6 +652,13 @@ $.Class(_, {
 	static: {
 		all: [],
 		elements: new WeakMap()
+	}
+});
+
+Mavo.observe({attribute: "mv-storage"}, function({node}) {
+	// Handle dynamic mv-storage on Mavo nodes (Fix for #576)
+	if (node) {
+		node.storage = node.element.getAttribute("mv-storage");
 	}
 });
 

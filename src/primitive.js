@@ -119,16 +119,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.defaultSource = "template";
 			}
 			else { // mv-default with value
-				var defaultExpression = Mavo.DOMExpression.search(this.element, "mv-default");
+				this.defaultExpression = Mavo.DOMExpression.search(this.element, "mv-default");
 
-				if (defaultExpression) {
+				if (this.defaultExpression) {
 					// To preserve type, e.g. booleans should stay booleans, not become strings
-					defaultExpression.output = value => this.default = value;
-				}
-				else {
-					this.defaultObserver = new Mavo.Observer(this.element, "mv-default", record => {
-						this.default = this.element.getAttribute("mv-default");
-					});
+					this.defaultExpression.output = value => this.default = value;
 				}
 
 				this.defaultSource = "attribute";
@@ -152,22 +147,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.setValue(this.initialValue, {silent: true});
 
 			if (this.element.hasAttribute("aria-label")) {
-				// Custom label, make it lazy to give expressions a chance and then observe changes
-				$.lazy(this, "label", () => {
-					this.labelObserver = new Mavo.Observer(this.element, "aria-label", () => {
-						this.label = this.element.getAttribute("aria-label");
-
-						if ("placeholder" in this.editor) {
-							this.editor.placeholder = `(${this.label})`;
-						}
-					});
-
-					return this.element.getAttribute("aria-label");
-				});
+				// Custom label
+				this.label = this.element.getAttribute("aria-label");
 			}
 			else {
 				this.label = Mavo.Functions.readable(this.property);
-				this.element.setAttribute("aria-label", this.label);
+				this.sneak(() => {
+					this.element.setAttribute("aria-label", this.label);
+				});
 			}
 		}
 
@@ -213,56 +200,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 	}
 
-	// Add mutation observer to observe future mutations to this property, if possible
-	// Properties like input.checked or input.value cannot be observed that way
-	// so we cannot depend on mutation observers for everything :(
-	updateObserver () {
-		if (!this.config) {
-			return;
-		}
-
-		if (this.config.observer === false) {
-			this.observer?.stop();
-		}
-		else {
-			var options = {subtree: this.config.subtree, childList: this.config.subtree};
-
-			if (this.observer) {
-				if (this.observer.attribute !== this.attribute
-				   || this.observer.options.subtree !== options.subtree
-				) {
-					// Options changed since last time, we need to recreate observer
-					this.observer.update(this.element, this.attribute, options);
-				}
-
-				if (!this.observer.running) {
-					this.observer.run();
-				}
-			}
-			else {
-				this.observer = new Mavo.Observer(this.element, this.attribute, records => {
-					if (this._config.observer === false) {
-						this.observer.stop();
-					}
-					else if (this.attribute || !this.editing || this.config.subtree) {
-						this.value = this.getValue();
-					}
-				}, options);
-			}
-		}
-	}
-
 	destroy () {
 		super.destroy();
-
-		[
-			"defaultObserver",
-			"observer",
-			"originalEditorObserver",
-			"labelObserver"
-		].forEach(observer => {
-			this[observer]?.destroy();
-		});
+		this.originalEditorObserver?.destroy();
 	}
 
 	isDataNull(o) {
@@ -294,8 +234,8 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return env.data;
 	}
 
-	sneak(callback) {
-		return Mavo.Observer.sneak(this.observer, callback);
+	sneak (callback) {
+		return this.mavo.sneak({id: "primitive"}, callback);
 	}
 
 	save() {
@@ -623,25 +563,25 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	setValue (value, o = {}) {
+		if (value === undefined) {
+			value = null;
+		}
+
+		var oldDatatype = this.datatype;
+
+		// If there's no datatype, adopt that of the value
+		if (!this.datatype && (typeof value == "number" || typeof value == "boolean")) {
+			this.datatype = typeof value;
+		}
+
+		value = _.safeCast(value, this.datatype);
+
+		if (!o.force && value === this._value && oldDatatype == this.datatype) {
+			// Do nothing if value didn't actually change, unless forced to
+			return value;
+		}
+
 		this.sneak(() => {
-			if (value === undefined) {
-				value = null;
-			}
-
-			var oldDatatype = this.datatype;
-
-			// If there's no datatype, adopt that of the value
-			if (!this.datatype && (typeof value == "number" || typeof value == "boolean")) {
-				this.datatype = typeof value;
-			}
-
-			value = _.safeCast(value, this.datatype);
-
-			if (!o.force && value === this._value && oldDatatype == this.datatype) {
-				// Do nothing if value didn't actually change, unless forced to
-				return value;
-			}
-
 			if (this.editor && this.editorValue != value) {
 				// If an editor is present, set its value to match
 				this.editorValue = value;
@@ -1099,20 +1039,6 @@ $.Class(_, {
 			}
 		},
 
-		config: function(config) {
-			if (this._config !== config) {
-				this._config = config;
-				this.updateObserver();
-			}
-		},
-
-		attribute: function(attribute) {
-			if (this._attribute !== attribute) {
-				this._attribute = attribute;
-				this.updateObserver();
-			}
-		},
-
 		value: function (value) {
 			return this.setValue(value);
 		},
@@ -1154,6 +1080,31 @@ $.Class(_, {
 					return numberFormat.format(value);
 				};
 			}
+		}
+	}
+});
+
+Mavo.observe({id: "primitive"}, function({node, type, attribute, record}) {
+	if (node instanceof Mavo.Primitive && node.config) {
+		if (attribute === "mv-default" && !node.defaultExpression) {
+			node.default = node.element.getAttribute("mv-default");
+		}
+		else if (attribute === "aria-label") {
+			node.label = node.element.getAttribute("aria-label");
+
+			if (Mavo.in("placeholder", node.editor)) {
+				node.editor.placeholder = `(${node.label})`;
+			}
+		}
+		else if (node.config.observer !== false
+			&& (
+				node.config.subtree
+				|| (attribute === node.attribute || type === "characterData" && !node.attribute)
+				   && !node.editing
+			)
+		) {
+			// Main value observer
+			node.value = node.getValue();
 		}
 	}
 });

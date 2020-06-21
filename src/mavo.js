@@ -75,6 +75,65 @@ var _ = self.Mavo = $.Class({
 
 		this.expressions = new Mavo.Expressions(this);
 
+		this.observer = new Mavo.Observer(this.element, null, records => {
+			if (!this.observers && !_.observers) {
+				return;
+			}
+
+			let observers = [
+				...(this.observers?.entries() ?? []),
+				...(_.observers?.entries() ?? []),
+			];
+
+			for (let r of records) {
+				let node = Mavo.Node.get(r.target, true);
+
+				for (let [o, callback] of observers) {
+					if (o.active === false) {
+						continue;
+					}
+
+					if (o.attribute) {
+						// We are monitoring attribute changes only
+						if (r.type !== "attributes") {
+							// Not an attribute change
+							continue;
+						}
+
+						if (o.attribute !== true && o.attribute !== r.attributeName) {
+							// We are monitoring a specific attribute, and a different one changed
+							continue;
+						}
+					}
+					else if (r.type === "attributes" && o.attribute === false) {
+						// We explicitly opted out monitoring attributes, and an attribute has changed
+						continue;
+					}
+
+					if (o.deep === false && r.target !== this.element) {
+						continue;
+					}
+
+					callback.call(this, {
+						node,
+						type: r.type,
+						attribute: r.attributeName,
+						element: r.target,
+						record: r
+					});
+
+					if (o.once) {
+						(o.static? _ : this).unobserve(o, callback);
+					}
+				}
+			}
+		}, {
+			characterData: true,
+			childList: true,
+			subtree: true,
+			attributes: true
+		});
+
 		// Build mavo objects
 		Mavo.hooks.run("init-tree-before", this);
 
@@ -90,25 +149,20 @@ var _ = self.Mavo = $.Class({
 		// Figure out backends for storage, data reads, and initialization respectively
 		backendTypes.forEach(role => this.updateBackend(role));
 
-		this.backendObserver = new Mavo.Observer(this.element, backendTypes.map(role => "mv-" + role), records => {
-			var changed = {};
+		this.observe({deep: false, attribute: true}, ({attribute}) => {
+			if (attribute.indexOf("mv-") === 0) {
+				let role = attribute?.replace(/^mv-/, "");
 
-			var roles = records.map(record => {
-				var role = record.attributeName.replace(/^mv-/, "");
-				changed[role] = this.updateBackend(role);
+				if (backendTypes.includes(role)) {
+					this.updateBackend(role);
 
-				return role;
-			});
-
-			// Do we need to re-load data?
-			if (changed.source) {  // if source changes, always reload
-				this.load();
-			}
-			else if (!this.source) {
-				if (changed.storage || changed.init && !this.root.data) {
-					this.load();
+					// Do we need to re-load data?
+					if (role === "source" || (!this.source && (role === "storage" || role === "init" && !this.root.data))) {
+						this.load();
+					}
 				}
 			}
+
 		});
 
 		this.permissions.can("login", () => {
@@ -156,46 +210,45 @@ var _ = self.Mavo = $.Class({
 		});
 
 		this.permissions.can(["edit", "add", "delete"], () => {
-			// Observe entire tree for mv-mode changes
-			this.modeObserver = new Mavo.Observer(this.element, "mv-mode", records => {
-				records.forEach(record => {
-					let element = record.target;
-					let nodes = _.Node.children(element);
-
-					nodeloop: for (let i=0; i<nodes.length; i++) {
-						let node = nodes[i];
-						let previousMode = node.mode, mode;
-
-						if (node.element == element) {
-							// If attribute set directly on a Mavo node, then it forces it into that mode
-							// otherwise, descendant nodes still inherit, unless they are also mode-restricted
-							mode = node.element.getAttribute("mv-mode");
-							node.modes = mode;
-						}
-						else {
-							// Inherited
-							if (node.modes) {
-								// Mode-restricted, we cannot change to the other mode
-								continue nodeloop;
-							}
-
-							mode = _.getStyle(node.element.parentNode, "--mv-mode");
-						}
-
-						node.mode = mode;
-
-						if (previousMode != node.mode) {
-							node[node.mode == "edit"? "edit" : "done"]();
-						}
-					}
-				});
-			}, {subtree: true});
-
 			if (this.autoEdit) {
 				this.edit();
 			}
-		}, () => { // cannot
-			this.modeObserver?.destroy();
+		});
+
+		// Observe entire tree for mv-mode changes
+		this.observe({attribute: "mv-mode"}, ({element}) => {
+			if (!this.permissions.edit && !this.permissions.add && !this.permissions.delete) {
+				return;
+			}
+
+			let nodes = _.Node.children(element);
+
+			nodeloop: for (let i=0; i<nodes.length; i++) {
+				let node = nodes[i];
+				let previousMode = node.mode, mode;
+
+				if (node.element == element) {
+					// If attribute set directly on a Mavo node, then it forces it into that mode
+					// otherwise, descendant nodes still inherit, unless they are also mode-restricted
+					mode = node.element.getAttribute("mv-mode");
+					node.modes = mode;
+				}
+				else {
+					// Inherited
+					if (node.modes) {
+						// Mode-restricted, we cannot change to the other mode
+						continue nodeloop;
+					}
+
+					mode = _.getStyle(node.element.parentNode, "--mv-mode");
+				}
+
+				node.mode = mode;
+
+				if (previousMode != node.mode) {
+					node[node.mode == "edit"? "edit" : "done"]();
+				}
+			}
 		});
 
 
@@ -215,7 +268,7 @@ var _ = self.Mavo = $.Class({
 		// Dynamic ids
 		$.bind(this.element, "mv-load.mavo", evt => {
 			if (location.hash) {
-				var callback = records => {
+				var callback = () => {
 					var target = document.getElementById(location.hash.slice(1));
 
 					if (target || !location.hash) {
@@ -224,11 +277,6 @@ var _ = self.Mavo = $.Class({
 								Mavo.scrollIntoViewIfNeeded(target);
 							});
 						}
-
-						if (this.idObserver) {
-							this.idObserver.destroy();
-							this.idObserver = null;
-						}
 					}
 
 					return target;
@@ -236,7 +284,9 @@ var _ = self.Mavo = $.Class({
 
 				if (!callback()) {
 					// No target, perhaps not yet?
-					this.idObserver = new Mavo.Observer(this.element, "id", callback, {subtree: true});
+					this.observe({attribute: "id", once: true}, callback);
+					// FIXME if expressions take multiple cycles to resolve, this will not scroll to the proper id
+					// FIXME also, if the user has started interacting with the document, we shouldn't scroll
 				}
 			}
 
@@ -313,6 +363,48 @@ var _ = self.Mavo = $.Class({
 
 	get editing() {
 		return this.root.editing;
+	},
+
+	observe (o = {}, callback) {
+		this.observers = this.observers ?? new Map();
+		this.observers.set(o, callback);
+		return callback;
+	},
+
+	unobserve (options, callback, observers) {
+		_.unobserve(options, callback, this.observers);
+	},
+
+	// Run a callback without triggering certain observers
+	sneak (options = {}, callback) {
+		let observers = new Map([
+			...(this.observers?.entries() ?? []),
+			...(_.observers?.entries() ?? []),
+		]);
+
+		if (observers.size === 0 || !this.observer) {
+			return callback();
+		}
+
+		this.observer.flush();
+
+		let matches = _.findObservers(options, undefined, observers);
+
+		for (let [o, c] of matches.entries()) {
+			o._active = o.active !== false && o._active !== false;
+			o.active = false;
+		}
+
+		let ret = callback();
+
+		this.observer.flush();
+
+		for (let [o, c] of matches.entries()) {
+			o.active = o.active || o._active;
+			delete o._active;
+		}
+
+		return ret;
 	},
 
 	getData: function(o) {
@@ -775,6 +867,43 @@ var _ = self.Mavo = $.Class({
 
 			var ret = mavos.filter(element => !_.get(element)) // not already inited
 				.map(element => new _(element));
+
+			return ret;
+		},
+
+		observe (options, callback) {
+			_.observers = _.observers ?? new Map();
+			options.static = true;
+			_.observers.set(options, callback);
+			return callback;
+		},
+
+		unobserve (options, callback, observers = _.observers) {
+			if (!observers) {
+				return;
+			}
+
+			let matches = _.findObservers(options, callback, observers);
+
+			for (let [o, c] of matches.entries()) {
+				observers.delete(o);
+			}
+		},
+
+		// Look up observers that match certain options and/or callback
+		findObservers (options, callback, observers = _.observers) {
+			let keys = Object.keys(options);
+			let ret = new Map();
+
+			for (let [o, c] of observers.entries()) {
+				if (callback && callback !== c) {
+					continue;
+				}
+
+				if (keys.every(k => o[k] === options[k])) {
+					ret.set(o, c);
+				}
+			}
 
 			return ret;
 		},

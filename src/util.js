@@ -607,8 +607,8 @@ var _ = $.extend(Mavo, {
 		return ro;
 	},
 
-	Observer: $.Class({
-		constructor: function(element, attribute, callback, o = {}) {
+	Observer: class Observer {
+		constructor (element, attribute, callback, o = {}) {
 			if (callback instanceof MutationObserver) {
 				this.observer = callback;
 			}
@@ -618,56 +618,69 @@ var _ = $.extend(Mavo, {
 			this.update(element, attribute, o);
 
 			this.run();
-		},
+		}
 
-		update: function(element, attribute, options) {
+		update (element, attribute, options) {
 			this.element = element;
 			this.attribute = attribute;
 			this.options = $.extend({}, options);
 
-			if (this.attribute) {
-				$.extend(this.options, {
-					attributes: true,
-					attributeFilter: this.attribute == "all"? undefined : Mavo.toArray(this.attribute),
-					attributeOldValue: !!options.oldValue
-				});
-			}
+			// We use the user-provided options object verbatim if it exists and
+			// is valid, i.e. has at least one of the required properties
+			if (options === undefined || !options.attributes && !options.childList && !options.characterData) {
+				if (this.attribute) {
+					Object.assign(this.options, {
+						attributes: true,
+						attributeFilter: this.attribute == "all"? undefined : Mavo.toArray(this.attribute),
+						attributeOldValue: !!options.oldValue
+					});
+				}
 
-			if (!this.attribute || this.attribute == "all") {
-				$.extend(this.options, {
-					characterData: true,
-					childList: true,
-					subtree: true,
-					characterDataOldValue: !!options.oldValue
-				});
+				if (!this.attribute || this.attribute == "all") {
+					Object.assign(this.options, {
+						characterData: true,
+						childList: true,
+						subtree: true,
+						characterDataOldValue: !!options.oldValue
+					});
+				}
 			}
 
 			if (this.observer?.running) {
 				this.stop();
 				this.run();
 			}
-		},
+		}
 
-		stop: function() {
+		flush () {
+			let records = this.observer?.takeRecords();
+
+			if (records) {
+				this.callback(records);
+			}
+		}
+
+		stop () {
 			this.observer?.disconnect();
 			this.running = false;
 			return this;
-		},
+		}
 
-		run: function() {
+		run () {
 			if (this.observer) {
 				this.observer.observe(this.element, this.options);
 				this.running = true;
 			}
 
 			return this;
-		},
+		}
 
 		/**
 		 * Disconnect an observer, run some code, then observe again
 		 */
-		sneak: function(callback) {
+		sneak (callback) {
 			if (this.running) {
+				console.log("sneak", callback);
 				this.stop();
 				var ret = callback();
 				this.run();
@@ -677,19 +690,17 @@ var _ = $.extend(Mavo, {
 			}
 
 			return ret;
-		},
+		}
 
-		destroy: function() {
+		destroy () {
 			this.stop();
 			this.observer = this.element = null;
-		},
-
-		static: {
-			sneak: function(observer, callback) {
-				return observer? observer.sneak(callback) : callback();
-			}
 		}
-	}),
+
+		static sneak (observer, callback) {
+			return observer? observer.sneak(callback) : callback();
+		}
+	},
 
 	/**
 	 * Run & Return a function
@@ -808,6 +819,6 @@ function updateTargetWithin() {
 
 document.addEventListener("mv-load", updateTargetWithin);
 addEventListener("hashchange", updateTargetWithin);
-var idObserver = new Mavo.Observer(document.documentElement, "id", updateTargetWithin, {subtree: true});
+Mavo.observe({attribute: "id"}, updateTargetWithin);
 
 })(Bliss, Bliss.$);
