@@ -41,8 +41,10 @@ var _ = self.Mavo = $.Class({
 		_.all[this.id] = this;
 		this.element.setAttribute("mv-app", this.id);
 
-		var lang = Mavo.getClosestAttribute(this.element, "lang") || Mavo.locale;
-		this.locale = Mavo.Locale.get(lang);
+		this.observe({attribute: "lang", deep: false}, () => {
+			var lang = Mavo.getClosestAttribute(this.element, "lang") || Mavo.locale;
+			this.locale = Mavo.Locale.get(lang);
+		})();
 
 		// Should we start in edit mode?
 		this.autoEdit = this.element.classList.contains("mv-autoedit");
