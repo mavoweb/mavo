@@ -1084,17 +1084,20 @@ $.Class(_, {
 	}
 });
 
-Mavo.observe({id: "primitive"}, function({node, type, attribute, record}) {
+Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element}) {
 	if (node instanceof Mavo.Primitive && node.config) {
 		if (attribute === "mv-default" && !node.defaultExpression) {
-			node.default = node.element.getAttribute("mv-default");
+			node.default = element.getAttribute("mv-default");
 		}
 		else if (attribute === "aria-label") {
-			node.label = node.element.getAttribute("aria-label");
+			node.label = element.getAttribute("aria-label");
 
 			if (Mavo.in("placeholder", node.editor)) {
 				node.editor.placeholder = `(${node.label})`;
 			}
+		}
+		else if (attribute && attribute.indexOf("mv-edit-") === 0) {
+			node.editor?.setAttribute(attribute.slice(8), element.getAttribute(attribute));
 		}
 		else if (node.config.observer !== false
 			&& (
