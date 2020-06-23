@@ -43,18 +43,6 @@ Mavo.Locale.register("en", {
 	"n-items": "{n} {name} items",
 	"undo": "Undo",
 	"gh-updated-file": "Updated {name}",
-	"gh-edit-suggestion-saved-in-profile": "Your edits are saved to <a href=\"{previewURL}\" target=\"_blank\">your own profile</a>, because you are not allowed to edit this page.",
-	"gh-edit-suggestion-instructions": "Write a short description of your edits below to suggest them to the page admins:",
-	"gh-edit-suggestion-notreviewed": "You have selected to suggest your edits to the page admins. Your suggestions have not been reviewed yet.",
-	"gh-edit-suggestion-send": "Send edit suggestion",
-	"gh-edit-suggestion-revoke": "Revoke edit suggestion",
-	"gh-edit-suggestion-reason-placeholder": "I added / corrected / deleted ...",
-	"gh-edit-suggestion-cancelled": "Edit suggestion cancelled successfully!",
-	"gh-edit-suggestion-title": "Suggested edits to data",
-	"gh-edit-suggestion-body": `Hello there! I used Mavo to suggest the following edits:
-{description}
-Preview my changes here: {previewURL}`,
-	"gh-edit-suggestion-sent": "Edit suggestion sent successfully!",
 	"gh-login-fork-options": "You have your own copy of this page, would you like to use it?",
 	"gh-use-my-fork": "Yes, show me my data."
 });
