@@ -3,7 +3,15 @@
  * @author Lea Verou and contributors
  * @version %%VERSION%%
  */
-(function ($, $$) {
+
+ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
+
+(async function ($, $$) {
+
+// Define $ and $$ if they are not already defined
+// Primarily for backwards compat since we used to use Bliss Full.
+self.$ = self.$ || $;
+self.$$ = self.$$ || $$;
 
 var _ = self.Mavo = $.Class({
 	constructor: function (element) {
@@ -1081,9 +1089,10 @@ $.each(_.polyfillsNeeded, (id, supported) => {
 	}
 });
 
-// Init mavo. Async to give other scripts a chance to modify stuff.
-(async () => {
+_.ready = _.thenAll(_.dependencies);
+_.inited = _.promise();
 
+// Init mavo. Async to give other scripts a chance to modify stuff.
 await _.defer();
 
 if (_.polyfills.length > 0) {
@@ -1104,17 +1113,5 @@ await _.ready;
 
 _.init();
 _.inited.resolve();
-
-})();
-
-_.ready = _.thenAll(_.dependencies);
-_.inited = _.promise();
-
-Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
-
-// Define $ and $$ if they are not already defined
-// Primarily for backwards compat since we used to use Bliss Full.
-self.$ = self.$ || $;
-self.$$ = self.$$ || $$;
 
 })(Bliss, Bliss.$);
