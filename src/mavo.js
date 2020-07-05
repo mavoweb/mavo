@@ -884,6 +884,21 @@ var _ = self.Mavo = $.Class({
 			// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
 			$.ready().then(() => _.Plugins.load()),
 		],
+
+		// Only naive tests here (no false positives, but false negatives are ok).
+		// polyfill.io will do more proper checking
+		polyfillsNeeded: {
+			"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+			"Intl.~locale.en": self.Intl,
+			"IntersectionObserver": self.IntersectionObserver,
+			"Symbol": self.Symbol,
+			"Element.prototype.remove": Element.prototype.remove,
+			"Element.prototype.before": Element.prototype.before,
+			"Element.prototype.after": Element.prototype.after,
+			"Element.prototype.prepend": Element.prototype.prepend,
+			"Array.prototype.flat": Array.prototype.flat,
+			"Array.prototype.flatMap": Array.prototype.flatMap,
+		},
 		polyfills: [],
 
 		init: function(container = document) {
@@ -1060,47 +1075,37 @@ $.extend(_.selectors, {
 
 }
 
-$.each({
-	"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
-	"Intl.~locale.en": self.Intl,
-	"IntersectionObserver": self.IntersectionObserver,
-	"Symbol": self.Symbol,
-	"Element.prototype.remove": Element.prototype.remove,
-	"Element.prototype.before": Element.prototype.before,
-	"Element.prototype.after": Element.prototype.after,
-	"Element.prototype.prepend": Element.prototype.prepend,
-	"Array.prototype.flat": Array.prototype.flat,
-	"Array.prototype.flatMap": Array.prototype.flatMap,
-}, (id, supported) => {
+$.each(_.polyfillsNeeded, (id, supported) => {
 	if (!supported) {
 		_.polyfills.push(id);
 	}
 });
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
-_.dependencies.push(_.defer().then(() => {
+(async () => {
+
+await _.defer();
+
+if (_.polyfills.length > 0) {
 	var polyfillURL = "https://cdn.polyfill.io/v2/polyfill.min.js?unknown=polyfill&features=" + _.polyfills.map(a => a + "|gated").join(",");
+	_.dependencies.push($.include(polyfillURL));
+}
 
-	_.dependencies.push(
-		$.include(!_.polyfills.length, polyfillURL)
-	);
+await $.ready();
 
-	$.ready().then(() => {
-		$$(_.selectors.init).forEach(function(elem) {
-			// Skip if an instance has been created, for example by another script.
-			if (!_.get(elem)) {
-				elem.setAttribute("mv-progress", "Loading");
-			}
-		});
+$$(_.selectors.init).forEach(function(elem) {
+	// Skip if an instance has been created, for example by another script.
+	if (!_.get(elem)) {
+		elem.setAttribute("mv-progress", "Loading");
+	}
+});
 
-		return _.ready;
-	})
-	.catch(console.error)
-	.then(() => {
-		_.init();
-		_.inited.resolve();
-	});
-}));
+await _.ready;
+
+_.init();
+_.inited.resolve();
+
+})();
 
 _.ready = _.thenAll(_.dependencies);
 _.inited = _.promise();
