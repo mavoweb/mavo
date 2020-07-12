@@ -673,12 +673,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 			env.events = {
 				"paste": evt => {
-					var item = evt.clipboardData.items[0];
-					var ext = item.type.split("/")[1];
+					// Look for the first file in the clipboard
+					var item = Array.from(evt.clipboardData.items).find(item => item.kind === "file");
+					var ext = item?.type.split("/")[1];
 
-					if (item.kind == "file" && checkType(item)) {
+					if (item && checkType(item)) {
 						// Is a file of the correct type, upload!
-						var defaultName = `pasted-${kind}-${Date.now()}.${ext}`;
+						// First, try to find its name in the clipboard
+						var defaultName = evt.clipboardData.getData("text") || `pasted-${kind}-${Date.now()}.${ext}`;
 						var name = prompt(this.mavo._("filename"), defaultName);
 
 						if (name === "") {
