@@ -194,15 +194,6 @@ var _ = self.Mavo = $.Class({
 
 		this.bar = new Mavo.UI.Bar(this);
 
-		// Prevent editing properties inside <summary> to open and close the summary (fix bug #82)
-		if ($("summary [property]:not([typeof])")) {
-			this.element.addEventListener("click", evt => {
-				if (evt.target != document.activeElement) {
-					evt.preventDefault();
-				}
-			});
-		}
-
 		// Is there any control that requires an edit button?
 		this.needsEdit = this.calculateNeedsEdit();
 
