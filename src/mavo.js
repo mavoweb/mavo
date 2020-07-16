@@ -665,6 +665,7 @@ var _ = self.Mavo = $.Class({
 	},
 
 	async save () {
+		_.hooks.run("save-start", this);
 		let saved = await this.store();
 
 		if (saved) {
