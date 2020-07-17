@@ -146,10 +146,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 				var propertyL = property.toLowerCase();
 
-				if (property === "$fn") {
-					return Mavo.Script.$fn;
-				}
-				else if (propertyL[0] === "$" && propertyL in Mavo.Functions) {
+				if (propertyL[0] === "$" && propertyL in Mavo.Functions) {
 					// Non-data $specialProperty
 					return Mavo.Functions[propertyL];
 				}

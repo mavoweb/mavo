@@ -14,6 +14,9 @@ var _ = Mavo.Functions = {
 	 */
 	get: function(obj, property, meta = {}) {
 		property = meta.property = val(property);
+
+		// Get same case property name if it exists,
+		// otherwise do a case insensitive search among properties
 		var canonicalProperty = Mavo.getCanonicalProperty(obj, property);
 
 		if (canonicalProperty !== undefined) {
@@ -32,7 +35,8 @@ var _ = Mavo.Functions = {
 			var eqIndex = property.indexOf("=");
 
 			if (eqIndex > -1) {
-				// Property query
+				// propertyName=value is used as a query for arrays of objects
+				// This is mainly useful for mv-path
 				meta.query = {
 					property: property.slice(0, eqIndex),
 					value: property.slice(eqIndex + 1)

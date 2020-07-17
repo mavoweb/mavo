@@ -606,9 +606,7 @@ var _ = Mavo.Script = {
 			let def = _.operators[name];
 
 			// Operator-specific transformations
-			if (def.transformation) {
-				def.transformation(node);
-			}
+			def.transformation?.(node);
 
 			var nodeLeft = node;
 			var ret = {
@@ -744,7 +742,7 @@ var _ = Mavo.Script = {
 			return node; // already serialized
 		}
 
-		var ret = _.transformations[node.type] && _.transformations[node.type](node);
+		var ret = _.transformations[node.type]?.(node);
 
 		if (typeof ret == "object" && ret?.type) {
 			node = ret;
@@ -779,6 +777,7 @@ var _ = Mavo.Script = {
 
 		code = `with (Mavo.Data.stub)
 	with (data || {}) {
+		let $fn = Mavo.Script.$fn;
 		return (${code});
 	}`;
 
