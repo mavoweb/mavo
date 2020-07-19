@@ -560,11 +560,11 @@ var _ = Mavo.Script = {
 	 * These serializers transform the AST into JS
 	 */
 	serializers: {
-		"BinaryExpression": node => `${_.serialize(node.left)} ${node.operator} ${_.serialize(node.right)}`,
-		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument)}`,
+		"BinaryExpression": node => `${_.serialize(node.left, node)} ${node.operator} ${_.serialize(node.right, node)}`,
+		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument, node)}`,
 		"CallExpression": node => {
-			var nameSerialized = _.serialize(node.callee);
-			var argsSerialized = node.arguments.map(_.serialize);
+			var nameSerialized = _.serialize(node.callee, node);
+			var argsSerialized = node.arguments.map(n => _.serialize(n, node));
 
 			if (node.callee.type == "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
@@ -580,21 +580,25 @@ var _ = Mavo.Script = {
 
 			return `${nameSerialized}(${argsSerialized.join(", ")})`;
 		},
-		"ConditionalExpression": node => `${_.serialize(node.test)}? ${_.serialize(node.consequent)} : ${_.serialize(node.alternate)}`,
-		"MemberExpression": node => {
-			if (node.object.type === "Identifier" && node.object.name === "$fn") {
-				var property = node.computed? `[${_.serialize(node.property)}]` : `.${node.property.name}`;
-				return `$fn${property}`;
+		"ConditionalExpression": node => `${_.serialize(node.test, node)}? ${_.serialize(node.consequent, node)} : ${_.serialize(node.alternate, node)}`,
+		"MemberExpression": (node, parent) => {
+			let plainSerialize = (node.object.type === "Identifier" && node.object.name === "$fn")
+				// Leave members in function calls as-is unless the object is $fn (handled above)
+				|| _.closest(node, "CallExpression");
+
+			if (plainSerialize) {
+				var property = node.computed? `[${_.serialize(node.property, node)}]` : `.${node.property.name}`;
+				return `${_.serialize(node.object, node)}${property}`;
 			}
 
-			var property = node.computed? _.serialize(node.property) : `"${node.property.name}"`;
-			return `$fn.get(${_.serialize(node.object)}, ${property})`;
+			var property = node.computed? _.serialize(node.property, node) : `"${node.property.name}"`;
+			return `$fn.get(${_.serialize(node.object, node)}, ${property})`;
 		},
-		"ArrayExpression": node => `[${node.elements.map(_.serialize).join(", ")}]`,
+		"ArrayExpression": node => `[${node.elements.map(n => _.serialize(n, node)).join(", ")}]`,
 		"Literal": node => node.raw.replace(/\r/g, "\\r").replace(/\n/g, "\\n"),
 		"Identifier": node => node.name,
 		"ThisExpression": node => "this",
-		"Compound": node => node.body.map(_.serialize).join(", ")
+		"Compound": node => node.body.map(n => _.serialize(n, node)).join(", ")
 	},
 
 	/**
@@ -737,12 +741,28 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	serialize: node => {
+	closest (node, type) {
+		let n = node;
+
+		do {
+			if (n.type === type) {
+				return n;
+			}
+		} while (n = n.parent);
+
+		return null;
+	},
+
+	serialize: (node, parent) => {
 		if (typeof node === "string") {
 			return node; // already serialized
 		}
 
-		var ret = _.transformations[node.type]?.(node);
+		if (parent) {
+			node.parent = parent;
+		}
+
+		var ret = _.transformations[node.type]?.(node, parent);
 
 		if (typeof ret == "object" && ret?.type) {
 			node = ret;
@@ -751,7 +771,7 @@ var _ = Mavo.Script = {
 			return ret;
 		}
 
-		return _.serializers[node.type](node);
+		return _.serializers[node.type](node, parent);
 	},
 
 	rewrite: function(code) {
