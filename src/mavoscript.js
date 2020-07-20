@@ -173,6 +173,8 @@ var _ = Mavo.Script = {
 		}
 	},
 
+	// Is this variable?
+	// E.g. foo or foo.bar is not static whereas "foo" or bar() is
 	isStatic: node => {
 		if (node.type === "Identifier") {
 			return false;
@@ -677,9 +679,7 @@ var _ = Mavo.Script = {
 			}
 
 			// Operator-specific transformations
-			if (def.postFlattenTransformation) {
-				def.postFlattenTransformation(ret);
-			}
+			def.postFlattenTransformation?.(ret);
 
 			return ret;
 		},
