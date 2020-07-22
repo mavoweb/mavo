@@ -32,12 +32,12 @@ var _ = Mavo.Actions = {
 			var node = Mavo.Node.getClosest(element);
 
 			if (node) {
-				var expression = new Mavo.Expression(code);
+				var expression = new Mavo.Expression(code, {actions: true});
 
 				var previousEvt = Mavo.Functions.$evt;
 				Mavo.Functions.$evt = evt;
 
-				var ret = expression.eval(node.getLiveData(), {actions: true});
+				var ret = expression.eval(node.getLiveData());
 
 				Mavo.Functions.$evt = previousEvt;
 

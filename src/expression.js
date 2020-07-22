@@ -1,30 +1,15 @@
 (function() {
 
 var _ = Mavo.Expression = class Expression {
-	constructor (expression) {
+	constructor (expression, options = {}) {
+		this.options = options;
 		this.expression = expression;
 	}
 
-	eval (data = Mavo.Data.stub, o) {
+	eval (data = Mavo.Data.stub) {
 		Mavo.hooks.run("expression-eval-beforeeval", this);
 
-		if (!this.function) {
-			try {
-				this.function = Mavo.Script.compile(this.expression, o);
-			}
-			catch (error) {
-				// Compilation error
-				this.error(`There is something wrong with the expression ${this.expression}`,
-					error.message,
-					"Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions."
-				);
-
-				Mavo.hooks.run("expression-compile-error", {context: this, error});
-
-				return this.function = error;
-			}
-		}
-		else if (this.function instanceof Error) {
+		if (this.function instanceof Error) {
 			// Previous compilation error
 			return this.function;
 		}
@@ -62,8 +47,43 @@ var _ = Mavo.Expression = class Expression {
 Bliss.Class(_, {
 	live: {
 		expression: function(value) {
-			this.function = null;
-			this.identifiers = value.match(/[$a-z][$\w]*/ig) || [];
+			try {
+				this.function = Mavo.Script.compile(value, this.options);
+			}
+			catch (error) {
+				// Compilation error
+				this.error(`There is something wrong with the expression ${value}`,
+					error.message,
+					"Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions."
+				);
+
+				Mavo.hooks.run("expression-compile-error", {context: this, error});
+
+				return this.function = error;
+			}
+
+			this.ast = this.options.ast;
+			delete this.options.ast;
+
+			if (this.ast) {
+				// Traverse AST to find potential identifiers
+				let identifiers = new Set();
+
+				Mavo.Script.walk(this.ast, (n, property, parent) => {
+					if (n.type === "Identifier" && property !== "callee") {
+						identifiers.add(n.name);
+					}
+					else if (n.type === "MemberExpression") {
+						if (n.object.name) {
+							identifiers.add(n.object.name);
+						}
+
+						identifiers.add(n.property.name);
+					}
+				});
+
+				this.identifiers = [...identifiers];
+			}
 		}
 	}
 });

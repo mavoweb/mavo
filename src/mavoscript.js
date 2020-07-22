@@ -530,12 +530,19 @@ var _ = Mavo.Script = {
 	},
 
 	childProperties: [
-		"arguments", "argument", "callee", "left", "right", "elements",
-		"test", "consequent", "alternate", "object",  "body"
+		"arguments", "callee", // CallExpression
+		"left", "right", // BinaryExpression, LogicalExpression
+		"argument", // UnaryExpression
+		"elements", // ArrayExpression
+		"test", "consequent", "alternate", // ConditionalExpression
+		"object",  "property", // MemberExpression
+		"body"
 	],
 
 	/**
 	 * Recursively execute a callback on this node and all its children
+	 * Caveat: For CallExpression arguments, it will call callback with an array
+	 * callback needs to take care of iterating over the array
 	 */
 	walk: function(node, callback, o = {}, property, parent) {
 		if (!o.type || node.type === o.type) {
@@ -543,11 +550,18 @@ var _ = Mavo.Script = {
 		}
 
 		if (!o.ignore || o.ignore.indexOf(node.type) === -1) {
-			_.childProperties.forEach(property => {
-				if (node[property]) {
-					_.walk(node[property], callback, o, property, node);
+			if (Array.isArray(node)) {
+				for (let n of node) {
+					_.walk(n, callback, o, property, node);
 				}
-			});
+			}
+			else {
+				_.childProperties.forEach(property => {
+					if (node[property]) {
+						_.walk(node[property], callback, o, property, node);
+					}
+				});
+			}
 		}
 
 		if (ret !== undefined && parent) {
@@ -774,9 +788,15 @@ var _ = Mavo.Script = {
 		return _.serializers[node.type](node, parent);
 	},
 
-	rewrite: function(code) {
+	rewrite: function(code, o) {
 		try {
-			return _.serialize(_.parse(code));
+			let ast = _.parse(code);
+
+			if (o) {
+				o.ast = ast;
+			}
+
+			return _.serialize(ast);
 		}
 		catch (e) {
 			// Parsing as MavoScript failed, falling back to plain JS
@@ -784,7 +804,7 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	compile: function(code, o = {}) {
+	compile: function(code, o) {
 		if (!/\S/.test(code)) {
 			// If code contains only whitespace, including in particular if
 			// code is just the empty string, treat it as an expression that
@@ -793,7 +813,7 @@ var _ = Mavo.Script = {
 			return () => "";
 		}
 
-		code = _.rewrite(code);
+		code = _.rewrite(code, o);
 
 		code = `with (Mavo.Data.stub)
 	with (data || {}) {
@@ -801,7 +821,7 @@ var _ = Mavo.Script = {
 		return (${code});
 	}`;
 
-		if (o.actions) {
+		if (o?.actions) {
 			// Yes this is a horrible, horrible hack and I’m truly ashamed.
 			// If you understand the reasons and can think of a better way, be my guest!
 			code = `
