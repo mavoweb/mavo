@@ -541,7 +541,9 @@ time[property][aria-label][mv-mode="edit"].mv-empty::before {
     [mv-app][mv-mode="edit"] .mv-bar.mv-ui .mv-edit:focus {
       background: rgba(0, 0, 0, 0.4); }
   .mv-bar.mv-ui .mv-save {
-    position: relative; }
+    position: relative; 
+    background: #5e5e5e; 
+    opacity: .6; }
     .mv-bar.mv-ui .mv-save::before {
       content: "✓"; }
     [mv-app][mv-progress="Saving"] .mv-bar.mv-ui .mv-save {
@@ -557,7 +559,7 @@ time[property][aria-label][mv-mode="edit"].mv-empty::before {
         left: .5em; }
     [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save,
     [mv-app].mv-unsaved-changes .mv-bar.mv-ui .mv-save::before {
-      text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; }
+      text-shadow: 0 0 0.2em #66ccff, 0 0 0.3em #66ccff; opacity:1; }
     .mv-bar.mv-ui .mv-save:hover {
       background: #40bfbf; }
   .mv-bar.mv-ui .mv-export::before {
