@@ -302,7 +302,7 @@ var _ = self.Mavo = $.Class({
 				}, this.autoSaveDelay);
 
 				var callback = evt => {
-					if (evt.node.saved) {
+					if (evt.node.saved && this.autoSave) {
 						debouncedSave();
 					}
 				};
