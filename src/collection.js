@@ -200,7 +200,27 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		}
 
 		if (item.collection != this) {
-			this.adopt(item);
+			// Move item to this collection from elsewhere
+			if (item.collection) {
+				// It belongs to another collection, delete from there first
+				item.collection.splice({remove: item});
+				item.collection.dataChanged("delete");
+			}
+
+			// FIXME this only includes saved data
+			// Expressions can be recalculated, but writeable data that is simply not saved will not be here
+			let data = item.getData();
+			let editing = item.editing;
+			item.element.remove();
+			item.destroy();
+
+			item = this.createItem();
+
+			if (editing) {
+				this.editItem(item);
+			}
+
+			item.render(data);
 		}
 
 		if (index === undefined) {
@@ -290,38 +310,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		this.liveData.update();
 
 		return changed;
-	}
-
-	// Move item to this collection from another collection
-	adopt (item) {
-		if (item.collection) {
-			// It belongs to another collection, delete from there first
-			item.collection.splice({remove: item});
-			item.collection.dataChanged("delete");
-		}
-
-		item.collection = this;
-
-		 // Update collection & closestCollection properties
-		this.walk(obj => {
-			if (obj.closestCollection === item.collection) {
-				obj.closestCollection = this;
-			}
-
-			// Belongs to another Mavo?
-			if (item.mavo != this.mavo) {
-				obj.mavo = this.mavo;
-			}
-
-			obj.path = obj.getPath();
-		});
-
-		// Adjust templates and their copies
-		if (item.template) {
-			Mavo.delete(item.template.copies, item);
-
-			item.template = this.itemTemplate;
-		}
 	}
 
 	async delete (item, {silent, undoable = !silent, transition = !silent, destroy = !undoable} = {}) {
