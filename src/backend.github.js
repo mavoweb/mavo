@@ -253,7 +253,7 @@ var _ = Mavo.Backend.register($.Class({
 
 							Mavo.hooks.run("gh-after-login", env);
 
-							return env.repoInfo
+							return env.repoInfo;
 						});
 					}
 				}
