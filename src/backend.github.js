@@ -29,7 +29,7 @@ var _ = Mavo.Backend.register($.Class({
 		$.extend(this, this.info);
 	},
 
-	get: function(url) {
+	get: async function(url) {
 		if (this.isAuthenticated() || !this.path || url) {
 			// Authenticated or raw API call
 			var info = url? _.parseURL(url) : this.info;
@@ -54,10 +54,28 @@ var _ = Mavo.Backend.register($.Class({
 		}
 		else {
 			// Unauthenticated, use simple GET request to avoid rate limit
-			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "master"}/${this.path}`);
+			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "main"}/${this.path}`);
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-			return $.fetch(url.href).then(xhr => Promise.resolve(xhr.responseText), () => Promise.resolve(null));
+			try {
+				let xhr = await $.fetch(url.href);
+				this.branch = this.branch || "main";
+				return xhr.responseText;
+			}
+			catch (e) {
+				if (e.status === 404 && !this.branch) {
+					// Possibly using older default branch "master", try again and store branch name
+					url.pathname = `/${this.username}/${this.repo}/master/${this.path}`;
+					try {
+						let xhr = await $.fetch(url.href);
+						this.branch = "master";
+						return xhr.responseText;
+					}
+					catch (e) {}
+				}
+			}
+
+			return null;
 		}
 	},
 
@@ -232,9 +250,9 @@ var _ = Mavo.Backend.register($.Class({
 							return repoInfo;
 						}).then(repoInfo => {
 							const env = { context: this, repoInfo };
-								
+
 							Mavo.hooks.run("gh-after-login", env);
-							
+
 							return env.repoInfo
 						});
 					}
