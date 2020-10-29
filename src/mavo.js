@@ -179,8 +179,9 @@ var _ = self.Mavo = $.Class({
 			// We also support a URL param to trigger login, in case the user doesn't want visible login UI
 			if (Mavo.Functions.url("login") !== null && this.index === 1) {
 				// Remove ?login from url
-                const newUrl = Mavo.Functions.url().replace("?login", "");
-				window.history.pushState("", "", newUrl);
+				const currentURL = new URL(location.href);
+				currentURL.searchParams.delete("login");
+				history.replaceState(null, "", currentURL.toString());
 				this.primaryBackend.login();
 			}
 			else if (Mavo.Functions.url(this.id + "-login") !== null) {
