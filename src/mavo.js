@@ -179,10 +179,10 @@ var _ = self.Mavo = $.Class({
 			// We also support a URL param to trigger login, in case the user doesn't want visible login UI
 			let loginUrlParam = null;
 			if (Mavo.Functions.url("login") !== null && this.index === 1) {
-			    loginUrlParam = "login";
+				loginUrlParam = "login";
 			}
 			else if (Mavo.Functions.url(this.id + "-login") !== null) {
-			    loginUrlParam = this.id + "-login";
+				loginUrlParam = this.id + "-login";
 			}
 			if (loginUrlParam !== null) {
 				// Remove param from url
