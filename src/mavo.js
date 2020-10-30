@@ -189,7 +189,7 @@ var _ = self.Mavo = $.Class({
 				// Remove param from url
 				const currentURL = new URL(location.href);
 				currentURL.searchParams.delete(loginUrlParam);
-				history.replaceState(null, "", currentURL.toString());
+				history.replaceState(null, "", currentURL);
 				this.primaryBackend.login();
 			}
 		});
