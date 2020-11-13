@@ -44,6 +44,9 @@ If you want to contribute to Mavo's source, read on.
 2. Run `python -m SimpleHTTPServer` to be able to use `http://` locally, since most APIs don't like the `file://` protocol and Chrome doesn't even allow AJAX on it.
 3. Copies of all dependencies are in `lib`. If you need to update them, clone their repos to folders **adjacent** to mavo, then run `gulp lib`. If you're running `gulp watch` this will be done automatically once changes are detected. Note that you need to clone ALL of them to do this, **gulp will overwrite any libs it can't find with empty files!**.
 
+## Unit tests
+
+The test suite and instructions for running the test suite can be found here: [https://github.com/mavoweb/test](https://github.com/mavoweb/test). 
 
 # Mavo Internals: An Overview
 This documentation describes the purpose or function of essential classes and properties in the Mavo codebase (inside `src`) to help facilitate your contribution process. It's a work in progress and feel free to suggest edits to this documentation.
