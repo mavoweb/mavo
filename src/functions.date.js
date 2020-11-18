@@ -98,6 +98,16 @@ $.extend(_, {
 
 _.msTo = (what, ms) => Math.floor(Math.abs(ms) / (s[what] * 1000)) || 0;
 
+_.toMs = function (what, value) {
+    if(what==="ms") return value;
+    if(what==="seconds") return value*1000;
+    for (var nextUnit in s) {
+      if(nextUnit === what) {
+        return _.toMs("seconds", value*s[what]);
+      }
+    }
+};
+
 for (let unit in s) {
 	_[unit] = $.extend(function(ms) {
 		if (arguments.length === 0) {
@@ -108,28 +118,46 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function($this, ms) {
-	if (arguments.length === 1) {
-		[ms, $this] = [$this, null];
-	}
+	
+_.duration = $.extend(function ($this, ms, terms = 1) {
+    if (arguments.length === 1) {
+      [ms, $this] = [$this, null];
+    }
 
-	var count = ms || 0;
-	var unit = "ms";
+    var msFromSingleTimeUnit = ms || 0;
+    var msLeftTotal = ms || 0;
+    if (ms===0) terms=1;
+    var returnString = "";
+    var numberTermsUsed = terms;
+    while( numberTermsUsed >0 && (msLeftTotal > 0 || terms==1)) {
+      var unit = "ms";
+    
+      for (let nextUnit in s) {
 
-	for (let nextUnit in s) {
-		var nextCount = _.msTo(nextUnit, ms);
+        var nextCount = _.msTo(nextUnit, msLeftTotal);
 
-		if (nextCount === 0) {
-			break;
-		}
+        if (nextCount === 0) {
+        
+          break;
 
-		count = nextCount;
-		unit = nextUnit;
-	}
+        }
+        msFromSingleTimeUnit = nextCount;
+        unit = nextUnit;
+      }
 
-	unit = count === 1 && unit !== "ms"? unit.slice(0, -1) : unit;
+      if(msFromSingleTimeUnit!=0 || terms === 1) {
 
-	return count + " " + _.phrase($this, unit);
+        var unitWithProperPlurality = msFromSingleTimeUnit === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
+        returnString += msFromSingleTimeUnit + " " + _.phrase($this, unitWithProperPlurality)+ " ";
+        numberTermsUsed--;
+        msLeftTotal-=_.toMs(unit,msFromSingleTimeUnit);
+        msFromSingleTimeUnit = msLeftTotal;
+
+      } 
+    
+    }
+  
+    return returnString.slice(0,-1);
 }, {
 	needsContext: true
 });
