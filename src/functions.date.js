@@ -103,9 +103,9 @@ $.extend(_, {
 		var dur_hours = matches[2] === undefined ? 0 : matches[2];
 		var dur_minutes = matches[3] === undefined ? 0 : matches[3];
 		var dur_seconds = matches[4] === undefined ? 0 : matches[4];
-
+		
 		var dur_num = dur_days*24*60*60*1000+dur_hours*60*60*1000+dur_minutes*60*1000+dur_seconds*1000;
-
+  
 		return this.duration(dur_num);
 	  }),
 });
@@ -122,43 +122,28 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function ($this, ms, terms = 1) {
+_.duration = $.extend(function($this, ms) {
 	if (arguments.length === 1) {
 		[ms, $this] = [$this, null];
 	}
 
-	let unitTime = ms || 0;
-	let timeLeft = ms || 0;
+	var count = ms || 0;
+	var unit = "ms";
 
-	if (ms === 0) {
-		terms = 1;
-	}
+	for (let nextUnit in s) {
+		var nextCount = _.msTo(nextUnit, ms);
 
-	let timeArray = [];
-
-	while ( timeArray.length < terms && (timeLeft > 0 || terms === 1)) {
-		let unit = "ms";
-
-		for (let nextUnit in s) {
-			let count = _.msTo(nextUnit, timeLeft);
-
-			if (count === 0) {
-				break;
-			}
-
-			unitTime = count;
-			unit = nextUnit;
+		if (nextCount === 0) {
+			break;
 		}
 
-		if (unitTime!=0 || terms === 1) {
-			let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-			timeArray.push(unitTime + " " + _.phrase($this, unitProperPlurality));
-			timeLeft -= unit === "ms" ? unitTime : unitTime* Mavo.Functions[unit]();
-			unitTime = timeLeft;
-		}
-
+		count = nextCount;
+		unit = nextUnit;
 	}
-	return timeArray;
+
+	unit = count === 1 && unit !== "ms"? unit.slice(0, -1) : unit;
+
+	return count + " " + _.phrase($this, unit);
 }, {
 	needsContext: true
 });
