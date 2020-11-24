@@ -98,16 +98,6 @@ $.extend(_, {
 
 _.msTo = (what, ms) => Math.floor(Math.abs(ms) / (s[what] * 1000)) || 0;
 
-_.toMs = function (what, value) {
-    if(what==="ms") return value;
-    if(what==="seconds") return value*1000;
-    for (var nextUnit in s) {
-      if(nextUnit === what) {
-        return _.toMs("seconds", value*s[what]);
-      }
-    }
-};
-
 for (let unit in s) {
 	_[unit] = $.extend(function(ms) {
 		if (arguments.length === 0) {
@@ -118,46 +108,43 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-	
 _.duration = $.extend(function ($this, ms, terms = 1) {
-    if (arguments.length === 1) {
-      [ms, $this] = [$this, null];
-    }
-
-    var msFromSingleTimeUnit = ms || 0;
-    var msLeftTotal = ms || 0;
-    if (ms===0) terms=1;
-    var returnString = "";
-    var numberTermsUsed = terms;
-    while( numberTermsUsed >0 && (msLeftTotal > 0 || terms==1)) {
-      var unit = "ms";
-    
-      for (let nextUnit in s) {
-
-        var nextCount = _.msTo(nextUnit, msLeftTotal);
-
-        if (nextCount === 0) {
-        
-          break;
-
-        }
-        msFromSingleTimeUnit = nextCount;
-        unit = nextUnit;
-      }
-
-      if(msFromSingleTimeUnit!=0 || terms === 1) {
-
-        var unitWithProperPlurality = msFromSingleTimeUnit === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-        returnString += msFromSingleTimeUnit + " " + _.phrase($this, unitWithProperPlurality)+ " ";
-        numberTermsUsed--;
-        msLeftTotal-=_.toMs(unit,msFromSingleTimeUnit);
-        msFromSingleTimeUnit = msLeftTotal;
-
-      } 
-    
-    }
-  
-    return returnString.slice(0,-1);
+	if (arguments.length === 1) {
+		[ms, $this] = [$this, null];
+	}
+	
+	let unitTime = ms || 0;
+	let timeLeft = ms || 0;
+	
+	if (ms === 0) {
+		terms = 1;
+	}
+	
+	let timeArray = [];
+	
+	while (timeArray.length < terms && (timeLeft > 0 || terms === 1)) {
+		let unit = "ms";
+		
+		for (let nextUnit in s) {
+			let count = _.msTo(nextUnit, timeLeft);
+			
+			if (count === 0) {
+				break;
+			}
+			
+			unitTime = count;
+			unit = nextUnit;
+		}
+		
+		if (unitTime !== 0 || terms === 1) {
+			let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
+			timeArray.push(unitTime + " " + _.phrase($this, unitProperPlurality));
+			timeLeft -= unit === "ms" ? unitTime : unitTime* Mavo.Functions[unit]();
+			unitTime = timeLeft;
+		}
+		
+	}
+	return timeArray;
 }, {
 	needsContext: true
 });
