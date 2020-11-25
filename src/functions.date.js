@@ -108,27 +108,32 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function($this, ms, terms = 1) {
+_.duration = $.extend(function($this, ms, terms) {
 	if (arguments.length === 1) {
 		[ms, $this] = [$this, null];
 	}
 	
+	let wantString = terms === undefined ? true : false;
 	let unitTime = ms || 0;
 	let timeLeft = ms || 0;
 	
-	if (ms === 0) {
+	if (ms === 0 || wantString) {
 		terms = 1;
 	}
 	
-	let timeArray = [];
+	let ret = [];
 	
-	while (timeArray.length < terms && (timeLeft > 0 || terms === 1)) {
+	while (ret.length < terms && (timeLeft > 0 || terms === 1)) {
+		// Only add terms if more than 1 term was designated, and those terms must be nonzero,
+      		// else, if one term was desitnated, that term can be nonzero
 		let unit = "ms";
 		
 		for (let nextUnit in s) {
 			let count = _.msTo(nextUnit, timeLeft);
 			
 			if (count === 0) {
+				// next higher-magnitude term occurs 0 times within timeLeft,
+          			// so remain with last loop's assigned unit & unitTime
 				break;
 			}
 			
@@ -138,13 +143,18 @@ _.duration = $.extend(function($this, ms, terms = 1) {
 		
 		if (unitTime !== 0 || terms === 1) {
 			let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-			timeArray.push(unitTime + " " + _.phrase($this, unitProperPlurality));
-			timeLeft -= unit === "ms" ? unitTime : unitTime * Mavo.Functions[unit]();
+			ret.push(unitTime + " " + _.phrase($this, unitProperPlurality));
+			timeLeft -= unitTime * (unit === "ms" ? 1 : Mavo.Functions[unit]());
 			unitTime = timeLeft;
 		}
 		
 	}
-	return timeArray;
+	
+	if (wantString) {
+      		return ret[0];
+    	}
+		
+    	return ret;
 }, {
 	needsContext: true
 });
