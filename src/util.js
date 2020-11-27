@@ -680,7 +680,6 @@ var _ = $.extend(Mavo, {
 		 */
 		sneak (callback) {
 			if (this.running) {
-				console.log("sneak", callback);
 				this.stop();
 				var ret = callback();
 				this.run();
