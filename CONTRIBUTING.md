@@ -46,7 +46,16 @@ If you want to contribute to Mavo's source, read on.
 
 ## Unit tests
 
-The test suite and instructions for running the test suite can be found here: [https://github.com/mavoweb/test](https://github.com/mavoweb/test). 
+The test suite and instructions for running the test suite can be found here: [https://github.com/mavoweb/test](https://github.com/mavoweb/test).
+
+## Code style
+
+Please install [ESLint](https://eslint.org/) and an ESLint plugin for your editor. There is an ESLint config in the project that should be picked up automatically once you’re all set. ESLint will catch many, though not all, code style issues.
+
+Other guidelines that cannot be enforced via ESLint:
+- Use a space between a method name and the `(` in its definition, but not in calls. This allows us to easily search for the function definition by searching for `methodName (`, without the search results being clogged by calls to the method.
+- Naming: use few, simple words. Avoid using more than two words to name a variable, method, or class. Use camelCase, as is idiomatic with JS. Start class names with uppercase. Avoid abbreviations, except the ones that are widespread convention, such as`i` for a loop counter or `ret` for the return value (which is encouraged).
+- Comments: Use comments to provide context and explain *why* code does things the way it does. Do not use comments to explain *what* the code does, that should be self-evident in well written code.
 
 # Mavo Internals: An Overview
 This documentation describes the purpose or function of essential classes and properties in the Mavo codebase (inside `src`) to help facilitate your contribution process. It's a work in progress and feel free to suggest edits to this documentation.
