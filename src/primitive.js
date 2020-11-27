@@ -594,11 +594,34 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this.config.setValue.call(this, this.element, value);
 				}
 				else if (!o.dataOnly) {
+					let map = this.originalEditor || this.editor;
+					let presentational;
+
+					if (map?.matches("select")) {
+						presentational = [...map.options].find(o => o.value == value)?.textContent;
+
+						if (this.editor) {
+							// We have a local editor, do we need to add/remove temp options?
+							if (presentational === undefined) {
+								// Option not found in the select menu, add a temp option
+								$.create("option", {
+									className: "mv-volatile",
+									textContent: value,
+									inside: this.editor
+								});
+							}
+							else {
+								// Delete any temp options, we don't need them anymore
+								$$(".mv-volatile", this.editor).forEach(o => o.remove());
+							}
+						}
+					}
+
 					_.setValue(this.element, value, {
 						config: this.config,
 						attribute: this.attribute,
 						datatype: this.datatype,
-						map: this.originalEditor || this.editor,
+						presentational,
 						node: this
 					});
 				}
@@ -935,7 +958,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		}
 		else {
-			var presentational = _.format(value, o);
+			var presentational = o.presentational ?? _.format(value, o);
 
 			if (o.node && !o.config.hasChildren) {
 				_.setText(element, presentational);
@@ -970,27 +993,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	static format (value, o = {}) {
-		if (o.map && /^select$/i.test(o.map.nodeName)) {
-			for (var i=0, option; option = o.map.options[i]; i++) {
-				if (option.value == value) {
-					return option.textContent;
-				}
-
-				if (option.classList.contains("mv-volatile")) {
-					option.remove();
-				}
-			}
-
-			// If we're here, the option is not present, add it
-			$.create("option", {
-				className: "mv-volatile",
-				textContent: value,
-				inside: o.map
-			});
-
-			return value;
-		}
-
 		if (($.type(value) === "number" || o.datatype == "number")) {
 			if (value === null) {
 				return "";
