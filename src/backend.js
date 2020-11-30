@@ -13,9 +13,17 @@ var _ = Mavo.Backend = $.Class({
 
 	update: function(url, o = {}) {
 		this.source = url;
+
+		// Backends that are not URL-based should just ignore this
 		this.url = new URL(this.source, Mavo.base);
+
+		this.options = o;
 		this.mavo = o.mavo;
 		this.format = Mavo.Formats.create(o.format, this);
+
+		if (this.constructor.key ?? o.key) {
+			this.key = o.key ?? this.constructor.key;
+		}
 	},
 
 	async get (url = new URL(this.url)) {
@@ -220,15 +228,16 @@ var _ = Mavo.Backend = $.Class({
 
 	static: {
 		// Return the appropriate backend(s) for this url
-		create: function(url, o, type, existing) {
-			var Backend;
+		create: function(url, o = {}, existing) {
+			let Backend;
 
-			if (type) {
-				Backend = Mavo.Functions.get(_, type);
+			if (o.type) {
+				// Using get() for case-insensitive property lookup
+				Backend = Mavo.Functions.get(_, o.type);
 			}
 
 			if (url && !Backend) {
-				Backend = _.types.filter(Backend => Backend.test(url))[0] || _.Remote;
+				Backend = _.types.find(Backend => Backend.test(url, o)) || _.Remote;
 			}
 
 			// Can we re-use the existing object perhaps?

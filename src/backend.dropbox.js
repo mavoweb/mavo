@@ -6,8 +6,6 @@ var _ = Mavo.Backend.register($.Class({
 	constructor: function() {
 		this.permissions.on(["login", "read"]);
 
-		this.key = this.mavo.element.getAttribute("mv-dropbox-key") || "2mx6061p054bpbp";
-
 		this.login(true);
 	},
 
@@ -89,6 +87,7 @@ var _ = Mavo.Backend.register($.Class({
 	static: {
 		apiDomain: "https://api.dropboxapi.com/2/",
 		oAuth: "https://www.dropbox.com/oauth2/authorize",
+		key: "2mx6061p054bpbp",
 
 		test: function(url) {
 			url = new URL(url, Mavo.base);

@@ -518,14 +518,17 @@ var _ = self.Mavo = $.Class({
 	 * @return {Boolean} true if a change occurred, false otherwise
 	 */
 	updateBackend: function(role) {
-		var previous = this[role], backend, changed;
+		let existing = this[role], backend, changed;
+		const attribute = "mv-" + role;
 
 		if (this.index == 1) {
+			// This app is the first one in the page, so we can override its backend
+			// via URL params such as ?storage=...
 			backend = _.Functions.url(role);
 		}
 
 		if (!backend) {
-			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute("mv-" + role) || null;
+			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute(attribute) || null;
 		}
 
 		if (backend) {
@@ -536,21 +539,29 @@ var _ = self.Mavo = $.Class({
 			}
 		}
 
-		if (backend && (!previous || !previous.equals(backend))) {
-			// We have a string, convert to a backend object if different than existing
-			this[role] = backend = _.Backend.create(backend, {
-				mavo: this,
-				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
-			}, this.element.getAttribute(`mv-${role}-type`), this[role]);
+		if (backend) {
+			// Do we have any other attributes?
+			let prefix = attribute + "-";
+			let roleAttributes = Mavo.attributeStartsWith(prefix, this.element);
+			let options = Object.fromEntries(roleAttributes.map(a => [a.name.replace(prefix, ""), a.value]));
 
-			changed = true;
+			if (!existing?.equals?.(backend)) {
+				// We have a string, convert to a backend object if different than existing
+				this[role] = backend = _.Backend.create(backend, {
+					format: this.element.getAttribute("mv-format"), // can be overwritten by options below
+					...options,
+					mavo: this
+				}, existing);
+
+				changed = true;
+			}
 		}
-		else if (!backend) {
+		else {
 			// We had a backend and now we will un-have it
 			this[role] = null;
 		}
 
-		changed = changed || (backend? !backend.equals(previous) : !!previous);
+		changed = changed || (backend? !backend.equals(existing) : Boolean(existing));
 
 		if (changed) {
 			// A change occured
