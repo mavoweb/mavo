@@ -187,6 +187,22 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
+				if (this.editor.matches("select")) {
+					let text = [...this.editor.options].find(o => o.value == value)?.textContent;
+
+					// We have a local editor, do we need to add/remove temp options?
+					if (text === undefined) {
+						// Option not found in the select menu, add a temp option
+						$.create("option", {
+							className: "mv-volatile",
+							textContent: value,
+							inside: this.editor,
+							selected: true,
+							disabled: true
+						});
+					}
+				}
+
 				_.setValue(this.editor, value, {config: this.editorDefaults});
 			}
 			else {
@@ -474,13 +490,18 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			else if (!this.attribute && this.editor) {
 				$.remove(this.editor);
 
-				_.setValue(this.element, this.editorValue, {
-					config: this.config,
-					attribute: this.attribute,
-					datatype: this.datatype,
-					map: this.originalEditor || this.editor,
-					node: this
-				});
+				if (this.editor.matches("select")) {
+					// Remove any temp options that we don’t need anymore
+					$$(".mv-volatile", this.editor).forEach(o => {
+						if (!o.selected) {
+							o.remove();
+						}
+					});
+				}
+
+				// force: true is needed because otherwise setValue() aborts when it sees
+				// that the value we are trying to set is the same as the existing one
+				this.setValue(this.editorValue, {silent: true, force: true});
 			}
 		});
 
@@ -599,22 +620,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 					if (map?.matches("select")) {
 						presentational = [...map.options].find(o => o.value == value)?.textContent;
-
-						if (this.editor) {
-							// We have a local editor, do we need to add/remove temp options?
-							if (presentational === undefined) {
-								// Option not found in the select menu, add a temp option
-								$.create("option", {
-									className: "mv-volatile",
-									textContent: value,
-									inside: this.editor
-								});
-							}
-							else {
-								// Delete any temp options, we don't need them anymore
-								$$(".mv-volatile", this.editor).forEach(o => o.remove());
-							}
-						}
 					}
 
 					_.setValue(this.element, value, {
