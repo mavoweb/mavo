@@ -445,10 +445,10 @@ var _ = $.extend(Mavo, {
 		return ret;
 	},
 
-	// Returns attribute nodes that start with str
-	// Use .ownerElement to get element
-	attributeStartsWith: function(str, context) {
-		return _.XPath(`.//@*[starts-with(name(), "${str}")]`, context);
+	// Returns attribute nodes that start with `str` on or inside `context`
+	// Use attr.ownerElement to get element
+	attributeStartsWith: function(str, context, {subtree} = {}) {
+		return _.XPath(`./${subtree? "/" : ""}@*[starts-with(name(), "${str}")]`, context);
 	},
 
 	/**

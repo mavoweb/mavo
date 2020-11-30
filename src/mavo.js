@@ -28,7 +28,7 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
-		Mavo.attributeStartsWith("data-mv-", this.element).forEach(attribute => {
+		Mavo.attributeStartsWith("data-mv-", this.element, {subtree: true}).forEach(attribute => {
 			var element = attribute.ownerElement;
 			var name = attribute.name.replace("data-", "");
 
