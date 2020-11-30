@@ -676,17 +676,31 @@ var _ = $.extend(Mavo, {
 		}
 
 		/**
+		 * Like stop(), but saves running state and then resumes it
+		 */
+		pause () {
+			this.runOnResume = this.running;
+			this.stop();
+		}
+
+		/**
+		 * Like run(), but runs only if observer was running before pause().
+		 */
+		resume () {
+			if (this.runOnResume !== false) {
+				this.run();
+			}
+
+			delete this.runOnResume;
+		}
+
+		/**
 		 * Disconnect an observer, run some code, then observe again
 		 */
 		sneak (callback) {
-			if (this.running) {
-				this.stop();
-				var ret = callback();
-				this.run();
-			}
-			else {
-				var ret = callback();
-			}
+			this.pause();
+			let ret = callback();
+			this.resume();
 
 			return ret;
 		}
