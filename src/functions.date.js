@@ -108,55 +108,58 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function($this, ms, terms) {
-	if (arguments.length === 1) {
-		[ms, $this] = [$this, null];
-	}
-	
-	let wantString = terms === undefined ? true : false;
-	let unitTime = ms || 0;
-	let timeLeft = ms || 0;
-	
-	if (ms === 0 || wantString) {
-		terms = 1;
-	}
-	
-	let ret = [];
-	
-	while (ret.length < terms && (timeLeft > 0 || terms === 1)) {
-		// Only add terms if more than 1 term was designated, and those terms must be nonzero,
-      		// else, if one term was desitnated, that term can be nonzero
-		let unit = "ms";
-		
-		for (let nextUnit in s) {
-			let count = _.msTo(nextUnit, timeLeft);
-			
-			if (count === 0) {
-				// next higher-magnitude term occurs 0 times within timeLeft,
-          			// so remain with last loop's assigned unit & unitTime
-				break;
-			}
-			
-			unitTime = count;
-			unit = nextUnit;
-		}
-		
-		if (unitTime !== 0 || terms === 1) {
-			let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-			ret.push(unitTime + " " + _.phrase($this, unitProperPlurality));
-			timeLeft -= unitTime * (unit === "ms" ? 1 : Mavo.Functions[unit]());
-			unitTime = timeLeft;
-		}
-		
-	}
-	
-	if (wantString) {
-      		return ret[0];
-    	}
-		
-    	return ret;
+_.duration = $.extend(function ($this, ms, terms) {
+    if (arguments.length === 1) {
+      [ms, $this] = [$this, null];
+    }
+
+    if (ms===0 || terms === undefined) {
+	terms=1;
+    }
+
+    let timeLeft = ms || 0;
+    let ret = [];
+    let unitsToUse = ["ms"];
+
+    // want to populate unitsToUse with all the terms that can fit within timeLeft
+    // in order of lowest to highest magnitude,
+		// so we have a list of consecutive unit terms to later reference
+    for (let nextUnit in s) {
+      let count = _.msTo(nextUnit, timeLeft);
+
+      if (count === 0) {
+        break;
+      }
+
+      unitsToUse.push(nextUnit);
+    }
+
+    while (ret.length < terms && unitsToUse.length > 0) {
+      let unit = unitsToUse.pop();
+			let unitTime;
+
+      if (unit!=="ms") {
+        unitTime = _.msTo(unit, timeLeft);
+      }
+      else {
+        unitTime = timeLeft;
+      }
+
+      if (unitTime!=0 || terms === 1) {
+        let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
+        ret.push(unitTime + " " + _.phrase($this, unitProperPlurality));
+        timeLeft -= unitTime * (unit === "ms" ? 1 : Mavo.Functions[unit]());
+      }
+      else {
+        // we will not populate the returning array further since
+        // the following units won't be consecutive
+        break;
+      }
+    }
+
+    return (arguments.length ===1 ||  (arguments.length ===2 && $this!== undefined))? ret[0] : ret;
 }, {
-	needsContext: true
+    needsContext: true
 });
 
 $.extend(_.util, {
