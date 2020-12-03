@@ -311,7 +311,7 @@ var _ = Mavo.Backend.register($.Class({
 
 	switchToMyForkDialog: function(forkURL) {
 			let params = (new URL(location)).searchParams;
-			params.append("storage", forkURL + "/" + this.path);
+			params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
 
 			this.notice = this.mavo.message(`
 			${this.mavo._("gh-login-fork-options")}
