@@ -114,21 +114,21 @@ _.duration = $.extend(function ($this, ms, terms) {
     }
 
     if (ms===0 || terms === undefined) {
-	terms=1;
+			terms = 1;
     }
 
     let timeLeft = ms || 0;
     let ret = [];
     let unitsToUse = ["ms"];
 
-    // want to populate unitsToUse with all the terms that can fit within timeLeft
+    // populate unitsToUse with all the terms that can fit within timeLeft
     // in order of lowest to highest magnitude,
 		// so we have a list of consecutive unit terms to later reference
     for (let nextUnit in s) {
       let count = _.msTo(nextUnit, timeLeft);
 
       if (count === 0) {
-        break;
+				break;
       }
 
       unitsToUse.push(nextUnit);
@@ -146,7 +146,8 @@ _.duration = $.extend(function ($this, ms, terms) {
       }
 
       if (unitTime!=0 || terms === 1) {
-        let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
+        let unitProperPlurality = unitTime === 1 && unit !== "ms" ?
+					unit.slice(0, -1) : unit;
         ret.push(unitTime + " " + _.phrase($this, unitProperPlurality));
         timeLeft -= unitTime * (unit === "ms" ? 1 : Mavo.Functions[unit]());
       }
@@ -157,7 +158,8 @@ _.duration = $.extend(function ($this, ms, terms) {
       }
     }
 
-    return (arguments.length ===1 ||  (arguments.length ===2 && $this!== undefined))? ret[0] : ret;
+    return (arguments.length ===1 ||
+			(arguments.length ===2 && $this!== undefined))? ret[0] : ret;
 }, {
     needsContext: true
 });
