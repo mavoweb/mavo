@@ -114,7 +114,7 @@ _.duration = $.extend(function ($this, ms, terms) {
     }
 
     if (ms===0 || terms === undefined) {
-terms = 1;
+ terms = 1;
     }
 
     let timeLeft = ms || 0;
@@ -128,7 +128,7 @@ terms = 1;
       let count = _.msTo(nextUnit, timeLeft);
 
       if (count === 0) {
-				break;
+   break;
       }
 
       unitsToUse.push(nextUnit);
