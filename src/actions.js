@@ -13,8 +13,8 @@ var _ = Mavo.Actions = {
 
 		var node = Mavo.Node.get(element);
 
-		if (node?.editing) {
-			// If this is a node, and being edited, we don't want to have the action interfering.
+		if (node && node.editing && node.modes !== "edit") {
+			// If this is a node, and being edited (and supports other modes), we don't want to have the action interfering.
 			return;
 		}
 
