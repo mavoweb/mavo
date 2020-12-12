@@ -299,6 +299,11 @@ _.register({
 		changeEvents: "click"
 	},
 
+	"input[type=checkbox]": {
+		attribute: "indeterminate",
+		datatype: "boolean"
+	},
+
 	"radio": {
 		extend: "formControl",
 		selector: "input[type=radio]",
