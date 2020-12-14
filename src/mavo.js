@@ -163,7 +163,7 @@ var _ = self.Mavo = $.Class({
 			if (attribute.indexOf("mv-") === 0) {
 				// We want to observe changes both in a backend (the mv-role attribute)
 				// and its metadata (provided via the mv-role-* family of attributes)
-				let [role, ...rest] = attribute?.replace(/^mv-/, "")?.split("-");
+				let role = attribute?.replace(/^mv-/, "")?.split("-")?.[0];
 
 				if (backendTypes.includes(role)) {
 					this.updateBackend(role);
