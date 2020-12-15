@@ -560,12 +560,12 @@ var _ = Mavo.Functions = {
 		multiValued: true
 	}),
 
-	phrase: $.extend(function($this, id, vars, lang) {
+	phrase: $.extend(function(id, vars, lang) {
 		if (arguments.length === 3 && $.type(vars) === "string") {
 			[lang, vars] = [vars];
 		}
 
-		var locale = lang? Mavo.Locale.get(lang) : ($this?.[Mavo.mavo]?.locale ?? Mavo.Locale.default);
+		var locale = lang? Mavo.Locale.get(lang) : (this?.[Mavo.mavo]?.locale ?? Mavo.Locale.default);
 
 		return locale.phrase(id, vars);
 	}, {

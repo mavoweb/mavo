@@ -108,11 +108,7 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function($this, ms) {
-	if (arguments.length === 1) {
-		[ms, $this] = [$this, null];
-	}
-
+_.duration = $.extend(function(ms) {
 	var count = ms || 0;
 	var unit = "ms";
 
