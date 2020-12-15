@@ -799,6 +799,166 @@ var _ = $.extend(Mavo, {
 	}
 });
 
+/**
+ * Collection of fake "observers" implemented over one large MutationObserver
+ */
+_.Observers = class Observers extends Map {
+	constructor({observer, callback} = {}) {
+		super();
+
+		let self = _.Observers;
+		this.callback = callback || self.callback;
+		this.observer = observer || (self.observer = self.observer || new MutationObserver(this.callback));
+	}
+
+	applyRecord (r) {
+		for (let [o, callback] of this.entries()) {
+			if (_.Observers.matchesRecord(o, r)) {
+				// If we are here, the observer matches
+				callback.call(this, {
+					node: Mavo.Node.get(r.target, true),
+					element: r.target,
+					type: r.type,
+					attribute: r.attributeName,
+					record: r
+				});
+
+				if (o.once) {
+					this.unobserve(o, callback);
+				}
+			}
+		}
+	}
+
+	static matchesRecord (o, r) {
+		if (o.active === false) {
+			return false;
+		}
+
+		let element = r.target;
+
+		if (o.attribute) {
+			// We are monitoring attribute changes only
+			if (r.type !== "attributes") {
+				// Not an attribute change
+				return false;
+			}
+
+			if (o.attribute !== true && o.attribute !== r.attributeName) {
+				// We are monitoring a specific attribute, and a different one changed
+				return false;
+			}
+		}
+		else if (r.type === "attributes" && o.attribute === false) {
+			// We explicitly opted out monitoring attributes, and an attribute has changed
+			return false;
+		}
+
+		if (o.element) {
+			if (o.deep === false) {
+				return element === o.element;
+			}
+			else {
+				return o.element.contains(element);
+			}
+		}
+
+		return true;
+	}
+
+	flush () {
+		let records = this.observer.takeRecords();
+
+		if (records) {
+			this.callback(records);
+		}
+	}
+
+	observe (o = {}, callback) {
+		this.set(o, callback);
+		return callback;
+	}
+
+	unobserve (options, callback) {
+		let matches = this.find(options, callback);
+
+		for (let [o, c] of matches.entries()) {
+			this.delete(o);
+		}
+	}
+
+	pause (options) {
+		let matches = this.find(options);
+
+		for (let [o, c] of matches.entries()) {
+			// Decativate and store active state
+			o._active = o.active !== false && o._active !== false;
+			o.active = false;
+		}
+
+		this.flush();
+
+		return matches;
+	}
+
+	resume (matches) {
+		if (!(matches instanceof _.Observers)) {
+			matches = this.find(matches);
+		}
+
+		this.flush();
+
+		for (let [o, c] of matches.entries()) {
+			// Restore active state
+			o.active = o.active || o._active;
+			delete o._active;
+		}
+	}
+
+	// Run a callback without triggering certain observers
+	sneak (options = {}, callback) {
+		if (this.size === 0) {
+			return callback();
+		}
+
+		let matches = this.pause(options);
+
+		let ret = callback();
+
+		this.resume(matches);
+
+		return ret;
+	}
+
+	find (options, callback) {
+		let keys = Object.keys(options);
+		let ret = new Mavo.Observers();
+
+		for (let [o, c] of this.entries()) {
+			if (callback && callback !== c) {
+				continue;
+			}
+
+			if (keys.every(k => o[k] === options[k])) {
+				ret.set(o, c);
+			}
+		}
+
+		return ret;
+	}
+};
+
+// Default callback
+_.Observers.callback = records => {
+	if (this.size === 0) {
+		return;
+	}
+
+	for (let r of records) {
+		_.observers.applyRecord(r);
+	}
+};
+
 // Bliss plugins
 
 // Provide shortcuts to long property chains

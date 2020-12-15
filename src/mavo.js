@@ -85,59 +85,9 @@ var _ = self.Mavo = $.Class({
 
 		this.expressions = new Mavo.Expressions(this);
 
-		this.observer = new Mavo.Observer(this.element, null, records => {
-			if (!this.observers && !_.observers) {
-				return;
-			}
-
-			let observers = [
-				...(this.observers?.entries() ?? []),
-				...(_.observers?.entries() ?? []),
-			];
-
-			for (let r of records) {
-				let node = Mavo.Node.get(r.target, true);
-
-				for (let [o, callback] of observers) {
-					if (o.active === false) {
-						continue;
-					}
-
-					if (o.attribute) {
-						// We are monitoring attribute changes only
-						if (r.type !== "attributes") {
-							// Not an attribute change
-							continue;
-						}
-
-						if (o.attribute !== true && o.attribute !== r.attributeName) {
-							// We are monitoring a specific attribute, and a different one changed
-							continue;
-						}
-					}
-					else if (r.type === "attributes" && o.attribute === false) {
-						// We explicitly opted out monitoring attributes, and an attribute has changed
-						continue;
-					}
-
-					if (o.deep === false && r.target !== this.element) {
-						continue;
-					}
-
-					callback.call(this, {
-						node,
-						type: r.type,
-						attribute: r.attributeName,
-						element: r.target,
-						record: r
-					});
-
-					if (o.once) {
-						(o.static? _ : this).unobserve(o, callback);
-					}
-				}
-			}
-		}, {
+		_.observers = _.observers || new Mavo.Observers();
+		_.observers.observer.observe(this.element, {
+			// Observe everything
 			characterData: true,
 			childList: true,
 			subtree: true,
@@ -381,45 +331,18 @@ var _ = self.Mavo = $.Class({
 	},
 
 	observe (o = {}, callback) {
-		this.observers = this.observers ?? new Map();
-		this.observers.set(o, callback);
-		return callback;
+		let options = Object.assign({element: this.element}, o);
+		return _.observers?.observe(options, callback);
 	},
 
-	unobserve (options, callback, observers) {
-		_.unobserve(options, callback, this.observers);
+	unobserve (o, callback) {
+		let options = Object.assign({element: this.element}, o);
+		return _.observers?.observe(options, callback);
 	},
 
 	// Run a callback without triggering certain observers
 	sneak (options = {}, callback) {
-		let observers = new Map([
-			...(this.observers?.entries() ?? []),
-			...(_.observers?.entries() ?? []),
-		]);
-
-		if (observers.size === 0 || !this.observer) {
-			return callback();
-		}
-
-		this.observer.flush();
-
-		let matches = _.findObservers(options, undefined, observers);
-
-		for (let [o, c] of matches.entries()) {
-			o._active = o.active !== false && o._active !== false;
-			o.active = false;
-		}
-
-		let ret = callback();
-
-		this.observer.flush();
-
-		for (let [o, c] of matches.entries()) {
-			o.active = o.active || o._active;
-			delete o._active;
-		}
-
-		return ret;
+		_.observers?.sneak(options, callback);
 	},
 
 	getData: function(o) {
@@ -519,7 +442,7 @@ var _ = self.Mavo = $.Class({
 	 * Update the backend for a given role
 	 * @return {Boolean} true if a change occurred, false otherwise
 	 */
-	updateBackend: function(role) {
+	updateBackend (role) {
 		let existing = this[role], backend, changed;
 		const attribute = "mv-" + role;
 
@@ -936,40 +859,12 @@ var _ = self.Mavo = $.Class({
 		},
 
 		observe (options, callback) {
-			_.observers = _.observers ?? new Map();
-			options.static = true;
-			_.observers.set(options, callback);
-			return callback;
+			_.observers = _.observers || new Mavo.Observers();
+			return _.observers.observe(options, callback);
 		},
 
-		unobserve (options, callback, observers = _.observers) {
-			if (!observers) {
-				return;
-			}
-
-			let matches = _.findObservers(options, callback, observers);
-
-			for (let [o, c] of matches.entries()) {
-				observers.delete(o);
-			}
-		},
-
-		// Look up observers that match certain options and/or callback
-		findObservers (options, callback, observers = _.observers) {
-			let keys = Object.keys(options);
-			let ret = new Map();
-
-			for (let [o, c] of observers.entries()) {
-				if (callback && callback !== c) {
-					continue;
-				}
-
-				if (keys.every(k => o[k] === options[k])) {
-					ret.set(o, c);
-				}
-			}
-
-			return ret;
+		unobserve (options, callback) {
+			_.observers.unobserve(options, callback);
 		},
 
 		warn: function warn(message, o = {}) {
