@@ -694,24 +694,9 @@ var _ = $.extend(Mavo, {
 			delete this.runOnResume;
 		}
 
-		/**
-		 * Disconnect an observer, run some code, then observe again
-		 */
-		sneak (callback) {
-			this.pause();
-			let ret = callback();
-			this.resume();
-
-			return ret;
-		}
-
 		destroy () {
 			this.stop();
 			this.observer = this.element = null;
-		}
-
-		static sneak (observer, callback) {
-			return observer? observer.sneak(callback) : callback();
 		}
 	},
 
@@ -913,21 +898,6 @@ _.Observers = class Observers extends Map {
 			o.active = o.active || o._active;
 			delete o._active;
 		}
-	}
-
-	// Run a callback without triggering certain observers
-	sneak (options = {}, callback) {
-		if (this.size === 0) {
-			return callback();
-		}
-
-		let matches = this.pause(options);
-
-		let ret = callback();
-
-		this.resume(matches);
-
-		return ret;
 	}
 
 	find (options, callback) {

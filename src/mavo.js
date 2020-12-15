@@ -340,11 +340,6 @@ var _ = self.Mavo = $.Class({
 		return _.observers?.observe(options, callback);
 	},
 
-	// Run a callback without triggering certain observers
-	sneak (options = {}, callback) {
-		_.observers?.sneak(options, callback);
-	},
-
 	getData: function(o) {
 		let env = {context: this, options: o};
 		env.data = this.root.getData(o);

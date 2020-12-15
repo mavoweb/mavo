@@ -372,12 +372,16 @@ _.register({
 				newValue += mod > step/2? step - mod : -mod;
 				newValue = Math.max(min, Math.min(newValue, max));
 
-				this.sneak(() => this.element.setAttribute("value", newValue));
+				this.pauseObserver();
+				this.element.setAttribute("value", newValue);
+				this.resumeObserver();
 			});
 
 			$.bind(this.element, "mouseleave.mavo:edit", evt => {
 				// Return to actual value
-				this.sneak(() => this.element.setAttribute("value", this.value));
+				this.pauseObserver();
+				this.element.setAttribute("value", this.value);
+				this.resumeObserver();
 			});
 
 			$.bind(this.element, "click.mavo:edit", evt => {

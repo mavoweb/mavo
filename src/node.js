@@ -604,9 +604,9 @@ $.Class(_, {
 				if (!Array.isArray(this.children) && [null, "", "read", "edit"].indexOf(this.element.getAttribute("mv-mode")) > -1) {
 					// If attribute is not one of the recognized values, leave it alone
 					var set = this.modes || value == "edit";
-					this.mavo.sneak({attribute: "mv-mode"}, () => {
-						$.toggleAttribute(this.element, "mv-mode", value, set);
-					});
+					let matches = Mavo.observers.pause({attribute: "mv-mode"});
+					$.toggleAttribute(this.element, "mv-mode", value, set);
+					Mavo.observers.resume(matches);
 				}
 
 				return value;
