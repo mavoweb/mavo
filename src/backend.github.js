@@ -20,7 +20,7 @@ var _ = Mavo.Backend.register($.Class({
 			filename: `${this.mavo.id}${extension}`
 		};
 
-		this.info = _.parseURL(this.source, this.defaults);
+		this.info = _.parseURL(this.source, this.defaults, o);
 		$.extend(this, this.info);
 	},
 
@@ -347,7 +347,7 @@ var _ = Mavo.Backend.register($.Class({
 		/**
 		 * Parse Github URLs, return username, repo, branch, path
 		 */
-		parseURL: function(source, defaults = {}) {
+		parseURL: function(source, defaults = {}, o = {}) {
 			var ret = {};
 			var url = new URL(source, Mavo.base);
 			var path = url.pathname.slice(1).split("/");
@@ -383,7 +383,13 @@ var _ = Mavo.Backend.register($.Class({
 				ret.filename = defaults.filename;
 			}
 
-			ret.filepath = path.join("/") || defaults.filepath || "";
+			// If an author provided backend metadata, use them
+			// since they have higher priority
+			for (const prop in ret) {
+				ret[prop] = o[prop] ?? ret[prop];
+			}
+
+			ret.filepath = path.join("/") || o.filepath || defaults.filepath || "";
 			ret.path = (ret.filepath? ret.filepath + "/" : "") + ret.filename;
 
 			ret.apiCall = `repos/${ret.username}/${ret.repo}/contents/${ret.path}`;
