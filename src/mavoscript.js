@@ -620,11 +620,16 @@ var _ = Mavo.Script = {
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test, node)}? ${_.serialize(node.consequent, node)} : ${_.serialize(node.alternate, node)}`,
 		"MemberExpression": (node, parent) => {
-			let plainSerialize = (node.object.type === "Identifier" && node.object.name === "$fn")
-				// Leave members in function calls as-is unless the object is $fn (handled above)
-				|| _.closest(node, "CallExpression");
+			let n = node, pn, callee;
 
-			if (plainSerialize) {
+			do {
+				if (n.type === "CallExpression" && n.callee === pn) {
+					break;
+				}
+				pn = n;
+			} while (n = n.parent);
+
+			if (n) { // Use plain serialization for foo.bar.baz()
 				var property = node.computed? `[${_.serialize(node.property, node)}]` : `.${node.property.name}`;
 				return `${_.serialize(node.object, node)}${property}`;
 			}
