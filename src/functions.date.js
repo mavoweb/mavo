@@ -125,7 +125,7 @@ _.duration = $.extend(function(ms) {
 
 	unit = count === 1 && unit !== "ms"? unit.slice(0, -1) : unit;
 
-	return count + " " + _.phrase($this, unit);
+	return count + " " + _.phrase.call(this, unit);
 }, {
 	needsContext: true
 });
