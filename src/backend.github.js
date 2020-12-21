@@ -35,12 +35,18 @@ var _ = Mavo.Backend.register($.Class({
 		}
 
 		// Let an author provide either filepath, filename, or path.
-		// The path property takes priority.
-		// Leave raw API calls as-is for now
+		// The path property takes priority
 		if (this.info.path) {
-			this.info.path = o.path ?? (this.info.filepath ? this.info.filepath + "/" : "") + this.info.filename;
+			if (!o.path) {
+				if (this.info.filename) {
+					this.info.path = (this.info.filepath? this.info.filepath + "/" : "") + this.info.filename;
+				}
+				else {
+					this.info.path = this.info.filepath;
+				}
+			}
 
-			this.info.apiCall = `repos/${this.info.username}/${this.info.repo}/contents/${this.info.path}`;
+			this.info.apiCall = `repos/${this.info.username}/${this.info.repo}/contents/${this.info.path}` + (this.info.apiParams ?? "");
 		}
 
 		$.extend(this, this.info);
@@ -67,7 +73,7 @@ var _ = Mavo.Backend.register($.Class({
 					headers: {
 						"Accept": "application/vnd.github.squirrel-girl-preview"
 					}
-				}).then(response => Promise.resolve(info.repo? _.atob(response.content) : response));
+				}).then(response => Promise.resolve(info.repo && response.content? _.atob(response.content) : response));
 		}
 		else {
 			// Unauthenticated, use simple GET request to avoid rate limit
@@ -382,13 +388,36 @@ var _ = Mavo.Backend.register($.Class({
 			}
 			else if (/api.github.com$/.test(url.host)) {
 				// Raw API call
-				var apiCall = url.pathname.slice(1) + url.search;
-				var data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+				const apiParams = url.search;
+				const apiCall = url.pathname.slice(1) + apiParams;
+				const data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
 
-				return {
+				if (apiCall == "graphql") {
+					return {
+						apiCall,
+						apiData: {query: data}
+					};
+				}
+
+				ret = {
 					apiCall,
-					apiData: apiCall == "graphql"? {query: data} : data
+					apiParams,
+					apiData: data
 				};
+
+				path = url.pathname.slice(1).split("/");
+				const firstSegment = path.shift();
+
+				if (firstSegment == "repos") {
+					ret.username = path.shift();
+					ret.repo = path.shift();
+
+					// Drop `contents`
+					path.shift();
+				}
+				else {
+					return ret;
+				}
 			}
 			else if (path[0] == "blob") {
 				path.shift();
@@ -402,13 +431,22 @@ var _ = Mavo.Backend.register($.Class({
 				path.splice(path.length - 1, 1);
 			}
 			else {
-				ret.filename = defaults.filename;
+				// If we work with a raw API call and couldn't find the filename in the path,
+				// leave the filename blank
+				ret.filename = ret.apiCall? "" : defaults.filename;
 			}
 
 			ret.filepath = path.join("/") || defaults.filepath || "";
-			ret.path = (ret.filepath? ret.filepath + "/" : "") + ret.filename;
 
-			ret.apiCall = `repos/${ret.username}/${ret.repo}/contents/${ret.path}`;
+			if (ret.filename) {
+				ret.path = (ret.filepath? ret.filepath + "/" : "") + ret.filename;
+			}
+			else {
+				ret.path = ret.filepath;
+			}
+
+			// Don't lose search params for raw API calls
+			ret.apiCall = `repos/${ret.username}/${ret.repo}/contents/${ret.path}` + (ret.apiParams ?? "");
 
 			return ret;
 		},
