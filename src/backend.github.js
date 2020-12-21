@@ -21,7 +21,6 @@ var _ = Mavo.Backend.register($.Class({
 		};
 
 		this.info = _.parseURL(this.source, this.defaults);
-		$.extend(this, this.info);
 
 		// If an author provided backend metadata, use them
 		// since they have higher priority
@@ -32,14 +31,18 @@ var _ = Mavo.Backend.register($.Class({
 				continue;
 			}
 
-			this[prop] = o[prop];
+			this.info[prop] = o[prop];
 		}
 
 		// Let an author provide either filepath, filename, or path.
 		// The path property takes priority
-		this.path = o.path ?? (this.filepath? this.filepath + "/" : "") + this.filename;
+		if (this.info.apiCall != "graphql") {
+			this.info.path = o.path ?? (this.info.filepath ? this.info.filepath + "/" : "") + this.info.filename;
 
-		this.apiCall = this.apiCall == "graphql"? this.apiCall : `repos/${this.username}/${this.repo}/contents/${this.path}`;
+			this.info.apiCall = `repos/${this.info.username}/${this.info.repo}/contents/${this.info.path}`;
+		}
+
+		$.extend(this, this.info);
 	},
 
 	get: async function(url) {
