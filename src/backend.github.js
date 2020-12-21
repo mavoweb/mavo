@@ -35,8 +35,9 @@ var _ = Mavo.Backend.register($.Class({
 		}
 
 		// Let an author provide either filepath, filename, or path.
-		// The path property takes priority
-		if (this.info.apiCall != "graphql") {
+		// The path property takes priority.
+		// Leave raw API calls as-is for now
+		if (this.info.path) {
 			this.info.path = o.path ?? (this.info.filepath ? this.info.filepath + "/" : "") + this.info.filename;
 
 			this.info.apiCall = `repos/${this.info.username}/${this.info.repo}/contents/${this.info.path}`;
