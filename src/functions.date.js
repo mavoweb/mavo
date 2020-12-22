@@ -127,7 +127,7 @@ _.duration = $.extend(function (ms, terms) {
 		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
 		return unitValue;
 	}).forEach(function (currentValue, index) {
-		if (currentValue !==0 && ret.length < terms) {
+		if (currentValue !== 0 && ret.length < terms) {
 			let unitProperPlurality = currentValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
 			ret.push(currentValue + " " + Mavo.Functions.phrase($this, unitProperPlurality));
 
