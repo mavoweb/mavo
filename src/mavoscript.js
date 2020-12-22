@@ -579,30 +579,57 @@ var _ = Mavo.Script = {
 		"BinaryExpression": node => `${_.serialize(node.left, node)} ${node.operator} ${_.serialize(node.right, node)}`,
 		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument, node)}`,
 		"CallExpression": node => {
-			var nameSerialized = _.serialize(node.callee, node);
-			var argsSerialized = node.arguments.map(n => _.serialize(n, node));
+			var callee = node.callee;
+			let root = node.callee;
+			let parent = node;
+			let prop = "callee";
 
-			if (node.callee.type == "Identifier") {
+			// Find left-most member
+			while (root.type === "MemberExpression") {
+				parent = root;
+				root = root.object;
+				prop = "object";
+			}
+
+			if (node.callee.type === "MemberExpression") {
+				if (node.callee.property.type === "Identifier" && node.callee.property.name === "call") {
+					callee = node.callee.object;
+				}
+			}
+
+			if (root.type === "Identifier") {
 				// Clashes with native prototype methods? If so, look first in Function trap
-				var name = node.callee.name;
+				var name = root.name;
 
 				if (name === "scope") {
 					return _.serializeScopeCall(node.arguments);
 				}
 				else if (name in Mavo.Script.$fn) {
-					return `$fn.${name}(${argsSerialized.join(", ")})`;
+					parent[prop] = {
+						type: "MemberExpression",
+						computed: false,
+						object: {type: "Identifier", name: "$fn"},
+						property: root
+					};
 				}
 			}
 
+			var nameSerialized = _.serialize(node.callee, node);
+			var argsSerialized = node.arguments.map(n => _.serialize(n, node));
 			return `${nameSerialized}(${argsSerialized.join(", ")})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test, node)}? ${_.serialize(node.consequent, node)} : ${_.serialize(node.alternate, node)}`,
 		"MemberExpression": (node, parent) => {
-			let plainSerialize = (node.object.type === "Identifier" && node.object.name === "$fn")
-				// Leave members in function calls as-is unless the object is $fn (handled above)
-				|| _.closest(node, "CallExpression");
+			let n = node, pn, callee;
 
-			if (plainSerialize) {
+			do {
+				if (n.type === "CallExpression" && n.callee === pn) {
+					break;
+				}
+				pn = n;
+			} while (n = n.parent);
+
+			if (n) { // Use plain serialization for foo.bar.baz()
 				var property = node.computed? `[${_.serialize(node.property, node)}]` : `.${node.property.name}`;
 				return `${_.serialize(node.object, node)}${property}`;
 			}
@@ -744,7 +771,13 @@ var _ = Mavo.Script = {
 					var def = Mavo.Functions[node.callee.name];
 
 					if (def && def.needsContext) {
-						// Why not function.call(...)? Because it's a more drastic change.
+						// Rewrite to funcName.call($this, ...args)
+						node.callee = {
+							type: "MemberExpression",
+							computed: false,
+							object: node.callee,
+							property: {type: "Identifier", name: "call"}
+						};
 						node.arguments.unshift({type: "Identifier", name: "$this"});
 					}
 				}

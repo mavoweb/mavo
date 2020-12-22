@@ -3,10 +3,14 @@
 var _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
 	id: "Github",
-	constructor: function() {
+	constructor: function(url, o) {
 		this.permissions.on(["login", "read"]);
 
-		this.key = this.mavo.element.getAttribute("mv-github-key") || "7e08e016048000bc594e";
+		this.login(true);
+	},
+
+	update: function(url, o) {
+		this.super.update.call(this, url, o);
 
 		// Extract info for username, repo, branch, filepath from URL
 		var extension = this.format.constructor.extensions[0] || ".json";
@@ -15,15 +19,6 @@ var _ = Mavo.Backend.register($.Class({
 			repo: "mv-data",
 			filename: `${this.mavo.id}${extension}`
 		};
-
-		this.info = _.parseURL(this.source, this.defaults);
-		$.extend(this, this.info);
-
-		this.login(true);
-	},
-
-	update: function(url, o) {
-		this.super.update.call(this, url, o);
 
 		this.info = _.parseURL(this.source, this.defaults);
 		$.extend(this, this.info);
@@ -316,7 +311,7 @@ var _ = Mavo.Backend.register($.Class({
 
 	switchToMyForkDialog: function(forkURL) {
 			let params = (new URL(location)).searchParams;
-			params.append("storage", forkURL + "/" + this.path);
+			params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
 
 			this.notice = this.mavo.message(`
 			${this.mavo._("gh-login-fork-options")}
@@ -342,6 +337,7 @@ var _ = Mavo.Backend.register($.Class({
 	static: {
 		apiDomain: "https://api.github.com/",
 		oAuth: "https://github.com/login/oauth/authorize",
+		key: "7e08e016048000bc594e",
 
 		test: function(url) {
 			url = new URL(url, Mavo.base);

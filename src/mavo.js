@@ -28,7 +28,7 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
-		Mavo.attributeStartsWith("data-mv-", this.element).forEach(attribute => {
+		Mavo.attributeStartsWith("data-mv-", this.element, {subtree: true}).forEach(attribute => {
 			var element = attribute.ownerElement;
 			var name = attribute.name.replace("data-", "");
 
@@ -85,59 +85,9 @@ var _ = self.Mavo = $.Class({
 
 		this.expressions = new Mavo.Expressions(this);
 
-		this.observer = new Mavo.Observer(this.element, null, records => {
-			if (!this.observers && !_.observers) {
-				return;
-			}
-
-			let observers = [
-				...(this.observers?.entries() ?? []),
-				...(_.observers?.entries() ?? []),
-			];
-
-			for (let r of records) {
-				let node = Mavo.Node.get(r.target, true);
-
-				for (let [o, callback] of observers) {
-					if (o.active === false) {
-						continue;
-					}
-
-					if (o.attribute) {
-						// We are monitoring attribute changes only
-						if (r.type !== "attributes") {
-							// Not an attribute change
-							continue;
-						}
-
-						if (o.attribute !== true && o.attribute !== r.attributeName) {
-							// We are monitoring a specific attribute, and a different one changed
-							continue;
-						}
-					}
-					else if (r.type === "attributes" && o.attribute === false) {
-						// We explicitly opted out monitoring attributes, and an attribute has changed
-						continue;
-					}
-
-					if (o.deep === false && r.target !== this.element) {
-						continue;
-					}
-
-					callback.call(this, {
-						node,
-						type: r.type,
-						attribute: r.attributeName,
-						element: r.target,
-						record: r
-					});
-
-					if (o.once) {
-						(o.static? _ : this).unobserve(o, callback);
-					}
-				}
-			}
-		}, {
+		_.observers = _.observers || new Mavo.Observers();
+		_.observers.observer.observe(this.element, {
+			// Observe everything
 			characterData: true,
 			childList: true,
 			subtree: true,
@@ -161,7 +111,9 @@ var _ = self.Mavo = $.Class({
 
 		this.observe({deep: false, attribute: true}, ({attribute}) => {
 			if (attribute.indexOf("mv-") === 0) {
-				let role = attribute?.replace(/^mv-/, "");
+				// We want to observe changes both in a backend (the mv-role attribute)
+				// and its metadata (provided via the mv-role-* family of attributes)
+				let role = attribute?.replace(/^mv-/, "")?.split("-")?.[0];
 
 				if (backendTypes.includes(role)) {
 					this.updateBackend(role);
@@ -379,45 +331,13 @@ var _ = self.Mavo = $.Class({
 	},
 
 	observe (o = {}, callback) {
-		this.observers = this.observers ?? new Map();
-		this.observers.set(o, callback);
-		return callback;
+		let options = Object.assign({element: this.element}, o);
+		return _.observers?.observe(options, callback);
 	},
 
-	unobserve (options, callback, observers) {
-		_.unobserve(options, callback, this.observers);
-	},
-
-	// Run a callback without triggering certain observers
-	sneak (options = {}, callback) {
-		let observers = new Map([
-			...(this.observers?.entries() ?? []),
-			...(_.observers?.entries() ?? []),
-		]);
-
-		if (observers.size === 0 || !this.observer) {
-			return callback();
-		}
-
-		this.observer.flush();
-
-		let matches = _.findObservers(options, undefined, observers);
-
-		for (let [o, c] of matches.entries()) {
-			o._active = o.active !== false && o._active !== false;
-			o.active = false;
-		}
-
-		let ret = callback();
-
-		this.observer.flush();
-
-		for (let [o, c] of matches.entries()) {
-			o.active = o.active || o._active;
-			delete o._active;
-		}
-
-		return ret;
+	unobserve (o, callback) {
+		let options = Object.assign({element: this.element}, o);
+		return _.observers?.observe(options, callback);
 	},
 
 	getData: function(o) {
@@ -517,15 +437,18 @@ var _ = self.Mavo = $.Class({
 	 * Update the backend for a given role
 	 * @return {Boolean} true if a change occurred, false otherwise
 	 */
-	updateBackend: function(role) {
-		var previous = this[role], backend, changed;
+	updateBackend (role) {
+		let existing = this[role], backend, changed;
+		const attribute = "mv-" + role;
 
 		if (this.index == 1) {
+			// This app is the first one in the page, so we can override its backend
+			// via URL params such as ?storage=...
 			backend = _.Functions.url(role);
 		}
 
 		if (!backend) {
-			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute("mv-" + role) || null;
+			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute(attribute) || null;
 		}
 
 		if (backend) {
@@ -536,21 +459,29 @@ var _ = self.Mavo = $.Class({
 			}
 		}
 
-		if (backend && (!previous || !previous.equals(backend))) {
-			// We have a string, convert to a backend object if different than existing
-			this[role] = backend = _.Backend.create(backend, {
-				mavo: this,
-				format: this.element.getAttribute(`mv-${role}-format`) || this.element.getAttribute("mv-format")
-			}, this.element.getAttribute(`mv-${role}-type`), this[role]);
+		if (backend) {
+			// Do we have any other attributes?
+			let prefix = attribute + "-";
+			let roleAttributes = Mavo.attributeStartsWith(prefix, this.element);
+			let options = Object.fromEntries(roleAttributes.map(a => [a.name.replace(prefix, ""), a.value]));
 
-			changed = true;
+			if (!existing?.equals?.(backend)) {
+				// We have a string, convert to a backend object if different than existing
+				this[role] = backend = _.Backend.create(backend, {
+					format: this.element.getAttribute("mv-format"), // can be overwritten by options below
+					...options,
+					mavo: this
+				}, existing);
+
+				changed = true;
+			}
 		}
-		else if (!backend) {
+		else {
 			// We had a backend and now we will un-have it
 			this[role] = null;
 		}
 
-		changed = changed || (backend? !backend.equals(previous) : !!previous);
+		changed = changed || (backend? !backend.equals(existing) : Boolean(existing));
 
 		if (changed) {
 			// A change occured
@@ -923,40 +854,12 @@ var _ = self.Mavo = $.Class({
 		},
 
 		observe (options, callback) {
-			_.observers = _.observers ?? new Map();
-			options.static = true;
-			_.observers.set(options, callback);
-			return callback;
+			_.observers = _.observers || new Mavo.Observers();
+			return _.observers.observe(options, callback);
 		},
 
-		unobserve (options, callback, observers = _.observers) {
-			if (!observers) {
-				return;
-			}
-
-			let matches = _.findObservers(options, callback, observers);
-
-			for (let [o, c] of matches.entries()) {
-				observers.delete(o);
-			}
-		},
-
-		// Look up observers that match certain options and/or callback
-		findObservers (options, callback, observers = _.observers) {
-			let keys = Object.keys(options);
-			let ret = new Map();
-
-			for (let [o, c] of observers.entries()) {
-				if (callback && callback !== c) {
-					continue;
-				}
-
-				if (keys.every(k => o[k] === options[k])) {
-					ret.set(o, c);
-				}
-			}
-
-			return ret;
+		unobserve (options, callback) {
+			_.observers.unobserve(options, callback);
 		},
 
 		warn: function warn(message, o = {}) {

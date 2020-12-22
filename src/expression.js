@@ -59,7 +59,9 @@ Bliss.Class(_, {
 
 				Mavo.hooks.run("expression-compile-error", {context: this, error});
 
-				return this.function = error;
+				this.function = error;
+
+				return value;
 			}
 
 			this.ast = this.options.ast;

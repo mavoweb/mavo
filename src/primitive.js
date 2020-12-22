@@ -152,9 +152,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 			else {
 				this.label = Mavo.Functions.readable(this.property);
-				this.sneak(() => {
-					this.element.setAttribute("aria-label", this.label);
-				});
+				this.pauseObserver();
+				this.element.setAttribute("aria-label", this.label);
+				this.resumeObserver();
 			}
 		}
 
@@ -187,6 +187,22 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (this.editor) {
 			if (this.editor.matches(Mavo.selectors.formControl)) {
+				if (this.editor.matches("select")) {
+					let text = [...this.editor.options].find(o => o.value == value)?.textContent;
+
+					// We have a local editor, do we need to add/remove temp options?
+					if (text === undefined) {
+						// Option not found in the select menu, add a temp option
+						$.create("option", {
+							className: "mv-volatile",
+							textContent: value,
+							inside: this.editor,
+							selected: true,
+							disabled: true
+						});
+					}
+				}
+
 				_.setValue(this.editor, value, {config: this.editorDefaults});
 			}
 			else {
@@ -234,8 +250,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return env.data;
 	}
 
-	sneak (callback) {
-		return this.mavo.sneak({id: "primitive"}, callback);
+	pauseObserver () {
+		Mavo.observers.pause({id: "primitive"});
+	}
+
+	resumeObserver () {
+		Mavo.observers.resume({id: "primitive"});
 	}
 
 	save() {
@@ -334,123 +354,125 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return true;
 		}
 
-		this.sneak(() => {
-			// Actual edit
+		this.pauseObserver();
 
-			if (this.initEdit) {
-				this.initEdit();
-			}
+		// Actual edit
 
-			if (this.popup) {
-				this.popup.prepare();
+		if (this.initEdit) {
+			this.initEdit();
+		}
 
-				var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
+		if (this.popup) {
+			this.popup.prepare();
 
-				$.bind(this.element, events, _ => this.popup.show());
-			}
-			else {
-				if (!this.attribute) {
-					if (this.editor.parentNode != this.element) {
-						this.editorValue = this.value;
+			var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
 
-						if (this.config.hasChildren) {
-							this.element.textContent = "";
-						}
-						else {
-							_.setText(this.element, "");
-						}
+			$.bind(this.element, events, _ => this.popup.show());
+		}
+		else {
+			if (!this.attribute) {
+				if (this.editor.parentNode != this.element) {
+					this.editorValue = this.value;
 
-						this.element.prepend(this.editor);
+					if (this.config.hasChildren) {
+						this.element.textContent = "";
+					}
+					else {
+						_.setText(this.element, "");
 					}
 
-					if (!this.collection) {
-						Mavo.revocably.restoreAttribute(this.element, "tabindex");
-					}
+					this.element.prepend(this.editor);
 				}
 
-				if (this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
-					// If pasting text with line breaks and this is a single-line input
-					// Insert them as multiple items
-					var multiline = this.editor.matches("textarea");
+				if (!this.collection) {
+					Mavo.revocably.restoreAttribute(this.element, "tabindex");
+				}
+			}
 
-					if (!multiline) {
-						$.bind(this.editor, "paste.mavo:edit", evt => {
-							if (!this.closestCollection.editing || !evt.clipboardData) {
-								return;
-							}
+			if (this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+				// If pasting text with line breaks and this is a single-line input
+				// Insert them as multiple items
+				var multiline = this.editor.matches("textarea");
 
-							var text = evt.clipboardData.getData("text/plain");
-							const CRLF = /\r?\n|\r/;
-
-							if (CRLF.test(text)) {
-								evt.preventDefault();
-
-								var lines = text.split(CRLF);
-
-								// "Paste" first line where the cursor is
-								this.editor.setRangeText(lines[0]);
-								$.fire(this.editor, "input");
-
-								// Insert the rest of the lines as new items
-								// FIXME DRYfy the repetition between this code and the one below
-								var collection = this.closestCollection;
-								var index = closestItem?.index || 0;
-
-								for (var i=1; i<lines.length; i++) {
-									var closestItem = this.closestItem;
-									var next = collection.add(undefined, index + i);
-									collection.editItem(next); // TODO add() should take care of this
-
-									var copy = this.getCousin(i);
-									copy.render(lines[i]);
-								}
-
-							}
-						});
-					}
-
-					$.bind(this.editor, "keydown.mavo:edit", evt => {
-						if (!this.closestCollection.editing || !["Backspace", "Enter"].indexOf(evt.key) === -1) {
+				if (!multiline) {
+					$.bind(this.editor, "paste.mavo:edit", evt => {
+						if (!this.closestCollection.editing || !evt.clipboardData) {
 							return;
 						}
 
-						if (evt.key == "Enter" && (evt.shiftKey || !multiline)) {
-							if (this.bottomUp) {
-								return;
-							}
+						var text = evt.clipboardData.getData("text/plain");
+						const CRLF = /\r?\n|\r/;
 
-							var closestItem = this.closestItem;
-							var next = this.closestCollection.add(undefined, closestItem?.index + 1);
-							this.closestCollection.editItem(next);
-
-							var copy = this.getCousin(1);
-							requestAnimationFrame(() => {
-								copy.edit();
-								copy.editor.focus();
-							});
-
-							if (multiline) {
-								evt.preventDefault();
-							}
-						}
-						else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
-							// Focus on sibling afterwards
-							var sibling = this.getCousin(1) || this.getCousin(-1);
-
-							// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
-							this.closestCollection.delete(this.closestItem);
-
-							if (sibling) {
-								sibling.edit();
-								sibling.editor.focus();
-							}
-
+						if (CRLF.test(text)) {
 							evt.preventDefault();
+
+							var lines = text.split(CRLF);
+
+							// "Paste" first line where the cursor is
+							this.editor.setRangeText(lines[0]);
+							$.fire(this.editor, "input");
+
+							// Insert the rest of the lines as new items
+							// FIXME DRYfy the repetition between this code and the one below
+							var collection = this.closestCollection;
+							var index = closestItem?.index || 0;
+
+							for (var i=1; i<lines.length; i++) {
+								var closestItem = this.closestItem;
+								var next = collection.add(undefined, index + i);
+								collection.editItem(next); // TODO add() should take care of this
+
+								var copy = this.getCousin(i);
+								copy.render(lines[i]);
+							}
+
 						}
 					});
 				}
+
+				$.bind(this.editor, "keydown.mavo:edit", evt => {
+					if (!this.closestCollection.editing || !["Backspace", "Enter"].indexOf(evt.key) === -1) {
+						return;
+					}
+
+					if (evt.key == "Enter" && (evt.shiftKey || !multiline)) {
+						if (this.bottomUp) {
+							return;
+						}
+
+						var closestItem = this.closestItem;
+						var next = this.closestCollection.add(undefined, closestItem?.index + 1);
+						this.closestCollection.editItem(next);
+
+						var copy = this.getCousin(1);
+						requestAnimationFrame(() => {
+							copy.edit();
+							copy.editor.focus();
+						});
+
+						if (multiline) {
+							evt.preventDefault();
+						}
+					}
+					else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
+						// Focus on sibling afterwards
+						var sibling = this.getCousin(1) || this.getCousin(-1);
+
+						// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
+						this.closestCollection.delete(this.closestItem);
+
+						if (sibling) {
+							sibling.edit();
+							sibling.editor.focus();
+						}
+
+						evt.preventDefault();
+					}
+				});
 			}
-		});
+		}
+
+		this.resumeObserver();
 
 		return true;
 	} // edit
@@ -462,27 +484,34 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		$.unbind(this.element, ".mavo:edit");
 
-		this.sneak(() => {
-			if (this.config.done) {
-				this.config.done.call(this);
-				return;
-			}
+		this.pauseObserver();
 
-			if (this.popup) {
-				this.popup.close();
-			}
-			else if (!this.attribute && this.editor) {
-				$.remove(this.editor);
+		if (this.config.done) {
+			this.config.done.call(this);
+			return;
+		}
 
-				_.setValue(this.element, this.editorValue, {
-					config: this.config,
-					attribute: this.attribute,
-					datatype: this.datatype,
-					map: this.originalEditor || this.editor,
-					node: this
+		if (this.popup) {
+			this.popup.close();
+		}
+		else if (!this.attribute && this.editor) {
+			$.remove(this.editor);
+
+			if (this.editor.matches("select")) {
+				// Remove any temp options that we don’t need anymore
+				$$(".mv-volatile", this.editor).forEach(o => {
+					if (!o.selected) {
+						o.remove();
+					}
 				});
 			}
-		});
+
+			// force: true is needed because otherwise setValue() aborts when it sees
+			// that the value we are trying to set is the same as the existing one
+			this.setValue(this.editorValue, {silent: true, force: true});
+		}
+
+		this.resumeObserver();
 
 		if (!this.collection) {
 			Mavo.revocably.restoreAttribute(this.element, "tabindex");
@@ -581,43 +610,52 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return value;
 		}
 
-		this.sneak(() => {
-			if (this.editor && this.editorValue != value) {
-				// If an editor is present, set its value to match
-				this.editorValue = value;
+		this.pauseObserver();
+
+		if (this.editor && this.editorValue != value) {
+			// If an editor is present, set its value to match
+			this.editorValue = value;
+		}
+
+		// Also set DOM value if either using a popup, or there's no editor
+		// or the editor is not inside the element (e.g. it could be a nested editor that is now detached)
+		if (this.popup || !this.editor || (this.editor !== document.activeElement && !this.element.contains(this.editor))) {
+			if (this.config.setValue) {
+				this.config.setValue.call(this, this.element, value);
 			}
+			else if (!o.dataOnly) {
+				let map = this.originalEditor || this.editor;
+				let presentational;
 
-			// Also set DOM value if either using a popup, or there's no editor
-			// or the editor is not inside the element (e.g. it could be a nested editor that is now detached)
-			if (this.popup || !this.editor || (this.editor !== document.activeElement && !this.element.contains(this.editor))) {
-				if (this.config.setValue) {
-					this.config.setValue.call(this, this.element, value);
-				}
-				else if (!o.dataOnly) {
-					_.setValue(this.element, value, {
-						config: this.config,
-						attribute: this.attribute,
-						datatype: this.datatype,
-						map: this.originalEditor || this.editor,
-						node: this
-					});
-				}
-			}
-
-			this.empty = !value && value !== 0;
-
-			this._value = value;
-
-			this.liveData.update();
-
-			if (!o.silent) {
-				if (this.saved) {
-					this.unsavedChanges = this.mavo.unsavedChanges = true;
+				if (map?.matches("select")) {
+					presentational = [...map.options].find(o => o.value == value)?.textContent;
 				}
 
-				this.dataChanged("propertychange", {value});
+				_.setValue(this.element, value, {
+					config: this.config,
+					attribute: this.attribute,
+					datatype: this.datatype,
+					presentational,
+					node: this
+				});
 			}
-		});
+		}
+
+		this.empty = !value && value !== 0;
+
+		this._value = value;
+
+		this.liveData.update();
+
+		if (!o.silent) {
+			if (this.saved) {
+				this.unsavedChanges = this.mavo.unsavedChanges = true;
+			}
+
+			this.dataChanged("propertychange", {value});
+		}
+
+		this.resumeObserver();
 
 		return value;
 	}
@@ -634,7 +672,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		var tempURL = URL.createObjectURL(file);
 
 		// FIXME what if there's no attribute?
-		this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
+		this.pauseObserver();
+		this.element.setAttribute(this.attribute, tempURL);
+		this.resumeObserver();
 
 		var path = this.element.getAttribute("mv-upload-path") || "";
 		var relative = path + "/" + name;
@@ -654,7 +694,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			// <a> should get the proper URL immediately, because hovering would reveal what it is
 			// for other types, we should keep the temporary URL because the real one may not have deployed yet
 			// If the editor is manually edited, this will change anyway
-			this.sneak(() => this.element.setAttribute(this.attribute, tempURL));
+			this.pauseObserver();
+			this.element.setAttribute(this.attribute, tempURL);
+			this.resumeObserver();
 		}
 	}
 
@@ -935,7 +977,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		}
 		else {
-			var presentational = _.format(value, o);
+			var presentational = o.presentational ?? _.format(value, o);
 
 			if (o.node && !o.config.hasChildren) {
 				_.setText(element, presentational);
@@ -970,27 +1012,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	static format (value, o = {}) {
-		if (o.map && /^select$/i.test(o.map.nodeName)) {
-			for (var i=0, option; option = o.map.options[i]; i++) {
-				if (option.value == value) {
-					return option.textContent;
-				}
-
-				if (option.classList.contains("mv-volatile")) {
-					option.remove();
-				}
-			}
-
-			// If we're here, the option is not present, add it
-			$.create("option", {
-				className: "mv-volatile",
-				textContent: value,
-				inside: o.map
-			});
-
-			return value;
-		}
-
 		if (($.type(value) === "number" || o.datatype == "number")) {
 			if (value === null) {
 				return "";
