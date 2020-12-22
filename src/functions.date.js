@@ -121,23 +121,15 @@ _.duration = $.extend(function (ms, terms) {
 	let onlyConsecutiveNonzeros = true;
 
 	units.map(function(unit) {
-		let unitValue;
-
 		// get largest value of time unit for the remaining
 		// time to account for
-		if (unit !== "ms") {
-			unitValue = _.msTo(unit, timeLeft);
-		}
-		else {
-			unitValue = timeLeft;
-		}
-
+		let unitValue = unit === "ms"? timeLeft : _.msTo(unit, timeLeft);
 		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
 		return unitValue;
 	}).forEach(function (currentValue, index) {
 		if (currentValue !==0 && ret.length < terms) {
 			let unitProperPlurality = currentValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
-			ret.push(currentValue + " " + _.phrase($this, unitProperPlurality));
+			ret.push(currentValue + " " + Mavo.Functions.phrase($this, unitProperPlurality));
 
 			// so we have a list of unit terms used to later determine whether they're consecutive
 			unitsUsed.push(units[index]);
