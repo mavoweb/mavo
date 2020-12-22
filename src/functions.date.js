@@ -108,56 +108,60 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function ($this, ms, terms) {
-	if (arguments.length === 1) {
-		[ms, $this] = [$this, null];
-	}
-
-	if (ms===0 || terms === undefined) {
+_.duration = $.extend(function (ms, terms) {
+	if (ms === 0 || terms === undefined) {
 		terms = 1;
 	}
 
 	let timeLeft = ms || 0;
 	let ret = [];
-	let unitsToUse = ["ms"];
+	let units = Object.keys(s).reverse();
+	units.push("ms");
+	let unitsUsed = [];
+	let onlyConsecutiveNonzeros = true;
 
-	// populate unitsToUse with all the terms that can fit within timeLeft
-	// in order of lowest to highest magnitude,
-	// so we have a list of consecutive unit terms to later reference
-	for (let nextUnit in s) {
-		let count = _.msTo(nextUnit, timeLeft);
+	units.map(function(unit) {
+		let unitValue;
 
-		if (count === 0) {
-			break;
-		}
-
-		unitsToUse.push(nextUnit);
-	}
-
-	while (ret.length < terms && unitsToUse.length > 0) {
-		let unit = unitsToUse.pop();
-		let unitTime;
-
-		if (unit!=="ms") {
-			unitTime = _.msTo(unit, timeLeft);
+		// get largest value of time unit for the remaining
+		// time to account for
+		if (unit !== "ms") {
+			unitValue = _.msTo(unit, timeLeft);
 		}
 		else {
-			unitTime = timeLeft;
+			unitValue = timeLeft;
 		}
 
-		if (unitTime!=0 || terms === 1) {
-			let unitProperPlurality = unitTime === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-			ret.push(unitTime + " " + _.phrase($this, unitProperPlurality));
-			timeLeft -= unitTime * (unit === "ms" ? 1 : Mavo.Functions[unit]());
+		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
+		return unitValue;
+	}).forEach(function (currentValue, index) {
+		if (currentValue !==0 && ret.length < terms) {
+			let unitProperPlurality = currentValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
+			ret.push(currentValue + " " + _.phrase($this, unitProperPlurality));
+
+			// so we have a list of unit terms used to later determine whether they're consecutive
+			unitsUsed.push(units[index]);
+		};
+	});
+
+	ret.filter(function (currentValue, index) {
+		// terms must be consecutive
+		if (index !== 0) {
+
+			if ((units.indexOf(unitsUsed[index]) - units.indexOf(unitsUsed[index-1])) !== 1) {
+				// we will not populate the returning array further since
+				// the following units won't be consecutive
+				onlyConsecutiveNonzeros = false;
+			}
 		}
-		else {
-			// we will not populate the returning array further since
-			// the following units won't be consecutive
-			break;
-		}
+		return onlyConsecutiveNonzeros;
+	});
+
+	if (ret.length === 0) {
+		ret.push("0 ms");
 	}
 
-	return (arguments.length ===1 || (arguments.length ===2 && $this!== undefined))? ret[0] : ret;
+	return arguments.length === 1 ? ret[0] : ret;
 }, {
 	needsContext: true
 });
