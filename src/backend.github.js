@@ -408,16 +408,15 @@ var _ = Mavo.Backend.register($.Class({
 				path = url.pathname.slice(1).split("/");
 				const firstSegment = path.shift();
 
-				if (firstSegment == "repos") {
-					ret.username = path.shift();
-					ret.repo = path.shift();
-
-					// Drop `contents`
-					path.shift();
-				}
-				else {
+				if (firstSegment != "repos") {
 					return ret;
 				}
+
+				ret.username = path.shift();
+				ret.repo = path.shift();
+
+				// Drop `contents`
+				path.shift();
 			}
 			else if (path[0] == "blob") {
 				path.shift();
