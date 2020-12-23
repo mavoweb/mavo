@@ -9,7 +9,7 @@ s.hours  = s.minutes * 60;
 s.days   = s.hours   * 24;
 s.weeks  = s.days    * 7;
 s.months = s.days    * 30.4368;
-s.years  = s.weeks  * 52;
+s.years  = s.weeks   * 52;
 
 var numeric = {
 	year: d => d.getFullYear(),
@@ -115,28 +115,29 @@ _.duration = $.extend(function (ms, terms) {
 
 	let timeLeft = ms || 0;
 	let ret = [];
-	let units = Object.keys(s).reverse();
-	units.push("ms");
-	let noUnitSkipped = true;
 
-	units.forEach(function(unit, index) {
-		// get largest value of time unit for the remaining
-		// time to account for
-		let unitValue = unit === "ms"? timeLeft : _.msTo(unit, timeLeft);
-		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
+	if (ms < 1) {
+		ret = ["0 ms"];
+	}
+	else {
+		let units = [...Object.keys(s).reverse(), "ms"];
 
-		if (unitValue !== 0 && ret.length < terms && noUnitSkipped) {
-			let unitProperPlurality = unitValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
-			ret.push(unitValue + " " + Mavo.Functions.phrase.call(this, unitProperPlurality));
+		for (let i=0, unit; unit = units[i]; i++) {
+			// get largest value of time unit for the remaining
+			// time to account for
+			let unitMs = unit in s? s[unit] * 1000 : 1; // number of ms in 1 unit
+			let unitValue = Math.floor(timeLeft / unitMs); // quotient
+			timeLeft = timeLeft % unitMs; // remainder
+
+			if (unitValue > 0) {
+				let unitProperPlurality = unitValue === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
+				ret.push(unitValue + " " + _.phrase.call(this, unitProperPlurality));
+			}
+			else if (ret.length > 0) {
+				// Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
+				break;
+			}
 		}
-		else if (ret.length > 0) {
-			// terms are no longer consecutive terms
-			noUnitSkipped = false;
-		}
-	});
-
-	if (ret.length === 0) {
-		ret.push("0 ms");
 	}
 
 	return arguments.length === 1 ? ret[0] : ret;
