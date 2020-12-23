@@ -108,24 +108,38 @@ for (let unit in s) {
 	}, {multiValued: true});
 }
 
-_.duration = $.extend(function(ms) {
-	var count = ms || 0;
-	var unit = "ms";
-
-	for (let nextUnit in s) {
-		var nextCount = _.msTo(nextUnit, ms);
-
-		if (nextCount === 0) {
-			break;
-		}
-
-		count = nextCount;
-		unit = nextUnit;
+_.duration = $.extend(function (ms, terms) {
+	if (ms === 0 || terms === undefined) {
+		terms = 1;
 	}
 
-	unit = count === 1 && unit !== "ms"? unit.slice(0, -1) : unit;
+	let timeLeft = ms || 0;
+	let ret = [];
+	let units = Object.keys(s).reverse();
+	units.push("ms");
+	let noUnitSkipped = true;
 
-	return count + " " + _.phrase.call(this, unit);
+	units.forEach(function(unit, index) {
+		// get largest value of time unit for the remaining
+		// time to account for
+		let unitValue = unit === "ms"? timeLeft : _.msTo(unit, timeLeft);
+		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
+
+		if (unitValue !== 0 && ret.length < terms && noUnitSkipped) {
+			let unitProperPlurality = unitValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
+			ret.push(unitValue + " " + Mavo.Functions.phrase(this, unitProperPlurality));
+		}
+		else if (ret.length > 0) {
+			// terms are no longer consecutive terms
+			noUnitSkipped = false;
+		}
+	});
+
+	if (ret.length === 0) {
+		ret.push("0 ms");
+	}
+
+	return arguments.length === 1 ? ret[0] : ret;
 }, {
 	needsContext: true
 });
