@@ -34,21 +34,6 @@ var _ = Mavo.Backend.register($.Class({
 			this.info[prop] = o[prop];
 		}
 
-		// Let an author provide either filepath, filename, or path.
-		// The path property takes priority
-		if (this.info.path) {
-			if (!o.path) {
-				if (this.info.filename) {
-					this.info.path = (this.info.filepath? this.info.filepath + "/" : "") + this.info.filename;
-				}
-				else {
-					this.info.path = this.info.filepath;
-				}
-			}
-
-			this.info.apiCall = `repos/${this.info.username}/${this.info.repo}/contents/${this.info.path}` + (this.info.apiParams ?? "");
-		}
-
 		$.extend(this, this.info);
 	},
 
@@ -376,9 +361,43 @@ var _ = Mavo.Backend.register($.Class({
 		 * Parse Github URLs, return username, repo, branch, path
 		 */
 		parseURL: function(source, defaults = {}) {
-			var ret = {};
-			var url = new URL(source, Mavo.base);
-			var path = url.pathname.slice(1).split("/");
+			const ret = {};
+
+			// Define computed properties as writable accessors
+			Object.defineProperties(ret, {
+				"apiCall": {
+					get() {
+						// Don't lose search params for raw API calls
+						return `repos/${this.username}/${this.repo}/contents/${this.path}` + (this.apiParams ?? "");
+					},
+					set (v) {
+						delete this.apiCall;
+						this.apiCall = v;
+					},
+					configurable: true,
+					enumerable: true
+				},
+
+				"path": {
+					get() {
+						if (this.filename) {
+							return (this.filepath? this.filepath + "/" : "") + this.filename;
+						}
+						else {
+							return this.filepath;
+						}
+					},
+					set (v) {
+						delete this.path;
+						this.path = v;
+					},
+					configurable: true,
+					enumerable: true
+				}
+			});
+
+			const url = new URL(source, Mavo.base);
+			let path = url.pathname.slice(1).split("/");
 
 			ret.username = path.shift();
 			ret.repo = path.shift() || defaults.repo;
@@ -388,22 +407,20 @@ var _ = Mavo.Backend.register($.Class({
 			}
 			else if (/api.github.com$/.test(url.host)) {
 				// Raw API call
-				const apiParams = url.search;
-				const apiCall = url.pathname.slice(1) + apiParams;
-				const data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+				delete ret.username;
+				delete ret.repo;
+
+				ret.apiParams = url.search;
+				ret.apiData = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+
+				const apiCall = url.pathname.slice(1) + ret.apiParams;
 
 				if (apiCall == "graphql") {
-					return {
-						apiCall,
-						apiData: {query: data}
-					};
-				}
+					ret.apiCall = apiCall;
+					ret.apiData = { query: ret.apiData };
 
-				ret = {
-					apiCall,
-					apiParams,
-					apiData: data
-				};
+					return ret;
+				}
 
 				path = url.pathname.slice(1).split("/");
 				const firstSegment = path.shift();
@@ -423,7 +440,7 @@ var _ = Mavo.Backend.register($.Class({
 				ret.branch = path.shift();
 			}
 
-			var lastSegment = path[path.length - 1];
+			const lastSegment = path[path.length - 1];
 
 			if (/\.\w+$/.test(lastSegment)) {
 				ret.filename = lastSegment;
@@ -432,20 +449,10 @@ var _ = Mavo.Backend.register($.Class({
 			else {
 				// If we work with a raw API call and couldn't find the filename in the path,
 				// leave the filename blank
-				ret.filename = ret.apiCall? "" : defaults.filename;
+				ret.filename = ret.hasOwnProperty("apiParams")? "" : defaults.filename;
 			}
 
 			ret.filepath = path.join("/") || defaults.filepath || "";
-
-			if (ret.filename) {
-				ret.path = (ret.filepath? ret.filepath + "/" : "") + ret.filename;
-			}
-			else {
-				ret.path = ret.filepath;
-			}
-
-			// Don't lose search params for raw API calls
-			ret.apiCall = `repos/${ret.username}/${ret.repo}/contents/${ret.path}` + (ret.apiParams ?? "");
 
 			return ret;
 		},
