@@ -127,7 +127,7 @@ _.duration = $.extend(function (ms, terms) {
 
 		if (unitValue !== 0 && ret.length < terms && noUnitSkipped) {
 			let unitProperPlurality = unitValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
-			ret.push(unitValue + " " + Mavo.Functions.phrase(this, unitProperPlurality));
+			ret.push(unitValue + " " + Mavo.Functions.phrase.call(this, unitProperPlurality));
 		}
 		else if (ret.length > 0) {
 			// terms are no longer consecutive terms
