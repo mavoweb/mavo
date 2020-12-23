@@ -117,36 +117,22 @@ _.duration = $.extend(function (ms, terms) {
 	let ret = [];
 	let units = Object.keys(s).reverse();
 	units.push("ms");
-	let unitsUsed = [];
-	let onlyConsecutiveNonzeros = true;
+	let noUnitSkipped = true;
 
-	units.map(function(unit) {
+	units.forEach(function(unit, index) {
 		// get largest value of time unit for the remaining
 		// time to account for
 		let unitValue = unit === "ms"? timeLeft : _.msTo(unit, timeLeft);
 		timeLeft -= unitValue * (unit === "ms" ? 1 : Mavo.Functions[unit]());
-		return unitValue;
-	}).forEach(function (currentValue, index) {
-		if (currentValue !== 0 && ret.length < terms) {
-			let unitProperPlurality = currentValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
-			ret.push(currentValue + " " + Mavo.Functions.phrase($this, unitProperPlurality));
 
-			// so we have a list of unit terms used to later determine whether they're consecutive
-			unitsUsed.push(units[index]);
-		};
-	});
-
-	ret.filter(function (currentValue, index) {
-		// terms must be consecutive
-		if (index !== 0) {
-
-			if ((units.indexOf(unitsUsed[index]) - units.indexOf(unitsUsed[index-1])) !== 1) {
-				// we will not populate the returning array further since
-				// the following units won't be consecutive
-				onlyConsecutiveNonzeros = false;
-			}
+		if (unitValue !== 0 && ret.length < terms && noUnitSkipped) {
+			let unitProperPlurality = unitValue === 1 && units[index] !== "ms" ? units[index].slice(0, -1) : units[index];
+			ret.push(unitValue + " " + Mavo.Functions.phrase(this, unitProperPlurality));
 		}
-		return onlyConsecutiveNonzeros;
+		else if (ret.length > 0) {
+			// terms are no longer consecutive terms
+			noUnitSkipped = false;
+		}
 	});
 
 	if (ret.length === 0) {
