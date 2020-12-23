@@ -426,6 +426,8 @@ var _ = Mavo.Backend.register($.Class({
 				const firstSegment = path.shift();
 
 				if (firstSegment != "repos") {
+					ret.apiCall = apiCall;
+
 					return ret;
 				}
 
