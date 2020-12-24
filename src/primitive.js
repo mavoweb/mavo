@@ -964,10 +964,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					var newValue = element[o.attribute] = value;
 				}
 				catch (e) {}
-
-				if (previousValue != newValue && o.config.changeEvents) {
-					o.config.changeEvents.split(/\s+/).forEach(type => $.fire(element, type));
-				}
 			}
 
 			// Set attribute anyway, even if we set a property because when

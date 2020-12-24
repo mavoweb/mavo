@@ -327,13 +327,23 @@ _.register({
 			}
 
 			var toCheck = $(`input[type=radio][name="${element.name}"][value="${value}"]`);
-			$.properties(toCheck, {checked: true});
+			if (toCheck) {
+				toCheck.checked = true;
+			}
 		},
-		init: function(element) {
-			this.mavo.element.addEventListener("change", evt => {
-				if (evt.target.name == element.name) {
-					this.value = this.getValue();
-				}
+		initOnce: function(element) {
+			Mavo.observe({
+				attribute: "value",
+				selector: "input[type=radio]"
+			}, () => {
+				let nodes = $$("input[type=radio]")
+					.forEach(radio => {
+						let node = Mavo.Node.get(radio, true);
+
+						if (node) {
+							node.value = node.getValue();
+						}
+					});
 			});
 		},
 		observedAttributes: ["value"]
