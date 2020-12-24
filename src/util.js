@@ -822,6 +822,10 @@ _.Observers = class Observers extends Map {
 
 		let element = r.target;
 
+		if (o.selector && !element.matches?.(o.selector)) {
+			return false;
+		}
+
 		if (o.attribute) {
 			// We are monitoring attribute changes only
 			if (r.type !== "attributes") {
@@ -829,8 +833,8 @@ _.Observers = class Observers extends Map {
 				return false;
 			}
 
-			if (o.attribute !== true && o.attribute !== r.attributeName) {
-				// We are monitoring a specific attribute, and a different one changed
+			if (o.attribute !== true && o.attribute !== r.attributeName && !o.attribute.includes?.(r.attributeName)) {
+				// We are monitoring specific attribute(s), and a different one changed
 				return false;
 			}
 		}
