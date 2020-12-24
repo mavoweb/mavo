@@ -1122,15 +1122,19 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 		else if (attribute && attribute.indexOf("mv-edit-") === 0) {
 			node.editor?.setAttribute(attribute.slice(8), element.getAttribute(attribute));
 		}
-		else if (node.config.observer !== false
-			&& (
-				node.config.subtree
-				|| (attribute === node.attribute || type === "characterData" && !node.attribute)
-				   && !node.editing
-			)
-		) {
+		else if (node.config.observer !== false) {
 			// Main value observer
-			node.value = node.getValue();
+			let update = node.config.subtree; // always update when this flag is on regardless of what changed
+
+			if (!update) {
+				update = attribute === node.attribute // note: these may be null
+				         || node.config.observedAttributes?.includes(attribute)
+				         || type === "characterData" && !node.attribute;
+			}
+
+			if (update) {
+				node.value = node.getValue();
+			}
 		}
 	}
 });

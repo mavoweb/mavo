@@ -288,7 +288,8 @@ _.register({
 				// Prevent creating same observer twice
 				Mavo.data(element, "boundObserver", observer);
 			}
-		}
+		},
+		observedAttributes: ["min", "max"]
 	},
 
 	"checkbox": {
@@ -332,7 +333,8 @@ _.register({
 					this.value = this.getValue();
 				}
 			});
-		}
+		},
+		observedAttributes: ["value"]
 	},
 
 	"counter": {
@@ -404,7 +406,8 @@ _.register({
 		},
 		done: function() {
 			$.unbind(this.element, ".mavo:edit");
-		}
+		},
+		observedAttributes: ["min", "max"]
 	},
 
 	"meta": {
