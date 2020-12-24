@@ -26,8 +26,8 @@ var _ = Mavo.Backend = $.Class({
 		}
 	},
 
-	async get (url = new URL(this.url)) {
-		if (url.protocol != "data:") {
+	async get (url = new URL(this.url), {useCache = false} = {}) {
+		if (!useCache && url.protocol != "data:") {
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 		}
 
@@ -87,7 +87,7 @@ var _ = Mavo.Backend = $.Class({
 	/**
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
-	request: function(call, data, method = "GET", req = {}) {
+	request: function(call, data, method = "GET", req = {}, {useCache = false} = {}) {
 		req = $.extend({}, req); // clone
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
@@ -105,7 +105,7 @@ var _ = Mavo.Backend = $.Class({
 		call = new URL(call, this.constructor.apiDomain);
 
 		// Prevent getting a cached response. Cache-control is often not allowed via CORS
-		if (req.method == "GET") {
+		if (!useCache && req.method == "GET") {
 			call.searchParams.set("timestamp", Date.now());
 		}
 
