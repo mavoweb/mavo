@@ -273,20 +273,22 @@ _.register({
 			if (!isNaN(value) && element.value != value && !Mavo.data(element, "boundObserver")) {
 				// Value out of bounds, maybe race condition? See #295
 				// Observe min/max attrs until user interaction or data change
-				var observer = new Mavo.Observer(element, attribute, r => {
-					element.value = value;
-				});
+				if (Mavo.observers.find({element, id: "oob"}).size === 0) {
+					Mavo.observe({
+						id: "oob",
+						element, attribute,
+						once: true
+					}, () => element.value = value);
+				}
 
 				requestAnimationFrame(() => {
 					$.bind(element, "input mv-change", function handler() {
-						observer.destroy();
-						Mavo.data(element, "boundObserver", undefined);
+						Mavo.unobserve({element, id: "oob"});
+
+						// Why not just use {once: true}? because we have two events
 						$.unbind(element, "input mv-change", handler);
 					});
 				});
-
-				// Prevent creating same observer twice
-				Mavo.data(element, "boundObserver", observer);
 			}
 		},
 		observedAttributes: ["min", "max"]
