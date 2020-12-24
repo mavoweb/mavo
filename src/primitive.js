@@ -94,6 +94,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.config.init.call(this, this.element);
 		}
 
+		if (this.config.initOnce && !this.config.initOnce.called) {
+			this.config.initOnce.call(this, this.element);
+			this.config.initOnce.called = true;
+		}
+
 		if (this.config.changeEvents) {
 			$.bind(this.element, this.config.changeEvents, evt => {
 				if (evt.target === this.element) {
