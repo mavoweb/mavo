@@ -109,18 +109,34 @@ for (let unit in s) {
 }
 
 _.duration = $.extend(function (ms, terms) {
-	if (ms === 0 || terms === undefined) {
+	if ((typeof terms) === "undefined") {
 		terms = 1;
 	}
 
 	let timeLeft = ms || 0;
 	let ret = [];
 
-	if (ms < 1) {
-		ret = ["0 ms"];
+	// all possible units
+	let unitsList = [...Object.keys(s).reverse(), "ms"];
+
+
+	if ((typeof terms) !== "number") {
+		// units must be in order of descending magnitude
+		terms.sort(function(a, b) {
+			return unitsList.indexOf(a) - unitsList.indexOf(b);
+		});
+	}
+
+	// terms will either provide units or allow any unit type
+	let units = ((typeof terms) === "number") ? unitsList : terms;
+
+	// number of ms in the shortest available unit
+	let smallestUnit = units[units.length-1] in s? s[units[units.length-1]] * 1000 : 1;
+
+	if (ms < smallestUnit) {
+		ret = ["0 " + units[units.length-1]];
 	}
 	else {
-		let units = [...Object.keys(s).reverse(), "ms"];
 
 		for (let i=0, unit; unit = units[i]; i++) {
 			// get largest value of time unit for the remaining
@@ -129,12 +145,16 @@ _.duration = $.extend(function (ms, terms) {
 			let unitValue = Math.floor(timeLeft / unitMs); // quotient
 			timeLeft = timeLeft % unitMs; // remainder
 
-			if (unitValue > 0) {
+			if (unitValue > 0 && ((typeof terms) !== "number" || ret.length < terms)) {
+				// only care about limiting number of terms when terms doesn't provide
+				// explicit units
 				let unitProperPlurality = unitValue === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
 				ret.push(unitValue + " " + _.phrase.call(this, unitProperPlurality));
 			}
-			else if (ret.length > 0) {
+			else if ((typeof terms) === "number" && (ret.length > 0 || ret.length === terms)) {
+				// When explicit units have not been provided in the terms param,
 				// Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
+				// & where we've reached term limit
 				break;
 			}
 		}
