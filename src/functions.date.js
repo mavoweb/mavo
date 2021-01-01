@@ -129,11 +129,11 @@ _.duration = $.extend(function (ms, terms) {
 			let unitValue = Math.floor(timeLeft / unitMs); // quotient
 			timeLeft = timeLeft % unitMs; // remainder
 
-			if (unitValue > 0) {
+			if (unitValue > 0 && ret.length < terms) {
 				let unitProperPlurality = unitValue === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
 				ret.push(unitValue + " " + _.phrase.call(this, unitProperPlurality));
 			}
-			else if (ret.length > 0 && ret.length < terms) {
+			else if (ret.length > 0) {
 				// Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
 				break;
 			}
