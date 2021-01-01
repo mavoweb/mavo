@@ -541,7 +541,7 @@ var _ = Mavo.Data = $.Class(class Data {
 				var path = arr.path.reverse().slice(1); // Drop index
 				var ret = arr.value.map(a => $.value(a, ...path));
 
-				if (ret.length > 0 && ret[0][Mavo.route]) {
+				if (ret.length > 0 && ret?.[0]?.[Mavo.route]) {
 					ret[Mavo.route] = $.each(ret[0][Mavo.route], (p, v) => true);
 					ret[Mavo.mavo] = ret[0][Mavo.mavo];
 				}
