@@ -133,7 +133,7 @@ _.duration = $.extend(function (ms, terms) {
 				let unitProperPlurality = unitValue === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
 				ret.push(unitValue + " " + _.phrase.call(this, unitProperPlurality));
 			}
-			else if (ret.length > 0) {
+			else if (ret.length > 0 && ret.length < terms) {
 				// Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
 				break;
 			}
