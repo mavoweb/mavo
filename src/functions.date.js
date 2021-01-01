@@ -142,7 +142,8 @@ _.duration = $.extend(function (ms, terms) {
 
 	return arguments.length === 1 ? ret[0] : ret;
 }, {
-	needsContext: true
+	needsContext: true,
+	multiValued: true
 });
 
 $.extend(_.util, {
