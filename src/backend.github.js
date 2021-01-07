@@ -367,8 +367,15 @@ var _ = Mavo.Backend.register($.Class({
 			Object.defineProperties(ret, {
 				"apiCall": {
 					get() {
+						let call = `repos/${this.username}/${this.repo}/${this.resources ?? "contents"}`;
+
+						const path = this.path;
+						if (path) {
+							call += `/${path}`;
+						}
+
 						// Don't lose search params for raw API calls
-						return `repos/${this.username}/${this.repo}/contents/${this.path}` + (this.apiParams ?? "");
+						return call + (this.apiParams ?? "");
 					},
 					set (v) {
 						delete this.apiCall;
@@ -433,9 +440,7 @@ var _ = Mavo.Backend.register($.Class({
 
 				ret.username = path.shift();
 				ret.repo = path.shift();
-
-				// Drop `contents`
-				path.shift();
+				ret.resources = path.shift();
 			}
 			else if (path[0] == "blob") {
 				path.shift();
