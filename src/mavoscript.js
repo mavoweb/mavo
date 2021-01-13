@@ -822,19 +822,13 @@ var _ = Mavo.Script = {
 	},
 
 	rewrite: function(code, o) {
-		try {
-			let ast = _.parse(code);
+		let ast = _.parse(code);
 
-			if (o) {
-				o.ast = ast;
-			}
+		if (o) {
+			o.ast = ast;
+		}
 
-			return _.serialize(ast);
-		}
-		catch (e) {
-			// Parsing as MavoScript failed, falling back to plain JS
-			return code;
-		}
+		return _.serialize(ast);
 	},
 
 	compile: function(code, o) {
