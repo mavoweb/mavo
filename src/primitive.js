@@ -1127,7 +1127,7 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 			// Main value observer
 			let update = node.config.subtree; // always update when this flag is on regardless of what changed
 
-			if (!update) {
+			if (!update && (!node.editing || node.modes === "edit")) {
 				update = attribute === node.attribute // note: these may be null
 				         || node.config.observedAttributes?.includes(attribute)
 				         || type === "characterData" && !node.attribute;
