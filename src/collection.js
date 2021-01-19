@@ -34,7 +34,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 	createAddButton() {
 		// Find add button if provided, or generate one
-		var selector = `button.mv-add-${this.property}`;
+		var selector = `button[class~="mv-add-${this.property}"]`;
 		var group = this.parentGroup.element;
 
 		var button = $$(selector, group).filter(button => {
