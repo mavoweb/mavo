@@ -588,31 +588,51 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	}
 
 	// Delete multiple items from potentially multiple collections or even multiple mavos
-	static delete (nodes, o = {}) {
-		var deleted = new Mavo.BucketMap({arrays: true}); // Mavos and deleted items
-		var collections = new Set(); // Collections items were deleted from
-		var options = {silent: true, undoable: false, destroy: false};
-		var promises = nodes
-			.filter(node => !!node.collection) // Drop nodes that are not collection items
-			.map(node => {
-				collections.add(node.collection);
-				return node.collection.delete(node, options)
-				           .then(node => deleted.set(node.mavo, node));
-			});
+	static async delete (nodes, o = {}) {
+		// Drop nodes that are not collection items
+		nodes = nodes.filter(node => !!node.collection);
 
-		if (!o.silent) {
-			Promise.all(promises).then(() => {
-				collections.forEach(collection => {
-					collection.dataChanged("delete");
-				});
-
-				if (o.undoable !== false) {
-					deleted.forEach((nodes, mavo) => {
-						mavo.setDeleted(...nodes);
-					});
-				}
-			});
+		if (nodes.length === 0) {
+			return [];
 		}
+		else if (nodes.length === 1) {
+			let ret = await nodes[0].collection.delete(nodes[0]);
+			return [ret];
+		}
+
+		let deleted = new Mavo.BucketMap({arrays: true}); // Mavos and deleted items
+		let collections = new Set(); // Collections items were deleted from
+
+		let promises = nodes.map(async node => {
+				collections.add(node.collection);
+				// We set undoable: false to suppress the Undo UI for individual items
+				// so we can show one notice about all items
+				let options = {silent: true, undoable: false, destroy: false};
+				let item = await node.collection.delete(node, options);
+				item.unsavedChanges = true;
+				deleted.set(node.mavo, node);
+				return item;
+			});
+
+		let ret = await Promise.all(promises);
+
+		if (o.silent !== false) {
+			// Here we are also batching change notifications to limit pointless expression recalc
+			// Hopefully at some point we'll utilize a queue on the expression side
+			// so we won't need to be careful about this in data modification code
+			collections.forEach(collection => {
+				collection.unsavedChanges = collection.mavo.unsavedChanges = true;
+				collection.dataChanged("delete");
+			});
+
+			if (o.undoable !== false) {
+				deleted.forEach((nodes, mavo) => {
+					mavo.setDeleted(...nodes);
+				});
+			}
+		}
+
+		return ret;
 	}
 };
 
