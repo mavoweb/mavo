@@ -39,7 +39,8 @@
             if (plugin.repo) {
               // Plugin hosted in a separate repo
               let url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
-            } else {
+            }
+ else {
               // Plugin hosted in the mavo-plugins repo
               let url = `${_.url}/${plugin.id}/${filename}`;
             }
@@ -62,7 +63,8 @@
 
         if ($.type(existing) === "function") {
           $.Class(existing, o.extend[Class]);
-        } else {
+        }
+ else {
           $.extend(existing, o.extend[Class]);
         }
       }

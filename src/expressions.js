@@ -80,7 +80,8 @@
 
           scheduled.add(evt.node.template);
         }
-      } else {
+      }
+ else {
         requestAnimationFrame(() => this.update(evt));
       }
     },
@@ -94,10 +95,12 @@
 
       if (evt instanceof Mavo.Node) {
         rootObject = evt;
-      } else if (evt instanceof Element) {
+      }
+ else if (evt instanceof Element) {
         root = evt.closest(Mavo.selectors.item);
         rootObject = Mavo.Node.get(root);
-      } else if (evt) {
+      }
+ else if (evt) {
         // Specific data change
         var cache = {
           updated: new Set(),
@@ -110,7 +113,8 @@
             // Ensure that [collectionName] updates when changing children
             this.updateByIdThrottled(evt.node.path, evt, cache);
           }
-        } else {
+        }
+ else {
           // Collection modifications (add, delete, move etc)
           this.updateById(Object.keys(Mavo.Data.special), evt, cache);
 
@@ -120,7 +124,8 @@
         }
 
         return;
-      } else {
+      }
+ else {
         rootObject = this.mavo.root;
       }
 
@@ -147,7 +152,8 @@
         property.forEach((property) =>
           this.updateByIdThrottled(property, evt, cache)
         );
-      } else {
+      }
+ else {
         let scheduled = (this.scheduledIds = this.scheduledIds || new Set());
 
         if (!scheduled.has(property)) {
@@ -233,7 +239,8 @@
         // Text node
         // Leaf node, extract references from content
         this.extract(node, null, path, syntax);
-      } else {
+      }
+ else {
         node.normalize();
 
         syntax = Mavo.Expression.Syntax.create(node) || syntax;
@@ -265,7 +272,8 @@
             if (child.nodeType == 1) {
               offset = 0;
               index++;
-            } else {
+            }
+ else {
               offset++;
             }
 

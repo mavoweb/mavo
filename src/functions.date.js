@@ -155,7 +155,8 @@
 
       if (ms < 1) {
         ret = ["0 ms"];
-      } else {
+      }
+ else {
         let units = [...Object.keys(s).reverse(), "ms"];
 
         for (let i = 0, unit; (unit = units[i]); i++) {
@@ -171,7 +172,8 @@
             ret.push(
               unitValue + " " + _.phrase.call(this, unitProperPlurality)
             );
-          } else if (ret.length > 0) {
+          }
+ else if (ret.length > 0) {
             // Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
             break;
           }
@@ -201,7 +203,8 @@
       if (!hasDate) {
         // No date, add today’s
         date = _.$today + " " + date;
-      } else {
+      }
+ else {
         // Only year-month, add day
         date = date.replace(/^(\d{4}-\d{2})(?!-\d{2})/, "$1-01");
       }
@@ -209,7 +212,8 @@
       if (!hasTime) {
         // Add a time if one doesn't exist
         date += "T00:00:00";
-      } else {
+      }
+ else {
         // Make sure time starts with T, due to Safari bug
         date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
       }
@@ -246,7 +250,8 @@
         if (/^0+$/.test(format)) {
           // Leading zeroes
           return (ret + "").padStart(format.length, "0").slice(-format.length);
-        } else {
+        }
+ else {
           format = { name: "long", shortname: "short" }[format] || format;
           ret = dateO.toLocaleString(Mavo.locale, { [component]: format });
           ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
@@ -286,7 +291,8 @@
       if (timezone) {
         // parse as ISO format
         date = new Date(date);
-      } else {
+      }
+ else {
         // construct date in local timezone
         let fields = date.match(/\d+/g);
 

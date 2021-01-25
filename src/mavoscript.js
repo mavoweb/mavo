@@ -12,7 +12,8 @@
               if (propertyL in Mavo.Actions.Functions) {
                 if (Mavo.Actions.running) {
                   ret = Mavo.Actions.Functions[propertyL];
-                } else {
+                }
+ else {
                   ret = Mavo.Actions.nope;
                 }
               }
@@ -21,7 +22,8 @@
               if (ret === undefined) {
                 if (propertyL in Mavo.Functions) {
                   ret = Mavo.Functions[propertyL];
-                } else {
+                }
+ else {
                   // Maybe it's a Math function?
                   ret = Math[property] || Math[propertyL];
                 }
@@ -60,7 +62,8 @@
     unaryOperation: function (operand, scalar) {
       if (Array.isArray(operand)) {
         return operand.map(scalar);
-      } else {
+      }
+ else {
         return scalar(operand);
       }
     },
@@ -83,24 +86,30 @@
           for (let i = 0; i < max; i++) {
             if (o.comparison && (a[i] === undefined || b[i] === undefined)) {
               result[i] = o.default;
-            } else if (a[i] === undefined) {
+            }
+ else if (a[i] === undefined) {
               result[i] = rightUnary
                 ? rightUnary(b[i])
                 : o.scalar(leftDefault, b[i]);
-            } else if (b[i] === undefined) {
+            }
+ else if (b[i] === undefined) {
               result[i] = leftUnary
                 ? leftUnary(a[i])
                 : o.scalar(a[i], rightDefault);
-            } else {
+            }
+ else {
               result[i] = o.scalar(a[i], b[i]);
             }
           }
-        } else {
+        }
+ else {
           result = b.map((n) => o.scalar(a, n));
         }
-      } else if (Array.isArray(a)) {
+      }
+ else if (Array.isArray(a)) {
         result = a.map((n) => o.scalar(n, b));
-      } else {
+      }
+ else {
         result = o.scalar(a, b);
       }
 
@@ -156,7 +165,8 @@
 
             if (o.comparison) {
               prev = _.binaryOperation(prev, result, _.operators["and"]);
-            } else {
+            }
+ else {
               prev = result;
             }
           }
@@ -387,18 +397,21 @@
             if (Array.isArray(a)) {
               if (Array.isArray(b)) {
                 a = a.map((v, i) => (val(b[i]) ? v : null));
-              } else {
+              }
+ else {
                 b = val(b);
 
                 if (typeof b === "boolean") {
                   // foo where true/false should equal foo/null respectively
                   a = b ? a : a.map((v) => null);
-                } else {
+                }
+ else {
                   // foo where 5 should equal foo where foo = 5
                   a = a.map((v) => (v == b ? v : null));
                 }
               }
-            } else {
+            }
+ else {
               a = val(b) ? a : null;
             }
           }
@@ -439,10 +452,12 @@
 
                 return b.map(fn).indexOf(fn(a)) > -1;
               };
-            } else if ($.type(b) === "object") {
+            }
+ else if ($.type(b) === "object") {
               // Mimic JS' in operator
               let op = (a) => Mavo.in(val(a), b);
-            } else {
+            }
+ else {
               let op = (a) => Mavo.Functions.eq(a, b);
             }
 
@@ -578,7 +593,8 @@
           for (let n of node) {
             _.walk(n, callback, o, property, node);
           }
-        } else {
+        }
+ else {
           _.childProperties.forEach((property) => {
             if (node[property]) {
               _.walk(node[property], callback, o, property, node);
@@ -634,7 +650,8 @@
 
           if (name === "scope") {
             return _.serializeScopeCall(node.arguments);
-          } else if (name in Mavo.Script.$fn) {
+          }
+ else if (name in Mavo.Script.$fn) {
             parent[prop] = {
               type: "MemberExpression",
               computed: false,
@@ -750,12 +767,14 @@
               });
               ret.arguments.push(co.operand);
             });
-          } else {
+          }
+ else {
             comparisonOperands.forEach((co) => {
               ret.arguments.push(co.operand);
             });
           }
-        } else {
+        }
+ else {
           // Flatten same operator calls
           do {
             ret.arguments.unshift(nodeLeft.right);
@@ -817,9 +836,11 @@
                 { type: "CallExpression" }
               );
             }
-          } else if (node.callee.name == "delete") {
+          }
+ else if (node.callee.name == "delete") {
             node.callee.name = "clear";
-          } else {
+          }
+ else {
             let def = Mavo.Functions[node.callee.name];
 
             if (def && def.needsContext) {
@@ -865,7 +886,8 @@
 
       if (typeof ret == "object" && ret?.type) {
         node = ret;
-      } else if (ret !== undefined) {
+      }
+ else if (ret !== undefined) {
         return ret;
       }
 
@@ -965,7 +987,8 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
     if (details.scalar?.length < 2) {
       let ret = _.addUnaryOperator(name, details);
-    } else {
+    }
+ else {
       let ret = _.addBinaryOperator(name, details);
     }
 

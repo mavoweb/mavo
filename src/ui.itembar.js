@@ -19,7 +19,8 @@
         this.element = this.item.template.itembar.element.cloneNode(true);
         this.dragHandle =
           $(".mv-drag-handle", this.element) || this.item.element;
-      } else {
+      }
+ else {
         // First item of this type
         this.element =
           this.element ||
@@ -62,7 +63,8 @@
           });
 
           buttons.push(this.dragHandle);
-        } else {
+        }
+ else {
           this.dragHandle = this.item.element;
         }
 
@@ -133,7 +135,8 @@
       if (!this.sticky || sticky) {
         if (timeout) {
           this.hideTimeout = setTimeout(() => this.hide(sticky), timeout);
-        } else {
+        }
+ else {
           this.element.setAttribute("hidden", "");
           $.unbind(
             [this.item.element, this.element],
@@ -156,7 +159,8 @@
           if (!this.isWithinItem(evt.relatedTarget)) {
             this.hide(sticky, _.DELAY);
           }
-        } else {
+        }
+ else {
           this.show(sticky);
           evt.stopPropagation();
         }

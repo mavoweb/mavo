@@ -23,7 +23,8 @@
           if (bounds.top - this.height > 20) {
             let pointDown = true;
             y = bounds.top - this.height - 20;
-          } else {
+          }
+ else {
             // Nah, just raise it a bit
             y = innerHeight - this.height - 20;
           }

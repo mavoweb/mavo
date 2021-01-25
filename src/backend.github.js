@@ -68,7 +68,8 @@
                 : response
             )
           );
-        } else {
+        }
+ else {
           // Unauthenticated, use simple GET request to avoid rate limit
           url = new URL(
             `https://raw.githubusercontent.com/${this.username}/${this.repo}/${
@@ -81,7 +82,8 @@
             let xhr = await $.fetch(url.href);
             this.branch = this.branch || "main";
             return xhr.responseText;
-          } catch (e) {
+          }
+ catch (e) {
             if (e.status === 404 && !this.branch) {
               // Possibly using older default branch "master", try again and store branch name
               url.pathname = `/${this.username}/${this.repo}/master/${this.path}`;
@@ -89,7 +91,8 @@
                 let xhr = await $.fetch(url.href);
                 this.branch = "master";
                 return xhr.responseText;
-              } catch (e) {}
+              }
+ catch (e) {}
             }
           }
 
@@ -286,7 +289,8 @@
 
                             return repoInfo;
                           });
-                        } else {
+                        }
+ else {
                           // search forks of this repo
                           return this.request(repoInfo.forks_url).then(
                             (forks) => {
@@ -457,7 +461,8 @@
                   return (
                     (this.filepath ? this.filepath + "/" : "") + this.filename
                   );
-                } else {
+                }
+ else {
                   return this.filepath;
                 }
               },
@@ -478,7 +483,8 @@
 
           if (/raw.githubusercontent.com$/.test(url.host)) {
             ret.branch = path.shift();
-          } else if (/api.github.com$/.test(url.host)) {
+          }
+ else if (/api.github.com$/.test(url.host)) {
             // Raw API call
             delete ret.username;
             delete ret.repo;
@@ -507,7 +513,8 @@
             ret.username = path.shift();
             ret.repo = path.shift();
             ret.resources = path.shift();
-          } else if (path[0] == "blob") {
+          }
+ else if (path[0] == "blob") {
             path.shift();
             ret.branch = path.shift();
           }
@@ -517,7 +524,8 @@
           if (/\.\w+$/.test(lastSegment)) {
             ret.filename = lastSegment;
             path.splice(path.length - 1, 1);
-          } else {
+          }
+ else {
             // If we work with a raw API call and couldn't find the filename in the path,
             // leave the filename blank
             ret.filename = ret.hasOwnProperty("apiParams")

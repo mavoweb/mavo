@@ -1,15 +1,440 @@
-!function(){"use strict";function t(e,n,i){return n=void 0===n?1:n,i=i||n+1,i-n<=1?function(){if(arguments.length<=n||"string"===r.type(arguments[n]))return e.apply(this,arguments);var t,i=arguments[n];for(var o in i){var s=Array.prototype.slice.call(arguments);s.splice(n,1,o,i[o]),t=e.apply(this,s)}return t}:t(t(e,n+1,i),n,i-1)}function e(t,r,i){var o=n(i);if("string"===o){var s=Object.getOwnPropertyDescriptor(r,i);!s||s.writable&&s.configurable&&s.enumerable&&!s.get&&!s.set?t[i]=r[i]:(delete t[i],Object.defineProperty(t,i,s))}else if("array"===o)i.forEach(function(n){n in r&&e(t,r,n)});else for(var a in r)i&&("regexp"===o&&!i.test(a)||"function"===o&&!i.call(r,a))||e(t,r,a);return t}function n(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e}var r=self.Bliss=e(function(t,e){return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(r,{extend:e,overload:t,type:n,property:r.property||"_",listeners:self.WeakMap?new WeakMap:new Map,original:{addEventListener:(self.EventTarget||Node).prototype.addEventListener,removeEventListener:(self.EventTarget||Node).prototype.removeEventListener},sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.prototype.slice.call("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[]},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?r.set(t,e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t,t=e.tag,e=r.extend({},e,function(t){return"tag"!==t}))),r.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t,e,n){if("function"!=typeof t||e||(e=t,t=void 0),t=t||document,e&&("loading"!==t.readyState?e():r.once(t,"DOMContentLoaded",function(){e()})),!n)return new Promise(function(e){r.ready(t,e,!0)})},Class:function(t){var e,n=["constructor","extends","abstract","static"].concat(Object.keys(r.classProps)),i=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0],t=arguments[1]):(e=function(){if(this.constructor.__abstract&&this.constructor===e)throw new Error("Abstract classes cannot be directly instantiated.");e["super"]&&e["super"].apply(this,arguments),i.apply(this,arguments)},e["super"]=t["extends"]||null,e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object),{constructor:e}),e.prototype["super"]=e["super"]?e["super"].prototype:null,e.__abstract=!!t["abstract"]);var o=function(t){return this.hasOwnProperty(t)&&n.indexOf(t)===-1};if(t["static"]){r.extend(e,t["static"],o);for(var s in r.classProps)s in t["static"]&&r.classProps[s](e,t["static"][s])}r.extend(e.prototype,t,o);for(var s in r.classProps)s in t&&r.classProps[s](e.prototype,t[s]);return e},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,n){return"function"===r.type(n)&&(n={set:n}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],r=n.get&&n.get.call(this,t);return void 0!==r?r:t},set:function(t){var r=this["_"+e],i=n.set&&n.set.call(this,t,r);this["_"+e]=void 0!==i?i:t},configurable:n.configurable,enumerable:n.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length&&arguments[0],n=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){r.set(n,{async:!0,onload:function(){e(),n.parentNode&&n.parentNode.removeChild(n)},onerror:function(){i()},src:t,inside:document.head})})},fetch:function(t,n){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},n);i.method=i.method.toUpperCase(),r.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var o in n)if("upload"===o)i.xhr.upload&&"object"==typeof n[o]&&r.extend(i.xhr.upload,n[o]);else if(o in i.xhr)try{i.xhr[o]=n[o]}catch(s){self.console&&console.error(s)}var a=Object.keys(i.headers).map(function(t){return t.toLowerCase()});"GET"!==i.method&&a.indexOf("content-type")===-1&&i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var c in i.headers)void 0!==i.headers[c]&&i.xhr.setRequestHeader(c,i.headers[c]);var u=new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(r.extend(Error(i.xhr.statusText),{xhr:i.xhr,get status(){return this.xhr.status}}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)});return u.xhr=i.xhr,u},value:function(t){var e="string"!==r.type(t);return r.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),r.Hooks=new r.Class({add:function(t,e,n){if("string"==typeof arguments[0])(Array.isArray(t)?t:[t]).forEach(function(t){this[t]=this[t]||[],e&&this[t][n?"unshift":"push"](e)},this);else for(var t in arguments[0])this.add(t,arguments[0][t],arguments[1])},run:function(t,e){this[t]=this[t]||[],this[t].forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),r.hooks=new r.Hooks;r.property;r.Element=function(t){this.subject=t,this.data={},this.bliss={}},r.Element.prototype={set:t(function(t,e){t in r.setProps?r.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return e=+e||400,new Promise(function(n,i){if("transition"in this.style){var o=r.extend({},this.style,/^transition(Duration|Property)$/);r.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),r.once(this,"transitionend",function(){clearTimeout(s),r.style(this,o),n(this)});var s=setTimeout(n,e+50,this);r.style(this,t)}else r.style(this,t),n(this)}.bind(this))},fire:function(t,e){var n=document.createEvent("HTMLEvents");return n.initEvent(t,!0,!0),this.dispatchEvent(r.extend(n,e))},bind:t(function(t,e){if(arguments.length>1&&("function"===r.type(e)||e.handleEvent)){var n=e;e="object"===r.type(arguments[2])?arguments[2]:{capture:!!arguments[2]},e.callback=n}var i=r.listeners.get(this)||{};t.trim().split(/\s+/).forEach(function(t){if(t.indexOf(".")>-1){t=t.split(".");var n=t[1];t=t[0]}i[t]=i[t]||[],0===i[t].filter(function(t){return t.callback===e.callback&&t.capture==e.capture}).length&&i[t].push(r.extend({className:n},e)),r.original.addEventListener.call(this,t,e.callback,e)},this),r.listeners.set(this,i)},0),unbind:t(function(t,e){if(e&&("function"===r.type(e)||e.handleEvent)){var n=e;e=arguments[2]}"boolean"==r.type(e)&&(e={capture:e}),e=e||{},e.callback=e.callback||n;var i=r.listeners.get(this);(t||"").trim().split(/\s+/).forEach(function(t){if(t.indexOf(".")>-1){t=t.split(".");var n=t[1];t=t[0]}if(t&&e.callback)return r.original.removeEventListener.call(this,t,e.callback,e.capture);if(i)for(var o in i)if(!t||o===t)for(var s,a=0;s=i[o][a];a++)n&&n!==s.className||e.callback&&e.callback!==s.callback||!!e.capture!=!!s.capture||(i[o].splice(a,1),r.original.removeEventListener.call(this,o,s.callback,s.capture),a--)},this)},0)},r.setProps={style:function(t){for(var e in t)e in this.style?this.style[e]=t[e]:this.style.setProperty(e,t[e])},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){r.extend(this,t)},events:function(t){if(1!=arguments.length||!t||!t.addEventListener)return r.bind.apply(this,[this].concat(r.$(arguments)));var e=this;if(r.listeners){var n=r.listeners.get(t);for(var i in n)n[i].forEach(function(t){r.bind(e,i,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])},once:t(function(t,e){var n=this,i=function(){return r.unbind(n,t,i),e.apply(n,arguments)};r.bind(this,t,i,{once:!0})},0),delegate:t(function(t,e,n){r.bind(this,t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t&&t.appendChild(this)},before:function(t){t&&t.parentNode.insertBefore(this,t)},after:function(t){t&&t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t&&t.insertBefore(this,t.firstChild)},around:function(t){t&&t.parentNode&&r.before(this,t),this.appendChild(t)}},r.Array=function(t){this.subject=t},r.Array.prototype={all:function(t){var e=r.$(arguments).slice(1);return this[t].apply(this,e)}},r.add=t(function(t,e,n,i){n=r.extend({$:!0,element:!0,array:!0},n),"function"==r.type(e)&&(!n.element||t in r.Element.prototype&&i||(r.Element.prototype[t]=function(){return this.subject&&r.defined(e.apply(this.subject,arguments),this.subject)}),!n.array||t in r.Array.prototype&&i||(r.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(n){return n&&r.defined(e.apply(n,t),n)})}),n.$&&(r.sources[t]=r[t]=e,(n.array||n.element)&&(r[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),o=n.array&&Array.isArray(i)?"Array":"Element";return r[o].prototype[t].apply({subject:i},e)})))},0),r.add(r.Array.prototype,{element:!1}),r.add(r.Element.prototype),r.add(r.setProps),r.add(r.classProps,{element:!1,array:!1});var i=document.createElement("_");r.add(r.extend({},HTMLElement.prototype,function(t){return"function"===r.type(i[t])}),null,!0)}();
+!function() {
+"use strict";function t(e, n, i) {
+return n=void 0===n?1:n, i=i||n+1, i-n<=1?function() {
+if (arguments.length<=n||"string"===r.type(arguments[n])) {
+return e.apply(this, arguments);
+} var t, i=arguments[n];for (var o in i) {
+var s=Array.prototype.slice.call(arguments);s.splice(n, 1, o, i[o]), t=e.apply(this, s);
+} return t;
+}:t(t(e, n+1, i), n, i-1);
+} function e(t, r, i) {
+var o=n(i);if ("string"===o) {
+var s=Object.getOwnPropertyDescriptor(r, i);!s||s.writable&&s.configurable&&s.enumerable&&!s.get&&!s.set?t[i]=r[i]:(delete t[i], Object.defineProperty(t, i, s));
+}
+else if ("array"===o) {
+i.forEach(function(n) {
+n in r&&e(t, r, n);
+});
+}
+else {
+for (var a in r) {
+i&&("regexp"===o&&!i.test(a)||"function"===o&&!i.call(r, a))||e(t, r, a);
+}
+} return t;
+} function n(t) {
+if (null===t) {
+return "null";
+} if (void 0===t) {
+return "undefined";
+} var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return "number"==e&&isNaN(t)?"nan":e;
+} var r=self.Bliss=e(function(t, e) {
+return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null;
+}, self.Bliss);e(r, {extend:e, overload:t, type:n, property:r.property||"_", listeners:self.WeakMap?new WeakMap:new Map, original:{addEventListener:(self.EventTarget||Node).prototype.addEventListener, removeEventListener:(self.EventTarget||Node).prototype.removeEventListener}, sources:{}, noop:function() {}, $:function(t, e) {
+return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.prototype.slice.call("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[];
+}, defined:function() {
+for (var t=0;t<arguments.length;t++) {
+if (void 0!==arguments[t]) {
+return arguments[t];
+}
+}
+}, create:function(t, e) {
+return t instanceof Node?r.set(t, e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t, t=e.tag, e=r.extend({}, e, function(t) {
+return "tag"!==t;
+}))), r.set(document.createElement(t||"div"), e));
+}, each:function(t, e, n) {
+n=n||{};for (var r in t) {
+n[r]=e.call(t, r, t[r]);
+} return n;
+}, ready:function(t, e, n) {
+if ("function"!=typeof t||e||(e=t, t=void 0), t=t||document, e&&("loading"!==t.readyState?e():r.once(t, "DOMContentLoaded", function() {
+e();
+})), !n) {
+return new Promise(function(e) {
+r.ready(t, e, !0);
+});
+}
+}, Class:function(t) {
+var e, n=["constructor", "extends", "abstract", "static"].concat(Object.keys(r.classProps)), i=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0], t=arguments[1]):(e=function() {
+if (this.constructor.__abstract&&this.constructor===e) {
+throw new Error("Abstract classes cannot be directly instantiated.");
+}e["super"]&&e["super"].apply(this, arguments), i.apply(this, arguments);
+}, e["super"]=t["extends"]||null, e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object), {constructor:e}), e.prototype["super"]=e["super"]?e["super"].prototype:null, e.__abstract=!!t["abstract"]);var o=function(t) {
+return this.hasOwnProperty(t)&&n.indexOf(t)===-1;
+};if (t["static"]) {
+r.extend(e, t["static"], o);for (var s in r.classProps) {
+s in t["static"]&&r.classProps[s](e, t["static"][s]);
+}
+}r.extend(e.prototype, t, o);for (var s in r.classProps) {
+s in t&&r.classProps[s](e.prototype, t[s]);
+} return e;
+}, classProps:{lazy:t(function(t, e, n) {
+return Object.defineProperty(t, e, {get:function() {
+var t=n.call(this);return Object.defineProperty(this, e, {value:t, configurable:!0, enumerable:!0, writable:!0}), t;
+}, set:function(t) {
+Object.defineProperty(this, e, {value:t, configurable:!0, enumerable:!0, writable:!0});
+}, configurable:!0, enumerable:!0}), t;
+}), live:t(function(t, e, n) {
+return "function"===r.type(n)&&(n={set:n}), Object.defineProperty(t, e, {get:function() {
+var t=this["_"+e], r=n.get&&n.get.call(this, t);return void 0!==r?r:t;
+}, set:function(t) {
+var r=this["_"+e], i=n.set&&n.set.call(this, t, r);this["_"+e]=void 0!==i?i:t;
+}, configurable:n.configurable, enumerable:n.enumerable}), t;
+})}, include:function() {
+var t=arguments[arguments.length-1], e=2===arguments.length&&arguments[0], n=document.createElement("script");return e?Promise.resolve():new Promise(function(e, i) {
+r.set(n, {async:!0, onload:function() {
+e(), n.parentNode&&n.parentNode.removeChild(n);
+}, onerror:function() {
+i();
+}, src:t, inside:document.head});
+});
+}, fetch:function(t, n) {
+if (!t) {
+throw new TypeError("URL parameter is mandatory and cannot be "+t);
+} var i=e({url:new URL(t, location), data:"", method:"GET", headers:{}, xhr:new XMLHttpRequest}, n);i.method=i.method.toUpperCase(), r.hooks.run("fetch-args", i), "GET"===i.method&&i.data&&(i.url.search+=i.data), document.body.setAttribute("data-loading", i.url), i.xhr.open(i.method, i.url.href, i.async!==!1, i.user, i.password);for (var o in n) {
+if ("upload"===o) {
+i.xhr.upload&&"object"==typeof n[o]&&r.extend(i.xhr.upload, n[o]);
+}
+else if (o in i.xhr) {
+try {
+i.xhr[o]=n[o];
+}
+catch (s) {
+self.console&&console.error(s);
+}
+}
+} var a=Object.keys(i.headers).map(function(t) {
+return t.toLowerCase();
+});"GET"!==i.method&&a.indexOf("content-type")===-1&&i.xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");for (var c in i.headers) {
+void 0!==i.headers[c]&&i.xhr.setRequestHeader(c, i.headers[c]);
+} var u=new Promise(function(t, e) {
+i.xhr.onload=function() {
+document.body.removeAttribute("data-loading"), 0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(r.extend(Error(i.xhr.statusText), {xhr:i.xhr, get status() {
+return this.xhr.status;
+}}));
+}, i.xhr.onerror=function() {
+document.body.removeAttribute("data-loading"), e(r.extend(Error("Network Error"), {xhr:i.xhr}));
+}, i.xhr.ontimeout=function() {
+document.body.removeAttribute("data-loading"), e(r.extend(Error("Network Timeout"), {xhr:i.xhr}));
+}, i.xhr.send("GET"===i.method?null:i.data);
+});return u.xhr=i.xhr, u;
+}, value:function(t) {
+var e="string"!==r.type(t);return r.$(arguments).slice(+e).reduce(function(t, e) {
+return t&&t[e];
+}, e?t:self);
+}}), r.Hooks=new r.Class({add:function(t, e, n) {
+if ("string"==typeof arguments[0]) {
+(Array.isArray(t)?t:[t]).forEach(function(t) {
+this[t]=this[t]||[], e&&this[t][n?"unshift":"push"](e);
+}, this);
+}
+else {
+for (var t in arguments[0]) {
+this.add(t, arguments[0][t], arguments[1]);
+}
+}
+}, run:function(t, e) {
+this[t]=this[t]||[], this[t].forEach(function(t) {
+t.call(e&&e.context?e.context:e, e);
+});
+}}), r.hooks=new r.Hooks;r.property;r.Element=function(t) {
+this.subject=t, this.data={}, this.bliss={};
+}, r.Element.prototype={set:t(function(t, e) {
+t in r.setProps?r.setProps[t].call(this, e):t in this?this[t]=e:this.setAttribute(t, e);
+}, 0), transition:function(t, e) {
+return e=+e||400, new Promise(function(n, i) {
+if ("transition"in this.style) {
+var o=r.extend({}, this.style, /^transition(Duration|Property)$/);r.style(this, {transitionDuration:(e||400)+"ms", transitionProperty:Object.keys(t).join(", ")}), r.once(this, "transitionend", function() {
+clearTimeout(s), r.style(this, o), n(this);
+});var s=setTimeout(n, e+50, this);r.style(this, t);
+}
+else {
+r.style(this, t), n(this);
+}
+}.bind(this));
+}, fire:function(t, e) {
+var n=document.createEvent("HTMLEvents");return n.initEvent(t, !0, !0), this.dispatchEvent(r.extend(n, e));
+}, bind:t(function(t, e) {
+if (arguments.length>1&&("function"===r.type(e)||e.handleEvent)) {
+var n=e;e="object"===r.type(arguments[2])?arguments[2]:{capture:!!arguments[2]}, e.callback=n;
+} var i=r.listeners.get(this)||{};t.trim().split(/\s+/).forEach(function(t) {
+if (t.indexOf(".")>-1) {
+t=t.split(".");var n=t[1];t=t[0];
+}i[t]=i[t]||[], 0===i[t].filter(function(t) {
+return t.callback===e.callback&&t.capture==e.capture;
+}).length&&i[t].push(r.extend({className:n}, e)), r.original.addEventListener.call(this, t, e.callback, e);
+}, this), r.listeners.set(this, i);
+}, 0), unbind:t(function(t, e) {
+if (e&&("function"===r.type(e)||e.handleEvent)) {
+var n=e;e=arguments[2];
+}"boolean"==r.type(e)&&(e={capture:e}), e=e||{}, e.callback=e.callback||n;var i=r.listeners.get(this);(t||"").trim().split(/\s+/).forEach(function(t) {
+if (t.indexOf(".")>-1) {
+t=t.split(".");var n=t[1];t=t[0];
+} if (t&&e.callback) {
+return r.original.removeEventListener.call(this, t, e.callback, e.capture);
+} if (i) {
+for (var o in i) {
+if (!t||o===t) {
+for (var s, a=0;s=i[o][a];a++) {
+n&&n!==s.className||e.callback&&e.callback!==s.callback||!!e.capture!=!!s.capture||(i[o].splice(a, 1), r.original.removeEventListener.call(this, o, s.callback, s.capture), a--);
+}
+}
+}
+}
+}, this);
+}, 0)}, r.setProps={style:function(t) {
+for (var e in t) {
+e in this.style?this.style[e]=t[e]:this.style.setProperty(e, t[e]);
+}
+}, attributes:function(t) {
+for (var e in t) {
+this.setAttribute(e, t[e]);
+}
+}, properties:function(t) {
+r.extend(this, t);
+}, events:function(t) {
+if (1!=arguments.length||!t||!t.addEventListener) {
+return r.bind.apply(this, [this].concat(r.$(arguments)));
+} var e=this;if (r.listeners) {
+var n=r.listeners.get(t);for (var i in n) {
+n[i].forEach(function(t) {
+r.bind(e, i, t.callback, t.capture);
+});
+}
+} for (var o in t) {
+0===o.indexOf("on")&&(this[o]=t[o]);
+}
+}, once:t(function(t, e) {
+var n=this, i=function() {
+return r.unbind(n, t, i), e.apply(n, arguments);
+};r.bind(this, t, i, {once:!0});
+}, 0), delegate:t(function(t, e, n) {
+r.bind(this, t, function(t) {
+t.target.closest(e)&&n.call(this, t);
+});
+}, 0, 2), contents:function(t) {
+(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t) {
+var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)), t instanceof Node&&this.appendChild(t);
+}, this);
+}, inside:function(t) {
+t&&t.appendChild(this);
+}, before:function(t) {
+t&&t.parentNode.insertBefore(this, t);
+}, after:function(t) {
+t&&t.parentNode.insertBefore(this, t.nextSibling);
+}, start:function(t) {
+t&&t.insertBefore(this, t.firstChild);
+}, around:function(t) {
+t&&t.parentNode&&r.before(this, t), this.appendChild(t);
+}}, r.Array=function(t) {
+this.subject=t;
+}, r.Array.prototype={all:function(t) {
+var e=r.$(arguments).slice(1);return this[t].apply(this, e);
+}}, r.add=t(function(t, e, n, i) {
+n=r.extend({$:!0, element:!0, array:!0}, n), "function"==r.type(e)&&(!n.element||t in r.Element.prototype&&i||(r.Element.prototype[t]=function() {
+return this.subject&&r.defined(e.apply(this.subject, arguments), this.subject);
+}), !n.array||t in r.Array.prototype&&i||(r.Array.prototype[t]=function() {
+var t=arguments;return this.subject.map(function(n) {
+return n&&r.defined(e.apply(n, t), n);
+});
+}), n.$&&(r.sources[t]=r[t]=e, (n.array||n.element)&&(r[t]=function() {
+var e=[].slice.apply(arguments), i=e.shift(), o=n.array&&Array.isArray(i)?"Array":"Element";return r[o].prototype[t].apply({subject:i}, e);
+})));
+}, 0), r.add(r.Array.prototype, {element:!1}), r.add(r.Element.prototype), r.add(r.setProps), r.add(r.classProps, {element:!1, array:!1});var i=document.createElement("_");r.add(r.extend({}, HTMLElement.prototype, function(t) {
+return "function"===r.type(i[t]);
+}), null, !0);
+}();
 /* jsep v0.3.2 (http://jsep.from.so/) */
-!function(e){"use strict";var r=function(e,r){var t=new Error(e+" at character "+r);throw t.index=r,t.description=e,t},t={"-":!0,"!":!0,"~":!0,"+":!0},n={"||":1,"&&":2,"|":3,"^":4,"&":5,"==":6,"!=":6,"===":6,"!==":6,"<":7,">":7,"<=":7,">=":7,"<<":8,">>":8,">>>":8,"+":9,"-":9,"*":10,"/":10,"%":10},o=function(e){var r,t=0;for(var n in e)(r=n.length)>t&&e.hasOwnProperty(n)&&(t=r);return t},i=o(t),a=o(n),u={true:!0,false:!1,null:null},s=function(e){return n[e]||0},p=function(e,r,t){return{type:"||"===e||"&&"===e?"LogicalExpression":"BinaryExpression",operator:e,left:r,right:t}},f=function(e){return e>=48&&e<=57},c=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=128&&!n[String.fromCharCode(e)]},l=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=48&&e<=57||e>=128&&!n[String.fromCharCode(e)]},d=function(e){for(var o,d,h=0,v=e.charAt,x=e.charCodeAt,y=function(r){return v.call(e,r)},m=function(r){return x.call(e,r)},b=e.length,E=function(){for(var e=m(h);32===e||9===e||10===e||13===e;)e=m(++h)},g=function(){var e,t,n=w();return E(),63!==m(h)?n:(h++,(e=g())||r("Expected expression",h),E(),58===m(h)?(h++,(t=g())||r("Expected expression",h),{type:"ConditionalExpression",test:n,consequent:e,alternate:t}):void r("Expected :",h))},C=function(){E();for(var r=e.substr(h,a),t=r.length;t>0;){if(n.hasOwnProperty(r))return h+=t,r;r=r.substr(0,--t)}return!1},w=function(){var e,t,n,o,i,a,u,f;if(a=O(),!(t=C()))return a;for(i={value:t,prec:s(t)},(u=O())||r("Expected expression after "+t,h),o=[a,i,u];(t=C())&&0!==(n=s(t));){for(i={value:t,prec:n};o.length>2&&n<=o[o.length-2].prec;)u=o.pop(),t=o.pop().value,a=o.pop(),e=p(t,a,u),o.push(e);(e=O())||r("Expected expression after "+t,h),o.push(i,e)}for(e=o[f=o.length-1];f>1;)e=p(o[f-1].value,o[f-2],e),f-=2;return e},O=function(){var r,n,o;if(E(),r=m(h),f(r)||46===r)return U();if(39===r||34===r)return k();if(91===r)return S();for(o=(n=e.substr(h,i)).length;o>0;){if(t.hasOwnProperty(n))return h+=o,{type:"UnaryExpression",operator:n,argument:O(),prefix:!0};n=n.substr(0,--o)}return!(!c(r)&&40!==r)&&A()},U=function(){for(var e,t,n="";f(m(h));)n+=y(h++);if(46===m(h))for(n+=y(h++);f(m(h));)n+=y(h++);if("e"===(e=y(h))||"E"===e){for(n+=y(h++),"+"!==(e=y(h))&&"-"!==e||(n+=y(h++));f(m(h));)n+=y(h++);f(m(h-1))||r("Expected exponent ("+n+y(h)+")",h)}return t=m(h),c(t)?r("Variable names cannot start with a number ("+n+y(h)+")",h):46===t&&r("Unexpected period",h),{type:"Literal",value:parseFloat(n),raw:n}},k=function(){for(var e,t="",n=y(h++),o=!1;h<b;){if((e=y(h++))===n){o=!0;break}if("\\"===e)switch(e=y(h++)){case"n":t+="\n";break;case"r":t+="\r";break;case"t":t+="\t";break;case"b":t+="\b";break;case"f":t+="\f";break;case"v":t+="\v";break;default:t+=e}else t+=e}return o||r('Unclosed quote after "'+t+'"',h),{type:"Literal",value:t,raw:n+t+n}},L=function(){var t,n=m(h),o=h;for(c(n)?h++:r("Unexpected "+y(h),h);h<b&&(n=m(h),l(n));)h++;return t=e.slice(o,h),u.hasOwnProperty(t)?{type:"Literal",value:u[t],raw:t}:"this"===t?{type:"ThisExpression"}:{type:"Identifier",name:t}},j=function(e){for(var t,n,o=[],i=!1;h<b;){if(E(),(t=m(h))===e){i=!0,h++;break}44===t?h++:((n=g())&&"Compound"!==n.type||r("Expected comma",h),o.push(n))}return i||r("Expected "+String.fromCharCode(e),h),o},A=function(){var e,t;for(t=40===(e=m(h))?P():L(),E(),e=m(h);46===e||91===e||40===e;)h++,46===e?(E(),t={type:"MemberExpression",computed:!1,object:t,property:L()}):91===e?(t={type:"MemberExpression",computed:!0,object:t,property:g()},E(),93!==(e=m(h))&&r("Unclosed [",h),h++):40===e&&(t={type:"CallExpression",arguments:j(41),callee:t}),E(),e=m(h);return t},P=function(){h++;var e=g();if(E(),41===m(h))return h++,e;r("Unclosed (",h)},S=function(){return h++,{type:"ArrayExpression",elements:j(93)}},B=[];h<b;)59===(o=m(h))||44===o?h++:(d=g())?B.push(d):h<b&&r('Unexpected "'+y(h)+'"',h);return 1===B.length?B[0]:{type:"Compound",body:B}};if(d.version="0.3.2",d.toString=function(){return"JavaScript Expression Parser (JSEP) v"+d.version},d.addUnaryOp=function(e){return i=Math.max(e.length,i),t[e]=!0,this},d.addBinaryOp=function(e,r){return a=Math.max(e.length,a),n[e]=r,this},d.addLiteral=function(e,r){return u[e]=r,this},d.removeUnaryOp=function(e){return delete t[e],e.length===i&&(i=o(t)),this},d.removeAllUnaryOps=function(){return t={},i=0,this},d.removeBinaryOp=function(e){return delete n[e],e.length===a&&(a=o(n)),this},d.removeAllBinaryOps=function(){return n={},a=0,this},d.removeLiteral=function(e){return delete u[e],this},d.removeAllLiterals=function(){return u={},this},"undefined"==typeof exports){var h=e.jsep;e.jsep=d,d.noConflict=function(){return e.jsep===d&&(e.jsep=h),d}}else"undefined"!=typeof module&&module.exports?exports=module.exports=d:exports.parse=d}(this);
-//# sourceMappingURL=jsep.min.js.map
-!function(){function e(e,t){return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[])}if(self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null),Element.prototype.matches)){var t=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text number url email tel".split(" ").join('"], input[type="')+'"]',filter:"*"},script:document.currentScript||e("script").pop(),resize:function(e){if(t.resizes(e)){var i,n=getComputedStyle(e),o=0;!e.value&&e.placeholder&&(i=!0,e.value=e.placeholder);var l=e.nodeName.toLowerCase();if("textarea"==l)e.style.height="0","border-box"==n.boxSizing?o=e.offsetHeight:"content-box"==n.boxSizing&&(o=-e.clientHeight+parseFloat(n.minHeight)),
-e.style.height=e.scrollHeight+o+"px";else if("input"==l)if(e.style.width="1000px",e.offsetWidth){e.style.width="0","border-box"==n.boxSizing?o=e.offsetWidth:"padding-box"==n.boxSizing?o=e.clientWidth:"content-box"==n.boxSizing&&(o=parseFloat(n.minWidth));var r=Math.max(o,e.scrollWidth-e.clientWidth);e.style.width=r+"px";for(var s=0;s<10&&(e.scrollLeft=1e10,0!=e.scrollLeft);s++)r+=e.scrollLeft,e.style.width=r+"px"}else e.style.width=e.value.length+1+"ch";else if("select"==l){var c=e.selectedIndex>0?e.selectedIndex:0,a=document.createElement("_");a.textContent=e.options[c].textContent,e.parentNode.insertBefore(a,e.nextSibling);var d;for(var h in n){var p=n[h];/^(width|webkitLogicalWidth|length)$/.test(h)||"string"!=typeof p||(a.style[h]=p,/appearance$/i.test(h)&&(d=h))}a.style.width="",a.offsetWidth>0&&(e.style.width=a.offsetWidth+"px",n[d]&&"none"===n[d]||(e.style.width="calc("+e.style.width+" + 2em)")),a.parentNode.removeChild(a),a=null}i&&(e.value="")}},resizeAll:function(i){
-e(i||t.selectors.base).forEach(function(e){t.resize(e)})},active:!0,resizes:function(e){return e&&e.parentNode&&e.matches&&e.matches(t.selectors.base)&&e.matches(t.selectors.filter)},init:function(){t.selectors.filter=t.script.getAttribute("data-filter")||(e("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||Stretchy.selectors.filter||"*",t.resizeAll()},$$:e};"loading"!==document.readyState?t.init():document.addEventListener("DOMContentLoaded",t.init);var i=function(e){t.active&&t.resize(e.target)};document.documentElement.addEventListener("input",i),document.documentElement.addEventListener("change",i),self.MutationObserver&&new MutationObserver(function(e){t.active&&e.forEach(function(e){"childList"==e.type&&Stretchy.resizeAll(e.addedNodes)})}).observe(document.documentElement,{childList:!0,subtree:!0})}}();
-//# sourceMappingURL=stretchy.min.js.map
+!function(e) {
+"use strict";var r=function(e, r) {
+var t=new Error(e+" at character "+r);throw t.index=r, t.description=e, t;
+}, t={"-":!0, "!":!0, "~":!0, "+":!0}, n={"||":1, "&&":2, "|":3, "^":4, "&":5, "==":6, "!=":6, "===":6, "!==":6, "<":7, ">":7, "<=":7, ">=":7, "<<":8, ">>":8, ">>>":8, "+":9, "-":9, "*":10, "/":10, "%":10}, o=function(e) {
+var r, t=0;for (var n in e) {
+(r=n.length)>t&&e.hasOwnProperty(n)&&(t=r);
+} return t;
+}, i=o(t), a=o(n), u={true:!0, false:!1, null:null}, s=function(e) {
+return n[e]||0;
+}, p=function(e, r, t) {
+return {type:"||"===e||"&&"===e?"LogicalExpression":"BinaryExpression", operator:e, left:r, right:t};
+}, f=function(e) {
+return e>=48&&e<=57;
+}, c=function(e) {
+return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=128&&!n[String.fromCharCode(e)];
+}, l=function(e) {
+return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=48&&e<=57||e>=128&&!n[String.fromCharCode(e)];
+}, d=function(e) {
+for (var o, d, h=0, v=e.charAt, x=e.charCodeAt, y=function(r) {
+return v.call(e, r);
+}, m=function(r) {
+return x.call(e, r);
+}, b=e.length, E=function() {
+for (var e=m(h);32===e||9===e||10===e||13===e;) {
+e=m(++h);
+}
+}, g=function() {
+var e, t, n=w();return E(), 63!==m(h)?n:(h++, (e=g())||r("Expected expression", h), E(), 58===m(h)?(h++, (t=g())||r("Expected expression", h), {type:"ConditionalExpression", test:n, consequent:e, alternate:t}):void r("Expected :", h));
+}, C=function() {
+E();for (var r=e.substr(h, a), t=r.length;t>0;) {
+if (n.hasOwnProperty(r)) {
+return h+=t, r;
+}r=r.substr(0, --t);
+} return !1;
+}, w=function() {
+var e, t, n, o, i, a, u, f;if (a=O(), !(t=C())) {
+return a;
+} for (i={value:t, prec:s(t)}, (u=O())||r("Expected expression after "+t, h), o=[a, i, u];(t=C())&&0!==(n=s(t));) {
+for (i={value:t, prec:n};o.length>2&&n<=o[o.length-2].prec;) {
+u=o.pop(), t=o.pop().value, a=o.pop(), e=p(t, a, u), o.push(e);
+}(e=O())||r("Expected expression after "+t, h), o.push(i, e);
+} for (e=o[f=o.length-1];f>1;) {
+e=p(o[f-1].value, o[f-2], e), f-=2;
+} return e;
+}, O=function() {
+var r, n, o;if (E(), r=m(h), f(r)||46===r) {
+return U();
+} if (39===r||34===r) {
+return k();
+} if (91===r) {
+return S();
+} for (o=(n=e.substr(h, i)).length;o>0;) {
+if (t.hasOwnProperty(n)) {
+return h+=o, {type:"UnaryExpression", operator:n, argument:O(), prefix:!0};
+}n=n.substr(0, --o);
+} return !(!c(r)&&40!==r)&&A();
+}, U=function() {
+for (var e, t, n="";f(m(h));) {
+n+=y(h++);
+} if (46===m(h)) {
+for (n+=y(h++);f(m(h));) {
+n+=y(h++);
+}
+} if ("e"===(e=y(h))||"E"===e) {
+for (n+=y(h++), "+"!==(e=y(h))&&"-"!==e||(n+=y(h++));f(m(h));) {
+n+=y(h++);
+}f(m(h-1))||r("Expected exponent ("+n+y(h)+")", h);
+} return t=m(h), c(t)?r("Variable names cannot start with a number ("+n+y(h)+")", h):46===t&&r("Unexpected period", h), {type:"Literal", value:parseFloat(n), raw:n};
+}, k=function() {
+for (var e, t="", n=y(h++), o=!1;h<b;) {
+if ((e=y(h++))===n) {
+o=!0;break;
+} if ("\\"===e) {
+switch (e=y(h++)) {
+case "n":t+="\n";break;case "r":t+="\r";break;case "t":t+="\t";break;case "b":t+="\b";break;case "f":t+="\f";break;case "v":t+="\v";break;default:t+=e;
+}
+}
+ else {
+t+=e;
+}
+} return o||r('Unclosed quote after "'+t+'"', h), {type:"Literal", value:t, raw:n+t+n};
+}, L=function() {
+var t, n=m(h), o=h;for (c(n)?h++:r("Unexpected "+y(h), h);h<b&&(n=m(h), l(n));) {
+h++;
+} return t=e.slice(o, h), u.hasOwnProperty(t)?{type:"Literal", value:u[t], raw:t}:"this"===t?{type:"ThisExpression"}:{type:"Identifier", name:t};
+}, j=function(e) {
+for (var t, n, o=[], i=!1;h<b;) {
+if (E(), (t=m(h))===e) {
+i=!0, h++;break;
+}44===t?h++:((n=g())&&"Compound"!==n.type||r("Expected comma", h), o.push(n));
+} return i||r("Expected "+String.fromCharCode(e), h), o;
+}, A=function() {
+var e, t;for (t=40===(e=m(h))?P():L(), E(), e=m(h);46===e||91===e||40===e;) {
+h++, 46===e?(E(), t={type:"MemberExpression", computed:!1, object:t, property:L()}):91===e?(t={type:"MemberExpression", computed:!0, object:t, property:g()}, E(), 93!==(e=m(h))&&r("Unclosed [", h), h++):40===e&&(t={type:"CallExpression", arguments:j(41), callee:t}), E(), e=m(h);
+} return t;
+}, P=function() {
+h++;var e=g();if (E(), 41===m(h)) {
+return h++, e;
+}r("Unclosed (", h);
+}, S=function() {
+return h++, {type:"ArrayExpression", elements:j(93)};
+}, B=[];h<b;) {
+59===(o=m(h))||44===o?h++:(d=g())?B.push(d):h<b&&r('Unexpected "'+y(h)+'"', h);
+} return 1===B.length?B[0]:{type:"Compound", body:B};
+};if (d.version="0.3.2", d.toString=function() {
+return "JavaScript Expression Parser (JSEP) v"+d.version;
+}, d.addUnaryOp=function(e) {
+return i=Math.max(e.length, i), t[e]=!0, this;
+}, d.addBinaryOp=function(e, r) {
+return a=Math.max(e.length, a), n[e]=r, this;
+}, d.addLiteral=function(e, r) {
+return u[e]=r, this;
+}, d.removeUnaryOp=function(e) {
+return delete t[e], e.length===i&&(i=o(t)), this;
+}, d.removeAllUnaryOps=function() {
+return t={}, i=0, this;
+}, d.removeBinaryOp=function(e) {
+return delete n[e], e.length===a&&(a=o(n)), this;
+}, d.removeAllBinaryOps=function() {
+return n={}, a=0, this;
+}, d.removeLiteral=function(e) {
+return delete u[e], this;
+}, d.removeAllLiterals=function() {
+return u={}, this;
+}, "undefined"==typeof exports) {
+var h=e.jsep;e.jsep=d, d.noConflict=function() {
+return e.jsep===d&&(e.jsep=h), d;
+};
+}
+else {
+"undefined"!=typeof module&&module.exports?exports=module.exports=d:exports.parse=d;
+}
+}(this);
+// # sourceMappingURL=jsep.min.js.map
+!function() {
+function e(e, t) {
+return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[]);
+} if (self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null), Element.prototype.matches)) {
+var t=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text number url email tel".split(" ").join('"], input[type="')+'"]', filter:"*"}, script:document.currentScript||e("script").pop(), resize:function(e) {
+if (t.resizes(e)) {
+var i, n=getComputedStyle(e), o=0;!e.value&&e.placeholder&&(i=!0, e.value=e.placeholder);var l=e.nodeName.toLowerCase();if ("textarea"==l) {
+e.style.height="0", "border-box"==n.boxSizing?o=e.offsetHeight:"content-box"==n.boxSizing&&(o=-e.clientHeight+parseFloat(n.minHeight)),
+e.style.height=e.scrollHeight+o+"px";
+}
+else if ("input"==l) {
+if (e.style.width="1000px", e.offsetWidth) {
+e.style.width="0", "border-box"==n.boxSizing?o=e.offsetWidth:"padding-box"==n.boxSizing?o=e.clientWidth:"content-box"==n.boxSizing&&(o=parseFloat(n.minWidth));var r=Math.max(o, e.scrollWidth-e.clientWidth);e.style.width=r+"px";for (var s=0;s<10&&(e.scrollLeft=1e10, 0!=e.scrollLeft);s++) {
+r+=e.scrollLeft, e.style.width=r+"px";
+}
+}
+else {
+e.style.width=e.value.length+1+"ch";
+}
+}
+else if ("select"==l) {
+var c=e.selectedIndex>0?e.selectedIndex:0, a=document.createElement("_");a.textContent=e.options[c].textContent, e.parentNode.insertBefore(a, e.nextSibling);var d;for (var h in n) {
+var p=n[h];/^(width|webkitLogicalWidth|length)$/.test(h)||"string"!=typeof p||(a.style[h]=p, /appearance$/i.test(h)&&(d=h));
+}a.style.width="", a.offsetWidth>0&&(e.style.width=a.offsetWidth+"px", n[d]&&"none"===n[d]||(e.style.width="calc("+e.style.width+" + 2em)")), a.parentNode.removeChild(a), a=null;
+}i&&(e.value="");
+}
+}, resizeAll:function(i) {
+e(i||t.selectors.base).forEach(function(e) {
+t.resize(e);
+});
+}, active:!0, resizes:function(e) {
+return e&&e.parentNode&&e.matches&&e.matches(t.selectors.base)&&e.matches(t.selectors.filter);
+}, init:function() {
+t.selectors.filter=t.script.getAttribute("data-filter")||(e("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||Stretchy.selectors.filter||"*", t.resizeAll();
+}, $$:e};"loading"!==document.readyState?t.init():document.addEventListener("DOMContentLoaded", t.init);var i=function(e) {
+t.active&&t.resize(e.target);
+};document.documentElement.addEventListener("input", i), document.documentElement.addEventListener("change", i), self.MutationObserver&&new MutationObserver(function(e) {
+t.active&&e.forEach(function(e) {
+"childList"==e.type&&Stretchy.resizeAll(e.addedNodes);
+});
+}).observe(document.documentElement, {childList:!0, subtree:!0});
+}
+}();
+// # sourceMappingURL=stretchy.min.js.map
 
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 /**
  * Mavo: Create web applications by writing HTML and CSS!
@@ -123,7 +548,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (changed.source) {
 					// if source changes, always reload
 					_this.load();
-				} else if (!_this.source) {
+				}
+ else if (!_this.source) {
 					if (changed.storage || changed.init && !_this.root.data) {
 						_this.load();
 					}
@@ -197,7 +623,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 									// otherwise, descendant nodes still inherit, unless they are also mode-restricted
 									mode = node.element.getAttribute("mv-mode");
 									node.modes = mode;
-								} else {
+								}
+ else {
 									// Inherited
 									if (node.modes) {
 										// Mode-restricted, we cannot change to the other mode
@@ -230,7 +657,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.permissions.can("read", function () {
 					return _this.load();
 				});
-			} else {
+			}
+ else {
 				// No storage or source
 				requestAnimationFrame(function () {
 					_this.dataLoaded.resolve();
@@ -296,7 +724,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (_this.permissions.save && evt.keyCode == 83 && evt[_.superKey] && !evt.altKey) {
 					evt.preventDefault();
 					_this.save();
-				} else if (evt.keyCode == 38 || evt.keyCode == 40) {
+				}
+ else if (evt.keyCode == 38 || evt.keyCode == 40) {
 					var element = evt.target;
 
 					if (element.matches("textarea, input[type=range], input[type=number]")) {
@@ -319,7 +748,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								nextNode.edit({ immediately: true }).then(function () {
 									return nextNode.editor.focus();
 								});
-							} else {
+							}
+ else {
 								nextNode.element.focus();
 							}
 
@@ -471,7 +901,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					mavo: this,
 					format: this.element.getAttribute("mv-" + role + "-format") || this.element.getAttribute("mv-format")
 				}, this.element.getAttribute("mv-" + role + "-type"));
-			} else if (!backend) {
+			}
+ else if (!backend) {
 				// We had a backend and now we will un-have it
 				this[role] = null;
 			}
@@ -531,7 +962,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					if (xhr && xhr.status == 404) {
 						_this3.render(null);
-					} else {
+					}
+ else {
 						var message = _this3._("problem-loading");
 
 						if (xhr) {
@@ -846,11 +1278,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+ return typeof obj; 
+} : function (obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+};
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
 (function ($, $$) {
 
@@ -943,7 +1395,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					value = (_value = {}, _defineProperty(_value, Symbol.toStringTag, "Null"), _defineProperty(_value, "toJSON", function toJSON() {
 						return null;
 					}), _value);
-				} else {
+				}
+ else {
 					var constructor = value.constructor;
 					value = new constructor(primitive);
 					value[Symbol.toStringTag] = constructor.name;
@@ -1043,9 +1496,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 			if (arguments.length == 2) {
 				ret = data[name];
-			} else if (value === undefined) {
+			}
+ else if (value === undefined) {
 				delete data[name];
-			} else {
+			}
+ else {
 				ret = data[name] = value;
 			}
 
@@ -1088,7 +1543,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				}
 
 				return ret;
-			} else {
+			}
+ else {
 				// Get path
 				var path = [];
 
@@ -1105,7 +1561,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 							if (sibling.nodeType == 1) {
 								countNonElementSiblings = false;
 							}
-						} else {
+						}
+ else {
 							index++;
 						}
 					}
@@ -1130,7 +1587,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 				if (comment && comment.parentNode) {
 					comment.parentNode.replaceChild(element, comment);
-				} else if (element && parent && !element.parentNode) {
+				}
+ else if (element && parent && !element.parentNode) {
 					// Has not been revocably removed because it has never even been added
 					parent.appendChild(element);
 				}
@@ -1327,7 +1785,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					if (Array.isArray(parent) && Array.isArray(value)) {
 						// Merge arrays instead of adding array inside array
 						parent.splice.apply(parent, [last, 1].concat(_toConsumableArray(value)));
-					} else {
+					}
+ else {
 						parent[path[path.length - 1]] = value;
 					}
 
@@ -1335,7 +1794,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				}
 
 				return value;
-			} else if ((typeof obj === "undefined" ? "undefined" : _typeof(obj)) == "object" && path && path.length) {
+			}
+ else if ((typeof obj === "undefined" ? "undefined" : _typeof(obj)) == "object" && path && path.length) {
 				// Get
 				return path.reduce(function (obj, property, i) {
 					var meta = {};
@@ -1352,7 +1812,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 					return ret;
 				}, obj);
-			} else {
+			}
+ else {
 				return obj;
 			}
 		},
@@ -1491,7 +1952,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					this.stop();
 					var ret = callback();
 					this.run();
-				} else {
+				}
+ else {
 					var ret = callback();
 				}
 
@@ -1590,7 +2052,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 					if (pair) {
 						ret[pair[1].replace(/\\:/g, ":")] = pair[2];
-					} else {
+					}
+ else {
 						// If no value, it's boolean
 						ret[option] = true;
 					}
@@ -1608,7 +2071,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 		if (test) {
 			this.setAttribute(name, value);
-		} else {
+		}
+ else {
 			this.removeAttribute(name);
 		}
 	});
@@ -1698,7 +2162,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			if (phrase === undefined) {
 				// Everything failed, use id
 				phrase = Mavo.Functions.readable(key);
-			} else if (vars) {
+			}
+ else if (vars) {
 				var keys = Mavo.matches(phrase, /\{\w+(?=\})/g).map(function (v) {
 					return v.slice(1);
 				});
@@ -1731,7 +2196,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			register: function register(lang, phrases) {
 				if (_.all[lang]) {
 					_.all[lang].extend(phrases);
-				} else {
+				}
+ else {
 					_.all[lang] = new _(lang, phrases);
 				}
 			},
@@ -1816,7 +2282,16 @@ Mavo.Locale.register("en", {
 });
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -1851,7 +2326,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (plugin.repo) {
 						// Plugin hosted in a separate repo
 						var base = "https://raw.githubusercontent.com/" + plugin.repo + "/";
-					} else {
+					}
+ else {
 						// Plugin hosted in the mavo-plugins repo
 						var base = _.url + "/" + plugin.id + "/";
 					}
@@ -1878,7 +2354,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if ($.type(existing) === "function") {
 					$.Class(existing, o.extend[Class]);
-				} else {
+				}
+ else {
 					$.extend(existing, o.extend[Class]);
 				}
 			}
@@ -1943,7 +2420,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						this.template += " " + id;
 					}
 				}
-			} else {
+			}
+ else {
 				this.element = $.create({
 					className: "mv-bar mv-ui",
 					start: this.mavo.element,
@@ -1981,7 +2459,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (o.create) {
 					_this[id] = o.create.call(_this.mavo, _this[id]);
-				} else if (!_this[id]) {
+				}
+ else if (!_this[id]) {
 					_this[id] = $.create("button", {
 						className: "mv-" + id,
 						textContent: _this.mavo._(id)
@@ -1998,7 +2477,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					}, function () {
 						_this.remove(id);
 					});
-				} else if (o.condition && !o.condition.call(_this.mavo)) {
+				}
+ else if (o.condition && !o.condition.call(_this.mavo)) {
 					_this.remove(id);
 				}
 
@@ -2171,7 +2651,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					action: function action() {
 						if (this.editing) {
 							this.done();
-						} else {
+						}
+ else {
 							this.edit();
 						}
 					},
@@ -2213,7 +2694,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 								className: "mv-button",
 								around: custom
 							});
-						} else {
+						}
+ else {
 							a = $.create("a", {
 								className: "mv-export mv-button",
 								textContent: this._("export")
@@ -2264,7 +2746,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 												try {
 													var json = JSON.parse(reader.result);
 													_this4.render(json);
-												} catch (e) {
+												}
+ catch (e) {
 													_this4.error(_this4._("cannot-parse"));
 												}
 											},
@@ -2304,7 +2787,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
 (function ($, $$) {
 
@@ -2332,7 +2822,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 			if (o.type == "error") {
 				this.element.setAttribute("role", "alert");
-			} else {
+			}
+ else {
 				this.element.setAttribute("aria-live", "polite");
 			}
 
@@ -2544,7 +3035,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 					trigger.active = false;
 					trigger.callback();
-				} else if (!match) {
+				}
+ else if (!match) {
 					// This is so that triggers can only be executed in an actual transition
 					// And that if there is a trigger for [a,b] it won't be executed twice
 					// if a and b are set to true one after the other
@@ -2782,7 +3274,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					req.data = Object.keys(req.data).map(function (p) {
 						return p + "=" + encodeURIComponent(req.data[p]);
 					}).join("&");
-				} else {
+				}
+ else {
 					req.data = JSON.stringify(req.data);
 				}
 			}
@@ -2797,7 +3290,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			return $.fetch(call, req).catch(function (err) {
 				if (err && err.xhr) {
 					return Promise.reject(err.xhr);
-				} else {
+				}
+ else {
 					_this3.mavo.error("Something went wrong while connecting to " + _this3.id, err);
 				}
 			}).then(function (xhr) {
@@ -2825,7 +3319,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						if (_this4.accessToken) {
 							resolve(_this4.accessToken);
 						}
-					} else {
+					}
+ else {
 						// Show window
 						var popup = {
 							width: Math.min(1000, innerWidth - 100),
@@ -2983,7 +3478,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 		put: function put(serialized) {
 			if (!serialized) {
 				delete localStorage[this.key];
-			} else {
+			}
+ else {
 				localStorage[this.key] = serialized;
 			}
 
@@ -2999,9 +3495,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+ return typeof obj; 
+} : function (obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+};
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
 (function ($, $$) {
 
@@ -3161,9 +3668,25 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 })(Bliss, Bliss.$);
 "use strict";
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -3199,7 +3722,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (this.template) {
 				this.template.copies.push(this);
-			} else {
+			}
+ else {
 				// First (or only) of its kind
 				this.copies = [];
 			}
@@ -3416,7 +3940,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (_node2 instanceof Mavo.Node) {
 					if (typeof callback === "function") {
 						callback.call(_node2, _node2);
-					} else if (callback in _node2) {
+					}
+ else if (callback in _node2) {
 						_node2[callback]();
 					}
 				}
@@ -3460,7 +3985,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (this.isRoot && (properties = Object.keys(this.children)).length === 1 && this.children[properties[0]].nodeType === "Collection") {
 					// If it's root with only one collection property, render on that property
 					env.data = _defineProperty({}, properties[0], env.data);
-				} else {
+				}
+ else {
 					// Otherwise, render first item
 					this.inPath.push("0");
 					env.data = env.data[0];
@@ -3471,7 +3997,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.done();
 				this.dataRender(env.data);
 				this.edit();
-			} else {
+			}
+ else {
 				this.dataRender(env.data);
 			}
 
@@ -3600,7 +4127,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							}).filter(function (item) {
 								return item !== null;
 							});
-						} else if (ret instanceof Mavo.Node) {
+						}
+ else if (ret instanceof Mavo.Node) {
 							ret = ret.getData(options);
 						}
 
@@ -3733,7 +4261,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					for (var property in this.children) {
 						ret = Mavo.union(ret, this.children[property].properties);
 					}
-				} else if (this.nodeType == "Collection") {
+				}
+ else if (this.nodeType == "Collection") {
 					ret = Mavo.union(ret, this.itemTemplate.properties);
 				}
 
@@ -3828,7 +4357,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					this.element.classList.remove("mv-highlight");
 					this.itembar.remove();
-				} else if (this.deleted) {
+				}
+ else if (this.deleted) {
 					// Undelete
 					this.element.textContent = "";
 					this.element.appendChild(this.elementContents);
@@ -3876,7 +4406,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (element.hasAttribute("property")) {
 						// property used without a value
 						property = element.name || element.id || element.classList[0];
-					} else if (element.matches(Mavo.selectors.multiple)) {
+					}
+ else if (element.matches(Mavo.selectors.multiple)) {
 						// mv-multiple used without property, generate name
 						property = element.getAttribute("mv-multiple") || "collection";
 					}
@@ -3930,11 +4461,31 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+ return typeof obj; 
+} : function (obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+};
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -3975,10 +4526,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var collection = _this.children[property];
 					collection.add(element);
 					collection.mutable = collection.mutable || Mavo.is("multiple", element);
-				} else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
+				}
+ else if (propertyNames.indexOf(property) != propertyNames.lastIndexOf(property)) {
 					// There are duplicates, so this should be a collection.
 					_this.children[property] = new Mavo.Collection(element, _this.mavo, options);
-				} else {
+				}
+ else {
 					// Normal case
 					_this.children[property] = Mavo.Node.create(element, _this.mavo, options);
 				}
@@ -4028,7 +4581,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// {foo: {foo: 5}} should become {foo: 5}
 				var options = $.extend($.extend({}, env.options), { forceObjects: true });
 				env.data = this.children[this.property].getData(options);
-			} else {
+			}
+ else {
 				for (var property in this.children) {
 					var obj = this.children[property];
 
@@ -4037,7 +4591,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 						if (data === null && !env.options.live) {
 							delete env.data[obj.property];
-						} else {
+						}
+ else {
 							env.data[obj.property] = data;
 						}
 					}
@@ -4052,7 +4607,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (!properties.length && !this.isRoot) {
 					// Avoid {} in the data
 					env.data = null;
-				} else if (env.data && _typeof(env.data) === "object") {
+				}
+ else if (env.data && _typeof(env.data) === "object") {
 					// Add JSON-LD stuff
 					if (this.type && this.type != _.DEFAULT_TYPE) {
 						env.data["@type"] = this.type;
@@ -4062,7 +4618,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						env.data["@context"] = this.vocab;
 					}
 				}
-			} else if (env.data) {
+			}
+ else if (env.data) {
 				env.data[Mavo.toNode] = this;
 				env.data = this.relativizeData(env.data);
 			}
@@ -4102,7 +4659,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (Array.isArray(ret)) {
 						results.push.apply(results, _toConsumableArray(ret));
 						returnArray = true;
-					} else {
+					}
+ else {
 						results.push(ret);
 					}
 				}
@@ -4146,7 +4704,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Data is a primitive, render it on this.property or failing that, any writable property
 				if (this.property in this.children) {
 					var property = this.property;
-				} else {
+				}
+ else {
 					var type = $.type(data);
 					var score = function score(prop) {
 						return (_this4.children[prop] instanceof Mavo.Primitive) + (_this4.children[prop].datatype == type);
@@ -4229,9 +4788,20 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+ return typeof obj; 
+} : function (obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+};
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
 (function ($, $$) {
 
@@ -4340,11 +4910,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				// no mv-default
 				this._default = this.modes ? this.templateValue : editorValue;
 				this.defaultSource = this.modes ? "template" : "editor";
-			} else if (this.default === "") {
+			}
+ else if (this.default === "") {
 				// mv-default exists, no value, default is template value
 				this._default = this.templateValue;
 				this.defaultSource = "template";
-			} else {
+			}
+ else {
 				// mv-default with value
 				this.defaultObserver = new Mavo.Observer(this.element, "mv-default", function (record) {
 					_this.default = _this.element.getAttribute("mv-default");
@@ -4358,7 +4930,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 			if (this.default === undefined && keepTemplateValue) {
 				this.initialValue = this.templateValue;
-			} else {
+			}
+ else {
 				this.initialValue = this.default;
 			}
 
@@ -4416,7 +4989,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				if (this.editor.matches(Mavo.selectors.formControl)) {
 
 					_.setValue(this.editor, value, { config: this.editorDefaults });
-				} else {
+				}
+ else {
 					// if we're here, this.editor is an entire HTML structure
 					var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
@@ -4462,7 +5036,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						env.data = this.relativizeData(env.data);
 					}
 				}
-			} else if (this.inPath.length) {
+			}
+ else if (this.inPath.length) {
 				env.data = Mavo.subset(this.data, this.inPath, env.data);
 			}
 
@@ -4546,7 +5121,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						if (multiline) {
 							evt.preventDefault();
 						}
-					} else if (evt.keyCode == 8 && (_this2.empty && _this2.collection || evt[Mavo.superKey])) {
+					}
+ else if (evt.keyCode == 8 && (_this2.empty && _this2.collection || evt[Mavo.superKey])) {
 						// Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
 						_this2.closestCollection.delete(_this2.closestItem);
 
@@ -4678,7 +5254,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 				if (_this4.popup) {
 					_this4.popup.close();
-				} else if (!_this4.attribute && _this4.editor) {
+				}
+ else if (!_this4.attribute && _this4.editor) {
 					$.remove(_this4.editor);
 
 					_.setValue(_this4.element, _this4.editorValue, {
@@ -4699,7 +5276,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 			if (data && (typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") {
 				if (Symbol.toPrimitive in data) {
 					data = data[Symbol.toPrimitive]();
-				} else {
+				}
+ else {
 					// Candidate properties to get a value from
 					var _arr = [this.property, "value", "content"];
 					for (var _i = 0; _i < _arr.length; _i++) {
@@ -4718,7 +5296,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 				if (!this.modes) {
 					this.value = this.closestCollection ? this.default : this.templateValue;
 				}
-			} else {
+			}
+ else {
 				this.value = data;
 			}
 		},
@@ -4794,7 +5373,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					// Prevent loops
 					if (_this5.config.setValue) {
 						_this5.config.setValue.call(_this5, _this5.element, value);
-					} else if (!o.dataOnly) {
+					}
+ else if (!o.dataOnly) {
 						_.setValue(_this5.element, value, {
 							config: _this5.config,
 							attribute: _this5.attribute,
@@ -4945,9 +5525,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					// Returning properties (if they exist) instead of attributes
 					// is needed for dynamic elements such as checkboxes, sliders etc
 					ret = element[attribute];
-				} else if (attribute) {
+				}
+ else if (attribute) {
 					ret = element.getAttribute(attribute);
-				} else {
+				}
+ else {
 					ret = element.getAttribute("content") || element.textContent || null;
 				}
 
@@ -5003,7 +5585,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						try {
 							var previousValue = element[o.attribute];
 							var newValue = element[o.attribute] = value;
-						} catch (e) {}
+						}
+ catch (e) {}
 
 						if (previousValue != newValue && o.config.changeEvents) {
 							o.config.changeEvents.split(/\s+/).forEach(function (type) {
@@ -5018,11 +5601,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						if (value != element.hasAttribute(o.attribute)) {
 							$.toggleAttribute(element, o.attribute, value, value);
 						}
-					} else if (element.getAttribute(o.attribute) != value) {
+					}
+ else if (element.getAttribute(o.attribute) != value) {
 						// intentionally non-strict, e.g. "3." !== 3
 						element.setAttribute(o.attribute, value);
 					}
-				} else {
+				}
+ else {
 					var presentational = _.format(value, o);
 
 					if (presentational !== value) {
@@ -5031,7 +5616,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 						if (element.setAttribute) {
 							element.setAttribute("content", value);
 						}
-					} else {
+					}
+ else {
 						element.textContent = value;
 					}
 				}
@@ -5132,7 +5718,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 					if (bounds.top - _this.height > 20) {
 						var pointDown = true;
 						y = bounds.top - _this.height - 20;
-					} else {
+					}
+ else {
 						// Nah, just raise it a bit
 						y = innerHeight - _this.height - 20;
 					}
@@ -5247,7 +5834,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 })(Bliss, Bliss.$);
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+ return typeof obj; 
+} : function (obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+};
 
 /**
  * Configuration for different types of elements. Options:
@@ -5305,7 +5896,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 						_[id + "@" + attribute] = o;
 					});
-				} else {
+				}
+ else {
 					_[id] = config;
 				}
 
@@ -5466,7 +6058,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 										return _this.element.src = tempURL;
 									});
 									load();
-								} else {
+								}
+ else {
 									// 11 + 0.5*10*11/2 = 38.5 seconds later, giving up
 									_this.mavo.error(_this.mavo._("cannot-load-uploaded-file") + " " + url);
 									cleanup();
@@ -5533,7 +6126,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 						}],
 						events: uploadEvents
 					});
-				} else {
+				}
+ else {
 					return mainInput;
 				}
 			}
@@ -5887,7 +6481,16 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 })(Bliss, Bliss.$);
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -5956,7 +6559,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					// If immutable with only 1 item, return the item
 					// See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
 					env.data = env.data[0];
-				} else if (this.data && !env.options.live) {
+				}
+ else if (this.data && !env.options.live) {
 					var rendered = Mavo.subset(this.data, this.inPath);
 					env.data = env.data.concat(rendered.slice(env.data.length));
 				}
@@ -6006,7 +6610,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (item instanceof Node) {
 				item = Mavo.Node.get(item) || this.createItem(item);
-			} else {
+			}
+ else {
 				item = item || this.createItem();
 			}
 
@@ -6022,7 +6627,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (index === undefined) {
 					index = this.bottomUp ? 0 : this.length;
 				}
-			} else {
+			}
+ else {
 				index = this.length;
 			}
 
@@ -6258,7 +6864,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			this.children.forEach(function (item) {
 				if (item.deleted) {
 					_this7.delete(item, true);
-				} else {
+				}
+ else {
 					item.unsavedChanges = false;
 				}
 			});
@@ -6281,14 +6888,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.children.forEach(function (item, i) {
 					return item.render(data && data[i]);
 				});
-			} else {
+			}
+ else {
 				// First render on existing items
 				for (var i = 0; i < this.children.length; i++) {
 					var item = this.children[i];
 
 					if (i < data.length) {
 						item.render(data[i]);
-					} else {
+					}
+ else {
 						item.dataChanged("delete");
 						this.delete(item, true);
 						i--;
@@ -6316,7 +6925,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					if (this.bottomUp) {
 						$.after(fragment, i > 0 ? this.children[i - 1].element : this.marker);
-					} else {
+					}
+ else {
 						$.before(fragment, this.marker);
 					}
 
@@ -6442,7 +7052,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (item.collection.isCompatible(collection)) {
 					var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
 					collection.add(item, index);
-				} else {
+				}
+ else {
 					return _this9.dragula.cancel(true);
 				}
 			});
@@ -6565,7 +7176,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// We can clone the buttons from the template
 				this.element = this.item.template.itembar.element.cloneNode(true);
 				this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
-			} else {
+			}
+ else {
 				// First item of this type
 				this.element = this.element || $.create({
 					className: "mv-item-bar mv-ui"
@@ -6589,7 +7201,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					});
 
 					buttons.push(this.dragHandle);
-				} else {
+				}
+ else {
 					this.dragHandle = this.item.element;
 				}
 
@@ -6641,9 +7254,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						Mavo.scrollIntoViewIfNeeded(newItem.element);
 
 						return _this.collection.editItem(newItem);
-					} else if (evt.target.matches(selectors.delete)) {
+					}
+ else if (evt.target.matches(selectors.delete)) {
 						_this.item.collection.delete(item);
-					} else if (evt.target.matches(selectors["drag-handle"])) {
+					}
+ else if (evt.target.matches(selectors["drag-handle"])) {
 						(function (evt) {
 							return evt.target.focus();
 						});
@@ -6697,7 +7312,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					this.hideTimeout = setTimeout(function () {
 						return _this3.hide(sticky);
 					}, timeout);
-				} else {
+				}
+ else {
 					this.element.setAttribute("hidden", "");
 					$.unbind([this.item.element, this.element], "focusout mouseleave", this);
 					this.sticky = false;
@@ -6716,7 +7332,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (!this.isWithinItem(evt.relatedTarget)) {
 						this.hide(sticky, _.DELAY);
 					}
-				} else {
+				}
+ else {
 					this.show(sticky);
 					evt.stopPropagation();
 				}
@@ -6738,7 +7355,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (this.item instanceof Mavo.Primitive && !this.item.attribute) {
 						this.adjacent = true;
 						$.after(this.element, this.item.element);
-					} else {
+					}
+ else {
 						this.item.element.appendChild(this.element);
 					}
 				}
@@ -6794,7 +7412,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -6814,7 +7441,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				}
 
 				return this.function(data);
-			} catch (exception) {
+			}
+ catch (exception) {
 				console.info("%cExpression error!", "color: red; font-weight: bold", exception.message + " in expression " + this.expression, "\nNot an expression? Use mv-expressions=\"none\" to disable expressions on an element and its descendants.");
 
 				Mavo.hooks.run("expression-eval-error", { context: this, exception: exception });
@@ -6859,7 +7487,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (evt.action == "propertychange") {
 					return Mavo.Functions.intersects(identifiers, evt.node.path);
-				} else {
+				}
+ else {
 					if (Mavo.Functions.intersects(["$index", "$previous", "$next"], identifiers)) {
 						return true;
 					}
@@ -6936,7 +7565,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -6995,7 +7633,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					var value = Element.prototype.getAttribute.call(this.node, this.attribute);
 
 					this.expression = (value || "").trim();
-				} else {
+				}
+ else {
 					// Move whitespace outside to prevent it from messing with types
 					this.node.normalize();
 
@@ -7104,7 +7743,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						}
 
 						return env.value;
-					} else {
+					}
+ else {
 						return _this2.oldValue[i];
 					}
 				}
@@ -7119,7 +7759,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 			if (env.value.length === 1) {
 				env.value = env.value[0];
-			} else {
+			}
+ else {
 				env.value = env.value.map(function (v) {
 					return Mavo.Primitive.format(v, {
 						attribute: _this2.attribute,
@@ -7136,9 +7777,11 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		output: function output(value) {
 			if (this.primitive) {
 				this.primitive.value = value;
-			} else if (this.mavoNode) {
+			}
+ else if (this.mavoNode) {
 				this.mavoNode.render(value);
-			} else {
+			}
+ else {
 				Mavo.Primitive.setValue(this.node, value, { attribute: this.attribute });
 			}
 		},
@@ -7198,11 +7841,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 							if (o.all.size === 1) {
 								o.observe();
-							} else if (!o.all.size) {
+							}
+ else if (!o.all.size) {
 								o.unobserve();
 							}
 						}
-					} else {
+					}
+ else {
 						// All names
 						for (var name in this.vars) {
 							this.add(domexpression, name);
@@ -7220,7 +7865,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (!o.all.size) {
 							o.unobserve();
 						}
-					} else {
+					}
+ else {
 						// All names
 						for (var name in this.vars) {
 							this.delete(domexpression, name);
@@ -7297,7 +7943,16 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, $$) {
 
@@ -7336,7 +7991,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 							scheduled.add(evt.node.template);
 						}
-					} else {
+					}
+ else {
 						requestAnimationFrame(function () {
 							return _this.update(evt);
 						});
@@ -7357,11 +8013,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			if (evt instanceof Mavo.Node) {
 				rootObject = evt;
 				evt = null;
-			} else if (evt instanceof Element) {
+			}
+ else if (evt instanceof Element) {
 				root = evt.closest(Mavo.selectors.item);
 				rootObject = Mavo.Node.get(root);
 				evt = null;
-			} else {
+			}
+ else {
 				rootObject = this.mavo.root;
 			}
 
@@ -7417,7 +8075,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// Text node
 				// Leaf node, extract references from content
 				this.extract(node, null, path, syntax);
-			} else {
+			}
+ else {
 				node.normalize();
 
 				syntax = Mavo.Expression.Syntax.create(node) || syntax;
@@ -7438,7 +8097,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (child.nodeType == 1) {
 							offset = 0;
 							index++;
-						} else {
+						}
+ else {
 							offset++;
 						}
 
@@ -7548,7 +8208,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						if (value) {
 							// Is removed from the DOM and needs to get back
 							Mavo.revocably.add(_this2.element);
-						} else if (_this2.element.parentNode) {
+						}
+ else if (_this2.element.parentNode) {
 							// Is in the DOM and needs to be removed
 							Mavo.revocably.remove(_this2.element, "mv-if");
 						}
@@ -7578,9 +8239,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Bliss.$);
 "use strict";
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 /**
  * Functions available inside Mavo expressions
@@ -7643,12 +8320,14 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 					if (ret === undefined) {
 						meta.property = obj.length;
-					} else if (ret.length === 0) {
+					}
+ else if (ret.length === 0) {
 						meta.property = [obj.length];
 					}
 
 					return ret;
-				} else {
+				}
+ else {
 					// Not a property query, get from objects inside
 					// TODO meta.property = ??
 					return obj.map(function (e) {
@@ -8013,7 +8692,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (!hasDate) {
 					// No date, add today’s
 					date = _.$today + " " + date;
-				} else {
+				}
+ else {
 					// Only year-month, add day
 					date = date.replace(/^(\d{4}-\d{2})(?!-\d{2})/, "$1-01");
 				}
@@ -8021,7 +8701,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				if (!hasTime) {
 					// Add a time if one doesn't exist
 					date += "T00:00:00";
-				} else {
+				}
+ else {
 					// Make sure time starts with T, due to Safari bug
 					date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
 				}
@@ -8051,7 +8732,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 					if (timezone) {
 						// parse as ISO format
 						_date2 = new Date(_date2);
-					} else {
+					}
+ else {
 						// construct date in local timezone
 						var fields = _date2.match(/\d+/g);
 						_date2 = new Date(
@@ -8060,7 +8742,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						// hours, minutes, seconds, milliseconds,
 						fields[3] || 0, fields[4] || 0, fields[5] || 0, fields[6] || 0);
 					}
-				} else {
+				}
+ else {
 					_date2 = new Date(_date2);
 				}
 
@@ -8202,9 +8885,53 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 })(Bliss, Mavo.value);
 "use strict";
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+var _slicedToArray = function () {
+ function sliceIterator(arr, i) {
+ var _arr = []; var _n = true; var _d = false; var _e = undefined; try {
+ for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+ _arr.push(_s.value); if (i && _arr.length === i) {
+break;
+} 
+} 
+}
+ catch (err) {
+ _d = true; _e = err; 
+}
+ finally {
+ try {
+ if (!_n && _i["return"]) {
+_i["return"]();
+} 
+}
+ finally {
+ if (_d) {
+throw _e;
+} 
+} 
+} return _arr; 
+} return function (arr, i) {
+ if (Array.isArray(arr)) {
+ return arr; 
+}
+ else if (Symbol.iterator in Object(arr)) {
+ return sliceIterator(arr, i); 
+}
+ else {
+ throw new TypeError("Invalid attempt to destructure non-iterable instance"); 
+} 
+}; 
+}();
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+function _toConsumableArray(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+}
+ else {
+ return Array.from(arr); 
+} 
+}
 
 (function ($, val, $u) {
 
@@ -8275,24 +9002,29 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 							result = [].concat(_toConsumableArray(b.map(function (n, i) {
 								return o.scalar(a[i] === undefined ? o.identity : a[i], n);
 							})), _toConsumableArray(a.slice(b.length)));
-						} else {
+						}
+ else {
 							result = b.map(function (n) {
 								return o.scalar(a, n);
 							});
 						}
-					} else if (Array.isArray(a)) {
+					}
+ else if (Array.isArray(a)) {
 						result = a.map(function (n) {
 							return o.scalar(n, b);
 						});
-					} else {
+					}
+ else {
 						result = o.scalar(a, b);
 					}
 
 					if (o.reduce) {
 						prev = o.reduce(prev, result, a, b);
-					} else if (o.logical) {
+					}
+ else if (o.logical) {
 						prev = prev && result;
-					} else {
+					}
+ else {
 						prev = result;
 					}
 				};
@@ -8609,7 +9341,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		rewrite: function rewrite(code) {
 			try {
 				return _.serialize(_.parse(code));
-			} catch (e) {
+			}
+ catch (e) {
 				// Parsing as MavoScript failed, falling back to plain JS
 				return code;
 			}
@@ -8632,7 +9365,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 		if (details.scalar.length < 2) {
 			Mavo.Script.addUnaryOperator(name, details);
-		} else {
+		}
+ else {
 			Mavo.Script.addBinaryOperator(name, details);
 		}
 	}
@@ -8804,7 +9538,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				this.path = this.path.replace(/\/\/|^\/|\/$/g, "");
 
 				this.apiCall = "repos/" + this.username + "/" + this.repo + "/contents/" + this.path;
-			} else {
+			}
+ else {
 				this.apiCall = this.url.pathname.slice(1);
 			}
 
@@ -8819,7 +9554,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				return this.request(this.apiCall).then(function (response) {
 					return Promise.resolve(_this.repo ? _.atob(response.content) : response);
 				});
-			} else {
+			}
+ else {
 				// Unauthenticated, use simple GET request to avoid rate limit
 				var url = new URL("https://raw.githubusercontent.com/" + this.username + "/" + this.repo + "/" + (this.branch || "master") + "/" + this.path);
 
@@ -8967,7 +9703,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 						_this4.pullRequest();
 					});
 				});
-			} else {
+			}
+ else {
 				// Ask about creating a PR
 				this.notice = this.mavo.message(message + "\n\t\t\t\t" + this.mavo._("gh-edit-suggestion-instructions") + "\n\t\t\t\t<form onsubmit=\"return false\">\n\t\t\t\t\t<textarea name=\"edits\" class=\"mv-autosize\" placeholder=\"" + this.mavo._("gh-edit-suggestion-reason-placeholder") + "\"></textarea>\n\t\t\t\t\t<button>" + this.mavo._("gh-edit-suggestion-send") + "</button>\n\t\t\t\t</form>", {
 					classes: "mv-inline",
@@ -9090,7 +9827,8 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 				// No Github Pages, return rawgit URL
 				if (sha) {
 					return "https://cdn.rawgit.com/" + repo + "/" + sha + "/" + path;
-				} else {
+				}
+ else {
 					return "https://rawgit.com/" + repo + "/" + _this8.branch + "/" + path;
 				}
 			});
@@ -9121,10 +9859,12 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 				if (/raw.githubusercontent.com$/.test(url.host)) {
 					ret.branch = path.shift();
-				} else if (/api.github.com$/.test(url.host)) {
+				}
+ else if (/api.github.com$/.test(url.host)) {
 					// raw API call, stop parsing and just return
 					return {};
-				} else if (path[0] == "blob") {
+				}
+ else if (path[0] == "blob") {
 					path.shift();
 					ret.branch = path.shift();
 				}
@@ -9154,4 +9894,4 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		}
 	}));
 })(Bliss, Bliss.$);
-//# sourceMappingURL=maps/mavo.es5.js.map
+// # sourceMappingURL=maps/mavo.es5.js.map

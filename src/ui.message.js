@@ -27,7 +27,8 @@
 
       if (o.type == "error") {
         this.element.setAttribute("role", "alert");
-      } else {
+      }
+ else {
         this.element.setAttribute("aria-live", "polite");
       }
 

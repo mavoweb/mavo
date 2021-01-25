@@ -21,7 +21,8 @@
             this.template += ` ${id}`;
           }
         }
-      } else {
+      }
+ else {
         this.element = $.create({
           className: "mv-bar mv-ui",
           start: this.mavo.element,
@@ -54,7 +55,8 @@
 
         if (o.create) {
           this[id] = o.create.call(this.mavo, this[id]);
-        } else if (!this[id]) {
+        }
+ else if (!this[id]) {
           this[id] = $.create("button", {
             type: "button",
             className: `mv-${id}`,
@@ -76,7 +78,8 @@
               this.remove(id);
             }
           );
-        } else if (o.condition && !o.condition.call(this.mavo)) {
+        }
+ else if (o.condition && !o.condition.call(this.mavo)) {
           this.remove(id);
         }
 
@@ -275,7 +278,8 @@
             if (this.editing) {
               this.done();
               this.bar.edit.textContent = this._("edit");
-            } else {
+            }
+ else {
               this.edit();
               this.bar.edit.textContent = this._("editing");
             }
@@ -324,7 +328,8 @@
                     className: "mv-button",
                     around: custom,
                   });
-            } else {
+            }
+ else {
               a = $.create("a", {
                 className: "mv-export mv-button",
                 textContent: this._("export"),
@@ -377,7 +382,8 @@
                         try {
                           let json = JSON.parse(reader.result);
                           this.render(json);
-                        } catch (e) {
+                        }
+ catch (e) {
                           this.error(this._("cannot-parse"));
                         }
                       },

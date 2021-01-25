@@ -132,7 +132,8 @@
 
       if (this.expressionText) {
         this.setValue(this.expressionText.value, { silent: true });
-      } else {
+      }
+ else {
         this.templateValue = this.getValue();
 
         this._default = this.element.getAttribute("mv-default");
@@ -141,11 +142,13 @@
           // no mv-default
           this._default = this.modes ? this.templateValue : editorValue;
           this.defaultSource = this.modes ? "template" : "editor";
-        } else if (this.default === "") {
+        }
+ else if (this.default === "") {
           // mv-default exists, no value, default is template value
           this._default = this.templateValue;
           this.defaultSource = "template";
-        } else {
+        }
+ else {
           // mv-default with value
           this.defaultExpression = Mavo.DOMExpression.search(
             this.element,
@@ -167,7 +170,8 @@
 
         if (this.default === undefined && keepTemplateValue) {
           this.initialValue = this.templateValue;
-        } else {
+        }
+ else {
           this.initialValue = this.default;
         }
 
@@ -180,7 +184,8 @@
         if (this.element.hasAttribute("aria-label")) {
           // Custom label
           this.label = this.element.getAttribute("aria-label");
-        } else {
+        }
+ else {
           this.label = Mavo.Functions.readable(this.property);
           this.pauseObserver();
           this.element.setAttribute("aria-label", this.label);
@@ -238,7 +243,8 @@
           }
 
           _.setValue(this.editor, value, { config: this.editorDefaults });
-        } else {
+        }
+ else {
           // if we're here, this.editor is an entire HTML structure
           let output = $(
             Mavo.selectors.output + ", " + Mavo.selectors.formControl,
@@ -469,7 +475,8 @@
             if (multiline) {
               evt.preventDefault();
             }
-          } else if (
+          }
+ else if (
             evt.key == "Backspace" &&
             (this.empty || evt[Mavo.superKey])
           ) {
@@ -512,14 +519,16 @@
           .join(" ");
 
         $.bind(this.element, events, (_) => this.popup.show());
-      } else {
+      }
+ else {
         if (!this.attribute) {
           if (this.editor.parentNode != this.element) {
             this.editorValue = this.value;
 
             if (this.config.hasChildren) {
               this.element.textContent = "";
-            } else {
+            }
+ else {
               _.setText(this.element, "");
             }
 
@@ -553,7 +562,8 @@
 
       if (this.popup) {
         this.popup.close();
-      } else if (!this.attribute && this.editor) {
+      }
+ else if (!this.attribute && this.editor) {
         $.remove(this.editor);
 
         if (this.editor.matches("select")) {
@@ -583,14 +593,16 @@
       if ($.type(data) === "object") {
         if (Symbol.toPrimitive in data) {
           data = data[Symbol.toPrimitive]("default");
-        } else if (!this.isHelperVariable && Mavo.isPlainObject(data)) {
+        }
+ else if (!this.isHelperVariable && Mavo.isPlainObject(data)) {
           // Candidate properties to get a value from
           let properties = Object.keys(data),
             property;
 
           if (properties.length === 1) {
             property = properties[0];
-          } else {
+          }
+ else {
             for (let p of [this.property, "value", "content"]) {
               if (p in data) {
                 property = p;
@@ -629,7 +641,8 @@
             ? this.default
             : this.templateValue;
         }
-      } else {
+      }
+ else {
         this.value = data;
       }
 
@@ -692,7 +705,8 @@
       ) {
         if (this.config.setValue) {
           this.config.setValue.call(this, this.element, value);
-        } else if (!o.dataOnly) {
+        }
+ else if (!o.dataOnly) {
           let map = this.originalEditor || this.editor;
           let presentational;
 
@@ -867,7 +881,8 @@
         Mavo.hooks.run("primitive-createuploadpopup-beforereturn", env);
 
         return env.popup;
-      } else {
+      }
+ else {
         return env.mainInput;
       }
     }
@@ -878,7 +893,8 @@
 
       if (node?.nodeType === Node.TEXT_NODE) {
         return node.nodeValue;
-      } else {
+      }
+ else {
         return "";
       }
     }
@@ -889,7 +905,8 @@
 
       if (node?.nodeType === Node.TEXT_NODE) {
         node.nodeValue = text;
-      } else {
+      }
+ else {
         element.prepend(text);
       }
     }
@@ -972,9 +989,11 @@
         // Returning properties (if they exist) instead of attributes
         // is needed for dynamic elements such as checkboxes, sliders etc
         ret = element[attribute];
-      } else if (attribute) {
+      }
+ else if (attribute) {
         ret = element.getAttribute(attribute);
-      } else {
+      }
+ else {
         ret = element.getAttribute("content") || _.getText(element) || null;
       }
 
@@ -1041,7 +1060,8 @@
           try {
             var previousValue = element[o.attribute];
             var newValue = (element[o.attribute] = value);
-          } catch (e) {}
+          }
+ catch (e) {}
         }
 
         // Set attribute anyway, even if we set a property because when
@@ -1050,16 +1070,19 @@
           if (value != element.hasAttribute(o.attribute)) {
             $.toggleAttribute(element, o.attribute, value, value);
           }
-        } else if (element.getAttribute(o.attribute) != value) {
+        }
+ else if (element.getAttribute(o.attribute) != value) {
           // intentionally non-strict, e.g. "3." !== 3
           element.setAttribute(o.attribute, value);
         }
-      } else {
+      }
+ else {
         let presentational = o.presentational ?? _.format(value, o);
 
         if (o.node && !o.config.hasChildren) {
           _.setText(element, presentational);
-        } else {
+        }
+ else {
           element.textContent = presentational;
         }
 
@@ -1199,18 +1222,21 @@
       if (node instanceof Mavo.Primitive && node.config) {
         if (attribute === "mv-default" && !node.defaultExpression) {
           node.default = element.getAttribute("mv-default");
-        } else if (attribute === "aria-label") {
+        }
+ else if (attribute === "aria-label") {
           node.label = element.getAttribute("aria-label");
 
           if (Mavo.in("placeholder", node.editor)) {
             node.editor.placeholder = `(${node.label})`;
           }
-        } else if (attribute && attribute.indexOf("mv-edit-") === 0) {
+        }
+ else if (attribute && attribute.indexOf("mv-edit-") === 0) {
           node.editor?.setAttribute(
             attribute.slice(8),
             element.getAttribute(attribute)
           );
-        } else if (node.config.observer !== false) {
+        }
+ else if (node.config.observer !== false) {
           // Main value observer
           let update = node.config.subtree; // always update when this flag is on regardless of what changed
 

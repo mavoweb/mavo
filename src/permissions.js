@@ -123,7 +123,8 @@
         if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
           trigger.active = false;
           trigger.callback();
-        } else if (!match) {
+        }
+ else if (!match) {
           // This is so that triggers can only be executed in an actual transition
           // And that if there is a trigger for [a,b] it won't be executed twice
           // if a and b are set to true one after the other

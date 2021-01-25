@@ -87,7 +87,8 @@
           if (value) {
             // Is removed from the DOM and needs to get back
             Mavo.revocably.add(this.element);
-          } else if (this.element.parentNode) {
+          }
+ else if (this.element.parentNode) {
             // Is in the DOM and needs to be removed
             Mavo.revocably.remove(this.element, "mv-if");
           }

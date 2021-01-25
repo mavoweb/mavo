@@ -60,12 +60,14 @@
 
           if (ret === undefined) {
             meta.property = obj.length;
-          } else if (ret.length === 0) {
+          }
+ else if (ret.length === 0) {
             meta.property = [obj.length];
           }
 
           return ret;
-        } else {
+        }
+ else {
           // Not a property query, get from objects inside
           // TODO meta.property = ??
           return obj.map((e) => _.get(e, property));
@@ -112,7 +114,8 @@
 
       if (n < 0) {
         return _.last(Math.abs(n), arr);
-      } else {
+      }
+ else {
         let ret = [];
         let numReturn = n === undefined ? 1 : Math.floor(n);
 
@@ -145,7 +148,8 @@
 
       if (n < 0) {
         return _.first(Math.abs(n), arr);
-      } else {
+      }
+ else {
         let ret = [];
         let numReturn = n === undefined ? 1 : Math.floor(n);
 
@@ -428,7 +432,8 @@
         }
 
         return ret;
-      } else {
+      }
+ else {
         return list;
       }
     },
@@ -493,7 +498,8 @@
               return true;
             }
           }
-        } else {
+        }
+ else {
           return _.search(haystack, needle) >= 0;
         }
 
@@ -731,7 +737,8 @@
               ...callback,
             });
           };
-        } else if (callback.isAggregate) {
+        }
+ else if (callback.isAggregate) {
           newCallback = function (array) {
             if (Mavo.in(Mavo.groupedBy, array)) {
               // grouped structures

@@ -33,7 +33,8 @@
       try {
         let xhr = await $.fetch(url.href);
         return xhr.responseText;
-      } catch (e) {
+      }
+ catch (e) {
         return null;
       }
     },
@@ -123,7 +124,8 @@
           }
 
           delete req.data;
-        } else {
+        }
+ else {
           req.data = JSON.stringify(req.data);
         }
       }
@@ -132,7 +134,8 @@
         .catch((err) => {
           if (err?.xhr) {
             return Promise.reject(err.xhr);
-          } else {
+          }
+ else {
             this.mavo.error(
               "Something went wrong while connecting to " + this.id,
               err
@@ -160,7 +163,8 @@
             if (this.accessToken) {
               resolve(this.accessToken);
             }
-          } else {
+          }
+ else {
             // Show window
             let popup = {
               width: Math.min(1000, innerWidth - 100),
@@ -350,7 +354,8 @@
       put: function (serialized) {
         if (!serialized) {
           delete localStorage[this.key];
-        } else {
+        }
+ else {
           localStorage[this.key] = serialized;
         }
 

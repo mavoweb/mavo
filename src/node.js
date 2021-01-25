@@ -28,7 +28,8 @@
 
       if (this.template) {
         this.template.copies.push(this);
-      } else {
+      }
+ else {
         // First (or only) of its kind
         this.copies = [];
       }
@@ -252,7 +253,8 @@
         if (node instanceof Mavo.Node) {
           if (typeof callback === "function") {
             callback.call(node, node);
-          } else if (callback in node) {
+          }
+ else if (callback in node) {
             node[callback]();
           }
         }
@@ -317,7 +319,8 @@
             this.inPath.push("0");
             env.data = env.data[0];
           }
-        } else if (
+        }
+ else if (
           this.childrenNames?.length == 1 &&
           this.childrenNames[0] === this.property &&
           env.data !== null &&
@@ -682,7 +685,8 @@
         get: function () {
           if (this._expressionsEnabled === false) {
             return false;
-          } else {
+          }
+ else {
             return this.parent ? this.parent.expressionsEnabled : true;
           }
         },

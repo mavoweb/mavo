@@ -32,7 +32,8 @@
       if (phrase === undefined) {
         // Everything failed, use id
         phrase = key.replace(/\b-\b/g, " ");
-      } else if (vars) {
+      }
+ else if (vars) {
         let keys = phrase.match(/\{\w+(?=\})/g)?.map((v) => v.slice(1)) ?? [];
         Mavo.Functions.unique(keys).forEach((name) => {
           if (name in vars) {
@@ -63,7 +64,8 @@
       register: function (lang, phrases) {
         if (_.all[lang]) {
           _.all[lang].extend(phrases);
-        } else {
+        }
+ else {
           _.all[lang] = new _(lang, phrases);
         }
       },

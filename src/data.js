@@ -48,7 +48,8 @@
             // depending on which items are null
             this.updateParent();
           }
-        } else if (this.node instanceof Mavo.Primitive) {
+        }
+ else if (this.node instanceof Mavo.Primitive) {
           let value = this.node.value;
 
           if (this.node.isDataNull({ live: true })) {
@@ -61,7 +62,8 @@
             // Object rendered on a primitive, we should traverse it and store its properties
             // Why check prototype instead of just type == "object"? Because instances of ES6 classes also return "object"
             _.computeRoutes(this.data);
-          } else {
+          }
+ else {
             _.computeMetadata(this.data, this.key, this.parent);
           }
 
@@ -79,10 +81,12 @@
           // See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
           let data = this.data.length === 1 ? this.data[0] : this.data;
           this.parent.set(this.node.property, data, true);
-        } else if (this.collection instanceof Mavo.ImplicitCollection) {
+        }
+ else if (this.collection instanceof Mavo.ImplicitCollection) {
           // Is implicit collection *Item*
           this.parent.update();
-        } else {
+        }
+ else {
           let key = this.key,
             isDeleted = false;
 
@@ -155,7 +159,8 @@
                   if (propertyL[0] === "$" && propertyL in Mavo.Functions) {
                     // Non-data $specialProperty
                     return Mavo.Functions[propertyL];
-                  } else {
+                  }
+ else {
                     let propertyU = property.toUpperCase();
                     if (propertyU in Math) {
                       // Math constants
@@ -284,7 +289,8 @@
               if (Array.isArray(ret)) {
                 results.push(...ret);
                 returnArray = true;
-              } else {
+              }
+ else {
                 results.push(ret);
               }
             }
@@ -294,7 +300,8 @@
             for (let prop in data) {
               findDown(prop);
             }
-          } else {
+          }
+ else {
             data[Mavo.route][property].forEach(findDown);
           }
 
@@ -338,18 +345,21 @@
 
           if (property in data) {
             ret = data[property];
-          } else if (!propertyIsNumeric) {
+          }
+ else if (!propertyIsNumeric) {
             // Property does not exist on data, if non-numeric, look for it elsewhere
             if (property in _.special) {
               // $special properties
               ret = _.special[property](data);
-            } else if (data[Mavo.mavo]) {
+            }
+ else if (data[Mavo.mavo]) {
               let all = data[Mavo.mavo].root.liveData.data[Mavo.route];
 
               if (Mavo.in(property, all)) {
                 ret = _.findUp(property, data);
               }
-            } else if (
+            }
+ else if (
               Mavo.in(Mavo.route, data) &&
               Mavo.in(property, data[Mavo.route])
             ) {
@@ -513,7 +523,8 @@
                 }
 
                 parent[Mavo.route][property].add(up);
-              } else {
+              }
+ else {
                 parent[Mavo.route][property] = true;
               }
 
@@ -532,7 +543,8 @@
         traverseDown(callback, object, property, parent) {
           if (Array.isArray(object)) {
             object.forEach((item, i) => _.traverse(callback, item, i, object));
-          } else if ($.type(object) === "object") {
+          }
+ else if ($.type(object) === "object") {
             for (let prop in object) {
               _.traverse(callback, object[prop], prop, object);
             }

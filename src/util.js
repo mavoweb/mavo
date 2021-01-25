@@ -29,7 +29,8 @@
 
       try {
         return JSON.stringify(data, null, "\t");
-      } catch (e) {
+      }
+ catch (e) {
         return e;
       }
     },
@@ -90,7 +91,8 @@
             [Symbol.toStringTag]: "Null",
             toJSON: () => null,
           };
-        } else {
+        }
+ else {
           let constructor = value.constructor;
           value = new constructor(primitive);
           value[Symbol.toStringTag] = constructor.name;
@@ -190,9 +192,11 @@
 
       if (arguments.length == 2) {
         ret = data[name];
-      } else if (value === undefined) {
+      }
+ else if (value === undefined) {
         delete data[name];
-      } else {
+      }
+ else {
         ret = data[name] = value;
       }
 
@@ -235,7 +239,8 @@
         }
 
         return ret;
-      } else {
+      }
+ else {
         // Get path
         let path = [];
 
@@ -262,7 +267,8 @@
               if (sibling.nodeType == 1) {
                 countNonElementSiblings = false;
               }
-            } else {
+            }
+ else {
               index++;
             }
           }
@@ -287,11 +293,13 @@
 
         if (comment?.parentNode) {
           comment.parentNode.replaceChild(element, comment);
-        } else if (element && insert && !element.parentNode) {
+        }
+ else if (element && insert && !element.parentNode) {
           // Has not been revocably removed because it has never even been added
           if (typeof insert === "function") {
             insert(element);
-          } else {
+          }
+ else {
             insert.appendChild(element);
           }
         }
@@ -541,7 +549,8 @@
           if (Array.isArray(parent) && Array.isArray(value)) {
             // Merge arrays instead of adding array inside array
             parent.splice(last, 1, ...value);
-          } else if (parent) {
+          }
+ else if (parent) {
             parent[path[path.length - 1]] = value;
           }
 
@@ -549,7 +558,8 @@
         }
 
         return value;
-      } else if (typeof obj == "object" && path?.length) {
+      }
+ else if (typeof obj == "object" && path?.length) {
         // Get
         return path.reduce((obj, property, i) => {
           let meta = {};
@@ -568,7 +578,8 @@
 
           return ret;
         }, obj);
-      } else {
+      }
+ else {
         return obj;
       }
     },
@@ -780,7 +791,8 @@
 
             if (pair) {
               ret[pair[1].replace(/\\:/g, ":")] = pair[2];
-            } else {
+            }
+ else {
               // If no value, it's boolean
               ret[option] = true;
             }
@@ -804,7 +816,8 @@
         if (this.arrays) {
           let values = this.map.get(key) || [];
           values.push(value);
-        } else {
+        }
+ else {
           let values = this.map.get(key) || new Set();
           values.add(value);
         }
@@ -819,11 +832,13 @@
           if (values) {
             if (this.arrays) {
               _.delete(values, value);
-            } else {
+            }
+ else {
               values.delete(value);
             }
           }
-        } else {
+        }
+ else {
           this.map.delete(key);
         }
       }
@@ -895,7 +910,8 @@
           // We are monitoring specific attribute(s), and a different one changed
           return false;
         }
-      } else if (r.type === "attributes" && o.attribute === false) {
+      }
+ else if (r.type === "attributes" && o.attribute === false) {
         // We explicitly opted out monitoring attributes, and an attribute has changed
         return false;
       }
@@ -903,7 +919,8 @@
       if (o.element) {
         if (o.deep === false) {
           return element === o.element;
-        } else {
+        }
+ else {
           return o.element.contains(element);
         }
       }

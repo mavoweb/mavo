@@ -12,7 +12,6 @@
     "node": true
   },
   "rules": {
-    "no-var": 0,
     "semi": 1,
     "no-dupe-args": 1,
     "no-dupe-keys": 1,

@@ -55,7 +55,8 @@
 
           if (existing instanceof Mavo.Collection) {
             existing.add(element);
-          } else if (Mavo.is("multiple", element)) {
+          }
+ else if (Mavo.is("multiple", element)) {
             // We must create the collection with the element that actually has mv-multiple
             // otherwise the template will be all wrong
             this.children[property] = new Mavo.Collection(
@@ -66,20 +67,24 @@
             (existing || []).forEach((e, i) =>
               this.children[property].add(e, i)
             );
-          } else {
+          }
+ else {
             this.children[property] = [...(existing || []), element];
           }
-        } else if (isCollection > 1) {
+        }
+ else if (isCollection > 1) {
           if (!this.children[property]) {
             this.children[property] = new Mavo.ImplicitCollection(
               element,
               this.mavo,
               options
             );
-          } else {
+          }
+ else {
             this.children[property].add(element);
           }
-        } else {
+        }
+ else {
           // Normal case
           this.children[property] = Mavo.Node.create(
             element,
@@ -131,7 +136,8 @@
 
         if (obj.saved && Mavo.value(data) !== null) {
           env.data[obj.property] = data;
-        } else {
+        }
+ else {
           delete env.data[obj.property];
         }
       }
@@ -139,12 +145,14 @@
       if (!this.childrenNames.length && !this.isRoot && !this.collection) {
         // Avoid {} in the data
         env.data = null;
-      } else if (
+      }
+ else if (
         this.childrenNames.length === 1 &&
         this.property in this.children
       ) {
         env.data = env.data[this.property];
-      } else if (env.data && typeof env.data === "object") {
+      }
+ else if (env.data && typeof env.data === "object") {
         // Add JSON-LD stuff
         if (this.type && this.type != _.DEFAULT_TYPE) {
           env.data["@type"] = this.type;
@@ -187,7 +195,8 @@
         // Data is a primitive, render it on this.property or failing that, any writable property
         if (this.property in this.children) {
           let property = this.property;
-        } else {
+        }
+ else {
           let type = $.type(data);
           let score = (prop) =>
             (this.children[prop] instanceof Mavo.Primitive) +

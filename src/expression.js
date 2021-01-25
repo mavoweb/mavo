@@ -15,7 +15,8 @@
 
       try {
         return this.function(data);
-      } catch (error) {
+      }
+ catch (error) {
         // Runtime error
         this.error(
           `Something went wrong with the expression ${this.expression}`,
@@ -52,7 +53,8 @@
       expression: function (value) {
         try {
           this.function = Mavo.Script.compile(value, this.options);
-        } catch (error) {
+        }
+ catch (error) {
           // Compilation error
           this.error(
             `There is something wrong with the expression ${value}`,
@@ -77,7 +79,8 @@
           Mavo.Script.walk(this.ast, (n, property, parent) => {
             if (n.type === "Identifier" && property !== "callee") {
               identifiers.add(n.name);
-            } else if (n.type === "MemberExpression") {
+            }
+ else if (n.type === "MemberExpression") {
               if (n.object.name) {
                 identifiers.add(n.object.name);
               }
@@ -133,7 +136,8 @@
 
         if (/\S/.test(match[1])) {
           ret.push(new Mavo.Expression(match[1]));
-        } else {
+        }
+ else {
           // If the matched expression is empty or consists only of
           // whitespace, don't treat it as an expression.
           ret.push(match[0]);

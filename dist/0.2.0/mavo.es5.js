@@ -1,60 +1,648 @@
-!function(){"use strict";function t(e,n,i){return n=void 0===n?1:n,i=i||n+1,i-n<=1?function(){if(arguments.length<=n||"string"===r.type(arguments[n]))return e.apply(this,arguments);var t,i=arguments[n];for(var o in i){var s=Array.prototype.slice.call(arguments);s.splice(n,1,o,i[o]),t=e.apply(this,s)}return t}:t(t(e,n+1,i),n,i-1)}function e(t,r,i){var o=n(i);if("string"===o){var s=Object.getOwnPropertyDescriptor(r,i);!s||s.writable&&s.configurable&&s.enumerable&&!s.get&&!s.set?t[i]=r[i]:(delete t[i],Object.defineProperty(t,i,s))}else if("array"===o)i.forEach(function(n){n in r&&e(t,r,n)});else for(var a in r)i&&("regexp"===o&&!i.test(a)||"function"===o&&!i.call(r,a))||e(t,r,a);return t}function n(t){if(null===t)return"null";if(void 0===t)return"undefined";var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return"number"==e&&isNaN(t)?"nan":e}var r=self.Bliss=e(function(t,e){return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null},self.Bliss);e(r,{extend:e,overload:t,type:n,property:r.property||"_",listeners:self.WeakMap?new WeakMap:new Map,original:{addEventListener:(self.EventTarget||Node).prototype.addEventListener,removeEventListener:(self.EventTarget||Node).prototype.removeEventListener},sources:{},noop:function(){},$:function(t,e){return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.prototype.slice.call("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[]},defined:function(){for(var t=0;t<arguments.length;t++)if(void 0!==arguments[t])return arguments[t]},create:function(t,e){return t instanceof Node?r.set(t,e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t,t=e.tag,e=r.extend({},e,function(t){return"tag"!==t}))),r.set(document.createElement(t||"div"),e))},each:function(t,e,n){n=n||{};for(var r in t)n[r]=e.call(t,r,t[r]);return n},ready:function(t,e,n){if("function"!=typeof t||e||(e=t,t=void 0),t=t||document,e&&("loading"!==t.readyState?e():r.once(t,"DOMContentLoaded",function(){e()})),!n)return new Promise(function(e){r.ready(t,e,!0)})},Class:function(t){var e,n=["constructor","extends","abstract","static"].concat(Object.keys(r.classProps)),i=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0],t=arguments[1]):(e=function(){if(this.constructor.__abstract&&this.constructor===e)throw new Error("Abstract classes cannot be directly instantiated.");e["super"]&&e["super"].apply(this,arguments),i.apply(this,arguments)},e["super"]=t["extends"]||null,e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object),{constructor:e}),e.prototype["super"]=e["super"]?e["super"].prototype:null,e.__abstract=!!t["abstract"]);var o=function(t){return this.hasOwnProperty(t)&&n.indexOf(t)===-1};if(t["static"]){r.extend(e,t["static"],o);for(var s in r.classProps)s in t["static"]&&r.classProps[s](e,t["static"][s])}r.extend(e.prototype,t,o);for(var s in r.classProps)s in t&&r.classProps[s](e.prototype,t[s]);return e},classProps:{lazy:t(function(t,e,n){return Object.defineProperty(t,e,{get:function(){var t=n.call(this);return Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0}),t},set:function(t){Object.defineProperty(this,e,{value:t,configurable:!0,enumerable:!0,writable:!0})},configurable:!0,enumerable:!0}),t}),live:t(function(t,e,n){return"function"===r.type(n)&&(n={set:n}),Object.defineProperty(t,e,{get:function(){var t=this["_"+e],r=n.get&&n.get.call(this,t);return void 0!==r?r:t},set:function(t){var r=this["_"+e],i=n.set&&n.set.call(this,t,r);this["_"+e]=void 0!==i?i:t},configurable:n.configurable,enumerable:n.enumerable}),t})},include:function(){var t=arguments[arguments.length-1],e=2===arguments.length&&arguments[0],n=document.createElement("script");return e?Promise.resolve():new Promise(function(e,i){r.set(n,{async:!0,onload:function(){e(n),n.parentNode&&n.parentNode.removeChild(n)},onerror:function(){i(n)},src:t,inside:document.head})})},load:function o(t,e){e=e?new URL(e,location.href):location.href,t=new URL(t,e);var n=o.loading=o.loading||{};return n[t+""]?n[t+""]:/\.css$/.test(t.pathname)?n[t+""]=new Promise(function(e,n){var i=r.create("link",{href:t,rel:"stylesheet",inside:document.head,onload:function(){e(i)},onerror:function(){n(i)}})}):n[t+""]=r.include(t)},fetch:function(t,n){if(!t)throw new TypeError("URL parameter is mandatory and cannot be "+t);var i=e({url:new URL(t,location),data:"",method:"GET",headers:{},xhr:new XMLHttpRequest},n);i.method=i.method.toUpperCase(),r.hooks.run("fetch-args",i),"GET"===i.method&&i.data&&(i.url.search+=i.data),document.body.setAttribute("data-loading",i.url),i.xhr.open(i.method,i.url.href,i.async!==!1,i.user,i.password);for(var o in n)if("upload"===o)i.xhr.upload&&"object"==typeof n[o]&&r.extend(i.xhr.upload,n[o]);else if(o in i.xhr)try{i.xhr[o]=n[o]}catch(s){self.console&&console.error(s)}var a=Object.keys(i.headers).map(function(t){return t.toLowerCase()});"GET"!==i.method&&a.indexOf("content-type")===-1&&i.xhr.setRequestHeader("Content-type","application/x-www-form-urlencoded");for(var c in i.headers)void 0!==i.headers[c]&&i.xhr.setRequestHeader(c,i.headers[c]);var u=new Promise(function(t,e){i.xhr.onload=function(){document.body.removeAttribute("data-loading"),0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(r.extend(Error(i.xhr.statusText),{xhr:i.xhr,get status(){return this.xhr.status}}))},i.xhr.onerror=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Error"),{xhr:i.xhr}))},i.xhr.ontimeout=function(){document.body.removeAttribute("data-loading"),e(r.extend(Error("Network Timeout"),{xhr:i.xhr}))},i.xhr.send("GET"===i.method?null:i.data)});return u.xhr=i.xhr,u},value:function(t){var e="string"!=typeof t;return r.$(arguments).slice(+e).reduce(function(t,e){return t&&t[e]},e?t:self)}}),r.Hooks=new r.Class({add:function(t,e,n){if("string"==typeof arguments[0])(Array.isArray(t)?t:[t]).forEach(function(t){this[t]=this[t]||[],e&&this[t][n?"unshift":"push"](e)},this);else for(var t in arguments[0])this.add(t,arguments[0][t],arguments[1])},run:function(t,e){this[t]=this[t]||[],this[t].forEach(function(t){t.call(e&&e.context?e.context:e,e)})}}),r.hooks=new r.Hooks;r.property;r.Element=function(t){this.subject=t,this.data={},this.bliss={}},r.Element.prototype={set:t(function(t,e){t in r.setProps?r.setProps[t].call(this,e):t in this?this[t]=e:this.setAttribute(t,e)},0),transition:function(t,e){return new Promise(function(n,i){if("transition"in this.style&&0!==e){var o=r.extend({},this.style,/^transition(Duration|Property)$/);r.style(this,{transitionDuration:(e||400)+"ms",transitionProperty:Object.keys(t).join(", ")}),r.once(this,"transitionend",function(){clearTimeout(s),r.style(this,o),n(this)});var s=setTimeout(n,e+50,this);r.style(this,t)}else r.style(this,t),n(this)}.bind(this))},fire:function(t,e){var n=document.createEvent("HTMLEvents");return n.initEvent(t,!0,!0),this.dispatchEvent(r.extend(n,e))},bind:t(function(t,e){if(arguments.length>1&&("function"===r.type(e)||e.handleEvent)){var n=e;e="object"===r.type(arguments[2])?arguments[2]:{capture:!!arguments[2]},e.callback=n}var i=r.listeners.get(this)||{};t.trim().split(/\s+/).forEach(function(t){if(t.indexOf(".")>-1){t=t.split(".");var n=t[1];t=t[0]}i[t]=i[t]||[],0===i[t].filter(function(t){return t.callback===e.callback&&t.capture==e.capture}).length&&i[t].push(r.extend({className:n},e)),r.original.addEventListener.call(this,t,e.callback,e)},this),r.listeners.set(this,i)},0),unbind:t(function(t,e){if(e&&("function"===r.type(e)||e.handleEvent)){var n=e;e=arguments[2]}"boolean"==r.type(e)&&(e={capture:e}),e=e||{},e.callback=e.callback||n;var i=r.listeners.get(this);(t||"").trim().split(/\s+/).forEach(function(t){if(t.indexOf(".")>-1){t=t.split(".");var n=t[1];t=t[0]}if(i){for(var o in i)if(!t||o===t)for(var s,a=0;s=i[o][a];a++)n&&n!==s.className||e.callback&&e.callback!==s.callback||!!e.capture!=!!s.capture&&(t||e.callback||void 0!==e.capture)||(i[o].splice(a,1),r.original.removeEventListener.call(this,o,s.callback,s.capture),a--)}else if(t&&e.callback)return r.original.removeEventListener.call(this,t,e.callback,e.capture)},this)},0),when:function(t,e){var n=this;return new Promise(function(r){n.addEventListener(t,function i(n){e&&!e.call(this,n)||(this.removeEventListener(t,i),r(n))})})},toggleAttribute:function(t,e,n){arguments.length<3&&(n=null!==e),n?this.setAttribute(t,e):this.removeAttribute(t)}},r.setProps={style:function(t){for(var e in t)e in this.style?this.style[e]=t[e]:this.style.setProperty(e,t[e])},attributes:function(t){for(var e in t)this.setAttribute(e,t[e])},properties:function(t){r.extend(this,t)},events:function(t){if(1!=arguments.length||!t||!t.addEventListener)return r.bind.apply(this,[this].concat(r.$(arguments)));var e=this;if(r.listeners){var n=r.listeners.get(t);for(var i in n)n[i].forEach(function(t){r.bind(e,i,t.callback,t.capture)})}for(var o in t)0===o.indexOf("on")&&(this[o]=t[o])},once:t(function(t,e){var n=this,i=function(){return r.unbind(n,t,i),e.apply(n,arguments)};r.bind(this,t,i,{once:!0})},0),delegate:t(function(t,e,n){r.bind(this,t,function(t){t.target.closest(e)&&n.call(this,t)})},0,2),contents:function(t){(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t){var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)),t instanceof Node&&this.appendChild(t)},this)},inside:function(t){t&&t.appendChild(this)},before:function(t){t&&t.parentNode.insertBefore(this,t)},after:function(t){t&&t.parentNode.insertBefore(this,t.nextSibling)},start:function(t){t&&t.insertBefore(this,t.firstChild)},around:function(t){t&&t.parentNode&&r.before(this,t),this.appendChild(t)}},r.Array=function(t){this.subject=t},r.Array.prototype={all:function(t){var e=r.$(arguments).slice(1);return this[t].apply(this,e)}},r.add=t(function(t,e,n,i){n=r.extend({$:!0,element:!0,array:!0},n),"function"==r.type(e)&&(!n.element||t in r.Element.prototype&&i||(r.Element.prototype[t]=function(){return this.subject&&r.defined(e.apply(this.subject,arguments),this.subject)}),!n.array||t in r.Array.prototype&&i||(r.Array.prototype[t]=function(){var t=arguments;return this.subject.map(function(n){return n&&r.defined(e.apply(n,t),n)})}),n.$&&(r.sources[t]=r[t]=e,(n.array||n.element)&&(r[t]=function(){var e=[].slice.apply(arguments),i=e.shift(),o=n.array&&Array.isArray(i)?"Array":"Element";return r[o].prototype[t].apply({subject:i},e)})))},0),r.add(r.Array.prototype,{element:!1}),r.add(r.Element.prototype),r.add(r.setProps),r.add(r.classProps,{element:!1,array:!1});var i=document.createElement("_");r.add(r.extend({},HTMLElement.prototype,function(t){return"function"===r.type(i[t])}),null,!0)}();
+!function() {
+"use strict";function t(e, n, i) {
+return n=void 0===n?1:n, i=i||n+1, i-n<=1?function() {
+if (arguments.length<=n||"string"===r.type(arguments[n])) {
+return e.apply(this, arguments);
+} var t, i=arguments[n];for (var o in i) {
+var s=Array.prototype.slice.call(arguments);s.splice(n, 1, o, i[o]), t=e.apply(this, s);
+} return t;
+}:t(t(e, n+1, i), n, i-1);
+} function e(t, r, i) {
+var o=n(i);if ("string"===o) {
+var s=Object.getOwnPropertyDescriptor(r, i);!s||s.writable&&s.configurable&&s.enumerable&&!s.get&&!s.set?t[i]=r[i]:(delete t[i], Object.defineProperty(t, i, s));
+}
+else if ("array"===o) {
+i.forEach(function(n) {
+n in r&&e(t, r, n);
+});
+}
+else {
+for (var a in r) {
+i&&("regexp"===o&&!i.test(a)||"function"===o&&!i.call(r, a))||e(t, r, a);
+}
+} return t;
+} function n(t) {
+if (null===t) {
+return "null";
+} if (void 0===t) {
+return "undefined";
+} var e=(Object.prototype.toString.call(t).match(/^\[object\s+(.*?)\]$/)[1]||"").toLowerCase();return "number"==e&&isNaN(t)?"nan":e;
+} var r=self.Bliss=e(function(t, e) {
+return 2==arguments.length&&!e||!t?null:"string"===r.type(t)?(e||document).querySelector(t):t||null;
+}, self.Bliss);e(r, {extend:e, overload:t, type:n, property:r.property||"_", listeners:self.WeakMap?new WeakMap:new Map, original:{addEventListener:(self.EventTarget||Node).prototype.addEventListener, removeEventListener:(self.EventTarget||Node).prototype.removeEventListener}, sources:{}, noop:function() {}, $:function(t, e) {
+return t instanceof Node||t instanceof Window?[t]:2!=arguments.length||e?Array.prototype.slice.call("string"==typeof t?(e||document).querySelectorAll(t):t||[]):[];
+}, defined:function() {
+for (var t=0;t<arguments.length;t++) {
+if (void 0!==arguments[t]) {
+return arguments[t];
+}
+}
+}, create:function(t, e) {
+return t instanceof Node?r.set(t, e):(1===arguments.length&&("string"===r.type(t)?e={}:(e=t, t=e.tag, e=r.extend({}, e, function(t) {
+return "tag"!==t;
+}))), r.set(document.createElement(t||"div"), e));
+}, each:function(t, e, n) {
+n=n||{};for (var r in t) {
+n[r]=e.call(t, r, t[r]);
+} return n;
+}, ready:function(t, e, n) {
+if ("function"!=typeof t||e||(e=t, t=void 0), t=t||document, e&&("loading"!==t.readyState?e():r.once(t, "DOMContentLoaded", function() {
+e();
+})), !n) {
+return new Promise(function(e) {
+r.ready(t, e, !0);
+});
+}
+}, Class:function(t) {
+var e, n=["constructor", "extends", "abstract", "static"].concat(Object.keys(r.classProps)), i=t.hasOwnProperty("constructor")?t.constructor:r.noop;2==arguments.length?(e=arguments[0], t=arguments[1]):(e=function() {
+if (this.constructor.__abstract&&this.constructor===e) {
+throw new Error("Abstract classes cannot be directly instantiated.");
+}e["super"]&&e["super"].apply(this, arguments), i.apply(this, arguments);
+}, e["super"]=t["extends"]||null, e.prototype=r.extend(Object.create(e["super"]?e["super"].prototype:Object), {constructor:e}), e.prototype["super"]=e["super"]?e["super"].prototype:null, e.__abstract=!!t["abstract"]);var o=function(t) {
+return this.hasOwnProperty(t)&&n.indexOf(t)===-1;
+};if (t["static"]) {
+r.extend(e, t["static"], o);for (var s in r.classProps) {
+s in t["static"]&&r.classProps[s](e, t["static"][s]);
+}
+}r.extend(e.prototype, t, o);for (var s in r.classProps) {
+s in t&&r.classProps[s](e.prototype, t[s]);
+} return e;
+}, classProps:{lazy:t(function(t, e, n) {
+return Object.defineProperty(t, e, {get:function() {
+var t=n.call(this);return Object.defineProperty(this, e, {value:t, configurable:!0, enumerable:!0, writable:!0}), t;
+}, set:function(t) {
+Object.defineProperty(this, e, {value:t, configurable:!0, enumerable:!0, writable:!0});
+}, configurable:!0, enumerable:!0}), t;
+}), live:t(function(t, e, n) {
+return "function"===r.type(n)&&(n={set:n}), Object.defineProperty(t, e, {get:function() {
+var t=this["_"+e], r=n.get&&n.get.call(this, t);return void 0!==r?r:t;
+}, set:function(t) {
+var r=this["_"+e], i=n.set&&n.set.call(this, t, r);this["_"+e]=void 0!==i?i:t;
+}, configurable:n.configurable, enumerable:n.enumerable}), t;
+})}, include:function() {
+var t=arguments[arguments.length-1], e=2===arguments.length&&arguments[0], n=document.createElement("script");return e?Promise.resolve():new Promise(function(e, i) {
+r.set(n, {async:!0, onload:function() {
+e(n), n.parentNode&&n.parentNode.removeChild(n);
+}, onerror:function() {
+i(n);
+}, src:t, inside:document.head});
+});
+}, load:function o(t, e) {
+e=e?new URL(e, location.href):location.href, t=new URL(t, e);var n=o.loading=o.loading||{};return n[t+""]?n[t+""]:/\.css$/.test(t.pathname)?n[t+""]=new Promise(function(e, n) {
+var i=r.create("link", {href:t, rel:"stylesheet", inside:document.head, onload:function() {
+e(i);
+}, onerror:function() {
+n(i);
+}});
+}):n[t+""]=r.include(t);
+}, fetch:function(t, n) {
+if (!t) {
+throw new TypeError("URL parameter is mandatory and cannot be "+t);
+} var i=e({url:new URL(t, location), data:"", method:"GET", headers:{}, xhr:new XMLHttpRequest}, n);i.method=i.method.toUpperCase(), r.hooks.run("fetch-args", i), "GET"===i.method&&i.data&&(i.url.search+=i.data), document.body.setAttribute("data-loading", i.url), i.xhr.open(i.method, i.url.href, i.async!==!1, i.user, i.password);for (var o in n) {
+if ("upload"===o) {
+i.xhr.upload&&"object"==typeof n[o]&&r.extend(i.xhr.upload, n[o]);
+}
+else if (o in i.xhr) {
+try {
+i.xhr[o]=n[o];
+}
+catch (s) {
+self.console&&console.error(s);
+}
+}
+} var a=Object.keys(i.headers).map(function(t) {
+return t.toLowerCase();
+});"GET"!==i.method&&a.indexOf("content-type")===-1&&i.xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");for (var c in i.headers) {
+void 0!==i.headers[c]&&i.xhr.setRequestHeader(c, i.headers[c]);
+} var u=new Promise(function(t, e) {
+i.xhr.onload=function() {
+document.body.removeAttribute("data-loading"), 0===i.xhr.status||i.xhr.status>=200&&i.xhr.status<300||304===i.xhr.status?t(i.xhr):e(r.extend(Error(i.xhr.statusText), {xhr:i.xhr, get status() {
+return this.xhr.status;
+}}));
+}, i.xhr.onerror=function() {
+document.body.removeAttribute("data-loading"), e(r.extend(Error("Network Error"), {xhr:i.xhr}));
+}, i.xhr.ontimeout=function() {
+document.body.removeAttribute("data-loading"), e(r.extend(Error("Network Timeout"), {xhr:i.xhr}));
+}, i.xhr.send("GET"===i.method?null:i.data);
+});return u.xhr=i.xhr, u;
+}, value:function(t) {
+var e="string"!=typeof t;return r.$(arguments).slice(+e).reduce(function(t, e) {
+return t&&t[e];
+}, e?t:self);
+}}), r.Hooks=new r.Class({add:function(t, e, n) {
+if ("string"==typeof arguments[0]) {
+(Array.isArray(t)?t:[t]).forEach(function(t) {
+this[t]=this[t]||[], e&&this[t][n?"unshift":"push"](e);
+}, this);
+}
+else {
+for (var t in arguments[0]) {
+this.add(t, arguments[0][t], arguments[1]);
+}
+}
+}, run:function(t, e) {
+this[t]=this[t]||[], this[t].forEach(function(t) {
+t.call(e&&e.context?e.context:e, e);
+});
+}}), r.hooks=new r.Hooks;r.property;r.Element=function(t) {
+this.subject=t, this.data={}, this.bliss={};
+}, r.Element.prototype={set:t(function(t, e) {
+t in r.setProps?r.setProps[t].call(this, e):t in this?this[t]=e:this.setAttribute(t, e);
+}, 0), transition:function(t, e) {
+return new Promise(function(n, i) {
+if ("transition"in this.style&&0!==e) {
+var o=r.extend({}, this.style, /^transition(Duration|Property)$/);r.style(this, {transitionDuration:(e||400)+"ms", transitionProperty:Object.keys(t).join(", ")}), r.once(this, "transitionend", function() {
+clearTimeout(s), r.style(this, o), n(this);
+});var s=setTimeout(n, e+50, this);r.style(this, t);
+}
+else {
+r.style(this, t), n(this);
+}
+}.bind(this));
+}, fire:function(t, e) {
+var n=document.createEvent("HTMLEvents");return n.initEvent(t, !0, !0), this.dispatchEvent(r.extend(n, e));
+}, bind:t(function(t, e) {
+if (arguments.length>1&&("function"===r.type(e)||e.handleEvent)) {
+var n=e;e="object"===r.type(arguments[2])?arguments[2]:{capture:!!arguments[2]}, e.callback=n;
+} var i=r.listeners.get(this)||{};t.trim().split(/\s+/).forEach(function(t) {
+if (t.indexOf(".")>-1) {
+t=t.split(".");var n=t[1];t=t[0];
+}i[t]=i[t]||[], 0===i[t].filter(function(t) {
+return t.callback===e.callback&&t.capture==e.capture;
+}).length&&i[t].push(r.extend({className:n}, e)), r.original.addEventListener.call(this, t, e.callback, e);
+}, this), r.listeners.set(this, i);
+}, 0), unbind:t(function(t, e) {
+if (e&&("function"===r.type(e)||e.handleEvent)) {
+var n=e;e=arguments[2];
+}"boolean"==r.type(e)&&(e={capture:e}), e=e||{}, e.callback=e.callback||n;var i=r.listeners.get(this);(t||"").trim().split(/\s+/).forEach(function(t) {
+if (t.indexOf(".")>-1) {
+t=t.split(".");var n=t[1];t=t[0];
+} if (i) {
+for (var o in i) {
+if (!t||o===t) {
+for (var s, a=0;s=i[o][a];a++) {
+n&&n!==s.className||e.callback&&e.callback!==s.callback||!!e.capture!=!!s.capture&&(t||e.callback||void 0!==e.capture)||(i[o].splice(a, 1), r.original.removeEventListener.call(this, o, s.callback, s.capture), a--);
+}
+}
+}
+}
+else if (t&&e.callback) {
+return r.original.removeEventListener.call(this, t, e.callback, e.capture);
+}
+}, this);
+}, 0), when:function(t, e) {
+var n=this;return new Promise(function(r) {
+n.addEventListener(t, function i(n) {
+e&&!e.call(this, n)||(this.removeEventListener(t, i), r(n));
+});
+});
+}, toggleAttribute:function(t, e, n) {
+arguments.length<3&&(n=null!==e), n?this.setAttribute(t, e):this.removeAttribute(t);
+}}, r.setProps={style:function(t) {
+for (var e in t) {
+e in this.style?this.style[e]=t[e]:this.style.setProperty(e, t[e]);
+}
+}, attributes:function(t) {
+for (var e in t) {
+this.setAttribute(e, t[e]);
+}
+}, properties:function(t) {
+r.extend(this, t);
+}, events:function(t) {
+if (1!=arguments.length||!t||!t.addEventListener) {
+return r.bind.apply(this, [this].concat(r.$(arguments)));
+} var e=this;if (r.listeners) {
+var n=r.listeners.get(t);for (var i in n) {
+n[i].forEach(function(t) {
+r.bind(e, i, t.callback, t.capture);
+});
+}
+} for (var o in t) {
+0===o.indexOf("on")&&(this[o]=t[o]);
+}
+}, once:t(function(t, e) {
+var n=this, i=function() {
+return r.unbind(n, t, i), e.apply(n, arguments);
+};r.bind(this, t, i, {once:!0});
+}, 0), delegate:t(function(t, e, n) {
+r.bind(this, t, function(t) {
+t.target.closest(e)&&n.call(this, t);
+});
+}, 0, 2), contents:function(t) {
+(t||0===t)&&(Array.isArray(t)?t:[t]).forEach(function(t) {
+var e=r.type(t);/^(string|number)$/.test(e)?t=document.createTextNode(t+""):"object"===e&&(t=r.create(t)), t instanceof Node&&this.appendChild(t);
+}, this);
+}, inside:function(t) {
+t&&t.appendChild(this);
+}, before:function(t) {
+t&&t.parentNode.insertBefore(this, t);
+}, after:function(t) {
+t&&t.parentNode.insertBefore(this, t.nextSibling);
+}, start:function(t) {
+t&&t.insertBefore(this, t.firstChild);
+}, around:function(t) {
+t&&t.parentNode&&r.before(this, t), this.appendChild(t);
+}}, r.Array=function(t) {
+this.subject=t;
+}, r.Array.prototype={all:function(t) {
+var e=r.$(arguments).slice(1);return this[t].apply(this, e);
+}}, r.add=t(function(t, e, n, i) {
+n=r.extend({$:!0, element:!0, array:!0}, n), "function"==r.type(e)&&(!n.element||t in r.Element.prototype&&i||(r.Element.prototype[t]=function() {
+return this.subject&&r.defined(e.apply(this.subject, arguments), this.subject);
+}), !n.array||t in r.Array.prototype&&i||(r.Array.prototype[t]=function() {
+var t=arguments;return this.subject.map(function(n) {
+return n&&r.defined(e.apply(n, t), n);
+});
+}), n.$&&(r.sources[t]=r[t]=e, (n.array||n.element)&&(r[t]=function() {
+var e=[].slice.apply(arguments), i=e.shift(), o=n.array&&Array.isArray(i)?"Array":"Element";return r[o].prototype[t].apply({subject:i}, e);
+})));
+}, 0), r.add(r.Array.prototype, {element:!1}), r.add(r.Element.prototype), r.add(r.setProps), r.add(r.classProps, {element:!1, array:!1});var i=document.createElement("_");r.add(r.extend({}, HTMLElement.prototype, function(t) {
+return "function"===r.type(i[t]);
+}), null, !0);
+}();
 /* jsep v0.3.2 (http://jsep.from.so/) */
-!function(e){"use strict";var r=function(e,r){var t=new Error(e+" at character "+r);throw t.index=r,t.description=e,t},t={"-":!0,"!":!0,"~":!0,"+":!0},n={"||":1,"&&":2,"|":3,"^":4,"&":5,"==":6,"!=":6,"===":6,"!==":6,"<":7,">":7,"<=":7,">=":7,"<<":8,">>":8,">>>":8,"+":9,"-":9,"*":10,"/":10,"%":10},o=function(e){var r,t=0;for(var n in e)(r=n.length)>t&&e.hasOwnProperty(n)&&(t=r);return t},i=o(t),a=o(n),u={true:!0,false:!1,null:null},s=function(e){return n[e]||0},p=function(e,r,t){return{type:"||"===e||"&&"===e?"LogicalExpression":"BinaryExpression",operator:e,left:r,right:t}},f=function(e){return e>=48&&e<=57},c=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=128&&!n[String.fromCharCode(e)]},l=function(e){return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=48&&e<=57||e>=128&&!n[String.fromCharCode(e)]},d=function(e){for(var o,d,h=0,v=e.charAt,x=e.charCodeAt,y=function(r){return v.call(e,r)},m=function(r){return x.call(e,r)},b=e.length,E=function(){for(var e=m(h);32===e||9===e||10===e||13===e;)e=m(++h)},g=function(){var e,t,n=w();return E(),63!==m(h)?n:(h++,(e=g())||r("Expected expression",h),E(),58===m(h)?(h++,(t=g())||r("Expected expression",h),{type:"ConditionalExpression",test:n,consequent:e,alternate:t}):void r("Expected :",h))},C=function(){E();for(var r=e.substr(h,a),t=r.length;t>0;){if(n.hasOwnProperty(r))return h+=t,r;r=r.substr(0,--t)}return!1},w=function(){var e,t,n,o,i,a,u,f;if(a=O(),!(t=C()))return a;for(i={value:t,prec:s(t)},(u=O())||r("Expected expression after "+t,h),o=[a,i,u];(t=C())&&0!==(n=s(t));){for(i={value:t,prec:n};o.length>2&&n<=o[o.length-2].prec;)u=o.pop(),t=o.pop().value,a=o.pop(),e=p(t,a,u),o.push(e);(e=O())||r("Expected expression after "+t,h),o.push(i,e)}for(e=o[f=o.length-1];f>1;)e=p(o[f-1].value,o[f-2],e),f-=2;return e},O=function(){var r,n,o;if(E(),r=m(h),f(r)||46===r)return U();if(39===r||34===r)return k();if(91===r)return S();for(o=(n=e.substr(h,i)).length;o>0;){if(t.hasOwnProperty(n))return h+=o,{type:"UnaryExpression",operator:n,argument:O(),prefix:!0};n=n.substr(0,--o)}return!(!c(r)&&40!==r)&&A()},U=function(){for(var e,t,n="";f(m(h));)n+=y(h++);if(46===m(h))for(n+=y(h++);f(m(h));)n+=y(h++);if("e"===(e=y(h))||"E"===e){for(n+=y(h++),"+"!==(e=y(h))&&"-"!==e||(n+=y(h++));f(m(h));)n+=y(h++);f(m(h-1))||r("Expected exponent ("+n+y(h)+")",h)}return t=m(h),c(t)?r("Variable names cannot start with a number ("+n+y(h)+")",h):46===t&&r("Unexpected period",h),{type:"Literal",value:parseFloat(n),raw:n}},k=function(){for(var e,t="",n=y(h++),o=!1;h<b;){if((e=y(h++))===n){o=!0;break}if("\\"===e)switch(e=y(h++)){case"n":t+="\n";break;case"r":t+="\r";break;case"t":t+="\t";break;case"b":t+="\b";break;case"f":t+="\f";break;case"v":t+="\v";break;default:t+=e}else t+=e}return o||r('Unclosed quote after "'+t+'"',h),{type:"Literal",value:t,raw:n+t+n}},L=function(){var t,n=m(h),o=h;for(c(n)?h++:r("Unexpected "+y(h),h);h<b&&(n=m(h),l(n));)h++;return t=e.slice(o,h),u.hasOwnProperty(t)?{type:"Literal",value:u[t],raw:t}:"this"===t?{type:"ThisExpression"}:{type:"Identifier",name:t}},j=function(e){for(var t,n,o=[],i=!1;h<b;){if(E(),(t=m(h))===e){i=!0,h++;break}44===t?h++:((n=g())&&"Compound"!==n.type||r("Expected comma",h),o.push(n))}return i||r("Expected "+String.fromCharCode(e),h),o},A=function(){var e,t;for(t=40===(e=m(h))?P():L(),E(),e=m(h);46===e||91===e||40===e;)h++,46===e?(E(),t={type:"MemberExpression",computed:!1,object:t,property:L()}):91===e?(t={type:"MemberExpression",computed:!0,object:t,property:g()},E(),93!==(e=m(h))&&r("Unclosed [",h),h++):40===e&&(t={type:"CallExpression",arguments:j(41),callee:t}),E(),e=m(h);return t},P=function(){h++;var e=g();if(E(),41===m(h))return h++,e;r("Unclosed (",h)},S=function(){return h++,{type:"ArrayExpression",elements:j(93)}},B=[];h<b;)59===(o=m(h))||44===o?h++:(d=g())?B.push(d):h<b&&r('Unexpected "'+y(h)+'"',h);return 1===B.length?B[0]:{type:"Compound",body:B}};if(d.version="0.3.2",d.toString=function(){return"JavaScript Expression Parser (JSEP) v"+d.version},d.addUnaryOp=function(e){return i=Math.max(e.length,i),t[e]=!0,this},d.addBinaryOp=function(e,r){return a=Math.max(e.length,a),n[e]=r,this},d.addLiteral=function(e,r){return u[e]=r,this},d.removeUnaryOp=function(e){return delete t[e],e.length===i&&(i=o(t)),this},d.removeAllUnaryOps=function(){return t={},i=0,this},d.removeBinaryOp=function(e){return delete n[e],e.length===a&&(a=o(n)),this},d.removeAllBinaryOps=function(){return n={},a=0,this},d.removeLiteral=function(e){return delete u[e],this},d.removeAllLiterals=function(){return u={},this},"undefined"==typeof exports){var h=e.jsep;e.jsep=d,d.noConflict=function(){return e.jsep===d&&(e.jsep=h),d}}else"undefined"!=typeof module&&module.exports?exports=module.exports=d:exports.parse=d}(this);
-//# sourceMappingURL=jsep.min.js.map
-!function(){if(self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null),Element.prototype.matches)){var p=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text number url email tel".split(" ").join('"], input[type="')+'"]',filter:"*"},script:document.currentScript||t("script").pop(),resize:function(e){if(p.resizes(e)){var t,i=getComputedStyle(e),n=0;!e.value&&e.placeholder&&(t=!0,e.value=e.placeholder);var o=e.nodeName.toLowerCase();if("textarea"==o)e.style.height="0","border-box"==i.boxSizing?n=e.offsetHeight:"content-box"==i.boxSizing&&(n=-e.clientHeight+parseFloat(i.minHeight)),e.style.height=e.scrollHeight+n+"px";else if("input"==o)if(e.style.width="1000px",e.offsetWidth){e.style.width="0",
-"border-box"==i.boxSizing?n=e.offsetWidth:"padding-box"==i.boxSizing?n=e.clientWidth:"content-box"==i.boxSizing&&(n=parseFloat(i.minWidth));var r=Math.max(n,e.scrollWidth-e.clientWidth);e.style.width=r+"px";for(var l=0;l<10&&(e.scrollLeft=1e10,0!=e.scrollLeft);l++)r+=e.scrollLeft,e.style.width=r+"px"}else e.style.width=e.value.length+1+"ch";else if("select"==o){var s,c=0<e.selectedIndex?e.selectedIndex:0,a=document.createElement("_");for(var d in a.textContent=e.options[c].textContent,e.parentNode.insertBefore(a,e.nextSibling),i){var h=i[d];/^(width|webkitLogicalWidth|length)$/.test(d)||"string"!=typeof h||(a.style[d]=h,/appearance$/i.test(d)&&(s=d))}a.style.width="",0<a.offsetWidth&&(e.style.width=a.offsetWidth+"px",i[s]&&"none"===i[s]||(e.style.width="calc("+e.style.width+" + 2em)")),a.parentNode.removeChild(a),a=null}t&&(e.value="")}},resizeAll:function(e){t(e||p.selectors.base).forEach(function(e){p.resize(e)})},active:!0,resizes:function(e){
-return e&&e.parentNode&&e.matches&&e.matches(p.selectors.base)&&e.matches(p.selectors.filter)},init:function(){p.selectors.filter=p.script.getAttribute("data-filter")||(t("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||p.selectors.filter,p.resizeAll(),self.MutationObserver&&!p.observer&&(p.observer=new MutationObserver(function(e){p.active&&e.forEach(function(e){"childList"==e.type&&p.resizeAll(e.addedNodes)})}),p.observer.observe(document.documentElement,{childList:!0,subtree:!0}))},$$:t};"loading"!==document.readyState?requestAnimationFrame(p.init):document.addEventListener("DOMContentLoaded",p.init),window.addEventListener("load",function(){p.resizeAll()});var e=function(e){p.active&&p.resize(e.target)};document.documentElement.addEventListener("input",e),document.documentElement.addEventListener("change",e)}function t(e,t){return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[])
-}}();
-//# sourceMappingURL=stretchy.min.js.map
+!function(e) {
+"use strict";var r=function(e, r) {
+var t=new Error(e+" at character "+r);throw t.index=r, t.description=e, t;
+}, t={"-":!0, "!":!0, "~":!0, "+":!0}, n={"||":1, "&&":2, "|":3, "^":4, "&":5, "==":6, "!=":6, "===":6, "!==":6, "<":7, ">":7, "<=":7, ">=":7, "<<":8, ">>":8, ">>>":8, "+":9, "-":9, "*":10, "/":10, "%":10}, o=function(e) {
+var r, t=0;for (var n in e) {
+(r=n.length)>t&&e.hasOwnProperty(n)&&(t=r);
+} return t;
+}, i=o(t), a=o(n), u={true:!0, false:!1, null:null}, s=function(e) {
+return n[e]||0;
+}, p=function(e, r, t) {
+return {type:"||"===e||"&&"===e?"LogicalExpression":"BinaryExpression", operator:e, left:r, right:t};
+}, f=function(e) {
+return e>=48&&e<=57;
+}, c=function(e) {
+return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=128&&!n[String.fromCharCode(e)];
+}, l=function(e) {
+return 36===e||95===e||e>=65&&e<=90||e>=97&&e<=122||e>=48&&e<=57||e>=128&&!n[String.fromCharCode(e)];
+}, d=function(e) {
+for (var o, d, h=0, v=e.charAt, x=e.charCodeAt, y=function(r) {
+return v.call(e, r);
+}, m=function(r) {
+return x.call(e, r);
+}, b=e.length, E=function() {
+for (var e=m(h);32===e||9===e||10===e||13===e;) {
+e=m(++h);
+}
+}, g=function() {
+var e, t, n=w();return E(), 63!==m(h)?n:(h++, (e=g())||r("Expected expression", h), E(), 58===m(h)?(h++, (t=g())||r("Expected expression", h), {type:"ConditionalExpression", test:n, consequent:e, alternate:t}):void r("Expected :", h));
+}, C=function() {
+E();for (var r=e.substr(h, a), t=r.length;t>0;) {
+if (n.hasOwnProperty(r)) {
+return h+=t, r;
+}r=r.substr(0, --t);
+} return !1;
+}, w=function() {
+var e, t, n, o, i, a, u, f;if (a=O(), !(t=C())) {
+return a;
+} for (i={value:t, prec:s(t)}, (u=O())||r("Expected expression after "+t, h), o=[a, i, u];(t=C())&&0!==(n=s(t));) {
+for (i={value:t, prec:n};o.length>2&&n<=o[o.length-2].prec;) {
+u=o.pop(), t=o.pop().value, a=o.pop(), e=p(t, a, u), o.push(e);
+}(e=O())||r("Expected expression after "+t, h), o.push(i, e);
+} for (e=o[f=o.length-1];f>1;) {
+e=p(o[f-1].value, o[f-2], e), f-=2;
+} return e;
+}, O=function() {
+var r, n, o;if (E(), r=m(h), f(r)||46===r) {
+return U();
+} if (39===r||34===r) {
+return k();
+} if (91===r) {
+return S();
+} for (o=(n=e.substr(h, i)).length;o>0;) {
+if (t.hasOwnProperty(n)) {
+return h+=o, {type:"UnaryExpression", operator:n, argument:O(), prefix:!0};
+}n=n.substr(0, --o);
+} return !(!c(r)&&40!==r)&&A();
+}, U=function() {
+for (var e, t, n="";f(m(h));) {
+n+=y(h++);
+} if (46===m(h)) {
+for (n+=y(h++);f(m(h));) {
+n+=y(h++);
+}
+} if ("e"===(e=y(h))||"E"===e) {
+for (n+=y(h++), "+"!==(e=y(h))&&"-"!==e||(n+=y(h++));f(m(h));) {
+n+=y(h++);
+}f(m(h-1))||r("Expected exponent ("+n+y(h)+")", h);
+} return t=m(h), c(t)?r("Variable names cannot start with a number ("+n+y(h)+")", h):46===t&&r("Unexpected period", h), {type:"Literal", value:parseFloat(n), raw:n};
+}, k=function() {
+for (var e, t="", n=y(h++), o=!1;h<b;) {
+if ((e=y(h++))===n) {
+o=!0;break;
+} if ("\\"===e) {
+switch (e=y(h++)) {
+case "n":t+="\n";break;case "r":t+="\r";break;case "t":t+="\t";break;case "b":t+="\b";break;case "f":t+="\f";break;case "v":t+="\v";break;default:t+=e;
+}
+}
+ else {
+t+=e;
+}
+} return o||r('Unclosed quote after "'+t+'"', h), {type:"Literal", value:t, raw:n+t+n};
+}, L=function() {
+var t, n=m(h), o=h;for (c(n)?h++:r("Unexpected "+y(h), h);h<b&&(n=m(h), l(n));) {
+h++;
+} return t=e.slice(o, h), u.hasOwnProperty(t)?{type:"Literal", value:u[t], raw:t}:"this"===t?{type:"ThisExpression"}:{type:"Identifier", name:t};
+}, j=function(e) {
+for (var t, n, o=[], i=!1;h<b;) {
+if (E(), (t=m(h))===e) {
+i=!0, h++;break;
+}44===t?h++:((n=g())&&"Compound"!==n.type||r("Expected comma", h), o.push(n));
+} return i||r("Expected "+String.fromCharCode(e), h), o;
+}, A=function() {
+var e, t;for (t=40===(e=m(h))?P():L(), E(), e=m(h);46===e||91===e||40===e;) {
+h++, 46===e?(E(), t={type:"MemberExpression", computed:!1, object:t, property:L()}):91===e?(t={type:"MemberExpression", computed:!0, object:t, property:g()}, E(), 93!==(e=m(h))&&r("Unclosed [", h), h++):40===e&&(t={type:"CallExpression", arguments:j(41), callee:t}), E(), e=m(h);
+} return t;
+}, P=function() {
+h++;var e=g();if (E(), 41===m(h)) {
+return h++, e;
+}r("Unclosed (", h);
+}, S=function() {
+return h++, {type:"ArrayExpression", elements:j(93)};
+}, B=[];h<b;) {
+59===(o=m(h))||44===o?h++:(d=g())?B.push(d):h<b&&r('Unexpected "'+y(h)+'"', h);
+} return 1===B.length?B[0]:{type:"Compound", body:B};
+};if (d.version="0.3.2", d.toString=function() {
+return "JavaScript Expression Parser (JSEP) v"+d.version;
+}, d.addUnaryOp=function(e) {
+return i=Math.max(e.length, i), t[e]=!0, this;
+}, d.addBinaryOp=function(e, r) {
+return a=Math.max(e.length, a), n[e]=r, this;
+}, d.addLiteral=function(e, r) {
+return u[e]=r, this;
+}, d.removeUnaryOp=function(e) {
+return delete t[e], e.length===i&&(i=o(t)), this;
+}, d.removeAllUnaryOps=function() {
+return t={}, i=0, this;
+}, d.removeBinaryOp=function(e) {
+return delete n[e], e.length===a&&(a=o(n)), this;
+}, d.removeAllBinaryOps=function() {
+return n={}, a=0, this;
+}, d.removeLiteral=function(e) {
+return delete u[e], this;
+}, d.removeAllLiterals=function() {
+return u={}, this;
+}, "undefined"==typeof exports) {
+var h=e.jsep;e.jsep=d, d.noConflict=function() {
+return e.jsep===d&&(e.jsep=h), d;
+};
+}
+else {
+"undefined"!=typeof module&&module.exports?exports=module.exports=d:exports.parse=d;
+}
+}(this);
+// # sourceMappingURL=jsep.min.js.map
+!function() {
+if (self.Element&&(Element.prototype.matches||(Element.prototype.matches=Element.prototype.webkitMatchesSelector||Element.prototype.mozMatchesSelector||Element.prototype.msMatchesSelector||Element.prototype.oMatchesSelector||null), Element.prototype.matches)) {
+var p=self.Stretchy={selectors:{base:'textarea, select:not([size]), input:not([type]), input[type="'+"text number url email tel".split(" ").join('"], input[type="')+'"]', filter:"*"}, script:document.currentScript||t("script").pop(), resize:function(e) {
+if (p.resizes(e)) {
+var t, i=getComputedStyle(e), n=0;!e.value&&e.placeholder&&(t=!0, e.value=e.placeholder);var o=e.nodeName.toLowerCase();if ("textarea"==o) {
+e.style.height="0", "border-box"==i.boxSizing?n=e.offsetHeight:"content-box"==i.boxSizing&&(n=-e.clientHeight+parseFloat(i.minHeight)), e.style.height=e.scrollHeight+n+"px";
+}
+else if ("input"==o) {
+if (e.style.width="1000px", e.offsetWidth) {
+e.style.width="0",
+"border-box"==i.boxSizing?n=e.offsetWidth:"padding-box"==i.boxSizing?n=e.clientWidth:"content-box"==i.boxSizing&&(n=parseFloat(i.minWidth));var r=Math.max(n, e.scrollWidth-e.clientWidth);e.style.width=r+"px";for (var l=0;l<10&&(e.scrollLeft=1e10, 0!=e.scrollLeft);l++) {
+r+=e.scrollLeft, e.style.width=r+"px";
+}
+}
+else {
+e.style.width=e.value.length+1+"ch";
+}
+}
+else if ("select"==o) {
+var s, c=0<e.selectedIndex?e.selectedIndex:0, a=document.createElement("_");for (var d in a.textContent=e.options[c].textContent, e.parentNode.insertBefore(a, e.nextSibling), i) {
+var h=i[d];/^(width|webkitLogicalWidth|length)$/.test(d)||"string"!=typeof h||(a.style[d]=h, /appearance$/i.test(d)&&(s=d));
+}a.style.width="", 0<a.offsetWidth&&(e.style.width=a.offsetWidth+"px", i[s]&&"none"===i[s]||(e.style.width="calc("+e.style.width+" + 2em)")), a.parentNode.removeChild(a), a=null;
+}t&&(e.value="");
+}
+}, resizeAll:function(e) {
+t(e||p.selectors.base).forEach(function(e) {
+p.resize(e);
+});
+}, active:!0, resizes:function(e) {
+return e&&e.parentNode&&e.matches&&e.matches(p.selectors.base)&&e.matches(p.selectors.filter);
+}, init:function() {
+p.selectors.filter=p.script.getAttribute("data-filter")||(t("[data-stretchy-filter]").pop()||document.body).getAttribute("data-stretchy-filter")||p.selectors.filter, p.resizeAll(), self.MutationObserver&&!p.observer&&(p.observer=new MutationObserver(function(e) {
+p.active&&e.forEach(function(e) {
+"childList"==e.type&&p.resizeAll(e.addedNodes);
+});
+}), p.observer.observe(document.documentElement, {childList:!0, subtree:!0}));
+}, $$:t};"loading"!==document.readyState?requestAnimationFrame(p.init):document.addEventListener("DOMContentLoaded", p.init), window.addEventListener("load", function() {
+p.resizeAll();
+});var e=function(e) {
+p.active&&p.resize(e.target);
+};document.documentElement.addEventListener("input", e), document.documentElement.addEventListener("change", e);
+} function t(e, t) {
+return e instanceof Node||e instanceof Window?[e]:[].slice.call("string"==typeof e?(t||document).querySelectorAll(e):e||[]);
+}
+}();
+// # sourceMappingURL=stretchy.min.js.map
 
 "use strict";
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+function _slicedToArray(arr, i) {
+ return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); 
+}
 
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+function _nonIterableRest() {
+ throw new TypeError("Invalid attempt to destructure non-iterable instance"); 
+}
 
-function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+function _iterableToArrayLimit(arr, i) {
+ var _arr = []; var _n = true; var _d = false; var _e = undefined; try {
+ for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+ _arr.push(_s.value); if (i && _arr.length === i) {
+break;
+} 
+} 
+}
+ catch (err) {
+ _d = true; _e = err; 
+}
+ finally {
+ try {
+ if (!_n && _i["return"] != null) {
+_i["return"]();
+} 
+}
+ finally {
+ if (_d) {
+throw _e;
+} 
+} 
+} return _arr; 
+}
 
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+function _arrayWithHoles(arr) {
+ if (Array.isArray(arr)) {
+return arr;
+} 
+}
 
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
+function _objectSpread(target) {
+ for (var i = 1; i < arguments.length; i++) {
+ var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === "function") {
+ ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) {
+ return Object.getOwnPropertyDescriptor(source, sym).enumerable; 
+})); 
+} ownKeys.forEach(function (key) {
+ _defineProperty(target, key, source[key]); 
+}); 
+} return target; 
+}
 
-function isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function isNativeReflectConstruct() {
+ if (typeof Reflect === "undefined" || !Reflect.construct) {
+return false;
+} if (Reflect.construct.sham) {
+return false;
+} if (typeof Proxy === "function") {
+return true;
+} try {
+ Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; 
+}
+ catch (e) {
+ return false; 
+} 
+}
 
-function _construct(Parent, args, Class) { if (isNativeReflectConstruct()) { _construct = Reflect.construct; } else { _construct = function _construct(Parent, args, Class) { var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) _setPrototypeOf(instance, Class.prototype); return instance; }; } return _construct.apply(null, arguments); }
+function _construct(Parent, args, Class) {
+ if (isNativeReflectConstruct()) {
+ _construct = Reflect.construct; 
+}
+ else {
+ _construct = function _construct(Parent, args, Class) {
+ var a = [null]; a.push.apply(a, args); var Constructor = Function.bind.apply(Parent, a); var instance = new Constructor(); if (Class) {
+_setPrototypeOf(instance, Class.prototype);
+} return instance; 
+}; 
+} return _construct.apply(null, arguments); 
+}
 
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+function _possibleConstructorReturn(self, call) {
+ if (call && (_typeof(call) === "object" || typeof call === "function")) {
+ return call; 
+} return _assertThisInitialized(self); 
+}
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+function _assertThisInitialized(self) {
+ if (self === void 0) {
+ throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); 
+} return self; 
+}
 
-function _get(target, property, receiver) { if (typeof Reflect !== "undefined" && Reflect.get) { _get = Reflect.get; } else { _get = function _get(target, property, receiver) { var base = _superPropBase(target, property); if (!base) return; var desc = Object.getOwnPropertyDescriptor(base, property); if (desc.get) { return desc.get.call(receiver); } return desc.value; }; } return _get(target, property, receiver || target); }
+function _get(target, property, receiver) {
+ if (typeof Reflect !== "undefined" && Reflect.get) {
+ _get = Reflect.get; 
+}
+ else {
+ _get = function _get(target, property, receiver) {
+ var base = _superPropBase(target, property); if (!base) {
+return;
+} var desc = Object.getOwnPropertyDescriptor(base, property); if (desc.get) {
+ return desc.get.call(receiver); 
+} return desc.value; 
+}; 
+} return _get(target, property, receiver || target); 
+}
 
-function _superPropBase(object, property) { while (!Object.prototype.hasOwnProperty.call(object, property)) { object = _getPrototypeOf(object); if (object === null) break; } return object; }
+function _superPropBase(object, property) {
+ while (!Object.prototype.hasOwnProperty.call(object, property)) {
+ object = _getPrototypeOf(object); if (object === null) {
+break;
+} 
+} return object; 
+}
 
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _getPrototypeOf(o) {
+ _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+ return o.__proto__ || Object.getPrototypeOf(o); 
+}; return _getPrototypeOf(o); 
+}
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+function _inherits(subClass, superClass) {
+ if (typeof superClass !== "function" && superClass !== null) {
+ throw new TypeError("Super expression must either be null or a function"); 
+} subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) {
+_setPrototypeOf(subClass, superClass);
+} 
+}
 
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+function _setPrototypeOf(o, p) {
+ _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+ o.__proto__ = p; return o; 
+}; return _setPrototypeOf(o, p); 
+}
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _classCallCheck(instance, Constructor) {
+ if (!(instance instanceof Constructor)) {
+ throw new TypeError("Cannot call a class as a function"); 
+} 
+}
 
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+function _defineProperties(target, props) {
+ for (var i = 0; i < props.length; i++) {
+ var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) {
+descriptor.writable = true;
+} Object.defineProperty(target, descriptor.key, descriptor); 
+} 
+}
 
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+function _createClass(Constructor, protoProps, staticProps) {
+ if (protoProps) {
+_defineProperties(Constructor.prototype, protoProps);
+} if (staticProps) {
+_defineProperties(Constructor, staticProps);
+} return Constructor; 
+}
 
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+function _toConsumableArray(arr) {
+ return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); 
+}
 
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+function _nonIterableSpread() {
+ throw new TypeError("Invalid attempt to spread non-iterable instance"); 
+}
 
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+function _iterableToArray(iter) {
+ if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") {
+return Array.from(iter);
+} 
+}
 
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+function _arrayWithoutHoles(arr) {
+ if (Array.isArray(arr)) {
+ for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
+ arr2[i] = arr[i]; 
+} return arr2; 
+} 
+}
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _defineProperty(obj, key, value) {
+ if (key in obj) {
+ Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); 
+}
+ else {
+ obj[key] = value; 
+} return obj; 
+}
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) {
+ if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+ _typeof = function _typeof(obj) {
+ return typeof obj; 
+}; 
+}
+ else {
+ _typeof = function _typeof(obj) {
+ return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; 
+}; 
+} return _typeof(obj); 
+}
 
 /**
  * Mavo: Create web applications by writing HTML and CSS!
@@ -149,7 +737,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         if (changed.source) {
           // if source changes, always reload
           _this.load();
-        } else if (!_this.source) {
+        }
+ else if (!_this.source) {
           if (changed.storage || changed.init && !_this.root.data) {
             _this.load();
           }
@@ -215,7 +804,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
                 // otherwise, descendant nodes still inherit, unless they are also mode-restricted
                 mode = node.element.getAttribute("mv-mode");
                 node.modes = mode;
-              } else {
+              }
+ else {
                 // Inherited
                 if (node.modes) {
                   // Mode-restricted, we cannot change to the other mode
@@ -249,7 +839,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         this.permissions.can("read", function () {
           return _this.load();
         });
-      } else {
+      }
+ else {
         // No storage or source
         requestAnimationFrame(function () {
           _this.dataLoaded.resolve();
@@ -326,7 +917,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           evt.preventDefault();
 
           _this.save();
-        } else if (evt.keyCode == 38 || evt.keyCode == 40) {
+        }
+ else if (evt.keyCode == 38 || evt.keyCode == 40) {
           var element = evt.target;
 
           if (element.matches("textarea, input[type=range], input[type=number]")) {
@@ -353,7 +945,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
                 }).then(function () {
                   return nextNode.editor.focus();
                 });
-              } else {
+              }
+ else {
                 nextNode.element.focus();
               }
 
@@ -493,7 +1086,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           format: this.element.getAttribute("mv-".concat(role, "-format")) || this.element.getAttribute("mv-format")
         }, this.element.getAttribute("mv-".concat(role, "-type")), this[role]);
         changed = true;
-      } else if (!backend) {
+      }
+ else if (!backend) {
         // We had a backend and now we will un-have it
         this[role] = null;
       }
@@ -554,7 +1148,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
           if (xhr && xhr.status == 404) {
             _this2.render(null);
-          } else {
+          }
+ else {
             var message = _this2._("problem-loading");
 
             if (xhr) {
@@ -693,7 +1288,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
       if (nodes.length == 1) {
         var phrase = nodes[0].name;
-      } else {
+      }
+ else {
         // Multiple items deleted, possibly from multiple collections
         var counts = {},
             ret = [];
@@ -1072,7 +1668,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           value = (_value = {}, _defineProperty(_value, Symbol.toStringTag, "Null"), _defineProperty(_value, "toJSON", function toJSON() {
             return null;
           }), _value);
-        } else {
+        }
+ else {
           var constructor = value.constructor;
           value = new constructor(primitive);
           value[Symbol.toStringTag] = constructor.name;
@@ -1184,9 +1781,11 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
       if (arguments.length == 2) {
         ret = data[name];
-      } else if (value === undefined) {
+      }
+ else if (value === undefined) {
         delete data[name];
-      } else {
+      }
+ else {
         ret = data[name] = value;
       }
 
@@ -1227,7 +1826,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         }
 
         return ret;
-      } else {
+      }
+ else {
         // Get path
         var path = [];
 
@@ -1244,7 +1844,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
               if (sibling.nodeType == 1) {
                 countNonElementSiblings = false;
               }
-            } else {
+            }
+ else {
               index++;
             }
           }
@@ -1269,11 +1870,13 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
         if (comment && comment.parentNode) {
           comment.parentNode.replaceChild(element, comment);
-        } else if (element && insert && !element.parentNode) {
+        }
+ else if (element && insert && !element.parentNode) {
           // Has not been revocably removed because it has never even been added
           if (typeof insert === "function") {
             insert(element);
-          } else {
+          }
+ else {
             insert.appendChild(element);
           }
         }
@@ -1487,7 +2090,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           if (Array.isArray(parent) && Array.isArray(value)) {
             // Merge arrays instead of adding array inside array
             parent.splice.apply(parent, [last, 1].concat(_toConsumableArray(value)));
-          } else if (parent) {
+          }
+ else if (parent) {
             parent[path[path.length - 1]] = value;
           }
 
@@ -1495,7 +2099,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
         }
 
         return value;
-      } else if (_typeof(obj) == "object" && path && path.length) {
+      }
+ else if (_typeof(obj) == "object" && path && path.length) {
         // Get
         return path.reduce(function (obj, property, i) {
           var meta = {};
@@ -1511,7 +2116,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
           return ret;
         }, obj);
-      } else {
+      }
+ else {
         return obj;
       }
     },
@@ -1653,7 +2259,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           this.stop();
           var ret = callback();
           this.run();
-        } else {
+        }
+ else {
           var ret = callback();
         }
 
@@ -1696,7 +2303,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
 
           if (pair) {
             ret[pair[1].replace(/\\:/g, ":")] = pair[2];
-          } else {
+          }
+ else {
             // If no value, it's boolean
             ret[option] = true;
           }
@@ -1709,7 +2317,7 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
      * Map that can hold multiple values per key
      */
     BucketMap:
-    /*#__PURE__*/
+    /* #__PURE__*/
     function () {
       function BucketMap() {
         var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -1729,7 +2337,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
           if (this.arrays) {
             var values = this.map.get(key) || [];
             values.push(value);
-          } else {
+          }
+ else {
             var values = this.map.get(key) || new Set();
             values.add(value);
           }
@@ -1745,11 +2354,13 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
             if (values) {
               if (this.arrays) {
                 _["delete"](values, value);
-              } else {
+              }
+ else {
                 values["delete"](value);
               }
             }
-          } else {
+          }
+ else {
             this.map["delete"](key);
           }
         }
@@ -1837,7 +2448,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       if (phrase === undefined) {
         // Everything failed, use id
         phrase = key.replace(/\b-\b/g, " ");
-      } else if (vars) {
+      }
+ else if (vars) {
         var keys = Mavo.matches(phrase, /\{\w+(?=\})/g).map(function (v) {
           return v.slice(1);
         });
@@ -1868,7 +2480,8 @@ function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterat
       register: function register(lang, phrases) {
         if (_.all[lang]) {
           _.all[lang].extend(phrases);
-        } else {
+        }
+ else {
           _.all[lang] = new _(lang, phrases);
         }
       },
@@ -2007,7 +2620,8 @@ Mavo.Locale.register("en", {
                 inside: document.head
               });
             });
-          } else {
+          }
+ else {
             // Plugin hosted in the mavo-plugins repo
             var url = "".concat(_.url, "/").concat(plugin.id, "/").concat(filename);
             return $.include(_.loaded[plugin.id], url);
@@ -2030,7 +2644,8 @@ Mavo.Locale.register("en", {
 
         if ($.type(existing) === "function") {
           $.Class(existing, o.extend[Class]);
-        } else {
+        }
+ else {
           $.extend(existing, o.extend[Class]);
         }
       }
@@ -2091,7 +2706,8 @@ Mavo.Locale.register("en", {
             this.template += " ".concat(id);
           }
         }
-      } else {
+      }
+ else {
         this.element = $.create({
           className: "mv-bar mv-ui",
           start: this.mavo.element,
@@ -2124,7 +2740,8 @@ Mavo.Locale.register("en", {
 
         if (o.create) {
           _this8[id] = o.create.call(_this8.mavo, _this8[id]);
-        } else if (!_this8[id]) {
+        }
+ else if (!_this8[id]) {
           _this8[id] = $.create("button", {
             type: "button",
             className: "mv-".concat(id),
@@ -2142,7 +2759,8 @@ Mavo.Locale.register("en", {
           }, function () {
             _this8.remove(id);
           });
-        } else if (o.condition && !o.condition.call(_this8.mavo)) {
+        }
+ else if (o.condition && !o.condition.call(_this8.mavo)) {
           _this8.remove(id);
         }
 
@@ -2326,7 +2944,8 @@ Mavo.Locale.register("en", {
             if (this.editing) {
               this.done();
               this.bar.edit.textContent = this._("edit");
-            } else {
+            }
+ else {
               this.edit();
               this.bar.edit.textContent = this._("editing");
             }
@@ -2371,7 +2990,8 @@ Mavo.Locale.register("en", {
                 className: "mv-button",
                 around: custom
               });
-            } else {
+            }
+ else {
               a = $.create("a", {
                 className: "mv-export mv-button",
                 textContent: this._("export")
@@ -2420,7 +3040,8 @@ Mavo.Locale.register("en", {
                           var json = JSON.parse(reader.result);
 
                           _this11.render(json);
-                        } catch (e) {
+                        }
+ catch (e) {
                           _this11.error(_this11._("cannot-parse"));
                         }
                       },
@@ -2486,7 +3107,8 @@ Mavo.Locale.register("en", {
 
       if (o.type == "error") {
         this.element.setAttribute("role", "alert");
-      } else {
+      }
+ else {
         this.element.setAttribute("aria-live", "polite");
       }
 
@@ -2692,7 +3314,8 @@ Mavo.Locale.register("en", {
         if (trigger.active && trigger.actions.indexOf(action) > -1 && match) {
           trigger.active = false;
           trigger.callback();
-        } else if (!match) {
+        }
+ else if (!match) {
           // This is so that triggers can only be executed in an actual transition
           // And that if there is a trigger for [a,b] it won't be executed twice
           // if a and b are set to true one after the other
@@ -2929,7 +3552,8 @@ Mavo.Locale.register("en", {
           }
 
           delete req.data;
-        } else {
+        }
+ else {
           req.data = JSON.stringify(req.data);
         }
       }
@@ -2937,7 +3561,8 @@ Mavo.Locale.register("en", {
       return $.fetch(call, req)["catch"](function (err) {
         if (err && err.xhr) {
           return Promise.reject(err.xhr);
-        } else {
+        }
+ else {
           _this23.mavo.error("Something went wrong while connecting to " + _this23.id, err);
         }
       }).then(function (xhr) {
@@ -2965,7 +3590,8 @@ Mavo.Locale.register("en", {
             if (_this24.accessToken) {
               resolve(_this24.accessToken);
             }
-          } else {
+          }
+ else {
             // Show window
             var popup = {
               width: Math.min(1000, innerWidth - 100),
@@ -3122,7 +3748,8 @@ Mavo.Locale.register("en", {
     put: function put(serialized) {
       if (!serialized) {
         delete localStorage[this.key];
-      } else {
+      }
+ else {
         localStorage[this.key] = serialized;
       }
 
@@ -3285,7 +3912,7 @@ Mavo.Locale.register("en", {
 
 (function ($, $$) {
   var _ = Mavo.Node =
-  /*#__PURE__*/
+  /* #__PURE__*/
   function () {
     function Node(element, mavo) {
       var _this25 = this;
@@ -3318,7 +3945,8 @@ Mavo.Locale.register("en", {
 
       if (this.template) {
         this.template.copies.push(this);
-      } else {
+      }
+ else {
         // First (or only) of its kind
         this.copies = [];
       }
@@ -3526,7 +4154,8 @@ Mavo.Locale.register("en", {
           if (node instanceof Mavo.Node) {
             if (typeof callback === "function") {
               callback.call(node, node);
-            } else if (callback in node) {
+            }
+ else if (callback in node) {
               node[callback]();
             }
           }
@@ -3597,7 +4226,8 @@ Mavo.Locale.register("en", {
               this.inPath.push("0");
               env.data = env.data[0];
             }
-          } else if (this.childrenNames && this.childrenNames.length == 1 && this.childrenNames[0] === this.property && env.data !== null && _typeof(env.data) === "object") {
+          }
+ else if (this.childrenNames && this.childrenNames.length == 1 && this.childrenNames[0] === this.property && env.data !== null && _typeof(env.data) === "object") {
             // {foo: {foo: 5}} should become {foo: 5}
             env.data = env.data[this.property];
           }
@@ -3987,7 +4617,8 @@ Mavo.Locale.register("en", {
         get: function get() {
           if (this._expressionsEnabled === false) {
             return false;
-          } else {
+          }
+ else {
             return this.parent ? this.parent.expressionsEnabled : true;
           }
         }
@@ -4002,7 +4633,7 @@ Mavo.Locale.register("en", {
 
 (function ($, $$) {
   var _ = Mavo.Group =
-  /*#__PURE__*/
+  /* #__PURE__*/
   function (_Mavo$Node) {
     _inherits(Group, _Mavo$Node);
 
@@ -4051,23 +4682,28 @@ Mavo.Locale.register("en", {
 
           if (existing instanceof Mavo.Collection) {
             existing.add(element);
-          } else if (Mavo.is("multiple", element)) {
+          }
+ else if (Mavo.is("multiple", element)) {
             // We must create the collection with the element that actually has mv-multiple
             // otherwise the template will be all wrong
             _this29.children[property] = new Mavo.Collection(element, _this29.mavo, options);
             (existing || []).forEach(function (e, i) {
               return _this29.children[property].add(e, i);
             });
-          } else {
+          }
+ else {
             _this29.children[property] = [].concat(_toConsumableArray(existing || []), [element]);
           }
-        } else if (isCollection > 1) {
+        }
+ else if (isCollection > 1) {
           if (!_this29.children[property]) {
             _this29.children[property] = new Mavo.ImplicitCollection(element, _this29.mavo, options);
-          } else {
+          }
+ else {
             _this29.children[property].add(element);
           }
-        } else {
+        }
+ else {
           // Normal case
           _this29.children[property] = Mavo.Node.create(element, _this29.mavo, options);
         }
@@ -4118,7 +4754,8 @@ Mavo.Locale.register("en", {
 
           if (obj.saved && Mavo.value(data) !== null) {
             env.data[obj.property] = data;
-          } else {
+          }
+ else {
             delete env.data[obj.property];
           }
         }
@@ -4126,9 +4763,11 @@ Mavo.Locale.register("en", {
         if (!this.childrenNames.length && !this.isRoot) {
           // Avoid {} in the data
           env.data = null;
-        } else if (this.childrenNames.length === 1 && this.property in this.children) {
+        }
+ else if (this.childrenNames.length === 1 && this.property in this.children) {
           env.data = env.data[this.property];
-        } else if (env.data && _typeof(env.data) === "object") {
+        }
+ else if (env.data && _typeof(env.data) === "object") {
           // Add JSON-LD stuff
           if (this.type && this.type != _.DEFAULT_TYPE) {
             env.data["@type"] = this.type;
@@ -4177,7 +4816,8 @@ Mavo.Locale.register("en", {
 
           if (this.property in this.children) {
             var property = this.property;
-          } else {
+          }
+ else {
             var type = $.type(data);
 
             var score = function score(prop) {
@@ -4291,7 +4931,7 @@ Mavo.Locale.register("en", {
 
 (function ($, $$) {
   var _ = Mavo.Primitive =
-  /*#__PURE__*/
+  /* #__PURE__*/
   function (_Mavo$Node2) {
     _inherits(Primitive, _Mavo$Node2);
 
@@ -4408,11 +5048,13 @@ Mavo.Locale.register("en", {
         // no mv-default
         _this33._default = _this33.modes ? _this33.templateValue : editorValue;
         _this33.defaultSource = _this33.modes ? "template" : "editor";
-      } else if (_this33["default"] === "") {
+      }
+ else if (_this33["default"] === "") {
         // mv-default exists, no value, default is template value
         _this33._default = _this33.templateValue;
         _this33.defaultSource = "template";
-      } else {
+      }
+ else {
         // mv-default with value
         var defaultExpression = Mavo.DOMExpression.search(_this33.element, "mv-default");
 
@@ -4421,7 +5063,8 @@ Mavo.Locale.register("en", {
           defaultExpression.output = function (value) {
             return _this33["default"] = value;
           };
-        } else {
+        }
+ else {
           _this33.defaultObserver = new Mavo.Observer(_this33.element, "mv-default", function (record) {
             _this33["default"] = _this33.element.getAttribute("mv-default");
           });
@@ -4436,7 +5079,8 @@ Mavo.Locale.register("en", {
 
       if (_this33["default"] === undefined && keepTemplateValue) {
         _this33.initialValue = _this33.templateValue;
-      } else {
+      }
+ else {
         _this33.initialValue = _this33["default"];
       }
 
@@ -4460,7 +5104,8 @@ Mavo.Locale.register("en", {
           });
           return _this33.element.getAttribute("aria-label");
         });
-      } else {
+      }
+ else {
         _this33.label = Mavo.Functions.readable(_this33.property);
 
         _this33.element.setAttribute("aria-label", _this33.label);
@@ -4493,7 +5138,8 @@ Mavo.Locale.register("en", {
           if (this.observer) {
             this.observer.stop();
           }
-        } else {
+        }
+ else {
           var options = {
             subtree: this.config.subtree,
             childList: this.config.subtree
@@ -4508,11 +5154,13 @@ Mavo.Locale.register("en", {
             if (!this.observer.running) {
               this.observer.run();
             }
-          } else {
+          }
+ else {
             this.observer = new Mavo.Observer(this.element, this.attribute, function (records) {
               if (_this34._config.observer === false) {
                 _this34.observer.stop();
-              } else if (_this34.attribute || !_this34.editing || _this34.config.subtree) {
+              }
+ else if (_this34.attribute || !_this34.editing || _this34.config.subtree) {
                 _this34.value = _this34.getValue();
               }
             }, options);
@@ -4726,7 +5374,8 @@ Mavo.Locale.register("en", {
                     if (multiline) {
                       evt.preventDefault();
                     }
-                  } else if (evt.key == "Backspace" && (_this37.empty || evt[Mavo.superKey])) {
+                  }
+ else if (evt.key == "Backspace" && (_this37.empty || evt[Mavo.superKey])) {
                     // Focus on sibling afterwards
                     var sibling = _this37.getCousin(1) || _this37.getCousin(-1); // Backspace on empty primitive or Cmd/Ctrl + Backspace should delete item
 
@@ -4804,7 +5453,8 @@ Mavo.Locale.register("en", {
 
                   if (_this37.config.hasChildren) {
                     _this37.element.textContent = "";
-                  } else {
+                  }
+ else {
                     _.setText(_this37.element, "");
                   }
 
@@ -4854,7 +5504,8 @@ Mavo.Locale.register("en", {
 
           if (_this38.popup) {
             _this38.popup.close();
-          } else if (!_this38.attribute && _this38.editor) {
+          }
+ else if (!_this38.attribute && _this38.editor) {
             $.remove(_this38.editor);
 
             _.setValue(_this38.element, _this38.editorValue, {
@@ -4883,14 +5534,16 @@ Mavo.Locale.register("en", {
         if ($.type(data) === "object") {
           if (Symbol.toPrimitive in data) {
             data = data[Symbol.toPrimitive]("default");
-          } else if (!this.isHelperVariable) {
+          }
+ else if (!this.isHelperVariable) {
             // Candidate properties to get a value from
             var properties = Object.keys(data),
                 property;
 
             if (properties.length === 1) {
               property = properties[0];
-            } else {
+            }
+ else {
               for (var _i2 = 0, _arr = [this.property, "value", "content"]; _i2 < _arr.length; _i2++) {
                 var _p = _arr[_i2];
 
@@ -4926,7 +5579,8 @@ Mavo.Locale.register("en", {
           if (!this.modes && this.value === this.templateValue) {
             this.value = this.closestCollection ? this["default"] : this.templateValue;
           }
-        } else {
+        }
+ else {
           this.value = data;
         }
 
@@ -4988,7 +5642,8 @@ Mavo.Locale.register("en", {
           if (_this39.popup || !_this39.editor || _this39.editor !== document.activeElement && !_this39.element.contains(_this39.editor)) {
             if (_this39.config.setValue) {
               _this39.config.setValue.call(_this39, _this39.element, value);
-            } else if (!o.dataOnly) {
+            }
+ else if (!o.dataOnly) {
               _.setValue(_this39.element, value, {
                 config: _this39.config,
                 attribute: _this39.attribute,
@@ -5157,7 +5812,8 @@ Mavo.Locale.register("en", {
           $.bind(this.element, env.events);
           Mavo.hooks.run("primitive-createuploadpopup-beforereturn", env);
           return env.popup;
-        } else {
+        }
+ else {
           return env.mainInput;
         }
       }
@@ -5191,7 +5847,8 @@ Mavo.Locale.register("en", {
             _.setValue(this.editor, value, {
               config: this.editorDefaults
             });
-          } else {
+          }
+ else {
             // if we're here, this.editor is an entire HTML structure
             var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, this.editor);
 
@@ -5208,7 +5865,8 @@ Mavo.Locale.register("en", {
 
         if (node && node.nodeType === Node.TEXT_NODE) {
           return node.nodeValue;
-        } else {
+        }
+ else {
           return "";
         }
       }
@@ -5219,7 +5877,8 @@ Mavo.Locale.register("en", {
 
         if (node && node.nodeType === Node.TEXT_NODE) {
           node.nodeValue = text;
-        } else {
+        }
+ else {
           element.prepend(text);
         }
       }
@@ -5317,9 +5976,11 @@ Mavo.Locale.register("en", {
           // Returning properties (if they exist) instead of attributes
           // is needed for dynamic elements such as checkboxes, sliders etc
           ret = element[attribute];
-        } else if (attribute) {
+        }
+ else if (attribute) {
           ret = element.getAttribute(attribute);
-        } else {
+        }
+ else {
           ret = element.getAttribute("content") || _.getText(element) || null;
         }
 
@@ -5384,7 +6045,8 @@ Mavo.Locale.register("en", {
             try {
               var previousValue = element[o.attribute];
               var newValue = element[o.attribute] = value;
-            } catch (e) {}
+            }
+ catch (e) {}
 
             if (previousValue != newValue && o.config.changeEvents) {
               o.config.changeEvents.split(/\s+/).forEach(function (type) {
@@ -5399,16 +6061,19 @@ Mavo.Locale.register("en", {
             if (value != element.hasAttribute(o.attribute)) {
               $.toggleAttribute(element, o.attribute, value, value);
             }
-          } else if (element.getAttribute(o.attribute) != value) {
+          }
+ else if (element.getAttribute(o.attribute) != value) {
             // intentionally non-strict, e.g. "3." !== 3
             element.setAttribute(o.attribute, value);
           }
-        } else {
+        }
+ else {
           var presentational = _.format(value, o);
 
           if (o.node && !o.config.hasChildren) {
             _.setText(element, presentational);
-          } else {
+          }
+ else {
             element.textContent = presentational;
           }
 
@@ -5580,7 +6245,8 @@ Mavo.Locale.register("en", {
           if (bounds.top - _this42.height > 20) {
             var pointDown = true;
             y = bounds.top - _this42.height - 20;
-          } else {
+          }
+ else {
             // Nah, just raise it a bit
             y = innerHeight - _this42.height - 20;
           }
@@ -5744,7 +6410,8 @@ Mavo.Locale.register("en", {
             o.attribute = attribute;
             _["".concat(id, "@").concat(attribute)] = o;
           });
-        } else {
+        }
+ else {
           _[id] = config;
         }
 
@@ -6203,7 +6870,7 @@ Mavo.Locale.register("en", {
   Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items", "mv-like");
 
   var _ = Mavo.Collection =
-  /*#__PURE__*/
+  /* #__PURE__*/
   function (_Mavo$Node3) {
     _inherits(Collection, _Mavo$Node3);
 
@@ -6231,7 +6898,8 @@ Mavo.Locale.register("en", {
       if (_this50.mavo.root || !_this50.templateElement.hasAttribute("mv-like")) {
         // Synchronous init
         _this50.init();
-      } else {
+      }
+ else {
         // Async init, we're borrowing the template from elsewhere so we need
         // to give the rest of the tree a chance to initialize
         _this50.mavo.treeBuilt.then(function () {
@@ -6263,7 +6931,8 @@ Mavo.Locale.register("en", {
           }
 
           Mavo.revocably.remove(button);
-        } else {
+        }
+ else {
           button = $.create("button", {
             type: "button",
             className: "mv-ui",
@@ -6301,7 +6970,8 @@ Mavo.Locale.register("en", {
               })[0];
               this.likeNode = this.likeNode.likeNode || this.likeNode;
               this.likeNode = this.likeNode.template || this.likeNode;
-            } else {
+            }
+ else {
               this.like = null;
             }
           }
@@ -6323,7 +6993,8 @@ Mavo.Locale.register("en", {
           if (!this.accepts.size) {
             this.accepts = this.likeNode.accepts || this.accepts;
           }
-        } else if (this.initialItems > 0 || !this.template) {
+        }
+ else if (this.initialItems > 0 || !this.template) {
           var item = this.createItem(this.element);
           this.add(item, undefined, {
             silent: true
@@ -6336,11 +7007,13 @@ Mavo.Locale.register("en", {
               _this52["delete"](item, {
                 silent: true
               });
-            } else {
+            }
+ else {
               // No item to delete
               _this52.element.remove();
             }
-          } else if (_this52.initialItems > 1) {
+          }
+ else if (_this52.initialItems > 1) {
             // Add extra items
             for (var i = 1; i < _this52.initialItems; i++) {
               _this52.add();
@@ -6406,7 +7079,8 @@ Mavo.Locale.register("en", {
 
         if (item instanceof Node) {
           item = Mavo.Node.get(item) || this.createItem(item);
-        } else {
+        }
+ else {
           item = item || this.createItem();
         }
 
@@ -6567,7 +7241,8 @@ Mavo.Locale.register("en", {
           }).then(function () {
             item.element.style.opacity = "";
           });
-        } else {
+        }
+ else {
           var stage2 = Promise.resolve();
         }
 
@@ -6583,7 +7258,8 @@ Mavo.Locale.register("en", {
 
           if (undoable) {
             _this56.mavo.setDeleted(item);
-          } else if (destroy) {
+          }
+ else if (destroy) {
             item.destroy();
           }
 
@@ -6633,7 +7309,8 @@ Mavo.Locale.register("en", {
 
           if (tag in Mavo.selectors.container) {
             var rel = this.marker.parentNode.closest(Mavo.selectors.container[tag]);
-          } else if (this.bottomUp && this.children[0]) {
+          }
+ else if (this.bottomUp && this.children[0]) {
             var rel = this.children[0].element;
           }
 
@@ -6693,7 +7370,8 @@ Mavo.Locale.register("en", {
 
           if (i < data.length) {
             changed = item.render(data[i], o) || changed;
-          } else {
+          }
+ else {
             changed = true;
             this["delete"](item, {
               silent: true
@@ -6819,7 +7497,8 @@ Mavo.Locale.register("en", {
           if (item.collection.isCompatible(collection)) {
             var index = closestItem ? closestItem.index + (closestItem.element === previous) : collection.length;
             collection.add(item, index);
-          } else {
+          }
+ else {
             return _this58.dragula.cancel(true);
           }
         });
@@ -6919,7 +7598,7 @@ Mavo.Locale.register("en", {
 
 (function ($, $$) {
   var _ = Mavo.ImplicitCollection =
-  /*#__PURE__*/
+  /* #__PURE__*/
   function (_Mavo$Node4) {
     _inherits(ImplicitCollection, _Mavo$Node4);
 
@@ -7051,7 +7730,8 @@ Mavo.Locale.register("en", {
         // We can clone the buttons from the template
         this.element = this.item.template.itembar.element.cloneNode(true);
         this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
-      } else {
+      }
+ else {
         // First item of this type
         this.element = this.element || $.create({
           className: "mv-item-bar mv-ui"
@@ -7084,7 +7764,8 @@ Mavo.Locale.register("en", {
             className: "mv-drag-handle"
           });
           buttons.push(this.dragHandle);
-        } else {
+        }
+ else {
           this.dragHandle = this.item.element;
         }
 
@@ -7154,7 +7835,8 @@ Mavo.Locale.register("en", {
           this.hideTimeout = setTimeout(function () {
             return _this62.hide(sticky);
           }, timeout);
-        } else {
+        }
+ else {
           this.element.setAttribute("hidden", "");
           $.unbind([this.item.element, this.element], "focusout mouseleave", this);
           this.sticky = false;
@@ -7173,7 +7855,8 @@ Mavo.Locale.register("en", {
           if (!this.isWithinItem(evt.relatedTarget)) {
             this.hide(sticky, _.DELAY);
           }
-        } else {
+        }
+ else {
           this.show(sticky);
           evt.stopPropagation();
         }
@@ -7242,7 +7925,8 @@ Mavo.Locale.register("en", {
       if (!this["function"]) {
         try {
           this["function"] = Mavo.Script.compile(this.expression, o);
-        } catch (error) {
+        }
+ catch (error) {
           // Compilation error
           this.error("There is something wrong with the expression ".concat(this.expression), error.message, "Not an expression? See https://mavo.io/docs/expressions/#disabling-expressions for information on how to disable expressions.");
           Mavo.hooks.run("expression-compile-error", {
@@ -7251,14 +7935,16 @@ Mavo.Locale.register("en", {
           });
           return this["function"] = error;
         }
-      } else if (this["function"] instanceof Error) {
+      }
+ else if (this["function"] instanceof Error) {
         // Previous compilation error
         return this["function"];
       }
 
       try {
         return this["function"](data);
-      } catch (error) {
+      }
+ catch (error) {
         // Runtime error
         this.error("Something went wrong with the expression ".concat(this.expression), error.message, "Data was: ".concat(JSON.stringify(data)));
         Mavo.hooks.run("expression-eval-error", {
@@ -7323,7 +8009,8 @@ Mavo.Locale.register("en", {
 
         if (/\S/.test(match[1])) {
           ret.push(new Mavo.Expression(match[1]));
-        } else {
+        }
+ else {
           // If the matched expression is empty or consists only of
           // whitespace, don't treat it as an expression.
           ret.push(match[0]);
@@ -7407,7 +8094,8 @@ Mavo.Locale.register("en", {
           // Some web components (e.g. AFrame) hijack getAttribute()
           var value = Element.prototype.getAttribute.call(this.node, this.attribute);
           this.expression = (value || "").trim();
-        } else {
+        }
+ else {
           // Move whitespace outside to prevent it from messing with types
           this.node.normalize();
 
@@ -7488,7 +8176,8 @@ Mavo.Locale.register("en", {
       if (this.item) {
         var scope = this.isDynamicObject ? this.item.parent : this.item;
         var data = this.data = scope.getLiveData();
-      } else {
+      }
+ else {
         var data = this.data === undefined ? Mavo.Data.stub : this.data;
       }
 
@@ -7529,7 +8218,8 @@ Mavo.Locale.register("en", {
 
       if (env.value.length === 1) {
         env.value = env.value[0];
-      } else {
+      }
+ else {
         env.value = env.value.map(function (v) {
           return Mavo.Primitive.format(v, {
             attribute: _this64.attribute,
@@ -7548,9 +8238,11 @@ Mavo.Locale.register("en", {
         }
 
         this.primitive.value = value;
-      } else if (this.mavoNode) {
+      }
+ else if (this.mavoNode) {
         this.mavoNode.render(value);
-      } else {
+      }
+ else {
         Mavo.Primitive.setValue(this.node, value, {
           attribute: this.attribute
         });
@@ -7617,11 +8309,13 @@ Mavo.Locale.register("en", {
 
               if (o.all.size === 1) {
                 o.observe();
-              } else if (!o.all.size) {
+              }
+ else if (!o.all.size) {
                 o.unobserve();
               }
             }
-          } else {
+          }
+ else {
             // All names
             for (var name in this.vars) {
               this.add(domexpression, name);
@@ -7637,7 +8331,8 @@ Mavo.Locale.register("en", {
             if (!o.all.size) {
               o.unobserve();
             }
-          } else {
+          }
+ else {
             // All names
             for (var name in this.vars) {
               this["delete"](domexpression, name);
@@ -7787,7 +8482,8 @@ Mavo.Locale.register("en", {
           }, _.THROTTLE);
           scheduled.add(evt.node.template);
         }
-      } else {
+      }
+ else {
         requestAnimationFrame(function () {
           return _this68.update(evt);
         });
@@ -7802,10 +8498,12 @@ Mavo.Locale.register("en", {
 
       if (evt instanceof Mavo.Node) {
         rootObject = evt;
-      } else if (evt instanceof Element) {
+      }
+ else if (evt instanceof Element) {
         root = evt.closest(Mavo.selectors.item);
         rootObject = Mavo.Node.get(root);
-      } else if (evt) {
+      }
+ else if (evt) {
         // Specific data change
         var cache = {
           updated: new Set()
@@ -7817,7 +8515,8 @@ Mavo.Locale.register("en", {
             // Ensure that [collectionName] updates when changing children
             this.updateByIdThrottled(evt.node.path, evt, cache);
           }
-        } else {
+        }
+ else {
           // Collection modifications (add, delete, move etc)
           this.updateById(Object.keys(Mavo.Data.special), evt, cache);
           var collection = evt.node.collection || evt.node;
@@ -7825,7 +8524,8 @@ Mavo.Locale.register("en", {
         }
 
         return;
-      } else {
+      }
+ else {
         rootObject = this.mavo.root;
       }
 
@@ -7855,7 +8555,8 @@ Mavo.Locale.register("en", {
         property.forEach(function (property) {
           return _this69.updateByIdThrottled(property, evt, cache);
         });
-      } else {
+      }
+ else {
         var scheduled = this.scheduledIds = this.scheduledIds || new Set();
 
         if (!scheduled.has(property)) {
@@ -7932,7 +8633,8 @@ Mavo.Locale.register("en", {
         // Text node
         // Leaf node, extract references from content
         this.extract(node, null, path, syntax);
-      } else {
+      }
+ else {
         node.normalize();
         syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
@@ -7957,7 +8659,8 @@ Mavo.Locale.register("en", {
             if (child.nodeType == 1) {
               offset = 0;
               index++;
-            } else {
+            }
+ else {
               offset++;
             }
 
@@ -8065,7 +8768,8 @@ Mavo.Locale.register("en", {
             if (value) {
               // Is removed from the DOM and needs to get back
               Mavo.revocably.add(_this73.element);
-            } else if (_this73.element.parentNode) {
+            }
+ else if (_this73.element.parentNode) {
               // Is in the DOM and needs to be removed
               Mavo.revocably.remove(_this73.element, "mv-if");
             }
@@ -8153,12 +8857,14 @@ Mavo.Locale.register("en", {
 
           if (ret === undefined) {
             meta.property = obj.length;
-          } else if (ret.length === 0) {
+          }
+ else if (ret.length === 0) {
             meta.property = [obj.length];
           }
 
           return ret;
-        } else {
+        }
+ else {
           // Not a property query, get from objects inside
           // TODO meta.property = ??
           return obj.map(function (e) {
@@ -8177,7 +8883,8 @@ Mavo.Locale.register("en", {
 
       if (typeof fn === "function") {
         return fn.apply(thisArg, args);
-      } else {
+      }
+ else {
         Mavo.warn("You tried to call ".concat(fn, " as a function, but it\u2019s not a function"));
       }
     },
@@ -8216,7 +8923,8 @@ Mavo.Locale.register("en", {
 
       if (n < 0) {
         return _.last(Math.abs(n), arr);
-      } else {
+      }
+ else {
         var ret = [];
         var numReturn = n === undefined ? 1 : Math.floor(n);
 
@@ -8249,7 +8957,8 @@ Mavo.Locale.register("en", {
 
       if (n < 0) {
         return _.first(Math.abs(n), arr);
-      } else {
+      }
+ else {
         var ret = [];
         var numReturn = n === undefined ? 1 : Math.floor(n);
 
@@ -8515,7 +9224,8 @@ Mavo.Locale.register("en", {
         }
 
         return ret;
-      } else {
+      }
+ else {
         return list;
       }
     },
@@ -8583,7 +9293,8 @@ Mavo.Locale.register("en", {
             return true;
           }
         }
-      } else {
+      }
+ else {
         return _.search(haystack, needle) >= 0;
       }
 
@@ -8796,7 +9507,8 @@ Mavo.Locale.register("en", {
               }
             }, callback));
           };
-        } else if (callback.isAggregate) {
+        }
+ else if (callback.isAggregate) {
           _newCallback = function newCallback(array) {
             if (Mavo["in"](Mavo.groupedBy, array)) {
               // grouped structures
@@ -8826,15 +9538,18 @@ Mavo.Locale.register("en", {
               var alias = _step.value;
               Mavo.Functions[alias] = _newCallback || callback;
             }
-          } catch (err) {
+          }
+ catch (err) {
             _didIteratorError = true;
             _iteratorError = err;
-          } finally {
+          }
+ finally {
             try {
               if (!_iteratorNormalCompletion && _iterator["return"] != null) {
                 _iterator["return"]();
               }
-            } finally {
+            }
+ finally {
               if (_didIteratorError) {
                 throw _iteratorError;
               }
@@ -9064,7 +9779,8 @@ Mavo.Locale.register("en", {
       if (!hasDate) {
         // No date, add today’s
         date = _.$today + " " + date;
-      } else {
+      }
+ else {
         // Only year-month, add day
         date = date.replace(/^(\d{4}-\d{2})(?!-\d{2})/, "$1-01");
       }
@@ -9072,7 +9788,8 @@ Mavo.Locale.register("en", {
       if (!hasTime) {
         // Add a time if one doesn't exist
         date += "T00:00:00";
-      } else {
+      }
+ else {
         // Make sure time starts with T, due to Safari bug
         date = date.replace(/\-(\d{2})\s+(?=\d{2}:)/, "-$1T");
       } // Remove all whitespace
@@ -9105,7 +9822,8 @@ Mavo.Locale.register("en", {
         if (/^0+$/.test(format)) {
           // Leading zeroes
           return (ret + "").padStart(format.length, "0").slice(-format.length);
-        } else {
+        }
+ else {
           format = {
             name: "long",
             shortname: "short"
@@ -9143,7 +9861,8 @@ Mavo.Locale.register("en", {
       if (timezone) {
         // parse as ISO format
         _date = new Date(_date);
-      } else {
+      }
+ else {
         // construct date in local timezone
         var fields = _date.match(/\d+/g);
 
@@ -9177,7 +9896,8 @@ Mavo.Locale.register("en", {
     unaryOperation: function unaryOperation(operand, scalar) {
       if (Array.isArray(operand)) {
         return operand.map(scalar);
-      } else {
+      }
+ else {
         return scalar(operand);
       }
     },
@@ -9198,24 +9918,30 @@ Mavo.Locale.register("en", {
           for (var i = 0; i < max; i++) {
             if (o.comparison && (a[i] === undefined || b[i] === undefined)) {
               result[i] = o["default"];
-            } else if (a[i] === undefined) {
+            }
+ else if (a[i] === undefined) {
               result[i] = rightUnary ? rightUnary(b[i]) : o.scalar(leftDefault, b[i]);
-            } else if (b[i] === undefined) {
+            }
+ else if (b[i] === undefined) {
               result[i] = leftUnary ? leftUnary(a[i]) : o.scalar(a[i], rightDefault);
-            } else {
+            }
+ else {
               result[i] = o.scalar(a[i], b[i]);
             }
           }
-        } else {
+        }
+ else {
           result = b.map(function (n) {
             return o.scalar(a, n);
           });
         }
-      } else if (Array.isArray(a)) {
+      }
+ else if (Array.isArray(a)) {
         result = a.map(function (n) {
           return o.scalar(n, b);
         });
-      } else {
+      }
+ else {
         result = o.scalar(a, b);
       }
 
@@ -9272,7 +9998,8 @@ Mavo.Locale.register("en", {
 
           if (o.comparison) {
             prev = _.binaryOperation(prev, result, _.operators["and"]);
-          } else {
+          }
+ else {
             prev = result;
           }
         }
@@ -9316,15 +10043,18 @@ Mavo.Locale.register("en", {
             }
           }
         }
-      } catch (err) {
+      }
+ catch (err) {
         _didIteratorError2 = true;
         _iteratorError2 = err;
-      } finally {
+      }
+ finally {
         try {
           if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
             _iterator2["return"]();
           }
-        } finally {
+        }
+ finally {
           if (_didIteratorError2) {
             throw _iteratorError2;
           }
@@ -9567,7 +10297,8 @@ Mavo.Locale.register("en", {
                 a = a.map(function (v, i) {
                   return val(b[i]) ? v : null;
                 });
-              } else {
+              }
+ else {
                 b = val(b);
 
                 if (typeof b === "boolean") {
@@ -9575,14 +10306,16 @@ Mavo.Locale.register("en", {
                   a = b ? a : a.map(function (v) {
                     return null;
                   });
-                } else {
+                }
+ else {
                   // foo where 5 should equal foo where foo = 5
                   a = a.map(function (v) {
                     return v == b ? v : null;
                   });
                 }
               }
-            } else {
+            }
+ else {
               a = val(b) ? a : null;
             }
           };
@@ -9633,12 +10366,14 @@ Mavo.Locale.register("en", {
                 var fn = $.type(val(a)) === "object" ? Mavo.safeToJSON : val;
                 return b.map(fn).indexOf(fn(a)) > -1;
               };
-            } else if ($.type(b) === "object") {
+            }
+ else if ($.type(b) === "object") {
               // Mimic JS' in operator
               var op = function op(a) {
                 return Mavo["in"](val(a), b);
               };
-            } else {
+            }
+ else {
               var op = function op(a) {
                 return Mavo.Functions.eq(a, b);
               };
@@ -9896,12 +10631,14 @@ Mavo.Locale.register("en", {
               });
               ret.arguments.push(co.operand);
             });
-          } else {
+          }
+ else {
             comparisonOperands.forEach(function (co) {
               ret.arguments.push(co.operand);
             });
           }
-        } else {
+        }
+ else {
           // Flatten same operator calls
           do {
             ret.arguments.unshift(nodeLeft.right);
@@ -9960,9 +10697,11 @@ Mavo.Locale.register("en", {
                 type: "CallExpression"
               });
             }
-          } else if (node.callee.name == "delete") {
+          }
+ else if (node.callee.name == "delete") {
             node.callee.name = "clear";
-          } else {
+          }
+ else {
             var def = Mavo.Functions[node.callee.name];
 
             if (def && def.needsContext) {
@@ -9987,7 +10726,8 @@ Mavo.Locale.register("en", {
 
       if (_typeof(ret) == "object" && ret && ret.type) {
         node = ret;
-      } else if (ret !== undefined) {
+      }
+ else if (ret !== undefined) {
         return ret;
       }
 
@@ -9996,7 +10736,8 @@ Mavo.Locale.register("en", {
     rewrite: function rewrite(code) {
       try {
         return _.serialize(_.parse(code));
-      } catch (e) {
+      }
+ catch (e) {
         // Parsing as MavoScript failed, falling back to plain JS
         return code;
       }
@@ -10059,7 +10800,8 @@ Mavo.Locale.register("en", {
 
     if (details.scalar && details.scalar.length < 2) {
       var ret = _.addUnaryOperator(name, details);
-    } else {
+    }
+ else {
       var ret = _.addBinaryOperator(name, details);
     }
 
@@ -10150,7 +10892,8 @@ Mavo.Locale.register("en", {
     getNode: function getNode(node) {
       if (node instanceof Mavo.Node) {
         return node;
-      } else if (node && node[Mavo.toNode]) {
+      }
+ else if (node && node[Mavo.toNode]) {
         return node[Mavo.toNode];
       }
     },
@@ -10185,7 +10928,8 @@ Mavo.Locale.register("en", {
             var _ref15 = [undefined, data];
             data = _ref15[0];
             ref = _ref15[1];
-          } else if (arguments.length === 2) {
+          }
+ else if (arguments.length === 2) {
             // Is it (data, ref) or (ref, index)?
             // ref might be a number, if collection of numbers!
             var collection = _.getCollection(ref);
@@ -10274,7 +11018,8 @@ Mavo.Locale.register("en", {
               once: false
             });
             return _.Functions.add(from, collection, index);
-          } else {
+          }
+ else {
             Mavo.warn("You need to provide at least one collection or collection item for move() to have something to do.", {
               once: false
             });
@@ -10313,15 +11058,18 @@ Mavo.Locale.register("en", {
           if (node instanceof Mavo.Collection) {
             // Clear collection
             itemsToDelete.push.apply(itemsToDelete, _toConsumableArray(node.children));
-          } else if (node.collection) {
+          }
+ else if (node.collection) {
             // Collection item, delete
             itemsToDelete.push(node);
-          } else {
+          }
+ else {
             // Ordinary node, just clear its data
             node.walk(function (n) {
               if (n instanceof Mavo.Primitive) {
                 n.value = null;
-              } else if (n !== node) {
+              }
+ else if (n !== node) {
                 _.clear(n);
               }
             });
@@ -10361,14 +11109,16 @@ Mavo.Locale.register("en", {
         if (node) {
           // Single node, render values on it
           node.render(values);
-        } else {
+        }
+ else {
           var wasArray = Array.isArray(ref);
 
           var nodes = _.getNodes(ref);
 
           if (!nodes.length) {
             Mavo.warn("The first parameter of set() needs to be one or more existing properties, ".concat(Mavo.safeToJSON(ref), " is not."));
-          } else {
+          }
+ else {
             Mavo.Script.binaryOperation(wasArray ? nodes : nodes[0], values, {
               scalar: function scalar(node, value) {
                 return node ? node.render(value) : null;
@@ -10410,7 +11160,7 @@ Mavo.Locale.register("en", {
 
 (function ($, $$) {
   var _ = Mavo.Data = $.Class(
-  /*#__PURE__*/
+  /* #__PURE__*/
   function () {
     function Data(node, data) {
       _classCallCheck(this, Data);
@@ -10447,7 +11197,8 @@ Mavo.Locale.register("en", {
 
             this.updateParent();
           }
-        } else if (this.node instanceof Mavo.Primitive) {
+        }
+ else if (this.node instanceof Mavo.Primitive) {
           var value = this.node.value;
 
           if (this.node.isDataNull({
@@ -10462,7 +11213,8 @@ Mavo.Locale.register("en", {
           if (type === "object" || type === "array") {
             // Object rendered on a primitive, we should traverse it and store its properties
             _.computeRoutes(this.data);
-          } else {
+          }
+ else {
             _.computeMetadata(this.data, this.key, this.parent);
           }
 
@@ -10481,10 +11233,12 @@ Mavo.Locale.register("en", {
           // See https://github.com/LeaVerou/mavo/issues/50#issuecomment-266079652
           var data = this.data.length === 1 ? this.data[0] : this.data;
           this.parent.set(this.node.property, data, true);
-        } else if (this.collection instanceof Mavo.ImplicitCollection) {
+        }
+ else if (this.collection instanceof Mavo.ImplicitCollection) {
           // Is implicit collection *Item*
           this.parent.update();
-        } else {
+        }
+ else {
           var key = this.key,
               isDeleted = false;
 
@@ -10573,7 +11327,8 @@ Mavo.Locale.register("en", {
           if (propertyL in Mavo.Actions.Functions) {
             if (Mavo.Actions.running) {
               ret = Mavo.Actions.Functions[propertyL];
-            } else {
+            }
+ else {
               ret = Mavo.Actions.nope;
             }
           } // Is this a Mavo function?
@@ -10581,7 +11336,8 @@ Mavo.Locale.register("en", {
 
           if (propertyL in Mavo.Functions) {
             ret = Mavo.Functions[propertyL];
-          } else {
+          }
+ else {
             // Maybe it's a Math function?
             ret = Math[property] || Math[propertyL] || ret;
           }
@@ -10715,7 +11471,8 @@ Mavo.Locale.register("en", {
             if (Array.isArray(ret)) {
               results.push.apply(results, _toConsumableArray(ret));
               returnArray = true;
-            } else {
+            }
+ else {
               results.push(ret);
             }
           }
@@ -10725,7 +11482,8 @@ Mavo.Locale.register("en", {
           for (var prop in data) {
             findDown(prop);
           }
-        } else {
+        }
+ else {
           data[Mavo.route][property].forEach(findDown);
         }
 
@@ -10769,18 +11527,21 @@ Mavo.Locale.register("en", {
 
         if (property in data) {
           ret = data[property];
-        } else if (!propertyIsNumeric) {
+        }
+ else if (!propertyIsNumeric) {
           // Property does not exist on data, if non-numeric, look for it elsewhere
           if (property in _.special) {
             // $special properties
             ret = _.special[property](data);
-          } else if (data[Mavo.mavo]) {
+          }
+ else if (data[Mavo.mavo]) {
             var all = data[Mavo.mavo].root.liveData.data[Mavo.route];
 
             if (Mavo["in"](property, all)) {
               ret = _.findUp(property, data);
             }
-          } else if (Mavo["in"](Mavo.route, data) && Mavo["in"](property, data[Mavo.route])) {
+          }
+ else if (Mavo["in"](Mavo.route, data) && Mavo["in"](property, data[Mavo.route])) {
             ret = _.find(property, data);
           }
         }
@@ -10936,7 +11697,8 @@ Mavo.Locale.register("en", {
               }
 
               parent[Mavo.route][property].add(up);
-            } else {
+            }
+ else {
               parent[Mavo.route][property] = true;
             }
 
@@ -10955,7 +11717,8 @@ Mavo.Locale.register("en", {
           object.forEach(function (item, i) {
             return _.traverse(callback, item, i, object);
           });
-        } else if ($.type(object) === "object") {
+        }
+ else if ($.type(object) === "object") {
           for (var prop in object) {
             _.traverse(callback, object[prop], prop, object);
           }
@@ -11187,7 +11950,8 @@ Mavo.Locale.register("en", {
         }).then(function (response) {
           return Promise.resolve(info.repo ? _.atob(response.content) : response);
         });
-      } else {
+      }
+ else {
         // Unauthenticated, use simple GET request to avoid rate limit
         url = new URL("https://raw.githubusercontent.com/".concat(this.username, "/").concat(this.repo, "/").concat(this.branch || "master", "/").concat(this.path));
         url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
@@ -11372,7 +12136,8 @@ Mavo.Locale.register("en", {
             // Storage points to current user's repo (but they want to close PR)
             username = _this79.repoInfo.parent.owner.login;
             repo = _this79.repoInfo.parent.name;
-          } else {
+          }
+ else {
             // Storage points to another user's repo
             username = _this79.username;
             repo = _this79.repo;
@@ -11390,7 +12155,8 @@ Mavo.Locale.register("en", {
             _this79.pullRequest();
           });
         });
-      } else {
+      }
+ else {
         // Ask about creating a PR
         // We already have a pull request, ask about closing it
         var style = lastNoticeName === "createPR" ? {
@@ -11418,7 +12184,8 @@ Mavo.Locale.register("en", {
             username = _this79.repoInfo.parent.owner.login;
             repo = _this79.repoInfo.parent.name;
             base = _this79.repoInfo.parent.default_branch;
-          } else {
+          }
+ else {
             // Storage points to another user's repo
             username = _this79.username;
             repo = _this79.repo;
@@ -11508,7 +12275,8 @@ Mavo.Locale.register("en", {
 
                       return repoInfo;
                     });
-                  } else {
+                  }
+ else {
                     // search forks of this repo
                     return _this80.request(repoInfo.forks_url).then(function (forks) {
                       for (var i in forks) {
@@ -11628,7 +12396,8 @@ Mavo.Locale.register("en", {
 
         if (/raw.githubusercontent.com$/.test(url.host)) {
           ret.branch = path.shift();
-        } else if (/api.github.com$/.test(url.host)) {
+        }
+ else if (/api.github.com$/.test(url.host)) {
           // Raw API call
           var apiCall = url.pathname.slice(1) + url.search;
           var data = Mavo.Functions.from(source, "#"); // url.* drops line breaks
@@ -11639,7 +12408,8 @@ Mavo.Locale.register("en", {
               query: data
             } : data
           };
-        } else if (path[0] == "blob") {
+        }
+ else if (path[0] == "blob") {
           path.shift();
           ret.branch = path.shift();
         }
@@ -11649,7 +12419,8 @@ Mavo.Locale.register("en", {
         if (/\.\w+$/.test(lastSegment)) {
           ret.filename = lastSegment;
           path.splice(path.length - 1, 1);
-        } else {
+        }
+ else {
           ret.filename = defaults.filename;
         }
 
@@ -11678,4 +12449,4 @@ Mavo.Locale.register("en", {
     }
   }));
 })(Bliss, Bliss.$);
-//# sourceMappingURL=maps/mavo.es5.js.map
+// # sourceMappingURL=maps/mavo.es5.js.map

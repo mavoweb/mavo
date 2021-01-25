@@ -31,7 +31,8 @@
       if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
         // Synchronous init
         this.init();
-      } else {
+      }
+ else {
         // Async init, we're borrowing the template from elsewhere so we need
         // to give the rest of the tree a chance to initialize
         this.mavo.treeBuilt.then(() => this.init());
@@ -61,7 +62,8 @@
         }
 
         Mavo.revocably.remove(button);
-      } else {
+      }
+ else {
         button = $.create("button", {
           type: "button",
           className: "mv-ui",
@@ -110,7 +112,8 @@
 
             this.likeNode = this.likeNode.likeNode || this.likeNode;
             this.likeNode = this.likeNode.template || this.likeNode;
-          } else {
+          }
+ else {
             this.like = null;
           }
         }
@@ -141,7 +144,8 @@
         if (!this.accepts.size) {
           this.accepts = this.likeNode.accepts || this.accepts;
         }
-      } else if (this.initialItems > 0 || !this.template) {
+      }
+ else if (this.initialItems > 0 || !this.template) {
         let item = this.createItem(this.element);
         this.add(item, undefined, { silent: true });
       }
@@ -150,11 +154,13 @@
         if (!this.initialItems) {
           if (item) {
             this.delete(item, { silent: true });
-          } else {
+          }
+ else {
             // No item to delete
             this.element.remove();
           }
-        } else if (this.initialItems > 1) {
+        }
+ else if (this.initialItems > 1) {
           // Add extra items
           for (let i = 1; i < this.initialItems; i++) {
             this.add();
@@ -219,7 +225,8 @@
     add(item, index, o = {}) {
       if (item instanceof Node) {
         item = Mavo.Node.get(item) || this.createItem(item);
-      } else {
+      }
+ else {
         item = item || this.createItem();
       }
 
@@ -376,7 +383,8 @@
 
       if (undoable) {
         this.mavo.setDeleted(item);
-      } else if (destroy) {
+      }
+ else if (destroy) {
         item.destroy();
       }
 
@@ -438,7 +446,8 @@
           let rel = this.marker.parentNode.closest(
             Mavo.selectors.container[tag]
           );
-        } else if (this.bottomUp && this.children[0]) {
+        }
+ else if (this.bottomUp && this.children[0]) {
           let rel = this.children[0].element;
         }
 
@@ -486,7 +495,8 @@
 
         if (i < data.length) {
           changed = item.render(data[i], o) || changed;
-        } else {
+        }
+ else {
           changed = true;
           this.delete(item, { silent: true });
           i--;
@@ -569,7 +579,7 @@
         isContainer: (el) => {
           if (this.accepts.size) {
             return Array.from(el.childNodes).some((child) => {
-              var collection = _.get(child); // Map children to any associated collections
+              let collection = _.get(child); // Map children to any associated collections
 
               return collection && this.accepts.has(collection.property);
             });
@@ -620,7 +630,8 @@
             ? closestItem.index + (closestItem.element === previous)
             : collection.length;
           collection.add(item, index);
-        } else {
+        }
+ else {
           return this.dragula.cancel(true);
         }
       });
@@ -655,7 +666,8 @@
 
       if (nodes.length === 0) {
         return [];
-      } else if (nodes.length === 1) {
+      }
+ else if (nodes.length === 1) {
         let ret = await nodes[0].collection.delete(nodes[0]);
         return [ret];
       }

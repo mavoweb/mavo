@@ -66,7 +66,8 @@
           );
 
           this.expression = (value || "").trim();
-        } else {
+        }
+ else {
           // Move whitespace outside to prevent it from messing with types
           this.node.normalize();
 
@@ -169,7 +170,8 @@
       if (this.item) {
         let scope = this.isDynamicObject ? this.item.parent : this.item;
         let data = (this.data = scope.getLiveData());
-      } else {
+      }
+ else {
         let data = this.data === undefined ? Mavo.Data.stub : this.data;
       }
 
@@ -214,7 +216,8 @@
 
       if (env.value.length === 1) {
         env.value = env.value[0];
-      } else {
+      }
+ else {
         env.value = env.value
           .map((v) =>
             Mavo.Primitive.format(v, {
@@ -237,9 +240,11 @@
         }
 
         this.primitive.value = value;
-      } else if (this.mavoNode) {
+      }
+ else if (this.mavoNode) {
         this.mavoNode.render(value);
-      } else {
+      }
+ else {
         Mavo.Primitive.setValue(this.node, value, {
           attribute: this.attribute,
         });
@@ -308,11 +313,13 @@
 
               if (o.all.size === 1) {
                 o.observe();
-              } else if (!o.all.size) {
+              }
+ else if (!o.all.size) {
                 o.unobserve();
               }
             }
-          } else {
+          }
+ else {
             // All names
             for (let name in this.vars) {
               this.add(domexpression, name);
@@ -330,7 +337,8 @@
             if (!o.all.size) {
               o.unobserve();
             }
-          } else {
+          }
+ else {
             // All names
             for (let name in this.vars) {
               this.delete(domexpression, name);

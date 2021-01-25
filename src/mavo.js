@@ -146,7 +146,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
         let loginUrlParam;
         if (Mavo.Functions.url("login") !== null && this.index === 1) {
           loginUrlParam = "login";
-        } else if (Mavo.Functions.url(this.id + "-login") !== null) {
+        }
+ else if (Mavo.Functions.url(this.id + "-login") !== null) {
           loginUrlParam = this.id + "-login";
         }
 
@@ -218,7 +219,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
             // otherwise, descendant nodes still inherit, unless they are also mode-restricted
             mode = node.element.getAttribute("mv-mode");
             node.modes = mode;
-          } else {
+          }
+ else {
             // Inherited
             if (node.modes) {
               // Mode-restricted, we cannot change to the other mode
@@ -239,7 +241,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
       if (this.storage || this.source) {
         // Fetch existing data
         this.permissions.can("read", () => this.load());
-      } else {
+      }
+ else {
         // No storage or source
         requestAnimationFrame(() => {
           this.dataLoaded.resolve();
@@ -316,7 +319,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
         ) {
           evt.preventDefault();
           this.save();
-        } else if (evt.key === "ArrowUp" || evt.key === "ArrowDown") {
+        }
+ else if (evt.key === "ArrowUp" || evt.key === "ArrowDown") {
           if (
             element.matches("textarea, input[type=range], input[type=number]")
           ) {
@@ -340,7 +344,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
               if (editor && nextNode.editing) {
                 nextNode.edit();
                 nextNode.editor.focus();
-              } else {
+              }
+ else {
                 nextNode.element.focus();
               }
 
@@ -527,7 +532,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
           changed = true;
         }
-      } else {
+      }
+ else {
         // We had a backend and now we will un-have it
         this[role] = null;
       }
@@ -589,7 +595,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
             if (xhr?.status == 404) {
               this.render(null);
-            } else {
+            }
+ else {
               let message = this._("problem-loading");
 
               if (xhr) {
@@ -625,7 +632,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
       try {
         saved = await this.storage.store(this.getData());
-      } catch (err) {
+      }
+ catch (err) {
         if (err) {
           let message = this._("problem-saving");
 
@@ -730,7 +738,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
 
       if (nodes.length == 1) {
         let phrase = nodes[0].name;
-      } else {
+      }
+ else {
         // Multiple items deleted, possibly from multiple collections
         let counts = {},
           ret = [];
@@ -985,7 +994,8 @@ Stretchy.selectors.filter = ".mv-editor:not([property]), .mv-autosize";
         let promise = new Promise((resolve, reject) => {
           if (typeof constructor === "function") {
             constructor(resolve, reject);
-          } else if (constructor instanceof Promise) {
+          }
+ else if (constructor instanceof Promise) {
             constructor.then(resolve);
             constructor.catch(reject);
           }

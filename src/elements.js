@@ -53,7 +53,8 @@
 
             _[`${id}@${attribute}`] = o;
           });
-        } else {
+        }
+ else {
           _[id] = config;
         }
 
