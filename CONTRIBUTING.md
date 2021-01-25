@@ -54,12 +54,13 @@ Please install [ESLint](https://eslint.org/) and an ESLint plugin for your edito
 
 Other guidelines that cannot be enforced via ESLint:
 - Use a space between a method name and the `(` in its definition, but not in calls. This allows us to easily search for the function definition by searching for `methodName (`, without the search results being clogged by calls to the method.
-- Naming: use few, simple words. Avoid using more than two words to name a variable, method, or class. Use camelCase, as is idiomatic with JS. Start class names with uppercase. Avoid abbreviations, except the ones that are widespread convention, such as`i` for a loop counter or `ret` for the return value (which is encouraged).
+- Naming: use few, simple words. Avoid using more than two words to name a variable, method, or class. Use camelCase, as is idiomatic with JS. Start class names with uppercase. Avoid abbreviations, except the ones that are widespread convention, such as`i` for a loop counter or `ret` for the return value (which is encouraged). The [TAG Web Platform Design Principles](https://w3ctag.github.io/design-principles/#naming-is-hard) document contains more good naming advice.
 - Comments: Use comments to provide context and explain *why* code does things the way it does. Do not use comments to explain *what* the code does, that should be self-evident in well written code.
 - Use spacing around operators *unless* you have consciously decided this would reduce readability. E.g. in some expressions with lots of terms, you may want to use spacing to group certain terms, e.g. `a * b + c * d` is arguably less readable than `a*b + c*d`.
 Similarly, `for (let i=0; i<n; i++)` produces a visual grouping of terms that aids readability compared to `for (let i = 0; i < n; i ++)`.
 However, in most situations using spaces around operators aids readability, so err on the side of that.
 **Do not ever use spaces between unary operators and their operand**, i.e. never write `i ++` instead of `i++` or `- i` instead of `-i`.
+- We do not slavishly follow a certain line length; we wrap lines of code where it makes the code more readable. Sometimes, a long line can be more readable than a wrapped line, and we leave that up to individual judgement.
 
 # Mavo Internals: An Overview
 This documentation describes the purpose or function of essential classes and properties in the Mavo codebase (inside `src`) to help facilitate your contribution process. It's a work in progress and feel free to suggest edits to this documentation.
