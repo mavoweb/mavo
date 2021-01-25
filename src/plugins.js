@@ -1,95 +1,97 @@
 (function ($, $$) {
+  Mavo.attributes.push("mv-plugins");
 
-Mavo.attributes.push("mv-plugins");
+  let _ = (Mavo.Plugins = {
+    loaded: {},
 
-var _ = Mavo.Plugins = {
-	loaded: {},
+    async load() {
+      _.plugins = new Set();
 
-	async load () {
-		_.plugins = new Set();
+      $$("[mv-plugins]").forEach((element) => {
+        element
+          .getAttribute("mv-plugins")
+          .trim()
+          .split(/\s+/)
+          .forEach((plugin) => _.plugins.add(plugin));
+      });
 
-		$$("[mv-plugins]").forEach(element => {
-			element
-				.getAttribute("mv-plugins").trim().split(/\s+/)
-				.forEach(plugin => _.plugins.add(plugin));
-		});
+      if (!_.plugins.size) {
+        return;
+      }
 
-		if (!_.plugins.size) {
-			return;
-		}
+      // Fetch plugin index
+      let response = await fetch(_.url + "/plugins.json");
+      let json = await response.json();
+      let plugin = json.plugin;
 
-		// Fetch plugin index
-		let response = await fetch(_.url + "/plugins.json");
-		let json = await response.json();
-		let plugin = json.plugin;
+      // Fetch plugins
+      return Mavo.thenAll(
+        plugin
+          .filter((plugin) => _.plugins.has(plugin.id))
+          .map((plugin) => {
+            if (_.loaded[plugin.id]) {
+              return Promise.resolve();
+            }
 
-		// Fetch plugins
-		return Mavo.thenAll(plugin
-			.filter(plugin => _.plugins.has(plugin.id))
-			.map(plugin => {
-				if (_.loaded[plugin.id]) {
-					return Promise.resolve();
-				}
+            // Load plugin
+            let filename = `mavo-${plugin.id}.js`;
 
-				// Load plugin
-				var filename = `mavo-${plugin.id}.js`;
+            if (plugin.repo) {
+              // Plugin hosted in a separate repo
+              let url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
+            } else {
+              // Plugin hosted in the mavo-plugins repo
+              let url = `${_.url}/${plugin.id}/${filename}`;
+            }
 
-				if (plugin.repo) {
-					// Plugin hosted in a separate repo
-					var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
-				}
-				else {
-					// Plugin hosted in the mavo-plugins repo
-					var url = `${_.url}/${plugin.id}/${filename}`;
-				}
+            return $.include(_.loaded[plugin.id], url);
+          })
+      );
+    },
 
-				return $.include(_.loaded[plugin.id], url);
-			}));
-	},
+    register: function (name, o = {}) {
+      if (_.loaded[name]) {
+        // Do not register same plugin twice
+        return;
+      }
 
-	register: function(name, o = {}) {
-		if (_.loaded[name]) {
-			// Do not register same plugin twice
-			return;
-		}
+      Mavo.hooks.add(o.hooks);
 
-		Mavo.hooks.add(o.hooks);
+      for (let Class in o.extend) {
+        let existing = Class == "Mavo" ? Mavo : Mavo[Class];
 
-		for (let Class in o.extend) {
-			let existing = Class == "Mavo"? Mavo : Mavo[Class];
+        if ($.type(existing) === "function") {
+          $.Class(existing, o.extend[Class]);
+        } else {
+          $.extend(existing, o.extend[Class]);
+        }
+      }
 
-			if ($.type(existing) === "function") {
-				$.Class(existing, o.extend[Class]);
-			}
-			else {
-				$.extend(existing, o.extend[Class]);
-			}
-		}
+      let ready = [];
 
-		var ready = [];
+      if (o.ready) {
+        ready.push(o.ready);
+      }
 
-		if (o.ready) {
-			ready.push(o.ready);
-		}
+      if (o.dependencies) {
+        let base = document.currentScript
+          ? document.currentScript.src
+          : location;
+        let dependencies = o.dependencies.map((url) => Mavo.load(url, base));
+        ready.push(...dependencies);
+      }
 
-		if (o.dependencies) {
-			var base = document.currentScript? document.currentScript.src : location;
-			var dependencies = o.dependencies.map(url => Mavo.load(url, base));
-			ready.push(...dependencies);
-		}
+      if (ready.length) {
+        Mavo.dependencies.push(...ready);
+      }
 
-		if (ready.length) {
-			Mavo.dependencies.push(...ready);
-		}
+      _.loaded[name] = o;
 
-		_.loaded[name] = o;
+      if (o.init) {
+        Promise.all(ready).then(() => o.init());
+      }
+    },
 
-		if (o.init) {
-			Promise.all(ready).then(() => o.init());
-		}
-	},
-
-	url: "https://plugins.mavo.io"
-};
-
+    url: "https://plugins.mavo.io",
+  });
 })(Bliss, Bliss.$);
