@@ -200,7 +200,7 @@ $.extend(_.util, {
 			return "";
 		}
 
-		var ret = ret || numeric[component](dateO);
+		ret = ret || numeric[component](dateO);
 
 		if (format) {
 			if (/^0+$/.test(format)) {
