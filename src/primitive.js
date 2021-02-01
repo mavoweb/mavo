@@ -256,11 +256,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	pauseObserver () {
-		Mavo.observers.pause({id: "primitive"});
+		this.pausedObserver = true;
 	}
 
 	resumeObserver () {
-		Mavo.observers.resume({id: "primitive"});
+		this.pausedObserver = false;
 	}
 
 	save() {
@@ -1109,7 +1109,7 @@ $.Class(_, {
 });
 
 Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element}) {
-	if (node instanceof Mavo.Primitive && node.config) {
+	if (node instanceof Mavo.Primitive && node.config && !node.pausedObserver) {
 		if (attribute === "mv-default" && !node.defaultExpression) {
 			node.default = element.getAttribute("mv-default");
 		}
