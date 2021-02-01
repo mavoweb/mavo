@@ -62,8 +62,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 								primitive.default = this.originalEditor.value;
 							}
 
-							if (primitive.editor) {
-								primitive.editor = this.originalEditor.cloneNode(true);
+							if (primitive.editor?.parentNode) {
+								let newEditor = this.originalEditor.cloneNode(true);
+								primitive.editor.replaceWith(newEditor);
+								primitive.editor = newEditor;
 							}
 
 							primitive.setValue(primitive.value, {force: true, silent: true});
