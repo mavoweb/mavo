@@ -83,11 +83,11 @@ var _ = Mavo.Functions = {
 		if (id === undefined) {
 			return location.href;
 		}
-
+		let ret;
 		if (id) {
 			id = str(id).replace(/[^\w-:]/g);
 
-			var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
+			ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
 			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
 		}
 

@@ -66,9 +66,9 @@ Mavo.Expressions.directive("mv-if", {
 
 			// Only apply this after the tree is built, otherwise any properties inside the if will go missing!
 			await this.item.mavo.treeBuilt;
-
+			let parentValue;
 			if (this.parentIf) {
-				var parentValue = this.parentIf.value[0];
+				parentValue = this.parentIf.value[0];
 				this.value[0] = value = value && parentValue;
 			}
 

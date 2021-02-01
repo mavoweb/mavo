@@ -282,11 +282,12 @@ var _ = Mavo.Node = class Node {
 
 		if (!this.isHelperVariable) {
 			if (!Array.isArray(this.children) && Array.isArray(env.data)) {
+				let mainProperty;
 				// We are rendering an array on a singleton, what to do?
 				if (this.isRoot) {
 					// Get the name of the first property that is a collection without mv-value
 					// OR if there is a collection with property="main", prioritize that
-					var mainProperty = this.children.main instanceof Mavo.Collection? "main" : this.getNames((p, n) => {
+					mainProperty = this.children.main instanceof Mavo.Collection? "main" : this.getNames((p, n) => {
 						return n instanceof Mavo.Collection && !n.expressions?.[0]?.isDynamicObject;
 					})[0];
 

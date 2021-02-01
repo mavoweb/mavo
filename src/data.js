@@ -342,9 +342,9 @@ var _ = Mavo.Data = $.Class(class Data {
 					ret = _.find(property, data);
 				}
 			}
-
+			let propertyL;
 			if (!propertyIsNumeric) {
-				var propertyL = property.toLowerCase();
+				propertyL = property.toLowerCase();
 			}
 
 			if (ret !== undefined) {

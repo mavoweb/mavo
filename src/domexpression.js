@@ -124,13 +124,13 @@ var _ = Mavo.DOMExpression = $.Class({
 	update: function() {
 		var env = {context: this};
 		var parentEnv = env;
-
+		let data;
 		if (this.item) {
 			var scope = this.isDynamicObject? this.item.parent : this.item;
-			var data = this.data = scope.getLiveData();
+			data = this.data = scope.getLiveData();
 		}
 		else {
-			var data = this.data === undefined? Mavo.Data.stub : this.data;
+			data = this.data === undefined? Mavo.Data.stub : this.data;
 		}
 
 		Mavo.hooks.run("domexpression-update-start", env);

@@ -222,9 +222,9 @@ var _ = Mavo.Expressions = $.Class({
 			if (Mavo.is("item", node)) {
 				path = [];
 			}
-
+			let ignore;
 			if (node.hasAttribute("mv-expressions-ignore")) {
-				var ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
+				ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
 			}
 
 			$$(node.attributes).forEach(attribute => {

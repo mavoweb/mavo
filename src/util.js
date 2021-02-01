@@ -118,8 +118,9 @@ var _ = $.extend(Mavo, {
 	// Delete an element from an array
 	// @param all {Boolean} Delete more than one?
 	delete: (arr, element, all) => {
+		let index;
 		do {
-			var index = arr && arr.indexOf(element);
+			index = arr && arr.indexOf(element);
 
 			if (index > -1) {
 				arr.splice(index, 1);

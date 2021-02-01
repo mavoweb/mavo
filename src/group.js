@@ -153,10 +153,10 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 		}
 
 		var changed = false;
-
+		let wasPrimitive;
 		// What if data is not an object?
 		if (typeof data !== "object") {
-			var wasPrimitive = true;
+			wasPrimitive = true;
 
 			// Data is a primitive, render it on this.property or failing that, any writable property
 			if (this.property in this.children) {

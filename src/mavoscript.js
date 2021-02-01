@@ -906,12 +906,12 @@ _.transformations.LogicalExpression = _.transformations.BinaryExpression;
 
 for (let name in _.operators) {
 	let details = _.operators[name];
-
+	let ret;
 	if (details.scalar?.length < 2) {
-		var ret = _.addUnaryOperator(name, details);
+		ret = _.addUnaryOperator(name, details);
 	}
 	else {
-		var ret = _.addBinaryOperator(name, details);
+		ret = _.addBinaryOperator(name, details);
 	}
 
 	details.code = details.code || ret;
