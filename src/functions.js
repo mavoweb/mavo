@@ -349,7 +349,13 @@ var _ = Mavo.Functions = {
 		return val(condition)? iftrue : iffalse;
 	},
 
-	group: (...objects) => Object.assign(...objects),
+	group: (...objects) => {
+		if (objects.length === 0) {
+			return {};
+		}
+
+		return Object.assign(...objects);
+	},
 	list: (...items) => items.flat(),
 
 	// FIXME if step=0 returns NaN
