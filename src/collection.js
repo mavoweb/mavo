@@ -445,7 +445,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 				i--;
 			}
 		}
-
+		//TODO: let->var issue #678
+		//it seems like in the for loop above and the if statement below, that the i variable is being re-used from the for loop. this could cause issues in changing it to a let variable
 		if (data.length > i) {
 			// There are still remaining items
 			// Using document fragments improves performance by 60%

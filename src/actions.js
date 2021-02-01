@@ -163,7 +163,9 @@ var _ = Mavo.Actions = {
 				// If to is a number and not a collection item, it's an index
 				[index, to] = [to];
 			}
-
+			//TODO: let->var issue #678
+			//Here is one place where variable hoisting seems to be depended upon with the variable toNode
+			
 			var toNode = _.getNode(to);
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
 			var collection = (toNode || fromNodes[0]).closestCollection;
