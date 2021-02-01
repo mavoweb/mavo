@@ -63,6 +63,8 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 							}
 
 							if (primitive.editor?.parentNode) {
+								// If we are editing the node, just setting primitive.editor won't help
+								// we also need to update it in the DOM
 								let newEditor = this.originalEditor.cloneNode(true);
 								primitive.editor.replaceWith(newEditor);
 								primitive.editor = newEditor;
@@ -258,10 +260,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	pauseObserver () {
+		Mavo.observers.flush();
 		this.pausedObserver = true;
 	}
 
 	resumeObserver () {
+		Mavo.observers.flush();
 		this.pausedObserver = false;
 	}
 
