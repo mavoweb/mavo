@@ -260,9 +260,30 @@ var _ = Mavo.Node = class Node {
 		return !!this.template;
 	}
 
-	render (data, o = {}) {
+	async render (data, o = {}) {
 		o.live = o.live || Mavo.in(Mavo.isProxy, data);
 		o.root = o.root || this;
+
+		// Any promises pending to be rendered?
+		delete this.pending;
+
+		if ($.type(data) === "promise") {
+			let pending = this.pending = data;
+
+			try {
+				data = await pending;
+			}
+			catch (e) {
+				data = e;
+			}
+
+			if (this.pending !== pending) {
+				// Value has been superseded
+				return;
+			}
+
+			delete this.pending;
+		}
 
 		if (o.live) {
 			// Drop proxy

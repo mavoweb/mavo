@@ -943,7 +943,34 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return config;
 	}
 
-	static setValue (element, value, o = {}) {
+	// This is called both on primitive nodes to set their value,
+	// as well as (primitive) expressions
+	static async setValue (element, value, o = {}) {
+		delete _.pending.get(element)?.[o.attribute];
+
+		if ($.type(value) === "promise") {
+			if (!_.pending.has(element)) {
+				_.pending.set(element, {});
+			}
+
+			let pending = value;
+			_.pending.get(element)[o.attribute] = pending;
+
+			try {
+				value = await pending;
+			}
+			catch (e) {
+				value = e;
+			}
+
+			if (_.pending.get(element)[o.attribute] !== pending) {
+				// Value has been superseded
+				return;
+			}
+
+			delete _.pending.get(element)?.[o.attribute];
+		}
+
 		if (element.nodeType === 1) {
 			if (!o.config) {
 				o.config = _.getConfig(element, o.attribute);
@@ -1096,6 +1123,7 @@ $.Class(_, {
 
 	static: {
 		all: new WeakMap(),
+		pending: new Map(),
 
 		lazy: {
 			formatNumber: () => {
