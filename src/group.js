@@ -152,21 +152,21 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 			return;
 		}
 
-		var changed = false;
+		let changed = false;
 
 		// What if data is not an object?
+		let noWriteableProperty;
+
 		if (typeof data !== "object") {
-			var wasPrimitive = true;
+			let wasPrimitive = true;
+			let property = this.property;
 
 			// Data is a primitive, render it on this.property or failing that, any writable property
-			if (this.property in this.children) {
-				var property = this.property;
-			}
-			else {
-				var type = $.type(data);
-				var score = prop => (this.children[prop] instanceof Mavo.Primitive) + (this.children[prop].datatype == type);
+			if (!(this.property in this.children)) {
+				let type = $.type(data);
+				let score = prop => (this.children[prop] instanceof Mavo.Primitive) + (this.children[prop].datatype == type);
 
-				var property = Object.keys(this.children)
+				property = Object.keys(this.children)
 					.filter(p => !this.children[p].expressionText)
 					.sort((prop1, prop2) => score(prop1) - score(prop2))
 					.reverse()[0];
@@ -175,25 +175,25 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 			if (!property) {
 				// No appropriate property found, use this.property
 				property = this.property;
-				var noWriteableProperty = true;
+				noWriteableProperty = true;
 			}
-			
+
 			data = {[property]: data};
 
 			this.data = Mavo.subset(this.data, this.inPath, data);
 		}
 
-		var copy; // to handle renaming
+		let copy; // to handle renaming
 
 		this.propagate(obj => {
-			var propertyData = data[obj.property];
+			let propertyData = data[obj.property];
 
 			// find first alias with data, load that data, and set to be copied
 			if (obj.alias) {
-				var aliasesArr = obj.alias.split(" ");
+				let aliasesArr = obj.alias.split(" ");
 
 				for (let i = 0; i < aliasesArr.length; i++) {
-					var currentAlias = aliasesArr[i];
+					let currentAlias = aliasesArr[i];
 
 					if (data[currentAlias] !== undefined) {
 						obj.currentAlias = currentAlias;
@@ -225,11 +225,11 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 		if (!wasPrimitive || noWriteableProperty) {
 			// Fire mv-change events for properties not in the template,
 			// since nothing else will and they can still be referenced in expressions
-			var oldData = Mavo.subset(this.oldData, this.inPath);
+			let oldData = Mavo.subset(this.oldData, this.inPath);
 
-			for (var property in data) {
+			for (let property in data) {
 				if (!(property in this.children)) {
-					var value = data[property];
+					let value = data[property];
 					changed = changed || data[property] !== this.liveData.data[property];
 
 					this.liveData.set(property, value);
