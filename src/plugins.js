@@ -35,7 +35,7 @@ var _ = Mavo.Plugins = {
 				var filename = `mavo-${plugin.id}.js`;
 
 				if (plugin.url) {
-					// The plugin author pointed out where the plugin hosted
+					// The plugin author pointed out where the plugin is hosted
 					var url = plugin.url;
 				}
 				else if (plugin.repo) {
