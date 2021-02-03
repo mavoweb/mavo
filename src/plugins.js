@@ -78,7 +78,7 @@ let _ = Mavo.Plugins = {
 		}
 
 		if (o.dependencies) {
-			let base = document.currentScript ? document.currentScript.src : location;
+			let base = document.currentScript? document.currentScript.src : location;
 			let dependencies = o.dependencies.map(url => Mavo.load(url, base));
 			ready.push(...dependencies);
 		}
