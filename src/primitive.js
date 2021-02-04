@@ -595,7 +595,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	 * Get value from the DOM
 	 */
 	getValue (o) {
-		if (this.editing && this.editor !== this.element) {
+		if (this.editing && this.editor && this.editor !== this.element) {
 			return this.editorValue;
 		}
 
