@@ -289,6 +289,7 @@ cd .. && gulp # regenerate local files
 ```
 Then:
 - in the `dist/_redirects` file replace `/stable/* /U.V.W/:splat 302` with `/stable/* /X.Y.Z/:splat 302` (where `U.V.W` is the previous version) and add any X.Y and X rules as needed.
-- Commit and push
-- Create new release on Github
+- Commit and push (Suggested commit message: "Prepare for vX.Y.Z release")
+- Create new release on Github. Name the tag `vX.Y.Z`.
+- Run `git pull` to pull the new tag locally
 - `npm publish`
