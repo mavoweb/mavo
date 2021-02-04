@@ -288,7 +288,7 @@ mv mavo.css mavo.min.css mavo.js mavo.es5.js mavo.es5.min.js mavo.min.js X.Y.Z
 cd .. && gulp # regenerate local files
 ```
 Then:
-- in the `dist/_redirects` file replace `/stable/* /U.V.W/:splat 302` with `/stable/* /X.Y.Z/:splat 302` and any X.Y and X rules as needed.
+- in the `dist/_redirects` file replace `/stable/* /U.V.W/:splat 302` with `/stable/* /X.Y.Z/:splat 302` (where `U.V.W` is the previous version) and add any X.Y and X rules as needed.
 - Commit and push
 - Create new release on Github
 - `npm publish`
