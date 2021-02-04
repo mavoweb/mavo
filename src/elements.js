@@ -317,7 +317,7 @@ _.register({
 				return element.form[element.name].value;
 			}
 
-			var checked = $(`input[type=radio][name="${element.name}"]:checked`);
+			let checked = $(`input[type=radio][name="${element.name}"]:checked`);
 			return checked && checked.value;
 		},
 		setValue: (element, value) => {
@@ -326,25 +326,33 @@ _.register({
 				return;
 			}
 
-			var toCheck = $(`input[type=radio][name="${element.name}"][value="${value}"]`);
+			let toCheck = $(`input[type=radio][name="${element.name}"][value="${value}"]`);
 			if (toCheck) {
 				toCheck.checked = true;
 			}
 		},
 		initOnce: function(element) {
+			function radioChanged(radio) {
+				let name = radio.name;
+				for (let otherRadio of $$(`input[type=radio][name="${radio.name}"]`)) {
+					let node = Mavo.Node.get(otherRadio, true);
+
+					if (node) {
+						node.value = node.getValue();
+					}
+				}
+			}
+
+			document.addEventListener("change", evt => {
+				if (evt.target.matches("input[type=radio]")) {
+					radioChanged(evt.target);
+				}
+			});
+
 			Mavo.observe({
 				attribute: "value",
 				selector: "input[type=radio]"
-			}, () => {
-				let nodes = $$("input[type=radio]")
-					.forEach(radio => {
-						let node = Mavo.Node.get(radio, true);
-
-						if (node) {
-							node.value = node.getValue();
-						}
-					});
-			});
+			}, r => radioChanged(r.element));
 		},
 		observedAttributes: ["value"]
 	},
