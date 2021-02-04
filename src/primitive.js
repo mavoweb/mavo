@@ -595,6 +595,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	 * Get value from the DOM
 	 */
 	getValue (o) {
+		if (this.editing && this.editor !== this.element) {
+			return this.editorValue;
+		}
+
 		return _.getValue(this.element, {
 			config: this.config,
 			attribute: this.attribute,
@@ -607,7 +611,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			value = null;
 		}
 
-		var oldDatatype = this.datatype;
+		let oldDatatype = this.datatype;
 
 		// If there's no datatype, adopt that of the value
 		if (!this.datatype && (typeof value == "number" || typeof value == "boolean")) {
