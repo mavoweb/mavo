@@ -77,18 +77,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		}
 
-		// Nested widgets
-		if (!this.editor && !this.originalEditor && !this.attribute) {
-			this.editor = $$(this.element.children).filter(function (el) {
-			    return el.matches(Mavo.selectors.formControl) && !el.matches(Mavo.selectors.property);
-			})[0];
-
-			if (this.editor) {
-				$.remove(this.editor);
-			}
-		}
-
-		var editorValue = this.editorValue;
+		let editorValue = this.editorValue;
 
 		if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
 			this.datatype = typeof editorValue;
