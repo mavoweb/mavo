@@ -346,6 +346,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return true;
 		}
 
+		if ($.type(this._value) === "object") {
+			// Editing is disabled when value is an object (see #692)
+			return false;
+		}
+
 		if (!wasEditing) {
 			// Make element focusable, so it can actually receive focus
 			if (this.element.tabIndex === -1) {
@@ -536,38 +541,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			if (Symbol.toPrimitive in data) {
 				data = data[Symbol.toPrimitive]("default");
 			}
-			else if (!this.isHelperVariable && Mavo.isPlainObject(data)) {
-				// Candidate properties to get a value from
-				var properties = Object.keys(data), property;
-
-				if (properties.length === 1) {
-					property = properties[0];
-				}
-				else {
-					for (let p of [this.property, "value", "content"]) {
-						if (p in data) {
-							property = p;
-							break;
-						}
-					}
-
-					// Failing that, any property with the same datatype
-					for (let p in data) {
-						let type = $.type(data[p]);
-
-						if (type === this.datatype || !this.datatype && type == "string") {
-							property = p;
-							break;
-						}
-					}
-				}
-
-				if (property) {
-					data = data[property];
-
-					if (!live) {
-						this.inPath.push(property);
-					}
+			else {
+				// Disable editing when the value is an object
+				// We do that by calling .done() and then rejecting in .edit()
+				if (this.editing) {
+					this.done();
 				}
 			}
 		}
