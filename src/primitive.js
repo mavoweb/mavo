@@ -47,40 +47,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		 */
 
 		 // Linked widgets
-		if (!this.editor && this.element.hasAttribute("mv-edit")) {
-			if (!this.originalEditor) {
-				this.originalEditor = $(this.element.getAttribute("mv-edit"));
+		if (this.element.hasAttribute("mv-edit")) {
+			this.originalEditorUpdated();
+
+			let editorValue = this.editorValue;
+
+			if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
+				this.datatype = typeof editorValue;
 			}
-
-			if (this.originalEditor) {
-				// Update editor if original mutates
-				// This means that expressions on mv-edit for individual collection items will not be picked up
-				if (!this.template) {
-					this.originalEditorObserver = new Mavo.Observer(this.originalEditor, "all", records => {
-						this.copies.concat(this).forEach(primitive => {
-							if (primitive.defaultSource == "editor") {
-								primitive.default = this.originalEditor.value;
-							}
-
-							if (primitive.editor?.parentNode) {
-								// If we are editing the node, just setting primitive.editor won't help
-								// we also need to update it in the DOM
-								let newEditor = this.originalEditor.cloneNode(true);
-								primitive.editor.replaceWith(newEditor);
-								primitive.editor = newEditor;
-							}
-
-							primitive.setValue(primitive.value, {force: true, silent: true});
-						});
-					});
-				}
-			}
-		}
-
-		let editorValue = this.editorValue;
-
-		if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
-			this.datatype = typeof editorValue;
 		}
 
 		if (this.config.init) {
@@ -109,7 +83,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this._default = this.element.getAttribute("mv-default");
 
 			if (this.default === null) { // no mv-default
-				this._default = this.modes? this.templateValue : editorValue;
+				this._default = this.modes? this.templateValue : this.editorValue;
 				this.defaultSource = this.modes? "template" : "editor";
 			}
 			else if (this.default === "") { // mv-default exists, no value, default is template value
@@ -162,7 +136,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	get editorValue() {
-		var editor = this.editor || this.originalEditor;
+		let editor = this.editor || this.originalEditor;
 
 		if (editor) {
 			if (editor.matches(Mavo.selectors.formControl)) {
@@ -170,7 +144,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 
 			// if we're here, this.editor is an entire HTML structure
-			var output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, editor);
+			let output = $(Mavo.selectors.output + ", " + Mavo.selectors.formControl, editor);
 
 			if (output) {
 				return _.getValue(output);
@@ -263,23 +237,41 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.unsavedChanges = false;
 	}
 
+	get hasPopup() {
+		return this.attribute || this.config.popup;
+	}
+
 	// Called only the first time this primitive is edited
 	initEdit () {
 		if (!this.editor && this.originalEditor) {
 			this.editor = this.originalEditor.cloneNode(true);
 		}
 
+		this.editorUpdated();
+
+		if (this.hasPopup) {
+			this.popup = new Mavo.UI.Popup(this);
+		}
+
+		this.initEdit = null;
+	}
+
+	generateDefaultEditor() {
+		// No editor provided, generate default for element type
+		// Find default editor for datatype
+		let editor = this.config.editor;
+
+		if (!editor || this.datatype == "boolean") {
+			editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+		}
+
+		this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
+		this.editorValue = this.value;
+	}
+
+	editorUpdated () {
 		if (!this.editor) {
-			// No editor provided, use default for element type
-			// Find default editor for datatype
-			var editor = this.config.editor;
-
-			if (!editor || this.datatype == "boolean") {
-				editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
-			}
-
-			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
-			this.editorValue = this.value;
+			this.generateDefaultEditor();
 		}
 
 		$.bind(this.editor, {
@@ -294,7 +286,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		});
 
-		var multiline = this.editor.matches("textarea");
+		let multiline = this.editor.matches("textarea");
 
 		if (!multiline) {
 			this.editor.addEventListener("focus", evt => {
@@ -302,28 +294,83 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			});
 		}
 
-		if ("placeholder" in this.editor) {
+		if ("placeholder" in this.editor && !this.editor.placeholder) {
 			this.editor.placeholder = `(${this.label})`;
 		}
 
 		// Copy any mv-edit-* attributes from the element to the editor
-		Mavo.attributeStartsWith("mv-edit-", this.element).forEach(attribute => {
-			this.editor.setAttribute(attribute.name.replace("mv-edit-", ""), attribute.value);
-		});
+		let editorAttributes = this.element.getAttributeNames().filter(n => n.startsWith("mv-edit-"));
 
-		if (this.attribute || this.config.popup) {
-			this.popup = new Mavo.UI.Popup(this);
+		for (let name of editorAttributes) {
+			let value = this.element.getAttribute(name);
+			name = name.replace(/^mv-edit-/, "");
+			this.editor.setAttribute(name, value);
 		}
 
-		if (!this.popup) {
+		if (!this.hasPopup) {
 			this.editor.classList.add("mv-editor");
 		}
+	}
 
-		this.initEdit = null;
+	originalEditorUpdated () {
+		let previousOriginalEditor = this.originalEditor;
+		let selector = this.element.getAttribute("mv-edit");
+
+		try {
+			this.originalEditor = $(selector);
+		}
+		catch (e) {
+			// Invalid selector, potentially expression that has not yet evaluated?
+			this.originalEditor = null;
+		}
+
+		if (previousOriginalEditor === this.originalEditor) {
+			return;
+		}
+
+		if (this.originalEditor) {
+			if (this.editor) {
+				this.editor = this.originalEditor.cloneNode(true);
+				this.setValue(this.value, {force: true, silent: true});
+			}
+
+			// Update editor if original mutates
+			// This means that expressions on mv-edit for individual collection items will not be picked up
+			if (!this.template || this.originalEditor !== this.template.originalEditor) {
+				this.originalEditorObserver?.destroy();
+
+				this.originalEditorObserver = new Mavo.Observer(this.originalEditor, "all", records => {
+					let nodes = [this];
+
+					if (this.template) {
+						let copies = this.copies.filter(n => n.originalEditor === this.originalEditor);
+						nodes.push(...copies);
+					}
+
+					for (let primitive of nodes) {
+						if (primitive.defaultSource == "editor") {
+							primitive.default = this.originalEditor.value;
+						}
+
+						if (primitive.editor) {
+							primitive.editor = this.originalEditor.cloneNode(true);
+						}
+
+						primitive.setValue(primitive.value, {force: true, silent: true});
+					}
+				});
+			}
+		}
+		else {
+			if (this.editor) {
+				this.generateDefaultEditor();
+				this.editorUpdated();
+			}
+		}
 	}
 
 	edit (o = {}) {
-		var wasEditing = this.editing;
+		let wasEditing = this.editing;
 
 		if (super.edit() === false) {
 			// Invalid edit
@@ -1061,6 +1108,24 @@ $.Class(_, {
 	},
 
 	live: {
+		editor: function (value) {
+			if (this._editor === value) {
+				return;
+			}
+
+			// If we are editing the node, just setting this.editor won't help
+			// we also need to update it in the DOM
+			this._editor?.replaceWith(value);
+
+			this._editor = value;
+
+			if (this.defaultSource === "editor") {
+				this.default = this.editorValue;
+			}
+
+			this.editorUpdated();
+		},
+
 		default: function (value) {
 			if (this.value == this._default) {
 				this.value = value;
@@ -1082,7 +1147,7 @@ $.Class(_, {
 		},
 
 		empty: function (value) {
-			var hide = value && // is empty
+			let hide = value && // is empty
 			           !this.modes && // and supports both modes
 			           (!this.attribute || !$(Mavo.selectors.property, this.element)) && // and has no property inside
 					   // and is not boolean OR if it is, its attribute is the default boolean attribute (see #464)
@@ -1124,6 +1189,9 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 			if (Mavo.in("placeholder", node.editor)) {
 				node.editor.placeholder = `(${node.label})`;
 			}
+		}
+		else if (attribute && attribute === "mv-edit") {
+			node.originalEditorUpdated();
 		}
 		else if (attribute && attribute.indexOf("mv-edit-") === 0) {
 			node.editor?.setAttribute(attribute.slice(8), element.getAttribute(attribute));
