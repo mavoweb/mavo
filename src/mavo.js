@@ -28,7 +28,7 @@ var _ = self.Mavo = $.Class({
 		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
 		// Convert any data-mv-* attributes to mv-*
-		Mavo.attributeStartsWith("data-mv-", this.element, {subtree: true}).forEach(attribute => {
+		Mavo.attributeStartsWith("data-mv-", this.element).forEach(attribute => {
 			var element = attribute.ownerElement;
 			var name = attribute.name.replace("data-", "");
 
@@ -462,8 +462,8 @@ var _ = self.Mavo = $.Class({
 		if (backend) {
 			// Do we have any other attributes?
 			let prefix = attribute + "-";
-			let roleAttributes = Mavo.attributeStartsWith(prefix, this.element);
-			let options = Object.fromEntries(roleAttributes.map(a => [a.name.replace(prefix, ""), a.value]));
+			let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
+			let options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
 
 			if (!existing?.equals?.(backend)) {
 				// We have a string, convert to a backend object if different than existing

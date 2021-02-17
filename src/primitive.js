@@ -299,9 +299,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		// Copy any mv-edit-* attributes from the element to the editor
-		let editorAttributes = this.element.getAttributeNames().filter(n => n.startsWith("mv-edit-"));
-
-		for (let name of editorAttributes) {
+		for (let name of Mavo.getAttributes(this.element, /^mv-edit-/)) {
 			let value = this.element.getAttribute(name);
 			name = name.replace(/^mv-edit-/, "");
 			this.editor.setAttribute(name, value);

@@ -446,9 +446,15 @@ var _ = $.extend(Mavo, {
 	},
 
 	// Returns attribute nodes that start with `str` on or inside `context`
+	// Use getAttributes() instead if you are only looking at the element itself and not its subtree
 	// Use attr.ownerElement to get element
-	attributeStartsWith: function(str, context, {subtree} = {}) {
-		return _.XPath(`./${subtree? "/" : ""}@*[starts-with(name(), "${str}")]`, context);
+	attributeStartsWith: function(str, context) {
+		return _.XPath(`.//@*[starts-with(name(), "${str}")]`, context);
+	},
+
+	// Returns attribute names that match a regex
+	getAttributes: function(element, regex) {
+		return element.getAttributeNames().filter(name => regex.test(name));
 	},
 
 	/**
