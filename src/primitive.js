@@ -46,17 +46,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		 * Set up input widget
 		 */
 
-		 // Linked widgets
-		if (this.element.hasAttribute("mv-edit")) {
-			this.originalEditorUpdated();
-
-			let editorValue = this.editorValue;
-
-			if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
-				this.datatype = typeof editorValue;
-			}
-		}
-
 		if (this.config.init) {
 			this.config.init.call(this, this.element);
 		}
@@ -78,6 +67,28 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.setValue(this.expressionText.value, {silent: true});
 		}
 		else {
+			if (this.element.hasAttribute("aria-label")) {
+				// Custom label
+				this.label = this.element.getAttribute("aria-label");
+			}
+			else {
+				this.label = Mavo.Functions.readable(this.property);
+				this.pauseObserver();
+				this.element.setAttribute("aria-label", this.label);
+				this.resumeObserver();
+			}
+
+			// Linked widgets
+			if (this.element.hasAttribute("mv-edit")) {
+				this.originalEditorUpdated();
+
+				let editorValue = this.editorValue;
+
+				if (!this.datatype && (typeof editorValue == "number" || typeof editorValue == "boolean")) {
+					this.datatype = typeof editorValue;
+				}
+			}
+
 			this.templateValue = this.getValue();
 
 			this._default = this.element.getAttribute("mv-default");
@@ -117,17 +128,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 
 			this.setValue(this.initialValue, {silent: true});
-
-			if (this.element.hasAttribute("aria-label")) {
-				// Custom label
-				this.label = this.element.getAttribute("aria-label");
-			}
-			else {
-				this.label = Mavo.Functions.readable(this.property);
-				this.pauseObserver();
-				this.element.setAttribute("aria-label", this.label);
-				this.resumeObserver();
-			}
 		}
 
 		this.postInit();

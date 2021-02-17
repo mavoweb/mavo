@@ -210,7 +210,7 @@ _.register({
 		edit: () => {},
 		done: () => {},
 		init: function() {
-			this.editor = this.element;
+			this._editor = this.element;
 		}
 	},
 
