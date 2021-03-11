@@ -222,14 +222,22 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return env.data;
 	}
 
+	// Why this complexity? Because it needs to be a stack, so that
+	// pause, pause, resume doesn't actually resume, you need to resume as many
+	// times as you paused, so that nested function calls work as expected.
+	get pausedObserver () {
+		return this.observerPauses?.length > 0;
+	}
+
 	pauseObserver () {
 		Mavo.observers.flush();
-		this.pausedObserver = true;
+		this.observerPauses = this.observerPauses || [];
+		this.observerPauses.push(1);
 	}
 
 	resumeObserver () {
 		Mavo.observers.flush();
-		this.pausedObserver = false;
+		this.observerPauses?.pop?.();
 	}
 
 	save() {
@@ -618,7 +626,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		});
 	}
 
-	setValue (value, o = {}) {
+	async setValue (value, o = {}) {
 		if (value === undefined) {
 			value = null;
 		}
@@ -658,7 +666,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					presentational = [...map.options].find(o => o.value == value)?.textContent;
 				}
 
-				_.setValue(this.element, value, {
+				await _.setValue(this.element, value, {
 					config: this.config,
 					attribute: this.attribute,
 					datatype: this.datatype,
@@ -1035,7 +1043,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			else {
 				element.textContent = presentational;
 			}
-
 
 			if (presentational !== value && element.setAttribute) {
 				element.setAttribute("content", value);
