@@ -626,7 +626,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		});
 	}
 
-	async setValue (value, o = {}) {
+	setValue (value, o = {}) {
 		if (value === undefined) {
 			value = null;
 		}
@@ -666,7 +666,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					presentational = [...map.options].find(o => o.value == value)?.textContent;
 				}
 
-				await _.setValue(this.element, value, {
+				_.setValue(this.element, value, {
 					config: this.config,
 					attribute: this.attribute,
 					datatype: this.datatype,
