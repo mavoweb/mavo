@@ -31,6 +31,14 @@ var _ = Mavo.Backend.register($.Class({
 				continue;
 			}
 
+			if (this.info.apiCall === "graphql" && prop === "query") {
+				// It makes sense to set/update the apiData property only for calls with GraphQL.
+				// Otherwise, it will break the Github#get method.
+				this.info.apiData = { query: o.query };
+
+				continue;
+			}
+
 			this.info[prop] = o[prop];
 		}
 
