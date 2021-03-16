@@ -1,6 +1,6 @@
 (function($, $$) {
 
-var _ = Mavo.Backend.register($.Class({
+let _ = Mavo.Backend.register($.Class({
 	extends: Mavo.Backend,
 	id: "Github",
 	constructor: function(url, o) {
@@ -13,7 +13,7 @@ var _ = Mavo.Backend.register($.Class({
 		this.super.update.call(this, url, o);
 
 		// Extract info for username, repo, branch, filepath from URL
-		var extension = this.format.constructor.extensions[0] || ".json";
+		let extension = this.format.constructor.extensions[0] || ".json";
 
 		this.defaults = {
 			repo: "mv-data",
@@ -48,7 +48,7 @@ var _ = Mavo.Backend.register($.Class({
 	get: async function(url) {
 		if (this.isAuthenticated() || !this.path || url) {
 			// Authenticated or raw API call
-			var info = url? _.parseURL(url) : this.info;
+			let info = url? _.parseURL(url) : this.info;
 
 			if (info.apiData) {
 				// GraphQL
@@ -97,8 +97,8 @@ var _ = Mavo.Backend.register($.Class({
 
 	upload: function(file, path = this.path) {
 		return Mavo.readFile(file).then(dataURL => {
-				var base64 = dataURL.slice(5); // remove data:
-				var media = base64.match(/^\w+\/[\w+]+/)[0];
+				let base64 = dataURL.slice(5); // remove data:
+				let media = base64.match(/^\w+\/[\w+]+/)[0];
 				media = media.replace("+", "\\+"); // Fix for #608
 				base64 = base64.replace(RegExp(`^${media}(;base64)?,`), "");
 				path = this.path.replace(/[^/]+$/, "") + path; // make upload path relative to existing path
@@ -120,12 +120,12 @@ var _ = Mavo.Backend.register($.Class({
 			return;
 		}
 
-		var repoCall = `repos/${this.username}/${this.repo}`;
-		var fileCall = `${repoCall}/contents/${path}`;
-		var commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
+		let repoCall = `repos/${this.username}/${this.repo}`;
+		let fileCall = `${repoCall}/contents/${path}`;
+		let commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
 
 		// Create repo if it doesn’t exist
-		var repoInfo = this.repoInfo?
+		let repoInfo = this.repoInfo?
 		               Promise.resolve(this.repoInfo)
 		             : this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
 
@@ -141,8 +141,8 @@ var _ = Mavo.Backend.register($.Class({
 						})
 						.then(forkInfo => {
 							// Ensure that fork is created (they take a while)
-							var timeout;
-							var test = (resolve, reject) => {
+							let timeout;
+							let test = (resolve, reject) => {
 								clearTimeout(timeout);
 								this.request(`repos/${forkInfo.full_name}/commits`, {until: "1970-01-01T00:00:00Z"}, "HEAD")
 									.then(x => {
@@ -220,7 +220,7 @@ var _ = Mavo.Backend.register($.Class({
 							if (!this.mavo.source) { // if url doesn't have source, check for forks
 								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch
 									if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
-										var query = `query {
+										let query = `query {
 													  viewer {
 													    name
 													      repositories(last: 100, isFork: true) {
@@ -235,9 +235,9 @@ var _ = Mavo.Backend.register($.Class({
 													}`;
 										return this.request("https://api.github.com/graphql", {query: query}, "POST")
 										.then(data => {
-											var repos = data.data.viewer.repositories.nodes;
+											let repos = data.data.viewer.repositories.nodes;
 
-											for (var i in repos) {
+											for (let i in repos) {
 												if (repos[i].parent.nameWithOwner === repoInfo.full_name) {
 													this.switchToMyForkDialog(repos[i].url);
 
@@ -251,7 +251,7 @@ var _ = Mavo.Backend.register($.Class({
 									else { // search forks of this repo
 										return this.request(repoInfo.forks_url)
 										.then(forks => {
-											for (var i in forks) {
+											for (let i in forks) {
 												if (forks[i].owner.login === this.user.username) {
 													this.switchToMyForkDialog(forks[i].html_url);
 
@@ -313,8 +313,8 @@ var _ = Mavo.Backend.register($.Class({
 	},
 
 	getURL: function(path = this.path, sha) {
-		var repoInfo = this.forkInfo || this.repoInfo;
-		var repo = repoInfo.full_name;
+		let repoInfo = this.forkInfo || this.repoInfo;
+		let repo = repoInfo.full_name;
 		path = path.replace(/ /g, "%20");
 
 		repoInfo.pagesInfo = repoInfo.pagesInfo || this.request(`repos/${repo}/pages`, {}, "GET", {
