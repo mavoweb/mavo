@@ -375,20 +375,19 @@ var _ = Mavo.Functions = {
 	range: (a, b, step) => {
 		if (step === undefined) {
 			if (b === undefined) {
-				b = a;
-				a = b >= 0? 1 : -1;
+				[a, b] = [a >= 0? 1 : -1, a]
 			}
 
 			step = a <= b? 1 : -1;
 		}
 
-		var steps = Math.floor((b - a)/step + 1);
+		let steps = Math.floor((b - a)/step + 1);
 
 		if (steps <= 0 || !isFinite(steps)) {
 			return [a];
 		}
 
-		var ret = [];
+		let ret = [];
 
 		for (let i = 0, n = a; i++ < steps; n += step) {
 			ret.push(n);
