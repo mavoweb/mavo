@@ -1,4 +1,4 @@
-(function($, $$) {
+(async function($, $$) {
 
 var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	constructor(element, mavo, o) {
@@ -79,7 +79,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 
 			// Linked widgets
-			if (this.element.hasAttribute("mv-edit")) {
+			if (this.element.hasAttribute("mv-editor")) {
 				this.originalEditorUpdated();
 
 				let editorValue = this.editorValue;
@@ -320,7 +320,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 	originalEditorUpdated () {
 		let previousOriginalEditor = this.originalEditor;
-		let selector = this.element.getAttribute("mv-edit");
+		let selector = this.element.getAttribute("mv-editor");
 
 		try {
 			this.originalEditor = $(selector);
@@ -1195,10 +1195,10 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 				node.editor.placeholder = `(${node.label})`;
 			}
 		}
-		else if (attribute && attribute === "mv-edit") {
+		else if (attribute && attribute === "mv-editor") {
 			node.originalEditorUpdated();
 		}
-		else if (attribute && attribute.indexOf("mv-edit-") === 0) {
+		else if (attribute && attribute.indexOf("mv-editor-") === 0) {
 			node.editor?.setAttribute(attribute.slice(8), element.getAttribute(attribute));
 		}
 		else if (node.config.observer !== false) {
@@ -1217,5 +1217,30 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 		}
 	}
 });
+
+await $.ready();
+
+// Migration from mv-edit-* to mv-editor-*
+let oldMvEdit = Mavo.attributeStartsWith("mv-edit-").map(a => a.name);
+let newMvEdit = Mavo.attributeStartsWith("mv-editor-");
+
+if ($("[mv-edit]")) {
+	oldMvEdit.unshift("mv-edit");
+}
+
+if (oldMvEdit.length > 0) {
+	let oldMvEditUnique = [...new Set(oldMvEdit)];
+
+	for (let name of oldMvEditUnique) {
+		let newName = name.replace(/^mv-edit(-|$)/, "mv-editor$1");
+		let elements = $$(`[${name}]`);
+
+		console.log(`You are using attribute ${name} on ${elements.length} element(s). This syntax is deprecated and will be removed in the next version of Mavo. Please use ${newName} instead.`);
+
+		for (let element of elements) {
+			Mavo.setAttributeShy(element, newName, element.getAttribute(name));
+		}
+	}
+}
 
 })(Bliss, Bliss.$);
