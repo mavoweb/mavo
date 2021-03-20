@@ -43,6 +43,5 @@
     "gulp-sourcemaps": "^2.6.5",
     "gulp-util": "^3.0.7",
     "merge2": "^1.4.1"
-  },
-  "dependencies": {}
+  }
 }
