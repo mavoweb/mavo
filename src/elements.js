@@ -382,7 +382,7 @@ _.register({
 			var min = +this.element.getAttribute("min") || 0;
 			var max = +this.element.getAttribute("max") || 1;
 			var range = max - min;
-			var step = +this.element.getAttribute("mv-edit-step") || (range > 1? 1 : range/100);
+			var step = +this.element.getAttribute("mv-editor-step") || (range > 1? 1 : range/100);
 
 			$.bind(this.element, "mousemove.mavo:edit", evt => {
 				// Change property as mouse moves
