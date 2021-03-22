@@ -306,10 +306,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.editor.placeholder = `(${this.label})`;
 		}
 
-		// Copy any mv-edit-* attributes from the element to the editor
-		for (let name of Mavo.getAttributes(this.element, /^mv-edit-/)) {
+		// Copy any mv-editor-* attributes from the element to the editor
+		for (let name of Mavo.getAttributes(this.element, /^mv-editor-/)) {
 			let value = this.element.getAttribute(name);
-			name = name.replace(/^mv-edit-/, "");
+			name = name.replace(/^mv-editor-/, "");
 			this.editor.setAttribute(name, value);
 		}
 
@@ -341,7 +341,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 
 			// Update editor if original mutates
-			// This means that expressions on mv-edit for individual collection items will not be picked up
+			// This means that expressions on mv-editor for individual collection items will not be picked up
 			if (!this.template || this.originalEditor !== this.template.originalEditor) {
 				this.originalEditorObserver?.destroy();
 
@@ -1199,7 +1199,7 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 			node.originalEditorUpdated();
 		}
 		else if (attribute && attribute.indexOf("mv-editor-") === 0) {
-			node.editor?.setAttribute(attribute.slice(8), element.getAttribute(attribute));
+			node.editor?.setAttribute(attribute.slice(10), element.getAttribute(attribute));
 		}
 		else if (node.config.observer !== false) {
 			// Main value observer
