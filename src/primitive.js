@@ -540,10 +540,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				// To fix this, we re-assign it to the actual text node.
 				if (!this.contentExpression) {
 					this.contentExpression = Mavo.DOMExpression.search(this.element, null);
+				}
 
-					if (this.contentExpression) {
-						this.contentExpression.active = false;
-					}
+				if (this.contentExpression) {
+					this.contentExpression.active = false;
 				}
 
 				this.element.prepend(this.editor);
