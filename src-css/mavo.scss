@@ -566,8 +566,8 @@ meter, progress {
 	}
 }
 
-time[property][aria-label][mv-mode="edit"].mv-empty::before {
-	content: "(No " attr(aria-label) ")";
+time[property][aria-label][mv-mode="edit"]:not([mv-edit-type="inline"]):not([mv-edit-type="self"]).mv-empty::before {
+	content: var(--mv-content);
 }
 
 img[property][mv-mode="edit"]:not([alt]) {
