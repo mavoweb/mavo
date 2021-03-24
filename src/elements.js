@@ -206,6 +206,7 @@ _.register({
 		default: true,
 		attribute: "value",
 		modes: "edit",
+		editType: "self",
 		changeEvents: "input change",
 		edit: () => {},
 		done: () => {},
@@ -546,7 +547,7 @@ _.register({
 
 	"text": {
 		default: true,
-		popup: true
+		editType: "popup"
 	},
 
 	".mv-toggle": {

@@ -245,8 +245,19 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.unsavedChanges = false;
 	}
 
-	get hasPopup() {
-		return this.attribute || this.config.popup;
+	get editType() {
+		let ret = this.element.getAttribute("mv-edit-type")?.trim() ?? "auto";
+
+		if (ret === "auto") {
+			// attribute may be "auto", in which case we want to get in here
+			ret = this.config.editType ?? "auto";
+		}
+
+		if (ret === "auto") {
+			ret = this.attribute? "popup" : "inline";
+		}
+
+		return ret;
 	}
 
 	// Called only the first time this primitive is edited
@@ -256,10 +267,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		this.editorUpdated();
-
-		if (this.hasPopup) {
-			this.popup = new Mavo.UI.Popup(this);
-		}
 
 		this.initEdit = null;
 	}
@@ -313,7 +320,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.editor.setAttribute(name, value);
 		}
 
-		if (!this.hasPopup) {
+		if (this.editType !== "popup") {
 			this.editor.classList.add("mv-editor");
 		}
 	}
@@ -502,31 +509,44 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.initEdit();
 		}
 
-		if (this.popup) {
+		if (this.editType === "popup") {
+			if (!this.popup) {
+				this.popup = new Mavo.UI.Popup(this);
+			}
+
 			this.popup.prepare();
 
 			var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
 
 			$.bind(this.element, events, _ => this.popup.show());
 		}
-		else {
-			if (!this.attribute) {
-				if (this.editor.parentNode != this.element) {
-					this.editorValue = this.value;
+		else if (this.editType === "inline") {
+			if (!this.editor.isConnected) {
+				this.editorValue = this.value;
 
-					if (this.config.hasChildren) {
-						this.element.textContent = "";
-					}
-					else {
-						_.setText(this.element, "");
-					}
-
-					this.element.prepend(this.editor);
+				if (this.config.hasChildren) {
+					this.element.textContent = "";
+				}
+				else {
+					_.setText(this.element, "");
 				}
 
-				if (!this.collection) {
-					Mavo.revocably.restoreAttribute(this.element, "tabindex");
+				// If there's an expression on .textContent, it will kick
+				// the editor out of the DOM next time it's updated.
+				// To fix this, we re-assign it to the actual text node.
+				if (!this.contentExpression) {
+					this.contentExpression = Mavo.DOMExpression.search(this.element, null);
+
+					if (this.contentExpression) {
+						this.contentExpression.active = false;
+					}
 				}
+
+				this.element.prepend(this.editor);
+			}
+
+			if (!this.collection) {
+				Mavo.revocably.restoreAttribute(this.element, "tabindex");
 			}
 		}
 
@@ -549,24 +569,32 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return;
 		}
 
-		if (this.popup) {
+		if (this.editType === "popup") {
 			this.popup.close();
 		}
-		else if (!this.attribute && this.editor) {
-			$.remove(this.editor);
+		else if (this.editType === "inline" && this.editor) {
+			this.editor.remove();
 
-			if (this.editor.matches("select")) {
-				// Remove any temp options that we don’t need anymore
-				$$(".mv-volatile", this.editor).forEach(o => {
-					if (!o.selected) {
-						o.remove();
-					}
-				});
+			if (this.contentExpression) {
+				// This only works because nothing else sets active
+				// Eventually, we'll need to move to a stack of some sort
+				// to cater to cases where active was false before, so should be false after
+				this.contentExpression.active = true;
+				this.contentExpression.update();
 			}
 
 			// force: true is needed because otherwise setValue() aborts when it sees
 			// that the value we are trying to set is the same as the existing one
 			this.setValue(this.editorValue, {silent: true, force: true});
+		}
+
+		if (this.editor?.matches("select")) {
+			// Remove any temp options that we don’t need anymore
+			$$(".mv-volatile", this.editor).forEach(o => {
+				if (!o.selected) {
+					o.remove();
+				}
+			});
 		}
 
 		this.resumeObserver();
@@ -1221,7 +1249,9 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 await $.ready();
 
 // Migration from mv-edit-* to mv-editor-*
-let oldMvEdit = Mavo.attributeStartsWith("mv-edit-").map(a => a.name);
+let oldMvEdit = Mavo.attributeStartsWith("mv-edit-")
+	.filter(a => !(a.name === "mv-edit-type" && ["auto", "inline", "popup", "self"].includes(a.value)))
+	.map(a => a.name);
 let newMvEdit = Mavo.attributeStartsWith("mv-editor-");
 
 if ($("[mv-edit]")) {

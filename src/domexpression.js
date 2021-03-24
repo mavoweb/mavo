@@ -122,6 +122,10 @@ var _ = Mavo.DOMExpression = $.Class({
 	},
 
 	update: function() {
+		if (this.active === false) {
+			return;
+		}
+
 		var env = {context: this};
 		var parentEnv = env;
 
