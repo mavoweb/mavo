@@ -574,7 +574,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (this.editType === "popup") {
-			this.popup.close();
+			this.popup?.close();
 		}
 		else if (this.editType === "inline" && this.editor) {
 			this.editor.remove();
