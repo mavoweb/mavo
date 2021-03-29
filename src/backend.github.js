@@ -331,28 +331,28 @@ let _ = Mavo.Backend.register($.Class({
 	},
 
 	switchToMyForkDialog: function(forkURL) {
-			let params = (new URL(location)).searchParams;
-			params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
+		let params = (new URL(location)).searchParams;
+		params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
 
-			this.notice = this.mavo.message(`
-			${this.mavo._("gh-login-fork-options")}
-			<form onsubmit="return false">
-				<a href="${location.pathname}?${params}"><button>${this.mavo._("gh-use-my-fork")}</button></a>
-			</form>`, {
-				classes: "mv-inline",
-				dismiss: ["button", "submit"]
-			});
+		this.notice = this.mavo.message(`
+		${this.mavo._("gh-login-fork-options")}
+		<form onsubmit="return false">
+			<a href="${location.pathname}?${params}"><button>${this.mavo._("gh-use-my-fork")}</button></a>
+		</form>`, {
+			classes: "mv-inline",
+			dismiss: ["button", "submit"]
+		});
 
-			this.notice.closed.then(form => {
-				if (!form) {
-					return;
-				}
+		this.notice.closed.then(form => {
+			if (!form) {
+				return;
+			}
 
-				history.pushState({}, "", `${location.pathname}?${params}`);
-				location.replace(`${location.pathname}?${params}`);
+			history.pushState({}, "", `${location.pathname}?${params}`);
+			location.replace(`${location.pathname}?${params}`);
 
-			});
-			return;
+		});
+		return;
 	},
 
 	static: {
