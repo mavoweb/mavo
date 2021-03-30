@@ -217,7 +217,12 @@ let _ = Mavo.Backend.register($.Class({
 
 							this.repoInfo = repoInfo;
 
-							if (!this.mavo.source) { // if url doesn't have source, check for forks
+							if (this.mavo.storage) { // Check for forks
+								if (repoInfo.fork) { // Current repo is a fork
+									this.forkInfo = repoInfo.parent;
+									return repoInfo;
+								}
+
 								if (!this.canPush()) { // Check if current user has a fork of this repo, and display dialog to switch
 									if (this.user.info.public_repos < repoInfo.forks) { // graphql search of current user's forks
 										let query = `query {
@@ -332,7 +337,24 @@ let _ = Mavo.Backend.register($.Class({
 
 	switchToMyForkDialog: function(forkURL) {
 		let params = (new URL(location)).searchParams;
-		params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
+		let prefix = `${this.mavo.id}-`;
+
+		if (this.mavo.index === 1 && params.has("storage")) {
+			prefix = "";
+		}
+		params.set(`${prefix}storage`, forkURL + "/" + this.path);
+
+		// Why? If an author provides both mv-source and mv-storage, end-users won't see their data if we only change the storage location.
+		// And since we don't want that, we must disable the source.
+		if (this.mavo.source) {
+			prefix = `${this.mavo.id}-`;
+
+			if (this.mavo.index === 1 && params.has("source")) {
+				prefix = "";
+			}
+
+			params.set(`${prefix}source`, "none");
+		}
 
 		this.notice = this.mavo.message(`
 		${this.mavo._("gh-login-fork-options")}
