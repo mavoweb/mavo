@@ -596,7 +596,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			return [];
 		}
 		else if (nodes.length === 1) {
-			let ret = await nodes[0].collection.delete(nodes[0]);
+			let ret = await nodes[0].collection.delete(nodes[0], o);
 			return [ret];
 		}
 
