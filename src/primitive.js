@@ -1269,8 +1269,11 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 await $.ready();
 
 // Migration from mv-edit-* to mv-editor-*
+let inputTypes = [
+	"checkbox", "color", "date", "datetime-local", "email", "file", "month", "number",
+	"password", "radio", "range", "search", "submit", "tel", "text", "time", "url", "week", "datetime"];
 let oldMvEdit = Mavo.attributeStartsWith("mv-edit-")
-	.filter(a => !(a.name === "mv-edit-type" && ["auto", "inline", "popup", "self"].includes(a.value)))
+	.filter(a => a.name !== "mv-edit-type" || inputTypes.includes(a.value))
 	.map(a => a.name);
 let newMvEdit = Mavo.attributeStartsWith("mv-editor-");
 
