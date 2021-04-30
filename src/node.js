@@ -197,10 +197,10 @@ var _ = Mavo.Node = class Node {
 		}
 	}
 
-	edit () {
+	edit ({force} = {}) {
 		this.mode = "edit";
 
-		if (this.mode != "edit") {
+		if (!force && this.mode != "edit") {
 			return false;
 		}
 
@@ -212,10 +212,10 @@ var _ = Mavo.Node = class Node {
 		Mavo.hooks.run("node-edit-end", this);
 	}
 
-	done () {
+	done ({force} = {}) {
 		this.mode = Mavo.getStyle(this.element.parentNode, "--mv-mode") || "read";
 
-		if (this.mode != "read") {
+		if (!force && this.mode != "read") {
 			return false;
 		}
 

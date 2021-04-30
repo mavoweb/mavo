@@ -245,21 +245,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.unsavedChanges = false;
 	}
 
-	get editType() {
-		let ret = this.element.getAttribute("mv-edit-type")?.trim() ?? "auto";
-
-		if (ret === "auto") {
-			// attribute may be "auto", in which case we want to get in here
-			ret = this.config.editType ?? "auto";
-		}
-
-		if (ret === "auto") {
-			ret = this.attribute? "popup" : "inline";
-		}
-
-		return ret;
-	}
-
 	// Called only the first time this primitive is edited
 	initEdit () {
 		if (!this.editor && this.originalEditor) {
@@ -282,6 +267,21 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
 		this.editorValue = this.value;
+	}
+
+	updateEditType() {
+		let ret = this.element.getAttribute("mv-edit-type")?.trim() ?? "auto";
+
+		if (ret === "auto") {
+			// attribute may be "auto", in which case we want to get in here
+			ret = this.config.editType ?? "auto";
+		}
+
+		if (ret === "auto") {
+			ret = this.attribute? "popup" : "inline";
+		}
+
+		return this.editType = ret;
 	}
 
 	editorUpdated () {
@@ -318,10 +318,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			let value = this.element.getAttribute(name);
 			name = name.replace(/^mv-editor-/, "");
 			this.editor.setAttribute(name, value);
-		}
-
-		if (this.editType !== "popup") {
-			this.editor.classList.add("mv-editor");
 		}
 	}
 
@@ -385,12 +381,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	edit (o = {}) {
 		let wasEditing = this.editing;
 
-		if (super.edit() === false) {
+		if (super.edit(o) === false) {
 			// Invalid edit
 			return false;
 		}
 
-		if (wasEditing && !this.initEdit) {
+		if (!o.force && wasEditing && !this.initEdit) {
 			// Already being edited
 			return true;
 		}
@@ -513,6 +509,8 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.initEdit();
 		}
 
+		this.editor.classList.toggle("mv-editor", this.editType !== "popup");
+
 		if (this.editType === "popup") {
 			if (!this.popup) {
 				this.popup = new Mavo.UI.Popup(this);
@@ -520,7 +518,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 			this.popup.prepare();
 
-			var events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
+			let events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
 
 			$.bind(this.element, events, _ => this.popup.show());
 		}
@@ -559,8 +557,8 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		return true;
 	} // edit
 
-	done () {
-		if (super.done() === false) {
+	done (o) {
+		if (super.done(o) === false) {
 			return false;
 		}
 
@@ -686,7 +684,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		// Also set DOM value if either using a popup, or there's no editor
 		// or the editor is not inside the element (e.g. it could be a nested editor that is now detached)
-		if (this.popup || !this.editor || (this.editor !== document.activeElement && !this.element.contains(this.editor))) {
+		if (this.editType == "popup" || !this.editor || (this.editor !== document.activeElement && !this.element.contains(this.editor))) {
 			if (this.config.setValue) {
 				this.config.setValue.call(this, this.element, value);
 			}
@@ -1141,6 +1139,10 @@ $.Class(_, {
 
 		editorDefaults: function() {
 			return this.editor && _.getConfig(this.editor);
+		},
+
+		editType: function() {
+			return this.updateEditType();
 		}
 	},
 
@@ -1229,6 +1231,20 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 		}
 		else if (attribute && attribute === "mv-editor") {
 			node.originalEditorUpdated();
+		}
+		else if (attribute && attribute === "mv-edit-type") {
+			let editing = node.editing;
+
+			if (editing) {
+				// Undo whatever editing UI we currently have
+				node.done({force: true});
+			}
+
+			node.updateEditType();
+
+			if (editing) {
+				node.edit({force: true});
+			}
 		}
 		else if (attribute && attribute.indexOf("mv-editor-") === 0) {
 			node.editor?.setAttribute(attribute.slice(10), element.getAttribute(attribute));

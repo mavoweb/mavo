@@ -120,6 +120,11 @@ var _ = Mavo.UI.Popup = $.Class({
 				}
 			}
 		});
+
+		if (!this.element.contains(this.editor)) {
+			// This can happen if edit type changes from popup to inline
+			this.element.append(this.editor);
+		}
 	},
 
 	close: function() {
