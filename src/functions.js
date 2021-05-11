@@ -584,6 +584,10 @@ var _ = Mavo.Functions = {
 	json: data => Mavo.safeToJSON(data),
 
 	split: $.extend((text, separator = /\s+/) => {
+		if (!text) {
+			return [];
+		}
+
 		text = str(text);
 
 		return text.split(separator);
