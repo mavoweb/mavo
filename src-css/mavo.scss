@@ -566,11 +566,11 @@ meter, progress {
 	}
 }
 
-time[property][aria-label][mv-mode="edit"]:not([mv-edit-type="inline"]):not([mv-edit-type="self"]).mv-empty::before {
+time[property]:where([aria-label][mv-mode="edit"]:not([mv-edit-type="inline"]):not([mv-edit-type="self"]).mv-empty)::before {
 	content: var(--mv-content);
 }
 
-img[property][mv-mode="edit"]:not([alt]) {
+img[property]:where([mv-mode="edit"]:not([alt], [alt=""])) {
 	&[src=""],
 	&:not([src]) {
 		min-width: 1.2em;
