@@ -966,10 +966,7 @@ Object.defineProperty(_.all, "length", {
 let s = _.selectors = {
 	init: "[mv-app], [data-mv-app]",
 	property: "[property]",
-	specificProperty: name => `[property=${name}]`,
 	group: "[typeof], [mv-group]",
-	primitive: "[property]:not([typeof]):not([mv-group])",
-	childGroup: "[typeof][property], [mv-group][property]",
 	multiple: "[mv-multiple]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
@@ -983,9 +980,12 @@ let s = _.selectors = {
 	}
 };
 
+s.primitive = s.property + `:not(${s.group})`;
+s.childGroup = s.property + `:is(${s.group})`;
+
 $.extend(_.selectors, {
 	item: s.multiple + ", " + s.group,
-	output: s.specificProperty("output") + ", .mv-output"
+	output: "[property=output], .mv-output"
 });
 
 }
