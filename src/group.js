@@ -17,9 +17,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		let properties = $$(Mavo.selectors.property, this.element).filter(element => {
-			return this.element === (element.parentNode.closest(Mavo.selectors.childGroup) || this.mavo.element);
-		});
+		let properties = $$("[property]:not(:scope [property] [property])", this.element);
 
 		// Figure out which properties are mv-multiple
 		var collections = {};
