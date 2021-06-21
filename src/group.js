@@ -17,56 +17,29 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		var properties = $$(Mavo.selectors.property + ", " + Mavo.selectors.multiple, this.element).filter(element => {
-			return this.element === (element.parentNode.closest(Mavo.selectors.childGroup) || this.mavo.element);
-		});
+		let properties = $$(`[property]:not(:scope ${Mavo.selectors.scope} [property])`, this.element);
+		let propertyNames = properties.map(element => Mavo.Node.getProperty(element));
 
-		// Figure out which properties are mv-multiple
-		var collections = {};
-		properties.forEach(element => {
-			var property = Mavo.Node.getProperty(element);
+		for (let i = 0, element; element = properties[i]; i++) {
+			let property = Mavo.Node.getProperty(element);
+			let existing = this.children[property];
+			let template = this.template? this.template.children[property] : null;
+			let options = {template, group: this};
 
-			if (collections[property] !== "multiple") {
-				collections[property] = Mavo.is("multiple", element)? "multiple" : (collections[property] || 0) + 1;
+			if (existing) {
+				// FIXME if this group includes a primitive (see line 14 above)
+				// and also a child property of the same name, this will fail
+				existing.add(element);
 			}
-		});
-
-		// Now create the node objects
-		properties.forEach((element, i) => {
-			var property = Mavo.Node.getProperty(element);
-			var template = this.template? this.template.children[property] : null;
-			var options = {template, group: this};
-			var isCollection = collections[property];
-
-			if (isCollection === "multiple") {
-				var existing = this.children[property];
-
-				if (existing instanceof Mavo.Collection) {
-					existing.add(element);
-				}
-				else if (Mavo.is("multiple", element)) {
-					// We must create the collection with the element that actually has mv-multiple
-					// otherwise the template will be all wrong
-					this.children[property] = new Mavo.Collection(element, this.mavo, options);
-					(existing || []).forEach((e, i) => this.children[property].add(e, i));
-				}
-				else {
-					this.children[property] = [...(existing || []), element];
-				}
-			}
-			else if (isCollection > 1) {
-				if (!this.children[property]) {
-					this.children[property] = new Mavo.ImplicitCollection(element, this.mavo, options);
-				}
-				else {
-					this.children[property].add(element);
-				}
+			else if (propertyNames.lastIndexOf(property) !== i) {
+				// Duplicate property name
+				this.children[property] = new Mavo.ImplicitCollection(element, this.mavo, options);
 			}
 			else {
 				// Normal case
 				this.children[property] = Mavo.Node.create(element, this.mavo, options);
 			}
-		});
+		}
 
 		this.childrenNames = Object.keys(this.children);
 
