@@ -192,6 +192,19 @@ var _ = Mavo.Functions = {
 		}
 	},
 
+	intersection: function (arr1, arr2) {
+		if (!arr1 || !arr2) {
+			return null;
+		}
+
+		arr1 = Mavo.toArray(arr1);
+		arr2 = Mavo.toArray(arr2);
+
+		let set2 = new Set(arr2);
+
+		return arr1.filter(x => set2.has(x));
+	},
+
 	/*********************
 	 * Number functions
 	 *********************/
