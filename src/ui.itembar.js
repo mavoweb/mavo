@@ -4,7 +4,7 @@ var _ = Mavo.UI.Itembar = $.Class({
 	constructor: function(item) {
 		this.item = item;
 
-		this.element = $$(`.mv-item-bar:not([mv-rel]), .mv-item-bar[mv-rel="${this.item.property}"]`, this.item.element).filter(el => {
+		this.element = $$(`.mv-item-bar:is(:not([mv-rel]), [mv-rel="${this.item.property}"])`, this.item.element).filter(el => {
 				// Ignore item controls meant for other collections
 				return el.closest(Mavo.selectors.multiple) == this.item.element && !Mavo.data(el, "item");
 			})[0];
