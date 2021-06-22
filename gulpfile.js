@@ -15,6 +15,8 @@ var merge = require("merge2");
 var injectVersion = require("gulp-inject-version");
 var csso = require("gulp-csso");
 
+sass.compiler = require("sass");
+
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
