@@ -1,6 +1,5 @@
 /*
 Build file to concat & minify files, compile SCSS and so on.
-npm install gulp gulp-util gulp-uglify gulp-rename gulp-concat gulp-sourcemaps gulp-babel gulp-sass gulp-autoprefixer --save-dev
 */
 // grab our gulp packages
 var gulp = require("gulp");
@@ -73,9 +72,8 @@ gulp.task("sass", function () {
 var transpileStream = () => gulp.src("dist/mavo-nodeps.js")
 	.pipe(sourcemaps.init())
 	.pipe(babel({
-		"presets": [
-			["@babel/env", {}
-			]
+		presets: [
+			["@babel/preset-env"]
 		],
 		compact: false
 	}))
