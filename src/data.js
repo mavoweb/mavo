@@ -181,11 +181,11 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		}) : Mavo.Functions,
 
-		isItem: function(data) {
+		isItem (data) {
 			return Array.isArray(data?.[Mavo.parent]);
 		},
 
-		closest(obj, test) {
+		closest (obj, test) {
 			var path = [];
 			do {
 				if (test(obj)) {
@@ -198,11 +198,11 @@ var _ = Mavo.Data = $.Class(class Data {
 			return {value: null, path};
 		},
 
-		root(obj) {
+		root (obj) {
 			return _.closest(obj, o => !o[Mavo.parent]);
 		},
 
-		closestItem(obj) {
+		closestItem (obj) {
 			return _.closest(obj, _.isItem);
 		},
 
@@ -210,13 +210,13 @@ var _ = Mavo.Data = $.Class(class Data {
 			return _.closest(obj, Array.isArray);
 		},
 
-		getProperty: function(data) {
+		getProperty (data) {
 			var ret = _.isItem(data)? data[Mavo.parent] : data;
 
 			return ret[Mavo.property];
 		},
 
-		find: function(property, data, o = {}) {
+		find (property, data, o = {}) {
 			if (!data || o.exclude === data) {
 				return;
 			}
@@ -290,7 +290,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 		// First look in descendants, then ancestors and their descendants
 		// one level up at a time (excluding the subtree we've already explored)
-		findUp: function(property, data) {
+		findUp (property, data) {
 			var parent = data;
 			var child;
 
@@ -310,7 +310,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			} while (parent);
 		},
 
-		resolve: function(property, data) {
+		resolve (property, data) {
 			if (property === Mavo.isProxy) {
 				return true;
 			}
@@ -407,7 +407,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		},
 
-		proxify(data) {
+		proxify (data) {
 			if (!data || typeof data !== "object" || !self.Proxy || data[Mavo.isProxy]) {
 				// Data is a primitive, proxies are not supported, or is already a proxy
 				return data;
@@ -433,7 +433,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			});
 		},
 
-		computeMetadata(object, property, parent) {
+		computeMetadata (object, property, parent) {
 			if (object && typeof object === "object") { // not primitive
 				if (property !== undefined) {
 					object[Mavo.property] = property;
@@ -445,7 +445,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		},
 
-		computeRoute(object, property, parent) {
+		computeRoute (object, property, parent) {
 			if (typeof object === "function") {
 				return;
 			}
@@ -491,13 +491,13 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		},
 
-		computeRoutes(object, property, parent) {
+		computeRoutes (object, property, parent) {
 			_.traverse(_.computeRoute, object, property, parent);
 		},
 
 		// Recursively traverse a JSON structure
 		// Warning: No cycle detection. Will loop infinitely if there are cycles
-		traverseDown(callback, object, property, parent) {
+		traverseDown (callback, object, property, parent) {
 			if (Array.isArray(object)) {
 				object.forEach((item, i) => _.traverse(callback, item, i, object));
 			}
@@ -508,7 +508,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			}
 		},
 
-		traverse(callback, object, property, parent) {
+		traverse (callback, object, property, parent) {
 			callback(object, property, parent);
 			_.traverseDown(callback, object, property, parent);
 		},

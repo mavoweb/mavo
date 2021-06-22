@@ -12,7 +12,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 
 		// Should this element also create a primitive?
 		if (Mavo.Primitive.getValueAttribute(this.element)) {
-			var obj = this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
+			this.children[this.property] = new Mavo.Primitive(this.element, this.mavo, {group: this});
 		}
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
