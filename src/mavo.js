@@ -27,16 +27,6 @@ var _ = self.Mavo = $.Class({
 		this.index = Object.keys(_.all).length + 1;
 		Object.defineProperty(_.all, this.index - 1, {value: this, configurable: true});
 
-		// Convert any data-mv-* attributes to mv-*
-		Mavo.attributeStartsWith("data-mv-", this.element).forEach(attribute => {
-			var element = attribute.ownerElement;
-			var name = attribute.name.replace("data-", "");
-
-			if (!element.attributes[name]) {
-				element.setAttribute(name, attribute.value);
-			}
-		});
-
 		// Assign a unique (for the page) id to this mavo instance
 		this.id = Mavo.getAttribute(this.element, "mv-app", "id") || `mavo${this.index}`;
 
@@ -1008,6 +998,13 @@ if (_.polyfills.length > 0) {
 }
 
 await $.ready();
+
+// Convert any data-mv-* attributes to mv-*
+Mavo.attributeStartsWith("data-mv-").forEach(attribute => {
+	let element = attribute.ownerElement;
+	let name = attribute.name.replace("data-", "");
+	Mavo.setAttributeShy(element, name, attribute.value);
+});
 
 $$(_.selectors.init).forEach(function(elem) {
 	// Skip if an instance has been created, for example by another script.
