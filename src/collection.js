@@ -1,6 +1,6 @@
 (function($, $$) {
 
-Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items", "mv-like");
+Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items");
 
 var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	constructor (element, mavo, o) {
@@ -21,15 +21,43 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		this.templateElement.after(this.marker);
 		this.addButton = this.createAddButton();
 
-		if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
-			// Synchronous init
-			this.init();
+		if (!this.fromTemplate("templateElement", "accepts", "initialItems")) {
+			this.accepts = this.templateElement.getAttribute("mv-accepts");
+			this.accepts = new Set(this.accepts?.split(/\s+/));
+
+			this.initialItems = +(this.templateElement.getAttribute("mv-initial-items") || 1);
+
+			// Must clone because otherwise once expressions are parsed on the template element
+			// we will not be able to pick them up from subsequent items
+			this.templateElement = this.templateElement.cloneNode(true);
 		}
-		else {
-			// Async init, we're borrowing the template from elsewhere so we need
-			// to give the rest of the tree a chance to initialize
-			this.mavo.treeBuilt.then(() => this.init());
+
+		if (this.initialItems > 0 || !this.template) {
+			var item = this.createItem(this.element);
+			this.add(item, undefined, {silent: true});
 		}
+
+		this.mavo.treeBuilt.then(() => {
+			if (!this.initialItems) {
+				if (item) {
+					this.delete(item, {silent: true});
+				}
+				else {
+					// No item to delete
+					this.element.remove();
+				}
+			}
+			else if (this.initialItems > 1) {
+				// Add extra items
+				for (let i=1; i<this.initialItems; i++) {
+					this.add();
+				}
+			}
+		});
+
+		this.postInit();
+
+		Mavo.hooks.run("collection-init-end", this);
 	}
 
 	createAddButton() {
@@ -65,82 +93,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		Mavo.setAttributeShy(button, "mv-action", `add(${this.property})`);
 
 		return button;
-	}
-
-	init () {
-		if (!this.fromTemplate("templateElement", "accepts", "initialItems", "like", "likeNode")) {
-			this.like = this.templateElement.getAttribute("mv-like");
-
-			if (this.like) {
-				var candidates = [];
-				this.mavo.walk(obj => {
-					if (obj instanceof _ && obj.property === this.like && obj !== this) {
-						candidates.push(obj);
-					}
-				});
-
-				if (candidates.length > 0) {
-					// If there are multiple collections that match,
-					// compare the paths and select the one that has the most overlap
-					this.likeNode = candidates.sort((a, b) => {
-						return a.pathFrom(this).length - b.pathFrom(this).length;
-					})[0];
-
-					this.likeNode = this.likeNode.likeNode || this.likeNode;
-					this.likeNode = this.likeNode.template || this.likeNode;
-				}
-				else {
-					this.like = null;
-				}
-			}
-
-			this.accepts = this.templateElement.getAttribute("mv-accepts");
-			this.accepts = new Set(this.accepts?.split(/\s+/));
-
-			this.initialItems = +(this.templateElement.getAttribute("mv-initial-items") || (this.like? 0 : 1));
-
-			// Must clone because otherwise once expressions are parsed on the template element
-			// we will not be able to pick them up from subsequent items
-			this.templateElement = this.templateElement.cloneNode(true);
-		}
-
-		if (this.likeNode) {
-			this.itemTemplate = this.likeNode.itemTemplate || this.likeNode;
-
-			var templateElement = this.likeNode.templateElement || this.likeNode.collection?.templateElement || this.likeNode.element;
-			this.templateElement = templateElement.cloneNode(true);
-			this.templateElement.setAttribute("property", this.property);
-
-			if (!this.accepts.size) {
-				this.accepts = this.likeNode.accepts || this.accepts;
-			}
-		}
-		else if (this.initialItems > 0 || !this.template) {
-			var item = this.createItem(this.element);
-			this.add(item, undefined, {silent: true});
-		}
-
-		this.mavo.treeBuilt.then(() => {
-			if (!this.initialItems) {
-				if (item) {
-					this.delete(item, {silent: true});
-				}
-				else {
-					// No item to delete
-					this.element.remove();
-				}
-			}
-			else if (this.initialItems > 1) {
-				// Add extra items
-				for (let i=1; i<this.initialItems; i++) {
-					this.add();
-				}
-			}
-		});
-
-		this.postInit();
-
-		Mavo.hooks.run("collection-init-end", this);
 	}
 
 	get length() {
