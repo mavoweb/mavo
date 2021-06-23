@@ -972,6 +972,7 @@ let s = _.selectors = {
 
 s.primitive = s.property + `:not(${s.group})`;
 s.childGroup = s.property + `:is(${s.group})`;
+s.scope = `:is(${s.group}, ${s.multiple})`;
 
 $.extend(_.selectors, {
 	item: s.multiple + ", " + s.group,
