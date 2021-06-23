@@ -27,7 +27,7 @@
 	right: 0;
 	margin: .2em 0;
 
-	tr[mv-multiple] > & { // Table rows cannot be relative, hack to fix that
+	tr[mv-list-item] > & { // Table rows cannot be relative, hack to fix that
 		bottom: auto;
 		right: auto;
 	}
@@ -145,7 +145,7 @@
 	}
 }
 
-[mv-multiple] {
+[mv-list-item] {
 	position: relative;
 
 	&.mv-highlight {  // basically &:has(> .mv-item-bar:hover)
@@ -234,7 +234,7 @@ button.mv-close {
 	}
 }
 
-[mv-progress="Loading"]:not(.mv-no-hiding-during-loading) [mv-multiple] {
+[mv-progress="Loading"]:not(.mv-no-hiding-during-loading) [mv-list-item] {
 	display: none;
 }
 
@@ -269,7 +269,7 @@ button.mv-close {
 [mv-mode=""]     { --mv-mode: initial; }
 
 // Primitives
-[property][mv-mode="edit"]:not([typeof]):not([mv-group]) {
+[property][mv-mode="edit"]:not([typeof], [mv-group], [mv-list]) {
 	input.mv-editor,
 	select.mv-editor,
 	textarea.mv-editor {
@@ -277,7 +277,7 @@ button.mv-close {
 		cursor: auto;
 	}
 
-	&:not(input):not(select):not(textarea):hover {
+	&:not(input, select, textarea):hover {
 		@include highlight(hsla(58, 100%, 50%, .2));
 	}
 

@@ -422,6 +422,19 @@ var _ = $.extend(Mavo, {
 		return element.closest(`[${attribute}]`)?.getAttribute(attribute) ?? null;
 	},
 
+	moveAttribute (name, from, to, o = {}) {
+		let value = from.getAttribute(name);
+
+		if (value === null) {
+			return;
+		}
+
+		let newName = o.rename || name;
+
+		to.setAttribute(newName, value);
+		from.removeAttribute(name);
+	},
+
 	/**
 	 * Get the element identified by the URL hash
 	 */

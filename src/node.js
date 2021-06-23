@@ -65,7 +65,7 @@ var _ = Mavo.Node = class Node {
 			}));
 		}
 
-		if (this instanceof Mavo.Group || this.collection) {
+		if (this instanceof Mavo.Group || this instanceof Mavo.Collection) {
 			// Handle mv-value
 			// TODO integrate with the code in Primitive that decides whether this is a computed property
 			var et = Mavo.DOMExpression.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
@@ -75,13 +75,6 @@ var _ = Mavo.Node = class Node {
 				this.expressionText = et;
 				this.storage = this.storage || "none";
 				this.modes = "read";
-
-				if (this.collection) {
-					this.collection.expressions = [...(this.collection.expressions || []), et];
-					et.mavoNode = this.collection;
-					this.collection.storage = this.collection.storage || "none";
-					this.collection.modes = "read";
-				}
 			}
 		}
 
@@ -478,33 +471,49 @@ var _ = Mavo.Node = class Node {
 	}
 
 	static create (element, mavo, o = {}) {
-		if (Mavo.is("multiple", element) && !o.collection) {
+		if (element.hasAttribute("mv-list")) {
 			return new Mavo.Collection(element, mavo, o);
 		}
 
 		return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
 	}
 
+	static getImplicitPropertyName (element) {
+		return element.getAttribute("itemprop")
+		       || element.getAttribute("mv-list")
+		       || element.getAttribute("mv-list-item")
+		       || element.name
+		       || element.id
+		       || element.classList[0];
+	}
+
 	/**
 	 * Get & normalize property name, if exists
 	 */
 	static getProperty (element) {
-		var property = element.getAttribute("property") || element.getAttribute("itemprop");
-
-		if (!property) {
-			var multiple = element.getAttribute("mv-multiple");
-
-			if (element.hasAttribute("property")) { // property used without a value
-				property = multiple || element.name || element.id || element.classList[0];
-
-				if (!property) {
-					property = _.generatePropertyName(multiple === null? "prop" : "collection", element);
-				}
-			}
+		if (!element.hasAttribute("property")) {
+			return null;
 		}
 
-		if (property) {
-			element.setAttribute("property", property);
+		let property = element.getAttribute("property");
+
+		if (!property) {
+			if (element.hasAttribute("mv-list-item")) {
+				// List items should always reflect the parent list's property
+				// We should be careful not to generate one that ends up being different
+				if (!property) {
+					property = element.getAttribute("mv-list-item");
+				}
+
+				return property;
+			}
+			else if (!property) {
+				property = _.getImplicitPropertyName(element) || _.generatePropertyName("prop", element);
+			}
+
+			if (property) {
+				element.setAttribute("property", property);
+			}
 		}
 
 		return property;
@@ -514,7 +523,7 @@ var _ = Mavo.Node = class Node {
 		let root = element.closest(Mavo.selectors.init);
 		let names = new Set(...$$("[property]", root).map(e => e.getAttribute("property")));
 
-		for (let i=""; i<10000; i++) { // 1000 is just a failsafe
+		for (let i=""; i<1000; i++) { // 1000 is just a failsafe
 			let name = prefix + i;
 
 			if (!names.has(name)) {
@@ -524,7 +533,10 @@ var _ = Mavo.Node = class Node {
 	}
 
 	static get (element, prioritizePrimitive) {
-		var nodes = (_.elements.get(element) || []).filter(node => !(Array.isArray(node.children)));
+		let nodes = _.elements.get(element) || [];
+
+		// Do not return implicit collections
+		nodes = nodes.filter(n => !(n instanceof Mavo.ImplicitCollection));
 
 		if (nodes.length < 2 || !prioritizePrimitive) {
 			return nodes[0];
@@ -589,9 +601,7 @@ $.Class(_, {
 
 		// Are we only rendering and editing a subset of the data?
 		inPath: function() {
-			var attribute = this instanceof Mavo.Collection? "mv-multiple-path" : "mv-path";
-
-			return (this.element.getAttribute(attribute) || "").split("/").filter(p => p.length);
+			return (this.element.getAttribute("mv-path") || "").split("/").filter(p => p.length);
 		}
 	},
 

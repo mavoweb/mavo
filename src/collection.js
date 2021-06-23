@@ -1,6 +1,6 @@
 (function($, $$) {
 
-Mavo.attributes.push("mv-multiple", "mv-order", "mv-accepts", "mv-initial-items");
+Mavo.attributes.push("mv-list", "mv-list-item", "mv-order", "mv-accepts", "mv-initial-items");
 
 var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	constructor (element, mavo, o) {
@@ -9,7 +9,8 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		/*
 		 * Create the template, remove it from the DOM and store it
 		 */
-		this.templateElement = this.element;
+
+		this.firstItemElement = this.templateElement = $(Mavo.selectors.multiple, this.element);
 
 		this.children = [];
 		this.liveData = new Mavo.Data(this, []);
@@ -22,29 +23,27 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		this.addButton = this.createAddButton();
 
 		if (!this.fromTemplate("templateElement", "accepts", "initialItems")) {
-			this.accepts = this.templateElement.getAttribute("mv-accepts");
+			this.accepts = this.element.getAttribute("mv-accepts");
 			this.accepts = new Set(this.accepts?.split(/\s+/));
 
-			this.initialItems = +(this.templateElement.getAttribute("mv-initial-items") || 1);
+			this.initialItems = +(this.element.getAttribute("mv-initial-items") || 1);
 
 			// Must clone because otherwise once expressions are parsed on the template element
 			// we will not be able to pick them up from subsequent items
+
 			this.templateElement = this.templateElement.cloneNode(true);
 		}
 
-		if (this.initialItems > 0 || !this.template) {
-			var item = this.createItem(this.element);
-			this.add(item, undefined, {silent: true});
-		}
+		let item = this.add(this.firstItemElement, undefined, {silent: true});
 
 		this.mavo.treeBuilt.then(() => {
-			if (!this.initialItems) {
+			if (this.initialItems === 0) {
 				if (item) {
 					this.delete(item, {silent: true});
 				}
 				else {
 					// No item to delete
-					this.element.remove();
+					this.firstItemElement.remove();
 				}
 			}
 			else if (this.initialItems > 1) {
@@ -66,7 +65,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		var group = this.parentGroup.element;
 
 		var button = $$(selector, group).filter(button => {
-			return !this.templateElement.contains(button)  // is outside the template element
+			return !this.element.contains(button)  // is outside the list element
 				&& !Mavo.data(button, "collection"); // and does not belong to another collection
 		})[0];
 
@@ -339,7 +338,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
-			var tag = this.element.tagName.toLowerCase();
+			var tag = this.templateElement.tagName.toLowerCase();
 
 			if (tag in Mavo.selectors.container) {
 				var rel = this.marker.parentNode.closest(Mavo.selectors.container[tag]);
@@ -595,7 +594,7 @@ $.Class(_, {
 			 * Add new items at the top or bottom?
 			 */
 
-			return /^desc\b/i.test(this.templateElement.getAttribute("mv-order"));
+			return /^desc\b/i.test(this.element.getAttribute("mv-order"));
 		}
 	},
 

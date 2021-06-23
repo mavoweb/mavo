@@ -57,18 +57,13 @@ var _ = self.Mavo = $.Class({
 
 		// ----- Heuristic for groups ------
 
-		// First, add property attributes to mv-multiple elements without one
-		$$(_.selectors.multiple, this.element).forEach(element => {
-			_.setAttributeShy(element, "property", "");
-		});
-
 		// Now, turn properties that contain other properties into groups
 		$$(_.selectors.primitive, this.element).forEach(element => {
 			if ($(_.selectors.property, element)) { // contains other properties
-				var config = Mavo.Primitive.getConfig(element);
+				let config = Mavo.Primitive.getConfig(element);
 
-				if (!config.attribute && !config.hasChildren || Mavo.is("multiple", element)) {
-					Mavo.setAttributeShy(element, "typeof", "");
+				if (!config.attribute && !config.hasChildren || element.hasAttribute("mv-list-item")) {
+					element.setAttribute("mv-group", "");
 				}
 			}
 		});
@@ -928,7 +923,7 @@ var _ = self.Mavo = $.Class({
 		properties: new Set(),
 
 		attributes: [
-			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-multiple-path", "mv-format",
+			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
 			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-editor", "mv-permisssions",
 			"mv-rel", "mv-value"
 		],
@@ -957,7 +952,7 @@ let s = _.selectors = {
 	init: "[mv-app], [data-mv-app]",
 	property: "[property]",
 	group: "[typeof], [mv-group]",
-	multiple: "[mv-multiple]",
+	multiple: "[mv-list-item]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
 	ui: ".mv-ui",
@@ -970,13 +965,10 @@ let s = _.selectors = {
 	}
 };
 
-s.primitive = s.property + `:not(${s.group})`;
+s.primitive = s.property + `:not(${s.group}, [mv-list])`;
 s.childGroup = s.property + `:is(${s.group})`;
-
-$.extend(_.selectors, {
-	item: s.multiple + ", " + s.group,
-	output: "[property=output], .mv-output"
-});
+s.item = s.multiple + ", " + s.group;
+s.output = "[property=output], .mv-output";
 
 }
 
@@ -999,11 +991,91 @@ if (_.polyfills.length > 0) {
 
 await $.ready();
 
+/***********************
+ * Various HTML fixups
+ ***********************/
+
 // Convert any data-mv-* attributes to mv-*
 Mavo.attributeStartsWith("data-mv-").forEach(attribute => {
 	let element = attribute.ownerElement;
 	let name = attribute.name.replace("data-", "");
 	Mavo.setAttributeShy(element, name, attribute.value);
+});
+
+// Transition legacy mv-multiple syntax to new mv-list/mv-list-item syntax
+$$("[mv-multiple]").forEach(item => {
+	item.setAttribute("mv-list-item", item.getAttribute("mv-multiple"));
+	console.warn("mv-multiple is deprecated. Please use mv-list-item instead");
+});
+
+// Expand mv-list="foo" to mv-list property="foo" and same for items
+$$("[mv-list]:not([property])").forEach(e => e.setAttribute("property", e.getAttribute("mv-list")));
+$$("[mv-list-item]:not([property])").forEach(e => e.setAttribute("property", e.getAttribute("mv-list-item")));
+
+// mv-list without mv-list-item child
+$$("[mv-list]").forEach(list => {
+	if (!$("[mv-list-item]", list)) {
+		if (list.children === 1 && !list.children[0].matches("[property]")) {
+			// A single non-Mavo node child, make that the list item
+			list.children[0].setAttribute("mv-list-item", "");
+		}
+		else {
+			// Wrap contents in list item
+			let item = $.create("mv-cn", {
+				className: "mv-container",
+				"mv-list-item": "",
+				contents: list.childNodes,
+				inside: list
+			});
+		}
+	}
+});
+
+
+
+// Wrap mv-list-item without mv-list parent
+$$(":not([mv-list]) > [mv-list-item]").forEach(item => {
+	let parent = item.parentNode;
+	let list = parent;
+	let property = Mavo.Node.getProperty(item);
+
+	if (parent.children.length !== 1 || parent.matches("[mv-app], [property], [mv-list-item]")) {
+		// Parent is a Mavo node and cannot just become the collection,
+		// create a new element for that
+		list = $.create("mv-c", {
+			className: "mv-container",
+			around: item
+		});
+	}
+
+	list.setAttribute("mv-list", "");
+	list.setAttribute("property", property);
+
+	// Transfer list-specific attributes to list
+	Mavo.moveAttribute("mv-initial-items", item, list);
+	Mavo.moveAttribute("mv-order", item, list);
+	Mavo.moveAttribute("mv-accepts", item, list);
+	Mavo.moveAttribute("mv-value", item, list);
+	Mavo.moveAttribute("mv-multiple-path", item, list, {rename: "mv-path"});
+
+	console.warn("Please wrap mv-list-item elements with mv-list elements");
+});
+
+// Make sure mv-list and mv-list-item have the same property
+$$("[mv-list] > [mv-list-item]").forEach(item => {
+	let list = item.parentNode;
+	let listProperty = list.getAttribute("property");
+	let itemProperty = item.getAttribute("property");
+
+	if (listProperty !== itemProperty) {
+		if (!listProperty && itemProperty) {
+			list.setAttribute("property", itemProperty);
+		}
+		else {
+			listProperty = Mavo.Node.getProperty(list); // Normalize list property
+			item.setAttribute("property", listProperty);
+		}
+	}
 });
 
 $$(_.selectors.init).forEach(function(elem) {
