@@ -967,6 +967,7 @@ let s = _.selectors = {
 
 s.primitive = s.property + `:not(${s.group}, [mv-list])`;
 s.childGroup = s.property + `:is(${s.group})`;
+s.scope = `:is(${s.group}, ${s.multiple})`;
 s.item = s.multiple + ", " + s.group;
 s.output = "[property=output], .mv-output";
 

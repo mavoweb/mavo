@@ -17,7 +17,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 
 		// Create Mavo objects for all properties in this group (primitives or groups),
 		// but not properties in descendant groups (they will be handled by their group)
-		let properties = $$("[property]:not(:scope [property] [property])", this.element);
+		let properties = $$(`[property]:not(:scope ${Mavo.selectors.scope} [property])`, this.element);
 		let propertyNames = properties.map(element => Mavo.Node.getProperty(element));
 
 		for (let i = 0, element; element = properties[i]; i++) {
