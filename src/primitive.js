@@ -1264,6 +1264,16 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 			}
 		}
 	}
+	else  {
+		let parentNode = Mavo.Node.getClosest(element.parentNode, true);
+		
+		// subtree changed on node for which we are monitoring this
+		// primarily used for monitoring changes to <select> options
+		if (parentNode?.config?.subtree) {
+			parentNode.value = parentNode.getValue();
+		}
+
+	}
 });
 
 await $.ready();

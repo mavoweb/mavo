@@ -484,7 +484,7 @@ var _ = Mavo.Node = class Node {
 		       || element.getAttribute("mv-list-item")
 		       || element.name
 		       || element.id
-		       || [...element.classList[0]].filter(n => n.startsWith("mv-"))[0];
+		       || [...element.classList].filter(n => n.startsWith("mv-"))[0];
 	}
 
 	/**
@@ -543,11 +543,11 @@ var _ = Mavo.Node = class Node {
 	}
 
 	static getClosest (element, prioritizePrimitive) {
-		var node;
+		let node;
 
 		do {
 			node = _.get(element, prioritizePrimitive);
-		} while (!node && (element = element.parentNode));
+		} while (!node && (element = element?.parentNode));
 
 		return node;
 	}
