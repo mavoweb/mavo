@@ -1073,7 +1073,6 @@ $$("[mv-list] > [mv-list-item]").forEach(item => {
 	}
 	else if (listProperty !== itemProperty || !listProperty) {
 		listProperty = Mavo.Node.getProperty(list); // Normalize list property
-		console.log("list property", listProperty);
 		item.setAttribute("property", listProperty);
 	}
 });
