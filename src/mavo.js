@@ -952,15 +952,16 @@ let s = _.selectors = {
 	init: "[mv-app], [data-mv-app]",
 	property: "[property]",
 	group: "[typeof], [mv-group]",
+	list: "[mv-list]",
 	multiple: "[mv-list-item]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
 	ui: ".mv-ui"
 };
 
-s.primitive = s.property + `:not(${s.group}, [mv-list])`;
+s.primitive = s.property + `:not(${s.group}, ${s.list})`;
 s.childGroup = s.property + `:is(${s.group})`;
-s.scope = `:is(${s.group}, ${s.multiple})`;
+s.scope = `:is(${s.group}, ${s.multiple}, ${s.list})`;
 s.item = s.multiple + ", " + s.group;
 s.output = "[property=output], .mv-output";
 
