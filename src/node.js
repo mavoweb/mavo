@@ -484,7 +484,7 @@ var _ = Mavo.Node = class Node {
 		       || element.getAttribute("mv-list-item")
 		       || element.name
 		       || element.id
-		       || [...element.classList].filter(n => n.startsWith("mv-"))[0];
+		       || [...element.classList].filter(n => !n.startsWith("mv-"))[0];
 	}
 
 	/**
