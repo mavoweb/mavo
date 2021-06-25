@@ -581,4 +581,41 @@ img[property]:where([mv-mode="edit"]:not([alt], [alt=""])) {
 	}
 }
 
+@property --mv-length {
+	syntax: "<length>";
+	initial-value: 0;
+	inherits: true;
+}
+
+.mv-container {
+	display: contents;
+}
+
+select,
+datalist {
+	--mv-length: 1em;
+}
+
+optgroup:where(.mv-container) {
+	& > option {
+		padding-inline-start: 2px; /* Remove Firefox gap */
+
+		/* Remove Chrome gap */
+		&::before {
+			content: none;
+		}
+	}
+
+	:where(:root.mv-supports-atproperty) & {
+		font-size: 0;
+		--mv-length: inherit;
+
+		& > * {
+			--mv-length: inherit;
+			font-size: var(--mv-length);
+		}
+	}
+}
+
+
 @import 'bar';

@@ -338,12 +338,9 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		// Insert the add button if it's not already in the DOM
 		if (!this.addButton.parentNode) {
-			var tag = this.templateElement.tagName.toLowerCase();
-
-			if (tag in Mavo.selectors.container) {
-				var rel = this.marker.parentNode.closest(Mavo.selectors.container[tag]);
-			}
-			else if (this.bottomUp && this.children[0]) {
+			// In bottom up collections, button goes before first item
+			// otherwise, it goes after the marker
+			if (this.bottomUp && this.children[0]) {
 				var rel = this.children[0].element;
 			}
 

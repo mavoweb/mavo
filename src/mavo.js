@@ -955,14 +955,7 @@ let s = _.selectors = {
 	multiple: "[mv-list-item]",
 	formControl: "input, select, option, textarea",
 	textInput: ["text", "email", "url", "tel", "search", "number"].map(t => `input[type=${t}]`).join(", ") + ", input:not([type]), textarea",
-	ui: ".mv-ui",
-	container: {
-		// "li": "ul, ol",
-		"tr": "table",
-		"option": "select",
-		// "dt": "dl",
-		// "dd": "dl"
-	}
+	ui: ".mv-ui"
 };
 
 s.primitive = s.property + `:not(${s.group}, [mv-list])`;
@@ -1013,6 +1006,11 @@ $$("[mv-multiple]").forEach(item => {
 $$("[mv-list]:not([property])").forEach(e => e.setAttribute("property", e.getAttribute("mv-list")));
 $$("[mv-list-item]:not([property])").forEach(e => e.setAttribute("property", e.getAttribute("mv-list-item")));
 
+_.containers = {
+	"TR": "TBODY",
+	"OPTION": "OPTGROUP",
+};
+
 // mv-list without mv-list-item child
 $$("[mv-list]").forEach(list => {
 	if (!$("[mv-list-item]", list)) {
@@ -1022,7 +1020,9 @@ $$("[mv-list]").forEach(list => {
 		}
 		else {
 			// Wrap contents in list item
-			let item = $.create("mv-cn", {
+			let itemTags = Object.entries(_.containers).filter(([_, i]) => i === list.tagName);
+			let itemTag = itemTags[0] || "div";
+			$.create(itemTag, {
 				className: "mv-container",
 				"mv-list-item": "",
 				contents: list.childNodes,
@@ -1031,8 +1031,6 @@ $$("[mv-list]").forEach(list => {
 		}
 	}
 });
-
-
 
 // Wrap mv-list-item without mv-list parent
 $$(":not([mv-list]) > [mv-list-item]").forEach(item => {
@@ -1043,7 +1041,8 @@ $$(":not([mv-list]) > [mv-list-item]").forEach(item => {
 	if (parent.children.length !== 1 || parent.matches("[mv-app], [property], [mv-list-item]")) {
 		// Parent is a Mavo node and cannot just become the collection,
 		// create a new element for that
-		list = $.create("mv-c", {
+		let listTag = _.containers[item.tagName] || "div";
+		list = $.create(listTag, {
 			className: "mv-container",
 			around: item
 		});
@@ -1085,6 +1084,11 @@ $$(_.selectors.init).forEach(function(elem) {
 		elem.setAttribute("mv-progress", "Loading");
 	}
 });
+
+if (window.CSSPropertyRule) {
+	let root = document.documentElement;
+	root.classList.add("mv-supports-atproperty");
+}
 
 await _.ready;
 
