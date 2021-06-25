@@ -484,7 +484,7 @@ var _ = Mavo.Node = class Node {
 		       || element.getAttribute("mv-list-item")
 		       || element.name
 		       || element.id
-		       || element.classList[0];
+		       || [...element.classList[0]].filter(n => n.startsWith("mv-"))[0];
 	}
 
 	/**
@@ -497,23 +497,18 @@ var _ = Mavo.Node = class Node {
 
 		let property = element.getAttribute("property");
 
+		if (element.hasAttribute("mv-list-item")) {
+			// List items should always reflect the parent list's property
+			// We should be careful not to generate one that ends up being different
+			return property;
+		}
+
 		if (!property) {
-			if (element.hasAttribute("mv-list-item")) {
-				// List items should always reflect the parent list's property
-				// We should be careful not to generate one that ends up being different
-				if (!property) {
-					property = element.getAttribute("mv-list-item");
-				}
+			let prefix = element.hasAttribute("mv-list")? "items" : "prop";
+			property = _.getImplicitPropertyName(element)
+			        || _.generatePropertyName(prefix, element);
 
-				return property;
-			}
-			else if (!property) {
-				property = _.getImplicitPropertyName(element) || _.generatePropertyName("prop", element);
-			}
-
-			if (property) {
-				element.setAttribute("property", property);
-			}
+			element.setAttribute("property", property);
 		}
 
 		return property;

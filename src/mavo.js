@@ -1062,20 +1062,19 @@ $$(":not([mv-list]) > [mv-list-item]").forEach(item => {
 	Mavo.warn("Please wrap @mv-list-item elements with @mv-list elements");
 });
 
-// Make sure mv-list and mv-list-item have the same property
+// Make sure mv-list and mv-list-item have the same property (and that one exists)
 $$("[mv-list] > [mv-list-item]").forEach(item => {
 	let list = item.parentNode;
 	let listProperty = list.getAttribute("property");
 	let itemProperty = item.getAttribute("property");
 
-	if (listProperty !== itemProperty) {
-		if (!listProperty && itemProperty) {
-			list.setAttribute("property", itemProperty);
-		}
-		else {
-			listProperty = Mavo.Node.getProperty(list); // Normalize list property
-			item.setAttribute("property", listProperty);
-		}
+	if (!listProperty && itemProperty) {
+		list.setAttribute("property", itemProperty);
+	}
+	else if (listProperty !== itemProperty || !listProperty) {
+		listProperty = Mavo.Node.getProperty(list); // Normalize list property
+		console.log("list property", listProperty);
+		item.setAttribute("property", listProperty);
 	}
 });
 
