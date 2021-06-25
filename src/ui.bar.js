@@ -9,6 +9,8 @@ var _ = Mavo.UI.Bar = $.Class({
 		this.element = $(".mv-bar", this.mavo.element);
 		this.template = this.mavo.element.getAttribute("mv-bar") || "";
 
+		Mavo.observers.pause();
+
 		if (this.element) {
 			this.custom = true;
 			this.template += " " + (this.element.getAttribute("mv-bar") || "");
@@ -107,6 +109,8 @@ var _ = Mavo.UI.Bar = $.Class({
 				});
 			}
 		}
+
+		Mavo.observers.resume();
 	},
 
 	resize: function() {
