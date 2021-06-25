@@ -1000,7 +1000,7 @@ Mavo.attributeStartsWith("data-mv-").forEach(attribute => {
 // Transition legacy mv-multiple syntax to new mv-list/mv-list-item syntax
 $$("[mv-multiple]").forEach(item => {
 	item.setAttribute("mv-list-item", item.getAttribute("mv-multiple"));
-	console.warn("mv-multiple is deprecated. Please use mv-list-item instead");
+	Mavo.warn("mv-multiple is deprecated. Please use mv-list-item instead");
 });
 
 // Expand mv-list="foo" to mv-list property="foo" and same for items
@@ -1059,7 +1059,7 @@ $$(":not([mv-list]) > [mv-list-item]").forEach(item => {
 	Mavo.moveAttribute("mv-value", item, list);
 	Mavo.moveAttribute("mv-multiple-path", item, list, {rename: "mv-path"});
 
-	console.warn("Please wrap mv-list-item elements with mv-list elements");
+	Mavo.warn("Please wrap @mv-list-item elements with @mv-list elements");
 });
 
 // Make sure mv-list and mv-list-item have the same property
