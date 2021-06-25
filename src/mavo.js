@@ -1032,7 +1032,20 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 
 	if (!item.hasAttribute("mv-list-item")) {
 		// Transition legacy mv-multiple syntax to new mv-list/mv-list-item syntax
-		item.setAttribute("mv-list-item", item.getAttribute("mv-multiple"));
+		let multiple = item.getAttribute("mv-multiple");
+		item.setAttribute("mv-list-item", multiple);
+
+		if (!item.hasAttribute("property")) {
+			if (multiple) {
+				item.setAttribute("property", multiple);
+			}
+			else {
+				let property = _.Node.getImplicitPropertyName(item)
+				        || _.Node.generatePropertyName("collection", item);
+				item.setAttribute("property", property);
+			}
+		}
+
 		wasLegacy = true;
 		Mavo.warn("mv-multiple is deprecated. Please use mv-list-item instead");
 	}
