@@ -588,7 +588,7 @@ img[property]:where([mv-mode="edit"]:not([alt], [alt=""])) {
 }
 
 .mv-container {
-	display: contents;
+	display: contents !important;
 }
 
 select,
