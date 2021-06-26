@@ -567,7 +567,7 @@ meter, progress {
 }
 
 time[property]:where([aria-label][mv-mode="edit"]:not([mv-edit-type="inline"]):not([mv-edit-type="self"]).mv-empty)::before {
-	content: var(--mv-content);
+	content: var(--mv-content, "(No " attr(aria-label) ")");
 }
 
 img[property]:where([mv-mode="edit"]:not([alt], [alt=""])) {
