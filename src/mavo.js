@@ -1047,7 +1047,7 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 		}
 
 		wasLegacy = true;
-		Mavo.warn("mv-multiple is deprecated. Please use mv-list-item instead");
+		Mavo.warn("@mv-multiple is deprecated. Please use @mv-list-item and @mv-list instead");
 	}
 
 	if (!item.hasAttribute("property")) {
@@ -1084,8 +1084,9 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 			Mavo.moveAttribute("mv-mode", item, list);
 			Mavo.moveAttribute("mv-multiple-path", item, list, {rename: "mv-path"});
 		}
-
-		Mavo.warn("Please wrap @mv-list-item elements with @mv-list elements");
+		else {
+			Mavo.warn("Please wrap @mv-list-item elements with @mv-list elements");
+		}
 	}
 
 	let listProperty = list.getAttribute("property");
