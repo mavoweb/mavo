@@ -185,6 +185,10 @@ var _ = Mavo.Data = $.Class(class Data {
 			return Array.isArray(data?.[Mavo.parent]);
 		},
 
+		isCollection (data) {
+			return Array.isArray(data) && data?.[Mavo.toNode] instanceof Mavo.Collection;
+		},
+
 		closest (obj, test) {
 			var path = [];
 			do {
@@ -326,6 +330,10 @@ var _ = Mavo.Data = $.Class(class Data {
 			if (property in data) {
 				ret = data[property];
 			}
+			else if (_.isCollection(data) && data[Mavo.property] === property) {
+				// On collections we want their property name to return the entire collection
+				return data;
+			}
 			else if (!propertyIsNumeric) {
 				// Property does not exist on data, if non-numeric, look for it elsewhere
 				if (property in _.special) { // $special properties
@@ -381,6 +389,10 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			if (typeof property !== "string") {
 				return Reflect.has(data, property);
+			}
+
+			if (_.getProperty(data) === property) {
+				return true;
 			}
 
 			var objects = [data, Mavo.all, _.special];

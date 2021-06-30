@@ -422,6 +422,19 @@ var _ = $.extend(Mavo, {
 		return element.closest(`[${attribute}]`)?.getAttribute(attribute) ?? null;
 	},
 
+	moveAttribute (name, from, to, o = {}) {
+		let value = from.getAttribute(name);
+
+		if (value === null) {
+			return;
+		}
+
+		let newName = o.rename || name;
+
+		to.setAttribute(newName, value);
+		from.removeAttribute(name);
+	},
+
 	/**
 	 * Get the element identified by the URL hash
 	 */
@@ -805,9 +818,12 @@ _.Observers = class Observers extends Map {
 	applyRecord (r) {
 		for (let [o, callback] of this.entries()) {
 			if (_.Observers.matchesRecord(o, r)) {
+
 				// If we are here, the observer matches
+				let node = Mavo.Node.get(r.target, true);
+
 				callback.call(this, {
-					node: Mavo.Node.get(r.target, true),
+					node,
 					element: r.target,
 					type: r.type,
 					attribute: r.attributeName,
@@ -910,7 +926,7 @@ _.Observers = class Observers extends Map {
 		}
 	}
 
-	find (options, callback) {
+	find (options = {}, callback) {
 		let keys = Object.keys(options);
 		let ret = new Mavo.Observers();
 
