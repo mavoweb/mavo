@@ -21,6 +21,10 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		this.templateElement.after(this.marker);
 		this.addButton = this.createAddButton();
 
+		if (this.templateElement.hasAttribute("mv-like")) {
+			Mavo.warn("@mv-like is deprecated and will be removed in the next version of Mavo");
+		}
+
 		if (this.mavo.root || !this.templateElement.hasAttribute("mv-like")) {
 			// Synchronous init
 			this.init();
