@@ -1,6 +1,6 @@
 {
   "name": "mavo",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Create web applications with HTML and CSS",
   "main": "dist/mavo.js",
   "scripts": {
