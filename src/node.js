@@ -497,18 +497,10 @@ var _ = Mavo.Node = class Node {
 
 		let property = element.getAttribute("property");
 
-		if (element.hasAttribute("mv-list-item")) {
-			// List items should always reflect the parent list's property
-			// We should be careful not to generate one that ends up being different
-			return property;
-		}
-
 		if (!property) {
-			let prefix = element.hasAttribute("mv-list")? "items" : "prop";
-			property = _.getImplicitPropertyName(element)
-			        || _.generatePropertyName(prefix, element);
-
-			element.setAttribute("property", property);
+			if (property = _.getImplicitPropertyName(element)) {
+				element.setAttribute("property", property);
+			}
 		}
 
 		return property;

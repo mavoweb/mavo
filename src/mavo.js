@@ -1020,7 +1020,7 @@ $$("[mv-list]").forEach(list => {
 			$.create(itemTag, {
 				className: "mv-container",
 				"mv-list-item": "",
-				contents: list.childNodes,
+				contents: [...list.childNodes],
 				inside: list
 			});
 		}
@@ -1036,7 +1036,7 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 		item.setAttribute("mv-list-item", multiple);
 
 		if (!item.hasAttribute("property")) {
-			if (multiple) {
+			if (multiple) { // mv-multiple has a value
 				item.setAttribute("property", multiple);
 			}
 			else {
@@ -1072,7 +1072,10 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 		}
 
 		list.setAttribute("mv-list", "");
-		list.setAttribute("property", property);
+		
+		if (property) {
+			list.setAttribute("property", property);
+		}
 
 		// Transfer list-specific attributes to list
 		Mavo.moveAttribute("mv-initial-items", item, list);
@@ -1097,10 +1100,22 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 		list.setAttribute("property", itemProperty);
 	}
 	else if (listProperty !== itemProperty || !listProperty) {
-		listProperty = Mavo.Node.getProperty(list); // Normalize list property
-		item.setAttribute("property", listProperty);
+		 // Normalize list property
+		let property = Mavo.Node.getProperty(list) || Mavo.Node.generatePropertyName("item", list);
+
+		if (!listProperty) {
+			list.setAttribute("property", property);
+		}
+
+		item.setAttribute("property", property);
 	}
 });
+
+// Resolve empty property attributes
+$$("[property='']").forEach(element => {
+	let property = Mavo.Node.getProperty(element) || Mavo.Node.generatePropertyName("prop", element);
+	element.setAttribute("property", property);
+})
 
 $$(_.selectors.init).forEach(function(elem) {
 	// Skip if an instance has been created, for example by another script.
