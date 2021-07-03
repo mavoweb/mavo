@@ -1008,7 +1008,7 @@ _.containers = {
 
 // mv-list without mv-list-item child
 $$("[mv-list]").forEach(list => {
-	if (!$("[mv-list-item]", list)) {
+	if (!$(":scope > [mv-list-item]", list)) {
 		if (list.children === 1 && !list.children[0].matches("[property]")) {
 			// A single non-Mavo node child, make that the list item
 			list.children[0].setAttribute("mv-list-item", "");
