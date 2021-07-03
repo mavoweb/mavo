@@ -208,7 +208,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 
 					this.liveData.set(property, value);
 
-					if (typeof value != "object" && (!oldData || oldData[property] != value)) {
+					if (this.expressionsEnabled !== false && typeof value != "object" && (!oldData || oldData[property] != value)) {
 						// Property actually changed. Why != "object" though?
 						this.dataChanged("propertychange", {property});
 					}
