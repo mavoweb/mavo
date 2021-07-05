@@ -352,8 +352,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					let nodes = [this];
 
 					if (this.template) {
-						let copies = this.copies.filter(n => n.originalEditor === this.originalEditor);
-						nodes.push(...copies);
+						for (let n of this.copies) {
+							if (n.originalEditor === this.originalEditor) {
+								nodes.push(n);
+							}
+						}
 					}
 
 					for (let primitive of nodes) {
@@ -1266,7 +1269,7 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 	}
 	else  {
 		let parentNode = Mavo.Node.getClosest(element.parentNode, true);
-		
+
 		// subtree changed on node for which we are monitoring this
 		// primarily used for monitoring changes to <select> options
 		if (parentNode?.config?.subtree) {

@@ -26,11 +26,11 @@ var _ = Mavo.Node = class Node {
 		this.alias = this.element.getAttribute("mv-alias");
 
 		if (this.template) {
-			this.template.copies.push(this);
+			this.template.copies.add(this);
 		}
 		else {
 			// First (or only) of its kind
-			this.copies = [];
+			this.copies = new Set();
 		}
 
 		if (!this.fromTemplate("property", "type", "storage", "path")) {
@@ -112,7 +112,7 @@ var _ = Mavo.Node = class Node {
 
 	destroy () {
 		if (this.template) {
-			Mavo.delete(this.template.copies, this);
+			this.template.copies.delete(this);
 		}
 
 		if (this.expressions) {
