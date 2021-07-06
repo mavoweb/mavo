@@ -36,7 +36,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (this.expressionText && !this.expressionText.mavoNode) {
 			// Computed property
-			this.expressionText.primitive = this;
+			this.expressionText.mavoNode = this;
 			this.storage = this.storage || "none";
 			this.modes = "read";
 			this.element.setAttribute("aria-live", "polite");

@@ -65,7 +65,7 @@ var _ = Mavo.Node = class Node {
 			}));
 		}
 
-		if (this instanceof Mavo.Group || this instanceof Mavo.Collection) {
+		if (!(this instanceof Mavo.Primitive)) {
 			// Handle mv-value
 			// TODO integrate with the code in Primitive that decides whether this is a computed property
 			var et = Mavo.DOMExpression.search(this.element).filter(et => et.originalAttribute == "mv-value")[0];
@@ -294,7 +294,7 @@ var _ = Mavo.Node = class Node {
 
 		Mavo.hooks.run("node-render-start", env);
 
-		if (!this.isHelperVariable) {
+		if (!this.isHelperVariable && !o.live) {
 			if (!Array.isArray(this.children) && Array.isArray(env.data)) {
 				// We are rendering an array on a singleton, what to do?
 				if (this.isRoot) {

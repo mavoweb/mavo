@@ -25,7 +25,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.originalAttribute = "mv-value";
 			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-			var expression = this.element.getAttribute("mv-value");
+			let expression = this.element.getAttribute("mv-value");
 			this.element.removeAttribute("mv-value");
 			this.parsed = [new Mavo.Expression(expression)];
 			this.expression = this.syntax.start + expression + this.syntax.end;
@@ -190,15 +190,12 @@ var _ = Mavo.DOMExpression = $.Class({
 	},
 
 	output: function(value) {
-		if (this.primitive) {
+		if (this.mavoNode) {
 			if (Mavo.in(Mavo.isProxy, value)) {
 				value = Mavo.clone(value); // Drop proxy
 			}
 
-			this.primitive.value = value;
-		}
-		else if (this.mavoNode) {
-			this.mavoNode.render(value);
+			this.mavoNode.render(value, {live: true});
 		}
 		else {
 			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
