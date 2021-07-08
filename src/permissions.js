@@ -154,7 +154,11 @@ var _ = Mavo.Permissions = $.Class({
 
 			// Remove previous trigger, if any
 			if (oldParent) {
-				Mavo.delete(oldParent.hooks.change, this.parentChanged);
+				let index = oldParent.hooks.change.indexOf(this.parentChanged);
+
+				if (index > -1) {
+					oldParent.hooks.change.splice(index, 1);
+				}
 			}
 
 			// What changes does this cause? Fire triggers for them

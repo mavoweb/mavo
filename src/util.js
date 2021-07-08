@@ -115,25 +115,6 @@ var _ = $.extend(Mavo, {
 		return arr === undefined? [] : Array.isArray(arr)? arr : [arr];
 	},
 
-	// Delete an element from an array
-	// @param all {Boolean} Delete more than one?
-	delete: (arr, element, all) => {
-		do {
-			var index = arr && arr.indexOf(element);
-
-			if (index > -1) {
-				arr.splice(index, 1);
-			}
-		} while (index > -1 && all);
-	},
-
-	// Push an item to an array iff it's not already in there
-	pushUnique: (arr, item) => {
-		if (arr.indexOf(item) === -1) {
-			arr.push(item);
-		}
-	},
-
 	// Adds items from set2 into set1, turns set1 into a set if it's not
 	union: (set1, set2) => {
 		if (set1 instanceof Set && set2) {
@@ -785,7 +766,11 @@ var _ = $.extend(Mavo, {
 
 				if (values) {
 					if (this.arrays) {
-						_.delete(values, value);
+						let index = values.indexOf(value);
+
+						if (index > -1) {
+							values.splice(index, 1);
+						}
 					}
 					else {
 						values.delete(value);

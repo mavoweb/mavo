@@ -456,7 +456,12 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		}
 
 		if (this.template) {
-			Mavo.pushUnique(this.template.getDragula().containers, this.marker.parentNode);
+			let containers = this.template.getDragula().containers;
+
+			if (containers.indexOf(this.marker.parentNode) === -1) {
+				containers.push(this.marker.parentNode);
+			}
+
 			return this.dragula = this.template.dragula || this.template.getDragula();
 		}
 
