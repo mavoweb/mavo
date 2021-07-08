@@ -93,7 +93,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		}
 
 		if (this.originalAttribute == "mv-value" && this.mavoNode && this.mavoNode == this.item.collection) {
-			Mavo.delete(this.item.expressions, this);
+			this.item.expressions.delete(this);
 		}
 
 		this.mavo.expressions.register(this);
@@ -207,11 +207,11 @@ var _ = Mavo.DOMExpression = $.Class({
 			if (item && this._item != item) {
 				if (this._item) {
 					// Previous item, delete from its expressions
-					Mavo.delete(this._item.expressions, this);
+					this._item.expressions.delete(this);
 				}
 
-				item.expressions = item.expressions || [];
-				item.expressions.push(this);
+				item.expressions = item.expressions || new Set();
+				item.expressions.add(this);
 			}
 		}
 	},

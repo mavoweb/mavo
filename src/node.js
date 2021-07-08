@@ -58,11 +58,17 @@ var _ = Mavo.Node = class Node {
 
 		if (template?.expressions) {
 			// We know which expressions we have, don't traverse again
-			this.expressions = template.expressions.map(et => new Mavo.DOMExpression({
-				template: et,
-				item: this,
-				mavo: this.mavo
-			}));
+			this.expressions = new Set();
+
+			for (let et of template.expressions) {
+				this.expressions.add(
+					new Mavo.DOMExpression({
+						template: et,
+						item: this,
+						mavo: this.mavo
+					})
+				);
+			}
 		}
 
 		if (!(this instanceof Mavo.Primitive)) {

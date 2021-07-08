@@ -7,7 +7,7 @@ var _ = Mavo.Expressions = $.Class({
 		this.mavo = mavo;
 		this.active = true;
 
-		this.expressions = [];
+		this.expressions = new Set();
 		this.identifiers = {};
 
 		var syntax = Mavo.Expression.Syntax.create(this.mavo.element.closest("[mv-expressions]")) || Mavo.Expression.Syntax.default;
@@ -17,7 +17,7 @@ var _ = Mavo.Expressions = $.Class({
 
 		await this.mavo.treeBuilt;
 
-		this.expressions = [];
+		this.expressions = new Set();
 		this.update();
 	},
 
@@ -194,7 +194,7 @@ var _ = Mavo.Expressions = $.Class({
 				path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
 			}
 
-			this.expressions.push(new Mavo.DOMExpression({
+			this.expressions.add(new Mavo.DOMExpression({
 				node, syntax, path,
 				attribute: attribute?.name,
 				mavo: this.mavo
