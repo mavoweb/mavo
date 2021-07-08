@@ -1,7 +1,7 @@
 (function($, $$) {
 
 var _ = Mavo.DOMExpression = $.Class({
-	constructor: function(o = {}) {
+	async constructor (o = {}) {
 		this.mavo = o.mavo;
 		this.template = o.template?.template || o.template;
 
@@ -28,7 +28,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			let expression = this.element.getAttribute("mv-value");
 			this.element.removeAttribute("mv-value");
 			this.parsed = [new Mavo.Expression(expression)];
-			this.expression = this.syntax.start + expression + this.syntax.end;
+			this.expression = expression;
 		}
 
 		if (this.node.nodeType === 3 && this.element === this.node) {
@@ -42,7 +42,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			}
 		}
 
-		if (!this.expression) { // Still unhandled?
+		if (typeof this.expression !== "string") { // Still unhandled?
 			if (this.attribute) {
 				// Some web components (e.g. AFrame) hijack getAttribute()
 				var value = Element.prototype.getAttribute.call(this.node, this.attribute);
@@ -81,24 +81,24 @@ var _ = Mavo.DOMExpression = $.Class({
 		// Any identifiers that need additional updating?
 		_.special.add(this);
 
-		this.mavo.treeBuilt.then(() => {
-			if (!this.template && !this.item) {
-				// Only collection items and groups can have their own expressions arrays
-				this.item = Mavo.Node.getClosestItem(this.element);
-			}
-
-			if (this.originalAttribute == "mv-value" && this.mavoNode && this.mavoNode == this.item.collection) {
-				Mavo.delete(this.item.expressions, this);
-			}
-
-			this.mavo.expressions.register(this);
-
-			Mavo.hooks.run("domexpression-init-treebuilt", this);
-		});
-
 		Mavo.hooks.run("domexpression-init-end", this);
 
 		_.elements.set(this.element, [...(_.elements.get(this.element) || []), this]);
+
+		await this.mavo.treeBuilt;
+
+		if (!this.template && !this.item) {
+			// Only collection items and groups can have their own expressions arrays
+			this.item = Mavo.Node.getClosestItem(this.element);
+		}
+
+		if (this.originalAttribute == "mv-value" && this.mavoNode && this.mavoNode == this.item.collection) {
+			Mavo.delete(this.item.expressions, this);
+		}
+
+		this.mavo.expressions.register(this);
+
+		Mavo.hooks.run("domexpression-init-treebuilt", this);
 	},
 
 	destroy: function() {
