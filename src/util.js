@@ -125,17 +125,6 @@ var _ = $.extend(Mavo, {
 		return new Set([...(set1 || []), ...(set2 || [])]);
 	},
 
-	// Filter an array in place
-	// TODO add index to callback
-	filter: (arr, callback) => {
-		for (var i=0; i<arr.length; i++) {
-			if (!callback(arr[i])) {
-				arr.splice(i, 1);
-				i--;
-			}
-		}
-	},
-
 	/**
 	 * DOM element utilities
 	 */

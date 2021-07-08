@@ -37,7 +37,13 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			if (this.node instanceof Mavo.ImplicitCollection) {
 				// Implicit collections drop nulls
-				Mavo.filter(this.data, data => Mavo.value(data) !== null);
+				// Filter array in place to maintain references
+				for (var i=0; i<this.data.length; i++) {
+					if (Mavo.value(this.data[i]) === null) {
+						this.data.splice(i, 1);
+						i--;
+					}
+				}
 
 				// Implicit collections can alternate between arrays and singletons
 				// depending on which items are null
