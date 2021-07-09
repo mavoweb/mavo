@@ -219,7 +219,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
-			if (Mavo.is("item", node)) {
+			if (node.matches(Mavo.selectors.item)) {
 				path = [];
 			}
 

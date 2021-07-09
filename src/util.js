@@ -129,16 +129,6 @@ var _ = $.extend(Mavo, {
 	 * DOM element utilities
 	 */
 
-	is: function(thing, ...elements) {
-		for (let i=0, element; i < elements.length; i++) {
-			if (elements?.[i]?.matches?.(_.selectors[thing])) {
-				return true;
-			}
-		}
-
-		return false;
-	},
-
 	/**
 	 * Get the current value of a CSS property on an element
 	 */
@@ -341,7 +331,7 @@ var _ = $.extend(Mavo, {
 			}, {rootMargin});
 
 			return new Promise(resolve => {
-				if (_.is(element)) {
+				if (_.inView.is(element)) {
 					resolve();
 				}
 

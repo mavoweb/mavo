@@ -481,7 +481,8 @@ var _ = Mavo.Node = class Node {
 			return new Mavo.Collection(element, mavo, o);
 		}
 
-		return new Mavo[Mavo.is("group", element)? "Group" : "Primitive"](element, mavo, o);
+		let isGroup = element.matches(Mavo.selectors.group);
+		return new Mavo[isGroup? "Group" : "Primitive"](element, mavo, o);
 	}
 
 	static getImplicitPropertyName (element) {
