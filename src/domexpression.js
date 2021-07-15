@@ -306,10 +306,10 @@ var _ = Mavo.DOMExpression = $.Class({
 				this.vars[name] = {
 					observe: function() {
 						this.callback = this.callback || _.special.update.bind(this);
-						target.addEventListener(type, this.callback);
+						$.bind(target, type, this.callback);
 					},
 					unobserve: function() {
-						target.removeEventListener(type, this.callback);
+						$.unbind(target, type, this.callback);
 					}
 				};
 
