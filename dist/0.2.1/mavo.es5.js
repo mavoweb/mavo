@@ -6204,9 +6204,15 @@ Mavo.Locale.register("en", {
         "month": /^[Y\d]{4}-[M\d]{2}$/i,
         "time": /^[H\d]{2}:[M\d]{2}/i,
         "datetime-local": /^[Y\d]{4}-[M\d]{2}-[D\d]{2} [H\d]{2}:[Mi\d]{2}/i,
-        "date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i
+        "date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
+        "duration": /^P/,
+        "duration-normal": /(day[s]?|hour[s]?|minute[s]?|second[s]?)$/,
+        "duration-abbreviation": /(d|h|m|s)$/,
       },
       defaultFormats: {
+        "duration": name => "[getduration(".concat(name,"\"officialDurationString\")]"),
+        "duration-abbreviation": name => "[getduration(".concat(name,"\"abbreviatedDurationString\")]"),
+        "duration-normal": name => "[getduration(".concat(name,"\"normalDurationString\")]"),
         "date": function date(name) {
           return "[day(".concat(name, ")] [month(").concat(name, ", 'shortname')] [year(").concat(name, ")]");
         },
@@ -9067,7 +9073,22 @@ Mavo.Locale.register("en", {
     }, {
       multiValued: true
     }),
-    localTimezone: -new Date().getTimezoneOffset()
+    localTimezone: -new Date().getTimezoneOffset(),
+    getduration: $.extend(function (dur, format) {
+      if(format === "officialDurationString") {durationRegEx = /P(?:([.,\d]+)D)?(?:T(?:([.,\d]+)H)?(?:([.,\d]+)M)?(?:([.,\d]+)S)?)?/;}
+      if(format === "abbreviatedDurationString") {durationRegEx = /[\s]*(?:([.,\d]+)d)?[\s]*(?:([.,\d]+)h)?[\s]*(?:([.,\d]+)m)?[\s]*(?:([.,\d]+)s)?[\s]*/;}
+      if(format === "normalDurationString") {durationRegEx = /[\s]*(?:([.,\d]+)[ ]?day[s]?)?[\s]*(?:([.,\d]+)[ ]?hour[s]?)?[\s]*(?:([.,\d]+)[ ]?minute[s]?)?[\s]*(?:([.,\d]+)[ ]?second[s]?)?[\s]*/;}
+      var matches = dur.match(durationRegEx);
+      var dur_days = matches[1] === undefined ? 0 : matches[1];
+      var dur_hours = matches[2] === undefined ? 0 : matches[2];
+      var dur_minutes = matches[3] === undefined ? 0 : matches[3];
+      var dur_seconds = matches[4] === undefined ? 0 : matches[4];
+      
+      var dur_num = dur_days*24*60*60*1000+dur_hours*60*60*1000+dur_minutes*60*1000+dur_seconds*1000;
+
+      return this.duration(dur_num);
+    }),
+
   });
 
   _.msTo = function (what, ms) {
