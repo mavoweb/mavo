@@ -3,15 +3,15 @@
 /**
  * Base class for all backends
  */
-var _ = Mavo.Backend = $.Class({
-	constructor: function(url, o = {}) {
+var _ = Mavo.Backend = class Backend {
+	constructor (url, o = {}) {
 		this.update(url, o);
 
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
-	},
+	}
 
-	update: function(url, o = {}) {
+	update (url, o = {}) {
 		this.source = url;
 
 		// Backends that are not URL-based should just ignore this
@@ -24,7 +24,7 @@ var _ = Mavo.Backend = $.Class({
 		if (this.constructor.key ?? o.key) {
 			this.key = o.key ?? this.constructor.key;
 		}
-	},
+	}
 
 	async get (url = new URL(this.url)) {
 		if (url.protocol != "data:" && this.constructor.useCache !== false) {
@@ -38,7 +38,7 @@ var _ = Mavo.Backend = $.Class({
 		catch (e) {
 			return null;
 		}
-	},
+	}
 
 	async load () {
 		await this.ready;
@@ -52,7 +52,7 @@ var _ = Mavo.Backend = $.Class({
 		response = response.replace(/^\ufeff/, ""); // Remove Unicode BOM
 
 		return this.format.parse(response);
-	},
+	}
 
 	async store (data, {path, format = this.format} = {}) {
 		await this.ready;
@@ -61,33 +61,35 @@ var _ = Mavo.Backend = $.Class({
 		await this.put(serialized, path);
 
 		return {data, serialized};
-	},
+	}
 
 	// To be be overriden by subclasses
-	ready: Promise.resolve(),
-	login: () => Promise.resolve(),
-	logout: () => Promise.resolve(),
-	put: () => Promise.reject(),
+	ready = Promise.resolve()
+	async login () {}
+	async logout () {}
+	put () {
+		return Promise.reject();
+	}
 
-	isAuthenticated: function() {
+	isAuthenticated () {
 		return !!this.accessToken;
-	},
+	}
 
 	// Any extra params to be passed to the oAuth URL.
-	oAuthParams: () => "",
+	oAuthParams = () => ""
 
-	toString: function() {
+	toString () {
 		return `${this.id} (${this.url})`;
-	},
+	}
 
-	equals: function(backend) {
+	equals (backend) {
 		return backend === this || (backend && this.id == backend.id && this.source == backend.source);
-	},
+	}
 
 	/**
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
-	request: function(call, data, method = "GET", req = {}) {
+	request (call, data, method = "GET", req = {}) {
 		req = $.extend({}, req); // clone
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
@@ -133,12 +135,12 @@ var _ = Mavo.Backend = $.Class({
 				}
 			})
 			.then(xhr => req.method == "HEAD"? xhr : xhr.response);
-	},
+	}
 
 	/**
 	 * Helper method for authenticating in OAuth APIs
 	 */
-	oAuthenticate: function(passive) {
+	oAuthenticate (passive) {
 		return this.ready.then(() => {
 			if (this.isAuthenticated()) {
 				return Promise.resolve();
@@ -206,12 +208,12 @@ var _ = Mavo.Backend = $.Class({
 				}
 			});
 		});
-	},
+	}
 
 	/**
 	 * oAuth logout helper
 	 */
-	oAuthLogout: function() {
+	oAuthLogout () {
 		if (this.isAuthenticated()) {
 			var id = this.id.toLowerCase();
 
@@ -224,101 +226,103 @@ var _ = Mavo.Backend = $.Class({
 		}
 
 		return Promise.resolve();
-	},
-
-	static: {
-		// Return the appropriate backend(s) for this url
-		create: function(url, o = {}, existing) {
-			let Backend;
-
-			if (o.type) {
-				// Using get() for case-insensitive property lookup
-				Backend = Mavo.Functions.get(_, o.type);
-			}
-
-			if (url && !Backend) {
-				Backend = _.types.find(Backend => Backend.test(url, o)) || _.Remote;
-			}
-
-			// Can we re-use the existing object perhaps?
-			if (Backend && existing?.constructor === Backend && existing.constructor.prototype.hasOwnProperty("update")) {
-				existing.update(url, o);
-				return existing;
-			}
-
-			return Backend? new Backend(url, o) : null;
-		},
-
-		types: [],
-
-		register: function(Class) {
-			_[Class.prototype.id] = Class;
-			_.types.push(Class);
-			return Class;
-		}
 	}
-});
+
+
+	// Return the appropriate backend(s) for this url
+	static create (url, o = {}, existing) {
+		let Backend;
+
+		if (o.type) {
+			// Using get() for case-insensitive property lookup
+			Backend = Mavo.Functions.get(_, o.type);
+		}
+
+		if (url && !Backend) {
+			Backend = _.types.find(Backend => Backend.test(url, o)) || _.Remote;
+		}
+
+		// Can we re-use the existing object perhaps?
+		if (Backend && existing?.constructor === Backend && existing.constructor.prototype.hasOwnProperty("update")) {
+			existing.update(url, o);
+			return existing;
+		}
+
+		return Backend? new Backend(url, o) : null;
+	}
+
+	static types = []
+
+	static register (Class) {
+		_[Class.name] = Class;
+		_.types.push(Class);
+		return Class;
+	}
+};
 
 /**
  * Save in an HTML element
  */
-_.register($.Class({
-	id: "Element",
-	extends: _,
-	constructor: function () {
-		this.permissions.on(["read", "edit", "save"]);
-	},
+_.register(class Element extends _ {
+	id = "Element"
 
-	update: function(url, o) {
-		this.super.update.call(this, url, o);
+	constructor () {
+		super();
+		this.permissions.on(["read", "edit", "save"]);
+	}
+
+	update (url, o) {
+		super.update(url, o);
 
 		this.element = $(this.source) || $.create("script", {
 			type: "application/json",
 			id: this.source.slice(1),
 			inside: document.body
 		});
-	},
 
-	get: function() {
-		return Promise.resolve(this.element.textContent);
-	},
-
-	put: function(serialized) {
-		return Promise.resolve(this.element.textContent = serialized);
-	},
-
-	static: {
-		test: url => url.indexOf("#") === 0
 	}
-}));
+
+	async get () {
+		return this.element.textContent;
+	}
+
+	put (serialized) {
+		return Promise.resolve(this.element.textContent = serialized);
+	}
+
+	static test (url) {
+		return url.indexOf("#") === 0;
+	}
+});
 
 // Load from a remote URL, no save
-_.register($.Class({
-	id: "Remote",
-	extends: _,
-	constructor: function() {
-		this.permissions.on("read");
-	},
+_.register(class Remote extends _ {
+	id = "Remote"
 
-	static: {
-		test: url => false
+	constructor () {
+		super();
+		this.permissions.on("read");
 	}
-}));
+
+	static test (url) {
+		return false;
+	}
+});
 
 // Save in localStorage
-_.register($.Class({
-	extends: _,
-	id: "Local",
-	constructor: function() {
+_.register(class Local extends _ {
+	id = "Local"
+
+	constructor () {
 		this.permissions.on(["read", "edit", "save"]);
 		this.key = this.mavo.id;
-	},
+	}
 
-	get: function() {
+	get () {
 		return Promise[this.key in localStorage? "resolve" : "reject"](localStorage[this.key]);
-	},
+	}
 
-	put: function(serialized) {
+	put (serialized) {
 		if (!serialized) {
 			delete localStorage[this.key];
 		}
@@ -327,11 +331,11 @@ _.register($.Class({
 		}
 
 		return Promise.resolve(serialized);
-	},
-
-	static: {
-		test: value => value == "local"
 	}
-}));
+
+	static test (value) {
+		return value == "local";
+	}
+});
 
 })(Bliss, Bliss.$);

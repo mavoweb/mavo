@@ -1,16 +1,18 @@
 (function($, $$) {
 
-let _ = Mavo.Backend.register($.Class({
-	extends: Mavo.Backend,
-	id: "Github",
-	constructor: function(url, o) {
+let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
+	id = "Github"
+
+	constructor (url, o) {
+		super(url, o);
+
 		this.permissions.on(["login", "read"]);
 
 		this.login(true);
-	},
+	}
 
-	update: function(url, o) {
-		this.super.update.call(this, url, o);
+	update (url, o) {
+		super.update(url, o);
 
 		// Extract info for username, repo, branch, filepath from URL
 		let extension = this.format.constructor.extensions[0] || ".json";
@@ -43,9 +45,9 @@ let _ = Mavo.Backend.register($.Class({
 		}
 
 		$.extend(this, this.info);
-	},
+	}
 
-	get: async function(url) {
+	async get (url) {
 		if (this.isAuthenticated() || !this.path || url) {
 			// Authenticated or raw API call
 			let info = url? _.parseURL(url) : this.info;
@@ -93,9 +95,9 @@ let _ = Mavo.Backend.register($.Class({
 
 			return null;
 		}
-	},
+	}
 
-	upload: function(file, path = this.path) {
+	upload (file, path = this.path) {
 		return Mavo.readFile(file).then(dataURL => {
 				let base64 = dataURL.slice(5); // remove data:
 				let media = base64.match(/^\w+\/[\w+]+/)[0];
@@ -106,7 +108,7 @@ let _ = Mavo.Backend.register($.Class({
 				return this.put(base64, path, {isEncoded: true});
 			})
 			.then(fileInfo => this.getURL(path, fileInfo.commit.sha));
-	},
+	}
 
 	/**
 	 * Saves a file to the backend.
@@ -114,7 +116,7 @@ let _ = Mavo.Backend.register($.Class({
 	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put: function(serialized, path = this.path, o = {}) {
+	put (serialized, path = this.path, o = {}) {
 		if (!path) {
 			// Raw API calls are read-only for now
 			return;
@@ -188,9 +190,9 @@ let _ = Mavo.Backend.register($.Class({
 
 				return env.fileInfo;
 			});
-	},
+	}
 
-	login: function(passive) {
+	login (passive) {
 		return this.oAuthenticate(passive)
 			.then(() => this.getUser())
 			.catch(xhr => {
@@ -274,9 +276,9 @@ let _ = Mavo.Backend.register($.Class({
 					}
 				}
 			});
-	},
+	}
 
-	canPush: function() {
+	canPush () {
 		if (this.repoInfo) {
 			return this.repoInfo.permissions.push;
 		}
@@ -284,17 +286,17 @@ let _ = Mavo.Backend.register($.Class({
 		// Repo does not exist so we can't check permissions
 		// Just check if authenticated user is the same as our URL username
 		return this.user?.username?.toLowerCase() == this.username.toLowerCase();
-	},
+	}
 
-	oAuthParams: () => "&scope=repo",
+	oAuthParams = () => "&scope=repo"
 
-	logout: function() {
+	logout () {
 		return this.oAuthLogout().then(() => {
 			this.user = null;
 		});
-	},
+	}
 
-	getUser: function() {
+	getUser () {
 		if (this.user) {
 			return Promise.resolve(this.user);
 		}
@@ -310,9 +312,9 @@ let _ = Mavo.Backend.register($.Class({
 
 			$.fire(this.mavo.element, "mv-login", { backend: this });
 		});
-	},
+	}
 
-	getURL: function(path = this.path, sha) {
+	getURL (path = this.path, sha) {
 		let repoInfo = this.forkInfo || this.repoInfo;
 		let repo = repoInfo.full_name;
 		path = path.replace(/ /g, "%20");
@@ -328,9 +330,9 @@ let _ = Mavo.Backend.register($.Class({
 				// No Github Pages, return jsdelivr URLs
 				return `https://cdn.jsdelivr.net/gh/${repo}@${sha || this.branch || "latest"}/${path}`;
 			});
-	},
+	}
 
-	switchToMyForkDialog: function(forkURL) {
+	switchToMyForkDialog (forkURL) {
 			let params = (new URL(location)).searchParams;
 			params.append(`${this.mavo.id}-storage`, forkURL + "/" + this.path);
 
@@ -353,129 +355,127 @@ let _ = Mavo.Backend.register($.Class({
 
 			});
 			return;
-	},
+	}
 
-	static: {
-		apiDomain: "https://api.github.com/",
-		oAuth: "https://github.com/login/oauth/authorize",
-		key: "7e08e016048000bc594e",
+	static apiDomain = "https://api.github.com/"
+	static oAuth = "https://github.com/login/oauth/authorize"
+	static key = "7e08e016048000bc594e"
 
-		test: function(url) {
-			url = new URL(url, Mavo.base);
-			return /^((api\.)?github\.com|raw\.githubusercontent\.com)/.test(url.host);
-		},
+	static test (url) {
+		url = new URL(url, Mavo.base);
+		return /^((api\.)?github\.com|raw\.githubusercontent\.com)/.test(url.host);
+	}
 
-		/**
-		 * Parse Github URLs, return username, repo, branch, path
-		 */
-		parseURL: function(source, defaults = {}) {
-			const ret = {};
+	/**
+	 * Parse Github URLs, return username, repo, branch, path
+	 */
+	static parseURL (source, defaults = {}) {
+		const ret = {};
 
-			// Define computed properties as writable accessors
-			Object.defineProperties(ret, {
-				"apiCall": {
-					get() {
-						let call = `repos/${this.username}/${this.repo}/${this.resources ?? "contents"}`;
+		// Define computed properties as writable accessors
+		Object.defineProperties(ret, {
+			"apiCall": {
+				get() {
+					let call = `repos/${this.username}/${this.repo}/${this.resources ?? "contents"}`;
 
-						const path = this.path;
-						if (path) {
-							call += `/${path}`;
-						}
+					const path = this.path;
+					if (path) {
+						call += `/${path}`;
+					}
 
-						// Don't lose search params for raw API calls
-						return call + (this.apiParams ?? "");
-					},
-					set (v) {
-						delete this.apiCall;
-						this.apiCall = v;
-					},
-					configurable: true,
-					enumerable: true
+					// Don't lose search params for raw API calls
+					return call + (this.apiParams ?? "");
 				},
+				set (v) {
+					delete this.apiCall;
+					this.apiCall = v;
+				},
+				configurable: true,
+				enumerable: true
+			},
 
-				"path": {
-					get() {
-						if (this.filename) {
-							return (this.filepath? this.filepath + "/" : "") + this.filename;
-						}
-						else {
-							return this.filepath;
-						}
-					},
-					set (v) {
-						delete this.path;
-						this.path = v;
-					},
-					configurable: true,
-					enumerable: true
-				}
-			});
+			"path": {
+				get() {
+					if (this.filename) {
+						return (this.filepath? this.filepath + "/" : "") + this.filename;
+					}
+					else {
+						return this.filepath;
+					}
+				},
+				set (v) {
+					delete this.path;
+					this.path = v;
+				},
+				configurable: true,
+				enumerable: true
+			}
+		});
 
-			const url = new URL(source, Mavo.base);
-			let path = url.pathname.slice(1).split("/");
+		const url = new URL(source, Mavo.base);
+		let path = url.pathname.slice(1).split("/");
+
+		ret.username = path.shift();
+		ret.repo = path.shift() || defaults.repo;
+
+		if (/raw.githubusercontent.com$/.test(url.host)) {
+			ret.branch = path.shift();
+		}
+		else if (/api.github.com$/.test(url.host)) {
+			// Raw API call
+			delete ret.username;
+			delete ret.repo;
+
+			ret.apiParams = url.search;
+			ret.apiData = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+
+			const apiCall = url.pathname.slice(1) + ret.apiParams;
+
+			if (apiCall == "graphql") {
+				ret.apiCall = apiCall;
+				ret.apiData = { query: ret.apiData };
+
+				return ret;
+			}
+
+			path = url.pathname.slice(1).split("/");
+			const firstSegment = path.shift();
+
+			if (firstSegment != "repos") {
+				ret.apiCall = apiCall;
+
+				return ret;
+			}
 
 			ret.username = path.shift();
-			ret.repo = path.shift() || defaults.repo;
+			ret.repo = path.shift();
+			ret.resources = path.shift();
+		}
+		else if (path[0] == "blob") {
+			path.shift();
+			ret.branch = path.shift();
+		}
 
-			if (/raw.githubusercontent.com$/.test(url.host)) {
-				ret.branch = path.shift();
-			}
-			else if (/api.github.com$/.test(url.host)) {
-				// Raw API call
-				delete ret.username;
-				delete ret.repo;
+		const lastSegment = path[path.length - 1];
 
-				ret.apiParams = url.search;
-				ret.apiData = Mavo.Functions.from(source, "#"); // url.* drops line breaks
+		if (/\.\w+$/.test(lastSegment)) {
+			ret.filename = lastSegment;
+			path.splice(path.length - 1, 1);
+		}
+		else {
+			// If we work with a raw API call and couldn't find the filename in the path,
+			// leave the filename blank
+			ret.filename = ret.hasOwnProperty("apiParams")? "" : defaults.filename;
+		}
 
-				const apiCall = url.pathname.slice(1) + ret.apiParams;
+		ret.filepath = path.join("/") || defaults.filepath || "";
 
-				if (apiCall == "graphql") {
-					ret.apiCall = apiCall;
-					ret.apiData = { query: ret.apiData };
-
-					return ret;
-				}
-
-				path = url.pathname.slice(1).split("/");
-				const firstSegment = path.shift();
-
-				if (firstSegment != "repos") {
-					ret.apiCall = apiCall;
-
-					return ret;
-				}
-
-				ret.username = path.shift();
-				ret.repo = path.shift();
-				ret.resources = path.shift();
-			}
-			else if (path[0] == "blob") {
-				path.shift();
-				ret.branch = path.shift();
-			}
-
-			const lastSegment = path[path.length - 1];
-
-			if (/\.\w+$/.test(lastSegment)) {
-				ret.filename = lastSegment;
-				path.splice(path.length - 1, 1);
-			}
-			else {
-				// If we work with a raw API call and couldn't find the filename in the path,
-				// leave the filename blank
-				ret.filename = ret.hasOwnProperty("apiParams")? "" : defaults.filename;
-			}
-
-			ret.filepath = path.join("/") || defaults.filepath || "";
-
-			return ret;
-		},
-
-		// Fix atob() and btoa() so they can handle Unicode
-		btoa: str => btoa(unescape(encodeURIComponent(str))),
-		atob: str => decodeURIComponent(escape(window.atob(str)))
+		return ret;
 	}
-}));
+
+	// Fix atob() and btoa() so they can handle Unicode
+	static btoa = str => btoa(unescape(encodeURIComponent(str)))
+	static atob = str => decodeURIComponent(escape(window.atob(str)))
+});
 
 })(Bliss, Bliss.$);

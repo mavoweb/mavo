@@ -1,31 +1,31 @@
 (function($, $$) {
 
-var _ = Mavo.Backend.register($.Class({
-	extends: Mavo.Backend,
-	id: "Dropbox",
-	constructor: function() {
+var _ = Mavo.Backend.register(class Dropbox extends Mavo.Backend {
+	id = "Dropbox"
+
+	constructor () {
 		this.permissions.on(["login", "read"]);
 
 		this.login(true);
-	},
+	}
 
-	update: function(url, o) {
-		this.super.update.call(this, url, o);
+	update (url, o) {
+		super.update(url, o);
 
 		this.url = _.fixShareURL(this.url);
-	},
+	}
 
 	async upload (file, path) {
 		path = this.path.replace(/[^/]+$/, "") + path;
 
 		await this.put(file, path);
 		return this.getURL(path);
-	},
+	}
 
 	async getURL (path) {
 		let shareInfo = await this.request("sharing/create_shared_link_with_settings", {path}, "POST");
 		return _.fixShareURL(shareInfo.url);
-	},
+	}
 
 	/**
 	 * Saves a file to the backend.
@@ -42,9 +42,9 @@ var _ = Mavo.Backend.register($.Class({
 				"Content-Type": "application/octet-stream"
 			}
 		});
-	},
+	}
 
-	oAuthParams: () => `&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=code`,
+	oAuthParams = () => `&redirect_uri=${encodeURIComponent("https://auth.mavo.io")}&response_type=code`
 
 	async getUser () {
 		if (this.user) {
@@ -61,7 +61,7 @@ var _ = Mavo.Backend.register($.Class({
 		};
 
 		$.fire(this.mavo.element, "mv-login", { backend: this });
-	},
+	}
 
 	async login (passive) {
 		await this.oAuthenticate(passive);
@@ -78,30 +78,28 @@ var _ = Mavo.Backend.register($.Class({
 			this.path = info.path_lower;
 			this.permissions.on(["edit", "save"]);
 		}
-	},
-
-	logout: function() {
-		return this.oAuthLogout();
-	},
-
-	static: {
-		apiDomain: "https://api.dropboxapi.com/2/",
-		oAuth: "https://www.dropbox.com/oauth2/authorize",
-		key: "2mx6061p054bpbp",
-
-		test: function(url) {
-			url = new URL(url, Mavo.base);
-			return /dropbox.com/.test(url.host);
-		},
-
-		// Transform the dropbox shared URL into something raw and CORS-enabled
-		fixShareURL: url => {
-			url = new URL(url, Mavo.base);
-			url.hostname = "dl.dropboxusercontent.com";
-			url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
-			return url;
-		}
 	}
-}));
+
+	logout () {
+		return this.oAuthLogout();
+	}
+
+	static apiDomain = "https://api.dropboxapi.com/2/"
+	static oAuth = "https://www.dropbox.com/oauth2/authorize"
+	static key = "2mx6061p054bpbp"
+
+	static test (url) {
+		url = new URL(url, Mavo.base);
+		return /dropbox.com/.test(url.host);
+	}
+
+	// Transform the dropbox shared URL into something raw and CORS-enabled
+	static fixShareURL = url => {
+		url = new URL(url, Mavo.base);
+		url.hostname = "dl.dropboxusercontent.com";
+		url.search = url.search.replace(/\bdl=0|^$/, "raw=1");
+		return url;
+	}
+});
 
 })(Bliss, Bliss.$);
