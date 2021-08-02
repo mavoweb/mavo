@@ -507,26 +507,27 @@ var _ = self.Mavo = $.Class({
 
 		await backend.ready;
 
-		let data = await backend.load()
-		.catch(err => {
-			// Try again with init
-			if (this.init && this.init != backend) {
-				backend = this.init;
-				return this.init.ready.then(() => this.init.load());
+		let data = null;
+
+		try {
+			data = await backend.load();
+		}
+		catch (err) {
+			if (this.init && this.init !== backend) {
+				await this.init.ready;
+
+				try {
+					data = await this.init.load();
+					backend = this.init;
+				}
+				catch (e) {}
 			}
 
-			// No init, propagate error
-			return Promise.reject(err);
-		})
-		.catch(err => {
-			if (err) {
-				var xhr = err instanceof XMLHttpRequest? err : err.xhr;
+			if (err && data === null) {
+				let xhr = err instanceof XMLHttpRequest? err : err.xhr;
 
-				if (xhr?.status == 404) {
-					this.render(null);
-				}
-				else {
-					var message = this._("problem-loading");
+				if (xhr && xhr.status !== 404) {
+					let message = this._("problem-loading");
 
 					if (xhr) {
 						message += xhr.status? this._("http-error", err) : ": " + this._("cant-connect");
@@ -535,8 +536,7 @@ var _ = self.Mavo = $.Class({
 					this.error(message, err);
 				}
 			}
-			return null;
-		});
+		}
 
 		this.render(data);
 
