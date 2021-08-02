@@ -60,7 +60,7 @@ var _ = Mavo.Backend.register(class Dropbox extends Mavo.Backend {
 			info
 		};
 
-		$.fire(this.mavo.element, "mv-login", { backend: this });
+		$.fire(this, "mv-login");
 	}
 
 	async login (passive) {

@@ -3,8 +3,10 @@
 /**
  * Base class for all backends
  */
-var _ = Mavo.Backend = class Backend {
+var _ = Mavo.Backend = class Backend extends EventTarget {
 	constructor (url, o = {}) {
+		super();
+
 		this.update(url, o);
 
 		// Permissions of this particular backend.
@@ -222,7 +224,7 @@ var _ = Mavo.Backend = class Backend {
 
 			this.permissions.off(["edit", "add", "delete", "save"]).on("login");
 
-			$.fire(this.mavo.element, "mv-logout", {backend: this});
+			$.fire(this, "mv-logout");
 		}
 
 		return Promise.resolve();

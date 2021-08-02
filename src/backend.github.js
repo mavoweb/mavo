@@ -310,7 +310,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 				info
 			};
 
-			$.fire(this.mavo.element, "mv-login", { backend: this });
+			$.fire(this, "mv-login");
 		});
 	}
 

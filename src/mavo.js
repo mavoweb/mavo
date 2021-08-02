@@ -459,6 +459,11 @@ var _ = self.Mavo = $.Class({
 				}, existing);
 
 				changed = true;
+
+				// Shim for previous mv-login and mv-logout events that were on the Mavo root
+				$.bind(backend, "mv-login mv-logout", evt => {
+					$.fire(this.element, evt.type, {backend});
+				});
 			}
 		}
 		else {
