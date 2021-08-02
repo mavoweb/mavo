@@ -316,6 +316,7 @@ _.register(class Local extends _ {
 	id = "Local"
 
 	constructor () {
+		super();
 		this.permissions.on(["read", "edit", "save"]);
 		this.key = this.mavo.id;
 	}
