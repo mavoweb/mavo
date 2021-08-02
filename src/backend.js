@@ -277,20 +277,42 @@ _.register(class Element extends _ {
 	update (url, o) {
 		super.update(url, o);
 
-		this.element = $(this.source) || $.create("script", {
+		this.observer?.disconnect();
+
+		this.element = $(this.source) ?? $.create("script", {
 			type: "application/json",
 			id: this.source.slice(1),
 			inside: document.body
 		});
 
+		this.observer = this.observer ?? new MutationObserver(records => {
+			console.log(records);
+			$.fire(this, "mv-remotedatachange");
+		});
+
+		this.observer.observe(this.element, {
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
 	}
 
 	async get () {
 		return this.element.textContent;
 	}
 
-	put (serialized) {
-		return Promise.resolve(this.element.textContent = serialized);
+	async put (serialized) {
+		this.observer.disconnect();
+
+		let ret = this.element.textContent = serialized;
+
+		this.observer.observe(this.element, {
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
+
+		return ret;
 	}
 
 	static test (url) {

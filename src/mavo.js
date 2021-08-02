@@ -202,7 +202,7 @@ var _ = self.Mavo = $.Class({
 		});
 
 
-		if (this.storage || this.source) {
+		if (this.primaryBackend) {
 			// Fetch existing data
 			this.permissions.can("read", () => this.load());
 		}
@@ -486,9 +486,44 @@ var _ = self.Mavo = $.Class({
 			this.permissions.parent = permissions;
 
 			this.primaryBackend = this.storage || this.source;
+			this.sourceBackend = this.source || this.storage || this.init;
+
+			let updateListener = evt => {
+				console.log(evt);
+				if (evt.target !== this.sourceBackend) {
+					evt.target.removeEventListener("mv-remotedatachange", updateListener);
+				}
+				else {
+					this.load({data: evt.data});
+				}
+			};
+
+			this.sourceBackend.addEventListener("mv-remotedatachange", updateListener);
 		}
 
 		return changed;
+	},
+
+	/*
+	 * Push new data from the remote
+	 * @param {Object} data The data
+	 * @param options
+	 * @param {("ask", "force", "stop")} options.conflictPolicy What to do when there are unsaved changes?
+	 */
+	async push(data, {conflictPolicy = "stop"} = {}) {
+		if (this.unsavedChanges) {
+			if (conflictPolicy === "ask") {
+				// TODO non-modal confirmation
+				if (!confirm(this._("remote-data-conflict"))) {
+					return;
+				}
+			}
+			else if (conflictPolicy === "stop") {
+				return;
+			}
+		}
+
+		return this.load({data});
 	},
 
 	/**
@@ -496,56 +531,63 @@ var _ = self.Mavo = $.Class({
 	 *
 	 * @return {Promise}  A promise that resolves when the data is loaded.
 	 */
-	async load () {
-		var backend = this.source || this.storage;
+	async load ({backend, data} = {}) {
+		let specificBackend = backend;
+		backend = backend ?? this.sourceBackend;
 
 		if (!backend) {
 			return;
 		}
 
-		this.inProgress = "Loading";
+		let autoSaveState = this.autoSave;
+		this.autoSave = false;
 
-		await backend.ready;
+		if (data === undefined) {
+			this.inProgress = "Loading";
 
-		let data = null;
+			await backend.ready;
 
-		try {
-			data = await backend.load();
-		}
-		catch (err) {
-			if (this.init && this.init !== backend) {
-				await this.init.ready;
+			data = null;
 
-				try {
-					data = await this.init.load();
-					backend = this.init;
-				}
-				catch (e) {}
+			try {
+				data = await backend.load();
 			}
+			catch (err) {
+				if (!specificBackend && this.init && this.init !== backend) {
+					await this.init.ready;
 
-			if (err && data === null) {
-				let xhr = err instanceof XMLHttpRequest? err : err.xhr;
-
-				if (xhr && xhr.status !== 404) {
-					let message = this._("problem-loading");
-
-					if (xhr) {
-						message += xhr.status? this._("http-error", err) : ": " + this._("cant-connect");
+					try {
+						data = await this.init.load();
+						backend = this.init;
 					}
+					catch (e) {}
+				}
 
-					this.error(message, err);
+				if (err && data === null) {
+					let xhr = err instanceof XMLHttpRequest? err : err.xhr;
+
+					if (xhr && xhr.status !== 404) {
+						let message = this._("problem-loading");
+
+						if (xhr) {
+							message += xhr.status? this._("http-error", err) : ": " + this._("cant-connect");
+						}
+
+						this.error(message, err);
+					}
 				}
 			}
+
+			this.inProgress = false;
 		}
 
 		this.render(data);
-
-		this.inProgress = false;
 
 		await Mavo.defer();
 
 		this.dataLoaded.resolve();
 		$.fire(this.element, "mv-load");
+		this.autoSave = autoSaveState;
 	},
 
 	async store () {

@@ -44,5 +44,6 @@ Mavo.Locale.register("en", {
 	"undo": "Undo",
 	"gh-updated-file": "Updated {name}",
 	"gh-login-fork-options": "You have your own copy of this page, would you like to use it?",
-	"gh-use-my-fork": "Yes, show me my data."
+	"gh-use-my-fork": "Yes, show me my data.",
+	"remote-data-conflict": "There is new data but you have unsaved changes. Loading it will overwrite your changes. Load new data?"
 });
