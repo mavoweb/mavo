@@ -504,14 +504,20 @@ var _ = self.Mavo = $.Class({
 
 		let data = await backend.load()
 		.catch(err => {
-			// Try again with init
+			// if init exists, return null so load from init is attempted
 			if (this.init && this.init != backend) {
-				backend = this.init;
-				return this.init.ready.then(() => this.init.load());
+				return null
 			}
 
 			// No init, propagate error
 			return Promise.reject(err);
+		}).then(data => {
+			// if data is null and init exists try to load with init
+			if (data === null && this.init && this.init != backend) {
+				backend = this.init;
+				return this.init.ready.then(() => this.init.load());
+			}
+			return data;
 		})
 		.catch(err => {
 			if (err) {
