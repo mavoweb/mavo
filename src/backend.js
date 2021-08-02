@@ -7,10 +7,10 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 	constructor (url, o = {}) {
 		super();
 
-		this.update(url, o);
-
 		// Permissions of this particular backend.
 		this.permissions = new Mavo.Permissions();
+
+		this.update(url, o);
 	}
 
 	update (url, o = {}) {
@@ -268,8 +268,9 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 _.register(class Element extends _ {
 	id = "Element"
 
-	constructor () {
-		super();
+	constructor (url, o) {
+		super(url, o);
+
 		this.permissions.on(["read", "edit", "save"]);
 	}
 
@@ -301,8 +302,8 @@ _.register(class Element extends _ {
 _.register(class Remote extends _ {
 	id = "Remote"
 
-	constructor () {
-		super();
+	constructor (url, o) {
+		super(url, o);
 		this.permissions.on("read");
 	}
 
@@ -315,8 +316,8 @@ _.register(class Remote extends _ {
 _.register(class Local extends _ {
 	id = "Local"
 
-	constructor () {
-		super();
+	constructor (url, o) {
+		super(url, o);
 		this.permissions.on(["read", "edit", "save"]);
 		this.key = this.mavo.id;
 	}

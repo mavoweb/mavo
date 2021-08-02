@@ -3,7 +3,9 @@
 var _ = Mavo.Backend.register(class Dropbox extends Mavo.Backend {
 	id = "Dropbox"
 
-	constructor () {
+	constructor (url, o) {
+		super(url, o);
+		
 		this.permissions.on(["login", "read"]);
 
 		this.login(true);
