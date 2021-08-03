@@ -489,7 +489,6 @@ var _ = self.Mavo = $.Class({
 			this.sourceBackend = this.source || this.storage || this.init;
 
 			let updateListener = evt => {
-				console.log(evt);
 				if (evt.target !== this.sourceBackend) {
 					evt.target.removeEventListener("mv-remotedatachange", updateListener);
 				}

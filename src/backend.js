@@ -286,7 +286,6 @@ _.register(class Element extends _ {
 		});
 
 		this.observer = this.observer ?? new MutationObserver(records => {
-			console.log(records);
 			$.fire(this, "mv-remotedatachange");
 		});
 
