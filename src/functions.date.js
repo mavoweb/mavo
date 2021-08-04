@@ -67,6 +67,16 @@ $.extend(_, {
 		return $u.dateComponent("ms", ...arguments);
 	}, {multiValued: true}),
 
+	datetime: $.extend((date, precision = "minutes") => {
+		date = $u.date(date);
+
+		if (!date) {
+			return "";
+		}
+
+		return `${_.date(date)}T${_.time(date, precision)}`;
+	}, {multiValued: true}),
+
 	date: $.extend(date => {
 		date = $u.date(date);
 
