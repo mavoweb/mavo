@@ -13,8 +13,8 @@
 self.$ = self.$ || $;
 self.$$ = self.$$ || $$;
 
-var _ = self.Mavo = $.Class({
-	constructor: function (element) {
+let _ = self.Mavo = $.Class(class Mavo {
+	constructor(element) {
 		this.treeBuilt = Mavo.promise();
 		this.dataLoaded = Mavo.promise();
 		this.deleted = [];
@@ -309,38 +309,38 @@ var _ = self.Mavo = $.Class({
 		$.bind(this.element, "click submit", _.Actions.listener);
 
 		Mavo.hooks.run("init-end", this);
-	},
+	}
 
 	get editing() {
 		return this.root.editing;
-	},
+	}
 
 	observe (o = {}, callback) {
 		let options = Object.assign({element: this.element}, o);
 		return _.observers?.observe(options, callback);
-	},
+	}
 
 	unobserve (o, callback) {
 		let options = Object.assign({element: this.element}, o);
 		return _.observers?.observe(options, callback);
-	},
+	}
 
-	getData: function(o) {
+	getData (o) {
 		let env = {context: this, options: o};
 		env.data = this.root.getData(o);
 		_.hooks.run("getdata-end", env);
 		return env.data;
-	},
+	}
 
-	toJSON: function() {
+	toJSON () {
 		return _.toJSON(this.getData());
-	},
+	}
 
-	message: function(message, options = {}) {
+	message (message, options = {}) {
 		return new _.UI.Message(this, message, options);
-	},
+	}
 
-	error: function(message, ...log) {
+	error (message, ...log) {
 		this.message(message, {
 			type: "error",
 			dismiss: ["button", "timeout"]
@@ -350,9 +350,9 @@ var _ = self.Mavo = $.Class({
 		if (log.length > 0) {
 			console.log(`%c${this.id}: ${message}`, "color: red; font-weight: bold", ...log);
 		}
-	},
+	}
 
-	render: function(data) {
+	render (data) {
 		var env = {context: this, data};
 		_.hooks.run("render-start", env);
 
@@ -363,9 +363,9 @@ var _ = self.Mavo = $.Class({
 		this.unsavedChanges = false;
 
 		_.hooks.run("render-end", env);
-	},
+	}
 
-	edit: function() {
+	edit () {
 		this.root.edit();
 
 		// Highlight collection item when item controls are hovered
@@ -382,14 +382,14 @@ var _ = self.Mavo = $.Class({
 		}, true);
 
 		this.setUnsavedChanges();
-	},
+	}
 
 	// Conclude editing
-	done: function() {
+	done () {
 		this.root.done();
 		$.unbind(this.element, ".mavo:edit");
 		this.unsavedChanges = false;
-	},
+	}
 
 	/**
 	 * Set this mavo instance’s unsavedChanges flag.
@@ -398,7 +398,7 @@ var _ = self.Mavo = $.Class({
 	 *        If false, sets the flag of the Mavo instance and every tree node to false
 	 *        If not provided, traverses the tree and recalculates the flag value.
 	 */
-	setUnsavedChanges: function(value) {
+	setUnsavedChanges (value) {
 		var unsavedChanges = !!value;
 
 		if (!value) {
@@ -416,7 +416,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		return this.unsavedChanges = unsavedChanges;
-	},
+	}
 
 	/**
 	 * Update the backend for a given role
@@ -501,7 +501,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		return changed;
-	},
+	}
 
 	/*
 	 * Push new data from the remote
@@ -523,7 +523,7 @@ var _ = self.Mavo = $.Class({
 		}
 
 		return this.load({data});
-	},
+	}
 
 	/**
 	 * load - Fetch data from source and render it.
@@ -587,7 +587,7 @@ var _ = self.Mavo = $.Class({
 		this.dataLoaded.resolve();
 		$.fire(this.element, "mv-load");
 		this.autoSave = autoSaveState;
-	},
+	}
 
 	async store () {
 		if (!this.storage) {
@@ -617,9 +617,9 @@ var _ = self.Mavo = $.Class({
 
 		this.inProgress = false;
 		return saved;
-	},
+	}
 
-	upload: function(file, path = "images/" + file.name) {
+	upload (file, path = "images/" + file.name) {
 		if (!this.uploadBackend) {
 			return Promise.reject();
 		}
@@ -636,7 +636,7 @@ var _ = self.Mavo = $.Class({
 				this.inProgress = false;
 				return null;
 			});
-	},
+	}
 
 	async save () {
 		_.hooks.run("save-start", this);
@@ -649,13 +649,13 @@ var _ = self.Mavo = $.Class({
 			this.root.save();
 			this.unsavedChanges = false;
 		}
-	},
+	}
 
-	walk: function() {
+	walk () {
 		return this.root.walk(...arguments);
-	},
+	}
 
-	calculateNeedsEdit: function() {
+	calculateNeedsEdit () {
 		var needsEdit = false;
 
 		this.walk((obj, path) => {
@@ -671,9 +671,9 @@ var _ = self.Mavo = $.Class({
 		}, undefined, {descentReturn: true});
 
 		return needsEdit;
-	},
+	}
 
-	changed: function(change) {
+	changed (change) {
 		if (!this.root) {
 			// No tree yet
 			return;
@@ -682,9 +682,9 @@ var _ = self.Mavo = $.Class({
 		if (this.expressions.active) {
 			this.expressions.updateThrottled(change);
 		}
-	},
+	}
 
-	setDeleted: function(...nodes) {
+	setDeleted (...nodes) {
 		// Clear previous deleted item(s)
 		this.deleted.forEach(node => node.destroy());
 		this.deleted.length = [];
@@ -747,12 +747,12 @@ var _ = self.Mavo = $.Class({
 				this.deletionNotice = null;
 			}
 		});
-	},
+	}
 
-	undoDelete: function() {
+	undoDelete () {
 		this.deleted.forEach(node => node.collection.add(node, node.index));
 		this.deleted.length = 0;
-	},
+	}
 
 	// A lot of this is inspired by @hopeful2's work in https://github.com/mavoweb/mavo/pull/430
 	destroy () {
@@ -774,34 +774,177 @@ var _ = self.Mavo = $.Class({
 		this.root.destroy();
 
 		Mavo.hooks.run("mavo-destroy-end", this);
-	},
+	}
 
+	static version = "%%VERSION%%"
+
+	static all = {}
+
+	static get (id) {
+		if (id instanceof Element) {
+			// Get by element
+			for (let name in _.all) {
+				if (_.all[name].element == id) {
+					return _.all[name];
+				}
+			}
+
+			return null;
+		}
+
+		let name = typeof id === "number"? Object.keys(_.all)[id] : id;
+
+		return _.all[name] || null;
+	}
+
+	static superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey"
+	static base = location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location
+	static dependencies = [
+		// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
+		$.ready().then(() => _.Plugins.load()),
+	]
+
+	// Only naive tests here (no false positives, but false negatives are ok).
+	// polyfill.io will do more proper checking
+	static polyfillsNeeded = {
+		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
+		"Intl.~locale.en": self.Intl,
+		"IntersectionObserver": self.IntersectionObserver,
+		"Symbol": self.Symbol,
+		"Element.prototype.remove": Element.prototype.remove,
+		"Element.prototype.before": Element.prototype.before,
+		"Element.prototype.after": Element.prototype.after,
+		"Element.prototype.prepend": Element.prototype.prepend,
+		"Array.prototype.flat": Array.prototype.flat,
+		"Array.prototype.flatMap": Array.prototype.flatMap,
+	}
+	static polyfills = []
+
+	static init (container = document) {
+		let mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
+
+		let ret = mavos.filter(element => !_.get(element)) // not already inited
+			.map(element => new _(element));
+
+		return ret;
+	}
+
+	static observe (options, callback) {
+		_.observers = _.observers || new Mavo.Observers();
+		return _.observers.observe(options, callback);
+	}
+
+	static unobserve (options, callback) {
+		_.observers.unobserve(options, callback);
+	}
+
+	static warn (message, o = {}) {
+		_.warn.history = _.warn.history || new Set();
+
+		if (!_.warn.history.has(message)) {
+			console.warn(message);
+		}
+
+		if (o.once !== false) {
+			_.warn.history.add(message);
+		}
+	}
+
+	/**
+	 * Similar to Promise.all() but can handle post-hoc additions
+	 * and does not reject if one promise rejects.
+	 */
+	static thenAll (iterable) {
+		// Turn rejected promises into resolved ones
+		$$(iterable).forEach(promise => {
+			if ($.type(promise) == "promise") {
+				promise = promise.catch(err => err);
+			}
+		});
+
+		return Promise.all(iterable).then(resolved => {
+			if (iterable.length != resolved.length) {
+				// The list of promises or values changed. Return a new Promise.
+				// The original promise won't resolve until the new one does.
+				return _.thenAll(iterable);
+			}
+
+			// The list of promises or values stayed the same.
+			// Return results immediately.
+			return resolved;
+		});
+	}
+
+	static promise (constructor) {
+		let res, rej;
+
+		let promise = new Promise((resolve, reject) => {
+			if (typeof constructor === "function") {
+				constructor(resolve, reject);
+			}
+			else if (constructor instanceof Promise) {
+				constructor.then(resolve);
+				constructor.catch(reject);
+			}
+
+			res = resolve;
+			rej = reject;
+		});
+
+		promise.resolve = a => {
+			res(a);
+			return promise;
+		};
+
+		promise.reject = a => {
+			rej(a);
+			return promise;
+		};
+
+		return promise;
+	}
+
+	static defer = delay => new Promise(resolve => delay === undefined? requestAnimationFrame(resolve) : setTimeout(resolve, delay))
+
+	static UI = {}
+
+	static hooks = new $.Hooks()
+
+	// Will be filled with a union of all properties across all Mavos
+	static properties = new Set()
+
+	static attributes = [
+		"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
+		"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-editor", "mv-permisssions",
+		"mv-rel", "mv-value"
+	]
+}, {
 	live: {
-		inProgress: function(value) {
+		inProgress (value) {
 			$.toggleAttribute(this.element, "mv-progress", value, value);
 			$.toggleAttribute(this.element, "aria-busy", !!value, !!value);
 			this.element.style.setProperty("--mv-progress-text", value? `"${this._(value)}"` : "");
 		},
 
-		unsavedChanges: function(value) {
+		unsavedChanges (value) {
 			this.element.classList.toggle("mv-unsaved-changes", value);
 		},
 
-		needsEdit: function(value) {
+		needsEdit (value) {
 			if (this.bar) {
 				this.bar.toggle("edit", value && this.permissions.edit);
 			}
 		},
 
-		storage: function(value) {
+		storage (value) {
 			if (value !== this._storage && !value) {
-				var permissions = new Mavo.Permissions({edit: true, save: false});
+				let permissions = new Mavo.Permissions({edit: true, save: false});
 				permissions.parent = this.permissions.parent;
 				this.permissions.parent = permissions;
 			}
 		},
 
-		primaryBackend: function(value) {
+		primaryBackend (value) {
 			value = value || null;
 
 			if (value != this._primaryBackend) {
@@ -810,7 +953,7 @@ var _ = self.Mavo = $.Class({
 		},
 
 		uploadBackend: {
-			get: function () {
+			get() {
 				const backend = this.uploads;
 
 				if (backend?.upload) {
@@ -829,154 +972,8 @@ var _ = self.Mavo = $.Class({
 			}
 		}
 	},
-
-	static: {
-		version: "%%VERSION%%",
-
-		all: {},
-
-		get: function(id) {
-			if (id instanceof Element) {
-				// Get by element
-				for (var name in _.all) {
-					if (_.all[name].element == id) {
-						return _.all[name];
-					}
-				}
-
-				return null;
-			}
-
-			var name = typeof id === "number"? Object.keys(_.all)[id] : id;
-
-			return _.all[name] || null;
-		},
-
-		superKey: navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey",
-		base: location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location,
-		dependencies: [
-			// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
-			$.ready().then(() => _.Plugins.load()),
-		],
-
-		// Only naive tests here (no false positives, but false negatives are ok).
-		// polyfill.io will do more proper checking
-		polyfillsNeeded: {
-			"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
-			"Intl.~locale.en": self.Intl,
-			"IntersectionObserver": self.IntersectionObserver,
-			"Symbol": self.Symbol,
-			"Element.prototype.remove": Element.prototype.remove,
-			"Element.prototype.before": Element.prototype.before,
-			"Element.prototype.after": Element.prototype.after,
-			"Element.prototype.prepend": Element.prototype.prepend,
-			"Array.prototype.flat": Array.prototype.flat,
-			"Array.prototype.flatMap": Array.prototype.flatMap,
-		},
-		polyfills: [],
-
-		init: function(container = document) {
-			var mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
-
-			var ret = mavos.filter(element => !_.get(element)) // not already inited
-				.map(element => new _(element));
-
-			return ret;
-		},
-
-		observe (options, callback) {
-			_.observers = _.observers || new Mavo.Observers();
-			return _.observers.observe(options, callback);
-		},
-
-		unobserve (options, callback) {
-			_.observers.unobserve(options, callback);
-		},
-
-		warn: function warn(message, o = {}) {
-			warn.history = warn.history || new Set();
-
-			if (!_.warn.history.has(message)) {
-				console.warn(message);
-			}
-
-			if (o.once !== false) {
-				warn.history.add(message);
-			}
-		},
-
-		/**
-		 * Similar to Promise.all() but can handle post-hoc additions
-		 * and does not reject if one promise rejects.
-		 */
-		thenAll: function(iterable) {
-			// Turn rejected promises into resolved ones
-			$$(iterable).forEach(promise => {
-				if ($.type(promise) == "promise") {
-					promise = promise.catch(err => err);
-				}
-			});
-
-			return Promise.all(iterable).then(resolved => {
-				if (iterable.length != resolved.length) {
-					// The list of promises or values changed. Return a new Promise.
-					// The original promise won't resolve until the new one does.
-					return _.thenAll(iterable);
-				}
-
-				// The list of promises or values stayed the same.
-				// Return results immediately.
-				return resolved;
-			});
-		},
-
-		promise: function(constructor) {
-			var res, rej;
-
-			var promise = new Promise((resolve, reject) => {
-				if (typeof constructor === "function") {
-					constructor(resolve, reject);
-				}
-				else if (constructor instanceof Promise) {
-					constructor.then(resolve);
-					constructor.catch(reject);
-				}
-
-				res = resolve;
-				rej = reject;
-			});
-
-			promise.resolve = a => {
-				res(a);
-				return promise;
-			};
-
-			promise.reject = a => {
-				rej(a);
-				return promise;
-			};
-
-			return promise;
-		},
-
-		defer: delay => new Promise(resolve => delay === undefined? requestAnimationFrame(resolve) : setTimeout(resolve, delay)),
-
-		UI: {},
-
-		hooks: new $.Hooks(),
-
-		// Will be filled with a union of all properties across all Mavos
-		properties: new Set(),
-
-		attributes: [
-			"mv-app", "mv-storage", "mv-source", "mv-init", "mv-path", "mv-format",
-			"mv-attribute", "mv-default", "mv-mode", "mv-edit", "mv-editor", "mv-permisssions",
-			"mv-rel", "mv-value"
-		],
-
-		lazy: {
-			locale: () => document.documentElement.lang || "en-GB"
-		}
+	lazy: {
+		locale: () => document.documentElement.lang || "en-GB"
 	}
 });
 
