@@ -89,7 +89,9 @@ var _ = Mavo.Actions = {
 		 * @param index {Number} index of new item(s).
 		 * @returns Newly added item(s)
 		 */
-		add: function(data, ref, index) {
+		add: Object.assign(function(data, ref, index) {
+			let args = [...arguments];
+
 			if (arguments.length < 3) {
 				if (arguments.length <= 1) {
 					// add(ref) signature used
@@ -119,6 +121,15 @@ var _ = Mavo.Actions = {
 			collection = collection || _.getCollection(ref);
 
 			if (!collection) {
+				collection = _.getCollection(this);
+
+				if (collection) {
+					// The collection is the context, re-interpret arguments
+					[data, index] = args;
+				}
+			}
+
+			if (!collection) {
 				Mavo.warn("No collection or collection item provided to add().", {once: false});
 				return data;
 			}
@@ -128,7 +139,7 @@ var _ = Mavo.Actions = {
 				// get index from collection item
 				var node = _.getNode(ref);
 
-				if (node !== collection) {
+				if (node && node.collection === collection) {
 					index = node.index;
 				}
 			}
@@ -146,7 +157,7 @@ var _ = Mavo.Actions = {
 
 				return item.getLiveData();
 			});
-		},
+		}, {needsContext: true}),
 
 		/**
 		 * @param from {Mavo.Node|Array<Mavo.Node>} one or more items to move
