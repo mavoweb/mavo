@@ -8,10 +8,11 @@ var _ = Mavo.UI.Bar = $.Class({
 
 		this.element = $(".mv-bar", this.mavo.element);
 		this.template = this.mavo.element.getAttribute("mv-bar") || "";
-
+		
 		Mavo.observers.pause();
 
 		if (this.element) {
+			
 			this.custom = true;
 			this.template += " " + (this.element.getAttribute("mv-bar") || "");
 			this.template = this.template.trim();
@@ -31,6 +32,7 @@ var _ = Mavo.UI.Bar = $.Class({
 				start: this.mavo.element,
 				innerHTML: "<button>&nbsp;</button>"
 			});
+			
 		}
 
 		if (this.element.classList.contains("mv-compact")) {
@@ -207,18 +209,32 @@ var _ = Mavo.UI.Bar = $.Class({
 
 				// Drop duplicates (last one wins)
 				ids = Mavo.Functions.unique(ids.reverse()).reverse();
-
+				
 				if (relative) {
-					return all.filter(id => {
-						var positive = ids.lastIndexOf(id);
-						var negative = ids.lastIndexOf("no-" + id);
-						var keep = positive > Math.max(-1, negative);
-						var drop = negative > Math.max(-1, positive);
+						if(ids.every(inputId=>{					//checking whether each element in ids array is a valid control type
+							if((/^no-/.test(inputId))){
+								inputId= inputId.replace("no-",'')
+							}
+							return all.includes(inputId)
+						}))//inputId is the element of the ids array,i.e the input values for mv-bar attribute
+						{	
+							return all.filter(id => {
+								var positive = ids.lastIndexOf(id);
+								var negative = ids.lastIndexOf("no-" + id);
+								var keep = positive > Math.max(-1, negative);
+								var drop = negative > Math.max(-1, positive);
 
-						return keep || (!_.controls[id].optional && !drop);
-					});
+								return keep || (!_.controls[id].optional && !drop);
+							});
+						}
+						else{
+							Mavo.warn(`incorrect value for mv-bar used!`);
+							return null;
+						}
+					
+					
 				}
-
+				
 				return ids;
 			}
 
