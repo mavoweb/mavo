@@ -40,23 +40,21 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 
 		let item = this.add(this.firstItemElement, undefined, {silent: true});
 
-		this.mavo.treeBuilt.then(() => {
-			if (this.initialItems === 0) {
-				if (item) {
-					this.delete(item, {silent: true});
-				}
-				else {
-					// No item to delete
-					this.firstItemElement.remove();
-				}
+		if (this.initialItems === 0) {
+			if (item) {
+				this.delete(item, {silent: true});
 			}
-			else if (this.initialItems > 1) {
-				// Add extra items
-				for (let i=1; i<this.initialItems; i++) {
-					this.add();
-				}
+			else {
+				// No item to delete
+				this.firstItemElement.remove();
 			}
-		});
+		}
+		else if (this.initialItems > 1) {
+			// Add extra items
+			for (let i=1; i<this.initialItems; i++) {
+				this.add();
+			}
+		}
 
 		this.postInit();
 
