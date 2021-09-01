@@ -191,7 +191,7 @@ var _ = Mavo.Expressions = $.Class({
 		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			if (path === undefined) {
-				path = Mavo.elementPath(node.closest(Mavo.selectors.item), node);
+				path = Mavo.elementPath(node.closest(Mavo.selectors.scope), node);
 			}
 
 			this.expressions.add(new Mavo.DOMExpression({
@@ -219,7 +219,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			syntax = Mavo.Expression.Syntax.create(node) || syntax;
 
-			if (node.matches(Mavo.selectors.item)) {
+			if (node.matches(Mavo.selectors.scope)) {
 				path = [];
 			}
 
