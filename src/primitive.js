@@ -416,7 +416,66 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 		}
 
-		if (this.closestCollection && this.editor && this.editor.matches(Mavo.selectors.textInput)) {
+		if (this.config.edit) {
+			this.config.edit.call(this);
+			this.initEdit = null;
+		}
+		else {
+			this.pauseObserver();
+
+			// Actual edit
+
+			if (this.initEdit) {
+				this.initEdit();
+			}
+
+			this.editor.classList.toggle("mv-editor", this.editType !== "popup");
+
+			if (this.editType === "popup") {
+				if (!this.popup) {
+					this.popup = new Mavo.UI.Popup(this);
+				}
+
+				this.popup.prepare();
+
+				let events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
+
+				$.bind(this.element, events, _ => this.popup.show());
+			}
+			else if (this.editType === "inline") {
+				if (!this.editor.isConnected) {
+					this.editorValue = this.value;
+
+					if (this.config.hasChildren) {
+						this.element.textContent = "";
+					}
+					else {
+						_.setText(this.element, "");
+					}
+
+					// If there's an expression on .textContent, it will kick
+					// the editor out of the DOM next time it's updated.
+					// To fix this, we re-assign it to the actual text node.
+					if (!this.contentExpression) {
+						this.contentExpression = Mavo.DOMExpression.search(this.element, null);
+					}
+
+					if (this.contentExpression) {
+						this.contentExpression.active = false;
+					}
+
+					this.element.prepend(this.editor);
+				}
+
+				if (!this.collection) {
+					Mavo.revocably.restoreAttribute(this.element, "tabindex");
+				}
+			}
+
+			this.resumeObserver();
+		}
+
+		if (this.closestCollection && this.editType === "inline" && this.editor?.matches(Mavo.selectors.textInput)) {
 			// If pasting text with line breaks and this is a single-line input
 			// Insert them as multiple items
 			let multiline = this.editor.matches("textarea");
@@ -497,65 +556,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				}
 			});
 		}
-
-		if (this.config.edit) {
-			this.config.edit.call(this);
-			this.initEdit = null;
-			return true;
-		}
-
-		this.pauseObserver();
-
-		// Actual edit
-
-		if (this.initEdit) {
-			this.initEdit();
-		}
-
-		this.editor.classList.toggle("mv-editor", this.editType !== "popup");
-
-		if (this.editType === "popup") {
-			if (!this.popup) {
-				this.popup = new Mavo.UI.Popup(this);
-			}
-
-			this.popup.prepare();
-
-			let events = "mousedown focus dragover dragenter".split(" ").map(e => e + ".mavo:edit").join(" ");
-
-			$.bind(this.element, events, _ => this.popup.show());
-		}
-		else if (this.editType === "inline") {
-			if (!this.editor.isConnected) {
-				this.editorValue = this.value;
-
-				if (this.config.hasChildren) {
-					this.element.textContent = "";
-				}
-				else {
-					_.setText(this.element, "");
-				}
-
-				// If there's an expression on .textContent, it will kick
-				// the editor out of the DOM next time it's updated.
-				// To fix this, we re-assign it to the actual text node.
-				if (!this.contentExpression) {
-					this.contentExpression = Mavo.DOMExpression.search(this.element, null);
-				}
-
-				if (this.contentExpression) {
-					this.contentExpression.active = false;
-				}
-
-				this.element.prepend(this.editor);
-			}
-
-			if (!this.collection) {
-				Mavo.revocably.restoreAttribute(this.element, "tabindex");
-			}
-		}
-
-		this.resumeObserver();
 
 		return true;
 	} // edit
