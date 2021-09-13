@@ -12,30 +12,39 @@ var _ = Mavo.Functions = {
 	/**
 	 * Get a property of an object. Used by the . operator to prevent TypeErrors
 	 */
-	get: function(obj, property) {
+	get: function(obj, property, ...properties) {
+		if (arguments.length <= 1) {
+			return obj;
+		}
+
+		let ret;
 		property = val(property);
 
 		// Get same case property name if it exists,
 		// otherwise do a case insensitive search among properties
-		var canonicalProperty = Mavo.getCanonicalProperty(obj, property);
+		let canonicalProperty = Mavo.getCanonicalProperty(obj, property);
 
 		if (canonicalProperty !== undefined) {
-			var ret = obj[canonicalProperty];
+			ret = obj[canonicalProperty];
 
 			if (typeof ret === "function" && ret.name.indexOf("bound") !== 0) {
-				return ret.bind(obj);
+				ret = ret.bind(obj);
 			}
-
-			return ret;
 		}
-
-		if (Array.isArray(obj) && property && isNaN(property)) {
+		else if (Array.isArray(obj) && property && isNaN(property)) {
 			// Array and non-numerical property, get from objects inside
-			return obj.map(e => _.get(e, property));
+			ret = obj.map(e => _.get(e, property));
+		}
+		else {
+			// Not found :(
+			return null;
 		}
 
-		// Not found :(
-		return null;
+		if (properties.length > 0) {
+			return _.get(ret, ...properties);
+		}
+
+		return ret;
 	},
 
 	url: (id, url = location) => {

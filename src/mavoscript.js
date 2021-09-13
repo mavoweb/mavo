@@ -634,8 +634,17 @@ var _ = Mavo.Script = {
 				return `${_.serialize(node.object, node)}${property}`;
 			}
 
-			var property = node.computed? _.serialize(node.property, node) : `"${node.property.name}"`;
-			return `$fn.get(${_.serialize(node.object, node)}, ${property})`;
+			n = node;
+			let properties = [], object, objectParent;
+
+			while (n.type === "MemberExpression") {
+				let serialized = n.computed? _.serialize(n.property, n) : `"${n.property.name}"`;
+				properties.push(serialized);
+				objectParent = n;
+				object = n = n.object;
+			}
+
+			return `$fn.get(${_.serialize(object, objectParent)}, ${properties.reverse().join(", ")})`;
 		},
 		"ArrayExpression": node => `[${node.elements.map(n => _.serialize(n, node)).join(", ")}]`,
 		"Literal": node => node.raw.replace(/\r/g, "\\r").replace(/\n/g, "\\n"),
