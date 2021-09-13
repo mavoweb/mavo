@@ -495,16 +495,17 @@ var _ = $.extend(Mavo, {
 		}
 		else if (typeof obj == "object" && path?.length) { // Get
 			return path.reduce((obj, property, i) => {
-				var meta = {};
-				var ret = Mavo.Functions.get(obj, property, meta);
+				let ret;
+				let idQuery = property?.startsWith?.("id=")? property.substring(3) : null;
 
-				// We don't yet support multiple properties at the same level
-				// i.e. the path can't be for the 2nd and 3rd item
-				path[i] = Array.isArray(meta.property)? meta.property[0] : meta.property;
-
-				if (ret === undefined && meta.query) {
-					// Not found, return dummy if query
-					ret = {[meta.query.property]: meta.query.value};
+				if (idQuery !== null) {
+					let index = obj.findIndex(o => Mavo.Functions.get(o, "id") == idQuery);
+					ret = index > -1? obj[index] : {id: idQuery}; // if not found, return dummy
+					path[i] = index > -1? index : obj.length;
+				}
+				else {
+					ret = Mavo.Functions.get(obj, property);
+					path[i] = property;
 				}
 
 				return ret;
