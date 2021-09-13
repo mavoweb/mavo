@@ -26,10 +26,6 @@ var _ = Mavo.Functions = {
 
 		if (canonicalProperty !== undefined) {
 			ret = obj[canonicalProperty];
-
-			if (typeof ret === "function" && ret.name.indexOf("bound") !== 0) {
-				ret = ret.bind(obj);
-			}
 		}
 		else if (Array.isArray(obj) && property && isNaN(property)) {
 			// Array and non-numerical property, get from objects inside
