@@ -201,7 +201,6 @@ let _ = self.Mavo = $.Class(class Mavo {
 			}
 		});
 
-
 		if (this.primaryBackend) {
 			// Fetch existing data
 			this.permissions.can("read", () => this.load());
@@ -433,7 +432,9 @@ let _ = self.Mavo = $.Class(class Mavo {
 		}
 
 		if (!backend) {
-			backend =  _.Functions.url(`${this.id}-${role}`) || this.element.getAttribute(attribute) || null;
+			backend = _.Functions.url(`${this.id}-${role}`)
+			          || _.Functions.url(`${this.id.toLowerCase()}-${role}`)
+			          || this.element.getAttribute(attribute) || null;
 		}
 
 		if (backend) {
