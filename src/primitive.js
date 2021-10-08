@@ -339,6 +339,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		if (this.originalEditor) {
 			if (this.editor) {
+				// If editor already created, replace it and update value
 				this.editor = this.originalEditor.cloneNode(true);
 				this.setValue(this.value, {force: true, silent: true});
 			}
@@ -1232,10 +1233,10 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 				node.editor.placeholder = `(${node.label})`;
 			}
 		}
-		else if (attribute && attribute === "mv-editor") {
+		else if (attribute === "mv-editor") {
 			node.originalEditorUpdated();
 		}
-		else if (attribute && attribute === "mv-edit-type") {
+		else if (attribute === "mv-edit-type") {
 			let editing = node.editing;
 
 			if (editing) {
