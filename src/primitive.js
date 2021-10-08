@@ -88,6 +88,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this.datatype = typeof editorValue;
 				}
 			}
+			else if (this.element.hasAttribute("mv-options")) {
+				this.updateOptions();
+			}
 
 			this.templateValue = this.getValue();
 
@@ -256,16 +259,43 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.initEdit = null;
 	}
 
-	generateDefaultEditor() {
-		// No editor provided, generate default for element type
-		// Find default editor for datatype
-		let editor = this.config.editor;
+	updateOptions () {
+		let options = Mavo.options(this.element.getAttribute("mv-options"));
 
-		if (!editor || this.datatype == "boolean") {
-			editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+		for (let key in options) {
+			let value = options[key];
+
+			if (value === true) {
+				options[key] = key;
+			}
 		}
 
-		this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
+		this.options = options;
+	}
+
+	generateDefaultEditor () {
+		if (this.options) {
+			let contents = Object.entries(this.options).map(([value, textContent]) => {
+				return { tag: "option", value, textContent };
+			});
+
+			this.editor = $.create("select", {
+				className: "mv-editor mv-options-select",
+				contents
+			});
+		}
+		else {
+			// No editor provided, generate default for element type
+			// Find default editor for datatype
+			let editor = this.config.editor;
+
+			if (!editor || this.datatype == "boolean") {
+				editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+			}
+
+			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
+		}
+
 		this.editorValue = this.value;
 	}
 
@@ -379,6 +409,17 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.generateDefaultEditor();
 				this.editorUpdated();
 			}
+		}
+
+		let editor = this.editor ?? this.originalEditor;
+		if (editor.matches("select:not(.mv-options-select")) {
+			// This is a select menu that is not automatically generated from mv-options
+			// We need to update this.options
+
+			let obj = [...editor.options]
+				.filter(o => !o.classList.contains("mv-volatile"))
+				.map(o => [o.value, o.textContent]);
+			this.options = Object.fromEntries(obj);
 		}
 	}
 
@@ -693,11 +734,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.config.setValue.call(this, this.element, value);
 			}
 			else if (!o.dataOnly) {
-				let map = this.originalEditor || this.editor;
 				let presentational;
 
-				if (map?.matches("select")) {
-					presentational = [...map.options].find(o => o.value == value)?.textContent;
+				if (this.options) {
+					presentational = this.options[value];
 				}
 
 				_.setValue(this.element, value, {
@@ -1248,6 +1288,13 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 
 			if (editing) {
 				node.edit({force: true});
+			}
+		}
+		else if (attribute === "mv-options") {
+			node.updateOptions();
+
+			if (node.editor) {
+				node.generateDefaultEditor();
 			}
 		}
 		else if (attribute && attribute.indexOf("mv-editor-") === 0) {
