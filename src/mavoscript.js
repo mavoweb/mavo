@@ -340,7 +340,12 @@ var _ = Mavo.Script = {
 		"concatenate": {
 			symbol: "&",
 			default: "",
-			scalar: (a, b) => "" + (a || "") + (b || ""),
+			scalar: (a, b) => {
+				a = Mavo.value(a) ?? "";
+				b = Mavo.value(b) ?? "";
+
+				return "" + a + b;
+			},
 			precedence: 10
 		},
 		"keyvalue": {
