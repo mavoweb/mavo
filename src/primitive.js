@@ -80,7 +80,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 			// Linked widgets
 			if (this.element.hasAttribute("mv-editor")) {
-				this.originalEditorUpdated();
+				this.originalEditorUpdated({force: true});
 
 				let editorValue = this.editorValue;
 
@@ -274,7 +274,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	generateDefaultEditor () {
-		if (this.options) {
+		if (this.element.hasAttribute("mv-options")) {
+			if (!this.options) {
+				this.updateOptions();
+			}
+
 			let contents = Object.entries(this.options).map(([value, textContent]) => {
 				return { tag: "option", value, textContent };
 			});
@@ -349,9 +353,13 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			name = name.replace(/^mv-editor-/, "");
 			this.editor.setAttribute(name, value);
 		}
+
+		if (!this.editor.matches("select")) {
+			delete this.options;
+		}
 	}
 
-	originalEditorUpdated () {
+	originalEditorUpdated ({force} = {}) {
 		let previousOriginalEditor = this.originalEditor;
 		let selector = this.element.getAttribute("mv-editor");
 
@@ -363,7 +371,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.originalEditor = null;
 		}
 
-		if (previousOriginalEditor === this.originalEditor) {
+		if (!force && previousOriginalEditor === this.originalEditor) {
 			return;
 		}
 
@@ -374,15 +382,20 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.setValue(this.value, {force: true, silent: true});
 			}
 
+			if (this.defaultSource == "editor") {
+				this.default = this.originalEditor.value;
+			}
+
 			// Update editor if original mutates
 			// This means that expressions on mv-editor for individual collection items will not be picked up
+			// We attach this observer to elements that are either the prototype of their kind, or they have a different original editor
 			if (!this.template || this.originalEditor !== this.template.originalEditor) {
 				this.originalEditorObserver?.destroy();
 
 				this.originalEditorObserver = new Mavo.Observer(this.originalEditor, "all", records => {
 					let nodes = [this];
 
-					if (this.template) {
+					if (this.copies) {
 						for (let n of this.copies) {
 							if (n.originalEditor === this.originalEditor) {
 								nodes.push(n);
@@ -391,14 +404,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					}
 
 					for (let primitive of nodes) {
-						if (primitive.defaultSource == "editor") {
-							primitive.default = this.originalEditor.value;
-						}
-
-						if (primitive.editor) {
-							primitive.editor = this.originalEditor.cloneNode(true);
-						}
-
+						primitive.originalEditorUpdated({force: true});
 						primitive.setValue(primitive.value, {force: true, silent: true});
 					}
 				});
@@ -412,6 +418,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		let editor = this.editor ?? this.originalEditor;
+
 		if (editor?.matches("select:not(.mv-options-select")) {
 			// This is a select menu that is not automatically generated from mv-options
 			// We need to update this.options
