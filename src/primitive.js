@@ -290,7 +290,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.updateOptions();
 			}
 
-			let contents = this.options.entries().map(([value, textContent]) => {
+			let contents = [...this.options].map(([value, textContent]) => {
 				return { tag: "option", value, textContent };
 			});
 
