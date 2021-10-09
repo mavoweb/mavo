@@ -97,8 +97,19 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this._default = this.element.getAttribute("mv-default");
 
 			if (this.default === null) { // no mv-default
-				this._default = this.modes? this.templateValue : this.editorValue;
-				this.defaultSource = this.modes? "template" : "editor";
+				if (this.modes) {
+					this._default = this.templateValue;
+					this.defaultSource = "template";
+				}
+				else {
+					this._default = this.editorValue;
+
+					if (this.options) {
+						this._default = this._default ?? Object.keys(this.options)[0];
+					}
+
+					this.defaultSource = "editor";
+				}
 			}
 			else if (this.default === "") { // mv-default exists, no value, default is template value
 				this._default = this.templateValue;
