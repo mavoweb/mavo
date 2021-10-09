@@ -696,20 +696,30 @@ var _ = $.extend(Mavo, {
 	 * Pairs are comma or semicolon-separated, key and value are colon separated.
 	 * Escapes are supported, via backslash. Useful for attributes.
 	 */
-	options: str => {
-		var ret = {};
+	options: (str, {map} = {}) => {
+		var ret = map? new Map() : {};
 
 		str.trim().match(/(?:\\[,;]|[^,;])+/g)?.forEach(option => {
 			if (option) {
 				option = option.trim().replace(/\\([,;])/g, "$1");
 				var pair = option.match(/^\s*((?:\\:|[^:])+?)\s*:\s*(.+)$/);
+				let key, value;
 
 				if (pair) {
-					ret[pair[1].replace(/\\:/g, ":")] = pair[2];
+					key = pair[1].replace(/\\:/g, ":");
+					value = pair[2];
 				}
 				else {
 					// If no value, it's boolean
-					ret[option] = true;
+					key = option;
+					value = true;
+				}
+
+				if (map) {
+					ret.set(key, value);
+				}
+				else {
+					ret[key] = value;
 				}
 			}
 		});

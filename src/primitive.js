@@ -105,7 +105,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this._default = this.editorValue;
 
 					if (this.options) {
-						this._default = this._default ?? Object.keys(this.options)[0];
+						// Get first option
+						let firstOption = this.options.keys().next().value;
+						this._default = this._default ?? firstOption;
 					}
 
 					this.defaultSource = "editor";
@@ -271,13 +273,11 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	updateOptions () {
-		let options = Mavo.options(this.element.getAttribute("mv-options"));
+		let options = Mavo.options(this.element.getAttribute("mv-options"), {map: true});
 
-		for (let key in options) {
-			let value = options[key];
-
+		for (let [key, value] of options) {
 			if (value === true) {
-				options[key] = key;
+				options.set(key, key);
 			}
 		}
 
@@ -290,7 +290,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.updateOptions();
 			}
 
-			let contents = Object.entries(this.options).map(([value, textContent]) => {
+			let contents = this.options.entries().map(([value, textContent]) => {
 				return { tag: "option", value, textContent };
 			});
 
@@ -437,7 +437,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			let obj = [...editor.options]
 				.filter(o => !o.classList.contains("mv-volatile"))
 				.map(o => [o.value, o.textContent]);
-			this.options = Object.fromEntries(obj);
+			this.options = new Map(obj);
 		}
 	}
 
@@ -755,7 +755,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				let presentational;
 
 				if (this.options) {
-					presentational = this.options[value];
+					presentational = this.options.get(value);
 				}
 
 				_.setValue(this.element, value, {
