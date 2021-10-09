@@ -80,7 +80,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 			// Linked widgets
 			if (this.element.hasAttribute("mv-editor")) {
-				this.originalEditorUpdated();
+				this.originalEditorUpdated({force: true});
 
 				let editorValue = this.editorValue;
 
@@ -88,14 +88,30 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					this.datatype = typeof editorValue;
 				}
 			}
+			else if (this.element.hasAttribute("mv-options")) {
+				this.updateOptions();
+			}
 
 			this.templateValue = this.getValue();
 
 			this._default = this.element.getAttribute("mv-default");
 
 			if (this.default === null) { // no mv-default
-				this._default = this.modes? this.templateValue : this.editorValue;
-				this.defaultSource = this.modes? "template" : "editor";
+				if (this.modes) {
+					this._default = this.templateValue;
+					this.defaultSource = "template";
+				}
+				else {
+					this._default = this.editorValue;
+
+					if (this.options) {
+						// Get first option
+						let firstOption = this.options.keys().next().value;
+						this._default = this._default ?? firstOption;
+					}
+
+					this.defaultSource = "editor";
+				}
 			}
 			else if (this.default === "") { // mv-default exists, no value, default is template value
 				this._default = this.templateValue;
@@ -256,16 +272,45 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.initEdit = null;
 	}
 
-	generateDefaultEditor() {
-		// No editor provided, generate default for element type
-		// Find default editor for datatype
-		let editor = this.config.editor;
+	updateOptions () {
+		let options = Mavo.options(this.element.getAttribute("mv-options"), {map: true});
 
-		if (!editor || this.datatype == "boolean") {
-			editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+		for (let [key, value] of options) {
+			if (value === true) {
+				options.set(key, key);
+			}
 		}
 
-		this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
+		this.options = options;
+	}
+
+	generateDefaultEditor () {
+		if (this.element.hasAttribute("mv-options")) {
+			if (!this.options) {
+				this.updateOptions();
+			}
+
+			let contents = [...this.options].map(([value, textContent]) => {
+				return { tag: "option", value, textContent };
+			});
+
+			this.editor = $.create("select", {
+				className: "mv-editor mv-options-select",
+				contents
+			});
+		}
+		else {
+			// No editor provided, generate default for element type
+			// Find default editor for datatype
+			let editor = this.config.editor;
+
+			if (!editor || this.datatype == "boolean") {
+				editor = Mavo.Elements.defaultConfig[this.datatype || "string"].editor;
+			}
+
+			this.editor = $.create($.type(editor) === "function"? editor.call(this) : editor);
+		}
+
 		this.editorValue = this.value;
 	}
 
@@ -319,9 +364,13 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			name = name.replace(/^mv-editor-/, "");
 			this.editor.setAttribute(name, value);
 		}
+
+		if (!this.editor.matches("select")) {
+			delete this.options;
+		}
 	}
 
-	originalEditorUpdated () {
+	originalEditorUpdated ({force} = {}) {
 		let previousOriginalEditor = this.originalEditor;
 		let selector = this.element.getAttribute("mv-editor");
 
@@ -333,7 +382,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			this.originalEditor = null;
 		}
 
-		if (previousOriginalEditor === this.originalEditor) {
+		if (!force && previousOriginalEditor === this.originalEditor) {
 			return;
 		}
 
@@ -344,15 +393,20 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.setValue(this.value, {force: true, silent: true});
 			}
 
+			if (this.defaultSource == "editor") {
+				this.default = this.originalEditor.value;
+			}
+
 			// Update editor if original mutates
 			// This means that expressions on mv-editor for individual collection items will not be picked up
+			// We attach this observer to elements that are either the prototype of their kind, or they have a different original editor
 			if (!this.template || this.originalEditor !== this.template.originalEditor) {
 				this.originalEditorObserver?.destroy();
 
 				this.originalEditorObserver = new Mavo.Observer(this.originalEditor, "all", records => {
 					let nodes = [this];
 
-					if (this.template) {
+					if (this.copies) {
 						for (let n of this.copies) {
 							if (n.originalEditor === this.originalEditor) {
 								nodes.push(n);
@@ -361,14 +415,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					}
 
 					for (let primitive of nodes) {
-						if (primitive.defaultSource == "editor") {
-							primitive.default = this.originalEditor.value;
-						}
-
-						if (primitive.editor) {
-							primitive.editor = this.originalEditor.cloneNode(true);
-						}
-
+						primitive.originalEditorUpdated({force: true});
 						primitive.setValue(primitive.value, {force: true, silent: true});
 					}
 				});
@@ -379,6 +426,18 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.generateDefaultEditor();
 				this.editorUpdated();
 			}
+		}
+
+		let editor = this.editor ?? this.originalEditor;
+
+		if (editor?.matches("select:not(.mv-options-select")) {
+			// This is a select menu that is not automatically generated from mv-options
+			// We need to update this.options
+
+			let obj = [...editor.options]
+				.filter(o => !o.classList.contains("mv-volatile"))
+				.map(o => [o.value, o.textContent]);
+			this.options = new Map(obj);
 		}
 	}
 
@@ -693,11 +752,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.config.setValue.call(this, this.element, value);
 			}
 			else if (!o.dataOnly) {
-				let map = this.originalEditor || this.editor;
 				let presentational;
 
-				if (map?.matches("select")) {
-					presentational = [...map.options].find(o => o.value == value)?.textContent;
+				if (this.options) {
+					presentational = this.options.get(value);
 				}
 
 				_.setValue(this.element, value, {
@@ -1248,6 +1306,13 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 
 			if (editing) {
 				node.edit({force: true});
+			}
+		}
+		else if (attribute === "mv-options") {
+			node.updateOptions();
+
+			if (node.editor) {
+				node.generateDefaultEditor();
 			}
 		}
 		else if (attribute && attribute.indexOf("mv-editor-") === 0) {
