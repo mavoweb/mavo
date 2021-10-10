@@ -702,7 +702,7 @@ var _ = $.extend(Mavo, {
 		str.trim().match(/(?:\\[,;]|[^,;])+/g)?.forEach(option => {
 			if (option) {
 				option = option.trim().replace(/\\([,;])/g, "$1");
-				var pair = option.match(/^\s*((?:\\:|[^:])+?)\s*:\s*(.+)$/);
+				var pair = option.match(/^\s*((?:\\:|[^:])*?)\s*:\s*(.+)$/);
 				let key, value;
 
 				if (pair) {
