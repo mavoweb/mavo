@@ -242,28 +242,25 @@ let _ = self.Mavo = $.Class(class Mavo {
 			requestAnimationFrame(() => Stretchy.resizeAll());
 		});
 
+		this.dataLoaded.then(async evt => {
+			await Mavo.defer();
 
-		if (this.autoSave) {
-			this.dataLoaded.then(evt => {
-				var debouncedSave = _.debounce(() => {
-					this.save();
-				}, this.autoSaveDelay);
+			this.permissions.can("save", () => {
+				if (this.autoSave) {
+					let debouncedSave = _.debounce(() => {
+						this.save();
+					}, this.autoSaveDelay);
 
-				var callback = evt => {
-					if (evt.node.saved && this.autoSave) {
-						debouncedSave();
-					}
-				};
-
-				requestAnimationFrame(() => {
-					this.permissions.can("save", () => {
-						$.bind(this.element, "mv-change.mavo:autosave", callback);
-					}, () => {
-						$.unbind(this.element, "mv-change.mavo:autosave", callback);
+					$.bind(this.element, "mv-change.mavo:autosave", evt => {
+						if (evt.node.saved && this.autoSave) {
+							debouncedSave();
+						}
 					});
-				});
+				}
+			}, () => {
+				$.unbind(this.element, "mv-change.mavo:autosave");
 			});
-		}
+		});
 
 		// Keyboard navigation
 		this.element.addEventListener("keydown", evt => {
