@@ -365,6 +365,10 @@ let _ = self.Mavo = $.Class(class Mavo {
 	}
 
 	edit () {
+		if (this.bar?.edit) {
+			this.bar.edit.click();
+		}
+
 		this.root.edit();
 
 		// Highlight collection item when item controls are hovered
