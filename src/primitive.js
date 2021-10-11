@@ -1152,6 +1152,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			return false;
 		}
 
+		if (attribute.startsWith("on")){
+			// Event listener attributes should be set as attributes,
+			// the properties expect functions and break with strings
+			return false;
+		}
+
 		if (element.namespaceURI == "http://www.w3.org/2000/svg") {
 			// SVG has a fucked up DOM, do not use these properties
 			return false;
