@@ -499,7 +499,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 				}
 			};
 
-			this.sourceBackend.addEventListener("mv-remotedatachange", updateListener);
+			this.sourceBackend?.addEventListener("mv-remotedatachange", updateListener);
 		}
 
 		return changed;
