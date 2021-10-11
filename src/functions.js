@@ -327,11 +327,7 @@ var _ = Mavo.Functions = {
 	},
 
 	group: (...objects) => {
-		if (objects.length === 0) {
-			return {};
-		}
-
-		return Object.assign(...objects);
+		return Object.assign({}, ...objects);
 	},
 	list: (...items) => items.flat(),
 
