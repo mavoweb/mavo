@@ -48,7 +48,7 @@ var _ = Mavo.UI.Bar = $.Class({
 			this.element.innerHTML = "";
 		}
 
-		this.controls.forEach(id => {
+		for (let id of this.controls) {
 			let o = _.controls[id];
 
 			if (this[id]) {
@@ -82,10 +82,10 @@ var _ = Mavo.UI.Bar = $.Class({
 				this.remove(id);
 			}
 
-			for (var events in o.events) {
+			for (let events in o.events) {
 				$.bind(this[id], events, o.events[events].bind(this.mavo));
 			}
-		});
+		}
 
 		for (let id in _.controls) {
 			let o = _.controls[id];
@@ -194,36 +194,77 @@ var _ = Mavo.UI.Bar = $.Class({
 
 	static: {
 		getControls: function(template) {
-			var all = Object.keys(_.controls);
+			template = template?.trim();
 
-			if (template && (template = template.trim())) {
-				if (template == "none") {
-					return [];
-				}
-
-				var relative = /^with\s|\b(yes|no)-\w+\b/.test(template);
-				template = template.replace(/\byes-|^with\s+/g, "");
-				var ids = template.split(/\s+/);
-
-				// Drop duplicates (last one wins)
-				ids = Mavo.Functions.unique(ids.reverse()).reverse();
-
-				if (relative) {
-					return all.filter(id => {
-						var positive = ids.lastIndexOf(id);
-						var negative = ids.lastIndexOf("no-" + id);
-						var keep = positive > Math.max(-1, negative);
-						var drop = negative > Math.max(-1, positive);
-
-						return keep || (!_.controls[id].optional && !drop);
-					});
-				}
-
-				return ids;
+			if (template === "none") {
+				return [];
 			}
 
-			// No template, return default set
-			return all.filter(id => !_.controls[id].optional);
+			let all = Object.keys(_.controls);
+
+			if (!template) {
+				// No template, return default set
+				return all.filter(id => !_.controls[id].optional);
+			}
+
+			let relative = /^with\s|\bno-\w+\b/.test(template);
+			template = template.replace(/\b^with\s+/g, "");
+			let ids = template.split(/\s+/);
+
+			// Convert both into sets
+			all = new Set(all);
+			ids = new Set(ids);
+
+			for (let id of ids) {
+				if (id.startsWith("no-")) {
+					// Drop negative references
+					ids.delete(id);
+
+					id = id.slice(3); // Drop "no-"
+
+					if (!ids.has(id)) {
+						// If there's no positive reference *as well*, drop it
+						// Note that this means that in `foo no-foo`, `no-foo` is ignored
+						all.delete(id);
+					}
+				}
+				else if (!all.has(id)) {
+					// Drop nonexistent ids
+					ids.delete(id);
+				}
+			}
+
+			if (!relative) {
+				return [...ids];
+			}
+
+			// Drop optional controls not specified from `all`
+			for (let id of all) {
+				let o = _.controls[id];
+
+				if (o.optional && !ids.has(id)) {
+					all.delete(id);
+				}
+			}
+
+			all = [...all];
+
+			// At this point all has all the buttons we want in the default order and ids has a subset, in the specified order
+			// How do we combine them and preserve as much of the default order as we can while still following the specified order?
+
+			if (ids.size === 0) {
+				return all;
+			}
+
+			// First, we find which part of `all` needs to be reordered
+			let indices = [...ids].map(id => all.indexOf(id));
+			let start = Math.min(...indices);
+			let end = Math.max(...indices);
+			let before = all.slice(0, start);
+			let after = all.slice(end + 1);
+			let slice = all.slice(start, end + 1).filter(id => !ids.has(id));
+
+			return [...before, ...slice, ...ids, ...after];
 		},
 
 		controls: {
