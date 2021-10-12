@@ -2,8 +2,8 @@
 
 Mavo.attributes.push("mv-bar");
 
-var _ = Mavo.UI.Bar = $.Class({
-	constructor: function(mavo) {
+let _ = Mavo.UI.Bar = class Bar {
+	constructor (mavo) {
 		this.mavo = mavo;
 
 		this.element = $(".mv-bar", this.mavo.element);
@@ -111,9 +111,9 @@ var _ = Mavo.UI.Bar = $.Class({
 		}
 
 		Mavo.observers.resume();
-	},
+	}
 
-	resize: function() {
+	resize () {
 		if (!this.targetHeight) {
 			// We don't have a correct measurement for target height, abort
 			this.targetHeight = this.element.offsetHeight;
@@ -149,10 +149,10 @@ var _ = Mavo.UI.Bar = $.Class({
 		}
 
 		this.resizeObserver?.observe(this.element);
-	},
+	}
 
-	add: function(id) {
-		var o = _.controls[id];
+	add (id) {
+		let o = _.controls[id];
 
 		if (o.prepare) {
 			o.prepare.call(this.mavo);
@@ -163,10 +163,10 @@ var _ = Mavo.UI.Bar = $.Class({
 		if (!this.resizeObserver && !this.noResize) {
 			requestAnimationFrame(() => this.resize());
 		}
-	},
+	}
 
-	remove: function(id) {
-		var o =_.controls[id];
+	remove (id) {
+		let o =_.controls[id];
 
 		Mavo.revocably.remove(this[id], "mv-" + id);
 
@@ -177,276 +177,274 @@ var _ = Mavo.UI.Bar = $.Class({
 		if (!this.resizeObserver && !this.noResize) {
 			requestAnimationFrame(() => this.resize());
 		}
-	},
+	}
 
-	toggle: function(id, add) {
+	toggle (id, add) {
 		return this[add? "add" : "remove"](id);
-	},
+	}
 
-	proxy: {
-		"permissions": "mavo"
-	},
+	get permissions () {
+		return this.mavo.permissions;
+	}
 
 	destroy () {
 		this.resizeObserver.disconnect();
 		this.resizeObserver = null;
-	},
+	}
 
-	static: {
-		getControls: function(template) {
-			template = template?.trim();
+	static getControls (template) {
+		template = template?.trim();
 
-			if (template === "none") {
-				return [];
-			}
+		if (template === "none") {
+			return [];
+		}
 
-			let all = Object.keys(_.controls);
+		let all = Object.keys(_.controls);
 
-			if (!template) {
-				// No template, return default set
-				return all.filter(id => !_.controls[id].optional);
-			}
+		if (!template) {
+			// No template, return default set
+			return all.filter(id => !_.controls[id].optional);
+		}
 
-			let relative = /^with\s|\bno-\w+\b/.test(template);
-			template = template.replace(/\b^with\s+/g, "");
-			let ids = template.split(/\s+/);
+		let relative = /^with\s|\bno-\w+\b/.test(template);
+		template = template.replace(/\b^with\s+/g, "");
+		let ids = template.split(/\s+/);
 
-			// Convert both into sets
-			all = new Set(all);
-			ids = new Set(ids);
+		// Convert both into sets
+		all = new Set(all);
+		ids = new Set(ids);
 
-			for (let id of ids) {
-				if (id.startsWith("no-")) {
-					// Drop negative references
-					ids.delete(id);
+		for (let id of ids) {
+			if (id.startsWith("no-")) {
+				// Drop negative references
+				ids.delete(id);
 
-					id = id.slice(3); // Drop "no-"
+				id = id.slice(3); // Drop "no-"
 
-					if (!ids.has(id)) {
-						// If there's no positive reference *as well*, drop it
-						// Note that this means that in `foo no-foo`, `no-foo` is ignored
-						all.delete(id);
-					}
-				}
-				else if (!all.has(id)) {
-					// Drop nonexistent ids
-					ids.delete(id);
-				}
-			}
-
-			if (!relative) {
-				return [...ids];
-			}
-
-			// Drop optional controls not specified from `all`
-			for (let id of all) {
-				let o = _.controls[id];
-
-				if (o.optional && !ids.has(id)) {
+				if (!ids.has(id)) {
+					// If there's no positive reference *as well*, drop it
+					// Note that this means that in `foo no-foo`, `no-foo` is ignored
 					all.delete(id);
 				}
 			}
-
-			all = [...all];
-
-			// At this point all has all the buttons we want in the default order and ids has a subset, in the specified order
-			// How do we combine them and preserve as much of the default order as we can while still following the specified order?
-
-			if (ids.size === 0) {
-				return all;
+			else if (!all.has(id)) {
+				// Drop nonexistent ids
+				ids.delete(id);
 			}
+		}
 
-			// First, we find which part of `all` needs to be reordered
-			let indices = [...ids].map(id => all.indexOf(id));
-			let start = Math.min(...indices);
-			let end = Math.max(...indices);
-			let before = all.slice(0, start);
-			let after = all.slice(end + 1);
-			let slice = all.slice(start, end + 1).filter(id => !ids.has(id));
+		if (!relative) {
+			return [...ids];
+		}
 
-			return [...before, ...slice, ...ids, ...after];
-		},
+		// Drop optional controls not specified from `all`
+		for (let id of all) {
+			let o = _.controls[id];
 
-		controls: {
-			status: {
-				create: function(custom) {
-					return custom || $.create({
-						className: "mv-status"
-					});
-				},
-				prepare: function() {
-					var backend = this.primaryBackend;
-
-					if (backend?.user) {
-						var user = backend.user;
-						var html = [user.name || ""];
-
-						if (user.avatar) {
-							html.unshift($.create("img", {
-								className: "mv-avatar",
-								src: user.avatar
-							}), " ");
-						}
-
-						if (user.url) {
-							html = [$.create("a", {
-								href: user.url,
-								target: "_blank",
-								contents: html
-							})];
-						}
-
-						this.bar.status.textContent = "";
-						$.contents(this.bar.status, [
-							{tag: "span", innerHTML: this._("logged-in-as", backend)},
-							" ",
-							...html
-						]);
-					}
-				},
-				permission: "logout"
-			},
-
-			edit: {
-				action: function() {
-					if (this.editing) {
-						this.done();
-						this.bar.edit.textContent = this._("edit");
-					}
-					else {
-						this.edit();
-						this.bar.edit.textContent = this._("editing");
-					}
-				},
-				permission: ["edit", "add", "delete"],
-				cleanup: function() {
-					if (this.editing) {
-						this.done();
-
-						if (this.bar?.edit) {
-							this.bar.edit.textContent = this._("edit");
-						}
-					}
-				},
-				condition: function() {
-					return this.needsEdit;
-				}
-			},
-
-			save: {
-				action: function() {
-					this.save();
-				},
-				events: {
-					"mouseenter focus": function() {
-						this.element.classList.add("mv-highlight-unsaved");
-					},
-					"mouseleave blur": function() {
-						this.element.classList.remove("mv-highlight-unsaved");
-					}
-				},
-				permission: "save",
-				condition: function() {
-					return !this.autoSave || this.autoSaveDelay > 0;
-				}
-			},
-
-			export: {
-				create: function(custom) {
-					var a;
-
-					if (custom) {
-						a = custom.matches("a")? custom : $.create("a", {
-							className: "mv-button",
-							around: custom
-						});
-					}
-					else {
-						a = $.create("a", {
-							className: "mv-export mv-button",
-							textContent: this._("export")
-						});
-					}
-
-					a.setAttribute("download", this.id + ".json");
-
-					return a;
-				},
-				events: {
-					mousedown: function() {
-						this.bar.export.href = "data:application/json;charset=UTF-8," + encodeURIComponent(this.toJSON());
-					}
-				},
-				permission: "edit",
-				optional: true
-			},
-
-			import: {
-				create: function(custom) {
-					var button = custom || $.create("span", {
-						role: "button",
-						tabIndex: "0",
-						className: "mv-import mv-button",
-						textContent: this._("import"),
-						events: {
-							focus: evt => {
-								input.focus();
-							}
-						}
-					});
-
-					var input = $.create("input", {
-						type: "file",
-						inside: button,
-						events: {
-							change: evt => {
-								var file = evt.target.files[0];
-
-								if (file) {
-									var reader = $.extend(new FileReader(), {
-										onload: evt => {
-											this.inProgress = false;
-
-											try {
-												var json = JSON.parse(reader.result);
-												this.render(json);
-											}
-											catch (e) {
-												this.error(this._("cannot-parse"));
-											}
-										},
-										onerror: evt => {
-											this.error(this._("problem-loading"));
-										}
-									});
-
-									this.inProgress = this._("uploading");
-									reader.readAsText(file);
-								}
-							}
-						}
-					});
-
-					return button;
-				},
-				optional: true
-			},
-
-			login: {
-				action: function() {
-					this.primaryBackend.login();
-				},
-				permission: "login"
-			},
-
-			logout: {
-				action: function() {
-					this.primaryBackend.logout();
-				},
-				permission: "logout"
+			if (o.optional && !ids.has(id)) {
+				all.delete(id);
 			}
-		},
+		}
+
+		all = [...all];
+
+		// At this point all has all the buttons we want in the default order and ids has a subset, in the specified order
+		// How do we combine them and preserve as much of the default order as we can while still following the specified order?
+
+		if (ids.size === 0) {
+			return all;
+		}
+
+		// First, we find which part of `all` needs to be reordered
+		let indices = [...ids].map(id => all.indexOf(id));
+		let start = Math.min(...indices);
+		let end = Math.max(...indices);
+		let before = all.slice(0, start);
+		let after = all.slice(end + 1);
+		let slice = all.slice(start, end + 1).filter(id => !ids.has(id));
+
+		return [...before, ...slice, ...ids, ...after];
 	}
-});
+}
+
+_.controls = {
+	status: {
+		create: function(custom) {
+			return custom || $.create({
+				className: "mv-status"
+			});
+		},
+		prepare: function() {
+			let backend = this.primaryBackend;
+
+			if (backend?.user) {
+				let user = backend.user;
+				let html = [user.name || ""];
+
+				if (user.avatar) {
+					html.unshift($.create("img", {
+						className: "mv-avatar",
+						src: user.avatar
+					}), " ");
+				}
+
+				if (user.url) {
+					html = [$.create("a", {
+						href: user.url,
+						target: "_blank",
+						contents: html
+					})];
+				}
+
+				this.bar.status.textContent = "";
+				$.contents(this.bar.status, [
+					{tag: "span", innerHTML: this._("logged-in-as", backend)},
+					" ",
+					...html
+				]);
+			}
+		},
+		permission: "logout"
+	},
+
+	edit: {
+		action: function() {
+			if (this.editing) {
+				this.done();
+				this.bar.edit.textContent = this._("edit");
+			}
+			else {
+				this.edit();
+				this.bar.edit.textContent = this._("editing");
+			}
+		},
+		permission: ["edit", "add", "delete"],
+		cleanup: function() {
+			if (this.editing) {
+				this.done();
+
+				if (this.bar?.edit) {
+					this.bar.edit.textContent = this._("edit");
+				}
+			}
+		},
+		condition: function() {
+			return this.needsEdit;
+		}
+	},
+
+	save: {
+		action: function() {
+			this.save();
+		},
+		events: {
+			"mouseenter focus": function() {
+				this.element.classList.add("mv-highlight-unsaved");
+			},
+			"mouseleave blur": function() {
+				this.element.classList.remove("mv-highlight-unsaved");
+			}
+		},
+		permission: "save",
+		condition: function() {
+			return !this.autoSave || this.autoSaveDelay > 0;
+		}
+	},
+
+	export: {
+		create: function(custom) {
+			let a;
+
+			if (custom) {
+				a = custom.matches("a")? custom : $.create("a", {
+					className: "mv-button",
+					around: custom
+				});
+			}
+			else {
+				a = $.create("a", {
+					className: "mv-export mv-button",
+					textContent: this._("export")
+				});
+			}
+
+			a.setAttribute("download", this.id + ".json");
+
+			return a;
+		},
+		events: {
+			mousedown: function() {
+				this.bar.export.href = "data:application/json;charset=UTF-8," + encodeURIComponent(this.toJSON());
+			}
+		},
+		permission: "edit",
+		optional: true
+	},
+
+	import: {
+		create: function(custom) {
+			let button = custom || $.create("span", {
+				role: "button",
+				tabIndex: "0",
+				className: "mv-import mv-button",
+				textContent: this._("import"),
+				events: {
+					focus: evt => {
+						input.focus();
+					}
+				}
+			});
+
+			let input = $.create("input", {
+				type: "file",
+				inside: button,
+				events: {
+					change: evt => {
+						let file = evt.target.files[0];
+
+						if (file) {
+							let reader = $.extend(new FileReader(), {
+								onload: evt => {
+									this.inProgress = false;
+
+									try {
+										let json = JSON.parse(reader.result);
+										this.render(json);
+									}
+									catch (e) {
+										this.error(this._("cannot-parse"));
+									}
+								},
+								onerror: evt => {
+									this.error(this._("problem-loading"));
+								}
+							});
+
+							this.inProgress = this._("uploading");
+							reader.readAsText(file);
+						}
+					}
+				}
+			});
+
+			return button;
+		},
+		optional: true
+	},
+
+	login: {
+		action: function() {
+			this.primaryBackend.login();
+		},
+		permission: "login"
+	},
+
+	logout: {
+		action: function() {
+			this.primaryBackend.logout();
+		},
+		permission: "logout"
+	}
+};
 
 })(Bliss, Bliss.$);
