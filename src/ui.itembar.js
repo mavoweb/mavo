@@ -21,45 +21,28 @@ var _ = Mavo.UI.Itembar = class Itembar {
 				className: "mv-item-bar mv-ui"
 			});
 
-			var bottomUp = this.collection.bottomUp;
-			var args = `$item${bottomUp? ", $index + 1" : ""}`;
-			var buttons = [
-				{
-					tag: "button",
-					type: "button",
-					title: this.mavo._("delete-item", this.item),
-					className: "mv-delete",
-					// Why $item and not this.collection.property?
-					// If there's a nested property with the same name, the name will refer to that
-					// However, this means that if we place the item bar inside another item, the button will not work anymore
-					// It's a tradeoff, and perhaps if it proves to be a problem we can start detecting which one is best
-					"mv-action": "delete($item)"
-				}, {
-					tag: "button",
-					type: "button",
-					title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
-					className: "mv-add",
-					"mv-action": `if($cmd, add($item, ${args}), add(${args}))`
-				}
-			];
+			this.template = this.element.getAttribute("mv-item-bar")
+		                || this.item.element.getAttribute("mv-item-bar")
+		                || this.collection.element.getAttribute("mv-item-bar")
+		                || "";
 
-			if (this.item instanceof Mavo.Group) {
-				this.dragHandle = $.create({
-					tag: "button",
-					type: "button",
-					title: this.mavo._("drag-to-reorder", this.item),
-					className: "mv-drag-handle"
-				});
+			let controls = Object.assign({}, _.controls);
+			// If item is a primitive, move button is optional
+			controls.move = {
+				...controls.move,
+				optional: this.item instanceof Mavo.Primitive
+			};
 
-				buttons.push(this.dragHandle);
-			}
-			else {
-				this.dragHandle = this.item.element;
-			}
+			this.controls = Mavo.UI.Bar.getControls(this.template, controls);
+
+			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
 
 			$.set(this.element, {
 				"mv-rel": this.item.property,
-				contents: buttons
+				contents: this.controls.map(id => {
+					let meta = _.controls[id];
+					return $.create(meta.create.call(this));
+				})
 			});
 		}
 
@@ -202,6 +185,46 @@ $.Class(_, {
 		visible: new Set(),
 		container: {
 			"details": "summary"
+		},
+		controls: {
+			delete: {
+				create () {
+					return {
+						tag: "button",
+						type: "button",
+						title: this.mavo._("delete-item", this.item),
+						className: "mv-delete",
+						// Why $item and not this.collection.property?
+						// If there's a nested property with the same name, the name will refer to that
+						// However, this means that if we place the item bar inside another item, the button will not work anymore
+						// It's a tradeoff, and perhaps if it proves to be a problem we can start detecting which one is best
+						"mv-action": "delete($item)"
+					}
+				}
+			},
+			add: {
+				create () {
+					let bottomUp = this.collection.bottomUp;
+					let args = `$item${bottomUp? ", $index + 1" : ""}`;
+					return {
+						tag: "button",
+						type: "button",
+						title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
+						className: "mv-add",
+						"mv-action": `if($cmd, add($item, ${args}), add(${args}))`
+					};
+				}
+			},
+			move: {
+				create () {
+					return {
+						tag: "button",
+						type: "button",
+						title: this.mavo._("drag-to-reorder", this.item),
+						className: "mv-drag-handle mv-move"
+					};
+				}
+			}
 		}
 	}
 });
