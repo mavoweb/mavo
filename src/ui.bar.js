@@ -192,18 +192,18 @@ let _ = Mavo.UI.Bar = class Bar {
 		this.resizeObserver = null;
 	}
 
-	static getControls (template) {
+	static getControls (template, controls = _.controls) {
 		template = template?.trim();
 
 		if (template === "none") {
 			return [];
 		}
 
-		let all = Object.keys(_.controls);
+		let all = Object.keys(controls);
 
 		if (!template) {
 			// No template, return default set
-			return all.filter(id => !_.controls[id].optional);
+			return all.filter(id => !controls[id].optional);
 		}
 
 		let relative = /^with\s|\bno-\w+\b/.test(template);
@@ -239,7 +239,7 @@ let _ = Mavo.UI.Bar = class Bar {
 
 		// Drop optional controls not specified from `all`
 		for (let id of all) {
-			let o = _.controls[id];
+			let o = controls[id];
 
 			if (o.optional && !ids.has(id)) {
 				all.delete(id);
