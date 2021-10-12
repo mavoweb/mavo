@@ -1,6 +1,6 @@
 (function($, $$) {
 
-var _ = Mavo.UI.Itembar = $.Class({
+var _ = Mavo.UI.Itembar = class Itembar {
 	constructor (item) {
 		this.item = item;
 
@@ -92,13 +92,21 @@ var _ = Mavo.UI.Itembar = $.Class({
 		}
 
 		Mavo.data(this.element, "item", this.item);
-	},
+	}
 
-	destroy: function() {
+	get collection() {
+		return this.item.collection;
+	}
+
+	get mavo() {
+		return this.item.mavo;
+	}
+
+	destroy () {
 		this.hide();
-	},
+	}
 
-	show: function(sticky) {
+	show (sticky) {
 		_.visible.forEach(instance => {
 			if (instance != this && (!this.sticky || instance.sticky)) {
 				clearTimeout(instance.hideTimeout);
@@ -113,9 +121,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 			this.sticky = this.sticky || sticky;
 			$.bind([this.item.element, this.element], "focusout mouseleave", this);
 		}
-	},
+	}
 
-	hide: function(sticky, timeout = 0) {
+	hide (sticky, timeout = 0) {
 		if (!this.sticky || sticky) {
 			if (timeout) {
 				this.hideTimeout = setTimeout(() => this.hide(sticky), timeout);
@@ -128,9 +136,9 @@ var _ = Mavo.UI.Itembar = $.Class({
 			}
 
 		}
-	},
+	}
 
-	handleEvent: function(evt) {
+	handleEvent (evt) {
 		var sticky = evt.type.indexOf("mouse") === -1;
 
 		if (this.isWithinItem(evt.target)) {
@@ -146,18 +154,18 @@ var _ = Mavo.UI.Itembar = $.Class({
 				evt.stopPropagation();
 			}
 		}
-	},
+	}
 
-	isWithinItem: function(element) {
+	isWithinItem (element) {
 		if (!element) {
 			return false;
 		}
 
 		var itemBar = element.closest(".mv-item-bar");
 		return itemBar? itemBar === this.element : element.closest(Mavo.selectors.item) === this.item.element;
-	},
+	}
 
-	add: function() {
+	add () {
 		if (!this.element.parentNode && !Mavo.revocably.add(this.element)) {
 			// Has not been added before
 			var tag = this.item.element.nodeName.toLowerCase();
@@ -172,27 +180,23 @@ var _ = Mavo.UI.Itembar = $.Class({
 		if (this.dragHandle == this.item.element) {
 			this.item.element.classList.add("mv-drag-handle");
 		}
-	},
+	}
 
-	remove: function() {
+	remove () {
 		Mavo.revocably.remove(this.element);
 
 		if (this.dragHandle == this.item.element) {
 			this.item.element.classList.remove("mv-drag-handle");
 		}
-	},
+	}
+}
 
+$.Class(_, {
 	live: {
 		sticky: function(v) {
 			this.element.classList.toggle("mv-sticky", v);
 		}
 	},
-
-	proxy: {
-		collection: "item",
-		mavo: "item"
-	},
-
 	static: {
 		DELAY: 100,
 		visible: new Set(),
