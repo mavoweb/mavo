@@ -175,9 +175,7 @@ var _ = Mavo.Group = class Group extends Mavo.Node {
 						propertyData = data[obj.currentAlias];
 						break;
 					}
-
 				}
-
 			}
 
 			changed = obj.render(propertyData, o) || changed;

@@ -38,6 +38,14 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 			this.templateElement = this.templateElement.cloneNode(true);
 		}
 
+		this.initializeData();
+
+		this.postInit();
+
+		Mavo.hooks.run("collection-init-end", this);
+	}
+
+	initializeData () {
 		let item = this.add(this.firstItemElement, undefined, {silent: true});
 
 		if (this.initialItems === 0) {
@@ -55,10 +63,6 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 				this.add();
 			}
 		}
-
-		this.postInit();
-
-		Mavo.hooks.run("collection-init-end", this);
 	}
 
 	createAddButton() {
