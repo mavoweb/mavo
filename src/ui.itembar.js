@@ -41,7 +41,8 @@ var _ = Mavo.UI.Itembar = class Itembar {
 				"mv-rel": this.item.property,
 				contents: this.controls.map(id => {
 					let meta = _.controls[id];
-					return $.create(meta.create.call(this));
+					let existing = $(`.mv-${id}`, this.element);
+					return $.create(meta.create.call(this, existing));
 				})
 			});
 		}
@@ -188,41 +189,48 @@ $.Class(_, {
 		},
 		controls: {
 			delete: {
-				create () {
-					return {
-						tag: "button",
+				create (existing) {
+					let button = existing || $.create("button", {
 						type: "button",
 						title: this.mavo._("delete-item", this.item),
-						className: "mv-delete",
-						// Why $item and not this.collection.property?
-						// If there's a nested property with the same name, the name will refer to that
-						// However, this means that if we place the item bar inside another item, the button will not work anymore
-						// It's a tradeoff, and perhaps if it proves to be a problem we can start detecting which one is best
-						"mv-action": "delete($item)"
-					}
+						className: "mv-delete"
+					});
+
+					// Why $item and not this.collection.property?
+					// If there's a nested property with the same name, the name will refer to that
+					// However, this means that if we place the item bar inside another item, the button will not work anymore
+					// It's a tradeoff, and perhaps if it proves to be a problem we can start detecting which one is best
+					Mavo.setAttributeShy(button, "mv-action", "delete($item)");
+
+					return button;
 				}
 			},
 			add: {
-				create () {
+				create (existing) {
 					let bottomUp = this.collection.bottomUp;
 					let args = `$item${bottomUp? ", $index + 1" : ""}`;
-					return {
-						tag: "button",
+					let button = existing || $.create("button", {
 						type: "button",
 						title: this.mavo._(`add-item-${bottomUp? "after" : "before"}`, this.item),
-						className: "mv-add",
-						"mv-action": `if($cmd, add($item, ${args}), add(${args}))`
-					};
+						className: "mv-add"
+					});
+
+					Mavo.setAttributeShy(button, "mv-action", `if($cmd, add($item, ${args}), add(${args}))`);
+
+					return button;
 				}
 			},
 			move: {
-				create () {
-					return {
-						tag: "button",
+				create (existing) {
+					let button = existing || $.create("button", {
 						type: "button",
 						title: this.mavo._("drag-to-reorder", this.item),
-						className: "mv-drag-handle mv-move"
-					};
+						className: "mv-move"
+					});
+
+					button.classList.add("mv-drag-handle");
+
+					return button;
 				}
 			}
 		}
