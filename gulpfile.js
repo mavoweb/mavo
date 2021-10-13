@@ -17,7 +17,7 @@ var csso = require("gulp-csso");
 
 sass.compiler = require("sass");
 
-var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/build/jsep.min.js"];
+var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/dist/jsep.iife.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
 			expression domexpression expressions mv-if functions functions.date mavoscript actions data
