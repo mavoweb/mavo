@@ -652,7 +652,20 @@ var _ = Mavo.Script = {
 			return `$fn.get(${_.serialize(object, objectParent)}, ${properties.reverse().join(", ")})`;
 		},
 		"ArrayExpression": node => `[${node.elements.map(n => _.serialize(n, node)).join(", ")}]`,
-		"Literal": node => node.raw.replace(/\r/g, "\\r").replace(/\n/g, "\\n"),
+		"Literal": node => {
+			let quote = node.raw[0];
+
+			if (quote === "'" || quote === '"') {
+				let content = node.raw.slice(1, -1);
+				content = content.replace(/\r/g, "\\r").replace(/\n/g, "\\n");
+				// jsep does not properly escape quotes, see https://github.com/EricSmekens/jsep/issues/192
+				let regex = quote === '"'? /(?<!\\)"/g : /(?<!\\)'/g
+				content = content.replaceAll(regex, "\\" + quote);
+				return quote + content + quote;
+			}
+
+			return node.raw;
+		},
 		"Identifier": node => node.name,
 		"ThisExpression": node => "this",
 		"Compound": node => node.body.map(n => _.serialize(n, node)).join(", ")
