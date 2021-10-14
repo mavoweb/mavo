@@ -659,8 +659,8 @@ var _ = Mavo.Script = {
 				let content = node.raw.slice(1, -1);
 				content = content.replace(/\r/g, "\\r").replace(/\n/g, "\\n");
 				// jsep does not properly escape quotes, see https://github.com/EricSmekens/jsep/issues/192
-				let regex = quote === '"'? /(?<!\\)"/g : /(?<!\\)'/g
-				content = content.replaceAll(regex, "\\" + quote);
+				// let regex = quote === '"'? /(?<!\\)"/g : /(?<!\\)'/g
+				content = content.replaceAll(quote, "\\" + quote);
 				return quote + content + quote;
 			}
 
