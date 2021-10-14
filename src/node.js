@@ -104,7 +104,8 @@ var _ = Mavo.Node = class Node {
 	}
 
 	get properties() {
-		return Object.keys(this.liveData.data[Mavo.route]);
+		let route = this.liveData.data[Mavo.route];
+		return route? Object.keys(route) : [];
 	}
 
 	/**
