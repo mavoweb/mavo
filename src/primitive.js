@@ -128,20 +128,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				this.defaultSource = "attribute";
 			}
 
-			var keepTemplateValue = !this.template // not in a collection or first item
-			                        || this.template.templateValue != this.templateValue // or different template value than first item
-									|| this.modes == "edit"; // or is always edited
 
-			if (this.default === undefined && keepTemplateValue) {
-				this.initialValue = this.templateValue;
-			}
-			else {
-				this.initialValue = this.default;
-			}
-
-			if (this.initialValue === undefined) {
-				this.initialValue = this.emptyValue;
-			}
 
 			this.setValue(this.initialValue, {silent: true});
 		}
@@ -149,6 +136,26 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		this.postInit();
 
 		Mavo.hooks.run("primitive-init-end", this);
+	}
+
+	get initialValue () {
+		let ret;
+		let keepTemplateValue = !this.template // not in a collection or first item
+		                        || this.template.templateValue != this.templateValue // or different template value than first item
+		                        || this.modes == "edit"; // or is always edited
+
+		if (this.default === undefined && keepTemplateValue) {
+			ret = this.templateValue;
+		}
+		else {
+			ret = this.default;
+		}
+
+		if (ret === undefined) {
+			ret = this.emptyValue;
+		}
+
+		return ret;
 	}
 
 	get editorValue() {
