@@ -449,14 +449,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	edit (o = {}) {
-		let wasEditing = this.editing;
+		let wasEditing = this.editing && !this.initEdit;
 
 		if (super.edit(o) === false) {
 			// Invalid edit
 			return false;
 		}
 
-		if (!o.force && wasEditing && !this.initEdit) {
+		if (!o.force && wasEditing) {
 			// Already being edited
 			return true;
 		}
@@ -474,9 +474,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 			// Prevent default actions while editing
 			// e.g. following links etc
-			if (!this.modes) {
+			if (!this.modes || this.modes === "edit") {
 				$.bind(this.element, "click.mavo:edit", evt => {
-					if (!this.editor.contains(evt.target)) {
+					if (this.editor.contains(evt.target)) {
 						evt.preventDefault();
 					}
 				});
