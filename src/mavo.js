@@ -565,13 +565,13 @@ let _ = self.Mavo = $.Class(class Mavo {
 				}
 
 				if (err && data === null) {
-					let xhr = err instanceof XMLHttpRequest? err : err.xhr;
+					let response = err instanceof Response || err instanceof XMLHttpRequest? err : err.xhr;
 
-					if (xhr && xhr.status !== 404) {
+					if (response?.status !== 404) {
 						let message = this._("problem-loading");
 
-						if (xhr) {
-							message += xhr.status? this._("http-error", err) : ": " + this._("cant-connect");
+						if (response) {
+							message += response.status? this._("http-error", err) : ": " + this._("cant-connect");
 						}
 
 						this.error(message, err);

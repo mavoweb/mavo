@@ -83,21 +83,23 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 			url = new URL(`https://raw.githubusercontent.com/${this.username}/${this.repo}/${this.branch || "main"}/${this.path}`);
 			url.searchParams.set("timestamp", Date.now()); // ensure fresh copy
 
-			try {
-				let xhr = await $.fetch(url.href);
+			let response = await fetch(url.href);
+
+			if (response.ok) {
 				this.branch = this.branch || "main";
-				return xhr.responseText;
+				return response.text();
 			}
-			catch (e) {
-				if (e.status === 404 && !this.branch) {
+			else {
+
+				if (response.status === 404 && !this.branch) {
 					// Possibly using older default branch "master", try again and store branch name
 					url.pathname = `/${this.username}/${this.repo}/master/${this.path}`;
-					try {
-						let xhr = await $.fetch(url.href);
+					response = await fetch(url.href);
+
+					if (response.ok) {
 						this.branch = "master";
-						return xhr.responseText;
+						return response.text();
 					}
-					catch (e) {}
 				}
 			}
 

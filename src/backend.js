@@ -34,8 +34,8 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 		}
 
 		try {
-			let xhr = await $.fetch(url.href);
-			return xhr.responseText;
+			let response = await fetch(url.href);
+			return response.ok? response.text() : Promise.reject(response);
 		}
 		catch (e) {
 			return null;
@@ -91,7 +91,7 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 	/**
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
-	request (call, data, method = "GET", req = {}) {
+	async request (call, data, method = "GET", req = {}) {
 		req = Object.assign({}, req); // clone
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
@@ -104,7 +104,7 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 			req.headers["Authorization"] = req.headers["Authorization"] || `Bearer ${this.accessToken}`;
 		}
 
-		req.data = data;
+		req.body = data;
 
 		call = new URL(call, this.constructor.apiDomain);
 
@@ -113,30 +113,40 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 			call.searchParams.set("timestamp", Date.now());
 		}
 
-		if ($.type(req.data) === "object") {
+		if ($.type(req.body) === "object") {
 			if (req.method == "GET") {
-				for (let p in req.data) {
-					let action = req.data[p] === undefined? "delete" : "set";
-					call.searchParams[action](p, req.data[p]);
+				for (let p in req.body) {
+					let action = req.body[p] === undefined? "delete" : "set";
+					call.searchParams[action](p, req.body[p]);
 				}
 
-				delete req.data;
+				delete req.body;
 			}
 			else {
-				req.data = JSON.stringify(req.data);
+				req.body = JSON.stringify(req.body);
 			}
 		}
 
-		return $.fetch(call, req)
-			.catch(err => {
-				if (err?.xhr) {
-					return Promise.reject(err.xhr);
-				}
-				else {
-					this.mavo.error("Something went wrong while connecting to " + this.id, err);
-				}
-			})
-			.then(xhr => req.method == "HEAD"? xhr : xhr.response);
+		let response;
+
+		try {
+			response = await fetch(call, req);
+		}
+		catch (err) {
+			this.mavo.error("Something went wrong while connecting to " + this.id, err);
+		}
+
+		if (response?.ok) {
+			if (req.method === "HEAD" || req.responseType === "response") {
+				return response;
+			}
+			else {
+				return response[req.responseType]();
+			}
+		}
+		else {
+			throw response;
+		}
 	}
 
 	/**
