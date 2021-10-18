@@ -202,7 +202,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.mavoNode.render(value, {live: true});
 		}
 		else {
-			if (this.node.nodeType === Node.TEXT_NODE && this.node.parentNode) {
+			if (this.node.nodeType === Node.TEXT_NODE && !this.node.parentNode) {
 				// If our expression was on a text node, and that somehow became orphaned, use the parent instead
 				this.node = this.element;
 			}
