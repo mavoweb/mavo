@@ -34,11 +34,15 @@ var _ = Mavo.DOMExpression = $.Class({
 		if (this.node.nodeType === 3 && this.element === this.node) {
 			this.element = this.node.parentNode;
 
-			// If no element siblings make this.node the element, which is more robust
-			// Same if attribute, there are no attributes on a text node!
+			// If no element siblings consider making this.node the element, which is more robust
 			if (!this.node.parentNode.children.length || this.attribute) {
-				this.node = this.element;
 				this.element.normalize();
+
+				if (!this.node.parentNode || this.attribute) {
+					// Normalization destroyed our text node, reassign it to the parent
+					// Same if it's in an attribute, there are no attributes on a text node!
+					this.node = this.element;
+				}
 			}
 		}
 
@@ -198,6 +202,11 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.mavoNode.render(value, {live: true});
 		}
 		else {
+			if (this.node.nodeType === Node.TEXT_NODE && this.node.parentNode) {
+				// If our expression was on a text node, and that somehow became orphaned, use the parent instead
+				this.node = this.element;
+			}
+
 			Mavo.Primitive.setValue(this.node, value, {attribute: this.attribute});
 		}
 	},
