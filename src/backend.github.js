@@ -64,11 +64,19 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 					});
 			}
 
-			return this.request(info.apiCall, {ref:this.branch}, "GET", {
-					headers: {
-						"Accept": "application/vnd.github.squirrel-girl-preview"
-					}
-				}).then(response => Promise.resolve(info.repo && response.content? _.atob(response.content) : response));
+			let response = await this.request(info.apiCall, {ref:this.branch}, "GET", {
+				headers: {
+					"Accept": "application/vnd.github.squirrel-girl-preview"
+				}
+			});
+
+			if (info.repo && response.content) {
+				// Fetching file contents
+				return _.atob(response.content);
+			}
+			else {
+				return response;
+			}
 		}
 		else {
 			// Unauthenticated, use simple GET request to avoid rate limit

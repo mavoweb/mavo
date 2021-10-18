@@ -92,11 +92,11 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 	 * Helper for making OAuth requests with JSON-based APIs.
 	 */
 	request (call, data, method = "GET", req = {}) {
-		req = $.extend({}, req); // clone
+		req = Object.assign({}, req); // clone
 		req.method = req.method || method;
 		req.responseType = req.responseType || "json";
 
-		req.headers = $.extend({
+		req.headers = Object.assign({
 			"Content-Type": "application/json; charset=utf-8"
 		}, req.headers || {});
 
