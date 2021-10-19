@@ -64,7 +64,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 					});
 			}
 
-			let isRawAPICall = info.apiParams === undefined;
+			let isRawAPICall = info.apiParams !== undefined;
 			let responseType = isRawAPICall ? "response" : "json";
 			let req = {
 				responseType,
