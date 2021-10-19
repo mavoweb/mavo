@@ -64,7 +64,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 					});
 			}
 
-			let isRawAPICall = !!info.apiParams;
+			let isRawAPICall = info.apiParams === undefined;
 			let responseType = isRawAPICall ? "response" : "json";
 			let req = {
 				responseType,
@@ -87,7 +87,6 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 
 					do {
 						next = response.headers.get("Link")?.match(/<(.+?)>; rel="next"/)?.[1];
-						console.log(next);
 
 						if (next) {
 							response = await this.request(next, {ref:this.branch}, "GET", req);
