@@ -476,7 +476,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			// e.g. following links etc
 			if (!this.modes || this.modes === "edit") {
 				$.bind(this.element, "click.mavo:edit", evt => {
-					if (this.editor.contains(evt.target)) {
+					if (this.editor?.contains(evt.target)) {
 						evt.preventDefault();
 					}
 				});
