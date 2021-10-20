@@ -24,7 +24,7 @@ var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
 			node group primitive ui.popup elements collection implicit-collection ui.itembar
 			expression domexpression expressions mv-if functions functions.date mavoscript actions data
-			backend.dropbox backend.github`
+			backend.github`
 	.split(/\s+/);
 var versionOptions = {
 	replace: /%%VERSION%%/g
