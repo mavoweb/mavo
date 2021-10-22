@@ -5,7 +5,7 @@ Build file to concat & minify files, compile SCSS and so on.
 var gulp = require("gulp");
 var rename = require("gulp-rename");
 var concat = require("gulp-concat");
-var sass = require("gulp-sass");
+var sass = require('gulp-sass')(require('sass'));
 var babel = require("gulp-babel");
 var minify = require("gulp-babel-minify");
 var autoprefixer = require("gulp-autoprefixer");
@@ -17,8 +17,6 @@ var csso = require("gulp-csso");
 var fs = require("fs");
 var sorcery = require("sorcery");
 var replace = require("gulp-replace");
-
-sass.compiler = require("sass");
 
 var dependencies = ["../../bliss/bliss.shy.min.js", "../../stretchy/stretchy.min.js", "../../jsep/dist/jsep.iife.min.js"];
 var src = `mavo util locale locale.en plugins ui.bar ui.message permissions backend formats
