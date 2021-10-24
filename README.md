@@ -1,3 +1,4 @@
+Mavo<br>
 Mavo is an HTML-based language for building small scale data-driven websites without programming knowledge (no JS, no backends needed!), just by writing HTML. For JavaScript developers (who like HTML), Mavo can also be used as a declarative, reactive front-end framework to make UI development easier.
 
 Useful links:
