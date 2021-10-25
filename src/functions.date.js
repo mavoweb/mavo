@@ -104,6 +104,20 @@ $.extend(_, {
 	}, {multiValued: true}),
 
 	localTimezone: -(new Date()).getTimezoneOffset(),
+	getduration: $.extend(function (dur, format) {
+		if(format === "officialDurationString") {durationRegEx = /P(?:([.,\d]+)D)?(?:T(?:([.,\d]+)H)?(?:([.,\d]+)M)?(?:([.,\d]+)S)?)?/;}
+		if(format === "abbreviatedDurationString") {durationRegEx = /[\s]*(?:([.,\d]+)d)?[\s]*(?:([.,\d]+)h)?[\s]*(?:([.,\d]+)m)?[\s]*(?:([.,\d]+)s)?[\s]*/;}
+		if(format === "normalDurationString") {durationRegEx = /[\s]*(?:([.,\d]+)[ ]?day[s]?)?[\s]*(?:([.,\d]+)[ ]?hour[s]?)?[\s]*(?:([.,\d]+)[ ]?minute[s]?)?[\s]*(?:([.,\d]+)[ ]?second[s]?)?[\s]*/;}
+		var matches = dur.match(durationRegEx);
+		var dur_days = matches[1] === undefined ? 0 : matches[1];
+		var dur_hours = matches[2] === undefined ? 0 : matches[2];
+		var dur_minutes = matches[3] === undefined ? 0 : matches[3];
+		var dur_seconds = matches[4] === undefined ? 0 : matches[4];
+		
+		var dur_num = dur_days*24*60*60*1000+dur_hours*60*60*1000+dur_minutes*60*1000+dur_seconds*1000;
+  
+		return this.duration(dur_num);
+	  }),
 });
 
 _.msTo = (what, ms) => Math.floor(Math.abs(ms) / (s[what] * 1000)) || 0;
