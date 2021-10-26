@@ -29,11 +29,9 @@
     "gulp-inject-version": "^1",
     "gulp-notify": "^4.0.0",
     "gulp-rename": "^2",
-    "gulp-replace": "^1",
     "gulp-sass": "^5",
     "gulp-sourcemaps": "^2",
     "merge2": "^1",
-    "sass": "^1",
-    "sorcery": "^0.10.0"
+    "sass": "^1"
   }
 }
