@@ -22,6 +22,23 @@ var numeric = {
 	ms: d => d.getMilliseconds()
 };
 
+function parsePrecision(precision) {
+	precision = precision?.trim() || "";
+	let keys = Object.keys(s).reverse();
+	let ret = {};
+
+	do {
+		p = keys.shift();
+		ret[p] = true;
+	} while(!RegExp(p + "?").test(precision) && keys.length > 0);
+
+	if (precision == "ms") {
+		ret.ms = true;
+	}
+
+	return ret;
+}
+
 $.extend(_, {
 	get $now() {
 		return new Date();
@@ -67,6 +84,7 @@ $.extend(_, {
 		return $u.dateComponent("ms", ...arguments);
 	}, {multiValued: true}),
 
+	// Return an ISO date & time string
 	datetime: $.extend((date, precision = "minutes") => {
 		date = $u.date(date);
 
@@ -74,33 +92,93 @@ $.extend(_, {
 			return "";
 		}
 
-		return `${_.date(date)}T${_.time(date, precision)}`;
+		let parts = parsePrecision(precision);
+		let ret = _.date(date, precision);
+
+		if (!parts.hours) {
+			return ret; // No time
+		}
+
+		return `${ret}T${_.time(date, precision)}`;
 	}, {multiValued: true}),
 
-	date: $.extend(date => {
-		date = $u.date(date);
-
-		return date? `${_.year(date)}-${_.month(date, "00")}-${_.day(date, "00")}` : "";
-	}, {multiValued: true}),
-
-	time: $.extend((date, precision = "seconds") => {
+	// Return an ISO date
+	date: $.extend((date, precision = "days") => {
 		date = $u.date(date);
 
 		if (!date) {
 			return "";
 		}
 
-		var ret = `${_.hour(date, "00")}:${precision == "hours"? "00" : _.minute(date, "00")}`;
+		let parts = parsePrecision(precision);
+		let ret = [];
 
-		if (precision == "seconds" || precision == "ms") {
-			ret += `:${_.second(date, "00")}`;
+		if (parts.years) {
+			ret.push(_.year(date));
+		}
 
-			if (precision == "ms") {
-				ret += `.${_.ms(date)}`;
+		if (parts.months) {
+			ret.push(_.month(date, "00"));
+		}
+
+		if (parts.days) {
+			ret.push(_.day(date, "00"));
+		}
+
+		return ret.join("-");
+	}, {multiValued: true}),
+
+	// Return an ISO time
+	time: $.extend((date, precision = "minutes") => {
+		date = $u.date(date);
+
+		if (!date) {
+			return "";
+		}
+
+		let parts = parsePrecision(precision);
+		let ret = "";
+
+		if (parts.hours) {
+			ret += _.hour(date, "00") + ":" + (parts.minutes? _.minute(date, "00") : "00");
+
+			if (parts.seconds) {
+				ret += ":" + _.second(date, "00");
+
+				if (parts.ms) {
+					ret += "." + _.ms(date, "000");
+				}
 			}
 		}
 
 		return ret;
+	}, {multiValued: true}),
+
+	readable_datetime: $.extend((date, ...options) => {
+		options = options.map(o => typeof o === "string" || o instanceof String? {precision: o} : o);
+		options = Object.assign({}, ...options);
+
+		let parts = parsePrecision(options.precision);
+		let monthFormat = options.month || parts.days? "shortname" : "long";
+		let ret = [];
+
+		if (parts.days) {
+			ret.push(_.day(date));
+		}
+
+		if (parts.months) {
+			ret.push(_.month(date, monthFormat));
+		}
+
+		if (parts.years) {
+			ret.push(_.year(date));
+		}
+
+		if (parts.hours) {
+			ret.push(_.time(date, options.precision));
+		}
+
+		return ret.join(" ");
 	}, {multiValued: true}),
 
 	localTimezone: -(new Date()).getTimezoneOffset(),
@@ -192,7 +270,7 @@ $.extend(_.util, {
 		return date;
 	},
 
-	dateComponent: function(component, date, format) {
+	dateComponent: function(component, date, format, locale = Mavo.locale) {
 		if (arguments.length === 1 && component + "s" in s) {
 			return _[component + "s"]();
 		}
@@ -219,7 +297,7 @@ $.extend(_.util, {
 			}
 			else {
 				format = {name: "long", shortname: "short"}[format] || format;
-				ret = dateO.toLocaleString(Mavo.locale, {[component]: format});
+				ret = dateO.toLocaleString(locale, {[component]: format});
 				ret = ret.replace(/\u200e/g, ""); // Stupid Edge bug
 
 				return ret;

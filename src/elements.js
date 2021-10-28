@@ -523,8 +523,9 @@ _.register({
 			"date": /^[Y\d]{4}-[M\d]{2}-[D\d]{2}$/i,
 		},
 		defaultFormats: {
-			"date": name => `[day(${name})] [month(${name}, 'shortname')] [year(${name})]`,
-			"month": name => `[month(${name}, 'name')] [year(${name})]`,
+			"date": name => `[readable_datetime(${name}, "days")]`,
+			"month": name => `[readable_datetime(${name}, 'months')] `,
+			"time": name => `[time(${name})]`,
 			"time": name => `[hour(${name}, '00')]:[minute(${name}, '00')]`,
 			"datetime-local": function(name) {
 				return this.date(name) + " " + this.time(name);
