@@ -35,8 +35,6 @@ var _ = Mavo.UI.Itembar = class Itembar {
 
 			this.controls = Mavo.UI.Bar.getControls(this.template, controls);
 
-			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
-
 			$.set(this.element, {
 				"mv-rel": this.item.property,
 				contents: this.controls.map(id => {
@@ -45,6 +43,8 @@ var _ = Mavo.UI.Itembar = class Itembar {
 					return $.create(meta.create.call(this, existing));
 				})
 			});
+
+			this.dragHandle = $(".mv-drag-handle", this.element) || this.item.element;
 		}
 
 		this.element.setAttribute("hidden", "");
