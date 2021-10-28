@@ -80,7 +80,7 @@ var _ = Mavo.Node = class Node {
 				et.mavoNode = this;
 				this.expressionText = et;
 				this.storage = this.storage || "none";
-				this.modes = "read";
+				this.modes = this.modes || "read";
 			}
 		}
 
