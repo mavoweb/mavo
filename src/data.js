@@ -299,24 +299,32 @@ var _ = Mavo.Data = $.Class(class Data {
 		},
 
 		// First look in descendants, then ancestors and their descendants
-		// one level up at a time (excluding the subtree we've already explored)
+		// one level up at a time (excluding the subtree we've already explored and any siblings)
 		findUp (property, data) {
-			var parent = data;
-			var child;
+			let parent = data;
+			let child;
+			let isDataArray = _.isCollection(data);
 
 			do {
-				var ret = _.find(property, parent, {exclude: child});
+				// console.log(parent, child);
+				if (!_.isCollection(parent) || isDataArray) {
+					// Skip arrays, we don't want to get siblings if we've written off the item
+					// unless we're resolving against an array in the first place
+					// so that things like collection.nestedProperty will still work
+					let ret = _.find(property, parent, {exclude: child});
 
-				if (ret !== undefined) {
-					return ret;
-				}
+					if (ret !== undefined) {
+						return ret;
+					}
 
-				if (_.getProperty(parent) === property) {
-					return parent;
+					if (_.getProperty(parent) === property) {
+						return parent;
+					}
 				}
 
 				child = parent;
 				parent = parent[Mavo.parent];
+
 			} while (parent);
 		},
 
