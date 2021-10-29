@@ -281,6 +281,45 @@ var _ = Mavo.Functions = {
 		alias: "th"
 	}),
 
+	pluralize: $.extend(function(num, ...args) {
+		if (empty(num)) {
+			return "";
+		}
+
+		if (args.length === 0) {
+			return num;
+		}
+
+		let o = args.reduce((o, arg) => {
+			arg = Mavo.value(arg);
+
+			if ($.type(arg) !== "object") {
+				if (o.one) {
+					arg = Object.fromEntries(["zero", "two", "few", "many", "other"].map(k => [k, arg]))
+				}
+				else {
+					arg = {one: arg}
+				}
+			}
+
+			return Object.assign(o, arg);
+		}, {});
+
+		let lang = o.lang || Mavo.locale;
+		let pl = new Intl.PluralRules(lang, {type: o.type || "cardinal"});
+		let type = pl.select(num);
+		let label = o[type] || o.other || o.two || o.zero || o.few || o.many || o.one;
+
+		if (o.text_only) {
+			return label;
+		}
+
+		return `${num} ${label}`;
+	}, {
+		multiValued: true,
+		needsContext: true
+	}),
+
 	digits: $.extend((digits, decimals, num) => {
 		if (num === undefined) {
 			num = decimals;
