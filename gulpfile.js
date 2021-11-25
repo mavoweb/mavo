@@ -96,15 +96,20 @@ gulp.task("transpile", function () {
 });
 
 gulp.task("minify", function () {
-	return merge(gulp.src("dist/deps.js"), gulp.src("dist/mavo-nodeps.js").pipe(sourcemaps.init({loadMaps: true})).pipe(minify({mangle: false})))
+	return merge(
+			gulp.src("dist/deps.js").pipe(sourcemaps.init()),
+			gulp.src("dist/mavo-nodeps.js").pipe(sourcemaps.init()).pipe(minify({mangle: false}))
+		)
 		.pipe(concat("mavo.min.js"))
-		.pipe(sourcemaps.mapSources((sourcePath, file) => "../" + sourcePath))
 		.pipe(sourcemaps.write("maps"))
 		.pipe(gulp.dest("dist"));
 });
 
 gulp.task("minify-es5", function () {
-	return merge(gulp.src("dist/deps.js"), transpileStream().pipe(minify({mangle: false})))
+	return merge(
+			gulp.src("dist/deps.js").pipe(sourcemaps.init()),
+			transpileStream().pipe(minify({mangle: false}))
+		)
 		.pipe(concat("mavo.es5.min.js"))
 		.pipe(sourcemaps.mapSources((sourcePath, file) => "../" + sourcePath))
 		.pipe(sourcemaps.write("maps"))
