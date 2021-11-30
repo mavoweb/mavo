@@ -318,7 +318,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 
 	unobserve (o, callback) {
 		let options = Object.assign({element: this.element}, o);
-		return _.observers?.observe(options, callback);
+		return _.observers?.unobserve(options, callback);
 	}
 
 	getData (o) {
