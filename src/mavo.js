@@ -626,7 +626,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return Promise.reject();
 		}
 
-		this.inProgress = this._("uploading");
+		this.inProgress = "Uploading";
 
 		return this.uploadBackend.upload(file, path)
 			.then(url => {
