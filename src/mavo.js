@@ -689,7 +689,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 	setDeleted (...nodes) {
 		// Clear previous deleted item(s)
 		this.deleted.forEach(node => node.destroy());
-		this.deleted.length = [];
+		this.deleted.length = 0;
 
 		this.deletionNotice?.close();
 
