@@ -495,7 +495,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 					evt.target.removeEventListener("mv-remotedatachange", updateListener);
 				}
 				else {
-					this.load({data: evt.data});
+					this.push(evt.data);
 				}
 			};
 
