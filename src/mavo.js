@@ -495,7 +495,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 					evt.target.removeEventListener("mv-remotedatachange", updateListener);
 				}
 				else {
-					this.load({data: evt.data});
+					this.push(evt.data);
 				}
 			};
 
@@ -626,7 +626,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return Promise.reject();
 		}
 
-		this.inProgress = this._("uploading");
+		this.inProgress = "Uploading";
 
 		return this.uploadBackend.upload(file, path)
 			.then(url => {
@@ -689,7 +689,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 	setDeleted (...nodes) {
 		// Clear previous deleted item(s)
 		this.deleted.forEach(node => node.destroy());
-		this.deleted.length = [];
+		this.deleted.length = 0;
 
 		this.deletionNotice?.close();
 
@@ -800,7 +800,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 	}
 
 	static superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey"
-	static base = location.protocol == "about:"? (document.currentScript? document.currentScript.src : "http://mavo.io") : location
+	static base = location.protocol == "about:"? (document.currentScript? document.currentScript.src : "https://mavo.io") : location
 	static dependencies = [
 		// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
 		$.ready().then(() => _.Plugins.load()),
