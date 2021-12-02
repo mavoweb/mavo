@@ -175,6 +175,7 @@ let _ = Mavo.Actions = {
 			if ($.type(to) == "number" && !(toNode?.collection)) {
 				// If to is a number and not a collection item, it's an index
 				[index, to] = [to];
+				toNode = undefined;
 			}
 
 			let fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
