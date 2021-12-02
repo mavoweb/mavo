@@ -170,12 +170,13 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
+			var toNode = _.getNode(to);
+
 			if ($.type(to) == "number" && !(toNode?.collection)) {
 				// If to is a number and not a collection item, it's an index
 				[index, to] = [to];
 			}
 
-			var toNode = _.getNode(to);
 			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
 			var collection = (toNode || fromNodes[0]).closestCollection;
 
