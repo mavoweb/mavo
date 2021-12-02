@@ -2,16 +2,16 @@
 
 Mavo.attributes.push("mv-action");
 
-var _ = Mavo.Actions = {
+let _ = Mavo.Actions = {
 	listener: evt => {
-		var tag = evt.type === "submit"? "form" : ":not(form)";
-		var element = evt.target.closest(tag + "[mv-action]");
+		let tag = evt.type === "submit"? "form" : ":not(form)";
+		let element = evt.target.closest(tag + "[mv-action]");
 
 		if (!element) {
 			return; // Not an action
 		}
 
-		var node = Mavo.Node.get(element);
+		let node = Mavo.Node.get(element);
 
 		if (node && node.editing && node.modes !== "edit") {
 			// If this is a node, and being edited (and supports other modes), we don't want to have the action interfering.
@@ -29,15 +29,15 @@ var _ = Mavo.Actions = {
 
 	run: (code, element, evt) => {
 		if (code) {
-			var node = Mavo.Node.getClosest(element);
+			let node = Mavo.Node.getClosest(element);
 
 			if (node) {
-				var expression = new Mavo.Expression(code, {actions: true});
+				let expression = new Mavo.Expression(code, {actions: true});
 
-				var previousEvt = Mavo.Functions.$evt;
+				let previousEvt = Mavo.Functions.$evt;
 				Mavo.Functions.$evt = evt;
 
-				var ret = expression.eval(node.getLiveData());
+				let ret = expression.eval(node.getLiveData());
 
 				Mavo.Functions.$evt = previousEvt;
 
@@ -47,7 +47,7 @@ var _ = Mavo.Actions = {
 	},
 
 	getNodes: ref => {
-		var node = _.getNode(ref);
+		let node = _.getNode(ref);
 
 		if (node) {
 			return [node];
@@ -66,7 +66,7 @@ var _ = Mavo.Actions = {
 	},
 
 	getCollection: ref => {
-		var collection = _.getNode(ref);
+		let collection = _.getNode(ref);
 
 		if (collection instanceof Mavo.Collection) {
 			return collection;
@@ -78,7 +78,7 @@ var _ = Mavo.Actions = {
 
 	// Function to run instead of actions if actions are called outside mv-action
 	nope: () => {
-		var actions = Object.keys(_.Functions).map(name => `${name}()`);
+		let actions = Object.keys(_.Functions).map(name => `${name}()`);
 		Mavo.warn(`Mavo actions (${actions}) can only be used in the mv-action attribute.`);
 	},
 
@@ -90,7 +90,7 @@ var _ = Mavo.Actions = {
 		 * @returns Newly added item(s)
 		 */
 		add: Object.assign(function(data, ref, index) {
-			let args = [...arguments];
+			let args = [...arguments], collection;
 
 			if (arguments.length < 3) {
 				if (arguments.length <= 1) {
@@ -100,7 +100,7 @@ var _ = Mavo.Actions = {
 				else if (arguments.length === 2) {
 					// Is it (data, ref) or (ref, index)?
 					// ref might be a number, if collection of numbers!
-					var collection = _.getCollection(ref);
+					collection = _.getCollection(ref);
 
 					if (!collection) {
 						// No collection from ref, must be (ref, index)
@@ -137,7 +137,7 @@ var _ = Mavo.Actions = {
 			if (index === undefined) {
 				// If there is no index and item provided instead of collection,
 				// get index from collection item
-				var node = _.getNode(ref);
+				let node = _.getNode(ref);
 
 				if (node && node.collection === collection) {
 					index = node.index;
@@ -145,7 +145,7 @@ var _ = Mavo.Actions = {
 			}
 
 			return (Array.isArray(data)? data : [data]).map(datum => {
-				var item = collection.add(undefined, index);
+				let item = collection.add(undefined, index);
 
 				if (datum !== undefined) {
 					item.render(datum);
@@ -170,15 +170,15 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var toNode = _.getNode(to);
+			let toNode = _.getNode(to);
 
 			if ($.type(to) == "number" && !(toNode?.collection)) {
 				// If to is a number and not a collection item, it's an index
 				[index, to] = [to];
 			}
 
-			var fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
-			var collection = (toNode || fromNodes[0]).closestCollection;
+			let fromNodes = Mavo.toArray(from).map(_.getNode).filter(n => n?.closestCollection);
+			let collection = (toNode || fromNodes[0]).closestCollection;
 
 			if (!fromNodes.length) {
 				if (collection) {
@@ -191,7 +191,7 @@ var _ = Mavo.Actions = {
 				}
 			}
 
-			var ret = _.Functions.add(from, collection, index);
+			let ret = _.Functions.add(from, collection, index);
 			Mavo.Collection.delete(fromNodes, {silent: true});
 			return ret;
 		},
@@ -204,8 +204,8 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var nodes = _.getNodes(ref.flat());
-			var itemsToDelete = [];
+			let nodes = _.getNodes(ref.flat());
+			let itemsToDelete = [];
 
 			nodes.forEach(node => {
 				if (!node) {
@@ -254,15 +254,15 @@ var _ = Mavo.Actions = {
 				return;
 			}
 
-			var node = _.getNode(ref);
+			let node = _.getNode(ref);
 
 			if (node) {
 				// Single node, render values on it
 				node.render(values);
 			}
 			else {
-				var wasArray = Array.isArray(ref);
-				var nodes = _.getNodes(ref);
+				let wasArray = Array.isArray(ref);
+				let nodes = _.getNodes(ref);
 
 				if (!nodes.length) {
 					Mavo.warn(`The first parameter of set() needs to be one or more existing properties, ${Mavo.safeToJSON(ref)} is not.`);
