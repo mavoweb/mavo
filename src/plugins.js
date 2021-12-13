@@ -2,7 +2,7 @@
 
 Mavo.attributes.push("mv-plugins");
 
-var _ = Mavo.Plugins = {
+let _ = Mavo.Plugins = {
 	loaded: {},
 
 	async load () {
@@ -32,15 +32,16 @@ var _ = Mavo.Plugins = {
 				}
 
 				// Load plugin
-				var filename = `mavo-${plugin.id}.js`;
+				let filename = `mavo-${plugin.id}.js`;
+				let url;
 
 				if (plugin.repo) {
 					// Plugin hosted in a separate repo
-					var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
+					url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
 				}
 				else {
 					// Plugin hosted in the mavo-plugins repo
-					var url = `${_.url}/${plugin.id}/${filename}`;
+					url = `${_.url}/${plugin.id}/${filename}`;
 				}
 
 				return $.include(_.loaded[plugin.id], url);
@@ -66,15 +67,15 @@ var _ = Mavo.Plugins = {
 			}
 		}
 
-		var ready = [];
+		let ready = [];
 
 		if (o.ready) {
 			ready.push(o.ready);
 		}
 
 		if (o.dependencies) {
-			var base = document.currentScript? document.currentScript.src : location;
-			var dependencies = o.dependencies.map(url => Mavo.load(url, base));
+			let base = document.currentScript? document.currentScript.src : location;
+			let dependencies = o.dependencies.map(url => Mavo.load(url, base));
 			ready.push(...dependencies);
 		}
 
