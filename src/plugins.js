@@ -21,12 +21,20 @@ let _ = Mavo.Plugins = {
 		// Fetch plugin index
 		let response = await fetch(_.url + "/plugins.json");
 		let json = await response.json();
-		let plugin = json.plugin;
+		let all = json.plugin;
+		let ids = all.map(plugin => plugin.id);
 
 		// Fetch plugins
-		return Mavo.thenAll(plugin
-			.filter(plugin => _.plugins.has(plugin.id))
-			.map(plugin => {
+		return Mavo.thenAll(Array.from(_.plugins)
+			.filter(plugin => {
+				let id = plugin.split("@")[0];
+
+				return ids.includes(id);
+			})
+			.map(async (plugin) => {
+				let [id, version] = plugin.split("@");
+				plugin = all.find(plugin => plugin.id === id);
+
 				if (_.loaded[plugin.id]) {
 					return Promise.resolve();
 				}
@@ -37,7 +45,16 @@ let _ = Mavo.Plugins = {
 
 				if (plugin.repo) {
 					// Plugin hosted in a separate repo
-					url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
+					version = version || "latest";
+					url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@${version}/${filename}`;
+
+					// Try to load the requested plugin version
+					try {
+						return await $.include(_.loaded[plugin.id], url);
+					} catch(e) {
+						// Fallback to the latest version
+						url = `https://cdn.jsdelivr.net/gh/${plugin.repo}/${filename}`;
+					}
 				}
 				else {
 					// Plugin hosted in the mavo-plugins repo
