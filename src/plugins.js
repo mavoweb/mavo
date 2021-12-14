@@ -8,10 +8,19 @@ let _ = Mavo.Plugins = {
 	async load () {
 		_.plugins = new Set();
 
+		let versions = {};
 		$$("[mv-plugins]").forEach(element => {
 			element
 				.getAttribute("mv-plugins").trim().split(/\s+/)
-				.forEach(plugin => _.plugins.add(plugin));
+				.forEach(plugin => {
+					let [id, version] = plugin.split("@");
+
+					_.plugins.add(id);
+
+					// If an author requested several versions of the same plugin (with the same id),
+					// the last specified version wins
+					versions[id] = version;
+				});
 		});
 
 		if (!_.plugins.size) {
@@ -21,20 +30,12 @@ let _ = Mavo.Plugins = {
 		// Fetch plugin index
 		let response = await fetch(_.url + "/plugins.json");
 		let json = await response.json();
-		let all = json.plugin;
-		let ids = all.map(plugin => plugin.id);
+		let plugin = json.plugin;
 
 		// Fetch plugins
-		return Mavo.thenAll(Array.from(_.plugins)
-			.filter(plugin => {
-				let id = plugin.split("@")[0];
-
-				return ids.includes(id);
-			})
+		return Mavo.thenAll(plugin
+			.filter(plugin => _.plugins.has(plugin.id))
 			.map(async (plugin) => {
-				let [id, version] = plugin.split("@");
-				plugin = all.find(plugin => plugin.id === id);
-
 				if (_.loaded[plugin.id]) {
 					return Promise.resolve();
 				}
@@ -45,14 +46,14 @@ let _ = Mavo.Plugins = {
 
 				if (plugin.repo) {
 					// Plugin hosted in a separate repo
-					version = version || "latest";
+					let version = versions[plugin.id] || "latest";
 					url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@${version}/${filename}`;
 
-					// Try to load the requested plugin version
+					// Try to load the requested version of a plugin
 					try {
 						return await $.include(_.loaded[plugin.id], url);
 					} catch(e) {
-						// Fallback to the latest version
+						// If there is no such version, fallback to the latest one (or the latest commit)
 						url = `https://cdn.jsdelivr.net/gh/${plugin.repo}/${filename}`;
 					}
 				}
