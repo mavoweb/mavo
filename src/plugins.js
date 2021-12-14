@@ -2,16 +2,25 @@
 
 Mavo.attributes.push("mv-plugins");
 
-var _ = Mavo.Plugins = {
+let _ = Mavo.Plugins = {
 	loaded: {},
 
 	async load () {
 		_.plugins = new Set();
 
+		let versions = {};
 		$$("[mv-plugins]").forEach(element => {
 			element
 				.getAttribute("mv-plugins").trim().split(/\s+/)
-				.forEach(plugin => _.plugins.add(plugin));
+				.forEach(plugin => {
+					let [id, version] = plugin.split("@");
+
+					_.plugins.add(id);
+
+					// If an author requested several versions of the same plugin (with the same id),
+					// the last specified version wins
+					versions[id] = version;
+				});
 		});
 
 		if (!_.plugins.size) {
@@ -26,21 +35,31 @@ var _ = Mavo.Plugins = {
 		// Fetch plugins
 		return Mavo.thenAll(plugin
 			.filter(plugin => _.plugins.has(plugin.id))
-			.map(plugin => {
+			.map(async (plugin) => {
 				if (_.loaded[plugin.id]) {
 					return Promise.resolve();
 				}
 
 				// Load plugin
-				var filename = `mavo-${plugin.id}.js`;
+				let filename = `mavo-${plugin.id}.js`;
+				let url;
 
 				if (plugin.repo) {
 					// Plugin hosted in a separate repo
-					var url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@master/${filename}`;
+					let version = versions[plugin.id] || "latest";
+					url = `https://cdn.jsdelivr.net/gh/${plugin.repo}@${version}/${filename}`;
+
+					// Try to load the requested version of a plugin
+					try {
+						return await $.include(_.loaded[plugin.id], url);
+					} catch(e) {
+						// If there is no such version, fallback to the latest one (or the latest commit)
+						url = `https://cdn.jsdelivr.net/gh/${plugin.repo}/${filename}`;
+					}
 				}
 				else {
 					// Plugin hosted in the mavo-plugins repo
-					var url = `${_.url}/${plugin.id}/${filename}`;
+					url = `${_.url}/${plugin.id}/${filename}`;
 				}
 
 				return $.include(_.loaded[plugin.id], url);
@@ -66,15 +85,15 @@ var _ = Mavo.Plugins = {
 			}
 		}
 
-		var ready = [];
+		let ready = [];
 
 		if (o.ready) {
 			ready.push(o.ready);
 		}
 
 		if (o.dependencies) {
-			var base = document.currentScript? document.currentScript.src : location;
-			var dependencies = o.dependencies.map(url => Mavo.load(url, base));
+			let base = document.currentScript? document.currentScript.src : location;
+			let dependencies = o.dependencies.map(url => Mavo.load(url, base));
 			ready.push(...dependencies);
 		}
 
