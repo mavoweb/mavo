@@ -550,12 +550,14 @@ var _ = Mavo.Functions = {
 		multiValued: true,
 	}),
 
-	fromlast: (haystack, needle) => {
-		Mavo.warn("fromlast() is deprecated and will be removed in the next version of Mavo. Please use from_last() instead.");
-		return from_last(haystack, needle);
-	},
-
 	from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+		multiValued: true,
+	}),
+
+	fromlast: $.extend((haystack, needle) => {
+		Mavo.warn("fromlast() is deprecated and will be removed in the next version of Mavo. Please use from_last() instead.");
+		return _.from_last(haystack, needle);
+	}, {
 		multiValued: true,
 	}),
 
