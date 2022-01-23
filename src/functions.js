@@ -565,7 +565,7 @@ var _ = Mavo.Functions = {
 
 	tofirst: (haystack, needle) => {
 		Mavo.warn("tofirst() is deprecated and will be removed in the next version of Mavo. Please use to_first() instead.");
-		Mavo.tofirst(haystack, needle);
+		Mavo.to_first(haystack, needle);
 	},
 
 	to_first: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
