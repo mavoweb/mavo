@@ -456,6 +456,14 @@ var _ = Mavo.Script = {
 		"groupby": {
 			symbol: "by",
 			code: (array, key) => {
+				Mavo.warn("groupby() is deprecated and will be removed in the next version of Mavo. Please use group_by() instead.");
+				Mavo.group_by(array, key);
+			},
+			precedence: 2
+		},
+		"group_by": {
+			symbol: "by",
+			code: (array, key) => {
 				array = Mavo.toArray(array);
 				key = Mavo.toArray(key);
 				var property = key[Mavo.as] || key[0]?.[Mavo.toNode]?.property;
