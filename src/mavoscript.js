@@ -453,14 +453,6 @@ var _ = Mavo.Script = {
 			},
 			precedence: 3
 		},
-		"groupby": {
-			symbol: "by",
-			code: (array, key) => {
-				Mavo.warn("groupby() is deprecated and will be removed in the next version of Mavo. Please use group_by() instead.");
-				Mavo.group_by(array, key);
-			},
-			precedence: 2
-		},
 		"group_by": {
 			symbol: "by",
 			code: (array, key) => {
@@ -496,6 +488,14 @@ var _ = Mavo.Script = {
 				});
 
 				return Mavo.Data.proxify(ret);
+			},
+			precedence: 2
+		},
+		"groupby": {
+			symbol: "by",
+			code: (array, key) => {
+				Mavo.warn("groupby() is deprecated and will be removed in the next version of Mavo. Please use group_by() instead.");
+				return Mavo.Functions['group_by'](array, key);
 			},
 			precedence: 2
 		},
