@@ -433,6 +433,10 @@ var _ = Mavo.Functions = {
 	 * Replace all occurences of a string with another string
 	 */
 	replace: $.extend((haystack, needle, replacement = "", iterations = 1) => {
+		if (!Mavo.value(haystack)) {
+			return haystack;
+		}
+
 		if (Array.isArray(haystack)) {
 			return haystack.map(item => _.replace(item, needle, replacement));
 		}
