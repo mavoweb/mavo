@@ -431,6 +431,30 @@ var _ = $.extend(Mavo, {
 	},
 
 	/**
+	 *  Set/get a property or an attribute?
+	 * @return {Boolean} true to use a property, false to use the attribute
+	 */
+	usePropertyInsteadOfAttribute: function (element, attribute) {
+		if (["href", "src"].indexOf(attribute) > -1) {
+			// URL properties resolve "" as location.href, fucking up emptiness checks
+			return false;
+		}
+
+		if (attribute.startsWith("on")){
+			// Event listener attributes should be set as attributes,
+			// the properties expect functions and break with strings
+			return false;
+		}
+
+		if (element.namespaceURI == "http://www.w3.org/2000/svg") {
+			// SVG has a fucked up DOM, do not use these properties
+			return false;
+		}
+
+		return true;
+	},
+
+	/**
 	 * Object utilities
 	 */
 

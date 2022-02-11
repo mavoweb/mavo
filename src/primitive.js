@@ -1022,7 +1022,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		var ret;
 
-		if (attribute in element && _.useProperty(element, attribute)) {
+		if (attribute in element && Mavo.usePropertyInsteadOfAttribute(element, attribute)) {
 			// Returning properties (if they exist) instead of attributes
 			// is needed for dynamic elements such as checkboxes, sliders etc
 			ret = element[attribute];
@@ -1112,7 +1112,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (o.attribute) {
-			if (o.attribute in element && _.useProperty(element, o.attribute) && element[o.attribute] !== value) {
+			if (o.attribute in element && Mavo.usePropertyInsteadOfAttribute(element, o.attribute) && element[o.attribute] !== value) {
 				// Setting properties (if they exist) instead of attributes
 				// is needed for dynamic elements such as checkboxes, sliders etc
 				try {
@@ -1147,30 +1147,6 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				element.setAttribute("content", value);
 			}
 		}
-	}
-
-	/**
-	 *  Set/get a property or an attribute?
-	 * @return {Boolean} true to use a property, false to use the attribute
-	 */
-	static useProperty (element, attribute) {
-		if (["href", "src"].indexOf(attribute) > -1) {
-			// URL properties resolve "" as location.href, fucking up emptiness checks
-			return false;
-		}
-
-		if (attribute.startsWith("on")){
-			// Event listener attributes should be set as attributes,
-			// the properties expect functions and break with strings
-			return false;
-		}
-
-		if (element.namespaceURI == "http://www.w3.org/2000/svg") {
-			// SVG has a fucked up DOM, do not use these properties
-			return false;
-		}
-
-		return true;
 	}
 
 	static format (value, o = {}) {
