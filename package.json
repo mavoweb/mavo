@@ -4,6 +4,10 @@
   "description": "Create web applications with HTML and CSS",
   "main": "dist/mavo.js",
   "scripts": {
+    "watch": "gulp watch",
+    "build": "gulp",
+    "build:css": "gulp css",
+    "build:js": "gulp concat && gulp minify",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
