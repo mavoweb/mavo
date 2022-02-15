@@ -3,7 +3,7 @@
 var _ = Mavo.Script = {
 	$fn: self.Proxy? new Proxy({[Symbol.unscopables]: {undefined: true}}, {
 		get: (data, property) => {
-			var propertyL = property.toLowerCase(), ret;
+			var propertyL = property?.toLowerCase?.() ?? property, ret;
 
 			// Is this a data action function?
 			if (propertyL in Mavo.Actions.Functions) {
