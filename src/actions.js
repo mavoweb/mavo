@@ -228,7 +228,7 @@ let _ = Mavo.Actions = {
 							n.value = null;
 						}
 						else if (n !== node) {
-							_.clear(n);
+							_.Functions.clear(n);
 						}
 					});
 				}
