@@ -21,12 +21,17 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		Mavo.hooks.run("domexpression-init-start", this);
 
-		if (this.attribute == "mv-value") {
-			this.originalAttribute = "mv-value";
-			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+		if (this.attribute === "mv-value" || this.attribute?.startsWith("mv-attr-")) {
+			let replaceableAttribute;
+			if (this.attribute.startsWith("mv-attr-")) {
+				replaceableAttribute = this.attribute.replace("mv-attr-", "");
+			}
+
+			this.originalAttribute = this.attribute;
+			this.attribute = replaceableAttribute ?? Mavo.Primitive.getValueAttribute(this.element);
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-			let expression = this.element.getAttribute("mv-value");
-			this.element.removeAttribute("mv-value");
+			let expression = this.element.getAttribute(this.originalAttribute);
+			this.element.removeAttribute(this.originalAttribute);
 			this.parsed = [new Mavo.Expression(expression)];
 			this.expression = expression;
 		}
