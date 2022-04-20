@@ -430,6 +430,19 @@ var _ = $.extend(Mavo, {
 		return element.getAttributeNames().filter(name => regex.test(name));
 	},
 
+	SVGAttributes: [
+		"preserveAspectRatio", "primitiveUnits", "refX", "refY", "repeatCount", "repeatDur", "requiredExtensions",
+		"requiredFeatures", "specularConstant", "specularExponent", "spreadMethod", "startOffset", "stdDeviation",
+		"stitchTiles", "surfaceScale", "systemLanguage", "tableValues", "targetX", "targetY", "textLength", "viewBox",
+		"viewTarget", "xChannelSelector", "yChannelSelector", "zoomAndPan"
+	],
+
+	// Fixes the case of SVG attributes that are not all lowercase
+	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
+	adjustSVGAttribute: (attribute) => {
+		return _.SVGAttributes.find(attr => attr.toLowerCase() === attribute) || attribute;
+	},
+
 	/**
 	 *  Set/get a property or an attribute?
 	 * @return {Boolean} true to use a property, false to use the attribute

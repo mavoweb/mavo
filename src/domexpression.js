@@ -34,6 +34,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		if (this.attribute?.startsWith("mv-attr-")) {
 			this.originalAttribute = this.attribute;
 			this.attribute = this.attribute.replace("mv-attr-", "");
+			this.attribute = Mavo.adjustSVGAttribute(this.attribute);
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		}
 
