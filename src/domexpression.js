@@ -34,7 +34,11 @@ var _ = Mavo.DOMExpression = $.Class({
 		if (this.attribute?.startsWith("mv-attr-")) {
 			this.originalAttribute = this.attribute;
 			this.attribute = this.attribute.replace("mv-attr-", "");
-			this.attribute = Mavo.adjustSVGAttribute(this.attribute);
+
+			if (this.element.namespaceURI === "http://www.w3.org/2000/svg") {
+				this.attribute = Mavo.getProperCasing(this.element.nodeName, this.attribute);
+			}
+
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 		}
 
