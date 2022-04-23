@@ -433,9 +433,9 @@ var _ = $.extend(Mavo, {
 	// Fixes the case of attributes that are not all lowercase
 	// Especially useful for SVG attributes
 	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
-	getProperCasing: (element, attribute) => {
-		let doc = new DOMParser().parseFromString(`<${element} ${attribute}=""></${element}>`, "text/html");
-		return doc.body.firstElementChild.attributes[0].name;
+	getProperCasing: (element, attribute, root = "svg") => {
+		let doc = new DOMParser().parseFromString(`<${root}><${element} ${attribute}=""></${element}></${root}>`, "text/html");
+		return doc.body.firstElementChild.firstElementChild.attributes[0].name;
 	},
 
 	/**
