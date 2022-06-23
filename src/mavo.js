@@ -536,7 +536,8 @@ let _ = self.Mavo = $.Class(class Mavo {
 		let specificBackend = backend;
 		backend = backend ?? this.sourceBackend;
 
-		if (!backend) {
+		if (!backend && !data) {
+			// Nothing to do here
 			return;
 		}
 
