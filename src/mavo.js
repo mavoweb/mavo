@@ -210,7 +210,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			requestAnimationFrame(() => {
 				this.dataLoaded.resolve();
 				this.expressions.update();
-				$.fire(this.element, "mv-load");
+				this.element.dispatchEvent(new Event("mv-load", {bubbles: true}));
 			});
 		}
 
@@ -587,7 +587,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		await Mavo.defer();
 
 		this.dataLoaded.resolve();
-		$.fire(this.element, "mv-load");
+		this.element.dispatchEvent(new Event("mv-load", {bubbles: true}));
 		this.autoSave = autoSaveState;
 	}
 
