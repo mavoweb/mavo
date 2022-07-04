@@ -64,9 +64,6 @@ var _ = Mavo.Data = $.Class(class Data {
 				// Why check prototype instead of just type == "object"? Because instances of ES6 classes also return "object"
 				_.computeRoutes(this.data);
 			}
-			else {
-				_.computeMetadata(this.data, this.key, this.parent);
-			}
 
 			this.updateParent();
 		}
@@ -478,7 +475,7 @@ var _ = Mavo.Data = $.Class(class Data {
 
 			_.computeMetadata(object, property, parent);
 
-			if (Mavo.isPlainObject(object) === Object.prototype || Array.isArray(object)) {
+			if (Mavo.isPlainObject(object) || Array.isArray(object)) {
 				if (!object[Mavo.route]) {
 					object[Mavo.route] = {};
 				}
@@ -527,7 +524,7 @@ var _ = Mavo.Data = $.Class(class Data {
 			if (Array.isArray(object)) {
 				object.forEach((item, i) => _.traverse(callback, item, i, object));
 			}
-			else if ($.type(object) === "object") {
+			else if (Mavo.isPlainObject(object)) {
 				for (var prop in object) {
 					_.traverse(callback, object[prop], prop, object);
 				}
