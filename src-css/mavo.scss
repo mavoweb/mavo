@@ -287,6 +287,16 @@ button.mv-close {
 
 	input.mv-editor {
 		max-width: 100%;
+
+		&[type="number"] {
+			min-width: 3ch; /* If input is empty, we should still be able to see the controls */
+
+			/* Do not hide spinner arrows */
+			&::-webkit-inner-spin-button,
+			&::-webkit-outer-spin-button {
+				opacity: 1;
+			}
+		}
 	}
 
 	select.mv-editor {
