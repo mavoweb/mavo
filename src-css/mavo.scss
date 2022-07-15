@@ -269,10 +269,8 @@ button.mv-close {
 [mv-mode=""]     { --mv-mode: initial; }
 
 // Primitives
-[property][mv-mode="edit"]:not([typeof], [mv-group], [mv-list]) {
-	input.mv-editor,
-	select.mv-editor,
-	textarea.mv-editor {
+[property][mv-mode="edit"]:where(:not([typeof], [mv-group], [mv-list])) {
+	.mv-editor:is(input, select, textarea):where(:not([type=range])) {
 		all: unset;
 		cursor: auto;
 	}
