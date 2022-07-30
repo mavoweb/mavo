@@ -801,7 +801,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 	}
 
 	static superKey = navigator.platform.indexOf("Mac") === 0? "metaKey" : "ctrlKey"
-	static base = location.protocol == "about:"? (document.currentScript? document.currentScript.src : "https://mavo.io") : location
+	static base = ["blob:", "about:"].includes(location.protocol)? (document.currentScript?.src || "https://mavo.io") : location
 	static dependencies = [
 		// Plugins.load() must be run after DOM load to pick up all mv-plugins attributes
 		$.ready().then(() => _.Plugins.load()),
