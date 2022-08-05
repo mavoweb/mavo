@@ -148,7 +148,8 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		env.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-				var env = {context: this, expr, parentEnv};
+				let oldValue = this.oldValue[i];
+				var env = {context: this, expr, parentEnv, oldValue};
 
 				Mavo.hooks.run("domexpression-update-beforeeval", env);
 
@@ -156,15 +157,17 @@ var _ = Mavo.DOMExpression = $.Class({
 
 				Mavo.hooks.run("domexpression-update-aftereval", env);
 
-				changed = true;
-
 				if (env.value instanceof Error) {
-					return this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
+					env.value = this.fallback !== undefined? this.fallback : this.syntax.start + env.expr.expression + this.syntax.end;
 				}
 
 				if (env.value === undefined || env.value === null) {
 					// Don’t print things like "undefined" or "null"
-					return "";
+					env.value = "";
+				}
+
+				if (env.value + "" !== env.oldValue + "") {
+					changed = true;
 				}
 
 				return env.value;
