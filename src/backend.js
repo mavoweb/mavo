@@ -350,7 +350,11 @@ _.register(class Local extends _ {
 	constructor (url, o) {
 		super(url, o);
 		this.permissions.on(["read", "edit", "save"]);
-		this.key = this.mavo.id;
+	}
+
+	update (url, o) {
+		super.update(url, o);
+		this.key = o.key || this.mavo.id;
 	}
 
 	get () {
