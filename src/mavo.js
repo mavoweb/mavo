@@ -588,7 +588,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		await Mavo.defer();
 
 		this.dataLoaded.resolve();
-		this.element.dispatchEvent(new Event("mv-load", {bubbles: true}));
+		this.element.dispatchEvent(new CustomEvent("mv-load", {detail: backend, bubbles: true}));
 		this.autoSave = autoSaveState;
 	}
 
