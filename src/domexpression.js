@@ -148,7 +148,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		env.value = this.value = this.parsed.map((expr, i) => {
 			if (expr instanceof Mavo.Expression) {
-				let oldValue = this.oldValue[i];
+				let oldValue = Mavo.value(this.oldValue[i]);
 				var env = {context: this, expr, parentEnv, oldValue};
 
 				Mavo.hooks.run("domexpression-update-beforeeval", env);
@@ -166,7 +166,8 @@ var _ = Mavo.DOMExpression = $.Class({
 					env.value = "";
 				}
 
-				if (env.value + "" !== env.oldValue + "") {
+				let value = Mavo.value(env.value);
+				if (typeof value === "object" || value !== oldValue) {
 					changed = true;
 				}
 
