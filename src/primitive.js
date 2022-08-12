@@ -1038,6 +1038,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 	}
 
 	static getConfig (element, attribute, datatype) {
+		let editAs = element.getAttribute("mv-edit-as");
+
+		if (editAs && editAs in Mavo.Elements) {
+			return Mavo.Elements[editAs];
+		}
+
 		if (attribute === undefined) {
 			attribute = element.getAttribute("mv-attribute") || undefined;
 		}
@@ -1341,7 +1347,7 @@ let inputTypes = [
 	"checkbox", "color", "date", "datetime-local", "email", "file", "month", "number",
 	"password", "radio", "range", "search", "submit", "tel", "text", "time", "url", "week", "datetime"];
 let oldMvEdit = Mavo.attributeStartsWith("mv-edit-")
-	.filter(a => a.name !== "mv-edit-type" || inputTypes.includes(a.value))
+	.filter(a => (a.name !== "mv-edit-type" || inputTypes.includes(a.value)) && !["mv-edit-as"].includes(a.name))
 	.map(a => a.name);
 let newMvEdit = Mavo.attributeStartsWith("mv-editor-");
 
