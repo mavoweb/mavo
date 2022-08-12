@@ -375,15 +375,22 @@ _.register({
 		}
 	},
 
-	"meter, progress": {
+	"meter": {
 		default: true,
+		selector: "meter, progress",
 		attribute: "value",
 		datatype: "number",
 		edit: function() {
-			var min = +this.element.getAttribute("min") || 0;
-			var max = +this.element.getAttribute("max") || 1;
-			var range = max - min;
-			var step = +this.element.getAttribute("mv-editor-step") || (range > 1? 1 : range/100);
+			let min = this.element.min ?? this.element.getAttribute("min") ?? 0;
+			let max = this.element.max ?? this.element.getAttribute("max") ?? 1;
+
+			min = +min;
+			max = +max;
+			let range = max - min;
+
+			let step = this.element.step ?? this.element.getAttribute("step")
+			         ?? this.element.getAttribute("mv-editor-step") ?? (range > 1? 1 : range/100);
+			step = +step;
 
 			$.bind(this.element, "mousemove.mavo:edit", evt => {
 				// Change property as mouse moves
@@ -424,9 +431,6 @@ _.register({
 					evt.preventDefault();
 				}
 			});
-		},
-		done: function() {
-			$.unbind(this.element, ".mavo:edit");
 		},
 		observedAttributes: ["min", "max"]
 	},
