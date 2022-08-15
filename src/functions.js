@@ -425,6 +425,29 @@ var _ = Mavo.Functions = {
 		}
 	},
 
+	sort (list, by = list, ...options) {
+		options = Object.assign({}, ...options);
+		let collatorOptions = Object.assign({numeric: true}, options);
+		let collator = new Intl.Collator(options.lang || Mavo.locale, collatorOptions);
+
+		if (!Array.isArray(by)) {
+			by = _.get(list, by);
+		}
+
+		let desc = options.order?.startsWith("desc");
+
+		let arr = list.map((a, i) => [a, by[i]]);
+		arr = arr.sort((a, b) => {
+			let bya = a[1];
+			let byb = b[1];
+
+			return collator.compare(bya, byb) * (desc? -1 : 1);
+		});
+
+		return arr.map(a => a[0]);
+
+	},
+
 	/*********************
 	 * String functions
 	 *********************/
