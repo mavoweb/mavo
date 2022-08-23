@@ -197,7 +197,23 @@ for (let unit in s) {
 }
 
 _.duration = $.extend(function (ms, terms) {
-	if (ms === 0 || terms === undefined) {
+	// TODO unify code for specific unit with code for auto units to reduce repetition
+	// TODO allow multiple units, e.g. ["days", "hours"]
+	// TODO allow combining term # and units, e.g. start: days, terms: 2
+	if (terms && isNaN(terms)) {
+		// Specific term specified
+		let unitSingular = terms != "ms" ? terms.replace(/s?$/, "") : terms;
+		let unitPlural = terms.replace(/s?$/, "s");
+
+		if (!(unitPlural in s)) {
+			throw new TypeError(`Unknown duration unit ${terms}. Please use one of ${ Object.keys(s).join(", ") }`);
+		}
+
+		let n = Math.floor(ms / s[unitPlural] / 1000);
+		let unitProperPlurality = n === 1 && unitPlural !== "ms" ? unitSingular : unitPlural;
+		return n + " " + _.phrase.call(this, unitProperPlurality);
+	}
+	else if (ms === 0 || terms === undefined) {
 		terms = 1;
 	}
 
