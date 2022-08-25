@@ -845,6 +845,10 @@ var _ = Mavo.Script = {
 			return ret;
 		}
 
+		if (!node.type || !_.serializers[node.type]) {
+			throw new TypeError("Cannot understand this expression at all 😔");
+		}
+
 		return _.serializers[node.type](node, parent);
 	},
 
