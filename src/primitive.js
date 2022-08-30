@@ -473,14 +473,16 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			}
 
 			// Prevent default actions while editing
-			// e.g. following links etc
-			if (!this.modes) {
-				$.bind(this.element, "click.mavo:edit", evt => {
-					if (this.editor?.contains(evt.target)) {
-						evt.preventDefault();
-					}
-				});
-			}
+			// e.g. following links, toggling <details> etc
+			$.bind(this.element, "click.mavo:edit", evt => {
+				if (this.mode !== "edit") {
+					return;
+				}
+
+				if (evt.target.closest("summary, a")) {
+					evt.preventDefault();
+				}
+			});
 		}
 
 		if (this.config.edit) {
