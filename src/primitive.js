@@ -652,7 +652,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				// Eventually, we'll need to move to a stack of some sort
 				// to cater to cases where active was false before, so should be false after
 				this.contentExpression.active = true;
-				this.contentExpression.update();
+				this.contentExpression.update({force: true});
 			}
 
 			// force: true is needed because otherwise setValue() aborts when it sees

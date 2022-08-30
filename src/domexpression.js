@@ -125,7 +125,7 @@ var _ = Mavo.DOMExpression = $.Class({
 		return Mavo.Expression.changedBy(this.identifiers, evt);
 	},
 
-	update: function() {
+	update: function(o) {
 		if (this.active === false) {
 			return;
 		}
@@ -177,7 +177,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			return expr;
 		});
 
-		if (!changed) {
+		if (!changed && !o?.force) {
 			// If nothing changed, no need to do anything
 			return;
 		}
