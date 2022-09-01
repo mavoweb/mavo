@@ -361,15 +361,15 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 			});
 		}
 
-		if ("placeholder" in this.editor && !this.editor.placeholder) {
-			this.editor.placeholder = `(${this.label})`;
-		}
-
 		// Copy any mv-editor-* attributes from the element to the editor
 		for (let name of Mavo.getAttributes(this.element, /^mv-editor-/)) {
 			let value = this.element.getAttribute(name);
 			name = name.replace(/^mv-editor-/, "");
 			this.editor.setAttribute(name, value);
+		}
+
+		if ("placeholder" in this.editor && !this.editor.placeholder) {
+			this.editor.placeholder = this.editor.type === "number" ? this.editor.min || 0 : `(${this.label})`;
 		}
 
 		if (!this.editor.matches("select")) {
@@ -1285,7 +1285,7 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 			node.label = element.getAttribute("aria-label");
 
 			if (Mavo.in("placeholder", node.editor)) {
-				node.editor.placeholder = `(${node.label})`;
+				node.editor.placeholder = node.editor.type === "number"? node.editor.min || 0 : `(${node.label})`;
 			}
 		}
 		else if (attribute === "mv-editor") {
