@@ -314,6 +314,10 @@ var _ = Mavo.Functions = {
 			return label;
 		}
 
+		if (o.type === "ordinal") {
+			return `${num}${label}`;
+		}
+
 		return `${num} ${label}`;
 	}, {
 		multiValued: true,
