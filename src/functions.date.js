@@ -22,6 +22,21 @@ var numeric = {
 	ms: d => d.getMilliseconds()
 };
 
+function isPrecision (precision) {
+	if (!precision) {
+		return false;
+	}
+
+	if (precision == "ms") {
+		return true;
+	}
+
+	let singular = precision.replace(/s$/, "");
+	let plural = precision.replace(/s?$/, "s");
+
+	return singular in s || plural in s;
+}
+
 function parsePrecision(precision) {
 	precision = precision?.trim() || "";
 	let keys = Object.keys(s).reverse();
@@ -85,13 +100,24 @@ $.extend(_, {
 	}, {multiValued: true}),
 
 	// Return an ISO date & time string
-	datetime: $.extend((date, precision = "minutes") => {
+	datetime: $.extend((date, time, precision) => {
 		date = $u.date(date);
 
 		if (!date) {
 			return "";
 		}
 
+		let separateTime;
+		if (time !== undefined) {
+			if (isPrecision(time)) {
+				[time, precision] = [, time];
+			}
+			else {
+				separateTime = true;
+			}
+		}
+
+		precision ??= "minutes";
 		let parts = parsePrecision(precision);
 		let ret = _.date(date, precision);
 
@@ -99,7 +125,15 @@ $.extend(_, {
 			return ret; // No time
 		}
 
-		return `${ret}T${_.time(date, precision)}`;
+		if (separateTime) {
+			// If time is provided separately, and it's empty, we just return a date
+			ret += Mavo.value(time) ? `T${ _.time(time, precision) }` : "";
+		}
+		else {
+			ret += `T${_.time(date, precision)}`;
+		}
+
+		return ret;
 	}, {multiValued: true}),
 
 	// Return an ISO date
