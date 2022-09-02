@@ -496,16 +496,22 @@ _.register({
 		default: true,
 		init: function() {
 			if (!this.fromTemplate("dateType")) {
+				// Is there an existing formatting expression within?
 				var dateFormat = Mavo.DOMExpression.search(this.element, null);
 				var datetime = this.element.getAttribute("datetime") || "YYYY-MM-DD";
 
-				for (var type in this.config.dateTypes) {
-					if (this.config.dateTypes[type].test(datetime)) {
-						break;
+				let editorType = this.element.getAttribute("mv-editor-type");
+				if (editorType in this.config.dateTypes) {
+					this.dateType = editorType;
+				}
+				else {
+					for (let type in this.config.dateTypes) {
+						if (this.config.dateTypes[type].test(datetime)) {
+							this.dateType = type;
+							break;
+						}
 					}
 				}
-
-				this.dateType = type;
 
 				if (!dateFormat) {
 					// TODO what about mv-expressions?
