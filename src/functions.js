@@ -84,7 +84,8 @@ var _ = Mavo.Functions = {
 			var numReturn = n === undefined ? 1 : Math.floor(n);
 
 			for (var i = 0; i<arr.length && ret.length<numReturn; i++) {
-				if (Mavo.value(arr[i]) !== null) {
+				let rawValue = Mavo.value(arr[i]);
+				if (rawValue !== null && rawValue !== "") {
 					ret.push(arr[i]);
 				}
 			}
@@ -118,7 +119,8 @@ var _ = Mavo.Functions = {
 			var numReturn = n === undefined ? 1 : Math.floor(n);
 
 			for (var i = arr.length-1; i>=0 && ret.length<numReturn; i--) {
-				if (Mavo.value(arr[i]) !== null) {
+				let rawValue = Mavo.value(arr[i]);
+				if (rawValue !== null && rawValue !== "") {
 					ret.push(arr[i]);
 				}
 			}
