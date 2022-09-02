@@ -1127,6 +1127,7 @@ $$("[mv-list-item], [mv-multiple]").forEach(item => {
 		Mavo.moveAttribute("mv-initial-items", item, list);
 		Mavo.moveAttribute("mv-order", item, list);
 		Mavo.moveAttribute("mv-accepts", item, list);
+		Mavo.moveAttribute("mv-alias", item, list);
 
 		if (wasLegacy) {
 			Mavo.moveAttribute("mv-value", item, list);
