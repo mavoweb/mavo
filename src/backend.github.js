@@ -187,7 +187,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 		// Create repo if it doesn’t exist
 		let repoInfo = this.repoInfo?
 		               Promise.resolve(this.repoInfo)
-		             : this.request("user/repos", {name: this.repo}, "POST").then(repoInfo => this.repoInfo = repoInfo);
+		             : this.request("user/repos", {name: this.repo, private: !!(this.options.private ?? o.private)}, "POST").then(repoInfo => this.repoInfo = repoInfo);
 
 		serialized = o.isEncoded? serialized : _.btoa(serialized);
 
