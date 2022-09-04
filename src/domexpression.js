@@ -167,9 +167,11 @@ var _ = Mavo.DOMExpression = $.Class({
 				}
 
 				let value = Mavo.value(env.value);
-				if (typeof value === "object" || value !== oldValue) {
+				if (!this.evaluated || typeof value === "object" || value !== oldValue) {
 					changed = true;
 				}
+
+				this.evaluated = true;
 
 				return env.value;
 			}
