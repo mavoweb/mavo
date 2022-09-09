@@ -43,6 +43,17 @@ var _ = Mavo.Functions = {
 		return ret;
 	},
 
+	// Like get() when used with an array, but immediately goes to items
+	// This means that map(arr, 'length') will return an array of item.length, rather than just the length of arr
+	map: function(array, property) {
+		if (Array.isArray(array)) {
+			return array.map(e => _.get(e, property));
+		}
+		else if (array) {
+			return _.get(array, property);
+		}
+	},
+
 	url: (id, url = location) => {
 		if (id === undefined) {
 			return location.href;
