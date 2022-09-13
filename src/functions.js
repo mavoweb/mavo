@@ -174,8 +174,8 @@ var _ = Mavo.Functions = {
 			return null;
 		}
 
-		arr1 = Mavo.toArray(arr1);
-		arr2 = Mavo.toArray(arr2);
+		arr1 = Mavo.toArray(arr1).map(val);
+		arr2 = Mavo.toArray(arr2).map(val);
 
 		let set2 = new Set(arr2);
 
