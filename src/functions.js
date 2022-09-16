@@ -174,12 +174,12 @@ var _ = Mavo.Functions = {
 			return null;
 		}
 
-		arr1 = Mavo.toArray(arr1).map(val);
-		arr2 = Mavo.toArray(arr2).map(val);
+		arr1 = Mavo.toArray(arr1);
+		arr2 = Mavo.toArray(arr2);
 
-		let set2 = new Set(arr2);
+		let set2 = new Set(arr2.map(val));
 
-		return arr1.filter(x => set2.has(x));
+		return arr1.filter(x => set2.has(Mavo.value(x)));
 	},
 
 	/*********************
