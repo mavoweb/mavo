@@ -162,7 +162,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		let editor = this.editor || this.originalEditor;
 
 		if (editor) {
-			if (editor.matches(Mavo.selectors.formControl)) {
+			if (_.isFormControl(editor)) {
 				return _.getValue(editor, {datatype: this.datatype});
 			}
 
@@ -181,7 +181,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (this.editor) {
-			if (this.editor.matches(Mavo.selectors.formControl)) {
+			if (_.isFormControl(this.editor)) {
 				if (this.editor.matches("select")) {
 					let text = [...this.editor.options].find(o => o.value == value)?.textContent;
 
@@ -1180,6 +1180,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		return value;
+	}
+
+	static isFormControl(element) {
+		return element.matches(Mavo.selectors.formControl) || element.matches(`[mv-edit-as="formControl"]`);
 	}
 };
 
