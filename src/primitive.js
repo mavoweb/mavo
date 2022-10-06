@@ -609,7 +609,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 						evt.preventDefault();
 					}
 				}
-				else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
+				else if (evt.key == "Backspace" && this.empty) {
 					// Focus on sibling afterwards
 					let sibling = this.getCousin(1) || this.getCousin(-1);
 
