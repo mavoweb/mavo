@@ -251,10 +251,11 @@ _.duration = $.extend(function (ms, terms) {
 		terms = 1;
 	}
 
-	let timeLeft = ms || 0;
+	let negativeMultiplier = ms < 0 ? -1 : 1; // a multiplier to convert to negative if needed
+	let timeLeft = Math.abs(ms);
 	let ret = [];
 
-	if (ms < 1) {
+	if (ms === 0) {
 		ret = ["0 ms"];
 	}
 	else {
@@ -269,7 +270,7 @@ _.duration = $.extend(function (ms, terms) {
 
 			if (unitValue > 0 && ret.length < terms) {
 				let unitProperPlurality = unitValue === 1 && unit !== "ms" ? unit.slice(0, -1) : unit;
-				ret.push(unitValue + " " + _.phrase.call(this, unitProperPlurality));
+				ret.push(negativeMultiplier * unitValue + " " + _.phrase.call(this, unitProperPlurality));
 			}
 			else if (ret.length > 0) {
 				// Discard any further terms to avoid non-continous terms like e.g. "1 month, 10 ms"
