@@ -196,6 +196,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 							disabled: true
 						});
 					}
+					else {
+						// Delete any temp options, we don't need them anymore
+						$$(".mv-volatile", this.editor).forEach(o => o.remove());
+					}
 				}
 
 				_.setValue(this.editor, value, {config: this.editorDefaults});
