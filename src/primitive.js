@@ -183,7 +183,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		if (this.editor) {
 			if (_.isFormControl(this.editor)) {
 				if (this.editor.matches("select")) {
-					let text = [...this.editor.options].find(o => (Array.isArray(value)? value : [value]).map(v => v + "").includes(o.value))?.textContent;
+					let text = [...this.editor.options].find(o => Mavo.toArray(value).map(v => v + "").includes(o.value))?.textContent;
 
 					// We have a local editor, do we need to add/remove temp options?
 					if (text === undefined) {
