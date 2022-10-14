@@ -234,6 +234,10 @@ _.duration = $.extend(function (ms, terms) {
 	// TODO unify code for specific unit with code for auto units to reduce repetition
 	// TODO allow multiple units, e.g. ["days", "hours"]
 	// TODO allow combining term # and units, e.g. start: days, terms: 2
+	
+	let negativeMultiplier = ms < 0 ? -1 : 1; // a multiplier to convert result to negative if needed
+	ms = Math.abs(ms); // negative works same way as positive does, just adding negative sign in the front
+
 	if (terms && isNaN(terms)) {
 		// Specific term specified
 		let unitSingular = terms != "ms" ? terms.replace(/s?$/, "") : terms;
@@ -245,17 +249,16 @@ _.duration = $.extend(function (ms, terms) {
 
 		let n = Math.floor(ms / s[unitPlural] / 1000);
 		let unitProperPlurality = n === 1 && unitPlural !== "ms" ? unitSingular : unitPlural;
-		return n + " " + _.phrase.call(this, unitProperPlurality);
+		return negativeMultiplier * n + " " + _.phrase.call(this, unitProperPlurality);
 	}
-	else if (ms === 0 || terms === undefined) {
+	else if (ms == 0 || terms === undefined) {
 		terms = 1;
 	}
 
-	let negativeMultiplier = ms < 0 ? -1 : 1; // a multiplier to convert to negative if needed
-	let timeLeft = Math.abs(ms);
+	let timeLeft = ms;
 	let ret = [];
 
-	if (ms === 0) {
+	if (ms == 0) {
 		ret = ["0 ms"];
 	}
 	else {
