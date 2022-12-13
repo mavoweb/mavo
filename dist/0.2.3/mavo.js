@@ -9641,7 +9641,7 @@ var _ = Mavo.Script = {
 			},
 			precedence: 3
 		},
-		"groupby": {
+		"group_by": {
 			symbol: "by",
 			code: (array, key) => {
 				array = Mavo.toArray(array);

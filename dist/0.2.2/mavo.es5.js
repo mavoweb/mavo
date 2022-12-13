@@ -9154,7 +9154,7 @@ Mavo.Locale.register("en", {
         },
         precedence: 3
       },
-      "groupby": {
+      "group_by": {
         symbol: "by",
         code: (array, key) => {
           var _key$, _key$$Mavo$toNode;
