@@ -8672,7 +8672,7 @@ var _ = Mavo.Functions = {
 		multiValued: true,
 	}),
 
-	fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+	from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
 		multiValued: true,
 	}),
 

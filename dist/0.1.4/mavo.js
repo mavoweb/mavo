@@ -6994,7 +6994,7 @@ var _ = Mavo.Functions = {
 	lowercase: text => str(text).toLowerCase(),
 
 	from: (haystack, needle) => _.between(haystack, needle),
-	fromlast: (haystack, needle) => _.between(haystack, needle, "", true),
+	from_last: (haystack, needle) => _.between(haystack, needle, "", true),
 	to: (haystack, needle) => _.between(haystack, "", needle),
 	tofirst: (haystack, needle) => _.between(haystack, "", needle, true),
 

@@ -8273,7 +8273,7 @@ Mavo.Locale.register("en", {
     from: $.extend((haystack, needle) => _.between(haystack, needle), {
       multiValued: true
     }),
-    fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+    from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
       multiValued: true
     }),
     to: $.extend((haystack, needle) => _.between(haystack, "", needle), {

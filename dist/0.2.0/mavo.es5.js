@@ -8659,7 +8659,7 @@ Mavo.Locale.register("en", {
     }, {
       multiValued: true
     }),
-    fromlast: $.extend(function (haystack, needle) {
+    from_last: $.extend(function (haystack, needle) {
       return _.between(haystack, needle, "", true);
     }, {
       multiValued: true
