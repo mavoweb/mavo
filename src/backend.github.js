@@ -1,5 +1,9 @@
 (function($, $$) {
 
+function delay(ms) {
+	return new Promise(r => setTimeout(r, ms));
+}
+
 let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 	id = "Github"
 
@@ -174,7 +178,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 	 * @param {String} path - Optional file path
 	 * @return {Promise} A promise that resolves when the file is saved.
 	 */
-	put (serialized, path = this.path, o = {}) {
+	async put (serialized, path = this.path, o = {}) {
 		if (!path) {
 			// Raw API calls are read-only for now
 			return;
@@ -184,70 +188,71 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 		let fileCall = `${repoCall}/contents/${path}`;
 		let commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
 
-		// Create repo if it doesn’t exist
-		let repoInfo = this.repoInfo?
-		               Promise.resolve(this.repoInfo)
-		             : this.request("user/repos", {name: this.repo, private: !!(this.options.private ?? o.private)}, "POST").then(repoInfo => this.repoInfo = repoInfo);
-
 		serialized = o.isEncoded? serialized : _.btoa(serialized);
 
-		return repoInfo.then(repoInfo => {
-				if (!this.canPush()) {
-					// Does not have permission to commit, create a fork
-					return this.request(`${repoCall}/forks`, {name: this.repo}, "POST")
-						.then(forkInfo => {
-							fileCall = `repos/${forkInfo.full_name}/contents/${path}`;
-							return this.forkInfo = forkInfo;
-						})
-						.then(forkInfo => {
-							// Ensure that fork is created (they take a while)
-							let timeout;
-							let test = (resolve, reject) => {
-								clearTimeout(timeout);
-								this.request(`repos/${forkInfo.full_name}/commits`, {until: "1970-01-01T00:00:00Z"}, "HEAD")
-									.then(x => {
-										resolve(forkInfo);
-									})
-									.catch(x => {
-										// Try again after 1 second
-										timeout = setTimeout(test, 1000);
-									});
-							};
+		let repoInfo = await this.repoInfo;
 
-							return new Promise(test);
-						});
+		if (!repoInfo || repoInfo.owner.login !== this.username || repoInfo.name !== this.repo) {
+			// No repo info available, or out of date, fetch it
+			try {
+				repoInfo = await this.request(`repos/${this.username}/${this.repo}`)
+				this.branch ??= repoInfo.default_branch;
+			}
+			catch (e) {
+				if (e.status === 404) {
+					// Create repo if it doesn’t exist
+					repoInfo = this.repoInfo = await this.request("user/repos", {name: this.repo, private: !!(this.options.private ?? o.private)}, "POST");
 				}
+			}
+		}
 
-				return repoInfo;
-			})
-			.then(repoInfo => {
-				return this.request(fileCall, {
-					ref: this.branch
-				}).then(fileInfo => this.request(fileCall, {
-					message: commitPrefix + this.mavo._("gh-updated-file", {name: fileInfo.name || "file"}),
+		if (!this.canPush()) {
+			// Does not have permission to commit, create a fork
+			let forkInfo = await this.request(`${repoCall}/forks`, {name: this.repo}, "POST");
+			fileCall = `repos/${forkInfo.full_name}/contents/${path}`;
+			this.forkInfo = forkInfo;
+
+			// Ensure that fork is created (they take a while)
+			let fetchedForkInfo;
+
+			do {
+				await delay(1000);
+				// If we can get a list of commits, the fork is created
+				fetchedForkInfo = this.request(`repos/${forkInfo.full_name}/commits`, {until: "1970-01-01T00:00:00Z"}, "HEAD");
+			} while (!fetchedForkInfo);
+
+			repoInfo = forkInfo = fetchedForkInfo;
+		}
+
+		let fileInfo;
+		try {
+			// Get SHA
+			fileInfo = await this.request(fileCall, { ref: this.branch});
+
+			// If we're here, file exists
+			fileInfo = await this.request(fileCall, {
+				message: commitPrefix + this.mavo._("gh-updated-file", {name: fileInfo.name || "file"}),
+				content: serialized,
+				branch: this.branch,
+				sha: fileInfo.sha
+			}, "PUT");
+		}
+		catch (xhr) {
+			if (xhr.status == 404) {
+				// File does not exist, create it
+				fileInfo = await this.request(fileCall, {
+					message: commitPrefix + "Created file",
 					content: serialized,
-					branch: this.branch,
-					sha: fileInfo.sha
-				}, "PUT"), xhr => {
-					if (xhr.status == 404) {
-						// File does not exist, create it
-						return this.request(fileCall, {
-							message: commitPrefix + "Created file",
-							content: serialized,
-							branch: this.branch
-						}, "PUT");
-					}
+					branch: this.branch
+				}, "PUT");
+			}
+		}
 
-					return xhr;
-				});
-			})
-			.then(fileInfo => {
-				const env = {context: this, fileInfo};
+		const env = {context: this, fileInfo};
 
-				Mavo.hooks.run("gh-after-commit", env);
+		Mavo.hooks.run("gh-after-commit", env);
 
-				return env.fileInfo;
-			});
+		return env.fileInfo;
 	}
 
 	login (passive) {
@@ -271,9 +276,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 					if (this.repo) {
 						return this.request(`repos/${this.username}/${this.repo}`)
 						.then(repoInfo => {
-							if (this.branch === undefined) {
-								this.branch = repoInfo.default_branch;
-							}
+							this.branch ??= repoInfo.default_branch;
 
 							this.repoInfo = repoInfo;
 
