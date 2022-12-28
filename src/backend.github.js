@@ -195,7 +195,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 		if (!repoInfo || repoInfo.owner.login !== this.username || repoInfo.name !== this.repo) {
 			// No repo info available, or out of date, fetch it
 			try {
-				repoInfo = await this.request(`repos/${this.username}/${this.repo}`)
+				repoInfo = await this.request(repoCall)
 				this.branch ??= repoInfo.default_branch;
 			}
 			catch (e) {
