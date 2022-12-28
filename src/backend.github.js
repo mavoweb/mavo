@@ -218,7 +218,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 			do {
 				await delay(1000);
 				// If we can get a list of commits, the fork is created
-				fetchedForkInfo = this.request(`repos/${forkInfo.full_name}/commits`, {until: "1970-01-01T00:00:00Z"}, "HEAD");
+				fetchedForkInfo = await this.request(`repos/${forkInfo.full_name}/commits`, {until: "1970-01-01T00:00:00Z"}, "HEAD");
 			} while (!fetchedForkInfo);
 
 			repoInfo = forkInfo = fetchedForkInfo;
