@@ -85,7 +85,7 @@ let _ = Mavo.Actions = {
 	Functions: {
 		/**
 		 * @param data (Optional) data of new item(s)
-		 * @param ref Collection to add to
+		 * @param ref Collection(s) to add to
 		 * @param index {Number} index of new item(s).
 		 * @returns Newly added item(s)
 		 */
