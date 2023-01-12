@@ -90,7 +90,10 @@ let _ = Mavo.Actions = {
 		 * @returns Newly added item(s)
 		 */
 		add: Object.assign(function(data, ref, index) {
-			let args = [...arguments], collection;
+			
+			const convertToArray =  arg => Array.isArray(arg) ? arg : [arg];
+
+			let args = [...arguments];
 
 			if (arguments.length < 3) {
 				if (arguments.length <= 1) {
@@ -99,64 +102,65 @@ let _ = Mavo.Actions = {
 				}
 				else if (arguments.length === 2) {
 					// Is it (data, ref) or (ref, index)?
-					// ref might be a number, if collection of numbers!
-					collection = _.getCollection(ref);
 
-					if (!collection) {
-						// No collection from ref, must be (ref, index)
-						collection = _.getCollection(data);
+					let refs = convertToArray(ref);
+					let refIsFirstArg = refs.map(x => _.getCollection(x)).every(x => x === null);
 
-						if (collection) {
-							// Yup, it's (ref, index)
+					if (refIsFirstArg) {
+						let refs = convertToArray(data);
+						refIsFirstArg = refs.map(x => _.getCollection(x)).some(x => x !== null);
+
+						if (refIsFirstArg) {
 							[data, ref, index] = [undefined, data, ref];
 						}
 					}
 				}
 			}
 
-			if (!ref) {
-				return;
-			}
+			let refs = convertToArray(ref);
+			let collections = [... new Set(refs.map(x => _.getCollection(x)).filter(x => x))];
 
-			collection = collection || _.getCollection(ref);
-
-			if (!collection) {
-				collection = _.getCollection(this);
+			if (!collections.length) {
+				let collection = _.getCollection(this);
 
 				if (collection) {
 					// The collection is the context, re-interpret arguments
 					[data, index] = args;
+					collections.push(collection);
 				}
 			}
 
-			if (!collection) {
+			if (!collections.length) {
 				Mavo.warn("No collection or collection item provided to add().", {once: false});
 				return data;
 			}
 
-			if (index === undefined) {
+			if (index === undefined && collections.length === 1) {
 				// If there is no index and item provided instead of collection,
 				// get index from collection item
 				let node = _.getNode(ref);
 
-				if (node && node.collection === collection) {
+				if (node && node.collection === collections[0]) {
 					index = node.index;
 				}
 			}
 
-			return (Array.isArray(data)? data : [data]).map(datum => {
-				let item = collection.add(undefined, index);
+			return convertToArray(data).reverse().map(datum => {
+				return collections.map(collection =>{
+					let item = collection.add(undefined, index);
 
-				if (datum !== undefined) {
-					item.render(datum);
-				}
+					if (datum !== undefined) {
+						item.render(datum);
+					}
 
-				if (collection.editing) {
-					collection.editItem(item);
-				}
+					if (collection.editing) {
+						collection.editItem(item);
+					}
 
-				return item.getLiveData();
-			});
+					return item.getLiveData();
+				});
+			}).reduce((result, arr) => result.concat(arr), []);
+			
 		}, {needsContext: true}),
 
 		/**
