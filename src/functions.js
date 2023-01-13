@@ -609,14 +609,18 @@ var _ = Mavo.Functions = {
 	between: $.extend((haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
 
-		const fromIndex = haystack[tight? "lastIndexOf" : "indexOf"](from);
-		const toIndex = haystack[tight? "indexOf" : "lastIndexOf"](to);
+		let fromIndex = haystack[tight? "lastIndexOf" : "indexOf"](from);
+		let toIndex = haystack[tight? "indexOf" : "lastIndexOf"](to);
 
 		if (fromIndex === -1 || toIndex === -1) {
 			return "";
 		}
 
-		return haystack.slice(from ? fromIndex + from.length : 0, to ? toIndex : haystack.length);
+		if (tight && toIndex <= fromIndex){
+			return haystack.slice(toIndex + to.length, fromIndex);
+		}
+
+		return haystack.slice(fromIndex + from.length, toIndex);
 	}, {
 		multiValued: true
 	}),
