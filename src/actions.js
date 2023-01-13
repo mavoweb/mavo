@@ -104,12 +104,17 @@ let _ = Mavo.Actions = {
 					// Is it (data, ref) or (ref, index)?
 
 					let refs = convertToArray(ref);
+					
+					// If no ref has a collection, add(ref, index) signature should be used.
 					let refIsFirstArg = refs.map(x => _.getCollection(x)).every(x => x === null);
-
+					
 					if (refIsFirstArg) {
 						let refs = convertToArray(data);
+					
+						// If there is at least one ref that has collection,
+						// we make sure that it is (ref, index)
 						refIsFirstArg = refs.map(x => _.getCollection(x)).some(x => x !== null);
-
+						
 						if (refIsFirstArg) {
 							[data, ref, index] = [undefined, data, ref];
 						}
@@ -118,6 +123,8 @@ let _ = Mavo.Actions = {
 			}
 
 			let refs = convertToArray(ref);
+			
+			// different and non-null collections
 			let collections = [... new Set(refs.map(x => _.getCollection(x)).filter(x => x))];
 
 			if (!collections.length) {
@@ -146,6 +153,8 @@ let _ = Mavo.Actions = {
 			}
 
 			return convertToArray(data).reverse().map(datum => {
+				
+				// Each data is added to all collections
 				return collections.map(collection =>{
 					let item = collection.add(undefined, index);
 
