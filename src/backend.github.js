@@ -186,7 +186,7 @@ let _ = Mavo.Backend.register(class Github extends Mavo.Backend {
 
 		let repoCall = `repos/${this.username}/${this.repo}`;
 		let fileCall = `${repoCall}/contents/${path}`;
-		let commitPrefix = this.mavo.element.getAttribute("mv-github-commit-prefix") || "";
+		let commitPrefix = this.mavo.element.getAttribute("mv-github-commit-message") || "";
 
 		serialized = o.isEncoded? serialized : _.btoa(serialized);
 
