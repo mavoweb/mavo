@@ -2094,7 +2094,7 @@ Mavo.Locale.register("en", {
       } else {
         this.element = $.create({
           className: "mv-bar mv-ui",
-          start: this.mavo.element.tagName === "HTML"? document.body : this.mavo.element,
+          start: this.mavo.element,
           innerHTML: "<button>&nbsp;</button>"
         });
       }

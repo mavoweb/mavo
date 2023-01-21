@@ -2129,7 +2129,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 			} else {
 				this.element = $.create({
 					className: "mv-bar mv-ui",
-					start: this.mavo.element.tagName === "HTML"? document.body : this.mavo.element,
+					start: this.mavo.element,
 					innerHTML: "<button>&nbsp;</button>"
 				});
 			}
