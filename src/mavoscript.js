@@ -37,19 +37,19 @@ var _ = Mavo.Script = {
 		}
 	}) : Mavo.Functions,
 
-	addUnaryOperator: function(name, o) {
+	add_Unary_Operator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
 				_.unarySymbols[symbol] = name;
-				jsep.addUnaryOp(symbol);
+				jsep.add_Unary_Operator(symbol);
 			});
 		}
 
-		return operand => _.unaryOperation(operand, operand => o.scalar(val(operand)));
+		return operand => _.unary_Operation(operand, operand => o.scalar(val(operand)));
 	},
 
-	unaryOperation: function(operand, scalar) {
+	unary_Operation: function(operand, scalar) {
 		if (Array.isArray(operand)) {
 			return operand.map(scalar);
 		}
@@ -58,7 +58,7 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	binaryOperation: function(a, b, o = {}) {
+	binary_Operation: function(a, b, o = {}) {
 		o.scalar = typeof o === "function" ? o : o.scalar;
 		var result;
 
@@ -106,14 +106,14 @@ var _ = Mavo.Script = {
 	 * The operation operation between a scalar and an array will result in
 	 * the operation being applied between the scalar and every array element.
 	 */
-	addBinaryOperator: function(name, o) {
+	add_Binary_Operator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
 				_.symbols[symbol] = name;
 
 				if (o.precedence) {
-					jsep.addBinaryOp(symbol, o.precedence);
+					jsep.add_Binary_Operator(symbol, o.precedence);
 				}
 			});
 		}
@@ -142,10 +142,10 @@ var _ = Mavo.Script = {
 					b = $u.numbers(b);
 				}
 
-				var result = _.binaryOperation(a, b, o);
+				var result = _.binary_Operation(a, b, o);
 
 				if (o.comparison) {
-					prev = _.binaryOperation(prev, result, _.operators["and"]);
+					prev = _.binary_Operation(prev, result, _.operators["and"]);
 				}
 				else {
 					prev = result;
@@ -163,9 +163,9 @@ var _ = Mavo.Script = {
 	symbols: {},
 	unarySymbols: {},
 
-	getOperatorName: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
+	get_Operator_Name: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
 
-	isComparisonOperator: (op) => {
+	is_Comparison_Operator: (op) => {
 		// decides if op, a string, is a comparison operator like < or <=
 		if (op) {
 			let operatorDefinition = _.operators[_.symbols[op]];
@@ -175,14 +175,14 @@ var _ = Mavo.Script = {
 
 	// Is this variable?
 	// E.g. foo or foo.bar is not static whereas "foo" or bar() is
-	isStatic: node => {
+	is_Static: node => {
 		if (node.type === "Identifier") {
 			return false;
 		}
 
 		for (let property of _.childProperties) {
 			if (node[property] && property !== "callee") {
-				if (!_.isStatic(node[property])) {
+				if (!_.is_Static(node[property])) {
 					return false;
 				}
 			}
@@ -408,7 +408,7 @@ var _ = Mavo.Script = {
 				var object = node.arguments[0];
 
 				for (let i=1; i<node.arguments.length; i++) {
-					if (!_.isStatic(node.arguments[i])) {
+					if (!_.is_Static(node.arguments[i])) {
 						node.arguments[i] = Object.assign(_.parse("scope()"), {
 							arguments: [
 								object,
@@ -446,7 +446,7 @@ var _ = Mavo.Script = {
 						var op = a => Mavo.Functions.eq(a, b);
 					}
 
-					var result = Mavo.Script.unaryOperation(needle, op);
+					var result = Mavo.Script.unary_Operation(needle, op);
 					ret = ret === undefined? result : Mavo.Functions.and(result, ret);
 				});
 				return ret;
@@ -520,7 +520,7 @@ var _ = Mavo.Script = {
 		},
 	},
 
-	getNumericalOperands: function(a, b) {
+	get_Numerical_Operands: function(a, b) {
 		if (isNaN(a) || isNaN(b)) {
 			// Try comparing as dates
 			var da = $u.date(a), db = $u.date(b);
@@ -676,7 +676,7 @@ var _ = Mavo.Script = {
 	 */
 	transformations: {
 		"BinaryExpression": node => {
-			let name = _.getOperatorName(node.operator);
+			let name = _.get_Operator_Name(node.operator);
 			let def = _.operators[name];
 
 			// Operator-specific transformations
@@ -700,13 +700,13 @@ var _ = Mavo.Script = {
 				// Create list of {comparison, operand} objects
 				let comparisonOperands = [];
 				do {
-					let operatorName = _.getOperatorName(nodeLeft.operator); // e.g. "lt"
+					let operatorName = _.get_Operator_Name(nodeLeft.operator); // e.g. "lt"
 					comparisonOperands.unshift({
 						comparison: operatorName,
 						operand: nodeLeft.right
 					});
 					nodeLeft = nodeLeft.left;
-				} while (def.flatten !== false && _.isComparisonOperator(nodeLeft.operator));
+				} while (def.flatten !== false && _.is_Comparison_Operator(nodeLeft.operator));
 
 				// Determine if all comparison operators are the same
 				let comparisonsHeterogeneous = false;
@@ -741,7 +741,7 @@ var _ = Mavo.Script = {
 				do {
 					ret.arguments.unshift(nodeLeft.right);
 					nodeLeft = nodeLeft.left;
-				} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
+				} while (def.flatten !== false && _.get_Operator_Name(nodeLeft.operator) === name);
 
 				ret.arguments.unshift(nodeLeft);
 			}
@@ -752,7 +752,7 @@ var _ = Mavo.Script = {
 			return ret;
 		},
 		"UnaryExpression": node => {
-			var name = _.getOperatorName(node.operator, true);
+			var name = _.get_Operator_Name(node.operator, true);
 
 			if (name) {
 				return {
@@ -939,10 +939,10 @@ for (let name in _.operators) {
 	let details = _.operators[name];
 
 	if (details.scalar?.length < 2) {
-		var ret = _.addUnaryOperator(name, details);
+		var ret = _.add_Unary_Operator(name, details);
 	}
 	else {
-		var ret = _.addBinaryOperator(name, details);
+		var ret = _.add_Binary_Operator(name, details);
 	}
 
 	details.code = details.code || ret;
@@ -963,8 +963,8 @@ Mavo.Functions.compare = function(...operands) {
 		let a = operands[i - 2];
 		let op = operands[i - 1];
 		let b = operands[i];
-		let term = _.binaryOperation(a, b, Mavo.Script.operators[op]);
-		result = _.binaryOperation(result, term, Mavo.Script.operators["and"]);
+		let term = _.binary_Operation(a, b, Mavo.Script.operators[op]);
+		result = _.binary_Operation(result, term, Mavo.Script.operators["and"]);
 	}
 
 	return result;
