@@ -90,9 +90,6 @@ let _ = Mavo.Actions = {
 		 * @returns Newly added item(s)
 		 */
 		add: Object.assign(function(data, ref, index) {
-			
-			const convertToArray =  arg => Array.isArray(arg) ? arg : [arg];
-
 			let args = [...arguments];
 
 			if (arguments.length < 3) {
@@ -103,18 +100,18 @@ let _ = Mavo.Actions = {
 				else if (arguments.length === 2) {
 					// Is it (data, ref) or (ref, index)?
 
-					let refs = convertToArray(ref);
-					
+					let refs = Mavo.toArray(ref);
+
 					// If no ref has a collection, add(ref, index) signature should be used.
 					let refIsFirstArg = refs.map(x => _.getCollection(x)).every(x => x === null);
-					
+
 					if (refIsFirstArg) {
-						let refs = convertToArray(data);
-					
+						let refs = Mavo.toArray(data);
+
 						// If there is at least one ref that has collection,
 						// we make sure that it is (ref, index)
 						refIsFirstArg = refs.map(x => _.getCollection(x)).some(x => x !== null);
-						
+
 						if (refIsFirstArg) {
 							[data, ref, index] = [undefined, data, ref];
 						}
@@ -122,8 +119,8 @@ let _ = Mavo.Actions = {
 				}
 			}
 
-			let refs = convertToArray(ref);
-			
+			let refs = Mavo.toArray(ref);
+
 			// different and non-null collections
 			let collections = [... new Set(refs.map(x => _.getCollection(x)).filter(x => x))];
 
@@ -152,8 +149,7 @@ let _ = Mavo.Actions = {
 				}
 			}
 
-			return convertToArray(data).reverse().map(datum => {
-				
+			return Mavo.toArray(data).reverse().map(datum => {
 				// Each data is added to all collections
 				return collections.map(collection =>{
 					let item = collection.add(undefined, index);
