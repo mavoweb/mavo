@@ -741,7 +741,7 @@ var _ = Mavo.Script = {
 				do {
 					ret.arguments.unshift(nodeLeft.right);
 					nodeLeft = nodeLeft.left;
-				} while (def.flatten !== false && _.getOperatorName(nodeLeft.operator) === name);
+				} while (def.flatten !== false && nodeLeft.right && _.getOperatorName(nodeLeft.operator) === name);
 
 				ret.arguments.unshift(nodeLeft);
 			}
