@@ -173,6 +173,7 @@ var _ = Mavo.Script = {
 		}
 	},
 
+	
 	// Is this variable?
 	// E.g. foo or foo.bar is not static whereas "foo" or bar() is
 	is_Static: node => {
