@@ -37,7 +37,7 @@ var _ = Mavo.Script = {
 		}
 	}) : Mavo.Functions,
 
-	add_Unary_Operator: function(name, o) {
+	addUnaryOperator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
@@ -49,7 +49,7 @@ var _ = Mavo.Script = {
 		return operand => _.unaryOperation(operand, operand => o.scalar(val(operand)));
 	},
 
-	unary_Operation: function(operand, scalar) {
+	unaryOperation: function(operand, scalar) {
 		if (Array.isArray(operand)) {
 			return operand.map(scalar);
 		}
@@ -58,7 +58,7 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	binary_Operation: function(a, b, o = {}) {
+	binaryOperation: function(a, b, o = {}) {
 		o.scalar = typeof o === "function" ? o : o.scalar;
 		var result;
 
@@ -106,7 +106,7 @@ var _ = Mavo.Script = {
 	 * The operation operation between a scalar and an array will result in
 	 * the operation being applied between the scalar and every array element.
 	 */
-	add_Binary_Operator: function(name, o) {
+	addBinaryOperator: function(name, o) {
 		if (o.symbol) {
 			// Build map of symbols to function names for easy rewriting
 			Mavo.toArray(o.symbol).forEach(symbol => {
@@ -163,9 +163,9 @@ var _ = Mavo.Script = {
 	symbols: {},
 	unarySymbols: {},
 
-	get_Operator_Name: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
+	getOperatorName: (op, unary) => _[unary? "unarySymbols" : "symbols"][op] || op,
 
-	is_Comparison_Operator: (op) => {
+	isComparisonOperator: (op) => {
 		// decides if op, a string, is a comparison operator like < or <=
 		if (op) {
 			let operatorDefinition = _.operators[_.symbols[op]];
@@ -175,7 +175,7 @@ var _ = Mavo.Script = {
 
 	// Is this variable?
 	// E.g. foo or foo.bar is not static whereas "foo" or bar() is
-	is_Static: node => {
+	isStatic: node => {
 		if (node.type === "Identifier") {
 			return false;
 		}
@@ -520,7 +520,7 @@ var _ = Mavo.Script = {
 		},
 	},
 
-	get_Numerical_Operands: function(a, b) {
+	getNumericalOperands: function(a, b) {
 		if (isNaN(a) || isNaN(b)) {
 			// Try comparing as dates
 			var da = $u.date(a), db = $u.date(b);
