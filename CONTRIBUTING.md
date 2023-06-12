@@ -14,6 +14,8 @@
 
 # Want to contribute?
 
+Please don't ask if you can contribute. If it's a small issue, just submit a PR. If it's a larger issue, and you have the experience to tackle it, just discuss your proposed design.
+
 - Currently the main need is **documentation**. There is literally a ton of functionality in Mavo that is not documented yet. If you want to contribute, please consider contributing documentation, tutorials and/or demos. You could do that in [the mavo.io repo](https://github.com/mavoweb/mavo.io).
 
 If you want to contribute to Mavo's source, read on.
