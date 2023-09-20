@@ -545,7 +545,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		this.autoSave = false;
 
 		if (data === undefined) {
-			this.inProgress = "Loading";
+			this.inProgress = "loading";
 
 			await backend.ready;
 
@@ -597,7 +597,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return;
 		}
 
-		this.inProgress = "Saving";
+		this.inProgress = "saving";
 
 		let saved;
 
@@ -627,7 +627,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return Promise.reject();
 		}
 
-		this.inProgress = "Uploading";
+		this.inProgress = "uploading";
 
 		return this.uploadBackend.upload(file, path)
 			.then(url => {

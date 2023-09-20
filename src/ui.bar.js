@@ -420,7 +420,7 @@ _.controls = {
 								}
 							});
 
-							this.inProgress = this._("uploading");
+							this.inProgress = "uploading";
 							reader.readAsText(file);
 						}
 					}
