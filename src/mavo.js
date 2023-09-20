@@ -135,7 +135,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		$.bind(this.element, "mv-login.mavo", evt => {
 			if (evt.backend == (this.source || this.storage)) {
 				// If last time we rendered we got nothing, maybe now we'll have better luck?
-				if (this.inProgress !== "Loading" && !this.root.data && !this.unsavedChanges) {
+				if (this.inProgress !== "loading" && !this.root.data && !this.unsavedChanges) {
 					this.load();
 				}
 			}
