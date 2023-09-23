@@ -437,7 +437,7 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 	isCompatible (c) {
 		return c && this.itemTemplate.constructor == c.itemTemplate.constructor && (c === this
 		       || c.template == this || this.template == c || this.template && this.template == c.template
-		       || this.accepts.has(c.property) > -1);
+		       || c.accepts.has(this.property));
 	}
 
 	// Make sure to remove reference to .dragula
