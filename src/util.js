@@ -731,7 +731,7 @@ var _ = $.extend(Mavo, {
 
 				if (pair) {
 					key = pair[1].replace(/\\:/g, ":");
-					value = pair[2];
+					value = pair[2] === "false" ? false : pair[2];
 				}
 				else {
 					// If no value, it's boolean

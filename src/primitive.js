@@ -162,7 +162,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		let editor = this.editor || this.originalEditor;
 
 		if (editor) {
-			if (editor.matches(Mavo.selectors.formControl)) {
+			if (_.isFormControl(editor)) {
 				return _.getValue(editor, {datatype: this.datatype});
 			}
 
@@ -181,9 +181,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		if (this.editor) {
-			if (this.editor.matches(Mavo.selectors.formControl)) {
+			if (_.isFormControl(this.editor)) {
 				if (this.editor.matches("select")) {
-					let text = [...this.editor.options].find(o => o.value == value)?.textContent;
+					let text = [...this.editor.options].find(o => Mavo.toArray(value).map(v => v.toString()).includes(o.value))?.textContent;
 
 					// We have a local editor, do we need to add/remove temp options?
 					if (text === undefined) {
@@ -195,6 +195,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 							selected: true,
 							disabled: true
 						});
+					}
+					else {
+						// Delete any temp options, we don't need them anymore
+						$$(".mv-volatile", this.editor).forEach(o => o.remove());
 					}
 				}
 
@@ -609,7 +613,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 						evt.preventDefault();
 					}
 				}
-				else if (evt.key == "Backspace" && (this.empty || evt[Mavo.superKey])) {
+				else if (evt.key == "Backspace" && this.empty) {
 					// Focus on sibling afterwards
 					let sibling = this.getCousin(1) || this.getCousin(-1);
 
@@ -1180,6 +1184,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		}
 
 		return value;
+	}
+
+	static isFormControl(element) {
+		return element.matches(Mavo.selectors.formControl) || element.matches(`[mv-edit-as="formControl"]`);
 	}
 };
 

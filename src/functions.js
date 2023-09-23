@@ -43,6 +43,17 @@ var _ = Mavo.Functions = {
 		return ret;
 	},
 
+	// Like get() when used with an array, but immediately goes to items
+	// This means that map(arr, 'length') will return an array of item.length, rather than just the length of arr
+	map: function(array, property) {
+		if (Array.isArray(array)) {
+			return array.map(e => _.get(e, property));
+		}
+		else if (array) {
+			return _.get(array, property);
+		}
+	},
+
 	url: (id, url = location) => {
 		if (id === undefined) {
 			return location.href;
@@ -166,9 +177,9 @@ var _ = Mavo.Functions = {
 		arr1 = Mavo.toArray(arr1);
 		arr2 = Mavo.toArray(arr2);
 
-		let set2 = new Set(arr2);
+		let set2 = new Set(arr2.map(val));
 
-		return arr1.filter(x => set2.has(x));
+		return arr1.filter(x => set2.has(Mavo.value(x)));
 	},
 
 	/*********************
@@ -598,14 +609,18 @@ var _ = Mavo.Functions = {
 	between: $.extend((haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
 
-		var i1 = from? haystack[tight? "lastIndexOf" : "indexOf"](from) : -1;
-		var i2 = haystack[tight? "indexOf" : "lastIndexOf"](to);
+		let fromIndex = from? haystack[tight? "lastIndexOf" : "indexOf"](from) : 0;
+		let toIndex = to? haystack[tight? "indexOf" : "lastIndexOf"](to) : haystack.length;
 
-		if (from && i1 === -1 || i2 === -1) {
+		if (fromIndex === -1 || toIndex === -1) {
 			return "";
 		}
 
-		return haystack.slice(i1 + 1, i2 === -1 || !to? haystack.length : i2);
+		if (tight && toIndex <= fromIndex){
+			return haystack.slice(toIndex + to.length, fromIndex);
+		}
+
+		return haystack.slice(fromIndex + from.length, toIndex);
 	}, {
 		multiValued: true
 	}),

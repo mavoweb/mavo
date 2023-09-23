@@ -8,11 +8,13 @@
 
 ## Getting a faster and better answer
 
-- It *really* helps us figure out what's wrong if you include a *reduced testcase*. You can go to play.mavo.io, paste in your HTML that is between `<body>` and `</body>` and remove one thing at a time, see if the bug still occurs, and add it back if not. Repeat until there's nothing more that can be removed without making the bug disappear.
+- It *really* helps us figure out what's wrong if you include a *reduced testcase*. You can go to [play.mavo.io](https://play.mavo.io), paste in your HTML that is between `<body>` and `</body>` and remove one thing at a time, see if the bug still occurs, and add it back if not. Repeat until there's nothing more that can be removed without making the bug disappear.
 - If you cannot make a reduced testcase, at the very least, include your HTML. It's almost impossible to understand what's going on without being able to see any of your HTML.
 - If you’re asking a question, please mention your level of familiarity with JavaScript (Nothing, beginner, intermediate, expert). Mavo does not require familiarity with JS to be used, but there are JS developers that use Mavo instead of a JS framework, and we need to know what kind of support you need so we can speak your language!
 
 # Want to contribute?
+
+Please don't ask if you can contribute. If it's a small issue, just submit a PR. If it's a larger issue, and you have the experience to tackle it, just discuss your proposed design.
 
 - Currently the main need is **documentation**. There is literally a ton of functionality in Mavo that is not documented yet. If you want to contribute, please consider contributing documentation, tutorials and/or demos. You could do that in [the mavo.io repo](https://github.com/mavoweb/mavo.io).
 

@@ -135,7 +135,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		$.bind(this.element, "mv-login.mavo", evt => {
 			if (evt.backend == (this.source || this.storage)) {
 				// If last time we rendered we got nothing, maybe now we'll have better luck?
-				if (!this.root.data && !this.unsavedChanges) {
+				if (this.inProgress !== "loading" && !this.root.data && !this.unsavedChanges) {
 					this.load();
 				}
 			}
@@ -545,7 +545,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		this.autoSave = false;
 
 		if (data === undefined) {
-			this.inProgress = "Loading";
+			this.inProgress = "loading";
 
 			await backend.ready;
 
@@ -597,7 +597,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return;
 		}
 
-		this.inProgress = "Saving";
+		this.inProgress = "saving";
 
 		let saved;
 
@@ -627,7 +627,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return Promise.reject();
 		}
 
-		this.inProgress = "Uploading";
+		this.inProgress = "uploading";
 
 		return this.uploadBackend.upload(file, path)
 			.then(url => {
