@@ -183,7 +183,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 		if (this.editor) {
 			if (_.isFormControl(this.editor)) {
 				if (this.editor.matches("select")) {
-					let text = [...this.editor.options].find(o => o.value == value)?.textContent;
+					let text = [...this.editor.options].find(o => Mavo.toArray(value).map(v => v.toString()).includes(o.value))?.textContent;
 
 					// We have a local editor, do we need to add/remove temp options?
 					if (text === undefined) {
@@ -195,6 +195,10 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 							selected: true,
 							disabled: true
 						});
+					}
+					else {
+						// Delete any temp options, we don't need them anymore
+						$$(".mv-volatile", this.editor).forEach(o => o.remove());
 					}
 				}
 
