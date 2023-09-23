@@ -503,6 +503,10 @@ var _ = Mavo.Collection = class Collection extends Mavo.Node {
 		});
 
 		this.dragula.on("drop", (el, target, source) => {
+			if (!el.parentNode) {
+				return;
+			}
+
 			var item = Mavo.Node.get(el);
 			// var oldIndex = item && item.index;
 			var next = el.nextElementSibling;
