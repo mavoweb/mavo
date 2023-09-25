@@ -60,13 +60,15 @@ var _ = Mavo.DOMExpression = $.Class({
 		if (typeof this.expression !== "string") { // Still unhandled?
 			if (this.attribute) {
 				// Some web components (e.g. AFrame) hijack getAttribute()
+				const originalGetAttribute = Element.prototype.getAttribute;
+
 				let value;
 				if (this.originalAttribute?.startsWith("mv-attr-")) {
-					value = Element.prototype.getAttribute.call(this.node, this.originalAttribute);
+					value = originalGetAttribute.call(this.node, this.originalAttribute);
 					this.node.removeAttribute(this.originalAttribute);
 				}
 				else {
-					value = Element.prototype.getAttribute.call(this.node, this.attribute);
+					value = originalGetAttribute.call(this.node, this.attribute);
 				}
 
 				this.expression = (value || "").trim();
