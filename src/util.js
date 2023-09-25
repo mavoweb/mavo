@@ -430,14 +430,9 @@ var _ = $.extend(Mavo, {
 		return element.getAttributeNames().filter(name => regex.test(name));
 	},
 
-	// {
-	// 	"svg": {
-	// 		"viewbox": "viewBox", // all-lowercase to proper casing
-	//		...
-	// 	},
-	//	"math": { ... }
-	// }
-	properlyCasedAttributesCache: {}, // We need this to cache the results of the intense parsing operation in the following utility function
+	// We need this to cache the results of the intense parsing operation in the following utility function
+	// E.g., { "svg": { "viewbox": "viewBox", ... }, "math": { ... } }
+	properlyCasedAttributesCache: {},
 
 	// Fixes the case of attributes that are not all-lowercase
 	// Especially useful for SVG attributes
