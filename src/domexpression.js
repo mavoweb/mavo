@@ -36,7 +36,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.attribute = this.attribute.replace("mv-attr-", "");
 
 			if (this.element.namespaceURI === "http://www.w3.org/2000/svg") {
-				this.attribute = Mavo.getProperAttributeCase(this.element.nodeName, this.attribute);
+				this.attribute = Mavo.getProperAttributeCase(this.element, this.attribute);
 			}
 
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});

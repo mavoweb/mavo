@@ -439,10 +439,14 @@ var _ = $.extend(Mavo, {
 	// }
 	properlyCasedAttributesCache: {}, // We need this to cache the results of the intense parsing operation in the following utility function
 
-	// Fixes the case of attributes that are not all lowercase
+	// Fixes the case of attributes that are not all-lowercase
 	// Especially useful for SVG attributes
 	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
-	getProperAttributeCase (element, attribute, root = "svg") {
+	getProperAttributeCase (element, attribute) {
+		const roots = "svg, math"; // Potential root elements
+
+		const root = element.closest(roots).tagName;
+
 		_.properlyCasedAttributesCache[root] ??= {};
 
 		let attr = _.properlyCasedAttributesCache[root][attribute];
@@ -450,7 +454,9 @@ var _ = $.extend(Mavo, {
 			return attr;
 		}
 
-		let doc = new DOMParser().parseFromString(`<${root}><${element} ${attribute}=""></${element}></${root}>`, "text/html");
+		const tag = element.tagName;
+
+		let doc = new DOMParser().parseFromString(`<${root}><${tag} ${attribute}=""></${tag}></${root}>`, "text/html");
 		attr = doc.body.firstElementChild.firstElementChild.attributes[0].name;
 
 		_.properlyCasedAttributesCache[root][attribute] = attr;
