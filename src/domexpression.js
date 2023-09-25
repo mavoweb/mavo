@@ -1,5 +1,8 @@
 (function($, $$) {
 
+// Some web components (e.g. AFrame) hijack getAttribute()
+const originalGetAttribute = Element.prototype.getAttribute;
+
 var _ = Mavo.DOMExpression = $.Class({
 	async constructor (o = {}) {
 		this.mavo = o.mavo;
@@ -59,9 +62,6 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		if (typeof this.expression !== "string") { // Still unhandled?
 			if (this.attribute) {
-				// Some web components (e.g. AFrame) hijack getAttribute()
-				const originalGetAttribute = Element.prototype.getAttribute;
-
 				let value;
 				if (this.originalAttribute?.startsWith("mv-attr-")) {
 					value = originalGetAttribute.call(this.node, this.originalAttribute);
