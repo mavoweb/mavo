@@ -442,7 +442,7 @@ var _ = $.extend(Mavo, {
 	// Fixes the case of attributes that are not all lowercase
 	// Especially useful for SVG attributes
 	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
-	getProperCasing (element, attribute, root = "svg") {
+	getProperAttributeCase (element, attribute, root = "svg") {
 		_.properlyCasedAttributesCache[root] ??= {};
 
 		let attr = _.properlyCasedAttributesCache[root][attribute];
