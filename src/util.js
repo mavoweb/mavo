@@ -438,7 +438,7 @@ var _ = $.extend(Mavo, {
 	// Especially useful for SVG attributes
 	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
 	getProperAttributeCase (element, attribute) {
-		const roots = "svg, math"; // Potential root elements
+		const roots = "svg, math, :root"; // Potential root elements
 
 		const root = element.closest(roots).tagName;
 
