@@ -430,12 +430,32 @@ var _ = $.extend(Mavo, {
 		return element.getAttributeNames().filter(name => regex.test(name));
 	},
 
+	// {
+	// 	"svg": {
+	// 		"viewbox": "viewBox", // all-lowercase to proper casing
+	//		...
+	// 	},
+	//	"math": { ... }
+	// }
+	properlyCasedAttributesCache: {}, // We need this to cache the results of the intense parsing operation in the following utility function
+
 	// Fixes the case of attributes that are not all lowercase
 	// Especially useful for SVG attributes
 	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
-	getProperCasing: (element, attribute, root = "svg") => {
+	getProperCasing (element, attribute, root = "svg") {
+		_.properlyCasedAttributesCache[root] ??= {};
+
+		let attr = _.properlyCasedAttributesCache[root][attribute];
+		if (attr) {
+			return attr;
+		}
+
 		let doc = new DOMParser().parseFromString(`<${root}><${element} ${attribute}=""></${element}></${root}>`, "text/html");
-		return doc.body.firstElementChild.firstElementChild.attributes[0].name;
+		attr = doc.body.firstElementChild.firstElementChild.attributes[0].name;
+
+		_.properlyCasedAttributesCache[root][attribute] = attr;
+
+		return attr;
 	},
 
 	/**
