@@ -1316,6 +1316,9 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 		else if (attribute === "mv-options") {
 			node.updateOptions();
 
+			let option = node.options.get(node.value) ?? node.options.keys().next().value;
+			node.setValue(option, {silent: true});
+
 			if (node.editor) {
 				node.generateDefaultEditor();
 			}
