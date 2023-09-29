@@ -769,13 +769,9 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 				if (this.options) {
 					if (!this.options.has(value)) {
-						// There is no option corresponding to the value. Try the default value.
-						value = this.default;
-
-						if (!this.options.has(value)) {
-							// There is no option corresponding to the default value either. Use the first option
-							value = this.options.keys().next().value;
-						}
+						// There is no option corresponding to the value. Try the default one.
+						// If there is no option corresponding to the default value either, use the first option
+						value = this.options.has(this.default)? this.default : this.options.keys().next().value;
 					}
 
 					presentational = this.options.get(value);
