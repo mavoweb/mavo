@@ -120,17 +120,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.item.expressions.delete(this);
 		}
 
-		let expressions = [...this.item.expressions].filter(e => e.attribute === this.attribute && e.active !== false);
-		if (expressions.some(e => e.originalAttribute?.startsWith("mv-attr-"))) {
-			for (let expression of expressions.filter(e => !e.originalAttribute?.startsWith("mv-attr-"))) {
-				// We already have expressions associated with this attribute; discard them since mv-attr-* has priority
-				expression.active = false;
-			}
-		}
-
-		if (this.active !== false) {
-			this.mavo.expressions.register(this);
-		}
+		this.mavo.expressions.register(this);
 
 		Mavo.hooks.run("domexpression-init-treebuilt", this);
 	},
