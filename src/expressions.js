@@ -223,16 +223,18 @@ var _ = Mavo.Expressions = $.Class({
 				path = [];
 			}
 
-			let ignore;
-			if (node.hasAttribute("mv-expressions-ignore")) {
-				ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
-			}
+			let ignoredAttributes = new Set([
+				// Globally ignored attributes (for all elements)
+				..._.skip,
 
+				// Locally ignored attributes (for this element)
+				node.getAttribute("mv-expressions-ignore")?.trim().split(/\s*,\s*/) ?? []
+			]);
 			let specifiedAttributes = new Set(node.getAttributeNames());
 
 			// Remove ignored attributes
 			for (let name of specifiedAttributes) {
-				if (ignore.has(name)) {
+				if (ignoredAttributes.has(name)) {
 					specifiedAttributes.delete(name);
 				}
 
