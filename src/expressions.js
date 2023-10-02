@@ -228,25 +228,24 @@ var _ = Mavo.Expressions = $.Class({
 				ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
 			}
 
-			let attributes = $$(node.attributes);
+			let specifiedAttributes = new Set(node.getAttributeNames());
 
-			// Iterate only over mv-attr-foo with expressions
-			for (let attribute of attributes.filter(attribute => attribute.name.startsWith("mv-attr-") && syntax.test(attribute.value))) {
-				let name = attribute.name.replace("mv-attr-", "");
-				let ignorable = attributes.find(attribute => attribute.name === name);
+			// Remove ignored attributes
+			for (let name of specifiedAttributes) {
+				if (ignore.has(name)) {
+					specifiedAttributes.delete(name);
+				}
 
-				if (ignorable) {
-					// Ignore expressions in foo, if any, since mv-attr-foo has priority
-					ignore ??= new Set();
-					ignore.add(ignorable.name);
+				if (name.startsWith("mv-attr-")) {
+					// If mv-attr-foo is present, ignore foo
+					let plainName = name.replace("mv-attr-", "");
+					specifiedAttributes.delete(plainName);
 				}
 			}
 
-			attributes.forEach(attribute => {
-				if (!ignore || !ignore.has(attribute.name)) {
-					this.extract(node, attribute, path, syntax);
-				}
-			});
+			for (let name of specifiedAttributes) {
+				this.extract(node, node.attributes[name], path, syntax);
+			}
 
 			var index = -1, offset = 0;
 
