@@ -45,7 +45,7 @@ var _ = Mavo.DOMExpression = $.Class({
 				this.attribute = Mavo.getProperAttributeCase(this.element, this.attribute);
 			}
 
-			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
+			this.fallback ??= Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
 			let expression = this.element.getAttribute(this.originalAttribute);
 			this.element.removeAttribute(this.originalAttribute);
 			this.parsed = [new Mavo.Expression(expression)];
