@@ -183,11 +183,12 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
-		if (_.skip.includes(attribute?.name)) {
+		let attributeName = attribute?.name;
+		if (_.skip.includes(attributeName)) {
 			return;
 		}
 
-		if (_.directives.includes(attribute?.name) || attribute?.name?.startsWith("mv-attr-") ||
+		if (_.directives.some(d => d.test?.(attributeName) || d === attributeName) ||
 		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			if (path === undefined) {
@@ -196,7 +197,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			this.expressions.add(new Mavo.DOMExpression({
 				node, syntax, path,
-				attribute: attribute?.name,
+				attribute: attributeName,
 				mavo: this.mavo
 			}));
 		}
@@ -271,7 +272,8 @@ var _ = Mavo.Expressions = $.Class({
 
 	static: {
 		directives: [
-			"mv-value"
+			"mv-value",
+			/^mv\-attr\-/
 		],
 
 		skip: ["mv-expressions", "mv-action"],
