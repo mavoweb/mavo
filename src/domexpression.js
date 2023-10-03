@@ -3,6 +3,9 @@
 // Some web components (e.g. AFrame) hijack getAttribute()
 const originalGetAttribute = Element.prototype.getAttribute;
 
+const SVG_NAMESPACE_URI = "http://www.w3.org/2000/svg";
+const MATHML_NAMESPACE_URI = "http://www.w3.org/1998/Math/MathML";
+
 var _ = Mavo.DOMExpression = $.Class({
 	async constructor (o = {}) {
 		this.mavo = o.mavo;
@@ -38,7 +41,7 @@ var _ = Mavo.DOMExpression = $.Class({
 			this.originalAttribute = this.attribute;
 			this.attribute = this.attribute.replace("mv-attr-", "");
 
-			if (["http://www.w3.org/2000/svg", "http://www.w3.org/1998/Math/MathML"].includes(this.element.namespaceURI)) {
+			if ([SVG_NAMESPACE_URI, MATHML_NAMESPACE_URI].includes(this.element.namespaceURI)) {
 				this.attribute = Mavo.getProperAttributeCase(this.element, this.attribute);
 			}
 
