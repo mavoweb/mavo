@@ -43,6 +43,10 @@ var _ = Mavo.DOMExpression = $.Class({
 			}
 
 			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
+			let expression = this.element.getAttribute(this.originalAttribute);
+			this.element.removeAttribute(this.originalAttribute);
+			this.parsed = [new Mavo.Expression(expression)];
+			this.expression = expression;
 		}
 
 		if (this.node.nodeType === 3 && this.element === this.node) {
@@ -62,14 +66,7 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		if (typeof this.expression !== "string") { // Still unhandled?
 			if (this.attribute) {
-				let value;
-				if (this.originalAttribute?.startsWith("mv-attr-")) {
-					value = originalGetAttribute.call(this.node, this.originalAttribute);
-					this.node.removeAttribute(this.originalAttribute);
-				}
-				else {
-					value = originalGetAttribute.call(this.node, this.attribute);
-				}
+				let value = originalGetAttribute.call(this.node, this.attribute);
 
 				this.expression = (value || "").trim();
 			}

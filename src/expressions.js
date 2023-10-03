@@ -183,11 +183,11 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
-		if (attribute && _.skip.indexOf(attribute.name) > -1) {
+		if (_.skip.includes(attribute?.name)) {
 			return;
 		}
 
-		if (attribute && _.directives.indexOf(attribute.name) > -1 ||
+		if (_.directives.includes(attribute?.name) || attribute?.name?.startsWith("mv-attr-") ||
 		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			if (path === undefined) {
@@ -228,7 +228,7 @@ var _ = Mavo.Expressions = $.Class({
 				..._.skip,
 
 				// Locally ignored attributes (for this element)
-				node.getAttribute("mv-expressions-ignore")?.trim().split(/\s*,\s*/) ?? []
+				...(node.getAttribute("mv-expressions-ignore")?.trim().split(/\s*,\s*/) ?? [])
 			]);
 			let specifiedAttributes = new Set(node.getAttributeNames());
 
@@ -237,8 +237,7 @@ var _ = Mavo.Expressions = $.Class({
 				if (ignoredAttributes.has(name)) {
 					specifiedAttributes.delete(name);
 				}
-
-				if (name.startsWith("mv-attr-")) {
+				else if (name.startsWith("mv-attr-")) {
 					// If mv-attr-foo is present, ignore foo
 					let plainName = name.replace("mv-attr-", "");
 					specifiedAttributes.delete(plainName);
