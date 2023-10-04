@@ -27,22 +27,22 @@ var _ = Mavo.DOMExpression = $.Class({
 
 		Mavo.hooks.run("domexpression-init-start", this);
 
-		if (this.attribute == "mv-value") {
-			this.originalAttribute = "mv-value";
-			this.attribute = Mavo.Primitive.getValueAttribute(this.element);
-			this.fallback = this.fallback || Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
-			let expression = this.element.getAttribute("mv-value");
-			this.element.removeAttribute("mv-value");
-			this.parsed = [new Mavo.Expression(expression)];
-			this.expression = expression;
-		}
-
-		if (this.attribute?.startsWith("mv-attr-")) {
+		if (/^mv-(value$|attr-)/.test(this.attribute)) {
+			// Attributes transformed to other attributes
 			this.originalAttribute = this.attribute;
-			this.attribute = this.attribute.replace("mv-attr-", "");
 
-			if ([SVG_NAMESPACE_URI, MATHML_NAMESPACE_URI].includes(this.element.namespaceURI)) {
-				this.attribute = Mavo.getProperAttributeCase(this.element, this.attribute);
+			if (this.attribute == "mv-value") {
+				this.attribute = Mavo.Primitive.getValueAttribute(this.element);
+			}
+			else {
+				this.attribute = this.attribute.replace("mv-attr-", "");
+
+				// Get proper attribute case if in a case sensitive environment
+				// FIXME do we also need this for XHTML?
+				// FIXME what about namespaced attributes? (e.g. xlink:href)
+				if ([SVG_NAMESPACE_URI, MATHML_NAMESPACE_URI].includes(this.element.namespaceURI)) {
+					this.attribute = Mavo.getProperAttributeCase(this.element, this.attribute);
+				}
 			}
 
 			this.fallback ??= Mavo.Primitive.getValue(this.element, {attribute: this.attribute});
