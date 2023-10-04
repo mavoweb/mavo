@@ -516,7 +516,7 @@ var _ = Mavo.Node = class Node {
 
 	static generatePropertyName(prefix, element = document.documentElement) {
 		let root = element.closest(Mavo.selectors.init);
-		let names = new Set(...$$("[property]", root).map(e => e.getAttribute("property")));
+		let names = new Set($$("[property]", root).map(e => e.getAttribute("property")));
 
 		for (let i=""; i<1000; i++) { // 1000 is just a failsafe
 			let name = prefix + i;
