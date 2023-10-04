@@ -184,10 +184,6 @@ var _ = Mavo.Expressions = $.Class({
 
 	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
 		let attributeName = attribute?.name;
-		if (_.skip.includes(attributeName)) {
-			return;
-		}
-
 		if (_.directives.some(d => d.test?.(attributeName) || d === attributeName) ||
 		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
