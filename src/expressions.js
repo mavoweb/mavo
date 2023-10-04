@@ -183,11 +183,8 @@ var _ = Mavo.Expressions = $.Class({
 	},
 
 	extract: function(node, attribute, path, syntax = Mavo.Expression.Syntax.default) {
-		if (attribute && _.skip.indexOf(attribute.name) > -1) {
-			return;
-		}
-
-		if (attribute && _.directives.indexOf(attribute.name) > -1 ||
+		let attributeName = attribute?.name;
+		if (_.directives.some(d => d.test?.(attributeName) || d === attributeName) ||
 		    syntax !== Mavo.Expression.Syntax.ESCAPE && syntax.test(attribute? attribute.value : node.textContent)
 		) {
 			if (path === undefined) {
@@ -196,7 +193,7 @@ var _ = Mavo.Expressions = $.Class({
 
 			this.expressions.add(new Mavo.DOMExpression({
 				node, syntax, path,
-				attribute: attribute?.name,
+				attribute: attributeName,
 				mavo: this.mavo
 			}));
 		}
@@ -223,15 +220,30 @@ var _ = Mavo.Expressions = $.Class({
 				path = [];
 			}
 
-			if (node.hasAttribute("mv-expressions-ignore")) {
-				var ignore = new Set(node.getAttribute("mv-expressions-ignore").trim().split(/\s*,\s*/));
+			let ignoredAttributes = new Set([
+				// Globally ignored attributes (for all elements)
+				..._.skip,
+
+				// Locally ignored attributes (for this element)
+				...(node.getAttribute("mv-expressions-ignore")?.trim().split(/\s*,\s*/) ?? [])
+			]);
+			let specifiedAttributes = new Set(node.getAttributeNames());
+
+			// Remove ignored attributes
+			for (let name of specifiedAttributes) {
+				if (ignoredAttributes.has(name)) {
+					specifiedAttributes.delete(name);
+				}
+				else if (name.startsWith("mv-attr-")) {
+					// If mv-attr-foo is present, ignore foo
+					let plainName = name.replace("mv-attr-", "");
+					specifiedAttributes.delete(plainName);
+				}
 			}
 
-			$$(node.attributes).forEach(attribute => {
-				if (!ignore || !ignore.has(attribute.name)) {
-					this.extract(node, attribute, path, syntax);
-				}
-			});
+			for (let name of specifiedAttributes) {
+				this.extract(node, node.attributes[name], path, syntax);
+			}
 
 			var index = -1, offset = 0;
 
@@ -256,7 +268,8 @@ var _ = Mavo.Expressions = $.Class({
 
 	static: {
 		directives: [
-			"mv-value"
+			"mv-value",
+			/^mv\-attr\-/
 		],
 
 		skip: ["mv-expressions", "mv-action"],

@@ -430,6 +430,35 @@ var _ = $.extend(Mavo, {
 		return element.getAttributeNames().filter(name => regex.test(name));
 	},
 
+	// We need this to cache the results of the intense parsing operation in the following utility function
+	// E.g., { "svg": { "viewbox": "viewBox", ... }, "math": { ... } }
+	properlyCasedAttributesCache: {},
+
+	// Fixes the case of attributes that are not all-lowercase
+	// Especially useful for SVG attributes
+	// https://html.spec.whatwg.org/multipage/parsing.html#adjust-svg-attributes
+	getProperAttributeCase (element, attribute) {
+		const roots = "svg, math, :root"; // Potential root elements
+
+		const root = element.closest(roots).tagName;
+
+		_.properlyCasedAttributesCache[root] ??= {};
+
+		let attr = _.properlyCasedAttributesCache[root][attribute];
+		if (attr) {
+			return attr;
+		}
+
+		const tag = element.tagName;
+
+		let doc = new DOMParser().parseFromString(`<${root}><${tag} ${attribute}=""></${tag}></${root}>`, "text/html");
+		attr = doc.body.firstElementChild.firstElementChild.attributes[0].name;
+
+		_.properlyCasedAttributesCache[root][attribute] = attr;
+
+		return attr;
+	},
+
 	/**
 	 *  Set/get a property or an attribute?
 	 * @return {Boolean} true to use a property, false to use the attribute
