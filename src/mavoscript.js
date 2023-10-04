@@ -534,6 +534,41 @@ var _ = Mavo.Script = {
 		return [a, b];
 	},
 
+	getVariables: function(ast) {
+		const addedVariableNames = new Set();
+
+		function innerGetVariables(ast) {
+			switch (ast.type) {
+				case "Literal":
+					return [];					
+				case "UnaryExpression":
+					return innerGetVariables(ast.argument);
+				case "BinaryExpression":
+					return [ast.left, ast.right].flatMap(innerGetVariables);
+				case "CallExpression":
+					return ast.arguments.flatMap(innerGetVariables);
+				case "Compound":
+					return ast.body.flatMap(innerGetVariables);
+				case "ArrayExpression":
+					return ast.elements.flatMap(innerGetVariables);
+				case "ConditionalExpression":
+					return [ast.test, ast.consequent, ast.alternate].flatMap(innerGetVariables);
+				case "MemberExpression":
+				case "ThisExpression":
+				case "Identifier":
+				default:
+					const name = ast.name;
+					if (!addedVariableNames.has(name)) {
+						addedVariableNames.add(name);
+						return [ast];
+					}
+					return [];
+			}
+		}
+
+		return innerGetVariables(ast);
+	},
+
 	childProperties: [
 		"arguments", "callee", // CallExpression
 		"left", "right", // BinaryExpression, LogicalExpression
