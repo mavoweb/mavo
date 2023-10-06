@@ -547,32 +547,24 @@ var _ = Mavo.Functions = {
 	}),
 
 	from: $.extend((haystack, needle) => _.between(haystack, needle), {
-		multiValued: true,
+		multiValued: true
 	}),
 
 	from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
-		multiValued: true,
+		multiValued: true
 	}),
 
-	fromlast: $.extend((haystack, needle) => {
-		Mavo.warn("fromlast() is deprecated and will be removed in the next version of Mavo. Please use from_last() instead.");
-		return _.from_last(haystack, needle);
-	}, {
-		multiValued: true,
-	}),
+	fromlast: deprecatedFunction("from_last", "fromlast"),
 
 	to: $.extend((haystack, needle) => _.between(haystack, "", needle), {
-		multiValued: true,
+		multiValued: true
 	}),
 
 	to_first: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
-		multiValued: true,
+		multiValued: true
 	}),
 
-	tofirst: $.extend((haystack, needle) => {
-		Mavo.warn("tofirst() is deprecated and will be removed in the next version of Mavo. Please use to_first() instead.");
-		return _.to_first(haystack, needle);
-	}),
+	tofirst: deprecatedFunction("to_first", "tofirst"),
 
 	between: $.extend((haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
@@ -754,6 +746,14 @@ function empty(v) {
 
 function not(v) {
 	return !val(v);
+}
+
+function deprecatedFunction (name, oldName, fn) {
+	return function (...args) {
+		fn ??= _[name];
+		Mavo.warn(`${oldName}() is deprecated and will be removed in the next version of Mavo. Please use ${name}() instead.`);
+		return fn(...args);
+	}
 }
 
 })(Bliss, Mavo.value);
