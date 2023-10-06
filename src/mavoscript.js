@@ -492,10 +492,7 @@ var _ = Mavo.Script = {
 			precedence: 2
 		},
 		"groupby": {
-			code: (array, key) => {
-				Mavo.warn("groupby() is deprecated and will be removed in the next version of Mavo. Please use group_by() instead.");
-				return Mavo.Functions["group_by"](array, key);
-			},
+			code: Mavo.deprecatedFunction("group_by", "groupby"),
 			precedence: 2
 		},
 		"as": {

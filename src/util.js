@@ -775,6 +775,14 @@ var _ = $.extend(Mavo, {
 		forEach(...args) {
 			return this.map.forEach(...args);
 		}
+	},
+
+	deprecatedFunction (name, oldName, fn) {
+		return function (...args) {
+			fn ??= Mavo.Functions[name];
+			Mavo.warn(`${oldName}() is deprecated and will be removed in the next version of Mavo. Please use ${name}() instead.`);
+			return fn(...args);
+		}
 	}
 });
 
