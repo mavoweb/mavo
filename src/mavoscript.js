@@ -533,40 +533,48 @@ var _ = Mavo.Script = {
 
 		return [a, b];
 	},
-
+	/**
+	 * Returns a list of all variables in the AST
+	 */
 	getVariables: function(ast) {
-		const addedVariableNames = new Set();
-
-		function innerGetVariables(ast) {
-			switch (ast.type) {
-				case "Literal":
-					return [];					
-				case "UnaryExpression":
-					return innerGetVariables(ast.argument);
-				case "BinaryExpression":
-					return [ast.left, ast.right].flatMap(innerGetVariables);
-				case "CallExpression":
-					return ast.arguments.flatMap(innerGetVariables);
-				case "Compound":
-					return ast.body.flatMap(innerGetVariables);
-				case "ArrayExpression":
-					return ast.elements.flatMap(innerGetVariables);
-				case "ConditionalExpression":
-					return [ast.test, ast.consequent, ast.alternate].flatMap(innerGetVariables);
-				case "MemberExpression":
-				case "ThisExpression":
-				case "Identifier":
-				default:
-					const name = ast.name;
-					if (!addedVariableNames.has(name)) {
-						addedVariableNames.add(name);
-						return [ast];
-					}
-					return [];
-			}
+		switch (ast.type) {
+			case "Literal":
+				return [];
+			case "Identifier":
+				// const isGlobal = !!globalThis[ast.name];
+				// return isGlobal? [] : [ast];	
+				return [ast];	
+			case "UnaryExpression":
+				return _.getVariables(ast.argument);
+			case "BinaryExpression":
+				if (ast.operator === ':') {
+					return _.getVariables(ast.right);
+				}
+				return [ast.left, ast.right].flatMap(_.getVariables);
+			case "LogicalExpression":
+				return [ast.left, ast.right].flatMap(_.getVariables);
+			case "CallExpression":
+				let toExplore = [...ast.arguments];
+				if (ast.callee.type !== "Identifier") {
+					toExplore = [ast.callee].concat(toExplore);
+				}
+				return toExplore.flatMap(_.getVariables);
+			case "Compound":
+				return ast.body.flatMap(_.getVariables);
+			case "ArrayExpression":
+				return ast.elements.flatMap(_.getVariables);
+			case "ConditionalExpression":
+				return [ast.test, ast.consequent, ast.alternate].flatMap(_.getVariables);
+			case "MemberExpression":
+				const children = _.getVariables(ast.object);
+				if (children[0] === ast.object) {
+					return [ast];
+				}
+				return children;
+			case "ThisExpression":
+			default:
+				return [ast];
 		}
-
-		return innerGetVariables(ast);
 	},
 
 	childProperties: [
