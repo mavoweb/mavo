@@ -196,7 +196,7 @@ _.register({
 		datatype: "boolean"
 	},
 
-	"input, select, button, textarea": {
+	"input, select, optgroup, option, button, textarea, fieldset": {
 		attribute: "disabled",
 		datatype: "boolean"
 	},
