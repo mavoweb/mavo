@@ -541,12 +541,12 @@ var _ = Mavo.Script = {
 			case "Literal":
 				return [];
 			case "Identifier":
-				// const isGlobal = !!globalThis[ast.name];
-				// return isGlobal? [] : [ast];	
-				return [ast];	
+				const isGlobal = !!globalThis[ast.name];
+				return isGlobal? [] : [ast];
 			case "UnaryExpression":
 				return _.getVariables(ast.argument);
 			case "BinaryExpression":
+				// handles group(key: value)
 				if (ast.operator === ':') {
 					return _.getVariables(ast.right);
 				}
@@ -555,6 +555,7 @@ var _ = Mavo.Script = {
 				return [ast.left, ast.right].flatMap(_.getVariables);
 			case "CallExpression":
 				let toExplore = [...ast.arguments];
+				// prevents adding the function name to the list of vars
 				if (ast.callee.type !== "Identifier") {
 					toExplore = [ast.callee].concat(toExplore);
 				}
@@ -567,6 +568,7 @@ var _ = Mavo.Script = {
 				return [ast.test, ast.consequent, ast.alternate].flatMap(_.getVariables);
 			case "MemberExpression":
 				const children = _.getVariables(ast.object);
+				// If the object is also a member expression, return this one (the top most one)
 				if (children[0] === ast.object) {
 					return [ast];
 				}
