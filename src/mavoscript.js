@@ -554,11 +554,9 @@ var _ = Mavo.Script = {
 			case "LogicalExpression":
 				return [ast.left, ast.right].flatMap(_.getVariables);
 			case "CallExpression":
-				let toExplore = [...ast.arguments];
-				// prevents adding the function name to the list of vars
-				if (ast.callee.type !== "Identifier") {
-					toExplore = [ast.callee].concat(toExplore);
-				}
+				// handles cases like count(...) where the callee is not a variable
+				const toExplore = ast.callee.type === "Identifier"? [] : [ast.callee];
+				toExplore.push(...ast.arguments);
 				return toExplore.flatMap(_.getVariables);
 			case "Compound":
 				return ast.body.flatMap(_.getVariables);
@@ -568,11 +566,14 @@ var _ = Mavo.Script = {
 				return [ast.test, ast.consequent, ast.alternate].flatMap(_.getVariables);
 			case "MemberExpression":
 				const children = _.getVariables(ast.object);
+				const propertyChildren = ast.property.type === "Identifier" ? [] : _.getVariables(ast.property);
 				// If the object is also a member expression, return this one (the top most one)
+				// along with the children of the properties
 				if (children[0] === ast.object) {
-					return [ast];
+					// children.slice(1) adds any variables found in properties of the object or the object's children
+					return [ast].concat(propertyChildren).concat(children.slice(1));
 				}
-				return children;
+				return children.concat(propertyChildren);
 			case "ThisExpression":
 			default:
 				return [ast];
