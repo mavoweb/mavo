@@ -492,7 +492,7 @@ var _ = Mavo.Script = {
 			precedence: 2
 		},
 		"groupby": {
-			code: Mavo.deprecatedFunction("group_by", "groupby"),
+			code: $u.deprecatedFunction("group_by", "groupby"),
 			precedence: 2
 		},
 		"as": {
