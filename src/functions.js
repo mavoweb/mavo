@@ -4,7 +4,79 @@
 
 (function($, val) {
 
-var _ = Mavo.Functions = {
+let $u = {
+	numbers (array, args) {
+		array = Array.isArray(array)? array : (args? $$(args) : [array]);
+
+		return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
+	},
+
+	// Implement function metadata
+	postProcess (callback) {
+		var multiValued = callback.multiValued;
+		var newCallback;
+
+		if (multiValued === true || multiValued?.length === 2) {
+			newCallback = (...args) => {
+				// Define index of multiValued arguments
+				// Fallback to first 2 arguments if not explicitly defined
+				var idxA = multiValued[0] || 0;
+				var idxB = multiValued[1] || 1;
+
+				return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
+					scalar: (a, b) => {
+						// Replace multiValued argument with its individual elements
+						if (idxA in args) {
+							args[idxA] = a;
+						}
+
+						if (idxB in args) {
+							args[idxB] = b;
+						}
+
+						return callback(...args);
+					},
+					...callback
+				});
+			};
+		}
+		else if (callback.isAggregate) {
+			newCallback = function(array) {
+				if (Mavo.in(Mavo.groupedBy, array)) { // grouped structures
+					return array.map(e => newCallback(e.$items));
+				}
+
+				var ret = callback.call(this, ...arguments);
+
+				return ret === undefined? array : ret;
+			};
+		}
+
+		if (newCallback) {
+			// Preserve function metadata
+			$.extend(newCallback, callback);
+			newCallback.original = callback;
+		}
+
+		if (callback.alias) {
+			for (let alias of Mavo.toArray(callback.alias)) {
+				Mavo.Functions[alias] = newCallback || callback;
+			}
+		}
+
+		return newCallback;
+	},
+
+	deprecatedFunction (name, oldName, fn) {
+		return function (...args) {
+			fn ??= Mavo.Functions[name];
+			Mavo.warn(`${oldName}() is deprecated and will be removed in the next version of Mavo. Please use ${name}() instead.`);
+			return fn(...args);
+		}
+	}
+}
+
+let _ = Mavo.Functions = {
 	operators: {
 		"=": "eq"
 	},
@@ -594,17 +666,21 @@ var _ = Mavo.Functions = {
 		multiValued: true,
 	}),
 
-	fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+	from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
 		multiValued: true,
 	}),
+
+	fromlast: $u.deprecatedFunction("from_last", "fromlast"),
 
 	to: $.extend((haystack, needle) => _.between(haystack, "", needle), {
 		multiValued: true,
 	}),
 
-	tofirst: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
+	to_first: $.extend((haystack, needle) => _.between(haystack, "", needle, true), {
 		multiValued: true,
 	}),
+
+	tofirst: $u.deprecatedFunction("to_first", "tofirst"),
 
 	between: $.extend((haystack, from, to, tight) => {
 		[haystack, from, to] = [str(haystack), str(from), str(to)];
@@ -685,72 +761,8 @@ var _ = Mavo.Functions = {
 	},
 
 	// "Private" helpers
-	util: {
-		numbers: function(array, args) {
-			array = Array.isArray(array)? array : (args? $$(args) : [array]);
-
-			return array.filter(number => !isNaN(number) && val(number) !== "" && val(number) !== null).map(n => +n);
-		},
-
-		// Implement function metadata
-		postProcess: function(callback) {
-			var multiValued = callback.multiValued;
-			var newCallback;
-
-			if (multiValued === true || multiValued?.length === 2) {
-				newCallback = (...args) => {
-					// Define index of multiValued arguments
-					// Fallback to first 2 arguments if not explicitly defined
-					var idxA = multiValued[0] || 0;
-					var idxB = multiValued[1] || 1;
-
-					return Mavo.Script.binaryOperation(args[idxA], args[idxB], {
-						scalar: (a, b) => {
-							// Replace multiValued argument with its individual elements
-							if (idxA in args) {
-								args[idxA] = a;
-							}
-
-							if (idxB in args) {
-								args[idxB] = b;
-							}
-
-							return callback(...args);
-						},
-						...callback
-					});
-				};
-			}
-			else if (callback.isAggregate) {
-				newCallback = function(array) {
-					if (Mavo.in(Mavo.groupedBy, array)) { // grouped structures
-						return array.map(e => newCallback(e.$items));
-					}
-
-					var ret = callback.call(this, ...arguments);
-
-					return ret === undefined? array : ret;
-				};
-			}
-
-			if (newCallback) {
-				// Preserve function metadata
-				$.extend(newCallback, callback);
-				newCallback.original = callback;
-			}
-
-			if (callback.alias) {
-				for (let alias of Mavo.toArray(callback.alias)) {
-					Mavo.Functions[alias] = newCallback || callback;
-				}
-			}
-
-			return newCallback;
-		}
-	}
+	util: $u
 };
-
-var $u = _.util;
 
 /**
  * After plugins are loaded, enable

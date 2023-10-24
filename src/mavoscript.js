@@ -453,7 +453,7 @@ var _ = Mavo.Script = {
 			},
 			precedence: 3
 		},
-		"groupby": {
+		"group_by": {
 			symbol: "by",
 			code: (array, key) => {
 				array = Mavo.toArray(array);
@@ -489,6 +489,10 @@ var _ = Mavo.Script = {
 
 				return Mavo.Data.proxify(ret);
 			},
+			precedence: 2
+		},
+		"groupby": {
+			code: $u.deprecatedFunction("group_by", "groupby"),
 			precedence: 2
 		},
 		"as": {
