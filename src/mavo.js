@@ -426,16 +426,30 @@ let _ = self.Mavo = $.Class(class Mavo {
 		let existing = this[role], backend, changed;
 		const attribute = "mv-" + role;
 
+		// If we override a backend via URL params,
+		// we should ignore metadata the author might pass via storage attributes.
+		// In other words, URLs should have precedence over everything static.
+		let ignoreRoleAttributes = false;
+
 		if (this.index == 1) {
 			// This app is the first one in the page, so we can override its backend
 			// via URL params such as ?storage=...
 			backend = _.Functions.url(role);
+
+			if (backend) {
+				ignoreRoleAttributes = true;
+			}
 		}
 
 		if (!backend) {
-			backend = _.Functions.url(`${this.id}-${role}`)
-			          || _.Functions.url(`${this.id.toLowerCase()}-${role}`)
-			          || this.element.getAttribute(attribute) || null;
+			backend = _.Functions.url(`${this.id}-${role}`) || _.Functions.url(`${this.id.toLowerCase()}-${role}`);
+
+			if (backend) {
+				ignoreRoleAttributes = true;
+			}
+			else {
+				backend = this.element.getAttribute(attribute) || null;
+			}
 		}
 
 		if (backend) {
@@ -456,7 +470,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 				// We have a string, convert to a backend object if different than existing
 				this[role] = backend = _.Backend.create(backend, {
 					format: this.element.getAttribute("mv-format"), // can be overwritten by options below
-					...options,
+					...(ignoreRoleAttributes? {} : options),
 					mavo: this
 				}, existing);
 
