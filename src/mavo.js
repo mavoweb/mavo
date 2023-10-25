@@ -461,16 +461,19 @@ let _ = self.Mavo = $.Class(class Mavo {
 		}
 
 		if (backend) {
-			// Do we have any other attributes?
-			let prefix = attribute + "-";
-			let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
-			let options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
+			let options = {};
+			if (!ignoreRoleAttributes) {
+				// Do we have any other attributes?
+				let prefix = attribute + "-";
+				let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
+				options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
+			}
 
 			if (!existing?.equals?.(backend)) {
 				// We have a string, convert to a backend object if different than existing
 				this[role] = backend = _.Backend.create(backend, {
 					format: this.element.getAttribute("mv-format"), // can be overwritten by options below
-					...(ignoreRoleAttributes? {} : options),
+					...options,
 					mavo: this
 				}, existing);
 
