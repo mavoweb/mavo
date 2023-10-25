@@ -126,23 +126,57 @@ let _ = Mavo.Functions = {
 		}
 	},
 
-	url: (id, url = location) => {
+	/**
+	 * Get the page URL (if called with no params), or a parameter from it.
+	 * @param {string} id Parameter name
+	 * @param {string | URL} [url] URL to get parameter from. Defaults to current page URL
+	 * @param {object} [...options] One or more options objects
+	 * @param {boolean} [options.case_sensitive=false] Whether to do a case sensitive search
+	 * @param { "query" | "path" } [options.type] Type of parameter to get.
+	 * 		"query" for query string type URLs (?foo=value)
+	 * 		"path" for path type URLs (/foo/value)
+	 * 		If not specified, it will search for both, with query string parameters taking precedence
+	 * @returns {string | null}
+	 */
+	url: (id, url = location, ...options) => {
 		if (id === undefined) {
+			// url() with no arguments is just an alias for location.href
 			return location.href;
 		}
 
-		if (id) {
-			id = str(id).replace(/[^\w-:]/g);
-
-			var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
-			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
-		}
-
-		if (ret === null || !id) {
+		if (!id) {
+			// Empty parameter name,
+			// This is not the same as not providing a parameter name at all,
+			// It’s usually due to a variable being the parameter name and the variable not being set yet
 			return null;
 		}
 
-		return decodeURIComponent(ret[1] || "");
+		if (options.length > 0) {
+			options = Object.assign({}, ...options);
+		}
+
+		let {
+			case_sensitive = false,
+			type
+		} = options ?? {};
+
+		let idRegex = Mavo.escapeRegExp(str(id));
+		let regexFlags = case_sensitive? "" : "i";
+
+		// Search for parameter in query string first
+		if (type === "query" || !type) {
+			ret = url.search.match(RegExp(`[?&]${idRegex}(?:=(?<value>.+?))?(?=$|&)`, regexFlags));
+		}
+
+		if (type === "path" || !type && ret === null) {
+			ret = url.pathname.match(RegExp(`(?:^|\\/)${idRegex}\\/(?<value>[^\\/]*)`, regexFlags));
+		}
+
+		if (ret !== null) {
+			return decodeURIComponent(ret.groups.value || "");
+		}
+
+		return null;
 	},
 
 	first: (n, arr) => {
