@@ -176,7 +176,7 @@ let _ = Mavo.Functions = {
 
 
 				if (index > -1) {
-					let ret = path[index + 1];
+					let ret = path[(index + 1) % path.length]; // Why “% path.length”? To handle cases like “/foo” where foo is equal to "".
 
 					if (ret) {
 						ret = decodeURIComponent(ret);
