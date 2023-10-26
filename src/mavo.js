@@ -442,7 +442,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		}
 
 		if (!backend) {
-			backend = _.Functions.url(`${this.id}-${role}`) || _.Functions.url(`${this.id.toLowerCase()}-${role}`);
+			backend = _.Functions.url(`${this.id}-${role}`);
 
 			if (backend) {
 				ignoreRoleAttributes = true;
