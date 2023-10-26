@@ -126,23 +126,71 @@ let _ = Mavo.Functions = {
 		}
 	},
 
-	url: (id, url = location) => {
+	/**
+	 * Get the page URL (if called with no params), or a parameter from it.
+	 * @param {string} id Parameter name
+	 * @param {object} [...options] One or more options objects
+	 * @param {string | URL} [options.url] URL to get parameter from. Defaults to current page URL
+	 * @param { "query" | "path" } [options.type] Type of parameter to get.
+	 * 		"query" for query string type URLs (?foo=value)
+	 * 		"path" for path type URLs (/foo/value)
+	 * 		If not specified, it will search for both, with query string parameters taking precedence
+	 * @param {boolean} [options.case_sensitive=false] Whether to do a case sensitive search
+	 * @param {boolean} [options.multiple=false] Whether to return multiple values if there are multiple parameters with the same name
+	 * @returns {string | null}
+	 */
+	url: (id, ...options) => {
 		if (id === undefined) {
+			// url() with no arguments is just an alias for location.href
 			return location.href;
 		}
 
+		// Resolve options
+		options = Object.assign({}, ...options);
+		let { url = location, type, case_sensitive, multiple } = options;
+
 		if (id) {
-			id = str(id).replace(/[^\w-:]/g);
+			// Why not Mavo.base as the 2nd arg? We want a URL that will not have a path or query string of its own
+			url = new URL(url, "https://mavo.io");
 
-			var ret = url.search.match(RegExp(`[?&]${id}(?:=(.+?))?(?=$|&)`))
-			       || url.pathname.match(RegExp(`(?:^|\\/)${id}\\/([^\\/]*)`));
+			if (type === "query" || !type) {
+				// Search for parameter in query string first
+				let params = url.searchParams;
+				let ret = url.searchParams.getAll(id);
+
+				if (ret.length === 0 && !case_sensitive) {
+					// Not found with the case provided, do a case insensitive search
+					let keys = [...params.keys()].filter(key => key.toLowerCase() === id.toLowerCase());
+					ret = keys.flatMap(key => params.getAll(key));
+				}
+
+				if (ret.length > 0) {
+					return multiple? ret : ret[0];
+				}
+			}
+
+			if (type === "path" || !type) {
+				let path = url.pathname.split("/");
+				// FIXME support multiple here?
+				let index = case_sensitive ? path.indexOf(id) : path.findIndex(part => part.toLowerCase() === id.toLowerCase());
+
+
+				if (index > -1) {
+					let ret = path[index + 1] ?? "";
+
+					if (ret) {
+						ret = decodeURIComponent(ret);
+					}
+
+					return multiple? Mavo.toArray(ret) : ret;
+				}
+			}
 		}
 
-		if (ret === null || !id) {
-			return null;
-		}
-
-		return decodeURIComponent(ret[1] || "");
+		// If we're here, we either have an empty parameter name, or it wasn't found
+		// Note that an empty parameter name is not the same as not providing a parameter name at all,
+		// It’s usually due to a variable being the parameter name and the variable not being set yet
+		return multiple? [] : null;
 	},
 
 	first: (n, arr) => {
