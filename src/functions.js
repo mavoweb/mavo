@@ -129,8 +129,8 @@ let _ = Mavo.Functions = {
 	/**
 	 * Get the page URL (if called with no params), or a parameter from it.
 	 * @param {string} id Parameter name
-	 * @param {string | URL} [url] URL to get parameter from. Defaults to current page URL
 	 * @param {object} [...options] One or more options objects
+	 * @param {string | URL} [options.url] URL to get parameter from. Defaults to current page URL
 	 * @param { "query" | "path" } [options.type] Type of parameter to get.
 	 * 		"query" for query string type URLs (?foo=value)
 	 * 		"path" for path type URLs (/foo/value)
@@ -139,7 +139,7 @@ let _ = Mavo.Functions = {
 	 * @param {boolean} [options.multiple=false] Whether to return multiple values if there are multiple parameters with the same name
 	 * @returns {string | null}
 	 */
-	url: (id, url = location, ...options) => {
+	url: (id, ...options) => {
 		if (id === undefined) {
 			// url() with no arguments is just an alias for location.href
 			return location.href;
@@ -147,7 +147,7 @@ let _ = Mavo.Functions = {
 
 		// Resolve options
 		options = Object.assign({}, ...options);
-		let { type, case_sensitive, multiple} = options;
+		let { url = location, type, case_sensitive, multiple } = options;
 
 		if (id) {
 			// Why not Mavo.base as the 2nd arg? We want a URL that will not have a path or query string of its own
