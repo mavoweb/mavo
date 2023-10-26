@@ -425,50 +425,38 @@ let _ = self.Mavo = $.Class(class Mavo {
 	updateBackend (role) {
 		let existing = this[role], backend, changed;
 		const attribute = "mv-" + role;
-
-		// If we override a backend via URL params,
-		// we should ignore metadata the author might pass via storage attributes.
-		// In other words, URLs should have precedence over everything static.
-		let ignoreRoleAttributes = false;
+		let options = {};
 
 		if (this.index == 1) {
 			// This app is the first one in the page, so we can override its backend
 			// via URL params such as ?storage=...
 			backend = _.Functions.url(role);
-
-			if (backend) {
-				ignoreRoleAttributes = true;
-			}
 		}
 
 		if (!backend) {
 			backend = _.Functions.url(`${this.id}-${role}`);
+		}
+
+		if (!backend) {
+			backend = this.element.getAttribute(attribute) || null;
 
 			if (backend) {
-				ignoreRoleAttributes = true;
-			}
-			else {
-				backend = this.element.getAttribute(attribute) || null;
+				backend = backend.trim();
+
+				if (backend == "none") {
+					backend = null;
+				}
+				else {
+					// Do we have any other attributes?
+					// We consider them since a backend was not overridden via URL params.
+					let prefix = attribute + "-";
+					let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
+					options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
+				}
 			}
 		}
 
 		if (backend) {
-			backend = backend.trim();
-
-			if (backend == "none") {
-				backend = null;
-			}
-		}
-
-		if (backend) {
-			let options = {};
-			if (!ignoreRoleAttributes) {
-				// Do we have any other attributes?
-				let prefix = attribute + "-";
-				let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
-				options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
-			}
-
 			if (!existing?.equals?.(backend)) {
 				// We have a string, convert to a backend object if different than existing
 				this[role] = backend = _.Backend.create(backend, {
