@@ -424,7 +424,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 	 */
 	updateBackend (role) {
 		let existing = this[role], backend, changed;
-		const attribute = "mv-" + role;
+		let options = {};
 
 		if (this.index == 1) {
 			// This app is the first one in the page, so we can override its backend
@@ -433,25 +433,30 @@ let _ = self.Mavo = $.Class(class Mavo {
 		}
 
 		if (!backend) {
-			backend = _.Functions.url(`${this.id}-${role}`)
-			          || _.Functions.url(`${this.id.toLowerCase()}-${role}`)
-			          || this.element.getAttribute(attribute) || null;
+			backend = _.Functions.url(`${this.id}-${role}`);
 		}
 
-		if (backend) {
-			backend = backend.trim();
+		if (!backend) {
+			const attribute = "mv-" + role;
+			backend = this.element.getAttribute(attribute) || null;
 
-			if (backend == "none") {
-				backend = null;
+			if (backend) {
+				backend = backend.trim();
+
+				if (backend == "none") {
+					backend = null;
+				}
+				else {
+					// Do we have any other attributes?
+					// We consider them since a backend was not overridden via URL params.
+					let prefix = attribute + "-";
+					let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
+					options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
+				}
 			}
 		}
 
 		if (backend) {
-			// Do we have any other attributes?
-			let prefix = attribute + "-";
-			let roleAttributes = Mavo.getAttributes(this.element, RegExp("^" + prefix));
-			let options = Object.fromEntries(roleAttributes.map(n => [n.replace(prefix, ""), this.element.getAttribute(n)]));
-
 			if (!existing?.equals?.(backend)) {
 				// We have a string, convert to a backend object if different than existing
 				this[role] = backend = _.Backend.create(backend, {
