@@ -424,7 +424,6 @@ let _ = self.Mavo = $.Class(class Mavo {
 	 */
 	updateBackend (role) {
 		let existing = this[role], backend, changed;
-		const attribute = "mv-" + role;
 		let options = {};
 
 		if (this.index == 1) {
@@ -438,6 +437,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		}
 
 		if (!backend) {
+			const attribute = "mv-" + role;
 			backend = this.element.getAttribute(attribute) || null;
 
 			if (backend) {
