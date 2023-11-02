@@ -193,7 +193,7 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 					}
 
 					addEventListener("message", evt => {
-						if (evt.source === this.authPopup) {
+						if (evt.source === this.authPopup && evt.data.backend) {
 							if (evt.data.backend == this.id) {
 								this.accessToken = localStorage[`mavo:${id}token`] = evt.data.token;
 							}
