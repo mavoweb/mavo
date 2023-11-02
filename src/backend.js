@@ -193,12 +193,7 @@ var _ = Mavo.Backend = class Backend extends EventTarget {
 					}
 
 					addEventListener("message", evt => {
-						if (evt.source === this.authPopup) {
-							if (!evt.data.backend) {
-								// Ignore un-supported events that backend services might send, e.g., messages from Yandex metrics.
-								return;
-							}
-
+						if (evt.source === this.authPopup && evt.data.backend) {
 							if (evt.data.backend == this.id) {
 								this.accessToken = localStorage[`mavo:${id}token`] = evt.data.token;
 							}
