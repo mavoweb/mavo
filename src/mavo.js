@@ -135,7 +135,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 		$.bind(this.element, "mv-login.mavo", evt => {
 			if (evt.backend == (this.source || this.storage)) {
 				// If last time we rendered we got nothing, maybe now we'll have better luck?
-				if (this.inProgress !== "loading" && !this.root.data && !this.unsavedChanges) {
+				if (!this.root.data && !this.unsavedChanges) {
 					this.load();
 				}
 			}
@@ -546,9 +546,6 @@ let _ = self.Mavo = $.Class(class Mavo {
 			return;
 		}
 
-		let autoSaveState = this.autoSave;
-		this.autoSave = false;
-
 		if (data === undefined) {
 			this.inProgress = "loading";
 
@@ -588,13 +585,17 @@ let _ = self.Mavo = $.Class(class Mavo {
 			this.inProgress = false;
 		}
 
+		let autoSaveState = this.autoSave;
+		this.autoSave = false;
+
 		this.render(data);
+
+		this.autoSave = autoSaveState;
 
 		await Mavo.defer();
 
 		this.dataLoaded.resolve();
 		this.element.dispatchEvent(new CustomEvent("mv-load", {detail: backend, bubbles: true}));
-		this.autoSave = autoSaveState;
 	}
 
 	async store () {
