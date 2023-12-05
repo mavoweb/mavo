@@ -553,32 +553,8 @@ var _ = Mavo.Script = {
 	 * Caveat: For CallExpression arguments, it will call callback with an array
 	 * callback needs to take care of iterating over the array
 	 */
-	walk: function(node, callback, o = {}, property, parent) {
-		if (!o.type || node.type === o.type) {
-			var ret = callback(node, property, parent);
-		}
-
-		if (!o.ignore || o.ignore.indexOf(node.type) === -1) {
-			if (Array.isArray(node)) {
-				for (let n of node) {
-					_.walk(n, callback, o, property, node);
-				}
-			}
-			else {
-				_.childProperties.forEach(property => {
-					if (node[property]) {
-						_.walk(node[property], callback, o, property, node);
-					}
-				});
-			}
-		}
-
-		if (ret !== undefined && parent) {
-			// Apply transformations after walking, otherwise it may recurse infinitely
-			parent[property] = ret;
-		}
-
-		return ret;
+	walk: function(node, callback, o = {}) {
+		return Vastly.walk(node, callback, {only: o.type, except: o.ignore});
 	},
 
 	/**
@@ -821,8 +797,10 @@ var _ = Mavo.Script = {
 
 	closest: Vastly.closest,
 
-	serialize: (node) => {
-		Vastly.parents.setAll(node);
+	serialize: (node, parent) => {
+		if (parent) {
+			Vastly.parents.set(node, parent);
+		}
 		return Vastly.serialize(node);
 	},
 
