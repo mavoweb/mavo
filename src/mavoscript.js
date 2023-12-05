@@ -628,7 +628,7 @@ var _ = Mavo.Script = {
 			return `${nameSerialized}(${argsSerialized.join(", ")})`;
 		},
 		"ConditionalExpression": node => `${_.serialize(node.test, node)}? ${_.serialize(node.consequent, node)} : ${_.serialize(node.alternate, node)}`,
-		"MemberExpression": (node, parent) => {
+		"MemberExpression": (node) => {
 			let n = node, pn, callee;
 
 			do {
@@ -819,41 +819,11 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	closest (node, type) {
-		let n = node;
+	closest: Vastly.closest,
 
-		do {
-			if (n.type === type) {
-				return n;
-			}
-		} while (n = n.parent);
-
-		return null;
-	},
-
-	serialize: (node, parent) => {
-		if (typeof node === "string") {
-			return node; // already serialized
-		}
-
-		if (parent) {
-			node.parent = parent;
-		}
-
-		var ret = _.transformations[node.type]?.(node, parent);
-
-		if (typeof ret == "object" && ret?.type) {
-			node = ret;
-		}
-		else if (ret !== undefined) {
-			return ret;
-		}
-
-		if (!node.type || !_.serializers[node.type]) {
-			throw new TypeError("Cannot understand this expression at all 😔");
-		}
-
-		return _.serializers[node.type](node, parent);
+	serialize: (node) => {
+		Vastly.parents.setAll(node);
+		return Vastly.serialize(node);
 	},
 
 	rewrite: function(code, o) {
@@ -938,6 +908,9 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
+
+Object.assign(Vastly.serialize.transformations, _.transformations);
+Object.assign(Vastly.serialize.serializers, _.serializers);
 
 for (let name in _.operators) {
 	let details = _.operators[name];
