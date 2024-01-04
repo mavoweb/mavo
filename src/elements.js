@@ -253,6 +253,17 @@ _.register({
 		default: true
 	},
 
+	"option[selected]": {
+		selector: "select option[selected]",
+		attribute: "selected",
+		datatype: "boolean",
+		setValue: (element, value) => {
+			element.selected = value;
+			element.closest("select")?.dispatchEvent(new Event("change"));
+		},
+		getValue: element => element.selected
+	},
+
 	"textarea": {
 		extend: "formControl",
 		selector: "textarea",
