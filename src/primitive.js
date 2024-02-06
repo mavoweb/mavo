@@ -1246,6 +1246,7 @@ $.Class(_, {
 			if (value !== this._datatype) {
 				if (value == "boolean" && !this.attribute) {
 					this.attribute = Mavo.Elements.defaultConfig.boolean.attribute;
+					this.updateEditType();
 				}
 
 				$.toggleAttribute(this.element, "datatype", value, value && value !== "string");
