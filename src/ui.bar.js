@@ -33,16 +33,7 @@ let _ = Mavo.UI.Bar = class Bar {
 			});
 		}
 
-		if (this.element.classList.contains("mv-compact")) {
-			this.noResize = true;
-		}
-
 		this.controls = _.getControls(this.template);
-
-		if (this.controls.length) {
-			// Measure height of 1 row
-			this.targetHeight = this.element.offsetHeight;
-		}
 
 		if (!this.custom) {
 			this.element.innerHTML = "";
@@ -63,6 +54,7 @@ let _ = Mavo.UI.Bar = class Bar {
 				this[id] = $.create("button", {
 					type: "button",
 					className: `mv-${id}`,
+					title: this.mavo._(id),
 					textContent: this.mavo._(id)
 				});
 			}
@@ -100,55 +92,7 @@ let _ = Mavo.UI.Bar = class Bar {
 			}
 		}
 
-		if (this.controls.length && !this.noResize) {
-			this.resize();
-
-			if (self.ResizeObserver) {
-				this.resizeObserver = Mavo.observeResize(this.element, entries => {
-					this.resize();
-				});
-			}
-		}
-
 		Mavo.observers.resume();
-	}
-
-	resize () {
-		if (!this.targetHeight) {
-			// We don't have a correct measurement for target height, abort
-			this.targetHeight = this.element.offsetHeight;
-			return;
-		}
-
-		this.resizeObserver?.disconnect();
-
-		this.element.classList.remove("mv-compact", "mv-tiny");
-
-		// Remove pointless tooltips
-		$$("button, .mv-button", this.element).forEach(button => {
-			if (button.title === button.textContent) {
-				button.title = "";
-			}
-		});
-
-		// Exceeded single row?
-		if (this.element.offsetHeight > this.targetHeight * 1.6) {
-			this.element.classList.add("mv-compact");
-
-			if (this.element.offsetHeight > this.targetHeight * 1.2) {
-				// Still too tall
-				this.element.classList.add("mv-tiny");
-
-				// Add tooltips, since only icons will be visible
-				$$("button, .mv-button", this.element).forEach(button => {
-					if (!button.title) {
-						button.title = button.textContent;
-					}
-				});
-			}
-		}
-
-		this.resizeObserver?.observe(this.element);
 	}
 
 	add (id) {
@@ -159,10 +103,6 @@ let _ = Mavo.UI.Bar = class Bar {
 		}
 
 		Mavo.revocably.add(this[id], this.element);
-
-		if (!this.resizeObserver && !this.noResize) {
-			requestAnimationFrame(() => this.resize());
-		}
 	}
 
 	remove (id) {
@@ -172,10 +112,6 @@ let _ = Mavo.UI.Bar = class Bar {
 
 		if (o.cleanup) {
 			o.cleanup.call(this.mavo);
-		}
-
-		if (!this.resizeObserver && !this.noResize) {
-			requestAnimationFrame(() => this.resize());
 		}
 	}
 

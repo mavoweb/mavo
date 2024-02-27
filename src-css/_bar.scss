@@ -11,6 +11,8 @@
 	line-height: 1.5;
 	position: sticky;
 
+	container: mv-bar / inline-size;
+
 	@supports (position: sticky) {
 		z-index: 2;
 		top: 5px;
@@ -175,20 +177,25 @@
 	}
 
 	// Displaying mv-bar in small spaces
-	&.mv-compact {
-		.mv-status > span {
-			display: none;
+	@container mv-bar (width <= 40em) {
+		.mv-status {
+			// Don't wrap the username on multiple lines
+			white-space: nowrap;
+
+			& > span {
+				display: none;
+			}
 		}
 	}
 
-	&.mv-tiny {
+	@container mv-bar (width <= 25em) {
 		& > button,
 		& > .mv-button {
 			// Hide text
 			width: 1em;
 			position: relative;
 			overflow: hidden;
-			text-indent: -999em;
+			text-indent: calc(-infinity * 1em);
 
 			&::before {
 				position: absolute;
