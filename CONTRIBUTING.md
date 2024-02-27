@@ -173,7 +173,6 @@ This file has utility functions used throughout the codebase. All functions are 
     * Used in collections and Mavo expressions.
 * `revocably` is an object with helpers that add/remove DOM elements and still remember the place in the DOM, even if other elements have been added in the meantime.
 * `inView` is an object that lets you execute code when something is in view in the viewport using an **intersectionObserver**.
-    * **resizeObserver** is used for the Mavo bar.
 
 ## node.js
 * `uid` is a unique ID for all nodes in a Mavo object. It's used for debugging.
