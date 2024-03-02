@@ -11,6 +11,7 @@
 	line-height: 1.5;
 	position: sticky;
 
+	min-width: 20em;
 	container: mv-bar / inline-size;
 
 	@supports (position: sticky) {
