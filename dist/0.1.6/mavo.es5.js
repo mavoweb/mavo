@@ -7995,7 +7995,7 @@ Mavo.Locale.register("en", {
 		from: function from(haystack, needle) {
 			return _.between(haystack, needle);
 		},
-		fromlast: function fromlast(haystack, needle) {
+		from_last: function from_last(haystack, needle) {
 			return _.between(haystack, needle, "", true);
 		},
 		to: function to(haystack, needle) {

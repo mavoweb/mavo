@@ -8476,7 +8476,7 @@ Mavo.Locale.register("en", {
     from: $.extend((haystack, needle) => _.between(haystack, needle), {
       multiValued: true
     }),
-    fromlast: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
+    from_last: $.extend((haystack, needle) => _.between(haystack, needle, "", true), {
       multiValued: true
     }),
     to: $.extend((haystack, needle) => _.between(haystack, "", needle), {
@@ -9361,7 +9361,7 @@ Mavo.Locale.register("en", {
         },
         precedence: 3
       },
-      "groupby": {
+      "group_by": {
         symbol: "by",
         code: (array, key) => {
           var _key$, _key$$Mavo$toNode;
