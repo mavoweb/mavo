@@ -8159,7 +8159,7 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 		from: function from(haystack, needle) {
 			return _.between(haystack, needle);
 		},
-		fromlast: function fromlast(haystack, needle) {
+		fromlast: function from_last(haystack, needle) {
 			return _.between(haystack, needle, "", true);
 		},
 		to: function to(haystack, needle) {
