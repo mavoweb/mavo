@@ -85,12 +85,12 @@ let _ = Mavo.Actions = {
 	Functions: {
 		/**
 		 * @param data (Optional) data of new item(s)
-		 * @param ref Collection to add to
+		 * @param ref Collection(s) to add to
 		 * @param index {Number} index of new item(s).
 		 * @returns Newly added item(s)
 		 */
 		add: Object.assign(function(data, ref, index) {
-			let args = [...arguments], collection;
+			let args = [...arguments];
 
 			if (arguments.length < 3) {
 				if (arguments.length <= 1) {
@@ -99,64 +99,73 @@ let _ = Mavo.Actions = {
 				}
 				else if (arguments.length === 2) {
 					// Is it (data, ref) or (ref, index)?
-					// ref might be a number, if collection of numbers!
-					collection = _.getCollection(ref);
 
-					if (!collection) {
-						// No collection from ref, must be (ref, index)
-						collection = _.getCollection(data);
+					let refs = Mavo.toArray(ref);
 
-						if (collection) {
-							// Yup, it's (ref, index)
+					// If no ref has a collection, add(ref, index) signature should be used.
+					let refIsFirstArg = refs.map(x => _.getCollection(x)).every(x => x === null);
+
+					if (refIsFirstArg) {
+						let refs = Mavo.toArray(data);
+
+						// If there is at least one ref that has collection,
+						// we make sure that it is (ref, index)
+						refIsFirstArg = refs.map(x => _.getCollection(x)).some(x => x !== null);
+
+						if (refIsFirstArg) {
 							[data, ref, index] = [undefined, data, ref];
 						}
 					}
 				}
 			}
 
-			if (!ref) {
-				return;
-			}
+			let refs = Mavo.toArray(ref);
 
-			collection = collection || _.getCollection(ref);
+			// different and non-null collections
+			let collections = [... new Set(refs.map(x => _.getCollection(x)).filter(x => x))];
 
-			if (!collection) {
-				collection = _.getCollection(this);
+			if (!collections.length) {
+				let collection = _.getCollection(this);
 
 				if (collection) {
 					// The collection is the context, re-interpret arguments
 					[data, index] = args;
+					collections.push(collection);
 				}
 			}
 
-			if (!collection) {
+			if (!collections.length) {
 				Mavo.warn("No collection or collection item provided to add().", {once: false});
 				return data;
 			}
 
-			if (index === undefined) {
+			if (index === undefined && collections.length === 1) {
 				// If there is no index and item provided instead of collection,
 				// get index from collection item
 				let node = _.getNode(ref);
 
-				if (node && node.collection === collection) {
+				if (node && node.collection === collections[0]) {
 					index = node.index;
 				}
 			}
 
-			return (Array.isArray(data)? data : [data]).map(datum => {
-				let item = collection.add(undefined, index);
+			return Mavo.toArray(data).reverse().map(datum => {
+				// Each data is added to all collections
+				return collections.map(collection =>{
+					let item = collection.add(undefined, index);
 
-				if (datum !== undefined) {
-					item.render(datum);
-				}
+					if (datum !== undefined) {
+						item.render(datum);
+					}
 
-				if (collection.editing) {
-					collection.editItem(item);
-				}
+					if (collection.editing) {
+						collection.editItem(item);
+					}
 
-				return item.getLiveData();
-			});
+					return item.getLiveData();
+				});
+			}).reduce((result, arr) => result.concat(arr), []);
+			
 		}, {needsContext: true}),
 
 		/**
