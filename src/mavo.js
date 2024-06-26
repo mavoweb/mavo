@@ -971,9 +971,8 @@ let _ = self.Mavo = $.Class(class Mavo {
 });
 
 // Define symbols
-// TODO: These should not be lazy anymore?
 ["toNode", "isProxy", "route", "parent", "property", "mavo", "groupedBy", "as"].forEach(symbol => {
-	$.lazy(_, symbol, () => Symbol(symbol));
+	_[symbol] = Symbol(symbol);
 });
 
 Object.defineProperty(_.all, "length", {
