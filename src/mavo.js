@@ -812,22 +812,6 @@ let _ = self.Mavo = $.Class(class Mavo {
 		$.ready().then(() => _.Plugins.load()),
 	]
 
-	// Only naive tests here (no false positives, but false negatives are ok).
-	// polyfill.io will do more proper checking
-	static polyfillsNeeded = {
-		"blissfuljs": Array.from && document.documentElement.closest && self.URL && "searchParams" in URL.prototype,
-		"Intl.~locale.en": self.Intl,
-		"IntersectionObserver": self.IntersectionObserver,
-		"Symbol": self.Symbol,
-		"Element.prototype.remove": Element.prototype.remove,
-		"Element.prototype.before": Element.prototype.before,
-		"Element.prototype.after": Element.prototype.after,
-		"Element.prototype.prepend": Element.prototype.prepend,
-		"Array.prototype.flat": Array.prototype.flat,
-		"Array.prototype.flatMap": Array.prototype.flatMap,
-	}
-	static polyfills = []
-
 	static init (container = document) {
 		let mavos = Array.isArray(arguments[0])? arguments[0] : $$(_.selectors.init, container);
 
@@ -986,7 +970,7 @@ let _ = self.Mavo = $.Class(class Mavo {
 });
 
 // Define symbols
-// These are lazy to give the Symbol polyfill a chance to load if needed
+// TODO: These should not be lazy anymore?
 ["toNode", "isProxy", "route", "parent", "property", "mavo", "groupedBy", "as"].forEach(symbol => {
 	$.lazy(_, symbol, () => Symbol(symbol));
 });
@@ -1018,22 +1002,11 @@ s.output = "[property=output], .mv-output";
 
 }
 
-$.each(_.polyfillsNeeded, (id, supported) => {
-	if (!supported) {
-		_.polyfills.push(id);
-	}
-});
-
 _.ready = _.thenAll(_.dependencies);
 _.inited = _.promise();
 
 // Init mavo. Async to give other scripts a chance to modify stuff.
 await _.defer();
-
-if (_.polyfills.length > 0) {
-	var polyfillURL = "https://cdn.polyfill.io/v2/polyfill.min.js?unknown=polyfill&features=" + _.polyfills.map(a => a + "|gated").join(",");
-	_.dependencies.push($.include(polyfillURL));
-}
 
 await $.ready();
 

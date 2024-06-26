@@ -140,12 +140,9 @@ This file is the entry point of Mavo and all of Mavo's components are utilized h
 * `attributes` object is an array of all attributes. It is incomplete as more are in separate JS files and are pushed later to this object.
 
 ### How Mavo Picks Up `mv-app` Elements
-1. Fetches polyfills needed ([polyfill.io](https://polyfill.io/v2/docs/)); syntax-level features cannot be polyfilled.
-    * Mavo has a list (IntersectionObserver, Symbol) that needs to be polyfilled.
-2. Adds/pushes dependencies after the polyfills are loaded.
-3. Loads Mavo plugins using `_.Plugins.load()` defined in plugins.js.
-4. `_.inited` Promise resolves after page (`$.ready`) and dependencies are ready.
-5. `_.init()` gets all elements with an `mv-app` attribute that matches the `$$` selector (using `selectors` object).
+1. Loads Mavo plugins using `_.Plugins.load()` defined in plugins.js.
+2. `_.inited` Promise resolves after page (`$.ready`) and dependencies are ready.
+3. `_.init()` gets all elements with an `mv-app` attribute that matches the `$$` selector (using `selectors` object).
     1. Filters array of `mv-app` elements (use `Mavo.get` to see if there’s another mv-app associated with this element).
     2. Maps each element to a new Mavo instance & return this array.
 
