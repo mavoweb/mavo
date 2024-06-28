@@ -553,40 +553,16 @@ var _ = Mavo.Script = {
 	 * Caveat: For CallExpression arguments, it will call callback with an array
 	 * callback needs to take care of iterating over the array
 	 */
-	walk: function(node, callback, o = {}, property, parent) {
-		if (!o.type || node.type === o.type) {
-			var ret = callback(node, property, parent);
-		}
-
-		if (!o.ignore || o.ignore.indexOf(node.type) === -1) {
-			if (Array.isArray(node)) {
-				for (let n of node) {
-					_.walk(n, callback, o, property, node);
-				}
-			}
-			else {
-				_.childProperties.forEach(property => {
-					if (node[property]) {
-						_.walk(node[property], callback, o, property, node);
-					}
-				});
-			}
-		}
-
-		if (ret !== undefined && parent) {
-			// Apply transformations after walking, otherwise it may recurse infinitely
-			parent[property] = ret;
-		}
-
-		return ret;
+	walk: function(node, callback, o = {}) {
+		return Vastly.walk(node, callback, {only: o.type, except: o.ignore});
 	},
 
 	/**
 	 * These serializers transform the AST into JS
 	 */
 	serializers: {
-		"BinaryExpression": node => `${_.serialize(node.left, node)} ${node.operator} ${_.serialize(node.right, node)}`,
-		"UnaryExpression": node => `${node.operator}${_.serialize(node.argument, node)}`,
+		"BinaryExpression": node => `${_._serialize(node.left, node)} ${node.operator} ${_._serialize(node.right, node)}`,
+		"UnaryExpression": node => `${node.operator}${_._serialize(node.argument, node)}`,
 		"CallExpression": node => {
 			var callee = node.callee;
 			let root = node.callee;
@@ -623,12 +599,12 @@ var _ = Mavo.Script = {
 				}
 			}
 
-			var nameSerialized = _.serialize(node.callee, node);
-			var argsSerialized = node.arguments.map(n => _.serialize(n, node));
+			var nameSerialized = _._serialize(node.callee, node);
+			var argsSerialized = node.arguments.map(n => _._serialize(n, node));
 			return `${nameSerialized}(${argsSerialized.join(", ")})`;
 		},
-		"ConditionalExpression": node => `${_.serialize(node.test, node)}? ${_.serialize(node.consequent, node)} : ${_.serialize(node.alternate, node)}`,
-		"MemberExpression": (node, parent) => {
+		"ConditionalExpression": node => `${_._serialize(node.test, node)}? ${_._serialize(node.consequent, node)} : ${_._serialize(node.alternate, node)}`,
+		"MemberExpression": (node) => {
 			let n = node, pn, callee;
 
 			do {
@@ -639,23 +615,23 @@ var _ = Mavo.Script = {
 			} while (n = n.parent);
 
 			if (n) { // Use plain serialization for foo.bar.baz()
-				var property = node.computed? `[${_.serialize(node.property, node)}]` : `.${node.property.name}`;
-				return `${_.serialize(node.object, node)}${property}`;
+				var property = node.computed? `[${_._serialize(node.property, node)}]` : `.${node.property.name}`;
+				return `${_._serialize(node.object, node)}${property}`;
 			}
 
 			n = node;
 			let properties = [], object, objectParent;
 
 			while (n.type === "MemberExpression") {
-				let serialized = n.computed? _.serialize(n.property, n) : `"${n.property.name}"`;
+				let serialized = n.computed? _._serialize(n.property, n) : `"${n.property.name}"`;
 				properties.push(serialized);
 				objectParent = n;
 				object = n = n.object;
 			}
 
-			return `$fn.get(${_.serialize(object, objectParent)}, ${properties.reverse().join(", ")})`;
+			return `$fn.get(${_._serialize(object, objectParent)}, ${properties.reverse().join(", ")})`;
 		},
-		"ArrayExpression": node => `[${node.elements.map(n => _.serialize(n, node)).join(", ")}]`,
+		"ArrayExpression": node => `[${node.elements.map(n => _._serialize(n, node)).join(", ")}]`,
 		"Literal": node => {
 			let quote = node.raw[0];
 
@@ -672,7 +648,7 @@ var _ = Mavo.Script = {
 		},
 		"Identifier": node => node.name,
 		"ThisExpression": node => "this",
-		"Compound": node => node.body.map(n => _.serialize(n, node)).join(", ")
+		"Compound": node => node.body.map(n => _._serialize(n, node)).join(", ")
 	},
 
 	/**
@@ -819,41 +795,18 @@ var _ = Mavo.Script = {
 		}
 	},
 
-	closest (node, type) {
-		let n = node;
+	closest: Vastly.closest,
 
-		do {
-			if (n.type === type) {
-				return n;
-			}
-		} while (n = n.parent);
-
-		return null;
+	_serialize: (node, parent) => {
+		if (parent) {
+			Vastly.parents.set(node, parent);
+		}
+		return Vastly.serialize(node);
 	},
 
-	serialize: (node, parent) => {
-		if (typeof node === "string") {
-			return node; // already serialized
-		}
-
-		if (parent) {
-			node.parent = parent;
-		}
-
-		var ret = _.transformations[node.type]?.(node, parent);
-
-		if (typeof ret == "object" && ret?.type) {
-			node = ret;
-		}
-		else if (ret !== undefined) {
-			return ret;
-		}
-
-		if (!node.type || !_.serializers[node.type]) {
-			throw new TypeError("Cannot understand this expression at all 😔");
-		}
-
-		return _.serializers[node.type](node, parent);
+	serialize: (node) => {
+		node = Vastly.map(node, _.transformations);
+		return _._serialize(node);
 	},
 
 	rewrite: function(code, o) {
@@ -900,9 +853,9 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
 	// scope() rewriting
 	serializeScopeCall: (args) => {
-		var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_.serialize(args[1])}); }`;
+		var withCode = `with (Mavo.Script.subScope(scope, $this) || {}) { return (${_._serialize(args[1])}); }`;
 		return `(function() {
-	var scope = ${_.serialize(args[0])};
+	var scope = ${_._serialize(args[0])};
 	if (Array.isArray(scope)) {
 		return scope.map(function(scope) {
 			${withCode}
@@ -938,6 +891,8 @@ Mavo.Actions.running = Mavo.Actions._running;`;
 
 _.serializers.LogicalExpression = _.serializers.BinaryExpression;
 _.transformations.LogicalExpression = _.transformations.BinaryExpression;
+
+Object.assign(Vastly.serialize.serializers, _.serializers);
 
 for (let name in _.operators) {
 	let details = _.operators[name];
