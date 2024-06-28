@@ -768,6 +768,12 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 				let presentational;
 
 				if (this.options) {
+					if (!this.options.has(value)) {
+						// There is no option corresponding to the value. Try the default one.
+						// If there is no option corresponding to the default value either, use the first option
+						value = this.options.has(this.default)? this.default : this.options.keys().next().value;
+					}
+
 					presentational = this.options.get(value);
 				}
 
@@ -1316,6 +1322,8 @@ Mavo.observe({id: "primitive"}, function({node, type, attribute, record, element
 		}
 		else if (attribute === "mv-options") {
 			node.updateOptions();
+
+			node.setValue(node.value, {force: true, silent: true});
 
 			if (node.editor) {
 				node.generateDefaultEditor();
