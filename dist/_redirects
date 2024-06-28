@@ -1,4 +1,4 @@
-/stable/* /0.3.0/:splat 302
+/stable/* /0.3.1/:splat 302
 
 /v0.1/*    /0.1.6/:splat 302
 /0.1/*    /0.1.6/:splat 302
@@ -12,8 +12,8 @@
 # We need a separate rule for versions like 0.2.x.
 /v0.2*    /0.2:splat 302
 
-/v0.3/*    /0.3.0/:splat 302
-/0.3/*    /0.3.0/:splat 302
+/v0.3/*    /0.3.1/:splat 302
+/0.3/*    /0.3.1/:splat 302
 
 # We need a separate rule for versions like 0.3.x.
 /v0.3*    /0.3:splat 302
