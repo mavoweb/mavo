@@ -574,7 +574,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 						// Insert the rest of the lines as new items
 						// FIXME DRYfy the repetition between this code and the one below
 						let collection = this.closestCollection;
-						let index = closestItem?.index || 0;
+						let index = this.closestItem?.index || 0;
 
 						for (let i=1; i<lines.length; i++) {
 							let closestItem = this.closestItem;
