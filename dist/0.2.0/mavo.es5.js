@@ -8659,7 +8659,7 @@ Mavo.Locale.register("en", {
     }, {
       multiValued: true
     }),
-    fromlast: $.extend(function (haystack, needle) {
+    from_last: $.extend(function (haystack, needle) {
       return _.between(haystack, needle, "", true);
     }, {
       multiValued: true
@@ -9651,7 +9651,7 @@ Mavo.Locale.register("en", {
         },
         precedence: 3
       },
-      "groupby": {
+      "group_by": {
         symbol: "by",
         code: function code(array, key) {
           array = Mavo.toArray(array);
