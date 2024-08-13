@@ -6,7 +6,10 @@ let _ = Mavo.Actions = {
 	listener: evt => {
 		// Clicking elements inside these elements should be ignored
 		// if the target element is closer to them than to the [mv-action] element
-		let controlSelector = ".mv-ui, .mv-editor, .mv-popup, .mv-drag-handle";
+		let controlSelector = `
+			.mv-ui, .mv-editor, .mv-popup, .mv-drag-handle,
+			button, label, input, output, select, textarea, meter, progress
+		`;
 
 		let tag = evt.type === "submit"? "form" : ":not(form)";
 		let element = evt.target.closest(tag + "[mv-action]");
