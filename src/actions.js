@@ -10,7 +10,7 @@ let _ = Mavo.Actions = {
 
 		let tag = evt.type === "submit"? "form" : ":not(form)";
 		let element = evt.target.closest(tag + "[mv-action]");
-		let control = evt.target.closest(tag + controlSelector);
+		let control = evt.target.closest(tag + `:is(${ controlSelector })`);
 
 		if (!element || control && !control.contains(element)) {
 			return; // Not an action or the click should be ignored
