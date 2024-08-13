@@ -1,4 +1,4 @@
-$font-sans: 'Helvetica Neue', sans-serif;
+$font-sans: system-ui, 'Helvetica Neue', sans-serif;
 $font-mono: Consolas, Monaco, monospace;
 
 @mixin highlight($color, $important: "") {

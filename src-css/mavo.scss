@@ -1,10 +1,5 @@
 @import 'defs';
 
-// Polyfill
-[mv-app] [hidden] {
-	display: none;
-}
-
 .mv-danger:enabled:hover {
 	box-shadow: 0 0 10em #b00 inset;
 	color: white;
@@ -14,7 +9,7 @@
 	@include highlight(hsla(58, 100%, 50%, .5));
 }
 
-.mv-item-bar.mv-ui {
+.mv-item-bar:where(.mv-ui) {
 	all: initial;
 	position: absolute;
 	z-index: 10;
@@ -192,7 +187,7 @@ button.mv-close {
 	}
 }
 
-[mv-app] {
+:where([mv-app]) {
 	[property].mv-multiline {
 		white-space: pre-line;
 	}
@@ -203,7 +198,7 @@ button.mv-close {
 	}
 
 	// Is this really needed?!
-	&:not([mv-permissions~="add"]) button.mv-add {
+	&:where(:not([mv-permissions~="add"])) button.mv-add {
 		display: none;
 	}
 
@@ -212,7 +207,7 @@ button.mv-close {
 	}
 
 	// Looking to change the hiding logic? Perhaps Primitive#empty is a better place
-	.mv-empty:not([mv-mode="edit"]):not(td):not(th) {
+	.mv-empty:where(:not([mv-mode="edit"]):not(td):not(th)) {
 		display: none;
 	}
 
@@ -234,7 +229,7 @@ button.mv-close {
 	}
 }
 
-[mv-progress="Loading"]:not(.mv-no-hiding-during-loading) [mv-list-item] {
+:where([mv-progress="Loading"]:not(.mv-no-hiding-during-loading)) [mv-list-item] {
 	display: none;
 }
 
