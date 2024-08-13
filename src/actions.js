@@ -4,11 +4,19 @@ Mavo.attributes.push("mv-action");
 
 let _ = Mavo.Actions = {
 	listener: evt => {
+		// Clicking elements inside these elements should be ignored
+		// if the target element is closer to them than to the [mv-action] element
+		let controlSelector = `
+			.mv-ui, .mv-editor, .mv-popup, .mv-drag-handle,
+			button, label, input, output, select, textarea, meter, progress
+		`;
+
 		let tag = evt.type === "submit"? "form" : ":not(form)";
 		let element = evt.target.closest(tag + "[mv-action]");
+		let control = evt.target.closest(tag + `:is(${ controlSelector })`);
 
-		if (!element) {
-			return; // Not an action
+		if (!element || control && !control.contains(element)) {
+			return; // Not an action or the click should be ignored
 		}
 
 		let node = Mavo.Node.get(element);
