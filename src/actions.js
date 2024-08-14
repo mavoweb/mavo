@@ -8,7 +8,8 @@ let _ = Mavo.Actions = {
 		// if the target element is closer to them than to the [mv-action] element
 		let controlSelector = `
 			.mv-ui, .mv-editor, .mv-popup, .mv-drag-handle,
-			button, label, input, output, select, textarea, meter, progress
+			button, label, input, output, select, textarea, meter, progress, summary,
+			a, audio, video
 		`;
 
 		let tag = evt.type === "submit"? "form" : ":not(form)";
