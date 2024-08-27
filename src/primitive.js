@@ -426,7 +426,14 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 					}
 
 					for (let primitive of nodes) {
-						primitive.originalEditorUpdated({force: true});
+						if (primitive.defaultSource == "editor") {
+							primitive.default = this.originalEditor.value;
+						}
+
+						if (primitive.editor) {
+							primitive.editor = this.originalEditor.cloneNode(true);
+						}
+
 						primitive.setValue(primitive.value, {force: true, silent: true});
 					}
 				});
@@ -441,7 +448,7 @@ var _ = Mavo.Primitive = class Primitive extends Mavo.Node {
 
 		let editor = this.editor ?? this.originalEditor;
 
-		if (editor?.matches("select:not(.mv-options-select")) {
+		if (editor?.matches("select:not(.mv-options-select)")) {
 			// This is a select menu that is not automatically generated from mv-options
 			// We need to update this.options
 
