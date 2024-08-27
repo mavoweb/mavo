@@ -615,31 +615,6 @@ var _ = $.extend(Mavo, {
 
 	escapeRegExp: s => s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
 
-	observeResize: function(element, callbackOrObserver) {
-		if (!self.ResizeObserver) {
-			return;
-		}
-
-		var previousRect = null;
-		var ro = callbackOrObserver instanceof ResizeObserver? callbackOrObserver : new ResizeObserver(entries => {
-			var contentRect = entries[entries.length - 1].contentRect;
-
-			if (previousRect
-				&& previousRect.width == contentRect.width
-				&& previousRect.height == contentRect.height) {
-				return;
-			}
-
-			callbackOrObserver(entries);
-
-			previousRect = contentRect;
-		});
-
-		ro.observe(element);
-
-		return ro;
-	},
-
 	Observer: class Observer {
 		constructor (element, attribute, callback, o = {}) {
 			if (callback instanceof MutationObserver) {
