@@ -114,19 +114,14 @@ let _ = self.Mavo = $.Class(class Mavo {
 
 		this.permissions.can("login", () => {
 			// We also support a URL param to trigger login, in case the user doesn't want visible login UI
-			let loginUrlParam;
-			if (Mavo.Functions.url("login") !== null && this.index === 1) {
-				loginUrlParam = "login";
-			}
-			else if (Mavo.Functions.url(this.id + "-login") !== null) {
-				loginUrlParam = this.id + "-login";
-			}
+			let loginApp = Mavo.Functions.url("login");
 
-			if (loginUrlParam !== undefined) {
+			if (loginApp === "" && this.index === 1 || loginApp === this.id) {
 				// Remove param from url
 				const currentURL = new URL(location.href);
-				currentURL.searchParams.delete(loginUrlParam);
+				currentURL.searchParams.delete("login");
 				history.replaceState(null, "", currentURL);
+
 				this.primaryBackend.login();
 			}
 		});
